@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 
@@ -32,9 +33,12 @@ import java.util.List;
  * Criteria object used to fetch a job that matches the parameters specified.
  */
 @JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class FindJobNodeCriteria extends BaseCriteria {
 
     public static final String FIELD_ID_ID = "Id";
+    public static final String FIELD_ADVANCED = "Advanced";
+    public static final String FIELD_JOB_NAME = "Job Name";
     public static final String FIELD_ID_ENABLED = "Enabled";
     public static final String FIELD_ID_NODE = "Node";
     public static final String FIELD_ID_LAST_EXECUTED = "Last Executed";
@@ -43,20 +47,31 @@ public class FindJobNodeCriteria extends BaseCriteria {
     private final StringCriteria jobName;
     @JsonProperty
     private final StringCriteria nodeName;
+    @JsonProperty
+    private Boolean jobNodeEnabled;
 
     public FindJobNodeCriteria() {
         jobName = new StringCriteria();
         nodeName = new StringCriteria();
+        jobNodeEnabled = null;
+    }
+
+    public FindJobNodeCriteria(final String nodeName) {
+        this.jobName = new StringCriteria();
+        this.nodeName = new StringCriteria(nodeName);
+        this.jobNodeEnabled = null;
     }
 
     @JsonCreator
     public FindJobNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                @JsonProperty("jobName") final StringCriteria jobName,
-                               @JsonProperty("nodeName") final StringCriteria nodeName) {
+                               @JsonProperty("nodeName") final StringCriteria nodeName,
+                               @JsonProperty("jobNodeEnabled") final Boolean jobNodeEnabled) {
         super(pageRequest, sortList);
         this.jobName = jobName;
         this.nodeName = nodeName;
+        this.jobNodeEnabled = jobNodeEnabled;
     }
 
     public StringCriteria getJobName() {
@@ -65,5 +80,22 @@ public class FindJobNodeCriteria extends BaseCriteria {
 
     public StringCriteria getNodeName() {
         return nodeName;
+    }
+
+    public Boolean getJobNodeEnabled() {
+        return jobNodeEnabled;
+    }
+
+    public void setJobNodeEnabled(final Boolean jobNodeEnabled) {
+        this.jobNodeEnabled = jobNodeEnabled;
+    }
+
+    @Override
+    public String toString() {
+        return "FindJobNodeCriteria{" +
+                "jobName=" + jobName +
+                ", nodeName=" + nodeName +
+                ", jobNodeEnabled=" + jobNodeEnabled +
+                '}';
     }
 }

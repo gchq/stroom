@@ -1,17 +1,17 @@
 package stroom.search.impl;
 
+import stroom.datasource.api.v2.IndexField;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardSearchConfig;
-import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.FieldIndex;
@@ -28,7 +28,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -44,8 +47,9 @@ public class LuceneSearcher {
     private final IndexStore indexStore;
     private final ExecutorProvider executorProvider;
     private final IndexShardSearchConfig indexShardSearchConfig;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
     private final LuceneProviderFactory luceneProviderFactory;
+    private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
 
 
@@ -55,14 +59,16 @@ public class LuceneSearcher {
     LuceneSearcher(final IndexStore indexStore,
                    final ExecutorProvider executorProvider,
                    final IndexShardSearchConfig indexShardSearchConfig,
-                   final IndexShardService indexShardService,
+                   final IndexShardDao indexShardDao,
                    final LuceneProviderFactory luceneProviderFactory,
+                   final IndexFieldCache indexFieldCache,
                    final TaskContextFactory taskContextFactory) {
         this.indexStore = indexStore;
         this.executorProvider = executorProvider;
         this.indexShardSearchConfig = indexShardSearchConfig;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
         this.luceneProviderFactory = luceneProviderFactory;
+        this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -77,29 +83,28 @@ public class LuceneSearcher {
         SearchProgressLog.increment(task.getKey(), SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
-        final IndexDoc index = indexStore.readDocument(task.getQuery().getDataSource());
+        final LuceneIndexDoc index = indexStore.readDocument(task.getQuery().getDataSource());
 
         // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
         }
 
-        // Create a map of index fields keyed by name.
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
-
-        final String[] storedFieldNames = new String[fieldIndex.size()];
-        for (int i = 0; i < storedFieldNames.length; i++) {
+        final IndexField[] storedFields = new IndexField[fieldIndex.size()];
+        final Set<String> fieldsToLoad = new HashSet<>();
+        for (int i = 0; i < storedFields.length; i++) {
             final String fieldName = fieldIndex.getField(i);
             if (fieldName != null) {
-                final IndexField indexField = indexFieldsMap.get(fieldName);
+                final IndexField indexField = indexFieldCache.get(task.getQuery().getDataSource(), fieldName);
                 if (indexField != null && indexField.isStored()) {
-                    storedFieldNames[i] = fieldName;
+                    storedFields[i] = indexField;
+                    fieldsToLoad.add(indexField.getFldName());
                 }
             }
         }
 
         // Get the stored fields that search is hoping to use.
-        if (storedFieldNames.length == 0) {
+        if (storedFields.length == 0) {
             throw new SearchException("No stored fields have been requested");
         }
 
@@ -107,7 +112,7 @@ public class LuceneSearcher {
         final CompletableFuture<Void>[] futures = new CompletableFuture[threadCount];
         final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
 
-        if (task.getShards().size() > 0) {
+        if (!task.getShards().isEmpty()) {
 //            final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
 //                    task, expression, indexFieldsMap, errorConsumer);
 
@@ -127,27 +132,31 @@ public class LuceneSearcher {
                                             taskContext.info(() -> "Waiting for index shard...");
                                             final Long shardId = shardIdQueue.next();
                                             if (shardId != null) {
-                                                final IndexShard indexShard = indexShardService.loadById(shardId);
-                                                if (indexShard == null) {
+                                                final Optional<IndexShard> optionalIndexShard = indexShardDao.fetch(
+                                                        shardId);
+                                                if (optionalIndexShard.isEmpty()) {
                                                     throw new SearchException("Unable to find index shard with id = " +
                                                             shardId);
                                                 }
 
+                                                final IndexShard indexShard = optionalIndexShard.get();
                                                 final LuceneVersion luceneVersion = LuceneVersionUtil
                                                         .getLuceneVersion(indexShard.getIndexVersion());
                                                 final LuceneShardSearcher luceneShardSearcher = searcherMap
                                                         .computeIfAbsent(luceneVersion, k ->
                                                                 luceneProviderFactory.get(k)
                                                                         .createLuceneShardSearcher(
+                                                                                task.getQuery().getDataSource(),
+                                                                                indexFieldCache,
                                                                                 expression,
-                                                                                indexFieldsMap,
                                                                                 task.getDateTimeSettings(),
                                                                                 task.getKey()));
 
                                                 luceneShardSearcher.searchShard(
                                                         taskContext,
                                                         indexShard,
-                                                        storedFieldNames,
+                                                        storedFields,
+                                                        fieldsToLoad,
                                                         hitCount,
                                                         shardNo.incrementAndGet(),
                                                         task.getShards().size(),

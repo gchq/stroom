@@ -30,7 +30,7 @@ public class FastInfosetValue implements RefDataValue {
      * MUST not change this else it is stored in the ref store. MUST be unique over all
      * {@link RefDataValue} impls.
      */
-    public static final int TYPE_ID = 1;
+    public static final byte TYPE_ID = 1;
 
     private final ByteBuffer fastInfosetByteBuffer;
     private volatile Long fastInfosetValueHash = null;
@@ -63,7 +63,7 @@ public class FastInfosetValue implements RefDataValue {
     }
 
     @Override
-    public int getTypeId() {
+    public byte getTypeId() {
         return TYPE_ID;
     }
 

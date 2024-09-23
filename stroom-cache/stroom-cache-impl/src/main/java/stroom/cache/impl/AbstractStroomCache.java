@@ -26,11 +26,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
@@ -39,6 +39,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     private final String name;
     private final Supplier<CacheConfig> cacheConfigSupplier;
     private final BiConsumer<K, V> removalNotificationConsumer;
+    private final AtomicInteger reachedSizeLimitCount = new AtomicInteger();
 
     protected volatile CacheHolder<K, V> cacheHolder = null;
 
@@ -73,6 +74,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
      */
     abstract Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder);
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public synchronized void rebuild() {
         LOGGER.trace(() -> buildMessage("rebuild"));
@@ -143,11 +145,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                     cause + ")";
 
             if (cause == RemovalCause.SIZE) {
-                LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
-                LOGGER.debug(messageSupplier);
-            } else {
-                LOGGER.trace(messageSupplier);
+                reachedSizeLimitCount.incrementAndGet();
+                LOGGER.debug(() -> "Cache reached size limit '" + name + "'");
             }
+            LOGGER.trace(messageSupplier);
             removalNotificationConsumer.accept(key, value);
         };
     }
@@ -246,7 +247,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                     LOGGER.trace(() -> buildMessage("invalidateEntries", entry.getKey()));
                     return entry.getKey();
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         // Doing the remove on the cacheAsMap means if rebuild was called we are still operating on
         // the old cache
@@ -296,13 +297,18 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         addEntries(map, cache.stats().toString());
 
         map.forEach((k, v) -> {
-            if (k.startsWith("Expire") || k.equals("TotalLoadTime")) {
+            if (k.startsWith("Expire") ||
+                    k.equals("TotalLoadTime") ||
+                    k.equals("RefreshAfterWrite")) {
                 convertNanosToDuration(map, k, v);
             }
         });
 
         // We don't make use of Weighers in the cache so the weight stats are meaningless
         map.remove("EvictionWeight");
+
+        // Let users know how many times we have evicted items for hitting the size limit.
+        map.put("Reached Size Limit Count", Integer.toString(reachedSizeLimitCount.get()));
 
         return new CacheInfo(name, basePropertyPath, map);
     }
@@ -331,10 +337,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                 if (kv.length == 2) {
                     String key = kv[0].replaceAll("\\W", "");
                     String value = kv[1].replaceAll("\\D", "");
-                    if (key.length() > 0) {
+                    if (!key.isEmpty()) {
                         final char[] chars = key.toCharArray();
                         chars[0] = Character.toUpperCase(chars[0]);
-                        key = new String(chars, 0, chars.length);
+                        key = new String(chars);
                     }
 
                     map.put(key, value);

@@ -222,4 +222,9 @@ public final class ValString implements Val {
                 ? CASE_SENSITIVE_COMPARATOR
                 : CASE_INSENSITIVE_COMPARATOR;
     }
+
+    @Override
+    public Object unwrap() {
+        return value;
+    }
 }

@@ -21,6 +21,7 @@ import stroom.util.shared.GwtNullSafe;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Map;
 import java.util.Set;
@@ -29,34 +30,39 @@ import java.util.Set;
 public class SteppingResult {
 
     @JsonProperty
-    private Map<String, SteppingFilterSettings> stepFilterMap;
+    private final String sessionUuid;
     @JsonProperty
-    private StepLocation stepLocation;
+    private final Map<String, SteppingFilterSettings> stepFilterMap;
     @JsonProperty
-    private SharedStepData stepData;
+    private final StepLocation stepLocation;
     @JsonProperty
-    private Integer currentStreamOffset;
+    private final SharedStepData stepData;
     @JsonProperty
-    private boolean foundRecord;
+    private final Integer currentStreamOffset;
     @JsonProperty
-    private Set<String> generalErrors;
+    private final boolean foundRecord;
     @JsonProperty
-    private boolean segmentedData;
-
-    public SteppingResult() {
-    }
+    private final Set<String> generalErrors;
+    @JsonProperty
+    private final boolean segmentedData;
+    @JsonPropertyDescription("True if stepping has completed")
+    @JsonProperty
+    private final boolean complete;
 
     @JsonCreator
-    public SteppingResult(@JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
+    public SteppingResult(@JsonProperty("sessionUuid") final String sessionUuid,
+                          @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
                           @JsonProperty("stepLocation") final StepLocation stepLocation,
                           @JsonProperty("stepData") final SharedStepData stepData,
                           @JsonProperty("currentStreamOffset") final Integer currentStreamOffset,
                           @JsonProperty("foundRecord") final boolean foundRecord,
                           @JsonProperty("generalErrors") final Set<String> generalErrors,
-                          @JsonProperty("segmentedData") final boolean segmentedData) {
+                          @JsonProperty("segmentedData") final boolean segmentedData,
+                          @JsonProperty("complete") final boolean complete) {
 
         // Copy the step filter map so it can be remembered across multiple
         // requests.
+        this.sessionUuid = sessionUuid;
         this.stepFilterMap = stepFilterMap;
         this.stepLocation = stepLocation;
         this.stepData = stepData;
@@ -64,38 +70,27 @@ public class SteppingResult {
         this.foundRecord = foundRecord;
         this.generalErrors = generalErrors;
         this.segmentedData = segmentedData;
+        this.complete = complete;
+    }
+
+    public String getSessionUuid() {
+        return sessionUuid;
     }
 
     public StepLocation getStepLocation() {
         return stepLocation;
     }
 
-    public void setStepLocation(final StepLocation stepLocation) {
-        this.stepLocation = stepLocation;
-    }
-
     public SharedStepData getStepData() {
         return stepData;
-    }
-
-    public void setStepData(final SharedStepData stepData) {
-        this.stepData = stepData;
     }
 
     public Integer getCurrentStreamOffset() {
         return currentStreamOffset;
     }
 
-    public void setCurrentStreamOffset(final Integer currentStreamOffset) {
-        this.currentStreamOffset = currentStreamOffset;
-    }
-
     public boolean isFoundRecord() {
         return foundRecord;
-    }
-
-    public void setFoundRecord(final boolean foundRecord) {
-        this.foundRecord = foundRecord;
     }
 
     public Map<String, SteppingFilterSettings> getStepFilterMap() {
@@ -109,19 +104,15 @@ public class SteppingResult {
                 .anyMatch(SteppingFilterSettings::hasActiveFilters);
     }
 
-    public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
-        this.stepFilterMap = stepFilterMap;
-    }
-
     public Set<String> getGeneralErrors() {
         return generalErrors;
     }
 
-    public void setGeneralErrors(final Set<String> generalErrors) {
-        this.generalErrors = generalErrors;
-    }
-
     public boolean isSegmentedData() {
         return segmentedData;
+    }
+
+    public boolean isComplete() {
+        return complete;
     }
 }

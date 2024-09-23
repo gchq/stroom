@@ -5,7 +5,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -16,6 +15,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -401,13 +401,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        action.accept(uiConfig.getSource()))
-                .onFailure(caught -> AlertEvent.fireError(
-                        SourcePresenter.this,
-                        caught.getMessage(),
-                        null));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                action.accept(uiConfig.getSource());
+            }
+        }, getView());
     }
 
     private void fetchSource(final SourceLocation sourceLocation) {
@@ -420,16 +418,16 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
             request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
         }
 
-        final Rest<AbstractFetchDataResult> rest = restFactory.create();
-
-        rest
+        restFactory
+                .create(DATA_RESOURCE)
+                .method(res -> res.fetch(request))
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
-                .call(DATA_RESOURCE)
-                .fetch(request);
+                .taskMonitorFactory(getView())
+                .exec();
     }
 
     private void handleResponse(final AbstractFetchDataResult result) {
@@ -873,7 +871,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     // ===================================================================
 
 
-    public interface SourceView extends View {
+    public interface SourceView extends View, TaskMonitorFactory {
 
         void setProgressView(final View view);
 

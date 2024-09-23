@@ -24,7 +24,7 @@ import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -36,7 +36,8 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -77,11 +78,14 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     }
 
     @Override
-    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {
+    public MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen);
+        return super.open(docRef, forceOpen, fullScreen, taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final String href) {
@@ -99,9 +103,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
         } else {
             final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, uuid);
-
-            // Start spinning.
-            TaskStartEvent.fire(this, "Opening document");
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
@@ -121,7 +122,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showDocument(docRef, presenter, closeHandler, presenter, false);
+            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -160,9 +161,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
             final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, source.getOwnerDocUuid());
 
-            // Start spinning.
-            TaskStartEvent.fire(this, "Opening document");
-
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
             final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
@@ -175,7 +173,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showDocument(docRef, presenter, closeHandler, presenter, false);
+            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -188,26 +186,30 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DashboardDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DashboardDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(DASHBOARD_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(DASHBOARD_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final DashboardDoc document,
                      final Consumer<DashboardDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DashboardDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(DASHBOARD_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(DASHBOARD_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

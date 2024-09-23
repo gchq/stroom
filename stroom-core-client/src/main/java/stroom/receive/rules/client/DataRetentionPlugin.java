@@ -27,6 +27,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -47,10 +48,20 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_POLICIES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addAdministrationMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.ADMINISTRATION_MENU, createDataRetentionMenuItem());
         }
+    }
+
+    @Override
+    protected String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_POLICIES_PERMISSION;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return Action.GOTO_DATA_RETENTION;
     }
 
     private MenuItem createDataRetentionMenuItem() {
@@ -58,6 +69,7 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
                 .priority(51)
                 .icon(SvgImage.HISTORY)
                 .text("Data Retention")
+                .action(getOpenAction())
                 .command(this::open)
                 .build();
     }

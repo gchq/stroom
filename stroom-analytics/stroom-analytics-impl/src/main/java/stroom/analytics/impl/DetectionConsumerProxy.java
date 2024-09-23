@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.ExecutionSchedule;
 import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.Column;
@@ -23,9 +24,9 @@ import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleAware {
@@ -41,6 +42,10 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private AnalyticRuleDoc analyticRuleDoc;
 
     private CompiledColumns compiledColumns;
+
+    private ExecutionSchedule executionSchedule;
+    private Instant executionTime;
+    private Instant effectiveExecutionTime;
 
     @Inject
     public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -83,6 +88,18 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     public void setAnalyticRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
         this.analyticRuleDoc = analyticRuleDoc;
+    }
+
+    public void setExecutionSchedule(final ExecutionSchedule executionSchedule) {
+        this.executionSchedule = executionSchedule;
+    }
+
+    public void setExecutionTime(final Instant executionTime) {
+        this.executionTime = executionTime;
+    }
+
+    public void setEffectiveExecutionTime(final Instant effectiveExecutionTime) {
+        this.effectiveExecutionTime = effectiveExecutionTime;
     }
 
     public void setCompiledColumns(final CompiledColumns compiledColumns) {
@@ -197,21 +214,25 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
             });
         }
 
-        final Detection detection = new Detection(
-                DateUtil.createNormalDateTimeString(),
-                analyticRuleDoc.getName(),
-                analyticRuleDoc.getUuid(),
-                analyticRuleDoc.getVersion(),
-                null,
-                null,
-                analyticRuleDoc.getDescription(),
-                null,
-                UUID.randomUUID().toString(),
-                0,
-                false,
-                values,
-                List.of(new DetectionLinkedEvent(null, streamId.get(), eventId.get()))
-        );
+        final List<DetectionLinkedEvent> linkedEvents =
+                List.of(new DetectionLinkedEvent(null, streamId.get(), eventId.get()));
+        final Detection detection = Detection
+                .builder()
+                .withDetectTime(DateUtil.createNormalDateTimeString())
+                .withDetectorName(analyticRuleDoc.getName())
+                .withDetectorUuid(analyticRuleDoc.getUuid())
+                .withDetectorVersion(analyticRuleDoc.getVersion())
+                .withDetailedDescription(analyticRuleDoc.getDescription())
+                .withRandomDetectionUniqueId()
+                .withDetectionRevision(0)
+                .withExecutionSchedule(NullSafe
+                        .get(executionSchedule, ExecutionSchedule::getName))
+                .withExecutionTime(executionTime)
+                .withEffectiveExecutionTime(effectiveExecutionTime)
+                .notDefunct()
+                .withValues(values)
+                .withLinkedEvents(linkedEvents)
+                .build();
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();
         detectionConsumer.accept(detection);

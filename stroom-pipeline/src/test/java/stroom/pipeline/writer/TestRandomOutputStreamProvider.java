@@ -42,9 +42,9 @@ class TestRandomOutputStreamProvider extends StroomUnitTest {
         boolean found3 = false;
 
         for (int i = 0; i < 1000; i++) {
-            final OutputStream outputStream = provider.createOutputStream();
-            final LockedOutputStream lockedOutputStream = (LockedOutputStream) outputStream;
-            final Path file = lockedOutputStream.lockFile;
+            final Output output = provider.createOutput();
+            final LockedOutput lockedOutput = (LockedOutput) output;
+            final Path file = lockedOutput.lockFile;
             final String path = FileUtil.getCanonicalPath(file);
 
             if (path.contains("/t1/")) {
@@ -66,7 +66,7 @@ class TestRandomOutputStreamProvider extends StroomUnitTest {
     private FileAppender buildTestObject(final Path tempDir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final FileAppender provider = new FileAppender(null, pathCreator);
+        final FileAppender provider = new FileAppender(null, null, pathCreator);
         provider.setOutputPaths(
                 FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," +
                         FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t2" + name + "," +

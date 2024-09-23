@@ -2,7 +2,7 @@
 	width: 200px;
 }
 
-.SelectionBox-textBox {
+.pointer {
     cursor: pointer;
 }
 
@@ -30,21 +30,36 @@
 .svgIconBox input {
     height: 100%;
     width: 100%;
-    padding-right: 22px;
+    padding-right: 26px;
     min-width: 200px;
 }
 
-.svgIconBox-icon {
+.svgIconBox-icon-outer {
     position: absolute;
-    top: 50%;
-    right: 6px;
-    height: 16px;
-    width: 16px;
+    top: 0;
+    right: 0px;
+    height: 100%;
+    width: 26px;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    cursor: pointer;
 }
 
-.svgIconBox-icon svg {
-    position: absolute;
-    top: -50%;
+.svgIconBox-icon-outer:has(.svgIconBox-icon-inner.svgIconBox-readonly),
+.svgIconBox-icon-inner.svgIconBox-readonly {
+    cursor: default;
+}
+
+.svgIconBox-icon-inner.svgIconBox-readonly svg {
+    opacity: 0.5;
+}
+
+.svgIconBox-icon-inner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 .SelectionPopup .gwt-ListBox {
@@ -82,5 +97,3 @@
     background-color: var(--row__background-color--selected--hovered);
     color:  var(--row__text-color--selected);
 }
-
-

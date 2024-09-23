@@ -13,6 +13,470 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.14] - 2024-09-20
+
+* Issue **#4451** : Add S3 pipeline appender.
+
+* Issue **#4401** : Improve content search.
+
+* Issue **#4417** : Show stepping progress and allow termination.
+
+
+## [v7.5-beta.13] - 2024-09-19
+
+* Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
+
+* Issue **#4448** : Fix query refresh tooltip when not refreshing.
+
+* Issue **#4457** : Fix ctrl+enter shortcut for query start.
+
+* Issue **#4441** : Improve sorted column matching.
+
+* Issue **#4449** : Reload Scheduled Query Analytics between executions.
+
+* Issue **#4420** : Make app title dynamic.
+
+* Issue **#4453** : Dictionaries will ignore imports if a user has no permission to read them.
+
+* Issue **#4404** : Change the Query editor completions to be context aware, e.g. it only lists Datasources after a `from `.
+
+* Issue **#4450** : Fix editor completion in Query editor so that it doesn't limit completions to 100. Added the property `stroom.ui.maxEditorCompletionEntries` to control the maximum number of completions items that are shown. In the event that the property is exceeded, Stroom will pre-filter the completions based on the user's input.
+
+* Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
+
+
+## [v7.5-beta.12] - 2024-09-06
+
+* Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
+
+* Issue **#4422** : Don't show _Edit Schedule_ in actions menu on Jobs screen for Distributed jobs.
+
+* Issue **#4418** : Fix missing css for `/stroom/sessionList`.
+
+* Issue **#4435** : Fix for progress spinner getting stuck on.
+
+* Issue **#4437** : Fix proxy not handling input files larger than 4 GiB.
+
+* Issue **#4069** : Reduce proxy memory usage.
+
+* Change the hard-coded test credentials to match those in v7.2 so that a test stack with 7.0 proxy and 7.2 stroom can communicate with each other. This change has no bearing on production deployments.
+
+* Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+
+## [v7.5-beta.11] - 2024-09-04
+
+* Issue **#4426** : Add INFO message when an index shard is created.
+
+* Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
+
+
+## [v7.5-beta.10] - 2024-09-04
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
+
+* Issue **#4416** : Allow dashboard table sorting to be changed post query.
+
+* Issue **#4421** : Change session state XML structure.
+
+* Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
+
+* Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
+## [v7.5-beta.9] - 2024-08-30
+
+* Issue **#4383** : Add an authentication error screen to be shown when a user tries to login and there is an authentication problem or the user's account has been locked/disabled. Previously the user was re-directed to the sign-in screen even if cert auth was enabled.  Added the new property `stroom.ui.authErrorMessage` to allow setting generic HTML content to show the user when an authentication error occurs.
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4400** : Fix missing styling on `sessionList` servlet.
+
+* Fix broken description pane in the stroomQL code completion.
+
+* Issue **#4411** : Prevent queueing too many processor tasks.
+
+* Issue **#4408** : Fix SQL deadlock between task queuing and task physical deletion.
+
+* Issue **#4410** : Allow over creation of processor tasks for bounded filters.
+
+* Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
+
+* Issue **#2897** : Fix issue of the effective stream intern pool returning incorrect sets of streams.
+
+* Issue **#4397** : Fix search API to not require node name.
+
+* Issue **#4394** : Fix a bug that was causing stepping filters to ignore the top level null prefixed namespace (e.g. `xmlns="event-logging:3"`. This meant all elements in the xpath had to be fully qualified.
+
+* Issue **#4395** : Fix ClassCastException when using a stepping xpath filter that returns something other than a list of nodes, e.g. a double, long, boolean, etc.. This means you can now do something like `/Events/Event/Meta/sm:source/sm:recordNo > 2` `equals` `true`, or `/Events/Event/Meta/sm:source/sm:recordNo mod 2` `equals` `0`.
+
+* Issue **#3960** : Migrate to Elasticsearch Java API Client.
+
+* Issue **#4385** : Fix error when trying to change permissions on a folder with no current owner.
+
+* Issue **#4384** : Stop logging to ERROR when stroomQL contains a malformed function.
+
+* Issue **#4389** : Fix the Query table re-drawing too frequently.
+
+
+## [v7.5-beta.8] - 2024-07-23
+
+* Change API endpoint `/Authentication/v1/noauth/reset` from GET to POST and from a path parameter to a POST body.
+
+* Fix various issues relating to unauthenticated servlets. Add new servlet paths e.g. `/stroom/XXX` becomes `/XXX` and `/stroom/XXX`. The latter will be removed in some future release. Notable new servlet paths are `/dashboard`, `/status`, `/swagger-ui`, `/echo`, `/debug`, `/datafeed`, `/sessionList`.
+
+* Change `sessionList` servlet to require manage users permission.
+
+
+## [v7.5-beta.7] - 2024-07-17
+
+* Issue **#4360** : Fix quick time settings popup.
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4347** : Filter queryable fields for dashboard query expressions.
+
+* Issue **#4350** : Add analytic execution history retention job.
+
+* Issue **#4351** : Improve query event logging.
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4358** : Fix streaming analytic field matches.
+
+
+## [v7.5-beta.6] - 2024-07-16
+
+* Improve styling of Jobs screen so disabled jobs/nodes are greyed out.
+
+* Add _Next Scheduled_ column to the detail pane of the Job screen.
+
+* Add _Build Version_ and _Up Date_ columns to the Nodes screen. Also change the styling of the _Ping_ column so an enabled node with no ping stands out while a disabled node does not. Also change the row styling for disabled nodes.
+
+* Add a Run now icon to the jobs screen to execute a job on a node immediately.
+
+* Change the FS Volume and Index Volume tables to low-light CLOSED/INACTIVE volumes. Add tooltips to the path and last updated columns. Change the _Use%_ column to a percentage bar. Add red/green colouring to the _Full_ column values.
+
+* Issue **#4327** : Add a Jobs pane to the Nodes screen to view jobs by node. Add linking between job nodes on the Nodes screen and the Jobs screen.
+
+
+## [v7.5-beta.5] - 2024-07-11
+
+* Fix lag on Jobs screen when changing the selected job in the top pane.
+
+* Issue **#4348** : Fix error with `IN DICTIONARY` term in rule when the dictionary is empty/blank.
+
+* Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
+
+* Make the expand/collapse all icons on Server Tasks and Data Retention Impact Summary consistent with those on the Explorer tree.
+
+* Add properties `httpHeadersStreamMetaDataAllowList` and `httpHeadersStreamMetaDataDenyList` to `HttpAppender` to allow fine grained control of what stream meta keys are sent to the HTTP destination as HTTP headers and `.meta` entries.
+
+* Change `/datafeed` receipt to always set `ReceivedTime` to `now()`. If it was already set (e.g. by proxy) then that value is added to `ReceivedTimeHistory` along with the latest `ReceivedTime`. This can be used to see the latency between proxy receipt and stroom receipt. This is similar to how `ReceivedPath` works.
+
+* Make long descriptions on the Edit Property (pipeline element property) screen wrap onto multiple lines.
+
+* Issue **#4317** : Fix explicit `Feed` header being ignored when `compression` is `true` on `HttpAppender`.
+
+* Issue **#4331** : Fix `java.lang.IllegalStateException` errors when using HTTPAppender.
+
+* Issue **#4330** : Fix NPE in HTTPAppender when the destination errors.
+
+* Improve description text for HttpAppender properties. Also add validation of some property values.
+
+* Add property `useContentEncodingHeader` to HttpAppender to allow the user to choose between using the stroom bespoke `Compression` and HTTP standard `Content-Encoding` headers.
+
+* When using zip compression with HttpAppender, make the .meta file also respect the various HTTP header pipeline element properties.
+
+
+## [v7.5-beta.4] - 2024-06-28
+
+* Issue **#4339** : Allow user selection of analytic duplicate columns.
+
+
+## [v7.5-beta.3] - 2024-06-27
+
+* Issue **#2126** : Add experimental state store.
+
+* Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
+
+* Make the expand/collapse all icons on Server Tasks and Data Retention Impact Summary consistent with those on the Explorer tree.
+
+* Issue **#4334** : Popup explorer text on mouse hover.
+
+
+## [v7.5-beta.2] - 2024-06-17
+
+* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`. 
+
+* Change document Copy and Move to check that the user has Owner permission (or admin) on the document being copied/moved if the permissions mode is None, Destination or Combined. This is because those modes will change the permissions which is something only an Owner/admin can do.
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+* Issue **#4313** : Add debug for authentication exceptions.
+
+* Issue **#4322** : Fix Feed Doc Cache entry invalidation when a new feed is created.
+
+* Add debug logging to HttpAppender.
+
+* Issue **#4306** : Fix inability to update config props that have previously been set to a non-default and then back to a default value.
+
+* Issue **#2897** : Add more debug logging to the reference lookup code.
+
+* Issue **#4307** : Fix stuck search.
+
+* Issue **#4303** : Change DSParser to catch and handle StackOverflowError as an ERROR and with a better message.
+
+* Issue **#4281** : Fix recent items dialog throwing an error when there are favourites in the explorer tree.
+
+
+## [v7.5-beta.1] - 2024-06-04
+
+* Issue **#3989** : Improve pause behaviour in dashboards and general presentation of `busy` state throughout UI.
+
+* Issue **#2111** : Add index assistance to find content feature.
+
+
+## [v7.4-beta.16] - 2024-05-28
+
+* Issue **#4298** : Improve duplicate management.
+
+* Issue **#4299** : Fix exception when creating a user using the `manageUsers` CLI command.
+
+
+## [v7.4-beta.15] - 2024-05-27
+
+* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithms.
+
+
+## [v7.4-beta.14] - 2024-05-24
+
+* Issue **#4078** : Support BZIP2 compression and make compression level configurable for FileAppender and RollingFileAppender.
+
+* Issue **#4257** : Stop new dashboards showing params input by default.
+
+* Issue **#4275** : Fix NPE.
+
+* Issue **#4262** : Change the content auto import feature to allow setting the user/group that will own the content on import. Previously content was imported as the 'admin' user, but this user may not exist in all environments. Setting of the user/group is done with the following config properties `stroom.contentPackImport.importAsSubjectId` (the unique identifier for the user/group) and `stroom.contentPackImport.importAsType` (`USER` or `GROUP`).
+
+* Issue **#4279** : Improve index shard writer cache error handling.
+
+* Issue **#4280** : Separate LMDB data directories.
+
+* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithms.
+
+* Issue **#4286** : Fix Stroom key bindings incorrectly triggering in the Ace editor find text input field.
+
+* Issue **#4287** : Add create document key sequences to explorer context menu.
+
+* Change the styling of the key binds in the menus.
+
+* Add `Add Current Item to Favourites` to Main Navigation menu and `Add to Favourites` to the top level tab context menu. Both menu items add the currently open document to the user's favourites list. Operation is idempotent.
+
+* Issue **#4289** : Make analytic duplicate checking optional and allow duplicates to be viewed/deleted from store.
+
+* Issue **#4281** : Add debug for recent items issue.
+
+* Issue **#4292** : Reset table selection on dashboard query.
+
+
+## [v7.4-beta.13] - 2024-05-15
+
+* Issue **#4256** : Change field types from `Long` to `Date` or `Duration` for various data sources. See GitHub issue for full details.
+
+* Issue **#4266** : Add types `Direct Buffers Used` and `Mapped Buffers Used` to the `Memory` internal statistic. These report the bytes used by off-heap direct/mapped byte buffers. Direct buffers are used heavily in search and reference data.
+
+* Issue **#4270** : Fix key binds like `ct` triggering when in a query term value edit field.
+
+* Issue **#4272** : Fix function and structure editor snippets not working in Query and column expression editors.
+
+
+## [v7.4-beta.12] - 2024-05-15
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
+## [v7.4-beta.11] - 2024-05-15
+
+* Issue **#4267** : Fix logout resource for internal IdP.
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
+## [v7.4-beta.10] - 2024-05-15
+
+* Issue **#4258** : Stop logging unnecessary error when shard deleted.
+
+* Issue **#4260** : Add debug for deduplication checks.
+
+
+## [v7.4-beta.9] - 2024-05-15
+
+* Issue **#4264** : Stop workers requesting 0 tasks from the master node.
+
+
+## [v7.4-beta.8] - 2024-05-02
+
+* Issue **#4253** : Prevent `CancellationException` being seen when user stops query.
+
+
+## [v7.4-beta.7] - 2024-05-01
+
+* Add key binds for creating documents.
+
+* Improve error message when you don't have permission to create an item in a folder. Now included the folder name.
+
+* Replace _group_ with _folder_ on Create/Move/Copy document dialogues.
+
+* Add `/stroom/analytic_store/` as a docker managed volume.
+
+* Issue **#4250** : Fix LMDB segfault.
+
+* Issue **#4238** : Force focus on properties quick filter.
+
+* Issue **#4246** : Inherit time range when creating rule from query.
+
+* Issue **#4247** : Fix notification UUID.
+
+
+## [v7.4-beta.6] - 2024-04-29
+
+* Issue **#4240** : Fix creation of new shards when non-full shards already exist for a partition.
+
+
+## [v7.4-beta.5] - 2024-04-26
+
+* Issue **#4232** : Enforce save before creating rule executors.
+
+* Issue **#4234** : Add change handler for streaming rule cache.
+
+* Issue **#4235** : Fix RefreshAfterWrite cache setting display to be a duration.
+
+
+## [v7.4-beta.4] - 2024-04-25
+
+* Issue **#4188** : Allow multiple analytic notifications.
+
+* Issue **#4224** : Fix editor Format command for Text converter entities. Also fix editor Format command for Script entities (i.e. JS/JSON).
+
+* Issue **#4228** : Fix right alignment of column headers.
+
+* Issue **#4230** : Fix step location delimiter.
+
+
+## [v7.4-beta.3] - 2024-04-24
+
+* Fix tag filter in Edit Tags dialog not being in-sync with filter input.
+
+* Issue **#4221** : Remove `id` column from `index_field` and change the primary key to be `(fk_index_field_source_id, name)`. Add retry logic and existing field check when adding fields to mitigate against deadlocks.
+
+* Issue **#4218** : Fix index shard state transition.
+
+* Issue **#4220** : Fix index shard creation.
+
+* Issue **#4217** : Suppress expected shard write errors.
+
+* Issue **#4215** : Fix NPE during context lookup with no context data loaded.
+
+* Issue **#4214** : Fix index shard writer errors.
+
+* Issue **#4203** : Fix event capture getting stuck on buttons.
+
+* Issue **#4204** : Make `indexOf()` and `lastIndexOf()` return `-1` when not found.
+
+* Issue **#4205** : Add `contains()` function.
+
+* Issue **#4209** : Support `and()` function in `eval`.
+
+* Issue **#4212** : Fix shards stuck in opening state.
+
+
+## [v7.4-beta.2] - 2024-04-10
+
+* Issue **#4161** : Fix cron schedule time UI.
+
+* Issue **#4160** : Fix date time picker.
+
+* Add the `ctrl+enter` key bind to dashboards to start/stop the query. Make the `ctrl+enter` key bind work on any part of the screen for Queries.
+
+* Add various 'Goto' type sequential key binds, e.g. `gt` for 'Goto Server Tasks'.
+
+* Change the Documentation tab to default to edit mode if the user has write permission and there is currently no documentation.
+
+* Add `ctrl+/` and `/` key binds for focusing on the explorer tree and current tab quick filters respectively.
+
+* Create a 'Copy As' explorer tree context menu sub-menu containing 'Copy (Name|UUID|Link) to Clipboard'.
+
+* Issue **#4184** : Add API specification link to help menu.
+
+* Issue **#4167** : Add templating of email subject and body in scheduled query rules. Template language is a sub-set of Jinja templating.
+
+* Issue **#4039** : Make tick boxes in conditional formatting table clickable.
+
+* Add help buttons to edit conditional rule dialog and add F1 keybind for opening help.
+
+* Issue **#4119** : Set stepping location from a popup and not inline editor.
+
+* Issue **#4187** : Fix scheduled executor stop behaviour.
+
+* Rename DB migration script from `V07_03_00_001__job_node.sql` to `V07_04_00_005__job_node.sql`. If you are deploying this version onto an existing 7.4 version then you will need to run the following sql `delete from job_schema_history where version = '07.03.00.001';`.
+
+* Issue **#4172** : Fix NPE when running an empty sQL query.
+
+* Issue **#4168** : Increase width of Id column on Annotations Linked Events dialog. Also increase size of dialog and the width of the left hand split pane.
+
+* Issue **#3998** : Clear visualisations when no data is returned rather than showing `no data`.
+
+* Issue **#4179** : Add text input control to dashboards.
+
+* Issue **#4151** : Prevent runaway creation of index shards when there are file system problems.
+
+* Issue **#4035** : Fix nasty error when changing permissions of a pipeline filter.
+
+* Issue **#4142** : Index shards now cope with field changes.
+
+* Issue **#4183** : Fix processor filter edit.
+
+* Issue **#4190** : Make MapDataStore sort and trim settings configurable.
+
+* Issue **#4192** : Fix NPE when selecting Info context menu item for any folder.
+
+* Issue **#4178** : Change the Info popup so that you can click Info for another entity and it will just update the popup content without hiding it.
+
+* Issue **#4196** : Fix warning message when the byte buffer pool hits its threshold.
+
+* Issue **#4175** : Fix `Batch module not found` error when sending emails.
+
+* Issue **#4199** : Fix internal statistics error when a pipeline is owned by a user with limited privileges.
+
+* Issue **#4195** : Fix SQL deadlock with dynamic index fields.
+
+* Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
+
+* Issue **#4051** : Fix search extraction for Elastic indexes.
+
+* Issue **#4159** : Fix StroomQL vis params.
+
+* Issue **#4149** : Format results based on real result value types rather than expected expression return type.
+
+* Issue **#4093** : Fix value type for stored values.
+
+* Issue **#4152** : Fix date time formatter always showing `Z` when it should show actual timezone.
+
+* Issue **#4150** : StroomQL `vis as` keyword replaced with `show` plus added validation to parameters.
+
+
+## [v7.4-beta.1] - 2024-03-12
+
+* Issue **#3749** : Replace Stroom simple cron scheduler with standard compliant Quartz cron scheduler.
+
+* Issue **#4041** : Improve date picker.
+
+* Issue **#4131** : Make Stroom's standard date parsing more lenient to accept various forms of ISO 8601 zoned date times, e.g. with varying number of fractional second digits, no fractional seconds, no seconds, different offset forms ('+02', '+0200', '+02:00', etc.). Normalise `EffectiveTime` and `ReceivedTime` header values so the dates are in Stroom's standard format.
+
+
 ## [v7.3-beta.11] - 2024-03-01
 
 * Issue **#4132** : Add tooltips to the copy/open hover buttons on table cell values.
@@ -286,8 +750,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Fix Hard coded XSLT editor snippets.
 
-* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)
-eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
+* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)\neval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
 
 * Add XSLT completion snippets for stroom identity skeletons.
 
@@ -363,15 +826,19 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.11...HEAD
-[v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
-[v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
-[v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
-[v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
-[v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
-[v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
-[v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
-[v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
-[v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
-[v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
-[v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.14...HEAD
+[v7.5-beta.14]: https://github.com/gchq/stroom/compare/v7.5-beta.13...v7.5-beta.14
+[v7.5-beta.13]: https://github.com/gchq/stroom/compare/v7.5-beta.12...v7.5-beta.13
+[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
+[v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
+[v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
+[v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
+[v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
+[v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7
+[v7.5-beta.6]: https://github.com/gchq/stroom/compare/v7.5-beta.5...v7.5-beta.6
+[v7.5-beta.5]: https://github.com/gchq/stroom/compare/v7.5-beta.4...v7.5-beta.5
+[v7.5-beta.4]: https://github.com/gchq/stroom/compare/v7.5-beta.3...v7.5-beta.4
+[v7.5-beta.3]: https://github.com/gchq/stroom/compare/v7.5-beta.2...v7.5-beta.3
+[v7.5-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.1...v7.5-beta.2
+[v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
+[v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1

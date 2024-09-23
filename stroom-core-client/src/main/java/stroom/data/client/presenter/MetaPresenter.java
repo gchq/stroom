@@ -65,7 +65,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MetaPresenter extends MyPresenterWidget<MetaView>
+public class MetaPresenter
+        extends MyPresenterWidget<MetaView>
         implements HasDataSelectionHandlers<Selection<Long>>,
         HasDocumentRead<Object>,
         BeginSteppingHandler {
@@ -221,6 +222,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                                                         e.hide();
                                                     } else {
                                                         // Don't hide
+                                                        e.reset();
                                                     }
                                                 });
                                     } else {
@@ -231,7 +233,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                                     // Nothing changed!
                                     e.hide();
                                 }
-                            });
+                            }, this);
                 } else {
                     e.hide();
                 }
@@ -397,7 +399,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
-                        if (field.getName().equals(((ExpressionTerm) item).getField())) {
+                        if (field.getFldName().equals(((ExpressionTerm) item).getField())) {
                             terms.add(((ExpressionTerm) item).getValue());
                         }
                     } else if (item instanceof ExpressionOperator) {

@@ -41,8 +41,8 @@ public class TestAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() {
-        return outputStream;
+    protected Output createOutput() {
+        return new BasicOutput(outputStream);
     }
 
     public void setOutputStream(final OutputStream os) {

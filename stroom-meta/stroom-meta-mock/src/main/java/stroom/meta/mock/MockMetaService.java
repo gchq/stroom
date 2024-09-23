@@ -8,8 +8,9 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.shared.StreamTypeNames;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
+import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -37,7 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class MockMetaService implements MetaService, Clearable {
@@ -223,23 +223,23 @@ public class MockMetaService implements MetaService, Clearable {
         final Map<String, Object> attributeMap = new HashMap<>();
 
         if (meta != null) {
-            attributeMap.put(MetaFields.ID.getName(), meta.getId());
-            attributeMap.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
-            attributeMap.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
-            attributeMap.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
-            attributeMap.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
+            attributeMap.put(MetaFields.ID.getFldName(), meta.getId());
+            attributeMap.put(MetaFields.CREATE_TIME.getFldName(), meta.getCreateMs());
+            attributeMap.put(MetaFields.EFFECTIVE_TIME.getFldName(), meta.getEffectiveMs());
+            attributeMap.put(MetaFields.STATUS_TIME.getFldName(), meta.getStatusMs());
+            attributeMap.put(MetaFields.STATUS.getFldName(), meta.getStatus().getDisplayValue());
             if (meta.getParentMetaId() != null) {
-                attributeMap.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
+                attributeMap.put(MetaFields.PARENT_ID.getFldName(), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                attributeMap.put(MetaFields.TYPE.getName(), meta.getTypeName());
+                attributeMap.put(MetaFields.TYPE.getFldName(), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                attributeMap.put(MetaFields.FEED.getName(), feedName);
+                attributeMap.put(MetaFields.FEED.getFldName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
-            attributeMap.put(MetaFields.PIPELINE.getName(), pipelineUuid);
+            attributeMap.put(MetaFields.PIPELINE.getFldName(), pipelineUuid);
 //            if (processor != null) {
 //                final String pipelineUuid = processor.getPipelineUuid();
 //                if (pipelineUuid != null) {
@@ -287,24 +287,23 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
-        List<EffectiveMeta> results = new ArrayList<>();
+    public EffectiveMetaSet findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        final Builder builder = EffectiveMetaSet.builder(criteria.getFeed(), criteria.getType());
 
         try {
-            results = metaMap.values()
+            metaMap.values()
                     .stream()
                     .filter(meta ->
                             NullSafe.test(criteria.getType(), type -> type.equals(meta.getTypeName())))
                     .filter(meta ->
                             NullSafe.test(criteria.getFeed(), feed -> feed.equals(meta.getFeedName())))
-                    .map(EffectiveMeta::new)
-                    .collect(Collectors.toList());
+                    .forEach(meta -> builder.add(meta.getId(), meta.getEffectiveMs()));
 
         } catch (final RuntimeException e) {
             System.out.println(e.getMessage());
             // Ignore ... just a mock
         }
-        return results;
+        return builder.build();
     }
 
     @Override

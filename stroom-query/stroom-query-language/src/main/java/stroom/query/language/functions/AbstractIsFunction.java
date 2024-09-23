@@ -73,11 +73,6 @@ abstract class AbstractIsFunction extends AbstractFunction {
         return super.requiresChildData();
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.BOOLEAN;
-    }
-
     interface Test {
 
         Val test(Val val);

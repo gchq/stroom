@@ -59,7 +59,7 @@ public class StringValueSerde implements RefDataValueSerde {
         try {
             final StringValue stringValue = (StringValue) refDataValue;
             pooledByteBufferOutputStream.write(toBytes(stringValue));
-            return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            return pooledByteBufferOutputStream.getByteBuffer();
         } catch (ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), StringValue.class.getCanonicalName()), e);

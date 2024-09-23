@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
 import stroom.query.language.token.Param;
 
 import java.text.ParseException;
@@ -81,10 +80,5 @@ abstract class AbstractTimeFunction extends AbstractFunction {
     @Override
     public boolean requiresChildData() {
         return false;
-    }
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DATE;
     }
 }

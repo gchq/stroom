@@ -35,10 +35,11 @@ public interface UserDao {
 
     Set<User> getByUuids(Collection<String> userUuids);
 
-    Optional<User> getBySubjectId(String name);
+    Optional<User> getBySubjectId(String subjectId);
 
     /**
      * Gets by displayName, falling back to
+     *
      * @param displayName
      * @return
      */

@@ -3,7 +3,7 @@ package stroom.query.common.v2;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.StoredValues;
 
-interface StoredValueKeyFactory {
+public interface StoredValueKeyFactory {
 
     Val[] getGroupValues(int depth, StoredValues storedValues);
 

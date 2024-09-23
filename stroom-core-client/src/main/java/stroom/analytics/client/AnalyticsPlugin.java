@@ -21,7 +21,7 @@ import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,26 +67,30 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<AnalyticRuleDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANALYTIC_RULE_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(ANALYTIC_RULE_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final AnalyticRuleDoc document,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<AnalyticRuleDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANALYTIC_RULE_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(ANALYTIC_RULE_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

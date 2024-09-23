@@ -284,22 +284,19 @@ public class SteppingFilterPresenter extends
 
     private void update(final PipelineElement element) {
         if (currentElementId != null) {
-            final SteppingFilterSettings settings = new SteppingFilterSettings();
-            settings.setSkipToSeverity(getView().getSkipToErrors());
-            settings.setSkipToOutput(getView().getSkipToOutput());
-            settings.setFilters(new ArrayList<>(xPathFilters));
+            final SteppingFilterSettings settings = new SteppingFilterSettings(
+                    getView().getSkipToErrors(),
+                    getView().getSkipToOutput(),
+                    new ArrayList<>(xPathFilters));
             settingsMap.put(currentElementId, settings);
         }
 
         final String elementId = GwtNullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
-            SteppingFilterSettings settings = settingsMap.get(element.getId());
-            if (settings == null) {
-                settings = new SteppingFilterSettings();
-            }
+            final SteppingFilterSettings settings = settingsMap.get(element.getId());
             getView().setName(element.getDisplayName());
-            getView().setSkipToErrors(settings.getSkipToSeverity());
-            getView().setSkipToOutput(settings.getSkipToOutput());
+            getView().setSkipToErrors(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToSeverity));
+            getView().setSkipToOutput(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToOutput));
 
             xPathFilters = xPathListPresenter.getDataProvider().getList();
             xPathFilters.clear();

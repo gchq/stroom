@@ -1,0 +1,128 @@
+package stroom.state.impl;
+
+import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.DateExpressionParser;
+import stroom.state.impl.dao.ScyllaDbColumn;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.querybuilder.Literal;
+import com.datastax.oss.driver.api.querybuilder.relation.ColumnRelationBuilder;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.term.Term;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+
+public class ScyllaDbExpressionUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScyllaDbExpressionUtil.class);
+
+    public static void getRelations(final Map<String, ScyllaDbColumn> columnMap,
+                                    final ExpressionOperator expressionOperator,
+                                    final List<Relation> relations,
+                                    final DateTimeSettings dateTimeSettings) {
+        if (expressionOperator != null &&
+                expressionOperator.enabled() &&
+                expressionOperator.getChildren() != null &&
+                !expressionOperator.getChildren().isEmpty()) {
+            switch (expressionOperator.op()) {
+                case AND -> expressionOperator.getChildren().forEach(child -> {
+                    if (child instanceof final ExpressionTerm expressionTerm) {
+                        if (expressionTerm.enabled()) {
+                            try {
+                                final Relation relation =
+                                        convertTerm(columnMap, expressionTerm, dateTimeSettings);
+                                relations.add(relation);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        }
+                    } else if (child instanceof final ExpressionOperator operator) {
+                        getRelations(columnMap, operator, relations, dateTimeSettings);
+                    }
+                });
+                case OR -> throw new RuntimeException("OR conditions are not supported");
+                case NOT -> throw new RuntimeException("NOT conditions are not supported");
+            }
+        }
+    }
+
+    private static Relation convertTerm(final Map<String, ScyllaDbColumn> columnMap,
+                                        final ExpressionTerm term,
+                                        final DateTimeSettings dateTimeSettings) {
+        String field = term.getField();
+        Condition condition = term.getCondition();
+        String value = term.getValue();
+
+        final ScyllaDbColumn column = columnMap.get(field);
+        if (column == null) {
+            throw new RuntimeException("Unexpected column " + field);
+        }
+
+        final ColumnRelationBuilder<Relation> builder = Relation.column(column.cqlIdentifier());
+        return switch (condition) {
+            case EQUALS, CONTAINS -> {
+                if (DataTypes.TEXT.equals(column.dataType()) && (value.contains("*") || value.contains("?"))) {
+                    value = value.replaceAll("\\*", "%");
+                    value = value.replaceAll("\\?", "_");
+                    yield builder.like(convertLiteral(column, value, dateTimeSettings));
+                } else {
+                    yield builder.isEqualTo(convertLiteral(column, value, dateTimeSettings));
+                }
+            }
+            case NOT_EQUALS -> builder.isNotEqualTo(
+                    convertLiteral(column, value, dateTimeSettings));
+            case LESS_THAN -> builder.isLessThan(
+                    convertLiteral(column, value, dateTimeSettings));
+            case LESS_THAN_OR_EQUAL_TO -> builder.isLessThanOrEqualTo(
+                    convertLiteral(column, value, dateTimeSettings));
+            case GREATER_THAN -> builder.isGreaterThan(
+                    convertLiteral(column, value, dateTimeSettings));
+            case GREATER_THAN_OR_EQUAL_TO -> builder.isGreaterThanOrEqualTo(
+                    convertLiteral(column, value, dateTimeSettings));
+            case IN -> {
+                Term[] terms = new Term[0];
+                if (value != null) {
+                    final String[] values = value.split(",");
+                    terms = new Term[values.length];
+                    for (int i = 0; i < values.length; i++) {
+                        terms[i] = convertLiteral(column, values[i], dateTimeSettings);
+                    }
+                }
+                yield builder.in(terms);
+            }
+            default -> throw new RuntimeException("Condition " + condition + " is not supported.");
+        };
+    }
+
+    private static Literal convertLiteral(final ScyllaDbColumn column,
+                                          final String value,
+                                          final DateTimeSettings dateTimeSettings) {
+        if (DataTypes.TEXT.equals(column.dataType())) {
+            return literal(value);
+        } else if (DataTypes.BOOLEAN.equals(column.dataType())) {
+            return literal(Boolean.parseBoolean(value));
+        } else if (DataTypes.INT.equals(column.dataType())) {
+            return literal(Integer.parseInt(value));
+        } else if (DataTypes.BIGINT.equals(column.dataType())) {
+            return literal(Long.parseLong(value));
+        } else if (DataTypes.FLOAT.equals(column.dataType())) {
+            return literal(Float.parseFloat(value));
+        } else if (DataTypes.DOUBLE.equals(column.dataType())) {
+            return literal(Double.parseDouble(value));
+        } else if (DataTypes.TIMESTAMP.equals(column.dataType())) {
+            final long ms = DateExpressionParser.getMs(column.name(), value, dateTimeSettings);
+            return literal(Instant.ofEpochMilli(ms));
+        }
+
+        throw new RuntimeException("Unable to convert literal: " + column.dataType());
+    }
+}

@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasCapacity;
@@ -329,6 +330,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         volume.volumeGroupId = volumeGroupId;
         return volume;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum VolumeUseStatus implements HasDisplayValue, HasPrimitiveValue {
         ACTIVE("Active", 0), // Currently being written to.

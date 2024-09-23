@@ -100,7 +100,7 @@ public class PostMessage {
     /*-{
     var listener = function(event) {
       var origin = event.origin;
-      var hostname = window.location.hostname;
+      var hostname = $wnd.location.hostname;
 
       // Stop this script being called from other domains.
       var eventLocation = document.createElement("a");

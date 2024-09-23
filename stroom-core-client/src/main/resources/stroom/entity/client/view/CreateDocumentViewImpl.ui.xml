@@ -4,7 +4,7 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="createDocumentSelectParentGroup" label="Select the parent group"
+        <form:FormGroup identity="createDocumentSelectParentGroup" label="Select the parent folder"
                         addStyleNames="dock-max overflow-hidden">
             <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden default-min-sizes"/>
         </form:FormGroup>

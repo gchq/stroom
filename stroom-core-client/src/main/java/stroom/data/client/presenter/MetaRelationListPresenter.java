@@ -83,18 +83,18 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
             getCriteria().setExpression(null);
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getFldName(), false, false);
             refresh();
 
         } else {
             final ExpressionOperator.Builder builder = ExpressionOperator.builder();
             if (!showSystemFiles) {
-                builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+                builder.addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
+            builder.addIdTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
             getCriteria().setExpression(builder.build());
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getFldName(), false, false);
             getCriteria().setFetchRelationships(true);
             refresh();
         }

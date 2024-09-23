@@ -31,14 +31,11 @@ import java.util.List;
 public class SteppingFilterSettings {
 
     @JsonProperty
-    private Severity skipToSeverity;
+    private final Severity skipToSeverity;
     @JsonProperty
-    private OutputState skipToOutput;
+    private final OutputState skipToOutput;
     @JsonProperty
-    private List<XPathFilter> filters;
-
-    public SteppingFilterSettings() {
-    }
+    private final List<XPathFilter> filters;
 
     @JsonCreator
     public SteppingFilterSettings(@JsonProperty("skipToSeverity") final Severity skipToSeverity,
@@ -53,24 +50,12 @@ public class SteppingFilterSettings {
         return skipToSeverity;
     }
 
-    public void setSkipToSeverity(final Severity skipToSeverity) {
-        this.skipToSeverity = skipToSeverity;
-    }
-
     public OutputState getSkipToOutput() {
         return skipToOutput;
     }
 
-    public void setSkipToOutput(final OutputState skipToOutput) {
-        this.skipToOutput = skipToOutput;
-    }
-
     public List<XPathFilter> getFilters() {
         return filters;
-    }
-
-    public void setFilters(List<XPathFilter> filters) {
-        this.filters = filters;
     }
 
     public void clearUniqueValues() {
@@ -81,15 +66,18 @@ public class SteppingFilterSettings {
         }
     }
 
-    public void clearAllFilters() {
-        skipToSeverity = null;
-        skipToOutput = null;
-        filters.clear();
-    }
-
     public boolean hasActiveFilters() {
         return skipToSeverity != null
                 || skipToOutput != null
                 || (filters != null && !filters.isEmpty());
+    }
+
+    @Override
+    public String toString() {
+        return "SteppingFilterSettings{" +
+                "skipToSeverity=" + skipToSeverity +
+                ", skipToOutput=" + skipToOutput +
+                ", filters=" + filters +
+                '}';
     }
 }

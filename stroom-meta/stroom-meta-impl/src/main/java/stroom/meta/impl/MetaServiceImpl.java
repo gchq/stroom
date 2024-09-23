@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.impl;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -5,15 +21,14 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
@@ -37,6 +52,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -133,7 +149,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
+        findMetaCriteria.setPageRequest(PageRequest.oneRow());
         final List<Meta> list = find(findMetaCriteria).getValues();
         if (list == null || list.size() == 0) {
             return null;
@@ -198,7 +214,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             ExpressionOperator expression = criteria.getExpression();
 
             final Predicate<ExpressionTerm> termPredicate = term ->
-                    MetaFields.ID.getName().equals(term.getField())
+                    MetaFields.ID.getFldName().equals(term.getField())
                             && term.hasCondition(Condition.EQUALS, Condition.IN);
 
             // The UI may give us one of:
@@ -285,8 +301,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(MetaFields.getAllFields()).build();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(MetaFields.getAllFields());
     }
 
     @Override
@@ -295,7 +316,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return MetaFields.CREATE_TIME;
     }
 
@@ -381,20 +402,20 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ResultPage<Meta> findChildren(final FindMetaCriteria parentCriteria, final List<Meta> streamList) {
-        final Set<String> excludedFields = Set.of(MetaFields.ID.getName(), MetaFields.PARENT_ID.getName());
+        final Set<String> excludedFields = Set.of(MetaFields.ID.getFldName(), MetaFields.PARENT_ID.getFldName());
         final Builder builder = copyExpression(parentCriteria.getExpression(), excludedFields);
 
         final String parentIds = streamList.stream()
                 .map(meta -> String.valueOf(meta.getId()))
                 .collect(Collectors.joining(","));
-        builder.addTerm(MetaFields.PARENT_ID.getName(), ExpressionTerm.Condition.IN, parentIds);
+        builder.addTerm(MetaFields.PARENT_ID.getFldName(), ExpressionTerm.Condition.IN, parentIds);
 
         return simpleFind(builder.build());
     }
 
     private Meta findParent(final Meta meta) {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
+                .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
                 .build();
         final ResultPage<Meta> parentList = simpleFind(expression);
         if (parentList != null && parentList.size() > 0) {
@@ -437,7 +458,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+    public EffectiveMetaSet findEffectiveData(final EffectiveMetaDataCriteria criteria) {
         LOGGER.debug("findEffectiveData({})", criteria);
 
         return securityContext.asProcessingUserResult(() ->
@@ -605,26 +626,26 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private ExpressionOperator getIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return ExpressionOperator.builder()
-                    .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
+                    .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
+                .addTextTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     private ExpressionOperator getParentIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return ExpressionOperator.builder()
-                    .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
+                    .addIdTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addIdTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
+                .addTextTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

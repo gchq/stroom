@@ -82,13 +82,12 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
         lmdbEnvironment.registerDatabases(this);
     }
 
-    public OptionalInt getTypeId(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+    public Byte getTypeId(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         Optional<ByteBuffer> optValueBuffer = getAsBytes(txn, keyBuffer);
 
         return optValueBuffer
-                .map(byteBuffer ->
-                        OptionalInt.of(valueSerde.extractTypeId(byteBuffer)))
-                .orElseGet(OptionalInt::empty);
+                .map(valueSerde::extractTypeId)
+                .orElse(null);
     }
 
     public OptionalInt getReferenceCount(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {

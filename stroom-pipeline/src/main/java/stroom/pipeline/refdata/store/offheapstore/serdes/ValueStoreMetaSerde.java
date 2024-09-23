@@ -62,7 +62,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     /**
      * Leaves byteBuffer unchanged
      */
-    public int extractTypeId(final ByteBuffer byteBuffer) {
+    public byte extractTypeId(final ByteBuffer byteBuffer) {
         return byteBuffer.get(TYPE_ID_OFFSET);
     }
 

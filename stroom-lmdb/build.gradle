@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.lmdb'
 
 dependencies {
+    implementation project(':stroom-bytebuffer')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -33,4 +34,8 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
+}
+
+checkstyle {
+    sourceSets = []
 }

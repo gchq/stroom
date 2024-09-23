@@ -59,9 +59,12 @@ import java.util.stream.Collectors;
 public class IndexShard {
 
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
-            new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
-    public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED)));
+            new HashSet<>(Arrays.asList(
+                    IndexShardStatus.OPEN,
+                    IndexShardStatus.OPENING,
+                    IndexShardStatus.CLOSED,
+                    IndexShardStatus.CLOSING,
+                    IndexShardStatus.CORRUPT)));
 
     @JsonProperty
     private Long id;
@@ -309,6 +312,10 @@ public class IndexShard {
         sb.append('}');
         return sb.toString();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * The status of this indexUuid shard

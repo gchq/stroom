@@ -26,7 +26,7 @@ public class StagingRefDataValueSerde
         Deserializer<StagingRefDataValue> {
 
     private static final int TYPE_ID_OFFSET = 0;
-    private static final int VALUE_HASH_OFFSET = TYPE_ID_OFFSET + Integer.BYTES;
+    private static final int VALUE_HASH_OFFSET = TYPE_ID_OFFSET + Byte.BYTES;
     private static final int VALUE_OFFSET = VALUE_HASH_OFFSET + Long.BYTES;
 
     private final GenericRefDataValueSerde genericRefDataValueSerde;
@@ -41,7 +41,7 @@ public class StagingRefDataValueSerde
 
     @Override
     public StagingRefDataValue deserialize(final ByteBuffer byteBuffer) {
-        final int typeId = byteBuffer.getInt();
+        final byte typeId = byteBuffer.get();
         final long valueHash = byteBuffer.getLong();
         // Need to hide the type/hash bit from the genericRefDataValueSerde so slice off the rest of the buffer
         final ByteBuffer valueBuffer = byteBuffer.slice();
@@ -56,7 +56,7 @@ public class StagingRefDataValueSerde
     @Override
     public void serialize(final ByteBuffer byteBuffer, final StagingRefDataValue stagingRefDataValue) {
         final RefDataValue refDataValue = stagingRefDataValue.getRefDataValue();
-        byteBuffer.putInt(stagingRefDataValue.getTypeId());
+        byteBuffer.put(stagingRefDataValue.getTypeId());
         byteBuffer.putLong(refDataValue.getValueHashCode(valueStoreHashAlgorithm));
         genericRefDataValueSerde.serialize(byteBuffer, refDataValue);
     }
@@ -67,21 +67,21 @@ public class StagingRefDataValueSerde
         final RefDataValue refDataValue = stagingRefDataValue.getRefDataValue();
 
         try {
-            pooledByteBufferOutputStream.write(Bytes.toBytes(stagingRefDataValue.getTypeId()));
+            pooledByteBufferOutputStream.write(stagingRefDataValue.getTypeId());
             pooledByteBufferOutputStream.write(Bytes.toBytes(refDataValue.getValueHashCode(valueStoreHashAlgorithm)));
             final ByteBuffer refDataValueBuffer = genericRefDataValueSerde.serialize(
                     pooledByteBufferOutputStream, refDataValue);
 
             pooledByteBufferOutputStream.write(refDataValueBuffer);
-            return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            return pooledByteBufferOutputStream.getByteBuffer();
         } catch (IOException e) {
             throw new RuntimeException(LogUtil.message("Unable to write value {} to output stream: {}",
                     stagingRefDataValue, e.getMessage()), e);
         }
     }
 
-    public int extractTypeId(final ByteBuffer byteBuffer) {
-        return byteBuffer.getInt(TYPE_ID_OFFSET);
+    public byte extractTypeId(final ByteBuffer byteBuffer) {
+        return byteBuffer.get(TYPE_ID_OFFSET);
     }
 
     public long extractValueHash(final ByteBuffer byteBuffer) {

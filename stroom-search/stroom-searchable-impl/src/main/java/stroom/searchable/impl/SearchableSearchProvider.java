@@ -1,8 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -80,8 +95,8 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
             final Searchable searchable = searchableProvider.get(criteria.getDataSourceRef());
             if (searchable != null) {
                 return Optional.ofNullable(searchable.getFieldInfo(criteria));
@@ -89,9 +104,17 @@ class SearchableSearchProvider implements SearchProvider {
             return Optional.empty();
         });
         return optional.orElseGet(() -> {
-            final List<FieldInfo> list = Collections.emptyList();
+            final List<QueryField> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
         });
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.getOrElse(
+                searchableProvider.get(docRef),
+                searchable -> searchable.getFieldCount(docRef),
+                0);
     }
 
     @Override
@@ -171,12 +194,11 @@ class SearchableSearchProvider implements SearchProvider {
 
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-        final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+        final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                 new PageRequest(0, 1000),
                 null,
-                docRef,
-                null);
-        final ResultPage<FieldInfo> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
+                docRef);
+        final ResultPage<QueryField> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();
 
@@ -272,7 +294,7 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return searchableProvider.get(docRef).getTimeField();
     }
 

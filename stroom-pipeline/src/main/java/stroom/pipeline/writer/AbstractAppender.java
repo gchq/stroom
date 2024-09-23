@@ -18,37 +18,46 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractAppender.class);
+
     private final ErrorReceiverProxy errorReceiverProxy;
 
-    private OutputStream outputStream;
+    private Output output;
+    private byte[] header;
     private byte[] footer;
+    private boolean writtenHeader;
     private String size;
     private Long sizeBytes = null;
-    private boolean splitAggregatedStreams;
-    private boolean splitRecords;
+    boolean splitAggregatedStreams;
+    boolean splitRecords;
 
-    AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
+    public AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
     @Override
     public void endProcessing() {
-        closeCurrentOutputStream();
+        writeFooter(true);
         super.endProcessing();
     }
 
     @Override
     public void endStream() {
         if (splitAggregatedStreams) {
-            closeCurrentOutputStream();
+            writeFooter(false);
         }
         super.endStream();
     }
@@ -70,97 +79,172 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
         if (splitRecords) {
             if (getCurrentOutputSize() > 0) {
-                closeCurrentOutputStream();
+                writeFooter(false);
             }
         } else {
             final Long sizeBytes = getSizeBytes();
-            if (sizeBytes > 0 && sizeBytes <= getCurrentOutputSize()) {
-                closeCurrentOutputStream();
+            if (sizeBytes > 0 && getCurrentOutputSize() >= sizeBytes) {
+                writeFooter(true);
             }
-        }
-    }
-
-    private void closeCurrentOutputStream() {
-        if (outputStream != null) {
-            try {
-                writeFooter();
-            } catch (final IOException e) {
-                error(e.getMessage(), e);
-            }
-
-            try {
-                outputStream.close();
-            } catch (final IOException e) {
-                error(e.getMessage(), e);
-            }
-
-            outputStream = null;
         }
     }
 
     @Override
-    public final OutputStream getByteArrayOutputStream() throws IOException {
+    public final OutputStream getOutputStream() throws IOException {
         return getOutputStream(null, null);
     }
 
     @Override
     public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        this.header = header;
         this.footer = footer;
 
-        if (outputStream == null) {
-            outputStream = createOutputStream();
-
-            // If we haven't written yet then create the output stream and
-            // write a header if we have one.
-            if (header != null && header.length > 0) {
-                // Write the header.
-                write(header);
-            }
-
-            // Insert a segment marker before we write the next record regardless of whether the header has actually
-            // been written. This is because we always make an allowance for the existence of a header in a segmented
-            // stream when viewing data.
-            insertSegmentMarker();
+        if (output == null) {
+            LOGGER.debug("Creating output");
+            output = createOutput();
         }
 
-        return outputStream;
+        // If we haven't written yet then create the output stream and
+        // write a header if we have one.
+        writeHeader();
+
+        return output.getOutputStream();
+    }
+
+    Output getOutput() {
+        return output;
     }
 
     /**
      * Method to allow subclasses to insert segment markers between records.
      */
-    void insertSegmentMarker() throws IOException {
-    }
-
-    private void writeFooter() throws IOException {
-        if (footer != null && footer.length > 0) {
-            // Write the footer.
-            write(footer);
+    private void insertSegmentMarker() throws IOException {
+        LOGGER.debug("insertSegmentMarker - output: {}", output);
+        if (output != null) {
+            output.insertSegmentMarker();
         }
     }
 
-    private void write(final byte[] bytes) throws IOException {
-        outputStream.write(bytes, 0, bytes.length);
+    void writeHeader() throws IOException {
+        LOGGER.debug("Writing footer - output: {}, writtenHeader: {}, header: \n{}",
+                output, writtenHeader, header);
+        if (!writtenHeader) {
+            if (output != null) {
+                // If we are writing to a zip then start a new zip entry before writing the header.
+                if (output.isZip()) {
+                    output.startZipEntry();
+                }
+
+                if (header != null && header.length > 0) {
+                    try {
+                        // Write the header.
+                        output.write(header);
+                    } catch (final IOException e) {
+                        error(e.getMessage(), e);
+                    }
+                }
+
+                // Insert a segment marker before we write the next record regardless of whether the header has actually
+                // been written. This is because we always make an allowance for the existence of a header in a
+                // segmented stream when viewing data.
+                insertSegmentMarker();
+            }
+
+            writtenHeader = true;
+        }
     }
 
-    protected abstract OutputStream createOutputStream() throws IOException;
+    void writeFooter(final boolean roll) {
+        LOGGER.debug("Writing footer - roll: {}, output: {}, writtenHeader: {}, footer: \n{}",
+                roll, output, writtenHeader, footer);
+        if (output != null) {
+            if (writtenHeader) {
+                try {
+                    if (footer != null && footer.length > 0) {
+                        // Write the footer.
+                        output.write(footer);
+                    }
+                } catch (final IOException e) {
+                    error(e.getMessage(), e);
+                } finally {
+                    writtenHeader = false;
+                }
+            }
+
+            try {
+                if (output.isZip()) {
+                    output.endZipEntry();
+                    if (roll) {
+                        closeCurrentOutputStream();
+                    }
+                } else {
+                    closeCurrentOutputStream();
+                }
+            } catch (final IOException e) {
+                error(e.getMessage(), e);
+                throw new UncheckedIOException(e);
+            } catch (final RuntimeException e) {
+                error(e.getMessage(), e);
+                throw e;
+            }
+        }
+    }
+
+    private void closeCurrentOutputStream() {
+        try {
+            LOGGER.debug("Closing output: {}", output);
+            output.close();
+        } catch (final IOException e) {
+            error(e.getMessage(), e);
+        } finally {
+            output = null;
+        }
+    }
+
+    protected abstract Output createOutput() throws IOException;
+
+    protected void error(final String message) {
+        error(message, null);
+    }
 
     protected void error(final String message, final Exception e) {
-        errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
+        if (errorReceiverProxy != null) {
+            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
+        } else {
+            LOGGER.error(message, e);
+        }
     }
 
-    abstract long getCurrentOutputSize();
+    protected void fatal(final String message) {
+        fatal(message, null);
+    }
+
+    protected void fatal(final String message, final Exception e) {
+        if (errorReceiverProxy != null) {
+            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, e);
+        } else {
+            LOGGER.error(message, e);
+        }
+        throw ProcessException.create(message);
+    }
+
+    long getCurrentOutputSize() {
+        return output == null
+                ? 0L
+                : output.getCurrentOutputSize();
+    }
 
     private Long getSizeBytes() {
         if (sizeBytes == null) {
             sizeBytes = -1L;
 
             // Set the maximum number of bytes to write before creating a new stream.
-            if (size != null && size.trim().length() > 0) {
+            if (!NullSafe.isBlankString(size)) {
                 try {
                     sizeBytes = ModelStringUtil.parseIECByteSizeString(size);
                 } catch (final RuntimeException e) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(), "Unable to parse size: " + size, null);
+                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                            "Unable to parse size: " + size, null);
                 }
             }
         }

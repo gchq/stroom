@@ -1,11 +1,26 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.task.impl;
 
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -13,6 +28,8 @@ import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDuration;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -25,6 +42,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -79,8 +97,19 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(TaskManagerFields.getFields()).build();
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(getFields())
+                .build();
+    }
+
+    private List<QueryField> getFields() {
+        return TaskManagerFields.getFields();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
     }
 
     @Override
@@ -89,7 +118,7 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return TaskManagerFields.SUBMIT_TIME;
     }
 
@@ -130,7 +159,14 @@ class SearchableTaskProgress implements Searchable {
                                     if (o instanceof String) {
                                         val = ValString.create((String) o);
                                     } else if (o instanceof Long) {
-                                        val = ValLong.create((long) o);
+                                        final long aLong = (long) o;
+                                        if (TaskManagerFields.FIELD_SUBMIT_TIME.equals(fieldName)) {
+                                            val = ValDate.create(aLong);
+                                        } else if (TaskManagerFields.FIELD_AGE.equals(fieldName)) {
+                                            val = ValDuration.create(aLong);
+                                        } else {
+                                            val = ValLong.create(aLong);
+                                        }
                                     } else if (o instanceof Integer) {
                                         val = ValInteger.create((int) o);
                                     }

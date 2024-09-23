@@ -23,7 +23,7 @@ public class SimpleDuration {
     public SimpleDuration(@JsonProperty("time") final long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
         this.time = time;
-        this.timeUnit = timeUnit;
+        this.timeUnit = timeUnit == null ? TimeUnit.DAYS : timeUnit;
     }
 
     public long getTime() {
@@ -92,6 +92,9 @@ public class SimpleDuration {
         }
 
         public SimpleDuration build() {
+            if (timeUnit == null) {
+                timeUnit = TimeUnit.DAYS;
+            }
             return new SimpleDuration(time, timeUnit);
         }
     }

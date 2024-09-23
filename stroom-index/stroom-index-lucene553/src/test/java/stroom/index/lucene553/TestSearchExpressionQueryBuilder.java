@@ -1,19 +1,19 @@
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.common.v2.MockIndexFieldCache;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +39,16 @@ public class TestSearchExpressionQueryBuilder {
 
         final WordListProvider wordListProvider = new WordListProvider() {
             @Override
+            public List<DocRef> findByName(final String name) {
+                return List.of(dictionaryRef);
+            }
+
+            @Override
+            public Optional<DocRef> findByUuid(final String uuid) {
+                return Optional.empty();
+            }
+
+            @Override
             public String getCombinedData(final DocRef dictionaryRef) {
                 return null;
             }
@@ -47,30 +57,19 @@ public class TestSearchExpressionQueryBuilder {
             public String[] getWords(final DocRef dictionaryRef) {
                 return "1\n2\n3\n4".split("\n");
             }
-
-            @Override
-            public Set<DocRef> listDocuments() {
-                return Set.of(dictionaryRef);
-            }
-
-            @Override
-            public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-                return List.of(dictionaryRef);
-            }
         };
 
-
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap();
-        indexFieldsMap.put(IndexField.createField("test", analyzerType));
-
+        final MockIndexFieldCache indexFieldCache = new MockIndexFieldCache();
+        indexFieldCache.put("test", LuceneIndexField.createField("test", analyzerType));
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                new DocRef("test", "test"),
+                indexFieldCache,
                 wordListProvider,
-                indexFieldsMap,
                 1024,
                 DateTimeSettings.builder().build());
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
-                .addTerm(
+                .addDocRefTerm(
                         "test",
                         ExpressionTerm.Condition.IN_DICTIONARY,
                         dictionaryRef)

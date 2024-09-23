@@ -17,7 +17,7 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createStatusExpression(final Status status) {
-        return ExpressionUtil.equals(MetaFields.STATUS, status.getDisplayValue());
+        return ExpressionUtil.equalsText(MetaFields.STATUS, status.getDisplayValue());
     }
 
     public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
@@ -30,33 +30,33 @@ public final class MetaExpressionUtil {
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
             return ExpressionOperator.builder().op(Op.AND)
-                    .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
+                    .addTerm(MetaFields.ID.getFldName(), Condition.IN, delimitedList)
                     .build();
         }
     }
 
     public static ExpressionOperator createDataIdExpression(final long id) {
-        return ExpressionUtil.equals(MetaFields.ID, id);
+        return ExpressionUtil.equalsId(MetaFields.ID, id);
     }
 
     public static ExpressionOperator createDataIdExpression(final long id, final Status status) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, id)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, id)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createParentIdExpression(final long parentId, final Status status) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createTypeExpression(final String typeName, final Status status) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.TYPE, Condition.EQUALS, typeName)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, typeName)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
@@ -66,39 +66,39 @@ public final class MetaExpressionUtil {
                         ExpressionOperator
                                 .builder()
                                 .op(Op.OR)
-                                .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder)
-                                .addTerm(MetaFields.PIPELINE, Condition.IN_FOLDER, folder)
+                                .addDocRefTerm(MetaFields.FEED, Condition.IN_FOLDER, folder)
+                                .addDocRefTerm(MetaFields.PIPELINE, Condition.IN_FOLDER, folder)
                                 .build()
                 )
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedExpression(final DocRef feedRef) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedRef)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedRef)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedExpression(final String feedName) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, feedName)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedsExpression(final String... feedNames) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.IN, String.join(",", feedNames))
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.IN, String.join(",", feedNames))
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 }

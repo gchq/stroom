@@ -19,6 +19,7 @@ package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent.Handler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -27,7 +28,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -107,7 +108,8 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
         // Root folder is just a constant so no load needed
 //        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
     }
@@ -116,7 +118,8 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     public void save(final DocRef docRef,
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
         // Nothing to do here, root folder is special
     }
 
@@ -125,18 +128,14 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
-                                final boolean fullScreen) {
-        try {
-            if (documentEditPresenter instanceof FolderRootPresenter) {
-                ((FolderRootPresenter) documentEditPresenter).read();
-            }
-
-            // Open the tab.
-            contentManager.open(closeHandler, tabData, documentEditPresenter);
-        } finally {
-            // Stop spinning.
-            TaskEndEvent.fire(FolderRootPlugin.this);
+                                final boolean fullScreen,
+                                final TaskMonitorFactory taskMonitorFactory) {
+        if (documentEditPresenter instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) documentEditPresenter).read();
         }
+
+        // Open the tab.
+        contentManager.open(closeHandler, tabData, documentEditPresenter);
     }
 
     @Override

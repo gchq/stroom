@@ -17,7 +17,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
@@ -28,12 +27,12 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,8 +54,8 @@ public class ExplorerTreeModel {
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
-    private final Widget loading;
     private final RestFactory restFactory;
+    private final TaskMonitorFactory taskMonitorFactory;
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
@@ -71,11 +70,11 @@ public class ExplorerTreeModel {
     private List<ExplorerNode> currentRootNodes;
 
     ExplorerTreeModel(final AbstractExplorerTree explorerTree,
-                      final Widget loading,
-                      final RestFactory restFactory) {
+                      final RestFactory restFactory,
+                      final TaskMonitorFactory taskMonitorFactory) {
         this.explorerTree = explorerTree;
-        this.loading = loading;
         this.restFactory = restFactory;
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     /**
@@ -179,20 +178,20 @@ public class ExplorerTreeModel {
 
             if (!fetching) {
                 fetching = true;
-                loading.setVisible(true);
                 Scheduler.get().scheduleDeferred(() -> {
                     final FetchExplorerNodesRequest criteria = currentCriteria;
 //                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
 //                            + " openItems: " + openItems.getOpenItems().size()
 //                            + " minDepth: " + minDepth
 //                            + " ensureVisible: " + ensureVisible);
-                    final Rest<FetchExplorerNodeResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(EXPLORER_RESOURCE)
+                            .method(res -> res.fetchExplorerNodes(criteria))
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
-                            .call(EXPLORER_RESOURCE)
-                            .fetchExplorerNodes(criteria);
+                            .taskMonitorFactory(taskMonitorFactory)
+                            .exec();
                 });
             }
         }
@@ -290,9 +289,6 @@ public class ExplorerTreeModel {
             // opened required folders to make them visible.
             ensureVisible = null;
             forceSelection = null;
-
-            // We aren't loading any more.
-            loading.setVisible(false);
         }
     }
 
@@ -403,7 +399,6 @@ public class ExplorerTreeModel {
             refresh(openItems.toggleOpenState(item.getUniqueKey()));
         }
     }
-
 
     // --------------------------------------------------------------------------------
 

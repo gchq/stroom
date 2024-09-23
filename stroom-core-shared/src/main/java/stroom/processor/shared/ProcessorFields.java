@@ -1,21 +1,18 @@
 package stroom.processor.shared;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.TextField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.pipeline.shared.PipelineDoc;
 
 public class ProcessorFields {
 
-    public static final IdField ID = new IdField("Processor Id");
-    public static final TextField PROCESSOR_TYPE = new TextField("Processor Type");
-    public static final DocRefField PIPELINE = DocRefField.byUuid(
+    public static final QueryField ID = QueryField.createId("Processor Id");
+    public static final QueryField PROCESSOR_TYPE = QueryField.createText("Processor Type");
+    public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
             PipelineDoc.DOCUMENT_TYPE, "Processor Pipeline");
-    public static final DocRefField ANALYTIC_RULE = DocRefField.byUuid(
+    public static final QueryField ANALYTIC_RULE = QueryField.createDocRefByUuid(
             AnalyticRuleDoc.DOCUMENT_TYPE, "Analytic Rule");
-    public static final BooleanField ENABLED = new BooleanField("Processor Enabled");
-    public static final BooleanField DELETED = new BooleanField("Processor Deleted");
-    public static final TextField UUID = new TextField("Processor UUID");
+    public static final QueryField ENABLED = QueryField.createBoolean("Processor Enabled");
+    public static final QueryField DELETED = QueryField.createBoolean("Processor Deleted");
+    public static final QueryField UUID = QueryField.createText("Processor UUID");
 }

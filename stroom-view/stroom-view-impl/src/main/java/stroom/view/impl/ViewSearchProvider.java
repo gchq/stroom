@@ -1,9 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.Query;
@@ -11,6 +27,8 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.common.v2.IndexFieldProvider;
+import stroom.query.common.v2.IndexFieldProviders;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.StoreFactoryRegistry;
@@ -30,7 +48,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
-public class ViewSearchProvider implements SearchProvider {
+public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewSearchProvider.class);
 
@@ -38,42 +56,77 @@ public class ViewSearchProvider implements SearchProvider {
     private final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
+    private final IndexFieldProviders indexFieldProviders;
 
     @Inject
     public ViewSearchProvider(final ViewStore viewStore,
                               final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
                               final SecurityContext securityContext,
-                              final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry) {
+                              final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry,
+                              final IndexFieldProviders indexFieldProviders) {
         this.viewStore = viewStore;
         this.storeFactoryRegistryProvider = storeFactoryRegistryProvider;
         this.securityContext = securityContext;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.indexFieldProviders = indexFieldProviders;
+    }
+
+    private DocRef getReferencedDataSource(final DocRef viewDocRef) {
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
+        if (viewDoc != null) {
+            // Find the referenced data source.
+            return viewDoc.getDataSource();
+        }
+        return null;
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
-            final ViewDoc viewDoc = viewStore.readDocument(criteria.getDataSourceRef());
-            if (viewDoc != null) {
-                // Find the referenced data source.
-                final DocRef docRef = viewDoc.getDataSource();
-                if (docRef != null) {
-                    final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                            criteria.getPageRequest(),
-                            criteria.getSortList(),
-                            docRef,
-                            criteria.getStringMatch());
-                    final Optional<DataSourceProvider> delegate =
-                            dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
-                    return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(findFieldInfoCriteria));
-                }
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
+            // Find the referenced data source.
+            final DocRef docRef = getReferencedDataSource(criteria.getDataSourceRef());
+            if (docRef != null) {
+                final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
+                        criteria.getPageRequest(),
+                        criteria.getSortList(),
+                        docRef,
+                        criteria.getStringMatch(),
+                        criteria.getQueryable());
+                final Optional<DataSourceProvider> delegate =
+                        dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
+                return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(findFieldInfoCriteria));
             }
             return Optional.empty();
         });
         return optional.orElseGet(() -> {
-            final List<FieldInfo> list = Collections.emptyList();
+            final List<QueryField> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
         });
+    }
+
+    @Override
+    public int getFieldCount(final DocRef viewDocRef) {
+        return securityContext.useAsReadResult(() -> {
+            final DocRef dataSourceRef = getReferencedDataSource(viewDocRef);
+            if (dataSourceRef != null) {
+                final Optional<DataSourceProvider> optDelegate =
+                        dataSourceProviderRegistry.get()
+                                .getDataSourceProvider(dataSourceRef.getType());
+                return optDelegate.map(dataSourceProvider -> dataSourceProvider.getFieldCount(dataSourceRef))
+                        .orElse(0);
+            } else {
+                return 0;
+            }
+        });
+    }
+
+    @Override
+    public IndexField getIndexField(final DocRef viewDocRef, final String fieldName) {
+        final DocRef docRef = getReferencedDataSource(viewDocRef);
+        if (docRef != null) {
+            return indexFieldProviders.getIndexField(docRef, fieldName);
+        }
+        return null;
     }
 
     @Override
@@ -164,7 +217,7 @@ public class ViewSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         final ViewDoc viewDoc = getView(docRef);
         return getDelegateStoreFactory(viewDoc).getTimeField(viewDoc.getDataSource());
     }

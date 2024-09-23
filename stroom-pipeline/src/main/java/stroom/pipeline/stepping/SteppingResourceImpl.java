@@ -67,17 +67,20 @@ class SteppingResourceImpl implements SteppingResource {
         try {
             result = steppingServiceProvider.get().step(request);
 
-            if (result.getStepLocation() != null) {
-                stepLocation = result.getStepLocation();
-            }
+            // Only log when complete.
+            if (result.isComplete()) {
+                if (result.getStepLocation() != null) {
+                    stepLocation = result.getStepLocation();
+                }
 
-            if (stepLocation != null) {
-                pipelineEventLogProvider.get().stepStream(
-                        stepLocation.getEventId(),
-                        null,
-                        request.getChildStreamType(),
-                        request.getPipeline(),
-                        null);
+                if (stepLocation != null) {
+                    pipelineEventLogProvider.get().stepStream(
+                            stepLocation.getEventId(),
+                            null,
+                            request.getChildStreamType(),
+                            request.getPipeline(),
+                            null);
+                }
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(LogUtil.message("Error during stepping, " +
@@ -98,4 +101,9 @@ class SteppingResourceImpl implements SteppingResource {
         return result;
     }
 
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public Boolean terminateStepping(final PipelineStepRequest request) {
+        return steppingServiceProvider.get().terminateStepping(request);
+    }
 }

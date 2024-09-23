@@ -1,7 +1,11 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
@@ -10,7 +14,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-public class Button extends ButtonBase implements ButtonView {
+public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
 
     private final Element rippleContainer;
     private final Element buttonContent;
@@ -19,6 +23,8 @@ public class Button extends ButtonBase implements ButtonView {
     private final Element icon;
     private final Element margin;
     private final Element text;
+
+    private int taskCount;
 
     /**
      * Creates a button with no caption.
@@ -137,6 +143,14 @@ public class Button extends ButtonBase implements ButtonView {
         }.schedule(1000);
     }
 
+    public void setLoading(final boolean loading) {
+        if (loading) {
+            getElement().addClassName("Button--loading");
+        } else {
+            getElement().removeClassName("Button--loading");
+        }
+    }
+
     @Override
     public void setText(final String text) {
         this.text.setInnerHTML(text);
@@ -149,5 +163,27 @@ public class Button extends ButtonBase implements ButtonView {
     @Override
     public void focus() {
         getElement().focus();
+    }
+
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                taskCount++;
+                setLoading(taskCount > 0);
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+                taskCount--;
+
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
+
+                setLoading(taskCount > 0);
+            }
+        };
     }
 }

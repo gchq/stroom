@@ -17,30 +17,20 @@
 package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexShardKey;
-import stroom.search.extraction.IndexStructure;
 
 public interface IndexShardWriter {
 
     void addDocument(IndexDocument document) throws IndexException;
 
-    void updateIndexStructure(IndexStructure indexStructure);
+    void setMaxDocumentCount(int maxDocumentCount);
 
     void flush();
 
     void close();
 
-//     IndexWriter getWriter() {
-//        return indexWriter;
-//    }
-
     int getDocumentCount();
-
-    IndexShardKey getIndexShardKey();
 
     long getIndexShardId();
 
     long getCreationTime();
-
-    long getLastUsedTime();
 }

@@ -23,7 +23,6 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
@@ -100,7 +99,7 @@ public class ManageGlobalPropertyListPresenter
     private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
 
     private final GlobalConfigCriteria criteria = new GlobalConfigCriteria(
-            new PageRequest(0, Integer.MAX_VALUE),
+            PageRequest.unlimited(),
             new ArrayList<>(),
             null);
 
@@ -145,8 +144,9 @@ public class ManageGlobalPropertyListPresenter
 
 //        GWT.log("Refresh table called");
 
-        final Rest<ListConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .method(res -> res.list(criteria))
                 .onSuccess(listConfigResponse -> {
 
                     lastNodeName = listConfigResponse.getNodeName();
@@ -178,8 +178,8 @@ public class ManageGlobalPropertyListPresenter
                                 ManageGlobalPropertyListPresenter.this,
                                 caught.getMessage(),
                                 null))
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .list(criteria);
+                .taskMonitorFactory(getView())
+                .exec();
     }
 
     private void refreshPropertiesForAllNodes() {
@@ -192,21 +192,22 @@ public class ManageGlobalPropertyListPresenter
                                 .stream()
                                 .filter(nodeName -> !nodeName.equals(lastNodeName))
                                 .forEach(this::refreshPropertiesForNode),
-                throwable ->
+                error ->
                         showError(
-                                throwable,
-                                "Error getting list of all nodes. Only properties for one node will be shown"));
+                                error.getException(),
+                                "Error getting list of all nodes. Only properties for one node will be shown"),
+                getView());
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
 //        GWT.log("Refreshing " + nodeName);
-        final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
-
         criteria.setPageRequest(new PageRequest(
                 dataGrid.getVisibleRange().getStart(),
                 dataGrid.getVisibleRange().getLength()));
 
-        listPropertiesRest
+        restFactory
+                .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .method(res -> res.listByNode(nodeName, criteria))
                 .onSuccess(this::handleNodeResponse)
                 .onFailure(throwable -> {
                     unreachableNodes.add(nodeName);
@@ -228,8 +229,8 @@ public class ManageGlobalPropertyListPresenter
                     // unless another node has already kicked it off
                     updateChildMapsTimer.update();
                 })
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .listByNode(nodeName, criteria);
+                .taskMonitorFactory(getView())
+                .exec();
     }
 
     private void handleNodeResponse(final ListConfigResponse listConfigResponse) {

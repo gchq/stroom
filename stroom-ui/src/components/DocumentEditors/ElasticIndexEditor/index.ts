@@ -1,1 +1,0 @@
-export { ElasticIndexEditor } from "./ElasticIndexEditor";

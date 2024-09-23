@@ -1,9 +1,11 @@
 package stroom.search.impl;
 
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -30,6 +32,7 @@ import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.MapDataStoreFactory;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
@@ -93,15 +96,15 @@ class TestSearchResultCreation {
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
-                pathCreator,
-                tempDirProvider,
-                () -> lmdbLibraryConfig);
+        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
-                lmdbEnvFactory,
+                lmdbEnvDirFactory,
                 SearchResultStoreConfig::new,
                 pathCreator,
-                () -> executorService);
+                () -> executorService,
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ByteBufferFactoryImpl());
     }
 
     @AfterEach
@@ -153,7 +156,8 @@ class TestSearchResultCreation {
                 null,
                 coprocessors,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -287,7 +291,8 @@ class TestSearchResultCreation {
                 "test_user_id",
                 coprocessors2,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -367,7 +372,8 @@ class TestSearchResultCreation {
                 "test_user_id",
                 coprocessors2,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -478,7 +484,8 @@ class TestSearchResultCreation {
                 null,
                 coprocessors2,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -487,6 +494,7 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.fetch(
+                dataStore.getColumns(),
                 OffsetRange.ZERO_1000,
                 OpenGroupsImpl.root(),
                 null,

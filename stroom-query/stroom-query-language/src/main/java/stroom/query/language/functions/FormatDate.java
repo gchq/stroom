@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.token.Param;
 
@@ -93,7 +94,7 @@ class FormatDate extends AbstractFunction {
 
         if (params.length >= 2) {
             pattern = ParamParseUtil.parseStringParam(params, 1, name);
-            formatter = FormatterCache.getFormatter(pattern);
+            formatter = FormatterCache.getFormatter(pattern, Mode.FORMAT);
         }
         if (params.length >= 3) {
             timeZone = ParamParseUtil.parseStringParam(params, 2, name);
@@ -137,11 +138,6 @@ class FormatDate extends AbstractFunction {
             return function.requiresChildData();
         }
         return super.requiresChildData();
-    }
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
     }
 
 

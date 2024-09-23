@@ -1,12 +1,30 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
+import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.config.app.AppConfig;
+import stroom.config.app.CrossModuleConfig;
 import stroom.config.app.DataConfig;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.app.SecurityConfig;
@@ -18,6 +36,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -25,7 +44,9 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
+import stroom.index.impl.ContentIndexConfig;
 import stroom.index.impl.IndexConfig;
+import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
@@ -37,12 +58,12 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.query.field.impl.QueryFieldConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
+import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.PropertyUtil.Prop;
@@ -912,6 +933,7 @@ class TestConfigMapper {
         @SuppressWarnings("checkstyle:LineLength")
         public TestConfig(
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+                @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
@@ -919,8 +941,10 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
+                @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                 @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
@@ -939,13 +963,15 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                 @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
-                @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final QueryFieldConfig queryDataSourceConfig,
+                @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                 @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -968,6 +994,7 @@ class TestConfigMapper {
                 @JsonProperty("boxed") final TestBoxedConfig testBoxedConfig) {
 
             super(haltBootOnConfigValidationFailure,
+                    crossModuleConfig,
                     activityConfig,
                     analyticsConfig,
                     annotationConfig,
@@ -975,8 +1002,10 @@ class TestConfigMapper {
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
+                    contentIndexConfig,
                     contentPackImportConfig,
                     legacyConfig,
+                    dashboardConfig,
                     dataConfig,
                     docStoreConfig,
                     elasticConfig,
@@ -997,11 +1026,13 @@ class TestConfigMapper {
                     publicUri,
                     queryDataSourceConfig,
                     receiveDataConfig,
+                    s3Config,
                     searchConfig,
                     securityConfig,
                     serviceDiscoveryConfig,
                     sessionCookieConfig,
                     solrConfig,
+                    stateConfig,
                     statisticsConfig,
                     storedQueryConfig,
                     pathConfig,

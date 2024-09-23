@@ -4,21 +4,52 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup addStyleNames="dock-max" identity="cfRuleExpression" label="Row Match Expression">
-            <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control">
-            </g:SimplePanel>
+
+        <form:FormGroup addStyleNames="dock-max"
+                        identity="cfRuleExpression"
+                        label="Row Match Expression"
+                        helpText="All rows matching this expression will be formatted according to the settings below.">
+            <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
         </form:FormGroup>
-        <form:FormGroup addStyleNames="dock-min">
+
+        <form:FormGroup addStyleNames="dock-min"
+                        label="Hide Matching Rows"
+                        helpText="When checked, prevents matching rows from appearing in the table.">
             <tickbox:CustomCheckBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
         </form:FormGroup>
-        <form:FormGroup addStyleNames="dock-min" identity="cfRuleBackgroundColor" label="Background Color">
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleBackgroundColor"
+                        label="Row Background Colour">
+            <form:HelpHTML>
+                <p>Sets the background colour of matching rows.</p>
+                <p>
+                    The colour is a valid CSS colour name (e.g. <code>red</code>) or a colour in RGB
+                    Hexadecimal form (e.g. <code>#FF0000</code>).
+                </p>
+            </form:HelpHTML>
             <g:TextBox ui:field="backgroundColor" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup addStyleNames="dock-min" identity="cfRuleTextColor" label="Text Color">
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleTextColor"
+                        label="Text Colour">
+            <form:HelpHTML>
+                <p>Sets the text colour of matching rows.</p>
+                <p>
+                    The colour is a valid CSS colour name (e.g. <code>red</code>) or a colour in RGB
+                    Hexadecimal form (e.g. <code>#FF0000</code>).
+                </p>
+            </form:HelpHTML>
             <g:TextBox ui:field="textColor" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup addStyleNames="dock-min">
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleEnabledState"
+                        label="Rule Enabled State"
+                        helpText="Enables or disables this rule. When disabled this rule will be ignored.">
             <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
         </form:FormGroup>
+
     </g:FlowPanel>
 </ui:UiBinder>

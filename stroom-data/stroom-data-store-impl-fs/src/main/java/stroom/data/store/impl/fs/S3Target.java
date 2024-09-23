@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -102,8 +103,8 @@ final class S3Target implements Target {
     }
 
     private void updateAttribute(final S3Target target, final QueryField key, final String value) {
-        if (!target.getAttributes().containsKey(key.getName())) {
-            target.getAttributes().put(key.getName(), value);
+        if (!target.getAttributes().containsKey(key.getFldName())) {
+            target.getAttributes().put(key.getFldName(), value);
         }
     }
 

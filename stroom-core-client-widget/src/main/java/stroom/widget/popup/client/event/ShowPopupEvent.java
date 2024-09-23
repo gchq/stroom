@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -36,6 +38,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final PopupType popupType;
     private final PopupPosition popupPosition;
     private final PopupSize popupSize;
+    private final SvgImage icon;
     private final String caption;
     private final ShowPopupEvent.Handler showHandler;
     private final HidePopupRequestEvent.Handler hideRequestHandler;
@@ -47,6 +50,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                            final PopupType popupType,
                            final PopupPosition popupPosition,
                            final PopupSize popupSize,
+                           final SvgImage icon,
                            final String caption,
                            final ShowPopupEvent.Handler showHandler,
                            final HidePopupRequestEvent.Handler hideRequestHandler,
@@ -57,6 +61,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         this.popupType = popupType;
         this.popupPosition = popupPosition;
         this.popupSize = popupSize;
+        this.icon = icon;
         this.caption = caption;
         this.showHandler = showHandler;
         this.hideRequestHandler = hideRequestHandler;
@@ -102,6 +107,10 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         return popupSize;
     }
 
+    public SvgImage getIcon() {
+        return icon;
+    }
+
     public String getCaption() {
         return caption;
     }
@@ -126,6 +135,10 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         return autoHidePartners;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onShow(ShowPopupEvent event);
@@ -141,6 +154,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         private PopupType popupType;
         private PopupPosition popupPosition;
         private PopupSize popupSize;
+        private SvgImage icon;
         private String caption;
         private ShowPopupEvent.Handler showHandler;
         private HidePopupRequestEvent.Handler hideRequestHandler;
@@ -167,6 +181,11 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             return this;
         }
 
+        public Builder icon(final SvgImage icon) {
+            this.icon = icon;
+            return this;
+        }
+
         public Builder caption(final String caption) {
             this.caption = caption;
             return this;
@@ -177,12 +196,24 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             return this;
         }
 
+        /**
+         * Same as passing {@code true} to {@link Builder#modal(Boolean)}
+         */
+        public Builder modal() {
+            this.modal = true;
+            return this;
+        }
+
+        /**
+         * Same as passing {@code false} to {@link Builder#modal(Boolean)}
+         */
+        public Builder modeless() {
+            this.modal = false;
+            return this;
+        }
+
         public Builder addAutoHidePartner(final Element... autoHidePartner) {
-            if (autoHidePartner != null) {
-                for (final Element element : autoHidePartner) {
-                    this.autoHidePartners.add(element);
-                }
-            }
+            this.autoHidePartners.addAll(GwtNullSafe.asList(autoHidePartner));
             return this;
         }
 
@@ -202,30 +233,36 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         }
 
         public void fire() {
-            // By default we will automatically hide popups unless they have a handler that alters the behaviour.
+            // By default, we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
-                hideRequestHandler = e -> HidePopupEvent.builder(presenterWidget)
-                        .autoClose(e.isAutoClose())
-                        .ok(e.isOk())
-                        .fire();
+                hideRequestHandler = e -> {
+//                    GWT.log("isOk: " + e.isOk());
+                    HidePopupEvent.builder(presenterWidget)
+                            .autoClose(e.isAutoClose())
+                            .ok(e.isOk())
+                            .fire();
+                };
             }
 
             Element[] elements = null;
-            if (autoHidePartners.size() > 0) {
+            if (GwtNullSafe.hasItems(autoHidePartners)) {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 
+//            if (!presenterWidget.getView().asWidget().isVisible()) {
             presenterWidget.fireEvent(new ShowPopupEvent(
                     presenterWidget,
                     popupType,
                     popupPosition,
                     popupSize,
+                    icon,
                     caption,
                     showHandler,
                     hideRequestHandler,
                     hideHandler,
                     modal,
                     elements));
+//            }
         }
     }
 }

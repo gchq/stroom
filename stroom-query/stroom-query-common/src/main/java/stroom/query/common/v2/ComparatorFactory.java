@@ -15,13 +15,13 @@ public class ComparatorFactory {
     private ComparatorFactory() {
     }
 
-    public static Comparator<Val> create(final CompiledColumn compiledColumn) {
-        Objects.requireNonNull(compiledColumn);
+    public static Comparator<Val> create(final Column column) {
+        Objects.requireNonNull(column);
         // We use case-insensitive comparators for sorting, but case-sensitive
         // ones for the boolean condition funcs like >, <, =, !=, etc.
         // Not sure this makes sense, but it is how it is.
         final Format.Type formatType = NullSafe.get(
-                compiledColumn.getColumn(),
+                column,
                 Column::getFormat,
                 Format::getType);
         // Format type trumps commonReturnType, but we may not have either
@@ -36,8 +36,7 @@ public class ComparatorFactory {
             // Even if we have numbers mixed in with words, we want the numbers
             // sorted numerically, i.e. 3, 20, 100, foo
             // rather than 100, 20, 3, foo
-            return ValComparators.getSortComparator(compiledColumn.getCommonReturnType())
-                    .orElse(ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
+            return ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
         }
     }
 }

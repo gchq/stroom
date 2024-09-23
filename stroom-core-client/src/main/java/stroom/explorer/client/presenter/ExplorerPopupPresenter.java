@@ -26,11 +26,12 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -69,18 +70,20 @@ public class ExplorerPopupPresenter
 
         getView().setUiHandlers(this);
 
-        explorerTree = new ExtendedExplorerTree(this, restFactory);
+        explorerTree = new ExtendedExplorerTree(this, restFactory, this);
         setIncludeNullSelection(true);
 
         // Add views.
         view.setCellTree(explorerTree);
 
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
-                                "Choose Item Quick Filter",
-                                ExplorerTreeFilter.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrlQuickFilter())));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Choose Item Quick Filter",
+                        ExplorerTreeFilter.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     public void setSelectionChangeConsumer(final Consumer<ExplorerNode> selectionChangeConsumer) {
@@ -96,6 +99,11 @@ public class ExplorerPopupPresenter
     }
 
     public void show(final Consumer<DocRef> consumer) {
+        show(consumer, () -> {
+        });
+    }
+
+    public void show(final Consumer<DocRef> consumer, final Runnable onShow) {
         initialSelection = getCurrentSelection();
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
@@ -103,22 +111,11 @@ public class ExplorerPopupPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ExplorerNode selected = getSelectedEntityData();
-                        if (isSelectionAllowed(selected)) {
-                            e.hide();
-                        } else {
-                            AlertEvent.fireError(ExplorerPopupPresenter.this,
-                                    "You must choose a valid item.", null);
-                        }
-                    } else {
-                        explorerTree.getSelectionModel().setSelected(initialSelection);
-                        e.hide();
-                    }
+                .onShow(e -> {
+                    onShow.run();
+                    getView().focus();
                 })
-                .onHide(e -> {
+                .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode selected = getSelectedEntityData();
                         if (isSelectionAllowed(selected)) {
@@ -127,7 +124,13 @@ public class ExplorerPopupPresenter
                             consumer.accept(selected == null
                                     ? null
                                     : selected.getDocRef());
+                            e.hide();
+                        } else {
+                            AlertEvent.fireError(ExplorerPopupPresenter.this,
+                                    "You must choose a valid item.", e::reset);
                         }
+                    } else {
+                        e.hide();
                     }
                 })
                 .fire();
@@ -151,7 +154,7 @@ public class ExplorerPopupPresenter
             } else if (selectionType.isDoubleSelect()) {
                 selectionChangeConsumer.accept(selected);
                 explorerTree.getSelectionModel().setSelected(selected);
-                HidePopupEvent.builder(this).fire();
+                HidePopupRequestEvent.builder(this).fire();
             }
         }
     }
@@ -211,12 +214,14 @@ public class ExplorerPopupPresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        restFactory
-                .builder()
-                .forType(ExplorerNode.class)
-                .onSuccess(this::setSelectedEntityData)
-                .call(EXPLORER_RESOURCE)
-                .getFromDocRef(docRef);
+        if (docRef != null) {
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.getFromDocRef(docRef))
+                    .onSuccess(this::setSelectedEntityData)
+                    .taskMonitorFactory(this)
+                    .exec();
+        }
     }
 
     private ExplorerNode getSelectedEntityData() {
@@ -249,6 +254,7 @@ public class ExplorerPopupPresenter
         this.initialQuickFilter = initialQuickFilter;
     }
 
+
     // --------------------------------------------------------------------------------
 
 
@@ -257,8 +263,9 @@ public class ExplorerPopupPresenter
         private final ExplorerPopupPresenter explorerDropDownTreePresenter;
 
         public ExtendedExplorerTree(final ExplorerPopupPresenter explorerDropDownTreePresenter,
-                                    final RestFactory restFactory) {
-            super(restFactory, false, false);
+                                    final RestFactory restFactory,
+                                    final TaskMonitorFactory taskMonitorFactory) {
+            super(restFactory, taskMonitorFactory, false, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
             this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }

@@ -1,6 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.api.NotificationState;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
@@ -15,7 +14,6 @@ public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldLis
     public StreamingAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                               final FieldIndex fieldIndex,
                                               final FieldValueExtractor fieldValueExtractor,
-                                              final NotificationState notificationState,
                                               final ValuesConsumer valuesConsumer,
                                               final MemoryIndex memoryIndex,
                                               final Long minEventId,
@@ -24,7 +22,6 @@ public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldLis
                 searchRequest,
                 fieldIndex,
                 fieldValueExtractor,
-                notificationState,
                 valuesConsumer,
                 memoryIndex,
                 minEventId);

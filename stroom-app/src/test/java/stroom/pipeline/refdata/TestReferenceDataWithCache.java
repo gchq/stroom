@@ -24,6 +24,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -62,7 +63,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,6 +71,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
     private static final String TEST_PIPELINE_1 = "TEST_PIPELINE_1";
     private static final String TEST_PIPELINE_2 = "TEST_PIPELINE_2";
+    public static final String DUMMY_FEED = "DUMMY_FEED";
+    public static final String DUMMY_TYPE = "DummyType";
 
     @Inject
     private FeedStore feedStore;
@@ -126,18 +128,20 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference1);
             pipelineReferences.add(pipelineReference2);
 
-            final Map<String, List<EffectiveMeta>> effectiveMetasByFeed = new HashMap();
+            final Map<String, EffectiveMetaSet> effectiveMetasByFeed = new HashMap<>();
+
             for (final DocRef feedDocRef : List.of(feed1, feed2)) {
-                final List<EffectiveMeta> streamSet = new ArrayList<>();
-                streamSet.add(buildEffectiveMeta(
-                        createMeta(feedDocRef.getName()).getId(),
-                        "2008-01-01T09:47:00.000Z"));
-                streamSet.add(
-                        buildEffectiveMeta(createMeta(feedDocRef.getName()).getId(),
-                                "2009-01-01T09:47:00.000Z"));
-                streamSet.add(
-                        buildEffectiveMeta(createMeta(feedDocRef.getName()).getId(),
-                                "2010-01-01T09:47:00.000Z"));
+                final EffectiveMetaSet streamSet = EffectiveMetaSet.builder(feedDocRef.getName(), DUMMY_TYPE)
+                        .add(
+                                createMeta(feedDocRef.getName()).getId(),
+                                DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"))
+                        .add(
+                                createMeta(feedDocRef.getName()).getId(),
+                                DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"))
+                        .add(
+                                createMeta(feedDocRef.getName()).getId(),
+                                DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z"))
+                        .build();
                 effectiveMetasByFeed.put(feedDocRef.getName(), streamSet);
             }
 
@@ -153,8 +157,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         ReferenceDataConfig::new) {
                     @Override
-                    public TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
-                        return new TreeSet<>(effectiveMetasByFeed.get(key.getFeed()));
+                    public EffectiveMetaSet create(final EffectiveStreamKey key) {
+                        return effectiveMetasByFeed.get(key.getFeed());
                     }
                 };
                 final ReferenceData referenceData = referenceDataProvider.get();
@@ -165,10 +169,10 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 // works.
                 addData(
                         pipeline1Ref,
-                        effectiveMetasByFeed.get(feed1.getName()),
+                        effectiveMetasByFeed.get(feed1.getName()).asList(),
                         new String[]{"USERNAME_TO_PAYROLL_NO_1", "USERNAME_TO_PAYROLL_NO_2"});
                 addData(pipeline2Ref,
-                        effectiveMetasByFeed.get(feed2.getName()),
+                        effectiveMetasByFeed.get(feed2.getName()).asList(),
                         new String[]{"USERNAME_TO_PAYROLL_NO_3", "USERNAME_TO_PAYROLL_NO_4"});
                 checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_1");
                 checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_2");
@@ -186,7 +190,9 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         return new RefStreamDefinition(pipelineRef, version, streamId);
     }
 
-    private void addData(final DocRef pipelineRef, final List<EffectiveMeta> effectiveMetas, final String[] mapNames) {
+    private void addData(final DocRef pipelineRef,
+                         final List<EffectiveMeta> effectiveMetas,
+                         final String[] mapNames) {
         EffectiveMeta effectiveStream = effectiveMetas.get(0);
         RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
@@ -275,8 +281,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
 
             EffectiveMeta effectiveStream = buildEffectiveMeta(createMeta(feedRef.getName()).getId(), 0L);
-            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
-            streamSet.add(effectiveStream);
+            final EffectiveMetaSet streamSet = EffectiveMetaSet.singleton(effectiveStream);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
@@ -285,7 +290,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         ReferenceDataConfig::new) {
                     @Override
-                    public TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
+                    public EffectiveMetaSet create(final EffectiveStreamKey key) {
                         return streamSet;
                     }
                 };
@@ -400,8 +405,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     private EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {
         return new EffectiveMeta(id,
-                "DUMMY_FEED",
-                "DummyType",
+                DUMMY_FEED,
+                DUMMY_TYPE,
                 DateUtil.parseNormalDateTimeString(effectiveTimeStr));
     }
 

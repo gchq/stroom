@@ -29,10 +29,15 @@ import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler
 import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.view.AbstractTab;
 import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
 
 import com.google.gwt.user.client.History;
@@ -148,6 +153,12 @@ public class ContentTabPanePresenter
         // tabs.
         forceReveal();
         add(event.getTabData(), event.getLayer());
+
+        if (event.getLayer() instanceof HasTaskMonitorFactory) {
+            final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
+            ((HasTaskMonitorFactory) event.getLayer())
+                    .setTaskMonitorFactory(new TabTaskMonitorFactory(tab));
+        }
     }
 
     @ProxyEvent
@@ -163,6 +174,11 @@ public class ContentTabPanePresenter
                     currentIndex--;
                 }
             }
+        }
+
+        if (event.getTabData() instanceof HasTaskMonitorFactory) {
+            ((HasTaskMonitorFactory) event.getTabData())
+                    .setTaskMonitorFactory(new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -212,5 +228,19 @@ public class ContentTabPanePresenter
     @ProxyCodeSplit
     public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
 
+    }
+
+    private static class TabTaskMonitorFactory implements TaskMonitorFactory {
+
+        private final AbstractTab tab;
+
+        public TabTaskMonitorFactory(final AbstractTab tab) {
+            this.tab = tab;
+        }
+
+        @Override
+        public TaskMonitor createTaskMonitor() {
+            return tab.createTaskMonitor();
+        }
     }
 }

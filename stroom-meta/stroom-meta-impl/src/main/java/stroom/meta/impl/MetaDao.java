@@ -5,8 +5,8 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -99,7 +99,7 @@ public interface MetaDao {
      */
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
-    List<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
+    EffectiveMetaSet getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
 
     Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
 

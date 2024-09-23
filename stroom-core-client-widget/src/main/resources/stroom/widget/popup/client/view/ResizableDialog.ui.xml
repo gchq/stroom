@@ -1,15 +1,20 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client">
 
-	<g:FlowPanel styleName="dialog-container">
-		<g:SimplePanel styleName="dialog-background-behind" />
-		<g:FlowPanel styleName="dialog-background">
-			<g:SimplePanel styleName="dialog-titleBar">
-				<g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
-			</g:SimplePanel>
-			<g:SimplePanel ui:field="content" styleName="dialog-body" />
-		</g:FlowPanel>
-		<g:SimplePanel ui:field="resizeHandle" styleName="resizableDialog-resizeHandle" />
-	</g:FlowPanel>
+    <g:FlowPanel styleName="dialog-container">
+        <g:SimplePanel styleName="dialog-background-behind"/>
+        <g:FlowPanel styleName="dialog-background">
+            <g:FlowPanel styleName="dialog-titleBar">
+                <g:SimplePanel ui:field="icon" styleName="dialog-icon" />
+                <g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
+                <g:SimplePanel styleName="dialog-spinner">
+                    <spinner:SpinnerLarge ui:field="spinner"/>
+                </g:SimplePanel>
+            </g:FlowPanel>
+            <g:SimplePanel ui:field="content" styleName="dialog-body"/>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="resizeHandle" styleName="resizableDialog-resizeHandle"/>
+    </g:FlowPanel>
 </ui:UiBinder> 

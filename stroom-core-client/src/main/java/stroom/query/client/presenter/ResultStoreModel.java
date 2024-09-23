@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.query.api.v2.DestroyReason;
@@ -11,6 +11,7 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
 import stroom.query.shared.UpdateStoreRequest;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 
@@ -28,6 +29,7 @@ public class ResultStoreModel {
 
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private final FindResultStoreCriteria criteria = new FindResultStoreCriteria();
+
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
     // nodeName => List<ResultStoreInfo>
@@ -46,29 +48,33 @@ public class ResultStoreModel {
 
     public void fetch(final Range range,
                       final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                      final Consumer<Throwable> throwableConsumer) {
+                      final RestErrorHandler errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
         this.range = range;
         this.dataConsumer = dataConsumer;
         delayedUpdate.reset();
-        fetchNodes(range, dataConsumer, throwableConsumer);
+        fetchNodes(range, dataConsumer, errorHandler, taskMonitorFactory);
     }
 
     private void fetchNodes(final Range range,
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                            final Consumer<Throwable> throwableConsumer) {
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskMonitorFactory),
+                errorHandler, taskMonitorFactory);
     }
 
     private void fetchTasksForNodes(final Range range,
                                     final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                                    final List<String> nodeNames) {
+                                    final List<String> nodeNames,
+                                    final TaskMonitorFactory taskMonitorFactory) {
         responseMap.clear();
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
-            final Rest<ResultPage<ResultStoreInfo>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(RESULT_STORE_RESOURCE)
+                    .method(res -> res.find(nodeName, criteria))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         delayedUpdate.update();
@@ -77,8 +83,8 @@ public class ResultStoreModel {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .call(RESULT_STORE_RESOURCE)
-                    .find(nodeName, criteria);
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
         }
     }
 
@@ -92,34 +98,41 @@ public class ResultStoreModel {
 
     public void terminate(final String nodeName,
                           final QueryKey queryKey,
-                          final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+                          final Consumer<Boolean> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESULT_STORE_RESOURCE)
+                .method(res -> res.terminate(nodeName, queryKey))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .call(RESULT_STORE_RESOURCE)
-                .terminate(nodeName, queryKey);
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     public void destroy(final String nodeName,
                         final QueryKey queryKey,
                         final DestroyReason destroyReason,
-                        final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+                        final Consumer<Boolean> consumer,
+                        final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESULT_STORE_RESOURCE)
+                .method(res -> res.destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason)))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .call(RESULT_STORE_RESOURCE)
-                .destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason));
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
-                               final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+                               final Consumer<Boolean> consumer,
+                               final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESULT_STORE_RESOURCE)
+                .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
-                .call(RESULT_STORE_RESOURCE)
-                .update(nodeName, updateStoreRequest);
+                .onFailure(t -> consumer.accept(false))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 }

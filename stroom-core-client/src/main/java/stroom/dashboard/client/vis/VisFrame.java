@@ -17,6 +17,8 @@
 package stroom.dashboard.client.vis;
 
 import stroom.script.shared.ScriptDoc;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
@@ -36,7 +38,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class VisFrame extends Composite implements VisPane {
+public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactory {
 
     private final MessageSupport messageSupport;
     private VisFunction function;
@@ -45,7 +47,7 @@ public class VisFrame extends Composite implements VisPane {
 
     public VisFrame(final EventBus eventBus) {
         // + "?time=" + System.currentTimeMillis());
-        frame = new Frame("vis.html");
+        frame = new Frame("ui/vis.html");
         frame.addStyleName("VisFrame-frame");
         messageSupport = new MessageSupport(eventBus, frame.getElement());
 
@@ -262,5 +264,10 @@ public class VisFrame extends Composite implements VisPane {
     @Override
     public void removeFromParent() {
         // Do nothing...
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        messageSupport.setTaskMonitorFactory(taskMonitorFactory);
     }
 }

@@ -1,7 +1,6 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -10,6 +9,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.shared.HasHandlers;
@@ -41,7 +41,8 @@ public class ExpressionValidator {
     protected void validateExpression(final HasHandlers hasHandlers,
                                       final List<QueryField> fields,
                                       final ExpressionOperator expression,
-                                      final Consumer<ExpressionOperator> consumer) {
+                                      final Consumer<ExpressionOperator> consumer,
+                                      final TaskMonitorFactory taskMonitorFactory) {
         if (expression != null) {
             if (Objects.equals(expression, validatedExpression)) {
                 // Same expression as last time, nothing new to validate, so carry on
@@ -57,8 +58,12 @@ public class ExpressionValidator {
                 // Standard expression that needs no validation, so save on the rest call
                 consumer.accept(expression);
             } else {
-                restFactory.builder()
-                        .forType(ValidateExpressionResult.class)
+                restFactory
+                        .create(EXPRESSION_RESOURCE)
+                        .method(res -> res.validate(new ValidateExpressionRequest(
+                                expression,
+                                fields,
+                                dateTimeSettingsFactory.getDateTimeSettings())))
                         .onSuccess(result -> {
                             if (result.isOk()) {
                                 validatedExpression = expression;
@@ -75,11 +80,8 @@ public class ExpressionValidator {
                                     hasHandlers, throwable.getMessage(), null);
                             expressionValidationMessage = throwable.getMessage();
                         })
-                        .call(EXPRESSION_RESOURCE)
-                        .validate(new ValidateExpressionRequest(
-                                expression,
-                                fields,
-                                dateTimeSettingsFactory.getDateTimeSettings()));
+                        .taskMonitorFactory(taskMonitorFactory)
+                        .exec();
             }
         }
     }

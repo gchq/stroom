@@ -18,7 +18,7 @@
 package stroom.view.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -26,6 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.view.client.presenter.ViewPresenter;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
@@ -66,26 +67,30 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ViewDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ViewDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(VIEW_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(VIEW_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final ViewDoc document,
                      final Consumer<ViewDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ViewDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(VIEW_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(VIEW_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

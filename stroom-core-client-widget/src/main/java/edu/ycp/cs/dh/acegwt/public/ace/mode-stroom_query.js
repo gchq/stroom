@@ -15,7 +15,7 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var StroomQueryHighlightRules = function() {
 
     var keywords = (
-        "from|select|where|filter|in|eval|and|or|not|sort|group|by|order|limit|having|as|when|desc|asc|window|vis|" +
+        "from|select|where|filter|in|eval|and|or|not|sort|group|by|order|limit|having|as|when|desc|asc|window|show|" +
         "dictionary"
     );
 

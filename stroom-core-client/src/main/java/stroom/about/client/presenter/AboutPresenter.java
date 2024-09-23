@@ -18,12 +18,10 @@ package stroom.about.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.SessionInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -36,7 +34,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
+public class AboutPresenter
+        extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
     private final RestFactory restFactory;
@@ -59,8 +58,9 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
     }
 
     private void buildContent() {
-        final Rest<SessionInfo> rest = restFactory.create();
-        rest
+        restFactory
+                .create(SESSION_INFO_RESOURCE)
+                .method(SessionInfoResource::get)
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     getView().getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
@@ -71,12 +71,14 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                     getView().getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))
-                .call(SESSION_INFO_RESOURCE)
-                .get();
+                .taskMonitorFactory(this)
+                .exec();
 
-        clientPropertyCache.get()
-                .onSuccess(result -> getView().setHTML(result.getAboutHtml()))
-                .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                getView().setHTML(result.getAboutHtml());
+            }
+        }, this);
     }
 
     @Override

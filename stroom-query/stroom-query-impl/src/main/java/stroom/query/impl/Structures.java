@@ -1,7 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.impl;
 
 import stroom.docref.StringMatch.MatchType;
-import stroom.query.shared.CompletionValue;
+import stroom.query.language.token.TokenType;
+import stroom.query.shared.CompletionItem;
+import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpDetail;
@@ -9,8 +27,13 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
+import stroom.util.string.AceStringMatcher;
+import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
@@ -18,16 +41,23 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
 class Structures {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Structures.class);
+
     private static final String SECTION_ID = "structure";
+    public static final int INITIAL_SCORE = 400;
 
     private final Provider<UiConfig> uiConfigProvider;
     private final QueryHelpRow root;
@@ -47,9 +77,10 @@ class Structures {
                 .title("Structure")
                 .build();
 
-        // Note 'stroomql' is not a thing, but using it in the hope that we create a language definition
-        // for prismjs so that it later works. Prism will just treat it as text.
-        add(list, "from",
+        // Note 'stroomql' is not a thing in our markdown, but using it in the hope that we create a
+        // language definition for prismjs so that it later works. Prism will just treat it as text.
+        // Ideally have these in the order they appear in a stroomQL statement
+        add(list, name(TokenType.FROM),
                 """
                         Select the data source to query, e.g.
                         ```stroomql
@@ -62,7 +93,7 @@ class Structures {
                         ```
                         """,
                 "from \"${1:view}\"$0");
-        add(list, "where",
+        add(list, name(TokenType.WHERE),
                 """
                         Use where to construct query criteria, e.g.
                         ```stroomql
@@ -82,19 +113,7 @@ class Structures {
                         ```
                         """,
                 "where ${1:field} ${2:=} ${3:value}\n$0");
-        add(list, "filter",
-                """
-                        Use filter to filter values that have not been indexed during search retrieval.
-                        This is used the same way as the `where` clause but applies to data after being retrieved from the index, e.g.
-                        ```stroomql
-                        filter obscure_field = "some value"
-                        ```
-                                            
-                        Add boolean logic with `and`, `or` and `not` to build complex criteria as supported by the `where` clause.
-                        Use brackets to group logical sub expressions as supported by the `where` clause.
-                        """,
-                "filter ${1:field} ${2:=} ${3:value}\n$0");
-        add(list, "eval",
+        add(list, name(TokenType.EVAL),
                 """
                         Use eval to apply a function and get a result, e.g.
                         ```stroomql
@@ -143,26 +162,33 @@ class Structures {
                         ```
                         """,
                 "eval ${1:variable_name} = ${2:value}\n$0");
-        add(list, "group by",
+        add(list, name(TokenType.WINDOW),
                 """
-                        Use to group by columns, e.g.
+                        Create windowed data, e.g.
                         ```stroomql
-                        group by feed
+                        window EventTime by 1y
                         ```
-                                            
-                        You can group across multiple columns, e.g.
+                        This will create counts for grouped rows per year plus the previous year.
+                                          
                         ```stroomql
-                        group by feed, name
+                        window EventTime by 1y advance 1m
                         ```
-                                            
-                        You can create nested groups, e.g.
-                        ```stroomql
-                        group by feed
-                        group by name
-                        ```
+                        This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
                         """,
-                "group by ${1:field(s)}$0");
-        add(list, "sort by",
+                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
+        add(list, name(TokenType.FILTER),
+                """
+                        Use filter to filter values that have not been indexed during search retrieval.
+                        This is used the same way as the `where` clause but applies to data after being retrieved from the index, e.g.
+                        ```stroomql
+                        filter obscure_field = "some value"
+                        ```
+                                            
+                        Add boolean logic with `and`, `or` and `not` to build complex criteria as supported by the `where` clause.
+                        Use brackets to group logical sub expressions as supported by the `where` clause.
+                        """,
+                "filter ${1:field} ${2:=} ${3:value}\n$0");
+        add(list, name(TokenType.SORT, TokenType.BY),
                 """
                         Use to sort by columns, e.g.
                         ```stroomql
@@ -184,7 +210,42 @@ class Structures {
                         ```
                         """,
                 "sort by ${1:field(s)}$0");
-        add(list, "select",
+        add(list, name(TokenType.GROUP, TokenType.BY),
+                """
+                        Use to group by columns, e.g.
+                        ```stroomql
+                        group by feed
+                        ```
+                                            
+                        You can group across multiple columns, e.g.
+                        ```stroomql
+                        group by feed, name
+                        ```
+                                            
+                        You can create nested groups, e.g.
+                        ```stroomql
+                        group by feed
+                        group by name
+                        ```
+                        """,
+                "group by ${1:field(s)}$0");
+        add(list, name(TokenType.HAVING),
+                """
+                        Apply a post aggregate filter to data, e.g.
+                        ```stroomql
+                        having count > 3
+                        ```
+                        """,
+                "having ${1:field} ${2:=} ${3:value}\n$0");
+        add(list, name(TokenType.LIMIT),
+                """
+                        Limit the number of results, e.g.
+                        ```stroomql
+                        limit 10
+                        ```
+                        """,
+                "limit ${1:count}\n$0");
+        add(list, name(TokenType.SELECT),
                 """
                         Select the columns to display in the table output, e.g.
                         ```stroomql
@@ -198,39 +259,29 @@ class Structures {
                         ```
                         """,
                 "select ${1:field(s)}$0");
-        add(list, "limit",
+        add(list, name(TokenType.SHOW),
                 """
-                        Limit the number of results, e.g.
+                        Visualise the selected data using a Stroom visualisation, e.g.
                         ```stroomql
-                        limit 10
+                        show LineChart(x = EventTime, y = count)
+                        show Doughnut(names = Feed, values = count)
                         ```
                         """,
-                "limit ${1:count}\n$0");
-        add(list, "window",
-                """
-                        Create windowed data, e.g.
-                        ```stroomql
-                        window EventTime by 1y
-                        ```
-                        This will create counts for grouped rows per year plus the previous year.
-                                          
-                        ```stroomql
-                        window EventTime by 1y advance 1m
-                        ```
-                        This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
-                        """,
-                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
-        add(list, "having",
-                """
-                        Apply a post aggregate filter to data, e.g.
-                        ```stroomql
-                        having count > 3
-                        ```
-                        """,
-                "having ${1:field} ${2:=} ${3:value}\n$0");
+                "show ${1:visualisation}$0");
     }
 
-    private void add(final List<QueryHelpRow> list, final String title, final String detail, final String... snippets) {
+    static String name(final TokenType... tokenTypes) {
+        Objects.requireNonNull(tokenTypes);
+        return Arrays.stream(tokenTypes)
+                .map(TokenType::name)
+                .map(String::toLowerCase)
+                .collect(Collectors.joining(" "));
+    }
+
+    private void add(final List<QueryHelpRow> list,
+                     final String title,
+                     final String detail,
+                     final String... snippets) {
         list.add(QueryHelpRow
                 .builder()
                 .type(QueryHelpType.STRUCTURE)
@@ -277,31 +328,59 @@ class Structures {
     }
 
     public void addCompletions(final CompletionsRequest request,
-                               final PageRequest pageRequest,
-                               final List<CompletionValue> resultList) {
-        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
-        int count = 0;
-        for (final QueryHelpRow row : list) {
-            if (count >= pageRequest.getOffset() + pageRequest.getLength()) {
-                break;
-            }
+                               final int maxCompletions,
+                               final List<CompletionItem> resultList,
+                               final Set<String> applicableStructureItems) {
+        try {
+            // Depending on where your cursor is will govern what structure items are allowed,
+            // so first filter out the invalid ones before comparing to the stringMatcher
+            final List<QueryHelpRow> fullList = list.stream()
+                    .filter(queryHelpRow -> {
+                        if (QueryHelpType.STRUCTURE == queryHelpRow.getType()) {
+                            return applicableStructureItems.contains(queryHelpRow.getTitle());
+                        } else {
+                            return true;
+                        }
+                    })
+                    .toList();
 
-            if (stringMatcher.match(row.getTitle()).isPresent()) {
-                if (count >= pageRequest.getOffset()) {
-                    resultList.add(createCompletionValue(row));
-                }
-                count++;
+            if (fullList.size() > maxCompletions) {
+                // We have more than we can show, so we have to pre-filter the completions
+                // which is not ideal as Ace does not re-ask for completions if the user relaxes
+                // their completion prefix
+                final List<AceMatchResult<QueryHelpRow>> matchResults = AceStringMatcher.filterCompletions(
+                        fullList,
+                        request.getPattern(),
+                        INITIAL_SCORE,
+                        QueryHelpRow::getTitle);
+                matchResults.sort(AceStringMatcher.SCORE_DESC_THEN_NAME_COMPARATOR);
+
+                LOGGER.debug(() -> LogUtil.message("Found {} match results, from {} items, maxCompletions {}",
+                        matchResults.size(), fullList.size(), maxCompletions));
+
+                matchResults.stream()
+                        .limit(maxCompletions)
+                        .map(matchResult -> createCompletionValue(matchResult.item(), matchResult.score()))
+                        .forEach(resultList::add);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
+                        fullList.size(), maxCompletions));
+                fullList.stream()
+                        .map(row -> createCompletionValue(row, INITIAL_SCORE))
+                        .forEach(resultList::add);
             }
+        } catch (Exception e) {
+            LOGGER.error("Error adding structure completions: {}", e.getMessage(), e);
         }
     }
 
-    private CompletionValue createCompletionValue(final QueryHelpRow row) {
+    private CompletionSnippet createCompletionValue(final QueryHelpRow row, final int score) {
         final StructureElement structureElement = map.get(row.getTitle());
         final String detail = getDetail(structureElement);
-        return new CompletionValue(
+        return new CompletionSnippet(
                 row.getTitle(),
                 structureElement.snippets[0],
-                400,
+                score,
                 "Structure",
                 detail);
     }
@@ -338,16 +417,18 @@ class Structures {
             }
 
             final List<String> snippets = NullSafe.asList(structureElement.snippets);
-            final InsertType insertType = NullSafe.hasItems(snippets)
-                    ? InsertType.SNIPPET
-                    : InsertType.BLANK;
-            final String insertText = snippets.get(0);
+            final String insertText = snippets.stream().findFirst().orElse(null);
+            final InsertType insertType = InsertType.snippet(insertText);
             final String documentation = getDetail(structureElement);
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
         }
 
         return Optional.empty();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record StructureElement(String title, String detail, String... snippets) {
 

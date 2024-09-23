@@ -20,9 +20,10 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
+import stroom.docstore.api.DocumentActionHandlers;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -34,8 +35,10 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 @EntityEventHandler(action = {
@@ -50,14 +53,19 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     // Effectively docUuid => optDocRefInfo
     private final LoadingStroomCache<DocRefCacheKey, Optional<DocRefInfo>> cache;
     private final SecurityContext securityContext;
+    // Provider to avoid circular guice dependency issue
+    private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
+
 
     @Inject
     DocRefInfoCache(final CacheManager cacheManager,
-                    final ExplorerActionHandlers explorerActionHandlers,
                     final Provider<ExplorerConfig> explorerConfigProvider,
-                    final SecurityContext securityContext) {
+                    final SecurityContext securityContext,
+                    final Provider<DocumentActionHandlers> documentActionHandlersProvider,
+                    final ExplorerActionHandlers explorerActionHandlers) {
         this.securityContext = securityContext;
+        this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.explorerActionHandlers = explorerActionHandlers;
 
         cache = cacheManager.createLoadingCache(
@@ -73,30 +81,67 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
             docRefInfo = securityContext.asProcessingUserResult(() -> {
                 final DocRef docRef = docRefCacheKey.getDocRef();
                 if (docRef.getType() != null) {
-                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-                    if (handler == null) {
-                        return null;
-                    }
-                    return handler.info(docRef.getUuid());
+                    return getDocRefInfoWithType(docRef);
                 } else {
-                    final String uuid = docRef.getUuid();
-                    // No type so need to check all handlers and return the one that has it.
-                    // Hopefully next time it will still be in the cache so this won't be needed
-                    final Optional<DocRefInfo> optInfo = explorerActionHandlers.getTypes()
-                            .stream()
-                            .map(DocumentType::getType)
-                            .map(explorerActionHandlers::getHandler)
-                            .filter(Objects::nonNull)
-                            .map(handler -> handler.info(uuid))
-                            .filter(Objects::nonNull)
-                            .findAny();
-                    return optInfo.orElse(null);
+                    return getDocRefInfoWithoutType(docRef);
                 }
             });
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
         return Optional.ofNullable(docRefInfo);
+    }
+
+    private DocRefInfo getDocRefInfoWithoutType(final DocRef docRef) {
+        final String uuid = docRef.getUuid();
+        // No type so need to check all handlers and return the one that has it.
+        // Hopefully next time it will still be in the cache so this won't be needed
+        final Set<String> typesChecked = new HashSet<>();
+        final Optional<DocRefInfo> optInfo = documentActionHandlersProvider.get()
+                .stream()
+                .map(handler -> {
+                    typesChecked.add(handler.getType());
+                    try {
+                        return handler.info(uuid);
+                    } catch (DocumentNotFoundException e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .findAny();
+
+        // Folder is not a DocumentActionHandler so check in ExplorerActionHandlers
+        return optInfo
+                .or(() ->
+                        explorerActionHandlers.stream()
+                                .filter(handler ->
+                                        !typesChecked.contains(handler.getDocumentType().getType()))
+                                .map(handler -> {
+                                    try {
+                                        return handler.info(uuid);
+                                    } catch (DocumentNotFoundException e) {
+                                        return null;
+                                    }
+                                })
+                                .filter(Objects::nonNull)
+                                .findAny())
+                .orElse(null);
+    }
+
+    private DocRefInfo getDocRefInfoWithType(final DocRef docRef) {
+        final String type = docRef.getType();
+        final String uuid = docRef.getUuid();
+
+        DocRefInfo docRefInfo = NullSafe.get(
+                documentActionHandlersProvider.get().getHandler(type),
+                handler -> handler.info(uuid));
+
+        if (docRefInfo == null) {
+            docRefInfo = NullSafe.get(
+                    explorerActionHandlers.getHandler(type),
+                    handler -> handler.info(uuid));
+        }
+        return docRefInfo;
     }
 
     Optional<DocRefInfo> get(final DocRef docRef) {
@@ -129,6 +174,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
      * the doc's UUID. The UUID is unique without the type.
      */
     private static class DocRefCacheKey {
+
         private final DocRef docRef;
         private transient int hashCode = -1;
 
@@ -178,6 +224,13 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                 hashCode = Objects.hash(docRef.getUuid());
             }
             return hashCode;
+        }
+
+        @Override
+        public String toString() {
+            return "DocRefCacheKey{" +
+                    "docRef=" + docRef +
+                    '}';
         }
     }
 }

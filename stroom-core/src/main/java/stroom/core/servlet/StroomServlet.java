@@ -17,23 +17,26 @@
 package stroom.core.servlet;
 
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.shared.IsServlet;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Set;
 
 public class StroomServlet extends AppServlet implements IsServlet {
 
-    private static final Set<String> PATH_SPECS = Set.of("/ui");
+    private static final Set<String> PATH_SPECS = Set.of("");  // Empty string == exact match on context root, ie. /
 
     @Inject
-    StroomServlet(final UiConfig uiConfig) {
-        super(uiConfig);
+    StroomServlet(final Provider<UiConfig> uiConfigProvider,
+                  final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+        super(uiConfigProvider, userPreferencesServiceProvider);
     }
 
     String getScript() {
-        return "stroom/stroom.nocache.js";
+        return "ui/stroom/stroom.nocache.js";
     }
 
     @Override

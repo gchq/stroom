@@ -16,7 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,7 +27,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class SimplePopup extends AbstractPopupPanel {
 
     private static final Binder binder = GWT.create(Binder.class);
-    private final HideRequestUiHandlers uiHandlers;
 
     @UiField
     SimplePanel content;
@@ -36,8 +35,8 @@ public class SimplePopup extends AbstractPopupPanel {
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
      */
-    public SimplePopup(final HideRequestUiHandlers uiHandlers) {
-        this(uiHandlers, true);
+    public SimplePopup(final DialogActionUiHandlers dialogEventHandler) {
+        this(dialogEventHandler, true);
     }
 
     /**
@@ -48,8 +47,8 @@ public class SimplePopup extends AbstractPopupPanel {
      * @param autoHide <code>true</code> if the dialog should be automatically hidden
      *                 when the user clicks outside of it
      */
-    public SimplePopup(final HideRequestUiHandlers uiHandlers, final boolean autoHide) {
-        this(uiHandlers, autoHide, false);
+    public SimplePopup(final DialogActionUiHandlers dialogEventHandler, final boolean autoHide) {
+        this(dialogEventHandler, autoHide, false);
     }
 
     /**
@@ -62,12 +61,16 @@ public class SimplePopup extends AbstractPopupPanel {
      * @param modal    <code>true</code> if keyboard and mouse events for widgets not
      *                 contained by the dialog should be ignored
      */
-    public SimplePopup(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final boolean modal) {
-        super(autoHide, modal, PopupType.POPUP);
-        this.uiHandlers = uiHandlers;
+    public SimplePopup(final DialogActionUiHandlers dialogEventHandler, final boolean autoHide, final boolean modal) {
+        super(dialogEventHandler, autoHide, modal);
 
         setStyleName("simplePopup-popup");
         setWidget(binder.createAndBindUi(this));
+    }
+
+    @Override
+    public void setIcon(final SvgImage icon) {
+        // No icon
     }
 
     @Override
@@ -90,14 +93,21 @@ public class SimplePopup extends AbstractPopupPanel {
      * to get a chance to do something about it. When hide occurs the presenter
      * will be notified via the event and will then choose whether or not to
      * force the popup to hide.
-     *
-     * @param autoClosed
-     * @see com.google.gwt.user.client.ui.PopupPanel#hide(boolean)
      */
     @Override
     public void hide(final boolean autoClosed) {
-        uiHandlers.hideRequest(new HideRequest(autoClosed, false));
+        if (dialogActionHandler != null) {
+            if (autoClosed) {
+                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
+            } else {
+                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
+            }
+        }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, SimplePopup> {
 

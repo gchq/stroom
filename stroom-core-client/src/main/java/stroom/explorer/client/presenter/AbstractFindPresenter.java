@@ -3,6 +3,7 @@ package stroom.explorer.client.presenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
@@ -14,7 +15,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -49,7 +50,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
     private ExplorerTreeFilter lastFilter;
 
     private FindRequest currentQuery = new FindRequest(
-            new PageRequest(0, 100),
+            PageRequest.createDefault(),
             null,
             null);
     private boolean initialised;
@@ -73,6 +74,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                 }
             }
         };
+        cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(
@@ -90,7 +92,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindResult>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final RestErrorHandler errorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 updateFilter(explorerTreeFilterBuilder);
                 final ExplorerTreeFilter filter = explorerTreeFilterBuilder.build();
@@ -113,8 +115,9 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                     resetFocus();
 
                 } else {
-                    restFactory.builder()
-                            .forResultPageOf(FindResult.class)
+                    restFactory
+                            .create(EXPLORER_RESOURCE)
+                            .method(res -> res.find(currentQuery))
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                     cellTable.setPageStart(resultPage.getPageStart());
@@ -131,9 +134,9 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
 
                                 resetFocus();
                             })
-                            .onFailure(throwableConsumer)
-                            .call(EXPLORER_RESOURCE)
-                            .find(currentQuery);
+                            .onFailure(errorHandler)
+                            .taskMonitorFactory(pagerView)
+                            .exec();
                 }
             }
         };
@@ -191,7 +194,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     @Override

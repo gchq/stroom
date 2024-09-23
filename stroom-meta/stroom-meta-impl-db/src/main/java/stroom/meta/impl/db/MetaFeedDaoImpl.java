@@ -69,7 +69,7 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
         return fetchFromDb(name)
                 .or(() -> {
                     // The id isn't in the DB so create it.
-                    return create(name)
+                    return tryCreate(name)
                             .or(() -> {
                                 // If the id is still null then this may be because the create method failed
                                 // due to the name having been inserted into the DB by another thread prior
@@ -157,14 +157,17 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
         return feedToIdMap;
     }
 
-    Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .insertInto(META_FEED, META_FEED.NAME)
-                        .values(name)
-                        .onDuplicateKeyIgnore()
-                        .returning(META_FEED.ID)
-                        .fetchOptional())
-                .map(MetaFeedRecord::getId);
+    Optional<Integer> tryCreate(final String name) {
+
+        MetaFeedRecord rec = new MetaFeedRecord(null, name);
+        final MetaFeedRecord dbRec = JooqUtil.tryCreate(metaDbConnProvider, rec, META_FEED.NAME, createdRec -> {
+            LOGGER.debug(() -> LogUtil.message("Created new {} record with ID: {}, name: {}",
+                    META_FEED.getName(),
+                    NullSafe.get(createdRec, MetaFeedRecord::getId),
+                    NullSafe.get(createdRec, MetaFeedRecord::getName)));
+        });
+
+        return Optional.ofNullable(dbRec.getId());
     }
 
     @Override

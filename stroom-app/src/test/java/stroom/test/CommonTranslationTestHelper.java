@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.impl.DataProcessorTaskHandler;
 import stroom.processor.impl.ProcessorTaskQueueManager;
@@ -168,6 +169,51 @@ public class CommonTranslationTestHelper {
     public void setup(final String feedName, final List<Path> dataLocations) {
         // commonTestControl.setup();
 
+        final Set<DocRef> referenceFeeds = createReferenceFeeds();
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
+                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Error adding event data for file %s",
+                        FileUtil.getCanonicalPath(dataLocation)), e);
+            }
+        });
+
+        assertThat(metaService.getLockCount()).isZero();
+    }
+
+    public void setupStateProcess(final String feedName,
+                                  final List<Path> dataLocations,
+                                  final List<PipelineReference> pipelineReferences) {
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
+                final DocRef feedDocRef = storeCreationTool.getOrCreateFeedDoc(feedName);
+                // Create the event pipeline.
+                storeCreationTool.createEventPipelineAndProcessors(
+                        feedName,
+                        TextConverterType.DATA_SPLITTER,
+                        CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING,
+                        null,
+                        pipelineReferences);
+
+                storeCreationTool.loadEventData(feedName, dataLocation, null);
+
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Error adding event data for file %s",
+                        FileUtil.getCanonicalPath(dataLocation)), e);
+            }
+        });
+
+        assertThat(metaService.getLockCount()).isZero();
+    }
+
+    public final Set<DocRef> createReferenceFeeds() {
+        // commonTestControl.setup();
+
         // Setup the feed definitions.
         final DocRef hostNameToIP = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_IP,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_IP, REFDATA_HOST_NAME_TO_IP);
@@ -181,18 +227,6 @@ public class CommonTranslationTestHelper {
         referenceFeeds.add(hostNameToIP);
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);
-
-        dataLocations.forEach(dataLocation -> {
-            try {
-                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
-                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
-                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(String.format("Error adding event data for file %s",
-                        FileUtil.getCanonicalPath(dataLocation)), e);
-            }
-        });
-
-        assertThat(metaService.getLockCount()).isZero();
+        return referenceFeeds;
     }
 }

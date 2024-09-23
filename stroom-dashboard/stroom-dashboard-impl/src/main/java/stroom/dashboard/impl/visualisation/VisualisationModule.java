@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 
 package stroom.dashboard.impl.visualisation;
 
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.query.language.VisualisationTokenConsumer;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.Clearable;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.inject.AbstractModule;
@@ -32,11 +35,13 @@ public class VisualisationModule extends AbstractModule {
     protected void configure() {
         bind(VisualisationStore.class).to(VisualisationStoreImpl.class);
         bind(VisualisationTokenConsumer.class).to(VisualisationTokenConsumerImpl.class);
+        bind(VisualisationDocCache.class).to(VisualisationDocCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(VisualisationStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(VisualisationStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(VisualisationStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
@@ -44,5 +49,11 @@ public class VisualisationModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(VisualisationResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(VisualisationDocCacheImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(VisualisationDocCacheImpl.class);
     }
 }

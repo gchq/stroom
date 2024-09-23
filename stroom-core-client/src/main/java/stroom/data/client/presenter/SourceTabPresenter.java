@@ -12,6 +12,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
+    public static final String TAB_TYPE = "DataSource";
     private final SourcePresenter sourcePresenter;
     private SourceKey sourceKey;
 
@@ -64,6 +65,14 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 //                .withChildStreamType(sourceKey.getOptChildStreamType().orElse(null))
 //                .build());
 //    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
 
 
     public interface SourceTabView extends View {

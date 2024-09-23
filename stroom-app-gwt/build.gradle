@@ -35,7 +35,6 @@ def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
-
 def allSourceDir = "${gwtBuildDir}/all-source"
 def transformedSourceDir = "${gwtBuildDir}/transformed-source"
 def transformedBuildDir = "${gwtBuildDir}/transformed-build"
@@ -72,8 +71,6 @@ dependencies {
     implementation project(':stroom-gwt')
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-security:stroom-security-client')
-    implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
@@ -111,8 +108,6 @@ def clientProjects = [
         project(':stroom-docref'),
         project(':stroom-query:stroom-query-api'),
         project(':stroom-query:stroom-query-language-api'),
-        project(':stroom-security:stroom-security-client'),
-        project(':stroom-security:stroom-security-client-api'),
         project(':stroom-util-shared'),
 ]
 
@@ -212,6 +207,7 @@ tasks.register('makeGwtSourceDirs') {
     doLast {
         def rsyncInputDir = "${gwtBuildDir}/rsync-input"
         delete rsyncInputDir
+        new File(rsyncInputDir).mkdirs()
 
         def start = Instant.now()
 
@@ -273,7 +269,6 @@ tasks.register('makeGwtSourceDirs') {
 tasks.register('gwtCompile', JavaExec) {
     dependsOn classes
     group "gwt"
-    dependsOn 'gwtClean'
     dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.app.App'
@@ -483,3 +478,6 @@ tasks.register('gwtClean') {
         new File(gwtTmpDir).mkdirs()
     }
 }
+
+tasks.clean.dependsOn(tasks.gwtClean)
+tasks.copySources.mustRunAfter(tasks.gwtClean)

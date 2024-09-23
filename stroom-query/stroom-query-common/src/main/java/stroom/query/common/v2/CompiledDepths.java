@@ -18,7 +18,7 @@ package stroom.query.common.v2;
 
 import java.util.Arrays;
 
-class CompiledDepths {
+public class CompiledDepths {
 
     private final int maxGroupDepth;
     private final int maxDepth;
@@ -127,8 +127,10 @@ class CompiledDepths {
     public String toString() {
         return "CompiledDepths{" +
                 "maxGroupDepth=" + maxGroupDepth +
-                ", levels=" + maxDepth +
-                ", groupIndicesByDepth=" + Arrays.toString(groupIndicesByDepth) +
+                ", maxDepth=" + maxDepth +
+                ", groupSizeByDepth=" + Arrays.toString(groupSizeByDepth) +
+                ", groupIndicesByDepth=" + Arrays.deepToString(groupIndicesByDepth) +
+                ", valueIndicesByDepth=" + Arrays.deepToString(valueIndicesByDepth) +
                 '}';
     }
 }

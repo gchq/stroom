@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.data.store.impl.fs'
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
@@ -22,6 +23,7 @@ dependencies {
 
     implementation libs.aws_crt
     implementation libs.aws_s3_transfer_manager
+    implementation libs.commons_compress
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice

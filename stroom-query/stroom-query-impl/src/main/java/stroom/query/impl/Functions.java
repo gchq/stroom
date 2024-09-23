@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.impl;
 
 import stroom.docref.StringMatch.MatchType;
@@ -15,7 +31,8 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValNumber;
 import stroom.query.language.functions.ValString;
-import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionItem;
+import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpDetail;
@@ -27,9 +44,14 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
+import stroom.util.string.AceStringMatcher;
+import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
@@ -53,10 +75,14 @@ import java.util.stream.Collectors;
 @Singleton
 public class Functions {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Functions.class);
+
     private static final String ROOT_ID = "functions";
+    public static final int INITIAL_SCORE = 200;
 
     private final Provider<UiConfig> uiConfigProvider;
     private final Map<String, List<QueryHelpRow>> map;
+    private volatile List<CompletionItem> functionCompletions = null;
 
     @Inject
     public Functions(final Provider<UiConfig> uiConfigProvider) {
@@ -366,17 +392,15 @@ public class Functions {
         }
     }
 
-    public void addCompletions(final CompletionsRequest request,
-                               final PageRequest pageRequest,
-                               final List<CompletionValue> resultList) {
-        int count = 0;
-        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
+    private List<CompletionItem> buildFunctionCompletions() {
+        final List<CompletionItem> completionItems = new ArrayList<>();
         for (final FunctionDef functionDef : FunctionFactory.getFunctionDefinitions()) {
-            if (count >= pageRequest.getOffset() + pageRequest.getLength()) {
-                break;
-            }
-
             if (functionDef != null) {
+                if (isSymbolicFunction(functionDef.name())) {
+                    // We don't want to see all the funcs like +, > !=, etc.
+                    continue;
+                }
+
                 try {
                     final Map<List<String>, Long> countsByCategoryPath = Arrays
                             .stream(functionDef.signatures())
@@ -385,28 +409,72 @@ public class Functions {
                                     Collectors.counting()));
 
                     for (final FunctionSignature functionSignature : functionDef.signatures()) {
-                        if (count >= pageRequest.getOffset() + pageRequest.getLength()) {
-                            break;
-                        }
-
-                        final QueryHelpFunctionSignature row =
+                        final QueryHelpFunctionSignature queryHelpSig =
                                 convertSignature(functionDef, functionSignature, countsByCategoryPath);
-                        if (stringMatcher.match(row.getName()).isPresent()) {
-                            if (count >= pageRequest.getOffset()) {
-                                resultList.add(createCompletionValue(row));
-                            }
-                            count++;
-                        }
+                        final String completionName = FunctionSignatureUtil.buildSignatureStr(
+                                queryHelpSig.getName(), queryHelpSig.getArgs());
+                        final NamedSignature namedSig = new NamedSignature(completionName, queryHelpSig);
+                        completionItems.add(createCompletionSnippet(namedSig, INITIAL_SCORE));
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
                 }
             }
         }
+        return Collections.unmodifiableList(completionItems);
     }
 
-    private CompletionValue createCompletionValue(final QueryHelpFunctionSignature signature) {
-        final String name = FunctionSignatureUtil.buildSignatureStr(signature.getName(), signature.getArgs());
+    private List<CompletionItem> getFunctionCompletions() {
+        if (functionCompletions == null) {
+            synchronized (this) {
+                if (functionCompletions == null) {
+                    functionCompletions = buildFunctionCompletions();
+                }
+            }
+        }
+        return functionCompletions;
+    }
+
+    public void addCompletions(final CompletionsRequest request,
+                               final int maxCompletions,
+                               final List<CompletionItem> resultList) {
+
+        try {
+            final List<CompletionItem> functionCompletions = getFunctionCompletions();
+
+            if (functionCompletions.size() > maxCompletions) {
+                final List<AceMatchResult<CompletionItem>> matchResults = AceStringMatcher.filterCompletions(
+                                functionCompletions,
+                                request.getPattern(),
+                                INITIAL_SCORE,
+                                CompletionItem::getCaption)
+                        .stream()
+                        .sorted(AceStringMatcher.SCORE_DESC_THEN_NAME_COMPARATOR)
+                        .toList();
+
+                LOGGER.debug(() -> LogUtil.message("Found {} match results, from {} items, maxCompletions {}",
+                        matchResults.size(), functionCompletions.size(), maxCompletions));
+
+                matchResults.stream()
+                        .limit(maxCompletions)
+                        .map(AceMatchResult::item)
+                        .forEach(resultList::add);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
+                        functionCompletions.size(), maxCompletions));
+                functionCompletions.stream()
+                        .limit(maxCompletions)
+                        .forEach(resultList::add);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error adding function completions: {}", e.getMessage(), e);
+        }
+    }
+
+    private CompletionSnippet createCompletionSnippet(final NamedSignature namedSignature,
+                                                      final int score) {
+        final String name = namedSignature.completionName;
+        final QueryHelpFunctionSignature signature = namedSignature.signature;
         final String snippetText = FunctionSignatureUtil.buildSnippetText(signature.getName(), signature.getArgs());
         final String meta;
         if ("Value".equals(signature.getPrimaryCategory())) {
@@ -418,10 +486,10 @@ public class Functions {
         }
         final String html = buildInfoHtml(signature);
 
-        return new CompletionValue(
+        return new CompletionSnippet(
                 name,
                 snippetText,
-                300,
+                score,
                 meta,
                 html);
     }
@@ -591,14 +659,33 @@ public class Functions {
 
         } else if (row.getId().startsWith(ROOT_ID + ".") && row.getData() instanceof
                 final QueryHelpFunctionSignature signature) {
-            final InsertType insertType = NullSafe.isBlankString(row.getTitle())
-                    ? InsertType.BLANK
-                    : InsertType.PLAIN_TEXT;
+            final InsertType insertType = InsertType.snippet(row.getTitle());
             final String insertText = FunctionSignatureUtil.buildSnippetText(signature.getName(), signature.getArgs());
             final String html = buildInfoHtml(signature);
             return Optional.of(new QueryHelpDetail(insertType, insertText, html));
         }
 
         return Optional.empty();
+    }
+
+    private boolean isSymbolicFunction(final String name) {
+        final int len = name.length();
+        if (len == 1) {
+            return !Character.isAlphabetic(name.charAt(0));
+        } else if (name.length() <= 2) {
+            return !Character.isAlphabetic(name.charAt(0))
+                    && !Character.isAlphabetic(name.charAt(1));
+        } else {
+            return false;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record NamedSignature(String completionName,
+                                  QueryHelpFunctionSignature signature) {
+
     }
 }

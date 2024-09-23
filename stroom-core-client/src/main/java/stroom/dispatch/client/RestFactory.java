@@ -1,95 +1,39 @@
 package stroom.dispatch.client;
 
-import stroom.util.shared.ResultPage;
+import stroom.task.client.TaskMonitorFactory;
 
-import com.google.inject.TypeLiteral;
+import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface RestFactory {
 
-    /**
-     * Returns a builder for creating a {@link Rest} instance for calling a RESTful
-     * service.
-     * Equivalent to passing {@code false} to {@link RestFactory#builder(boolean)},
-     * i.e. does not fire {@link stroom.task.client.TaskStartEvent}
-     * or {@link stroom.task.client.TaskEndEvent} events.
-     * @return An untyped {@link RestBuilder} to set the return type of the REST service.
-     */
-    RestBuilder builder();
+    <T extends DirectRestService> Resource<T> create(T service);
 
-    /**
-     * Returns a builder for creating a {@link Rest} instance for calling a RESTful
-     * service.
-     *
-     * @param isQuiet Set to true to not fire {@link stroom.task.client.TaskStartEvent}
-     *                or {@link stroom.task.client.TaskEndEvent} events.
-     * @return An untyped {@link RestBuilder} to set the return type of the REST service.
-     */
-    RestBuilder builder(final boolean isQuiet);
+    interface Resource<T extends DirectRestService> {
 
-    String getImportFileURL();
+        <R> MethodExecutor<T, R> method(Function<T, R> function);
 
-    /**
-     * Deprecated, use {@link RestFactory#builder()} instead
-     */
-    @Deprecated
-    <R> Rest<R> create();
+        MethodExecutor<T, Void> call(Consumer<T> consumer);
+    }
 
-    /**
-     * Deprecated, use {@link RestFactory#builder(boolean)} instead
-     */
-    @Deprecated
-    <R> Rest<R> createQuiet();
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface RestBuilder {
+    interface MethodExecutor<T extends DirectRestService, R> {
 
         /**
-         * Create a {@link Rest} for a void return type
-         */
-        Rest<Void> forVoid();
+         * Set a task listener if we want to listen to the request start and finish events.
+         **/
+        TaskExecutor<T, R> taskMonitorFactory(TaskMonitorFactory taskMonitorFactory);
 
-        /**
-         * Create a {@link Rest} for a boolean return type
-         */
-        Rest<Boolean> forBoolean();
+        TaskExecutor<T, R> taskMonitorFactory(TaskMonitorFactory taskMonitorFactory, String taskMessage);
 
-        /**
-         * Create a {@link Rest} for a simple return type with no generics,
-         * e.g. {@link String}.
-         */
-        <R> Rest<R> forType(final Class<R> type);
+        MethodExecutor<T, R> onSuccess(Consumer<R> resultConsumer);
 
-        /**
-         * Create a {@link Rest} for a given return type with generics,
-         * e.g. For a return type of {@link java.util.Collection<String>}
-         * <pre>{@code
-         * RestFactory.build()
-         *   .forWrappedType(new TypeLiteral<Collection<String>>(){ })}</pre>
-         */
-        <R> Rest<R> forWrappedType(final TypeLiteral<R> typeLiteral);
+        MethodExecutor<T, R> onFailure(RestErrorHandler errorHandler);
+    }
 
-        /**
-         * Create a {@link Rest} for a {@link List} return type with a given
-         * non-generic item type, e.g. {@link String}.
-         */
-        <T> Rest<List<T>> forListOf(final Class<T> itemType);
+    interface TaskExecutor<T extends DirectRestService, R> {
 
-        /**
-         * Create a {@link Rest} for a {@link Set} return type with a given
-         * non-generic item type, e.g. {@link String}.
-         */
-        <T> Rest<Set<T>> forSetOf(final Class<T> itemType);
-
-        /**
-         * Create a {@link Rest} for a {@link ResultPage} return type with a given
-         * non-generic item type, e.g. {@link String}.
-         */
-        <T> Rest<ResultPage<T>> forResultPageOf(final Class<T> itemType);
+        void exec();
     }
 }

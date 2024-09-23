@@ -10,18 +10,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Deprecated
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
-    final DocRef errorFeed;
+    private final DocRef errorFeed;
 
     @JsonCreator
     public StreamingAnalyticProcessConfig(@JsonProperty("errorFeed") final DocRef errorFeed) {
         this.errorFeed = errorFeed;
     }
 
+    @Deprecated
     public DocRef getErrorFeed() {
         return errorFeed;
     }

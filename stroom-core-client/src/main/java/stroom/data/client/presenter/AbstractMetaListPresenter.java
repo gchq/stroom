@@ -33,7 +33,7 @@ import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -50,7 +50,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
@@ -62,7 +61,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.MyDataGridUtil;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
@@ -143,21 +141,22 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        criteria.setSort(MetaFields.CREATE_TIME.getName(), true, false);
+        criteria.setSort(MetaFields.CREATE_TIME.getFldName(), true, false);
 
         dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(META_RESOURCE)
+                            .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
-                            .call(META_RESOURCE)
-                            .findMetaRow(criteria);
+                            .onFailure(errorHandler)
+                            .taskMonitorFactory(view)
+                            .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
                 }
@@ -442,7 +441,7 @@ public abstract class AbstractMetaListPresenter
                             final int size) {
 
         final Function<MetaRow, String> extractor = metaRow ->
-                metaRow.getAttributeValue(attribute.getName());
+                metaRow.getAttributeValue(attribute.getFldName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .build();
@@ -459,7 +458,7 @@ public abstract class AbstractMetaListPresenter
                                         final int size) {
 
         final Function<MetaRow, String> extractor = metaRow ->
-                metaRow.getAttributeValue(attribute.getName());
+                metaRow.getAttributeValue(attribute.getFldName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .rightAligned()
@@ -477,7 +476,7 @@ public abstract class AbstractMetaListPresenter
                                         final int size) {
 
         final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getName());
+            final String value = metaRow.getAttributeValue(attribute.getFldName());
             if (value == null) {
                 return null;
             } else {
@@ -620,7 +619,8 @@ public abstract class AbstractMetaListPresenter
                 AbstractMetaListPresenter.this,
                 MetaFields.getAllFields(),
                 expression,
-                consumer);
+                consumer,
+                getView());
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
@@ -668,8 +668,9 @@ public abstract class AbstractMetaListPresenter
                             final Status currentStatus,
                             final Status newStatus) {
         return () -> {
-            final Rest<Integer> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(META_RESOURCE)
+                    .method(res -> res.updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus)))
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
                                     AbstractMetaListPresenter.this,
@@ -677,17 +678,18 @@ public abstract class AbstractMetaListPresenter
                                             ? "s"
                                             : ""),
                                     this::refresh))
-                    .call(META_RESOURCE)
-                    .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+                    .taskMonitorFactory(getView())
+                    .exec();
         };
     }
 
     private void download(final FindMetaCriteria criteria) {
-        final Rest<ResourceGeneration> rest = restFactory.create();
-        rest
+        restFactory
+                .create(DATA_RESOURCE)
+                .method(res -> res.download(criteria))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                .call(DATA_RESOURCE)
-                .download(criteria);
+                .taskMonitorFactory(getView())
+                .exec();
     }
 
     private void process(final DocRef pipeline,
@@ -709,8 +711,9 @@ public abstract class AbstractMetaListPresenter
                 .maxMetaCreateTimeMs(processChoice.getMaxMetaCreateTimeMs())
                 .build();
 
-        final Rest<ProcessorFilter> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.create(request))
                 .onSuccess(processorFilter -> {
                     if (processorFilter != null) {
                         CreateProcessorEvent.fire(AbstractMetaListPresenter.this, processorFilter);
@@ -718,8 +721,8 @@ public abstract class AbstractMetaListPresenter
                         AlertEvent.fireInfo(this, "Created processor filter", null);
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .create(request);
+                .taskMonitorFactory(getView())
+                .exec();
 
     }
 
@@ -741,8 +744,9 @@ public abstract class AbstractMetaListPresenter
                 .maxMetaCreateTimeMs(processChoice.getMaxMetaCreateTimeMs())
                 .build();
 
-        final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.reprocess(request))
                 .onSuccess(result -> {
                     if (result != null && result.size() > 0) {
                         Severity maxSeverity = null;
@@ -793,8 +797,8 @@ public abstract class AbstractMetaListPresenter
                         }
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .reprocess(request);
+                .taskMonitorFactory(getView())
+                .exec();
 
     }
 

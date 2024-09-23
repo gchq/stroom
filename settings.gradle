@@ -32,17 +32,23 @@ include 'stroom-analytics:stroom-analytics-rule-impl'
 include 'stroom-analytics:stroom-analytics-impl-db'
 include 'stroom-analytics:stroom-analytics-impl-db-jooq'
 
-// Annotations project.
+// Annotations
 include 'stroom-annotation:stroom-annotation-api'
 include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
 
+// AWS
+include 'stroom-aws:stroom-aws-s3-impl'
+
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
 include 'stroom-gwt'
+
+// Bytebuffer
+include 'stroom-bytebuffer'
 
 // Cache
 include 'stroom-cache:stroom-cache-api'
@@ -208,18 +214,16 @@ include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-repo-db-jooq'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
-// Query Field
-include 'stroom-query:stroom-query-field-api'
-include 'stroom-query:stroom-query-field-impl'
-include 'stroom-query:stroom-query-field-impl-db'
-include 'stroom-query:stroom-query-field-impl-db-jooq'
-
 // Query
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
 include 'stroom-query:stroom-query-language-api'
+
+// State store
+include 'stroom-state:stroom-state-api'
+include 'stroom-state:stroom-state-impl'
 
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'
@@ -236,7 +240,6 @@ include 'stroom-receive:stroom-receive-common'
 include 'stroom-receive:stroom-receive-rules-impl'
 
 // Search
-include 'stroom-search:elastic-shaded'
 include 'stroom-search:stroom-expression-matcher'
 include 'stroom-search:stroom-search-api'
 include 'stroom-search:stroom-search-elastic'
@@ -248,8 +251,6 @@ include 'stroom-search:stroom-searchable-impl'
 
 // Security
 include 'stroom-security:stroom-security-api'
-include 'stroom-security:stroom-security-client'
-include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-common-impl'
 include 'stroom-security:stroom-security-identity'
 include 'stroom-security:stroom-security-identity-db'
@@ -281,9 +282,6 @@ include 'stroom-task:stroom-task-mock'
 
 // Test project
 include 'stroom-test-common'
-
-// New Stroom UI
-include 'stroom-ui'
 
 // Util
 include 'stroom-util'

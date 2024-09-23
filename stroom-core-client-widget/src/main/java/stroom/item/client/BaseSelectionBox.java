@@ -16,34 +16,39 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BaseSelectionBox<T, I extends SelectionItem>
         extends Composite
         implements SelectionBoxView<T, I>, Focus, HasValueChangeHandlers<T> {
 
+    public static final String POINTER_CLASS_NAME = "pointer";
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
     private T value;
     private SelectionPopup<T, I> popup;
+    private boolean allowTextEntry;
+    private boolean isEnabled = true;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
-            registerHandler(textBox.addClickHandler(event -> showPopup()));
+            registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 int keyCode = event.getNativeKeyCode();
-                if (KeyCodes.KEY_ENTER == keyCode || KeyCodes.KEY_SPACE == keyCode) {
+                if (KeyCodes.KEY_ENTER == keyCode) {
                     showPopup();
                 }
             }));
+            registerHandler(textBox.addValueChangeHandler(event ->
+                    ValueChangeEvent.fire(BaseSelectionBox.this, value)));
         }
     };
 
     public BaseSelectionBox() {
         textBox = new TextBox();
-        textBox.setReadOnly(true);
         textBox.addStyleName("SelectionBox-textBox stroom-control allow-focus");
 
         svgIconBox = new SvgIconBox();
@@ -51,6 +56,37 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         svgIconBox.setWidget(textBox, SvgImage.DROP_DOWN);
 
         initWidget(svgIconBox);
+        setAllowTextEntry(false);
+    }
+
+    public void setAllowTextEntry(final boolean allowTextEntry) {
+        this.allowTextEntry = allowTextEntry;
+        textBox.setReadOnly(!allowTextEntry);
+        updatePointer();
+    }
+
+    private void updatePointer() {
+        if (allowTextEntry || !isEnabled()) {
+            textBox.removeStyleName(POINTER_CLASS_NAME);
+        } else {
+            textBox.addStyleName(POINTER_CLASS_NAME);
+        }
+
+        if (isEnabled()) {
+            svgIconBox.addStyleName(POINTER_CLASS_NAME);
+        } else {
+            svgIconBox.removeStyleName(POINTER_CLASS_NAME);
+        }
+    }
+
+    private void onTextBoxClick() {
+        if (!allowTextEntry) {
+            showPopup();
+        }
+    }
+
+    private boolean isEnabled() {
+        return this.isEnabled;
     }
 
     @Override
@@ -77,6 +113,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             popup = new SelectionPopup<>();
             popup.init(model);
             popup.addAutoHidePartner(textBox.getElement());
+            popup.addAutoHidePartner(svgIconBox.getElement());
 
             final I selectionItem = model.wrap(value);
             if (selectionItem != null) {
@@ -101,7 +138,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
                 hidePopup();
             }));
 
-            popup.show(textBox);
+            popup.show(textBox.getElement());
         }
     }
 
@@ -120,7 +157,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     public void setEnabled(final boolean enabled) {
+        this.isEnabled = enabled;
         textBox.setEnabled(enabled);
+        svgIconBox.setReadonly(!enabled);
+        updatePointer();
     }
 
     public T getValue() {
@@ -133,15 +173,22 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     public void setValue(final T value, final boolean fireEvents) {
         this.value = value;
+
+        String currentText = textBox.getText();
+        String newText = "";
         if (value != null) {
-            textBox.setValue(model.wrap(value).getLabel());
-        } else {
-            textBox.setValue("");
+            newText = model.wrap(value).getLabel();
         }
 
-        if (fireEvents) {
+        textBox.setValue(newText);
+
+        if (fireEvents && !Objects.equals(currentText, newText)) {
             ValueChangeEvent.fire(this, value);
         }
+    }
+
+    public String getText() {
+        return textBox.getText();
     }
 
     @Override

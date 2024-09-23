@@ -38,7 +38,7 @@ public class SimpleDurationUtil {
                     default -> throw new ParseException("Time unit is invalid: " + trimmed, 0);
                 };
 
-                return new SimpleDuration(time, timeUnit);
+                return SimpleDuration.builder().time(time).timeUnit(timeUnit).build();
             } catch (final RuntimeException e) {
                 throw new ParseException("Format of duration string is invalid: " + trimmed, 0);
             }

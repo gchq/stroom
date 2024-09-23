@@ -6,7 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="solrIndexFieldUse" label="Field Use">
-            <l:SelectionBox ui:field="fieldUse" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexFieldName" label="Field Name">
             <g:TextBox ui:field="fieldName" addStyleNames="w-100"/>

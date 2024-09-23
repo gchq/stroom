@@ -21,6 +21,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import java.io.OutputStream;
 
 public class OutputStreamAppender extends AbstractAppender {
+
     private final OutputStream outputStream;
 
     public OutputStreamAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -30,8 +31,8 @@ public class OutputStreamAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() {
-        return outputStream;
+    protected Output createOutput() {
+        return new BasicOutput(outputStream);
     }
 
     @Override

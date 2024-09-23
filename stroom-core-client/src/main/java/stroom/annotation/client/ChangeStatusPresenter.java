@@ -19,9 +19,9 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -39,7 +39,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
+public class ChangeStatusPresenter
+        extends MyPresenterWidget<ChangeStatusView>
         implements ChangeStatusUiHandlers {
 
     private final RestFactory restFactory;
@@ -70,12 +71,16 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
     public void show(final List<Long> annotationIdList) {
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(values -> {
-                if (currentStatus == null && values != null && values.size() > 0) {
-                    changeStatus(values.get(0));
-                }
-            }).call(annotationResource).getStatus(null);
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getStatus(null))
+                    .onSuccess(values -> {
+                        if (currentStatus == null && values != null && values.size() > 0) {
+                            changeStatus(values.get(0));
+                        }
+                    })
+                    .taskMonitorFactory(this)
+                    .exec();
         }
 
         ShowPopupEvent.builder(this)
@@ -86,14 +91,20 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                        final Rest<Integer> rest = restFactory.create();
-
                         final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
-                        rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
-                                .call(annotationResource)
-                                .setStatus(request);
+                        restFactory
+                                .create(annotationResource)
+                                .method(res -> res.setStatus(request))
+                                .onSuccess(values -> {
+                                    GWT.log("Updated " + values + " annotations");
+                                    e.hide();
+                                })
+                                .onFailure(RestErrorHandler.forPopup(this, e))
+                                .taskMonitorFactory(this)
+                                .exec();
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
                 .fire();
     }
@@ -102,7 +113,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         if (!Objects.equals(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
-            HidePopupEvent.builder(statusPresenter).fire();
+            HidePopupRequestEvent.builder(statusPresenter).fire();
         }
     }
 
@@ -110,8 +121,12 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
     public void showStatusChooser(final Element element) {
         statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(annotationResource).getStatus(filter);
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getStatus(filter))
+                    .onSuccess(consumer)
+                    .taskMonitorFactory(this)
+                    .exec();
         });
         statusPresenter.clearFilter();
         statusPresenter.setSelected(currentStatus);

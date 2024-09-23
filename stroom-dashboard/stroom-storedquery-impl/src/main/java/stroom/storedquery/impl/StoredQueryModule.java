@@ -4,11 +4,10 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class StoredQueryModule extends AbstractModule {
 
@@ -23,7 +22,7 @@ public class StoredQueryModule extends AbstractModule {
                 .bindJobTo(QueryHistoryClean.class, builder -> builder
                         .name("Query History Clean")
                         .description("Job to clean up old query history items")
-                        .schedule(CRON, "0 0 *")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .advanced(false));
     }
 

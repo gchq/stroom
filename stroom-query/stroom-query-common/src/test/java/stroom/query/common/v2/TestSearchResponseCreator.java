@@ -81,12 +81,15 @@ class TestSearchResponseCreator {
                 TOLERANCE);
 
         assertThat(searchResponse.getErrors()).hasSize(1);
-        assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
+        assertThat(searchResponse.getErrors().getFirst()).containsIgnoringCase("timed out");
     }
 
     private SearchResponseCreator createSearchResponseCreator(final SearchRequest searchRequest) {
-        return new SearchResponseCreator(sizesProvider, mockStore, new ExpressionContextFactory()
-                .createContext(searchRequest));
+        return new SearchResponseCreator(
+                sizesProvider,
+                mockStore,
+                new ExpressionContextFactory().createContext(searchRequest),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
     }
 
     @Test
@@ -303,13 +306,14 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public <R> void fetch(final OffsetRange range,
+            public <R> void fetch(final List<Column> columns,
+                                  final OffsetRange range,
                                   final OpenGroups openGroups,
                                   final TimeFilter timeFilter,
                                   final ItemMapper<R> mapper,
                                   final Consumer<R> resultConsumer,
                                   final Consumer<Long> totalRowCountConsumer) {
-                resultConsumer.accept(mapper.create(getColumns(), item));
+                resultConsumer.accept(mapper.create(item));
                 if (totalRowCountConsumer != null) {
                     totalRowCountConsumer.accept(1L);
                 }
@@ -338,11 +342,6 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public Serialisers getSerialisers() {
-                return new Serialisers(new SearchResultStoreConfig());
-            }
-
-            @Override
             public KeyFactory getKeyFactory() {
                 return KeyFactoryFactory.create(
                         new BasicKeyFactoryConfig(),
@@ -359,8 +358,8 @@ class TestSearchResponseCreator {
     private void assertResponseWithData(final SearchResponse searchResponse) {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).hasSize(1);
-        assertThat(searchResponse.getResults().get(0)).isInstanceOf(TableResult.class);
-        TableResult tableResult = (TableResult) searchResponse.getResults().get(0);
+        assertThat(searchResponse.getResults().getFirst()).isInstanceOf(TableResult.class);
+        TableResult tableResult = (TableResult) searchResponse.getResults().getFirst();
         assertThat(tableResult.getTotalResults()).isEqualTo(1);
     }
 

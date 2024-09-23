@@ -7,7 +7,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -17,7 +16,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
-public class StroomZipFile implements Closeable {
+public class StroomZipFile implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipFile.class);
 

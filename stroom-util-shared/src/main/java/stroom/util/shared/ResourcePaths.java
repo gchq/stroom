@@ -9,7 +9,22 @@ public interface ResourcePaths {
     /**
      * Used as the root path for all servlet and UI requests
      */
-    String ROOT_PATH = "/stroom";
+    String ROOT_PATH = "";
+
+    /**
+     * Used as the root path for all ui resources
+     */
+    String UI_PATH = "/ui";
+
+    /**
+     * Used as the root path for all script resources
+     */
+    String SCRIPT_PATH = "/ui/script";
+
+    /**
+     * Used as the path for internal IdP sign in
+     */
+    String SIGN_IN_PATH = "/signIn";
 
     /**
      * Used as the root path for all REST resources
@@ -17,14 +32,11 @@ public interface ResourcePaths {
     String API_ROOT_PATH = "/api";
 
     /**
-     * Used as the root path for all web socket traffic
+     * Used as the base path for all servlets. This is because in earlier versions
+     * servlets were all under /stroom because the React UI was using /. We could move
+     * them all down to / but that is a breaking API change.
      */
-    String WEB_SOCKET_ROOT_PATH = "/web-socket";
-
-    /**
-     * All static React paths containing "/s/" will be served as root and be handled by the React BrowserRouter
-     */
-    String SINGLE_PAGE_PREFIX = "/s/";
+    String SERVLET_BASE_PATH = "/stroom";
 
     /**
      * Path part for unauthenticated servlets
@@ -41,21 +53,30 @@ public interface ResourcePaths {
      */
     String SQL_STATISTICS = "/sqlstatistics";
 
-    /**
-     * Path part for the Hessian based inter-node RPC comms
-     */
-    String CLUSTER_CALL_RPC = NO_AUTH + "/clustercall.rpc";
-
-    String XSRF_TOKEN_RPC_PATH = "/xsrf";
-
     // Path parts for versioned API paths
     String V1 = "/v1";
     String V2 = "/v2";
     String V3 = "/v3";
 
 
-    static String addUnauthenticatedPrefix(final String... parts) {
+    static String addLegacyUnauthenticatedServletPrefix(final String... parts) {
         return new Builder()
+                .addPathPart(SERVLET_BASE_PATH)
+                .addPathPart(NO_AUTH)
+                .addPathParts(parts)
+                .build();
+    }
+
+    static String addLegacyAuthenticatedServletPrefix(final String... parts) {
+        return new Builder()
+                .addPathPart(SERVLET_BASE_PATH)
+                .addPathParts(parts)
+                .build();
+    }
+
+    static String addUnauthenticatedUiPrefix(final String... parts) {
+        return new Builder()
+                .addPathPart(UI_PATH)
                 .addPathPart(NO_AUTH)
                 .addPathParts(parts)
                 .build();
@@ -89,30 +110,6 @@ public interface ResourcePaths {
     static String buildAuthenticatedApiPath(final String... parts) {
         return new Builder()
                 .addPathPart(API_ROOT_PATH)
-                .addPathParts(parts)
-                .build();
-    }
-
-    /**
-     * @param parts The path or parts of a path to append onto the base path.
-     * @return The full path to the unauthenticated resource, e.g. /api/noauth/node
-     */
-    static String buildUnauthenticatedApiPath(final String... parts) {
-        return new Builder()
-                .addPathPart(API_ROOT_PATH)
-                .addPathPart(NO_AUTH)
-                .addPathParts(parts)
-                .build();
-    }
-
-    /**
-     * @param parts The path or parts of a path to append onto the base path
-     *              {@link ResourcePaths#WEB_SOCKET_ROOT_PATH}.
-     * @return The full path to the authenticated resource, e.g. /web-socket/application-instance
-     */
-    static String buildAuthenticatedWebSocketPath(final String... parts) {
-        return new Builder()
-                .addPathPart(WEB_SOCKET_ROOT_PATH)
                 .addPathParts(parts)
                 .build();
     }

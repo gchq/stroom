@@ -26,7 +26,6 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.WordListResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Param;
 
@@ -44,6 +43,7 @@ public class ListInputPresenter
         extends AbstractComponentPresenter<ListInputView>
         implements ListInputUiHandlers, HasParams {
 
+    public static final String TAB_TYPE = "list-input-component";
     public static final ComponentType TYPE =
             new ComponentType(1,
                     "list-input",
@@ -98,19 +98,22 @@ public class ListInputPresenter
     private void update(final ListInputComponentSettings settings) {
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(WORD_LIST_RESOURCE)
+                    .method(res -> res.getWords(settings.getDictionary().getUuid()))
                     .onSuccess(words -> {
                         if (words != null) {
                             getView().setValues(words);
                             getView().setSelectedValue(settings.getValue());
+                            getView().setAllowTextEntry(settings.isAllowTextEntry());
                         }
                     })
-                    .call(WORD_LIST_RESOURCE)
-                    .getWords(settings.getDictionary().getUuid());
+                    .taskMonitorFactory(this)
+                    .exec();
         } else {
             getView().setValues(settings.getValues());
             getView().setSelectedValue(settings.getValue());
+            getView().setAllowTextEntry(settings.isAllowTextEntry());
         }
     }
 
@@ -134,9 +137,17 @@ public class ListInputPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ListInputView extends View, HasUiHandlers<ListInputUiHandlers> {
 
@@ -145,5 +156,7 @@ public class ListInputPresenter
         void setSelectedValue(String selected);
 
         String getSelectedValue();
+
+        void setAllowTextEntry(boolean allowTextEntry);
     }
 }

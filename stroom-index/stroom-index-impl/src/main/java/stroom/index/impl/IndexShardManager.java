@@ -19,39 +19,36 @@ package stroom.index.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringUtil;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -59,7 +56,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -71,59 +67,32 @@ public class IndexShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManager.class);
 
     private final IndexStore indexStore;
-    private final IndexShardService indexShardService;
-    private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
+    private final IndexShardDao indexShardDao;
+    private final IndexShardWriterCache indexShardWriterCache;
     private final NodeInfo nodeInfo;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
-
-    private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
-
-    private final Map<IndexShardStatus, Set<IndexShardStatus>> allowedStateTransitions = new HashMap<>();
 
     @Inject
     IndexShardManager(final IndexStore indexStore,
-                      final IndexShardService indexShardService,
-                      final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
+                      final IndexShardDao indexShardDao,
+                      final IndexShardWriterCache indexShardWriterCache,
                       final NodeInfo nodeInfo,
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
                       final SecurityContext securityContext,
                       final PathCreator pathCreator) {
         this.indexStore = indexStore;
-        this.indexShardService = indexShardService;
-        this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
+        this.indexShardDao = indexShardDao;
+        this.indexShardWriterCache = indexShardWriterCache;
         this.nodeInfo = nodeInfo;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
-
-        // Ensure all but deleted and corrupt states can be set to closed on clean.
-        allowedStateTransitions.put(IndexShardStatus.NEW,
-                Set.of(IndexShardStatus.OPENING,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPENING,
-                Set.of(IndexShardStatus.OPEN,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPEN,
-                Set.of(IndexShardStatus.CLOSING,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSING,
-                Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSED,
-                Set.of(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
-        allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
 
     /**
@@ -133,12 +102,10 @@ public class IndexShardManager {
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (deletingShards.compareAndSet(false, true)) {
                 try {
-                    final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
-
                     final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
-                    final ResultPage<IndexShard> shards = indexShardService.find(criteria);
+                    final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
                     if (NullSafe.test(shards, shards2 -> shards2.size() > 0)) {
                         deleteShardsFromDisk(indexShardWriterCache, shards);
                     } else {
@@ -169,10 +136,10 @@ public class IndexShardManager {
                             final Iterator<IndexShard> iter = shards.getValues().iterator();
                             while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
                                 final IndexShard shard = iter.next();
-                                final IndexShardWriter indexShardWriter =
-                                        indexShardWriterCache.getWriterByShardId(shard.getId());
+                                final Optional<IndexShardWriter> optional =
+                                        indexShardWriterCache.getIfPresent(shard.getId());
                                 try {
-                                    if (indexShardWriter != null) {
+                                    if (optional.isPresent()) {
                                         LOGGER.debug(() ->
                                                 "deleteShardsFromDisk() - Unable to delete index " +
                                                         "shard " + shard.getId() + " as it is currently " +
@@ -209,8 +176,8 @@ public class IndexShardManager {
                 // The directory either doesn't exist or we have
                 // successfully deleted it so delete this index
                 // shard from the database.
-                if (indexShardService != null) {
-                    indexShardService.delete(shard);
+                if (indexShardDao != null) {
+                    indexShardDao.delete(shard.getId());
                 }
             }
         } catch (final RuntimeException e) {
@@ -221,7 +188,7 @@ public class IndexShardManager {
     public Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final String thisNodeName = nodeInfo.getThisNodeName();
-            final ResultPage<IndexShard> shards = indexShardService.find(criteria);
+            final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
 
             // Only perform actions on shards owned by this node.
             final List<IndexShard> ownedShards = shards
@@ -234,61 +201,60 @@ public class IndexShardManager {
 
     private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
-        if (ownedShards.size() > 0) {
+        if (!ownedShards.isEmpty()) {
             taskContextFactory.context(
                     "Index Shard Manager",
                     TerminateHandlerFactory.NOOP_FACTORY,
                     parentTaskContext -> {
                         parentTaskContext.info(() -> action.getActivity() + " index shards");
 
-                        final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
-
                         // Create an atomic integer to count the number of index shard writers yet to complete the
                         // specified action.
                         final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
                         // Create a scheduled executor for us to continually log index shard writer action progress.
-                        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-                        // Start logging action progress.
-                        executor.scheduleAtFixedRate(
-                                () -> LOGGER.info(() ->
-                                        "Waiting for " + remaining.get() + " index shards to " + action.getName()),
-                                10,
-                                10,
-                                TimeUnit.SECONDS);
+                        try (final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()) {
+                            // Start logging action progress.
+                            executor.scheduleAtFixedRate(
+                                    () -> LOGGER.info(() ->
+                                            "Waiting for " + remaining.get() + " index shards to " + action.getName()),
+                                    10,
+                                    10,
+                                    TimeUnit.SECONDS);
 
-                        // Perform action on all of the index shard writers in parallel.
-                        ownedShards.parallelStream().forEach(shard -> {
-                            try {
-                                // We use a child tak context here to create child messages in the UI but also to ensure
-                                // the task is performed in the context of the parent user.
-                                taskContextFactory.childContext(parentTaskContext,
-                                        "Index Shard Manager",
-                                        TerminateHandlerFactory.NOOP_FACTORY,
-                                        taskContext -> {
-                                            taskContext.info(() -> action.getActivity() +
-                                                    " index shard: " +
-                                                    shard.getId());
-                                            switch (action) {
-                                                case FLUSH:
-                                                    shardCount.incrementAndGet();
-                                                    indexShardWriterCache.flush(shard.getId());
-                                                    break;
-                                                case DELETE:
-                                                    shardCount.incrementAndGet();
-                                                    indexShardWriterCache.delete(shard.getId());
-                                                    break;
-                                            }
-                                        }).run();
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
+                            // Perform action on all of the index shard writers in parallel.
+                            ownedShards.parallelStream().forEach(shard -> {
+                                try {
+                                    // We use a child tak context here to create child messages in the UI but also to
+                                    // ensure the task is performed in the context of the parent user.
+                                    taskContextFactory.childContext(parentTaskContext,
+                                            "Index Shard Manager",
+                                            TerminateHandlerFactory.NOOP_FACTORY,
+                                            taskContext -> {
+                                                taskContext.info(() -> action.getActivity() +
+                                                        " index shard: " +
+                                                        shard.getId());
+                                                switch (action) {
+                                                    case FLUSH:
+                                                        shardCount.incrementAndGet();
+                                                        flush(shard);
+                                                        break;
+                                                    case DELETE:
+                                                        shardCount.incrementAndGet();
+                                                        delete(shard);
+                                                        break;
+                                                }
+                                            }).run();
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e::getMessage, e);
+                                }
 
-                            remaining.getAndDecrement();
-                        });
+                                remaining.getAndDecrement();
+                            });
 
-                        // Shut down the progress logging executor.
-                        executor.shutdown();
+                            // Shut down the progress logging executor.
+                            executor.shutdown();
+                        }
 
                         LOGGER.info(() -> "Finished " +
                                 action.getActivity().toLowerCase(Locale.ROOT) +
@@ -299,12 +265,27 @@ public class IndexShardManager {
         return shardCount.get();
     }
 
+    private void flush(final IndexShard indexShard) {
+        indexShardWriterCache.flush(indexShard.getId());
+    }
+
+    private void delete(final IndexShard indexShard) {
+        if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(),
+                DocumentPermissionNames.DELETE)) {
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    "You do not have permission to delete index shard");
+        } else {
+            indexShardWriterCache.delete(indexShard.getId());
+        }
+    }
+
     public void checkRetention() {
         taskContextFactory.current().info(() -> "Checking index shard retention");
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-            final ResultPage<IndexShard> shards = indexShardService.find(criteria);
+            final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
             for (final IndexShard shard : shards.getValues()) {
                 checkRetention(shard);
             }
@@ -314,10 +295,11 @@ public class IndexShardManager {
     private void checkRetention(final IndexShard shard) {
         try {
             // Delete this shard if it is older than the retention age.
-            final IndexDoc index = indexStore.readDocument(new DocRef(IndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
+            final LuceneIndexDoc index = indexStore.readDocument(
+                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
             if (index == null) {
                 // If there is no associated index then delete the shard.
-                setStatus(shard.getId(), IndexShardStatus.DELETED);
+                indexShardWriterCache.delete(shard.getId());
 
             } else {
                 final Integer retentionDayAge = index.getRetentionDayAge();
@@ -333,87 +315,16 @@ public class IndexShardManager {
                             .toEpochMilli();
 
                     if (partitionToTime < retentionTime) {
-                        setStatus(shard.getId(), IndexShardStatus.DELETED);
+                        indexShardWriterCache.delete(shard.getId());
                     }
                 }
             }
         } catch (final DocumentNotFoundException e) {
             // If there is no associated index then delete the shard.
-            setStatus(shard.getId(), IndexShardStatus.DELETED);
+            indexShardWriterCache.delete(shard.getId());
 
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
-        }
-    }
-
-    public IndexShard load(final long indexShardId) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            // Allow the thing to run without a service (e.g. benchmark mode)
-            if (indexShardService != null) {
-                final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-                lock.lock();
-                try {
-                    return indexShardService.loadById(indexShardId);
-                } finally {
-                    lock.unlock();
-                }
-            }
-
-            return null;
-        });
-    }
-
-    public void setStatus(final long indexShardId, final IndexShardStatus status) {
-        // Allow the thing to run without a service (e.g. benchmark mode)
-        if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
-            try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
-                if (indexShard != null) {
-                    // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                    if (allowed == null) {
-                        throw new RuntimeException("No state transitions are defined for " +
-                                indexShard.getStatus());
-                    } else {
-                        if (allowed.contains(status)) {
-                            indexShardService.setStatus(indexShard.getId(), status);
-                        } else {
-                            LOGGER.debug("State transition from " +
-                                    indexShard.getStatus() +
-                                    " to " +
-                                    status +
-                                    " was attempted but is not allowed");
-                        }
-                    }
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                lock.unlock();
-            }
-        }
-    }
-
-    public void update(final long indexShardId,
-                       final Integer documentCount,
-                       final Long commitDurationMs,
-                       final Long commitMs,
-                       final Long fileSize) {
-        // Allow the thing to run without a service (e.g. benchmark mode)
-        if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
-            try {
-                indexShardService.update(indexShardId,
-                        documentCount,
-                        commitDurationMs,
-                        commitMs,
-                        fileSize);
-            } finally {
-                lock.unlock();
-            }
         }
     }
 

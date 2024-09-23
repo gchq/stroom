@@ -35,7 +35,7 @@ public class StagingValueImpl implements StagingValue {
         return valueStoreHashAlgorithm.hash(valueByteBufferView);
     }
 
-    public int getTypeId() {
+    public byte getTypeId() {
         return StagingValueSerde.extractTypeId(fullByteBuffer);
     }
 

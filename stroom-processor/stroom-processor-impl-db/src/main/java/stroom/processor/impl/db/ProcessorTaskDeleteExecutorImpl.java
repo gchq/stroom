@@ -24,11 +24,13 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
+import stroom.security.api.DocumentPermissionService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
@@ -37,6 +39,7 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -54,6 +57,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskDao processorTaskDao;
     private final TaskContextFactory taskContextFactory;
+    private final DocumentPermissionService documentPermissionService;
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ClusterLockService clusterLockService,
@@ -61,13 +65,15 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                     final ProcessorDao processorDao,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskDao processorTaskDao,
-                                    final TaskContextFactory taskContextFactory) {
+                                    final TaskContextFactory taskContextFactory,
+                                    final DocumentPermissionService documentPermissionService) {
         this.clusterLockService = clusterLockService;
         this.processorConfig = processorConfig;
         this.processorDao = processorDao;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.taskContextFactory = taskContextFactory;
+        this.documentPermissionService = documentPermissionService;
     }
 
     /**
@@ -138,7 +144,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
         // Physically delete old filters.
         taskContext.info(() -> "Physically deleting old processor filters with state of DELETED");
-        runWithCountAndTimeLogging(() -> processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold),
+        runWithCountAndTimeLogging(() -> deletingOldProcessorFilters(deleteThreshold),
                 totalCount,
                 "Physically deleted {} old processor filters with state of DELETED");
 
@@ -151,6 +157,19 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         if (totalCount.get() == 0) {
             LOGGER.info("{} - No records logically or physically deleted", TASK_NAME);
         }
+    }
+
+    private int deletingOldProcessorFilters(final Instant deleteThreshold) {
+        final Set<String> procFilterUuids = processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold);
+
+        if (!procFilterUuids.isEmpty()) {
+            // Now delete any perms for the deleted filters
+            LOGGER.debug(() -> LogUtil.message("Deleting doc_permission records for {} doc UUIDs",
+                    procFilterUuids.size()));
+            documentPermissionService.deleteDocumentPermissions(procFilterUuids);
+        }
+
+        return procFilterUuids.size();
     }
 
     private void runWithCountAndTimeLogging(final Supplier<Integer> action,

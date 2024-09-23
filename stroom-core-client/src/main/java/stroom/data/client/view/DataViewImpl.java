@@ -18,8 +18,10 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -46,9 +48,10 @@ public class DataViewImpl extends ViewImpl implements DataView {
     LayerContainer layerContainer;
     @UiField
     SimplePanel progressBarPanel;
-
     @UiField
     ButtonPanel buttonPanel;
+    @UiField
+    SpinnerLarge spinner;
 
     private boolean sourceLinkEnabled = true;
 
@@ -56,6 +59,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        spinner.setVisible(false);
         layerContainer.setFade(true);
         sourceLinkLabel.setText("View Source");
         sourceLinkLabel.setVisible(true);
@@ -123,6 +127,11 @@ public class DataViewImpl extends ViewImpl implements DataView {
         } else {
             progressBarPanel.clear();
         }
+    }
+
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return spinner.createTaskMonitor();
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {

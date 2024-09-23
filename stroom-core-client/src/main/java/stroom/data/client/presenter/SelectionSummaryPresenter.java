@@ -1,7 +1,6 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaResource;
@@ -20,7 +19,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Set;
 
-public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView> {
+public class SelectionSummaryPresenter
+        extends MyPresenterWidget<CommonAlertView> {
 
     public static final int MAX_DISTINCT_ITEMS = Math.min(10, SelectionSummary.MAX_GROUP_CONCAT_PARTS);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -46,25 +46,29 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                      final Runnable runnable) {
         getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
-        final Rest<SelectionSummary> rest = restFactory.create();
-        if (reprocess) {
-            rest
-                    .onSuccess(result -> update(postAction, action, result))
-                    .call(META_RESOURCE)
-                    .getReprocessSelectionSummary(criteria);
-        } else {
-            rest
-                    .onSuccess(result -> update(postAction, action, result))
-                    .call(META_RESOURCE)
-                    .getSelectionSummary(criteria);
-        }
-
         final PopupType popupType = postAction != null
                 ? PopupType.OK_CANCEL_DIALOG
                 : PopupType.CLOSE_DIALOG;
         ShowPopupEvent.builder(this)
                 .popupType(popupType)
                 .caption(caption)
+                .onShow(e -> {
+                    if (reprocess) {
+                        restFactory
+                                .create(META_RESOURCE)
+                                .method(res -> res.getReprocessSelectionSummary(criteria))
+                                .onSuccess(result -> update(postAction, action, result))
+                                .taskMonitorFactory(this)
+                                .exec();
+                    } else {
+                        restFactory
+                                .create(META_RESOURCE)
+                                .method(res -> res.getSelectionSummary(criteria))
+                                .onSuccess(result -> update(postAction, action, result))
+                                .taskMonitorFactory(this)
+                                .exec();
+                    }
+                })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         runnable.run();

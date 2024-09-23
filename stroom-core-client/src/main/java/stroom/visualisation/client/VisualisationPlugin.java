@@ -18,7 +18,7 @@
 package stroom.visualisation.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -26,6 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
@@ -66,26 +67,30 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<VisualisationDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(VISUALISATION_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(VISUALISATION_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final VisualisationDoc document,
                      final Consumer<VisualisationDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(VISUALISATION_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(VISUALISATION_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

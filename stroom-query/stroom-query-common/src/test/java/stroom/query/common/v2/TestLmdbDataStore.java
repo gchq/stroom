@@ -16,22 +16,26 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
+import stroom.lmdb2.LmdbEnv;
+import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
@@ -39,22 +43,32 @@ import stroom.query.language.functions.ValString;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestLmdbDataStore extends AbstractDataStoreTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbDataStore.class);
 
     private Path tempDir;
     private ExecutorService executorService;
@@ -75,24 +89,28 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                      final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
-                     final AbstractResultStoreConfig resultStoreConfig,
-                     final DataStoreSettings dataStoreSettings) {
+                     final SearchResultStoreConfig resultStoreConfig,
+                     final DataStoreSettings dataStoreSettings,
+                     final String subDirectory) {
         final FieldIndex fieldIndex = new FieldIndex();
 
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
-                pathCreator,
-                tempDirProvider,
-                () -> lmdbLibraryConfig);
-        final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig());
-
+        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
+        final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
+                .builder()
+                .config(resultStoreConfig.getLmdbConfig())
+                .subDir(subDirectory)
+                .build();
+        final LmdbEnv.Builder lmdbEnvBuilder = LmdbEnv
+                .builder()
+                .config(resultStoreConfig.getLmdbConfig())
+                .lmdbEnvDir(lmdbEnvDir);
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
                 searchRequestSource,
-                serialisers,
                 lmdbEnvBuilder,
                 resultStoreConfig,
                 queryKey,
@@ -103,7 +121,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 Collections.emptyMap(),
                 dataStoreSettings,
                 () -> executorService,
-                errorConsumer);
+                errorConsumer,
+                new ByteBufferFactoryImpl());
     }
 
     @Test
@@ -163,6 +182,169 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         Metrics.report();
     }
 
+    @Disabled
+    @Test
+    void testMultiThread2() {
+        final int threadCount = 100;
+        final Executor executor = Executors.newFixedThreadPool(threadCount * 2);
+        final CompletableFuture<?>[] writers = new CompletableFuture[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            writers[i] = CompletableFuture.runAsync(this::testMultiThread, executor);
+        }
+        CompletableFuture.allOf(writers).join();
+    }
+
+    @Disabled
+    @Test
+    void testMultiThread() {
+        final int threadCount = 100;
+        final FormatterFactory formatterFactory = new FormatterFactory(null);
+        final ColumnFormatter columnFormatter = new ColumnFormatter(formatterFactory);
+
+        final TableSettings tableSettings = TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("Text")
+                        .name("Text")
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .format(Format.TEXT)
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Text2")
+                        .name("Text2")
+                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .format(Format.TEXT)
+                        .group(1)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Text2")
+                        .name("Text2")
+                        .expression("first(" + ParamSubstituteUtil.makeParam("Text2") + ")")
+                        .format(Format.TEXT)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("count")
+                        .name("count")
+                        .expression("count()")
+                        .format(Format.NUMBER)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("countGroups")
+                        .name("countGroups")
+                        .expression("countGroups()")
+                        .format(Format.NUMBER)
+                        .build())
+                .showDetail(true)
+                .build();
+
+        final DataStore dataStore = create(tableSettings);
+
+        // Start reading data store.
+        final AtomicBoolean reading = new AtomicBoolean(true);
+        final CompletableFuture<?>[] readers = new CompletableFuture[threadCount];
+        final CompletableFuture<?>[] writers = new CompletableFuture[threadCount];
+        final Executor executor = Executors.newFixedThreadPool(threadCount * 2);
+
+        for (int j = 0; j < threadCount; j++) {
+            final int run = j;
+            readers[j] = CompletableFuture.runAsync(() -> {
+                LOGGER.info(() -> "Reading " + run);
+                while (reading.get()) {
+                    final ResultRequest tableResultRequest = ResultRequest.builder()
+                            .componentId("componentX")
+                            .addMappings(tableSettings)
+                            .requestedRange(new OffsetRange(0, 3000))
+                            .build();
+                    final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
+                    final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                            dataStore,
+                            tableResultRequest);
+                    final Set<String> openGroups = searchResult
+                            .getRows()
+                            .stream()
+                            .map(Row::getGroupKey)
+                            .collect(Collectors.toSet());
+
+                    final ResultRequest tableResultRequest2 = ResultRequest.builder()
+                            .componentId("componentX")
+                            .addMappings(tableSettings)
+                            .requestedRange(new OffsetRange(0, 3000))
+                            .openGroups(openGroups)
+                            .build();
+
+//                    if (!openGroups.isEmpty()) {
+//                        LOGGER.info("Open groups: " + openGroups.size());
+//                    }
+
+                    final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(columnFormatter);
+                    final TableResult searchResult2 = (TableResult) tableComponentResultCreator2.create(
+                            dataStore,
+                            tableResultRequest2);
+
+
+                    final Set<String> openGroups2 = searchResult2
+                            .getRows()
+                            .stream()
+                            .map(Row::getGroupKey)
+                            .collect(Collectors.toSet());
+
+                    final ResultRequest tableResultRequest3 = ResultRequest.builder()
+                            .componentId("componentX")
+                            .addMappings(tableSettings)
+                            .requestedRange(new OffsetRange(0, 3000))
+                            .openGroups(openGroups2)
+                            .build();
+
+//                    if (!openGroups.isEmpty()) {
+//                        LOGGER.info("Open groups: " + openGroups.size());
+//                    }
+
+                    final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(columnFormatter);
+                    final TableResult searchResult3 = (TableResult) tableComponentResultCreator2.create(
+                            dataStore,
+                            tableResultRequest3);
+                }
+            }, executor);
+        }
+
+        for (int j = 0; j < threadCount; j++) {
+            final int run = j;
+            writers[j] = CompletableFuture.runAsync(() -> {
+                LOGGER.info(() -> "Writing " + run);
+                for (int i = 0; i < 1_000_00; i++) {
+                    final Val val1 = ValString.create("Text " + run);
+                    final Val val2 = ValString.create("Text " + i);
+                    dataStore.accept(Val.of(val1, val2));
+                }
+            }, executor);
+        }
+        CompletableFuture.allOf(writers).join();
+
+        // Wait for all items to be added.
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        reading.set(false);
+        CompletableFuture.allOf(readers).join();
+
+        Metrics.measure("Retrieved data", () -> {
+            final ResultRequest tableResultRequest = ResultRequest.builder()
+                    .componentId("componentX")
+                    .addMappings(tableSettings)
+                    .requestedRange(new OffsetRange(0, 3000))
+                    .build();
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
+            final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                    dataStore,
+                    tableResultRequest);
+        });
+        Metrics.report();
+    }
+
     @Test
     void testReload() throws Exception {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
@@ -190,7 +372,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
+        final SearchResultStoreConfig resultStoreConfig = new SearchResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
@@ -203,7 +385,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         "0",
                         tableSettings,
                         resultStoreConfig,
-                        dataStoreSettings);
+                        dataStoreSettings,
+                        "reload");
 
         for (int i = 1; i <= 100; i++) {
             for (int j = 1; j <= 100; j++) {
@@ -245,7 +428,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         "0",
                         tableSettings,
                         resultStoreConfig,
-                        dataStoreSettings);
+                        dataStoreSettings,
+                        "reload");
 
         currentDbState = dataStore2.sync();
         assertThat(currentDbState.getStreamId()).isEqualTo(100);

@@ -17,6 +17,7 @@
 package stroom.dashboard.client;
 
 import stroom.dashboard.client.gin.DashboardAppGinjectorUser;
+import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -51,6 +52,6 @@ public class DashboardApp implements EntryPoint {
             // Remember how places were used in case we want to use URLs and history
             // at some point.
             // ginjector.getPlaceManager().revealCurrentPlace();
-        });
+        }, new QuietTaskMonitorFactory());
     }
 }

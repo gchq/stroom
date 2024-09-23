@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
@@ -24,6 +23,8 @@ import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
+import stroom.query.shared.QueryHelpType;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -40,6 +41,7 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 
 import java.util.Objects;
+import java.util.Set;
 
 public class QueryHelpPresenter
         extends MyPresenterWidget<QueryHelpView>
@@ -205,10 +207,21 @@ public class QueryHelpPresenter
         keyedAceCompletionProvider.setDataSourceRef(dataSourceRef);
     }
 
-    public void setShowAll(final boolean showAll) {
-        model.setShowAll(showAll);
-        keyedAceCompletionProvider.setShowAll(showAll);
+    public void setIncludedTypes(Set<QueryHelpType> includedTypes) {
+        model.setIncludedTypes(includedTypes);
+        keyedAceCompletionProvider.setIncludedTypes(includedTypes);
     }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        model.setTaskMonitorFactory(taskMonitorFactory);
+        keyedAceCompletionProvider.setTaskMonitorFactory(taskMonitorFactory);
+        detailProvider.setTaskMonitorFactory(taskMonitorFactory);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {
 

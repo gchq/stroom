@@ -29,14 +29,14 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -66,7 +66,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexDoc> implements Refreshable {
+public class IndexShardPresenter
+        extends DocumentEditPresenter<PagerView, LuceneIndexDoc>
+        implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
@@ -84,7 +86,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
 
     private ButtonView buttonFlush;
     private ButtonView buttonDelete;
-    private IndexDoc index;
+    private LuceneIndexDoc index;
     private boolean readOnly;
     private boolean allowDelete;
 
@@ -418,7 +420,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
 
@@ -433,14 +435,15 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<IndexShard>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
+                                        final RestErrorHandler errorHandler) {
                         CriteriaUtil.setRange(queryCriteria, range);
-                        final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .create(INDEX_RESOURCE)
+                                .method(res -> res.find(queryCriteria))
                                 .onSuccess(dataConsumer)
-                                .onFailure(throwableConsumer)
-                                .call(INDEX_RESOURCE)
-                                .find(queryCriteria);
+                                .onFailure(errorHandler)
+                                .taskMonitorFactory(getView())
+                                .exec();
                     }
 
                     @Override
@@ -452,16 +455,20 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
                 dataProvider.addDataDisplay(dataGrid);
             }
 
-            securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.DELETE)
-                    .onSuccess(result -> {
+            securityContext.hasDocumentPermission(
+                    document.getUuid(),
+                    DocumentPermissionNames.DELETE,
+                    result -> {
                         this.allowDelete = result;
                         enableButtons();
-                    });
+                    },
+                    throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
+                    this);
         }
     }
 
     @Override
-    protected IndexDoc onWrite(final IndexDoc entity) {
+    protected LuceneIndexDoc onWrite(final LuceneIndexDoc entity) {
         return entity;
     }
 
@@ -541,13 +548,14 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
     private void doFlush() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Long> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .call(INDEX_RESOURCE)
-                    .flushIndexShards(nodeName, selectionCriteria);
+                    .taskMonitorFactory(getView())
+                    .exec();
         }), throwable -> {
-        });
+        }, getView());
 
         AlertEvent.fireInfo(IndexShardPresenter.this,
                 "Selected index shards will be flushed. Please be patient as this may take some time.",
@@ -557,13 +565,14 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
     private void doDelete() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Long> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .call(INDEX_RESOURCE)
-                    .deleteIndexShards(nodeName, selectionCriteria);
+                    .taskMonitorFactory(getView())
+                    .exec();
         }), throwable -> {
-        });
+        }, getView());
 
         AlertEvent.fireInfo(IndexShardPresenter.this,
                 "Selected index shards will be deleted. Please be patient as this may take some time.",

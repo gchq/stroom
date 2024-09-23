@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:ThinSplitLayoutPanel styleName="ScheduledProcessingViewImpl max">
+        <g:north size="400">
+            <g:SimplePanel ui:field="executionScheduleList" styleName="max dashboard-panel overflow-hidden"/>
+        </g:north>
+        <g:center>
+            <g:SimplePanel ui:field="executionHistoryList" styleName="max dashboard-panel overflow-hidden"/>
+        </g:center>
+    </g:ThinSplitLayoutPanel>
+</ui:UiBinder>

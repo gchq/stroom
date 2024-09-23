@@ -16,7 +16,10 @@
 
 package stroom.explorer.shared;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,7 +27,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
@@ -43,11 +48,16 @@ public class DocumentTypes {
     @JsonProperty
     private final List<DocumentType> visibleTypes;
 
+    @JsonIgnore
+    private final transient Map<String, DocumentType> typeToDocumentTypeMap;
+
     @JsonCreator
     public DocumentTypes(@JsonProperty("types") final List<DocumentType> types,
                          @JsonProperty("visibleTypes") final List<DocumentType> visibleTypes) {
         this.types = types;
         this.visibleTypes = visibleTypes;
+        this.typeToDocumentTypeMap = GwtNullSafe.stream(types)
+                .collect(Collectors.toMap(DocumentType::getType, Function.identity()));
     }
 
     public List<DocumentType> getTypes() {
@@ -56,6 +66,10 @@ public class DocumentTypes {
 
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
+    }
+
+    public DocumentType getDocumentType(final String type) {
+        return typeToDocumentTypeMap.get(type);
     }
 
     public static boolean isFolder(final String type) {

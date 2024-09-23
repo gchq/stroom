@@ -97,13 +97,13 @@ public final class GlobalPropertyEditViewImpl
             }
         });
 
-        databaseValue.addKeyUpHandler(event -> {
+        databaseValue.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChangeOverrideValue();
             }
         });
 
-        databaseValuePassword.addKeyUpHandler(event -> {
+        databaseValuePassword.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChangeOverrideValue();
             }

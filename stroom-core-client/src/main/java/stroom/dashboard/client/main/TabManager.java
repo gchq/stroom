@@ -100,9 +100,7 @@ public class TabManager {
                         .items(menuItems)
                         .addAutoHidePartner(target)
                         .popupPosition(popupPosition)
-                        .onHide(e -> {
-                            currentTabConfig = null;
-                        })
+                        .onHide(e -> currentTabConfig = null)
                         .fire(dashboardPresenter);
 //                    }
 //                }.schedule(0);

@@ -17,9 +17,9 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.datasource.api.v2.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -50,9 +50,9 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
         getView().setFieldTypes(fieldTypes);
 
         this.otherFieldNames = otherFieldNames;
-        getView().setFieldUse(indexField.getFieldUse());
-        getView().setFieldName(indexField.getFieldName());
-        getView().setFieldType(indexField.getFieldType());
+        getView().setType(indexField.getFldType());
+        getView().setFieldName(indexField.getFldName());
+        getView().setFieldType(indexField.getNativeType());
         getView().setDefaultValue(indexField.getDefaultValue());
         getView().setStored(indexField.isStored());
         getView().setIndexed(indexField.isIndexed());
@@ -71,50 +71,52 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
         getView().setSortMissingLast(indexField.isSortMissingLast());
     }
 
-    public boolean write(final SolrIndexField indexField) {
+    public SolrIndexField write() {
         String name = getView().getFieldName();
         name = name.trim();
 
         if (name.length() == 0) {
             AlertEvent.fireWarn(this, "An index field must have a name", null);
-            return false;
+            return null;
         }
         if (!name.matches(SolrIndexField.VALID_FIELD_NAME_PATTERN)) {
             AlertEvent.fireWarn(this,
                     "An index field name must conform to the pattern '" + SolrIndexField.VALID_FIELD_NAME_PATTERN + "'",
                     null);
-            return false;
+            return null;
         }
-        if (otherFieldNames.contains(indexField.getFieldName())) {
+        if (otherFieldNames.contains(name)) {
             AlertEvent.fireWarn(this, "An index field with this name already exists", null);
-            return false;
+            return null;
         }
 
-        indexField.setFieldUse(getView().getFieldUse());
-        indexField.setFieldName(name);
-        indexField.setFieldType(getView().getFieldType());
-        if (getView().getDefaultValue().trim().length() == 0) {
-            indexField.setDefaultValue(null);
-        } else {
-            indexField.setDefaultValue(getView().getDefaultValue());
+        String defaultValue = null;
+        if (getView().getDefaultValue().trim().length() > 0) {
+            defaultValue = getView().getDefaultValue();
         }
-        indexField.setStored(getView().isStored());
-        indexField.setIndexed(getView().isIndexed());
-        indexField.setUninvertible(getView().isUninvertible());
-        indexField.setDocValues(getView().isDocValues());
-        indexField.setMultiValued(getView().isMultiValued());
-        indexField.setRequired(getView().isRequired());
-        indexField.setOmitNorms(getView().isOmitNorms());
-        indexField.setOmitTermFreqAndPositions(getView().isOmitTermFreqAndPositions());
-        indexField.setOmitPositions(getView().isOmitPositions());
-        indexField.setTermVectors(getView().isTermVectors());
-        indexField.setTermPositions(getView().isTermPositions());
-        indexField.setTermOffsets(getView().isTermOffsets());
-        indexField.setTermPayloads(getView().isTermPayloads());
-        indexField.setSortMissingFirst(getView().isSortMissingFirst());
-        indexField.setSortMissingLast(getView().isSortMissingLast());
 
-        return true;
+        return SolrIndexField
+                .builder()
+                .fldType(getView().getType())
+                .fldName(name)
+                .nativeType(getView().getFieldType())
+                .defaultValue(defaultValue)
+                .stored(getView().isStored())
+                .indexed(getView().isIndexed())
+                .uninvertible(getView().isUninvertible())
+                .docValues(getView().isDocValues())
+                .multiValued(getView().isMultiValued())
+                .required(getView().isRequired())
+                .omitNorms(getView().isOmitNorms())
+                .omitTermFreqAndPositions(getView().isOmitTermFreqAndPositions())
+                .omitPositions(getView().isOmitPositions())
+                .termVectors(getView().isTermVectors())
+                .termPositions(getView().isTermPositions())
+                .termOffsets(getView().isTermOffsets())
+                .termPayloads(getView().isTermPayloads())
+                .sortMissingFirst(getView().isSortMissingFirst())
+                .sortMissingLast(getView().isSortMissingLast())
+                .build();
     }
 
     public void show(final String caption, final HidePopupRequestEvent.Handler handler) {
@@ -130,9 +132,9 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
 
     public interface SolrIndexFieldEditView extends View, Focus {
 
-        SolrIndexFieldType getFieldUse();
+        FieldType getType();
 
-        void setFieldUse(SolrIndexFieldType fieldUse);
+        void setType(FieldType type);
 
         String getFieldName();
 

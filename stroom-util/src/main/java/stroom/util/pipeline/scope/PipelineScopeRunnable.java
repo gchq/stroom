@@ -32,9 +32,6 @@ public class PipelineScopeRunnable {
 
         scope.enter();
         try {
-//            // explicitly seed some seed objects...
-//            scope.seed(Key.get(SomeObject.class), someObject);
-
             // create and access scoped objects
             result = supplier.get();
 

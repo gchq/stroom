@@ -20,7 +20,6 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.ClassificationWrapperView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -44,8 +43,6 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.widget.util.client.Future;
-import stroom.widget.util.client.FutureImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -67,9 +64,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ElementPresenter extends MyPresenterWidget<ElementView> implements
-        HasDirtyHandlers,
-        ClassificationUiHandlers {
+public class ElementPresenter
+        extends MyPresenterWidget<ElementView>
+        implements HasDirtyHandlers, ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -117,9 +114,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         this.restFactory = restFactory;
     }
 
-    public Future<Boolean> load() {
-        final FutureImpl<Boolean> future = new FutureImpl<>();
-
+    public void load(final Consumer<Boolean> consumer) {
         if (!loaded) {
             loaded = true;
             boolean loading = false;
@@ -135,17 +130,18 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                             .pipelineName(pipelineName)
                             .build();
 
-                    final Rest<DocRef> rest = restFactory.create();
-                    rest
-                            .onSuccess(result -> loadEntityRef(result, future))
+                    restFactory
+                            .create(STEPPING_RESOURCE)
+                            .method(res -> res.findElementDoc(findElementDocRequest))
+                            .onSuccess(result -> loadEntityRef(result, consumer))
                             .onFailure(caught -> {
                                 dirtyCode = false;
                                 setCode(caught.getMessage());
                                 clearAllIndicators();
-                                future.setResult(false);
+                                consumer.accept(false);
                             })
-                            .call(STEPPING_RESOURCE)
-                            .findElementDoc(findElementDocRequest);
+                            .taskMonitorFactory(this)
+                            .exec();
 
                     loading = true;
                 } catch (final RuntimeException e) {
@@ -166,13 +162,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             updateLogView();
 
             if (!loading) {
-                Scheduler.get().scheduleDeferred(() -> future.setResult(true));
+                Scheduler.get().scheduleDeferred(() -> consumer.accept(true));
             }
         } else {
-            future.setResult(true);
+            consumer.accept(true);
         }
-
-        return future;
     }
 
     public void setDesiredLogPanVisibility(final boolean desiredLogPanVisibility) {
@@ -237,7 +231,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                 .collect(Collectors.joining("\n"));
     }
 
-    private void loadEntityRef(final DocRef entityRef, final FutureImpl<Boolean> future) {
+    private void loadEntityRef(final DocRef entityRef, final Consumer<Boolean> future) {
         if (entityRef != null) {
             final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
             documentPlugin.load(entityRef,
@@ -247,16 +241,17 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                         dirtyCode = false;
                         read();
 
-                        future.setResult(true);
+                        future.accept(true);
                     },
                     caught -> {
                         dirtyCode = false;
                         setCode(caught.getMessage());
                         clearAllIndicators();
-                        future.setResult(false);
-                    });
+                        future.accept(false);
+                    },
+                    this);
         } else {
-            Scheduler.get().scheduleDeferred(() -> future.setResult(true));
+            Scheduler.get().scheduleDeferred(() -> future.accept(true));
         }
     }
 
@@ -273,8 +268,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                         AlertEvent.fireError(
                                 this,
                                 "Unable to save document " + loadedDoc,
-                                ((Throwable) throwable).getMessage(), null);
-                    });
+                                throwable.getMessage(), null);
+                    },
+                    this);
         }
     }
 
@@ -631,10 +627,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         this.stepRequestHandler = onStepRefreshRequest;
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
     public interface ElementView extends View {
 
         void setCodeView(View view);
@@ -647,10 +639,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
 
         void setLogVisible(final boolean isVisible);
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     enum IndicatorType {
         CODE("Code"),

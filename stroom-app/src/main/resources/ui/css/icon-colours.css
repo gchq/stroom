@@ -7,8 +7,8 @@
 :root {
     --icon-colour__black: var(--black);
     /* For toggle buttons like exclamation.svg on stepper */
-    --icon-colour__black__on: var(--app__background-color);
-    --icon-colour__white: var(--app__background-color);
+    --icon-colour__black__on: var(--page__background-color);
+    --icon-colour__white: var(--page__background-color);
     /* For toggle buttons like exclamation.svg on stepper */
     --icon-colour__white__on: var(--icon-button__background-color--on);
 
@@ -36,8 +36,8 @@
 .stroom-theme-dark {
     --icon-colour__black: var(--white);
     /* For toggle buttons like exclamation.svg on stepper */
-    --icon-colour__black__on: var(--app__background-color);
-    --icon-colour__white: var(--app__background-color);
+    --icon-colour__black__on: var(--page__background-color);
+    --icon-colour__white: var(--page__background-color);
     /* For toggle buttons like exclamation.svg on stepper */
     --icon-colour__white__on: var(--icon-button__background-color--on);
 

@@ -11,6 +11,9 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DocContentMatch {
 
+    private static final int SAMPLE_LENGTH_BEFORE = 40;
+    private static final int SAMPLE_LENGTH_AFTER = 200;
+
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
@@ -29,6 +32,74 @@ public class DocContentMatch {
         this.extension = extension;
         this.location = location;
         this.sample = sample;
+    }
+
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
+    public static DocContentMatch create(final DocRef docRef,
+                                         final String extension,
+                                         final String text,
+                                         final StringMatchLocation location) {
+        int offset = location.getOffset();
+        int length = location.getLength();
+        final char[] chars = text.toCharArray();
+        final int min = Math.max(0, offset - SAMPLE_LENGTH_BEFORE);
+        int sampleStart = offset;
+        // Go back to get a sample from the same line.
+        for (; sampleStart >= min; sampleStart--) {
+            char c = chars[sampleStart];
+            if (c == '\n') {
+                break;
+            }
+        }
+        sampleStart = Math.max(0, sampleStart);
+
+        // Trim leading whitespace.
+        for (; sampleStart < offset; sampleStart++) {
+            char c = chars[sampleStart];
+            if (!Character.isWhitespace(c)) {
+                break;
+            }
+        }
+
+        // Adjust offset for start of sample.
+        offset -= sampleStart;
+
+        // Now remove newlines and adjust offset and length to accordingly.
+        final StringBuilder sample = new StringBuilder();
+        for (int i = sampleStart; i < chars.length; i++) {
+            final char c = chars[i];
+            if (c == '\r' || c == '\n') {
+                break;
+
+//            if (c == '\r') {
+//                // Omit carriage returns.
+//                if (i < location.getOffset()) {
+//                    offset--;
+//                } else if (i >= location.getOffset() && i <= location.getOffset() + location.getLength()) {
+//                    length--;
+//                }
+//            } else if (c == '\n') {
+//                sample.append(' ');
+            } else {
+                sample.append(c);
+                if (sample.length() >= SAMPLE_LENGTH_BEFORE + SAMPLE_LENGTH_AFTER) {
+                    break;
+                }
+            }
+        }
+
+        // Ensure offset and length are positive.
+        offset = Math.max(offset, 0);
+        length = Math.max(length, 0);
+
+        final StringMatchLocation match = new StringMatchLocation(offset, length);
+        return DocContentMatch
+                .builder()
+                .docRef(docRef)
+                .extension(extension)
+                .location(match)
+                .sample(sample.toString())
+                .build();
     }
 
     public DocRef getDocRef() {

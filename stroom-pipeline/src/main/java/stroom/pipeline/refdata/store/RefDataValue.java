@@ -37,7 +37,7 @@ public interface RefDataValue {
      * unique within all sub-classes of {@link RefDataValue}. Stored in the DB as a single
      * byte so values must be in the range -128 to 127.
      */
-    int getTypeId();
+    byte getTypeId();
 
     boolean isNullValue();
 }

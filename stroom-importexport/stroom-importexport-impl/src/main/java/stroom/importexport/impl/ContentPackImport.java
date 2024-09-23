@@ -18,6 +18,8 @@ package stroom.importexport.impl;
 
 import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -59,47 +61,58 @@ public class ContentPackImport {
     }
 
     public void startup() {
-        final boolean isEnabled = config.isEnabled();
+        final String importDirStr = config.getImportDirectory();
+        final String importAsSubjectId = config.getImportAsSubjectId();
 
-        if (isEnabled) {
-            LOGGER.info("Configured import dir is '" + config.getImportDirectory() + "'");
-            if (config.getImportDirectory() != null) {
-                final Path resolvedPath = pathCreator.toAppPath(config.getImportDirectory());
-                LOGGER.info("Importing from resolved dir '" + resolvedPath + "'");
-                securityContext.asAdminUser(() -> doImport(resolvedPath));
-            } else {
-                LOGGER.warn("Content pack import is enabled but the configured directory is null");
-            }
-        } else {
+        if (!config.isEnabled()) {
             LOGGER.info("Content pack import currently disabled via property");
+            return;
         }
-    }
+        if (NullSafe.isBlankString(importDirStr)) {
+            LOGGER.error("Content pack import is enabled but the configured directory is null");
+            return;
+        }
+        if (NullSafe.isBlankString(importAsSubjectId)) {
+            LOGGER.error("importAsSubjectId property is not set so cannot perform content import");
+            return;
+        }
 
-    // pkg private for testing
-//    void startup(final List<Path> contentPacksDirs) {
-//        final boolean isEnabled = config.isEnabled();
-//
-//        if (isEnabled) {
-//            final UserIdentity admin = securityContext.createIdentity(User.ADMIN_USER_NAME);
-//            securityContext.asUser(admin, () ->
-//                    doImport(contentPacksDirs));
-//        } else {
-//            LOGGER.info("Content pack import currently disabled via property");
-//        }
-//    }
+        // TODO once subjectId is made globally unique we can get rid of this
+        final boolean isGroup = switch (config.getImportAsType()) {
+            case USER -> false;
+            case GROUP -> true;
+        };
+
+        final UserIdentity userIdentity = securityContext.getIdentityBySubjectId(
+                importAsSubjectId, isGroup);
+        if (userIdentity == null) {
+            LOGGER.error("A {} cannot be found with subject ID: '{}'.",
+                    (isGroup
+                            ? "group"
+                            : "user"),
+                    importAsSubjectId);
+            return;
+        }
+
+        LOGGER.info("Configured import dir is '" + importDirStr + "'");
+        final Path resolvedPath = pathCreator.toAppPath(importDirStr);
+        LOGGER.info("Importing content as user '{}', from configured dir: {}, resolved dir: '{}'",
+                userIdentity.getCombinedName(), importDirStr, resolvedPath);
+
+        securityContext.asUser(userIdentity, () ->
+                doImport(resolvedPath));
+    }
 
     private void doImport(final Path contentPacksDir) {
 
         final AtomicInteger successCounter = new AtomicInteger();
         final AtomicInteger failedCounter = new AtomicInteger();
 
-        LOGGER.info("ContentPackImport started, checking the following directory for content packs to import,\n{}",
-                contentPacksDir.toAbsolutePath().normalize());
-
         if (!Files.isDirectory(contentPacksDir)) {
-            LOGGER.warn("Content pack import directory {} doesn't exist", FileUtil.getCanonicalPath(contentPacksDir));
+            LOGGER.warn("Content pack import directory '{}' doesn't exist",
+                    FileUtil.getCanonicalPath(contentPacksDir));
         } else {
-            LOGGER.info("Processing content packs in directory {}", FileUtil.getCanonicalPath(contentPacksDir));
+            LOGGER.info("Processing content packs in directory '{}'", FileUtil.getCanonicalPath(contentPacksDir));
 
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacksDir, "*.zip")) {
                 stream.forEach(file -> {
@@ -128,7 +141,7 @@ public class ContentPackImport {
     }
 
     private boolean importContentPack(Path parentPath, Path contentPack) {
-        LOGGER.info("Starting import of content pack {}", FileUtil.getCanonicalPath(contentPack));
+        LOGGER.info("Starting import of content pack '{}'", FileUtil.getCanonicalPath(contentPack));
 
         try {
             //It is possible to import a content pack (or packs) with missing dependencies
@@ -139,10 +152,10 @@ public class ContentPackImport {
                     new ArrayList<>());
             moveFile(contentPack, contentPack.getParent().resolve(IMPORTED_DIR));
 
-            LOGGER.info("Completed import of content pack {}", FileUtil.getCanonicalPath(contentPack));
+            LOGGER.info("Completed import of content pack '{}'", FileUtil.getCanonicalPath(contentPack));
 
         } catch (final RuntimeException e) {
-            LOGGER.error("Error importing content pack {}", FileUtil.getCanonicalPath(contentPack), e);
+            LOGGER.error("Error importing content pack '{}'", FileUtil.getCanonicalPath(contentPack), e);
             moveFile(contentPack, contentPack.getParent().resolve(FAILED_DIR));
             return false;
         }

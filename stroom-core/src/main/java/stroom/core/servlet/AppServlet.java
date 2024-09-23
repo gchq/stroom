@@ -16,10 +16,17 @@
 
 package stroom.core.servlet;
 
+import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UserPreferences;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,34 +37,44 @@ import java.io.PrintWriter;
 
 public abstract class AppServlet extends HttpServlet {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppServlet.class);
+
     private static final String TITLE = "@TITLE@";
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String SCRIPT = "@SCRIPT@";
+    private static final String ROOT_CLASS = "@ROOT_CLASS@";
 
-    private final UiConfig uiConfig;
+    private final Provider<UiConfig> uiConfigProvider;
+    private final Provider<UserPreferencesService> userPreferencesServiceProvider;
 
-    private String template;
-
-    AppServlet(final UiConfig uiConfig) {
-        this.uiConfig = uiConfig;
+    AppServlet(final Provider<UiConfig> uiConfigProvider,
+               final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+        this.uiConfigProvider = uiConfigProvider;
+        this.userPreferencesServiceProvider = userPreferencesServiceProvider;
     }
 
     private String getHtmlTemplate() {
-        if (template == null) {
-            final InputStream is = getClass().getResourceAsStream("app.html");
-            template = StreamUtil.streamToString(is);
-            CloseableUtil.closeLogAndIgnoreException(is);
-        }
-        return template;
+        return LazyTemplateHolder.getTemplate();
     }
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws IOException {
+
+        LOGGER.debug(() -> LogUtil.message("Using servlet {} for requestURI: {}, servletPath: {}",
+                this.getClass().getSimpleName(), request.getServletPath(), request.getServletPath()));
+
         final PrintWriter pw = response.getWriter();
         response.setContentType("text/html");
 
+        final UserPreferencesService userPreferencesService = userPreferencesServiceProvider.get();
+        final UiConfig uiConfig = uiConfigProvider.get();
+
+        final UserPreferences userPreferences = userPreferencesService.fetchDefault();
+        final String classNames = ThemeCssUtil.getCurrentPreferenceClasses(userPreferences);
+
         String html = getHtmlTemplate();
+        html = html.replace(ROOT_CLASS, classNames);
         html = html.replace(TITLE, uiConfig.getHtmlTitle());
         html = html.replace(ON_CONTEXT_MENU, uiConfig.getOncontextmenu());
         html = html.replace(SCRIPT, getScript());
@@ -67,4 +84,26 @@ public abstract class AppServlet extends HttpServlet {
     }
 
     abstract String getScript();
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Initialization-on-demand holder idiom
+     */
+    private static class LazyTemplateHolder {
+
+        private static final String TEMPLATE;
+
+        static {
+            final InputStream inputStream = AppServlet.class.getResourceAsStream("app.html");
+            TEMPLATE = StreamUtil.streamToString(inputStream);
+            CloseableUtil.closeLogAndIgnoreException(inputStream);
+        }
+
+        private static String getTemplate() {
+            return TEMPLATE;
+        }
+    }
 }

@@ -16,7 +16,7 @@
 
 package stroom.index.lucene980.analyser;
 
-import stroom.index.shared.AnalyzerType;
+import stroom.datasource.api.v2.AnalyzerType;
 
 import org.apache.lucene980.analysis.Analyzer;
 import org.apache.lucene980.analysis.core.WhitespaceAnalyzer;

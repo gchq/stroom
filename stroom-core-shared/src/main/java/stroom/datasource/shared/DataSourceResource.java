@@ -16,8 +16,8 @@
 
 package stroom.datasource.shared;
 
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.util.shared.ResourcePaths;
@@ -45,8 +45,8 @@ public interface DataSourceResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Find data source fields",
             operationId = "findDataSourceFields")
-    ResultPage<FieldInfo> findFields(
-            @Parameter(description = "criteria", required = true) FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> findFields(
+            @Parameter(description = "criteria", required = true) FindFieldCriteria criteria);
 
     @POST
     @Path("/fetchDocumentation")

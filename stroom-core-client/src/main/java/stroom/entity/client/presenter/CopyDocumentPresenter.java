@@ -28,6 +28,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -115,12 +116,12 @@ public class CopyDocumentPresenter
                     if (e.isOk()) {
                         if (singleItemMode &&
                                 (getView().getName() == null || getView().getName().trim().length() == 0)) {
-                            AlertEvent.fireError(CopyDocumentPresenter.this, "No name specified", null);
+                            AlertEvent.fireError(CopyDocumentPresenter.this, "No name specified", e::reset);
                         } else {
                             final ExplorerNode folder = entityTreePresenter.getSelectedItem();
                             CopyDocumentEvent.fire(
                                     CopyDocumentPresenter.this,
-                                    CopyDocumentPresenter.this,
+                                    e,
                                     explorerNodeList,
                                     folder,
                                     singleItemMode,
@@ -132,6 +133,12 @@ public class CopyDocumentPresenter
                     }
                 })
                 .fire();
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface CopyDocumentView extends View {

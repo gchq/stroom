@@ -2,11 +2,9 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
@@ -22,7 +20,7 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -35,9 +33,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
+public class ProcessorEditPresenter
+        extends MyPresenterWidget<ProcessorEditView> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
@@ -69,7 +67,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs) {
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
-        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        selectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
 
         if (expression != null) {
@@ -134,8 +132,8 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                         : "Add Filter")
                 .modal(true)
                 .onShow(e -> editExpressionPresenter.focus())
-                .onHideRequest(event -> {
-                    if (event.isOk()) {
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
                         final ExpressionOperator expression = write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
@@ -155,19 +153,21 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                             result -> {
                                                 if (result) {
                                                     validateFeed(
-                                                            filter, queryData, minMetaCreateTime, maxMetaCreateTime);
+                                                            filter, queryData, minMetaCreateTime, maxMetaCreateTime, e);
+                                                } else {
+                                                    e.reset();
                                                 }
                                             });
                                 } else {
-                                    validateFeed(null, queryData, minMetaCreateTime, maxMetaCreateTime);
+                                    validateFeed(null, queryData, minMetaCreateTime, maxMetaCreateTime, e);
                                 }
-                            } catch (final RuntimeException e) {
-                                AlertEvent.fireError(ProcessorEditPresenter.this, e.getMessage(), null);
+                            } catch (final RuntimeException ex) {
+                                AlertEvent.fireError(ProcessorEditPresenter.this, ex.getMessage(), e::reset);
                             }
                         });
                     } else {
                         consumer.accept(null);
-                        event.hide();
+                        e.hide();
                     }
                 })
                 .fire();
@@ -177,8 +177,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                     final ExpressionOperator expression,
                                     final Runnable onSuccess) {
 
-        restFactory.builder()
-                .forType(ValidateExpressionResult.class)
+        restFactory
+                .create(EXPRESSION_RESOURCE)
+                .method(res -> res.validate(new ValidateExpressionRequest(
+                        expression,
+                        fields,
+                        dateTimeSettingsFactory.getDateTimeSettings())))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         onSuccess.run();
@@ -189,16 +193,13 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                 .onFailure(throwable -> {
                     AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
                 })
-                .call(EXPRESSION_RESOURCE)
-                .validate(new ValidateExpressionRequest(
-                        expression,
-                        fields,
-                        dateTimeSettingsFactory.getDateTimeSettings()));
+                .taskMonitorFactory(this)
+                .exec();
     }
 
-    private void hide(final ProcessorFilter result) {
+    private void hide(final ProcessorFilter result, final HidePopupRequestEvent event) {
         consumer.accept(result);
-        HidePopupEvent.builder(ProcessorEditPresenter.this).ok(result != null).fire();
+        event.hide();
     }
 
     private QueryData getOrCreateQueryData(final ProcessorFilter filter,
@@ -212,7 +213,8 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     private void validateFeed(final ProcessorFilter filter,
                               final QueryData queryData,
                               final Long minMetaCreateTimeMs,
-                              final Long maxMetaCreateTimeMs) {
+                              final Long maxMetaCreateTimeMs,
+                              final HidePopupRequestEvent event) {
         final int feedCount = termCount(queryData, MetaFields.FEED);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
@@ -223,18 +225,21 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             ConfirmEvent.fire(this,
                     "You are about to process all feeds. Are you sure you wish to do this?", result -> {
                         if (result) {
-                            validateStreamType(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
+                            validateStreamType(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+                        } else {
+                            event.reset();
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
+            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
         }
     }
 
     private void validateStreamType(final ProcessorFilter filter,
                                     final QueryData queryData,
                                     final Long minMetaCreateTimeMs,
-                                    final Long maxMetaCreateTimeMs) {
+                                    final Long maxMetaCreateTimeMs,
+                                    final HidePopupRequestEvent event) {
         final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
@@ -246,11 +251,13 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     "You are about to process all stream types. Are you sure you wish to do this?",
                     result -> {
                         if (result) {
-                            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
+                            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+                        } else {
+                            event.reset();
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
+            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
         }
     }
 
@@ -258,21 +265,27 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         if (queryData == null || queryData.getExpression() == null) {
             return 0;
         }
-        return ExpressionUtil.termCount(queryData.getExpression(), field.getName());
+        return ExpressionUtil.termCount(queryData.getExpression(), field.getFldName());
     }
 
     private void createOrUpdateProcessor(final ProcessorFilter filter,
                                          final QueryData queryData,
                                          final Long minMetaCreateTimeMs,
-                                         final Long maxMetaCreateTimeMs) {
+                                         final Long maxMetaCreateTimeMs,
+                                         final HidePopupRequestEvent event) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setQueryData(queryData);
             filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
-            final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).update(filter.getId(), filter);
+            restFactory
+                    .create(PROCESSOR_FILTER_RESOURCE)
+                    .method(res -> res.update(filter.getId(), filter))
+                    .onSuccess(r -> hide(r, event))
+                    .onFailure(RestErrorHandler.forPopup(this, event))
+                    .taskMonitorFactory(this)
+                    .exec();
 
         } else {
             // Now create the processor filter using the find stream criteria.
@@ -286,8 +299,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .build();
-            final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
+            restFactory
+                    .create(PROCESSOR_FILTER_RESOURCE)
+                    .method(res -> res.create(request))
+                    .onSuccess(r -> hide(r, event))
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 

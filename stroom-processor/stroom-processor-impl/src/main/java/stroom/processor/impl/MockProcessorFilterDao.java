@@ -9,9 +9,12 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Singleton;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Singleton
 public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
@@ -57,19 +60,24 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
-        return 0;
+    public Set<String> physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
+        return dao
+                .getMap()
+                .values()
+                .stream()
+                .filter(processorFilter ->
+                        Objects.equals(processorFilter.getUuid(), uuid))
+                .findAny();
     }
 
     @Override
     public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
-        final List<ProcessorFilter> list = dao
-                .getMap()
-                .values()
-                .stream()
-//                .filter(pf -> criteria.getPipelineUuidCriteria().getString().equals(pf.getPipelineUuid()))
-                .collect(Collectors.toList());
-
+        final List<ProcessorFilter> list = new ArrayList<>(dao.getMap().values());
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 

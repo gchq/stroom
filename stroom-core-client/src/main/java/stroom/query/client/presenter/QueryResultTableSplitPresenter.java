@@ -34,13 +34,12 @@ import java.util.Set;
 
 public class QueryResultTableSplitPresenter
         extends MyPresenterWidget<QueryResultTableSplitView>
-        implements ResultConsumer {
+        implements ResultComponent {
 
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
     private SimplePanel tableContainer;
     private ThinSplitLayoutPanel splitLayoutPanel;
-    private QueryModel queryModel;
     private boolean showingSplit = true;
 
 
@@ -57,16 +56,13 @@ public class QueryResultTableSplitPresenter
         showSplit(false);
     }
 
+    @Override
     public void setQueryModel(final QueryModel queryModel) {
-        this.queryModel = queryModel;
+        tablePresenter.setQueryModel(queryModel);
     }
 
     @Override
     protected void onBind() {
-        registerHandler(tablePresenter.addExpanderHandler(event ->
-                queryModel.refresh(QueryModel.TABLE_COMPONENT_ID)));
-        registerHandler(tablePresenter.addRangeChangeHandler(event ->
-                queryModel.refresh(QueryModel.TABLE_COMPONENT_ID)));
         registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
                 onSelection(tablePresenter.getSelectionModel().getSelected())));
     }

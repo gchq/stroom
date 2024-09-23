@@ -21,14 +21,20 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(type = ElasticIndexDoc.DOCUMENT_TYPE, action = {
@@ -41,17 +47,16 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
     private static final String CACHE_NAME = "Elastic Index Cache";
 
     private final ElasticIndexStore elasticIndexStore;
-    private final ElasticIndexService elasticIndexService;
+    private final SecurityContext securityContext;
     private final LoadingStroomCache<DocRef, ElasticIndexDoc> cache;
 
     @Inject
     ElasticIndexCacheImpl(final CacheManager cacheManager,
                           final ElasticIndexStore elasticIndexStore,
                           final Provider<ElasticConfig> elasticConfigProvider,
-                          final ElasticIndexService elasticIndexService
-    ) {
+                          final SecurityContext securityContext) {
         this.elasticIndexStore = elasticIndexStore;
-        this.elasticIndexService = elasticIndexService;
+        this.securityContext = securityContext;
         this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 elasticConfigProvider.get()::getIndexCache,
@@ -59,25 +64,26 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
     }
 
     private ElasticIndexDoc create(final DocRef docRef) {
-        if (docRef == null) {
-            throw new NullPointerException("Null key supplied");
-        }
+        return securityContext.asProcessingUserResult(() -> {
+            final ElasticIndexDoc loaded = elasticIndexStore.readDocument(docRef);
+            if (loaded == null) {
+                throw new NullPointerException("No index can be found for: " + docRef);
+            }
 
-        final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-
-        if (index == null) {
-            throw new NullPointerException("No Elasticsearch index can be found for: " + docRef);
-        }
-
-        // Query field mappings and cache with the index
-        index.setFields(elasticIndexService.getFields(index));
-
-        return index;
+            return loaded;
+        });
     }
 
     @Override
-    public ElasticIndexDoc get(final DocRef key) {
-        return cache.get(key);
+    public ElasticIndexDoc get(final DocRef docRef) {
+        Objects.requireNonNull(docRef, "Null DocRef supplied");
+
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    LogUtil.message("You are not authorised to read {}", docRef));
+        }
+        return cache.get(docRef);
     }
 
     @Override

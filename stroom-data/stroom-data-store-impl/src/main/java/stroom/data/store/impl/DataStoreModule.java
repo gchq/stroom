@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl;
 
+import stroom.data.store.api.DataService;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 

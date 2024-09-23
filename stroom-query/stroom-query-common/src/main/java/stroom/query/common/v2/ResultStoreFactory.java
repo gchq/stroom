@@ -14,16 +14,19 @@ public final class ResultStoreFactory {
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
     private final ResultStoreSettingsFactory resultStoreSettingsFactory;
+    private final MapDataStoreFactory mapDataStoreFactory;
 
     @Inject
     ResultStoreFactory(final SizesProvider sizesProvider,
                        final SecurityContext securityContext,
                        final NodeInfo nodeInfo,
-                       final ResultStoreSettingsFactory resultStoreSettingsFactory) {
+                       final ResultStoreSettingsFactory resultStoreSettingsFactory,
+                       final MapDataStoreFactory mapDataStoreFactory) {
         this.sizesProvider = sizesProvider;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.resultStoreSettingsFactory = resultStoreSettingsFactory;
+        this.mapDataStoreFactory = mapDataStoreFactory;
     }
 
     public ResultStore create(final SearchRequestSource searchRequestSource,
@@ -39,6 +42,7 @@ public final class ResultStoreFactory {
                 createUser,
                 coprocessors,
                 nodeInfo.getThisNodeName(),
-                resultStoreSettingsFactory.get());
+                resultStoreSettingsFactory.get(),
+                mapDataStoreFactory);
     }
 }

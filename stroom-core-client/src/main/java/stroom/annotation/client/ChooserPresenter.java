@@ -18,8 +18,10 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.MyCellTable;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.BasicSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -42,8 +44,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implements ChooserUiHandlers {
+public class ChooserPresenter<T>
+        extends MyPresenterWidget<ChooserView>
+        implements ChooserUiHandlers {
 
     private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
     private final CellTable<T> cellTable;
@@ -51,7 +56,9 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
     private Function<T, String> displayValueFunction = Objects::toString;
 
     @Inject
-    public ChooserPresenter(final EventBus eventBus, final ChooserView view) {
+    public ChooserPresenter(final EventBus eventBus,
+                            final ChooserView view,
+                            final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         view.setUiHandlers(this);
@@ -61,7 +68,7 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
             @Override
             protected void onClose(final CellPreviewEvent<T> e) {
                 super.onClose(e);
-                HidePopupEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
+                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
             }
 
             @Override
@@ -86,6 +93,16 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
             }
         };
         cellTable.addColumn(textColumn);
+
+        // Only deals in lists of strings so no field defs required.
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                getView().registerPopupTextProvider(() ->
+                        QuickFilterTooltipUtil.createTooltip(
+                                "Choose Item Quick Filter",
+                                uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     void focus() {
@@ -146,7 +163,6 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
         onFilterChange(null);
     }
 
-
     // --------------------------------------------------------------------------------
 
 
@@ -160,6 +176,8 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
 
 
     public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
+
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
         void setBottomWidget(Widget widget);
 

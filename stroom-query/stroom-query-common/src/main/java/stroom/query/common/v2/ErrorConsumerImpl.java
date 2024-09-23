@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.concurrent.InterruptionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
@@ -45,7 +46,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
             LOGGER.trace(exception::getMessage, exception);
         }
 
-        if (!ErrorConsumerUtil.isInterruption(exception)) {
+        if (!InterruptionUtil.isInterruption(exception)) {
             final int count = errorCount.incrementAndGet();
             if (count <= MAX_ERROR_COUNT) {
                 errors.add(ExceptionStringUtil.getMessage(exception));

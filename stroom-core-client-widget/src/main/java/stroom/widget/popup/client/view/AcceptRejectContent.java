@@ -63,14 +63,29 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
         reject.setFocus(true);
     }
 
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        setEnabled(false);
+        if (action == DialogAction.OK) {
+            accept.setLoading(true);
+        } else {
+            reject.setLoading(true);
+        }
+        uiHandlers.hideRequest(new HideRequest(action, () -> {
+            setEnabled(true);
+            accept.setLoading(false);
+            reject.setLoading(false);
+        }));
+    }
+
     @UiHandler("accept")
     public void onAcceptClick(final ClickEvent event) {
-        uiHandlers.hideRequest(new HideRequest(false, true));
+        onDialogAction(DialogAction.OK);
     }
 
     @UiHandler("reject")
     public void onRejectClick(final ClickEvent event) {
-        uiHandlers.hideRequest(new HideRequest(false, false));
+        onDialogAction(DialogAction.CANCEL);
     }
 
     @Override

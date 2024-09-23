@@ -49,19 +49,37 @@
 }
 
 .dialog-titleBar {
-	flex-grow: 0;
+    flex-grow: 0;
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
+    display: flex;
+    gap: 5px;
+}
+
+.dialog-spinner {
+    width: 22px;
+    height: 22px;
+}
+
+.dialog-icon {
+    display: flex;
+    align-items: center;
+}
+
+.dialog-icon svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+    color: var(--text-color);
 }
 
 .dialog-titleText {
-    width: 100%;
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
     color: var(--text-color);
     cursor: default;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 0;
     line-height: 1.5;
     font-size: 1.5rem;
+    flex-grow: 1;
 }
 
 .dialog-body {

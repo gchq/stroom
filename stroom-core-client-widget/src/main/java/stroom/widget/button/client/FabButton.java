@@ -36,10 +36,6 @@ public class FabButton extends ButtonBase {
      */
     private boolean isCapturing;
     /**
-     * If <code>true</code>, this widget has focus with the space bar down.
-     */
-    private boolean isFocusing;
-    /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
      */
@@ -47,7 +43,7 @@ public class FabButton extends ButtonBase {
 
     public FabButton() {
         super(Document.get().createDivElement());
-        sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
+        sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS);
 
         getElement().setClassName("stroom-button-fab");
 
@@ -74,9 +70,11 @@ public class FabButton extends ButtonBase {
     @Override
     public void onBrowserEvent(final Event event) {
         // Should not act on button if disabled.
-        if (isEnabled() == false) {
+        if (!isEnabled()) {
             // This can happen when events are bubbled up from non-disabled
             // children
+            isCapturing = false;
+            onClickCancel();
             return;
         }
 
@@ -94,7 +92,6 @@ public class FabButton extends ButtonBase {
                 if (MouseUtil.isPrimary(event)) {
                     setFocus(true);
                     onClickStart();
-                    DOM.setCapture(getElement());
                     isCapturing = true;
                     // Prevent dragging (on some browsers);
                     event.preventDefault();
@@ -103,10 +100,10 @@ public class FabButton extends ButtonBase {
             case Event.ONMOUSEUP:
                 if (isCapturing) {
                     isCapturing = false;
-                    DOM.releaseCapture(getElement());
                     if (MouseUtil.isPrimary(event)) {
                         onClick();
                     }
+                    onClickCancel();
                 }
                 break;
             case Event.ONMOUSEMOVE:
@@ -122,27 +119,13 @@ public class FabButton extends ButtonBase {
                     if (isCapturing) {
                         onClickCancel();
                     }
-                    setHovering(false);
                 }
                 break;
             case Event.ONMOUSEOVER:
                 if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
-                    setHovering(true);
                     if (isCapturing) {
                         onClickStart();
                     }
-                }
-                break;
-            case Event.ONBLUR:
-                if (isFocusing) {
-                    isFocusing = false;
-                    onClickCancel();
-                }
-                break;
-            case Event.ONLOSECAPTURE:
-                if (isCapturing) {
-                    isCapturing = false;
-                    onClickCancel();
                 }
                 break;
         }
@@ -175,16 +158,6 @@ public class FabButton extends ButtonBase {
         // caused by a keyboard event).
         final NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false, false, false, false);
         getElement().dispatchEvent(evt);
-        face.removeClassName("face--down");
-
         allowClick = false;
-    }
-
-    private void setHovering(final boolean hovering) {
-        // if (hovering && hoverColor != null) {
-        // face.getStyle().setBackgroundColor(hoverColor);
-        // } else if (color != null) {
-        // face.getStyle().setBackgroundColor(color);
-        // }
     }
 }

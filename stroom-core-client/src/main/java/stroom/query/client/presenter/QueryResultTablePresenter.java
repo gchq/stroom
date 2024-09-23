@@ -28,7 +28,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.util.shared.Expander;
-import stroom.widget.util.client.ExpanderEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -38,11 +37,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
@@ -56,18 +53,19 @@ import java.util.Set;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultConsumer {
+        implements ResultComponent {
 
     private int expanderColumnWidth;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
+    private final PagerView pagerView;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final DataGridSelectionEventManager<TableRow> selectionEventManager;
+
+    private QueryModel currentSearchModel;
     private boolean ignoreRangeChange;
     private boolean pause;
-    private int currentRequestCount;
-//    private QueryModel currentSearchModel;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
@@ -79,6 +77,7 @@ public class QueryResultTablePresenter
                                      final PagerView pagerView) {
         super(eventBus, tableView);
 
+        this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
@@ -99,8 +98,10 @@ public class QueryResultTablePresenter
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
             toggleOpenGroup(result.getGroupKey());
-            ExpanderEvent.fire(this, result.getGroupKey());
+            refresh();
         });
+
+        pagerView.getRefreshButton().setAllowPause(true);
     }
 
     private void toggleOpenGroup(final String group) {
@@ -143,7 +144,7 @@ public class QueryResultTablePresenter
             final com.google.gwt.view.client.Range range = event.getNewRange();
             requestedRange = new OffsetRange(range.getStart(), range.getLength());
             if (!ignoreRangeChange) {
-                fireEvent(event);
+                refresh();
             }
         }));
         registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
@@ -155,6 +156,38 @@ public class QueryResultTablePresenter
 //                refresh();
 //            }
 //        }));
+
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
+            setPause(!pause, true);
+        }));
+    }
+
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If currently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        pagerView.getRefreshButton().setPaused(this.pause);
+    }
+
+    private void refresh() {
+        if (currentSearchModel != null) {
+            pagerView.getRefreshButton().setRefreshing(true);
+            currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                }
+                pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+            });
+        } else {
+            RefreshRequestEvent.fire(this);
+        }
     }
 
 //    @Override
@@ -225,6 +258,8 @@ public class QueryResultTablePresenter
 
     @Override
     public void reset() {
+        selectionModel.clear(true);
+
         final long length = Math.max(1, requestedRange.getLength());
 
         // Reset the data grid paging.
@@ -245,12 +280,13 @@ public class QueryResultTablePresenter
 //                .tableSettings(tableSettings)
 //                .build();
 
-        getView().setRefreshing(true);
+        setPause(false, false);
+        pagerView.getRefreshButton().setRefreshing(true);
     }
 
     @Override
     public void endSearch() {
-        getView().setRefreshing(false);
+        pagerView.getRefreshButton().setRefreshing(false);
     }
 
     @Override
@@ -457,47 +493,25 @@ public class QueryResultTablePresenter
         return processed;
     }
 
-
-//    private void refresh() {
-//        currentRequestCount++;
-//        getView().setPaused(pause && currentRequestCount == 0);
-//        getView().setRefreshing(true);
-//        currentSearchModel.refresh("table", result -> {
-//            try {
-//                if (result != null) {
-//                    setDataInternal(result);
-//                }
-//            } catch (final Exception e) {
-//                GWT.log(e.getMessage());
-//            }
-//            currentRequestCount--;
-//            getView().setPaused(pause && currentRequestCount == 0);
-//            getView().setRefreshing(currentSearchModel.getMode());
-//        });
-//    }
-
-    public HandlerRegistration addRangeChangeHandler(RangeChangeEvent.Handler handler) {
-        return addHandler(RangeChangeEvent.getType(), handler);
-    }
-
-    public HandlerRegistration addExpanderHandler(final ExpanderEvent.Handler handler) {
-        return addHandler(ExpanderEvent.getType(), handler);
+    public HandlerRegistration addRefreshRequestHandler(RefreshRequestEvent.Handler handler) {
+        return addHandler(RefreshRequestEvent.getType(), handler);
     }
 
     public MultiSelectionModelImpl<TableRow> getSelectionModel() {
         return selectionModel;
     }
 
+    @Override
+    public void setQueryModel(final QueryModel queryModel) {
+        this.currentSearchModel = queryModel;
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    public interface QueryResultTableView extends View, HasUiHandlers<TableUiHandlers> {
+    public interface QueryResultTableView extends View {
 
         void setTableView(View view);
-
-        void setRefreshing(boolean refreshing);
-
-        void setPaused(boolean paused);
     }
 }

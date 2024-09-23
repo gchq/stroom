@@ -16,14 +16,13 @@
 
 package stroom.main.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.Item;
@@ -32,8 +31,9 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleClickTester;
-import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.GlobalKeyHandler;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -41,7 +41,6 @@ import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -69,70 +68,52 @@ public class MainPresenter
     private final Timer refreshTimer;
     private boolean click;
     private final MenuItems menuItems;
+    private int taskCount;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
                          final MainView view,
                          final MainProxy proxy,
                          final MenuItems menuItems,
-                         final UiConfigCache uiConfigCache) {
+                         final UiConfigCache uiConfigCache,
+                         final GlobalKeyHandler globalKeyHandler) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
         view.setUiHandlers(this);
 
-        // Handle key presses.
-        view.asWidget().addDomHandler(event ->
-                KeyBinding.test(event.getNativeEvent()), KeyDownEvent.getType());
-        view.asWidget().addDomHandler(event ->
-                KeyBinding.test(event.getNativeEvent()), KeyUpEvent.getType());
+        // Handle key presses
+        view.asWidget().addDomHandler(globalKeyHandler::onKeyDown, KeyDownEvent.getType());
+
+        // Inspect the keyUp so we can catch stuff like 'shift,shift'
+        view.asWidget().addDomHandler(globalKeyHandler::onKeyUp, KeyUpEvent.getType());
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());
-
-            // Always try and start spinner even if it might be spinning
-            // already.
-            if (view.getSpinner() != null) {
-                view.getSpinner().start();
-            }
+            taskCount++;
+            updateSpinnerState();
         });
         addRegisteredHandler(TaskEndEvent.getType(), event -> {
             // DebugPane.debug("taskEnd:" + event.getTaskCount());
-
-            // Only stop spinner if we are no longer executing any tasks.
-            if (event.getTaskCount() == 0) {
-                if (view.getSpinner() != null) {
-                    view.getSpinner().stop();
-                }
-            }
+            taskCount--;
+            updateSpinnerState();
         });
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final ExtendedUiConfig uiConfig = event.getProperties();
+                    if (uiConfig.getHtmlTitle() != null) {
+                        Window.setTitle(uiConfig.getHtmlTitle());
+                    }
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
                     }
                     getView().setBanner(uiConfig.getMaintenanceMessage());
-                    if (uiConfig.getRequireReactWrapper()) {
-                        final Object parentIframe = getParentIframe();
-                        if (parentIframe == null) {
-                            AlertEvent.fireWarn(
-                                    this,
-                                    "You have reached Stroom outside of an IFrame you will now be redirected",
-                                    () -> {
-                                        UrlBuilder builder = new UrlBuilder();
-                                        builder.setProtocol(Window.Location.getProtocol());
-                                        builder.setHost(Window.Location.getHost());
-                                        Window.Location.replace(builder.buildString());
-                                    });
-                        }
-                    }
                 }
         ));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {
                 click = false;
-                OpenTaskManagerEvent.fire(MainPresenter.this);
+                OpenUserTaskManagerEvent.fire(MainPresenter.this);
 
             } else {
                 final Timer clickTimer = new Timer() {
@@ -162,6 +143,24 @@ public class MainPresenter
 
         // Start the auto refresh timer.
         startAutoRefresh();
+    }
+
+    private void updateSpinnerState() {
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        // Always try and start spinner even if it might be spinning
+        // already.
+        final SpinnerDisplay spinner = getView().getSpinner();
+        if (spinner != null) {
+            if (taskCount > 0) {
+                spinner.start();
+            } else if (taskCount == 0) {
+                // Only stop spinner if we are no longer executing any tasks.
+                spinner.stop();
+            }
+        }
     }
 
     @Override

@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 final class CurrentUserState {
+
     private static final ThreadLocal<Deque<State>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
 
     private CurrentUserState() {
@@ -57,7 +58,12 @@ final class CurrentUserState {
         return state != null && state.isElevatePermissions();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class State {
+
         private final UserIdentity userIdentity;
         private final boolean elevatePermissions;
 

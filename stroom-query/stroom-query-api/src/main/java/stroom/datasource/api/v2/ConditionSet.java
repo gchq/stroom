@@ -219,6 +219,56 @@ public enum ConditionSet {
         throw new RuntimeException("Unknown field type");
     }
 
+    public static ConditionSet getSolr(final FieldType fieldType) {
+        switch (fieldType) {
+            case ID: {
+                return ConditionSet.SOLR_ID;
+            }
+            case BOOLEAN: {
+                return ConditionSet.SOLR_BOOLEAN;
+            }
+            case INTEGER: {
+                return ConditionSet.SOLR_NUMERIC;
+            }
+            case LONG: {
+                return ConditionSet.SOLR_NUMERIC;
+            }
+            case FLOAT: {
+                return ConditionSet.SOLR_NUMERIC;
+            }
+            case DOUBLE: {
+                return ConditionSet.SOLR_NUMERIC;
+            }
+            case DATE: {
+                return ConditionSet.SOLR_DATE;
+            }
+            case TEXT: {
+                return ConditionSet.SOLR_TEXT;
+            }
+            case KEYWORD: {
+                return ConditionSet.DEFAULT_KEYWORD;
+            }
+            case IPV4_ADDRESS: {
+                return ConditionSet.SOLR_NUMERIC;
+            }
+            case DOC_REF: {
+                return ConditionSet.DOC_REF_ALL;
+            }
+        }
+        throw new RuntimeException("Unknown field type");
+    }
+
+    public static ConditionSet getElastic(final FieldType elasticIndexFieldType) {
+        if (FieldType.DATE.equals(elasticIndexFieldType) ||
+                FieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
+                FieldType.ID.equals(elasticIndexFieldType) ||
+                FieldType.LONG.equals(elasticIndexFieldType) ||
+                FieldType.INTEGER.equals(elasticIndexFieldType)) {
+            return ConditionSet.ELASTIC_NUMERIC;
+        }
+        return ConditionSet.ELASTIC_TEXT;
+    }
+
     public static ConditionSet getUiDefaultConditions(final FieldType fieldType) {
         if (fieldType != null) {
             if (FieldType.DOC_REF.equals(fieldType)) {

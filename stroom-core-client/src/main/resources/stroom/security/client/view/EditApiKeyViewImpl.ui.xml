@@ -1,0 +1,86 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:item="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max dock-container-vertical form">
+        <form:FormGroup identity="owner" label="Owner">
+            <form:HelpHTML>
+                <p>The API Key will have the same permissions as the owner of the key.</p>
+                <p>
+                    Anyone in possession of the API Key will be able to perform any action
+                    that the owner can.
+                </p>
+            </form:HelpHTML>
+            <g:FlowPanel styleName="max dock-container-vertical">
+                <g:Label ui:field="ownerLabel" addStyleNames="w-100"/>
+                <item:SelectionBox ui:field="ownerSelectionBox" addStyleNames="w-100"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="name" label="API Key Name">
+            <form:HelpHTML>
+                <p>A name for the API Key. This can be used to describe the intended purpose of the key.</p>
+                <p>API Key names must be unique for the same owner.</p>
+            </form:HelpHTML>
+            <g:TextBox ui:field="nameTextBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="hashAlgorithm" label="Hash Algorithm">
+            <form:HelpHTML>
+                <p>The hashing algorithm used to hash the API Key for storage in Stroom (Stroom only stores
+                a hash of the key and its prefix, not the full key).</p>
+                <p>Different algorithms offer different security/performance characteristics.</p>
+                <p>The SHA algorithms provide less of a performance impact on the API. Bcrypt and Argon2
+                are potentially more secure (though this is marginal given the size of the API Keys)
+                but have an overhead of ~100ms on API calls.</p>
+            </form:HelpHTML>
+            <item:SelectionBox ui:field="hashAlgorithmSelectionBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="prefixFormGroup" identity="prefix" label="API Key Prefix">
+            <form:HelpHTML>
+                <p>This is the key's prefix. It can be used to help associate a key that you hold with the
+                API key record in Stroom. Note: though unlikely, multiple keys can share the same prefix.</p>
+            </form:HelpHTML>
+            <g:TextBox ui:field="prefixTextBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="apiKeyFormGroup" identity="apiKey" label="API Key (you must copy this)">
+            <form:HelpHTML>
+                <p>This is the full API Key. Because it is never stored in Stroom you must copy it now for use
+                    in your client application/script. Once you close this dialog, Stroom will never be able to
+                    show you this key again.</p>
+                <p>To use the API Key in your client application or script, set a HTTP header with key
+                    '<code>Authorization</code>' and value '<code>Bearer ${TOKEN}</code>'
+                    (where '<code>${TOKEN}</code>' is the full API Key, e.g.</p>
+                    <p>'<code>Bearer sak_0ef90a814d_ArVs6...TRUNCATED...6Edq4</code>'.</p>
+            </form:HelpHTML>
+            <g:FlowPanel styleName="max dock-container-vertical">
+                <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
+                <g:FlowPanel styleName="max dock-container-horizontal align-center">
+                    <b:ButtonPanel ui:field="apiKeyButtonPanel" />
+                    <g:Label ui:field="copyToClipboardLabel" />
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="enabled" label="Enabled">
+            <form:HelpHTML>
+                <p>You can temporarily disable a key which will prevent anyone from authenticating with that key.</p>
+            </form:HelpHTML>
+            <tickbox:CustomCheckBox ui:field="enabledCheckBox" identity="enabledCheckBox" label="Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="comments" label="Comments">
+            <form:HelpHTML>
+                <p>Comments can be added to help describe the purpose of the key.</p>
+            </form:HelpHTML>
+            <g:TextArea ui:field="commentsTextArea" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="expiry" label="Expiry Date">
+            <form:HelpHTML>
+                <p>This is the expiry date of the key. After this date, the API Key will no longer be allowed to
+                authenticate and will be essentially useless.</p>
+            </form:HelpHTML>
+            <c:MyDateBox ui:field="expiresOnDateBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

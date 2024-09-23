@@ -104,6 +104,10 @@ public class Rect {
         return "[" + top + ", " + left + ", " + bottom + ", " + right + "]";
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private double top;

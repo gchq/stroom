@@ -17,8 +17,11 @@
 
 package stroom.importexport.impl;
 
+import stroom.importexport.impl.ContentPackImportConfig.UserType;
 import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
+import stroom.security.mock.MockSecurityContext;
+import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -53,12 +56,13 @@ class TestContentPackZipImport {
 
     private static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
 
+    private final SecurityContext securityContext = new MockSecurityContext();
+
     @Mock
     private ImportExportService importExportService;
     @Mock
     private ContentPackImportConfig contentPackImportConfig;
-    @Mock
-    private SecurityContext securityContext;
+
 
     private Path tempDir;
     private Path contentPackDir;
@@ -105,14 +109,10 @@ class TestContentPackZipImport {
                 .thenReturn(contentPackDir.toAbsolutePath().toString());
         Mockito.when(contentPackImportConfig.isEnabled())
                 .thenReturn(true);
-        Mockito
-                .doAnswer(invocation -> {
-                    Runnable runnable = invocation.getArgument(0);
-                    runnable.run();
-                    return null;
-                })
-                .when(securityContext)
-                .asAdminUser(Mockito.any(Runnable.class));
+        Mockito.when(contentPackImportConfig.getImportAsSubjectId())
+                .thenReturn(User.ADMINISTRATORS_GROUP_SUBJECT_ID);
+        Mockito.when(contentPackImportConfig.getImportAsType())
+                .thenReturn(UserType.GROUP);
     }
 
     private void deleteTestFiles() throws IOException {
@@ -120,7 +120,6 @@ class TestContentPackZipImport {
         Files.deleteIfExists(testPack2);
         Files.deleteIfExists(testPack3);
     }
-
 
     @Test
     void testStartup_disabled() throws IOException {

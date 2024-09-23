@@ -106,11 +106,6 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
 
     abstract boolean inverse();
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     abstract static class AbstractGen extends AbstractManyChildGenerator {
 
         AbstractGen(final Generator[] childGenerators) {

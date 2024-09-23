@@ -16,11 +16,12 @@
 
 package stroom.analytics;
 
+import stroom.analytics.impl.AnalyticHelper;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationDestinationType;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.NotificationConfig;
+import stroom.analytics.shared.NotificationDestinationType;
+import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -30,7 +31,6 @@ import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
-import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -51,6 +51,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,7 +67,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockIndexShardWriterExecutorModule.class)
 class AbstractAnalyticsTest extends StroomIntegrationTest {
 
     static final SimpleDuration INSTANT = SimpleDuration
@@ -82,6 +83,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     private AnalyticRuleStore analyticRuleStore;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
+    private AnalyticHelper analyticHelper;
 
     @BeforeEach
     final void setup() {
@@ -107,6 +110,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         if (analyticsDataSetup.getDetections() == null) {
             throw new NullPointerException("Detections missing");
         }
+
+        assertThat(analyticHelper.getRules().size()).isZero();
     }
 
     @Override
@@ -122,9 +127,14 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .query(sample.getQuery())
                 .analyticProcessType(sample.getAnalyticProcessType())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
-                .analyticNotificationConfig(sample.getAnalyticNotificationConfig())
+                .notifications(new ArrayList<>(sample.getNotifications()))
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
+
+        assertThat(analyticHelper.getRules().size()).isOne();
+        assertThat(analyticHelper.getRules().getFirst().getUuid()).isEqualTo(alertRuleDocRef.getUuid());
+
         return alertRuleDocRef;
     }
 
@@ -143,14 +153,15 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         }
     }
 
-    protected AnalyticNotificationConfig createNotificationConfig() {
-        return AnalyticNotificationConfig
+    protected List<NotificationConfig> createNotificationConfig() {
+        final NotificationConfig notificationConfig = NotificationConfig
                 .builder()
-                .destinationType(AnalyticNotificationDestinationType.STREAM)
-                .destination(AnalyticNotificationStreamDestination.builder()
+                .destinationType(NotificationDestinationType.STREAM)
+                .destination(NotificationStreamDestination.builder()
                         .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
                 .build();
+        return List.of(notificationConfig);
     }
 }

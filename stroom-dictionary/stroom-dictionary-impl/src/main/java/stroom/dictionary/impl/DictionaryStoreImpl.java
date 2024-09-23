@@ -19,11 +19,8 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -33,8 +30,10 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
+import stroom.util.shared.PermissionException;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
@@ -43,13 +42,15 @@ import jakarta.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DictionaryStoreImpl.class);
 
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
@@ -57,8 +58,6 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
             DictionaryDoc.DOCUMENT_TYPE,
             DictionaryDoc.ICON);
     private final Store<DictionaryDoc> store;
-    // Split on unix or windows line ends
-    private static final Pattern WORD_SPLIT_PATTERN = Pattern.compile("(\r?\n)+");
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
@@ -212,21 +211,32 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+
+    @Override
+    public Optional<DocRef> findByUuid(final String uuid) {
+        try {
+            final DocRefInfo docRefInfo = store.info(uuid);
+            return Optional.ofNullable(docRefInfo.getDocRef());
+        } catch (final RuntimeException e) {
+            // Expected permission exception for some users.
+            LOGGER.debug(e::getMessage, e);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public List<DocRef> findByName(final String name) {
+        return findByNames(List.of(name), false);
+    }
+
     @Override
     public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
         return store.findByNames(names, allowWildCards);
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
-    }
-
-    @Override
-    public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                final String extension,
-                                                final StringMatch filter) {
-        return store.fetchHighlights(docRef, extension, filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 
     @Override
@@ -241,43 +251,49 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
+        // returns null if doc not found
         final String words = getCombinedData(dictionaryRef);
-
-        if (!NullSafe.isBlankString(words)) {
+        if (words.isBlank()) {
+            return new String[0];
+        } else {
             // Split by line break (`LF` or `CRLF`) and trim whitespace from each resulting line
             return StringUtil.splitToLines(words, true)
                     .toArray(String[]::new);
         }
-
-        return null;
     }
 
     private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {
-        final DictionaryDoc doc = readDocument(docRef);
-        if (doc != null && !visited.contains(docRef)) {
-            // Prevent circular dependencies.
+        final StringBuilder sb = new StringBuilder();
+        // Prevent circular dependencies.
+        if (!visited.contains(docRef)) {
             visited.add(docRef);
 
-            final StringBuilder sb = new StringBuilder();
-            if (doc.getImports() != null) {
-                for (final DocRef ref : doc.getImports()) {
-                    final String data = doGetCombinedData(ref, visited);
-                    if (data != null && !data.isEmpty()) {
-                        if (sb.length() > 0) {
+            try {
+                final DictionaryDoc doc = readDocument(docRef);
+                if (doc != null) {
+                    if (doc.getImports() != null) {
+                        for (final DocRef ref : doc.getImports()) {
+                            final String data = doGetCombinedData(ref, visited);
+                            if (!data.isEmpty()) {
+                                if (!sb.isEmpty()) {
+                                    sb.append("\n");
+                                }
+                                sb.append(data);
+                            }
+                        }
+                    }
+                    if (doc.getData() != null) {
+                        if (!sb.isEmpty()) {
                             sb.append("\n");
                         }
-                        sb.append(data);
+                        sb.append(doc.getData());
                     }
                 }
+            } catch (final PermissionException e) {
+                // Silently ignore permission exceptions.
+                LOGGER.debug(e::getMessage, e);
             }
-            if (doc.getData() != null) {
-                if (sb.length() > 0) {
-                    sb.append("\n");
-                }
-                sb.append(doc.getData());
-            }
-            return sb.toString();
         }
-        return null;
+        return sb.toString();
     }
 }

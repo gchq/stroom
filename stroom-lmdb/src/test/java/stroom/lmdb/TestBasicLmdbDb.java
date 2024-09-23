@@ -35,7 +35,9 @@ import stroom.lmdb.serde.UnsignedLongSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
+import stroom.util.exception.ThrowingConsumer;
 import stroom.util.functions.TriConsumer;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
@@ -72,7 +74,10 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -1462,19 +1467,117 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         });
     }
 
+    /**
+     * See the impact on disk space of doing writes with an open read txn
+     */
+    @Test
+    void testPutsWithConcurrentReadTxn() throws ExecutionException, InterruptedException {
+        try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
+            final BasicLmdbDb<String, String> basicLmdb1 = createDb(
+                    temporaryPathCreator,
+                    new EnvFlags[]{EnvFlags.MDB_NOTLS},
+                    false,
+                    "1");
+            final LmdbEnv lmdbEnv = basicLmdb1.getLmdbEnvironment();
+
+            final AtomicInteger runNo = new AtomicInteger(1);
+
+            final Consumer<Txn<ByteBuffer>> putConsumer = writeTxn -> {
+                final int run = runNo.getAndIncrement();
+//                LOGGER.info("Putting for run: {}", run);
+                for (int i = 1; i <= 1_000; i++) {
+                    basicLmdb1.put(
+                            writeTxn,
+                            Strings.padStart(Integer.toString(i), 6, '0'),
+                            "val-"
+                                    + Strings.padStart(Integer.toString(i), 6, '0')
+                                    + "_run-"
+                                    + Strings.padStart(Integer.toString(run), 3, '0'),
+                            true);
+
+                }
+                final Optional<String> optVal1 = basicLmdb1.get(writeTxn, "000001");
+                assertThat(optVal1)
+                        .isNotEmpty();
+//                LOGGER.info("Val for key 1: {}", optVal1.orElse("[empty]"));
+            };
+
+            // Initial rounds of putting the same set of keys but with different values
+            // each round.
+            for (int i = 0; i < 5; i++) {
+                lmdbEnv.doWithWriteTxn(putConsumer);
+                LOGGER.info("Run: {}, DB size on disk: {}, entry count: {}",
+                        runNo.get() - 1,  // already incremented
+                        ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),
+                        basicLmdb1.getEntryCount());
+            }
+
+            final CountDownLatch readStartLatch = new CountDownLatch(1);
+            final CountDownLatch writeFinishLatch = new CountDownLatch(1);
+
+            final CompletableFuture<Void> readFuture = CompletableFuture.runAsync(() -> {
+                LOGGER.info("Read thread started");
+                lmdbEnv.doWithReadTxn(ThrowingConsumer.unchecked(readTxn -> {
+                    LOGGER.info("Read txn started");
+                    readStartLatch.countDown();
+                    LOGGER.info("readStartLatch counted down");
+
+                    // Just hold the readTxn open while all the writes happen
+
+                    awaitWithTimeout(writeFinishLatch, 10);
+                }));
+                LOGGER.info("Finished read thread");
+            });
+
+            // Wait for the read txn to be active
+            awaitWithTimeout(readStartLatch, 10);
+
+            final CompletableFuture<Void> writeFuture = CompletableFuture.runAsync(() -> {
+                LOGGER.info("Write thread started");
+                lmdbEnv.doWithWriteTxn(ThrowingConsumer.unchecked(writeTxn -> {
+                    LOGGER.info("Write txn started");
+
+                    for (int i = 0; i < 5; i++) {
+                        // Initial puts with no read txn
+                        putConsumer.accept(writeTxn);
+                        LOGGER.info("Run: {}, DB size on disk: {}, entry count: {}",
+                                runNo.get() - 1,  // already incremented
+                                ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),
+                                basicLmdb1.getEntryCount());
+                    }
+
+                    writeFinishLatch.countDown();
+                }));
+                LOGGER.info("Finished write thread");
+            });
+
+            readFuture.get();
+            writeFuture.get();
+        }
+    }
+
     private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
                                                  final EnvFlags[] envFlags,
                                                  final String id) {
+        return createDb(temporaryPathCreator, envFlags, true, id);
+
+    }
+
+    private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
+                                                 final EnvFlags[] envFlags,
+                                                 final boolean isReadBlockedByWrite,
+                                                 final String id) {
         final LmdbEnv lmdbEnv = new LmdbEnvFactory(
                 temporaryPathCreator,
-                temporaryPathCreator.getTempDirProvider(),
-                LmdbLibraryConfig::new)
+                new LmdbLibrary(temporaryPathCreator,
+                        temporaryPathCreator.getTempDirProvider(),
+                        LmdbLibraryConfig::new))
                 .builder(temporaryPathCreator.getBaseTempDir())
                 .withSubDirectory("env" + id)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)
                 .withEnvFlags(envFlags)
-                .makeWritersBlockReaders()
+                .setIsReaderBlockedByWriter(isReadBlockedByWrite)
                 .build();
 
         return new BasicLmdbDb<>(
@@ -1510,6 +1613,22 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         return "value" + i;
     }
 
+    private void awaitWithTimeout(final CountDownLatch latch,
+                                  final int timeoutSecs) {
+        try {
+            final boolean success = latch.await(timeoutSecs, TimeUnit.SECONDS);
+            if (!success) {
+                throw new RuntimeException("Timed out");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     private record MultiKey(
             int int1,
             long long1,
@@ -1519,6 +1638,10 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MultiKeySerde implements Serde<MultiKey> {
 
@@ -1552,5 +1675,4 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             UNSIGNED_BYTES.increment(byteBuffer, 12);
         }
     }
-
 }

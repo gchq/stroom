@@ -16,10 +16,14 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class AbstractTab extends Widget {
+public abstract class AbstractTab extends Widget implements TaskMonitorFactory {
 
     private boolean hidden;
 
@@ -47,5 +51,20 @@ public abstract class AbstractTab extends Widget {
     }
 
     protected void setHover(final boolean hover) {
+    }
+
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+
+            }
+        };
     }
 }

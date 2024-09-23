@@ -29,8 +29,9 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -46,9 +47,11 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Provider;
 
-public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
+public class DataRetentionPresenter
+        extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
         implements HasDirtyHandlers, CloseContentEvent.Handler {
 
+    public static final String TAB_TYPE = "DataRetentionRules";
     private static final TabData RULES_TAB = new TabDataImpl("Rules");
     private static final TabData IMPACT_SUMMARY_TAB = new TabDataImpl("Impact Summary");
     private static final String TAB_LABEL = "Data Retention";
@@ -124,7 +127,9 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     }
 
     public void selectTab(final TabData tab) {
-        TaskStartEvent.fire(DataRetentionPresenter.this);
+        final TaskMonitor taskMonitor = createTaskMonitor();
+        final Task task = new SimpleTask("Selecting tab");
+        taskMonitor.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -142,8 +147,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
                     }
                 });
             }
-
-            TaskEndEvent.fire(DataRetentionPresenter.this);
+            taskMonitor.onEnd(task);
         });
     }
 
@@ -225,6 +229,15 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
             unbind();
         }
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DataRetentionView extends LinkTabsLayoutView {
 

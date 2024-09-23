@@ -23,12 +23,12 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -100,15 +100,15 @@ public class FsVolumeGroupEditPresenter
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
-            final Rest<Boolean> rest = restFactory.create();
             delayedUpdate.reset();
-            rest
+            restFactory
+                    .create(FS_VOLUME_RESOURCE)
+                    .method(FsVolumeResource::rescan)
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
                     })
-                    .call(FS_VOLUME_RESOURCE)
-                    .rescan();
-
+                    .taskMonitorFactory(this)
+                    .exec();
         }));
     }
 
@@ -121,11 +121,12 @@ public class FsVolumeGroupEditPresenter
     private void edit() {
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<FsVolume> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(FS_VOLUME_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
-                    .call(FS_VOLUME_RESOURCE)
-                    .fetch(volume.getId());
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
@@ -135,7 +136,6 @@ public class FsVolumeGroupEditPresenter
             if (result != null) {
                 volumeStatusListPresenter.refresh();
             }
-            editor.hide();
         });
     }
 
@@ -151,9 +151,12 @@ public class FsVolumeGroupEditPresenter
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> volumeStatusListPresenter.refresh()).call(
-                                        FS_VOLUME_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .create(FS_VOLUME_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
+                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .taskMonitorFactory(this)
+                                        .exec();
                             }
                         }
                     });
@@ -193,27 +196,31 @@ public class FsVolumeGroupEditPresenter
             volumeStatusListPresenter.setGroup(volumeGroup);
             getView().setName(volumeGroup.getName());
 
-            final PopupSize popupSize = PopupSize.resizable(1000, 600);
+            final PopupSize popupSize = PopupSize.resizable(1400, 600);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(title)
                     .onShow(e -> getView().focus())
-                    .onHideRequest(event -> {
-                        if (event.isOk()) {
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
                             volumeGroup.setName(getView().getName());
                             try {
                                 doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup));
-                            } catch (final RuntimeException e) {
+                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                            } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         FsVolumeGroupEditPresenter.this,
-                                        e.getMessage(),
-                                        null);
+                                        ex.getMessage(),
+                                        e::reset);
                             }
                         } else {
-                            consumer.accept(null);
+                            e.hide();
                         }
+                    })
+                    .onHide(e -> {
+                        open = false;
+                        opening = false;
                     })
                     .fire();
         }
@@ -221,15 +228,17 @@ public class FsVolumeGroupEditPresenter
 
     private void doWithGroupNameValidation(final String groupName,
                                            final Integer groupId,
-                                           final Runnable work) {
+                                           final Runnable work,
+                                           final HidePopupRequestEvent event) {
         if (groupName == null || groupName.isEmpty()) {
             AlertEvent.fireError(
                     FsVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
-                    null);
+                    event::reset);
         } else {
-            final Rest<FsVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(FS_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetchByName(getView().getName()))
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -237,30 +246,35 @@ public class FsVolumeGroupEditPresenter
                                     "Group name '"
                                             + groupName
                                             + "' is already in use by another group.",
-                                    null);
+                                    event::reset);
                         } else {
                             work.run();
                         }
                     })
-                    .call(FS_VOLUME_GROUP_RESOURCE)
-                    .fetchByName(getView().getName());
+                    .onFailure(RestErrorHandler.forPopup(this, event))
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
     private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
-                                   final FsVolumeGroup volumeGroup) {
-        final Rest<FsVolumeGroup> rest = restFactory.create();
-        rest
-                .onSuccess(consumer)
-                .call(FS_VOLUME_GROUP_RESOURCE)
-                .update(volumeGroup.getId(), volumeGroup);
+                                   final FsVolumeGroup volumeGroup,
+                                   final HidePopupRequestEvent event) {
+        restFactory
+                .create(FS_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.update(volumeGroup.getId(), volumeGroup))
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskMonitorFactory(this)
+                .exec();
     }
 
-    void hide() {
-        HidePopupEvent.builder(this).fire();
-        open = false;
-        opening = false;
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface FsVolumeGroupEditView extends View, Focus {
 

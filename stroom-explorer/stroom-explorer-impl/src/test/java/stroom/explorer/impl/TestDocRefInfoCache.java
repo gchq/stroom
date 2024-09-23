@@ -1,21 +1,23 @@
 package stroom.explorer.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
+import stroom.docstore.api.DocumentActionHandler;
+import stroom.docstore.api.DocumentActionHandlers;
+import stroom.docstore.api.DocumentType;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
+import stroom.util.shared.Document;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,9 +25,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestDocRefInfoCache {
 
     public static final String TYPE_FOO = "foo";
@@ -47,27 +51,52 @@ class TestDocRefInfoCache {
             .type(TYPE_BAR)
             .build();
 
+    public static final DocRef DOC_REF_FOLDER = DocRef.builder()
+            .randomUuid()
+            .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
+            .name("bongo")
+            .build();
+
     final CacheManagerImpl cacheManager = new CacheManagerImpl();
     final SecurityContext securityContext = new MockSecurityContext();
     DocRefInfoCache docRefInfoCache;
 
+    @Mock
+    private ExplorerActionHandlers mockExplorerActionHandlers;
+
     @BeforeEach
     void setUp() {
-        final ExplorerActionHandlers explorerActionHandlers = new ExplorerActionHandlers(
-                Set.of(
-                        new MyExplorerActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
-                        new MyExplorerActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
+        final DocumentActionHandlers documentActionHandlers = new DocumentActionHandlers(
+                Map.of(
+                        new DocumentType(TYPE_FOO), new MyDocumentActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
+                        new DocumentType(TYPE_BAR), new MyDocumentActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
 
         docRefInfoCache = new DocRefInfoCache(
                 cacheManager,
-                explorerActionHandlers,
                 ExplorerConfig::new,
-                securityContext);
+                securityContext,
+                () -> documentActionHandlers,
+                mockExplorerActionHandlers);
     }
 
     @Test
     void testGet() {
         final DocRef docRef = DOC_REF_1;
+        final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);
+
+        assertThat(docRefInfo)
+                .isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef())
+                .isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef.getUuid()))
+                .isEqualTo(docRefInfoCache.get(docRef));
+    }
+
+    @Test
+    void testGet_folder() {
+        final DocRef docRef = DOC_REF_FOLDER;
+        Mockito.when(mockExplorerActionHandlers.getHandler(Mockito.anyString()))
+                .thenReturn(new MyFolderExplorerActionHandler());
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);
 
         assertThat(docRefInfo)
@@ -102,6 +131,22 @@ class TestDocRefInfoCache {
     }
 
     @Test
+    void testGet_noType_folder() {
+        final DocRef docRef = DOC_REF_FOLDER;
+        Mockito.when(mockExplorerActionHandlers.stream())
+                .thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
+
+        Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
+
+        assertThat(docRefInfo)
+                .isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef())
+                .isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef.getUuid()))
+                .isEqualTo(docRefInfoCache.get(docRef));
+    }
+
+    @Test
     void testGet_noName() {
         DocRef docRef = DOC_REF_1;
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef.withoutName());
@@ -118,16 +163,28 @@ class TestDocRefInfoCache {
                 .build();
     }
 
+    private static DocRefInfo buildInfo(final DocRef docRef) {
+        return NullSafe.get(
+                docRef,
+                docRef2 -> new DocRefInfo(
+                        docRef2,
+                        System.currentTimeMillis(),
+                        System.currentTimeMillis(),
+                        "user1",
+                        "user1",
+                        null));
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    private static class MyExplorerActionHandler implements ExplorerActionHandler {
+    private static class MyDocumentActionHandler implements DocumentActionHandler {
 
         private final Map<String, DocRef> docRefs = new HashMap<>();
         private final String type;
 
-        private MyExplorerActionHandler(final Set<DocRef> docRefs) {
+        public MyDocumentActionHandler(final Set<DocRef> docRefs) {
             docRefs.forEach(docRef -> this.docRefs.put(docRef.getUuid(), docRef));
             final Set<String> types = docRefs.stream()
                     .map(DocRef::getType)
@@ -139,18 +196,45 @@ class TestDocRefInfoCache {
         }
 
         @Override
+        public Document readDocument(final DocRef docRef) {
+            return null;
+        }
+
+        @Override
+        public Document writeDocument(final Document document) {
+            return null;
+        }
+
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public DocRefInfo info(final String uuid) {
+            return NullSafe.get(docRefs.get(uuid), TestDocRefInfoCache::buildInfo);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MyFolderExplorerActionHandler implements ExplorerActionHandler {
+
+        @Override
         public Set<DocRef> listDocuments() {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public DocRef createDocument(final String name) {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
@@ -158,71 +242,50 @@ class TestDocRefInfoCache {
                                    final String name,
                                    final boolean makeNameUnique,
                                    final Set<String> existingNames) {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public DocRef moveDocument(final String uuid) {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public DocRef renameDocument(final String uuid, final String name) {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public void deleteDocument(final String uuid) {
-            throw new UnsupportedOperationException();
+
         }
 
         @Override
         public DocRefInfo info(final String uuid) {
-            return NullSafe.get(
-                    docRefs.get(uuid),
-                    docRef -> new DocRefInfo(
-                            docRef,
-                            System.currentTimeMillis(),
-                            System.currentTimeMillis(),
-                            "user1",
-                            "user1",
-                            null));
+            return buildInfo(DocRef.builder()
+                    .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
+                    .uuid(uuid)
+                    .build());
         }
 
         @Override
-        public DocumentType getDocumentType() {
-            return new DocumentType(
-                    DocumentTypeGroup.CONFIGURATION,
-                    type,
-                    type,
-                    SvgImage.OK);
+        public stroom.explorer.shared.DocumentType getDocumentType() {
+            return FolderExplorerActionHandler.DOCUMENT_TYPE;
         }
 
         @Override
         public Map<DocRef, Set<DocRef>> getDependencies() {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public Set<DocRef> getDependencies(final DocRef docRef) {
-            throw new UnsupportedOperationException();
+            return null;
         }
 
         @Override
         public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
-            throw new UnsupportedOperationException();
-        }
 
-        @Override
-        public List<DocContentMatch> findByContent(final StringMatch filter) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                    final String extension,
-                                                    final StringMatch filter) {
-            throw new UnsupportedOperationException();
         }
     }
 }

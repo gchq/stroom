@@ -16,8 +16,8 @@
 
 package stroom.query.impl.datasource;
 
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
@@ -39,8 +39,8 @@ class DataSourceResourceImpl implements DataSourceResource {
     }
 
     @Override
-    public ResultPage<FieldInfo> findFields(final FindFieldInfoCriteria criteria) {
-        return queryServiceProvider.get().getFieldInfo(criteria);
+    public ResultPage<QueryField> findFields(final FindFieldCriteria criteria) {
+        return queryServiceProvider.get().findFields(criteria);
     }
 
     @Override

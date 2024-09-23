@@ -25,6 +25,8 @@ import stroom.alert.client.gin.AlertModule;
 import stroom.analytics.client.gin.AnalyticsGinjector;
 import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.annotation.client.AnnotationModule;
+import stroom.aws.s3.client.gin.S3ConfigGinjector;
+import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
@@ -81,6 +83,12 @@ import stroom.search.solr.client.gin.SolrIndexGinjector;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
+import stroom.security.identity.client.gin.ChangePasswordGinjector;
+import stroom.security.identity.client.gin.ChangePasswordModule;
+import stroom.state.client.gin.ScyllaDbGinjector;
+import stroom.state.client.gin.ScyllaDbModule;
+import stroom.state.client.gin.StateStoreGinjector;
+import stroom.state.client.gin.StateStoreModule;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
@@ -132,6 +140,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
+        ChangePasswordModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
@@ -144,7 +153,10 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         VisualisationModule.class,
         ViewModule.class,
         WelcomeModule.class,
-        XMLSchemaModule.class
+        XMLSchemaModule.class,
+        S3ConfigModule.class,
+        ScyllaDbModule.class,
+        StateStoreModule.class,
 })
 public interface AppGinjectorUser extends
         AboutGinjector,
@@ -169,6 +181,7 @@ public interface AppGinjectorUser extends
         UserPreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
+        ChangePasswordGinjector,
         AnalyticsGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
@@ -181,7 +194,10 @@ public interface AppGinjectorUser extends
         VisGinjector,
         VisualisationGinjector,
         WelcomeGinjector,
-        XMLSchemaGinjector {
+        XMLSchemaGinjector,
+        S3ConfigGinjector,
+        ScyllaDbGinjector,
+        StateStoreGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();

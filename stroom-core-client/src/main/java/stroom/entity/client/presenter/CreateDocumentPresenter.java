@@ -27,12 +27,14 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -49,7 +51,8 @@ import java.util.function.Consumer;
 public class CreateDocumentPresenter
         extends MyPresenter<CreateDocumentView, CreateDocumentProxy>
         implements ShowCreateDocumentDialogEvent.Handler,
-        HidePopupRequestEvent.Handler {
+        HidePopupRequestEvent.Handler,
+        DialogActionUiHandlers {
 
     private final EntityTreePresenter entityTreePresenter;
     private String docType;
@@ -66,7 +69,7 @@ public class CreateDocumentPresenter
         super(eventBus, view, proxy);
 
         this.entityTreePresenter = entityTreePresenter;
-        view.setUiHandlers(new DefaultHideRequestUiHandlers(this));
+        view.setUiHandlers(this);
         view.setFolderView(entityTreePresenter.getView());
 
         entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
@@ -110,6 +113,11 @@ public class CreateDocumentPresenter
     }
 
     @Override
+    public void onDialogAction(final DialogAction action) {
+        DialogEvent.fire(this, this, action);
+    }
+
+    @Override
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final ExplorerNode destinationFolder = getFolder();
@@ -117,7 +125,7 @@ public class CreateDocumentPresenter
                 AlertEvent.fireWarn(
                         CreateDocumentPresenter.this,
                         "No parent folder has been selected",
-                        null);
+                        e::reset);
             } else {
                 String docName = getView().getName();
                 if (docName != null) {
@@ -128,11 +136,11 @@ public class CreateDocumentPresenter
                     AlertEvent.fireWarn(
                             CreateDocumentPresenter.this,
                             "You must provide a name for the new " + docType.toLowerCase(),
-                            null);
+                            e::reset);
                 } else {
                     CreateDocumentEvent.fire(
                             CreateDocumentPresenter.this,
-                            CreateDocumentPresenter.this,
+                            e,
                             docType,
                             docName,
                             destinationFolder,
@@ -149,11 +157,16 @@ public class CreateDocumentPresenter
         return entityTreePresenter.getSelectedItem();
     }
 
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
+    }
 
     // --------------------------------------------------------------------------------
 
 
-    public interface CreateDocumentView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
+    public interface CreateDocumentView extends View, Focus, HasUiHandlers<DialogActionUiHandlers> {
 
         String getName();
 

@@ -40,7 +40,7 @@ import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
@@ -161,11 +161,11 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         assertThat(pipelineStore.list().size()).isEqualTo(1);
 
         final ExplorerNode indexNode = explorerService.create(
-                IndexDoc.DOCUMENT_TYPE,
+                LuceneIndexDoc.DOCUMENT_TYPE,
                 "Test Index",
                 folder1,
                 null);
-        final IndexDoc index = indexStore.readDocument(indexNode.getDocRef());
+        final LuceneIndexDoc index = indexStore.readDocument(indexNode.getDocRef());
         indexStore.writeDocument(index);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
@@ -337,7 +337,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
         final ExpressionOperator.Builder root = ExpressionOperator.builder();
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
-        root.addTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
+        root.addDocRefTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;
     }
 }

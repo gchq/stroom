@@ -19,6 +19,7 @@ package stroom.data.store.impl;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -210,6 +211,11 @@ class DataServiceImpl implements DataService {
     }
 
     @Override
+    public Map<String, String> metaAttributes(final long id) {
+        return attributeMapFactory.getAttributes(id);
+    }
+
+    @Override
     public List<DataInfoSection> info(final long id) {
         final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(
                 new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id)));
@@ -226,7 +232,8 @@ class DataServiceImpl implements DataService {
             final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
             final Map<String, String> attributeMap = metaRow.getAttributes();
-            final Map<String, String> additionalAttributes = attributeMapFactory.getAttributes(metaRow.getMeta());
+            final Map<String, String> additionalAttributes = attributeMapFactory.getAttributes(
+                    metaRow.getMeta().getId());
             final String files = additionalAttributes.remove("Files");
             attributeMap.putAll(additionalAttributes);
 
@@ -243,7 +250,7 @@ class DataServiceImpl implements DataService {
                         !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
                         !DataRetentionFields.RETENTION_RULE.equals(key)) {
 
-                    if (MetaFields.DURATION.getName().equals(key)) {
+                    if (MetaFields.DURATION.getFldName().equals(key)) {
                         entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
                     } else if (key.toLowerCase().contains("time")) {
                         entries.add(new DataInfoSection.Entry(key, convertTime(value)));

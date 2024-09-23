@@ -16,21 +16,22 @@
 
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.IndexField;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.impl.SearchException;
@@ -54,6 +55,8 @@ import org.apache.lucene553.search.Query;
 import org.apache.lucene553.search.SearcherManager;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
@@ -78,7 +81,8 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory,
                            final PathCreator pathCreator,
-                           final IndexFieldsMap indexFieldsMap,
+                           final DocRef indexDocRef,
+                           final IndexFieldCache indexFieldCache,
                            final ExpressionOperator expression,
                            final WordListProvider dictionaryStore,
                            final int maxBooleanClauseCount,
@@ -92,8 +96,9 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
         this.pathCreator = pathCreator;
 
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                indexDocRef,
+                indexFieldCache,
                 dictionaryStore,
-                indexFieldsMap,
                 maxBooleanClauseCount,
                 dateTimeSettings);
         SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
@@ -110,7 +115,8 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
     @Override
     public void searchShard(final TaskContext taskContext,
                             final IndexShard indexShard,
-                            final String[] storedFieldNames,
+                            final IndexField[] storedFields,
+                            final Set<String> fieldsToLoad,
                             final LongAdder hitCount,
                             final int shardNumber,
                             final int shardTotal,
@@ -131,7 +137,8 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
                 // Start searching.
                 searchShard(
                         taskContext,
-                        storedFieldNames,
+                        storedFields,
+                        fieldsToLoad,
                         hitCount,
                         indexShardSearcher,
                         valuesConsumer,
@@ -153,8 +160,8 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
         IndexWriter indexWriter = null;
 
         // Load the current index shard.
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(indexShardId);
-        if (indexShardWriter instanceof final Lucene553IndexShardWriter writer) {
+        final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(indexShardId);
+        if (optional.isPresent() && optional.get() instanceof final Lucene553IndexShardWriter writer) {
             indexWriter = writer.getWriter();
         }
 
@@ -162,7 +169,8 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
     }
 
     private void searchShard(final TaskContext parentContext,
-                             final String[] storedFieldNames,
+                             final IndexField[] storedFields,
+                             final Set<String> fieldsToLoad,
                              final LongAdder hitCount,
                              final IndexShardSearcher indexShardSearcher,
                              final ValuesConsumer valuesConsumer,
@@ -241,7 +249,13 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
                                     // If we have a doc id then retrieve the stored data for it.
                                     SearchProgressLog.increment(queryKey,
                                             SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                                    getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                                    getStoredData(
+                                            storedFields,
+                                            fieldsToLoad,
+                                            valuesConsumer,
+                                            searcher,
+                                            docId,
+                                            errorConsumer);
                                 } catch (final RuntimeException e) {
                                     error(errorConsumer, e);
                                 }
@@ -264,31 +278,30 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
      * only want to get stream and event ids, in these cases no values are
      * retrieved, only stream and event ids.
      */
-    private void getStoredData(final String[] storedFieldNames,
+    private void getStoredData(final IndexField[] storedFields,
+                               final Set<String> fieldsToLoad,
                                final ValuesConsumer valuesConsumer,
                                final IndexSearcher searcher,
                                final int docId,
                                final ErrorConsumer errorConsumer) {
         try {
             SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_GET_STORED_DATA);
-            final Val[] values = new Val[storedFieldNames.length];
-            final Document document = searcher.doc(docId);
+            final Val[] values = new Val[storedFields.length];
+            final Document document = searcher.getIndexReader().document(docId, fieldsToLoad);
 
-            for (int i = 0; i < storedFieldNames.length; i++) {
-                final String storedField = storedFieldNames[i];
+            for (int i = 0; i < storedFields.length; i++) {
+                final IndexField storedField = storedFields[i];
 
                 // If the field is null then it isn't stored.
                 if (storedField != null) {
-                    final IndexableField indexableField = document.getField(storedField);
+                    final IndexableField indexableField = document.getField(storedField.getFldName());
 
                     // If the field is not in fact stored then it will be null here.
                     if (indexableField != null) {
-                        final String value = indexableField.stringValue();
-                        if (value != null) {
-                            final String trimmed = value.trim();
-                            if (trimmed.length() > 0) {
-                                values[i] = ValString.create(trimmed);
-                            }
+                        try {
+                            values[i] = FieldFactory.convertValue(storedField, indexableField);
+                        } catch (final RuntimeException e) {
+                            error(errorConsumer, e);
                         }
                     }
                 }

@@ -29,13 +29,11 @@ import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
@@ -46,6 +44,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
@@ -68,8 +67,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
+public class TextPresenter
+        extends AbstractComponentPresenter<TextPresenter.TextView>
+        implements TextUiHandlers {
 
+    public static final String TAB_TYPE = "text-component";
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text", ComponentUse.PANEL);
@@ -195,7 +197,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 if (link != null) {
                     final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
-                        HyperlinkEvent.fire(TextPresenter.this, hyperlink);
+                        HyperlinkEvent.fire(TextPresenter.this, hyperlink, getView());
                     }
                 }
             }, ClickEvent.getType());
@@ -590,8 +592,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final FetchDataRequest request = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(DATA_RESOURCE)
+                            .method(res -> res.fetch(request))
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
@@ -619,8 +622,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                     }
                                 }
                             })
-                            .call(DATA_RESOURCE)
-                            .fetch(request);
+                            .taskMonitorFactory(getView())
+                            .exec();
                 }
             };
         }
@@ -691,7 +694,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -719,7 +722,16 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         }
     }
 
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {
 
         void setContent(View view);
 

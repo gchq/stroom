@@ -47,6 +47,8 @@
 	height: 18px;
 }
 
+/* quickFilter-tooltip is also used by the HelpManager so bear that in mind.
+   Probably ought to be moved to a common css */
 .quickFilter-tooltip {
 	background-color: var(--tooltip__background-color);
 	color: var(--tooltip__text-color);

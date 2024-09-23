@@ -90,19 +90,7 @@ public class ValueSpinner
         }
     }
 
-//    /**
-//     * @return the Spinner used by this widget
-//     */
-////    public Spinner getSpinner() {
-////        return spinner;
-////    }
-//
-//    /**
-//     * @return the TextBox used by this widget
-//     */
-////    public TextBox getTextBox() {
-////        return valueBox;
-////    }
+
 
     /**
      * @return whether this widget is enabled.
@@ -149,8 +137,24 @@ public class ValueSpinner
         spinner.setMin(min);
     }
 
+    public long getMin() {
+        return spinner.getMin();
+    }
+
     public void setMinStep(final int minStep) {
         spinner.setMinStep(minStep);
+    }
+
+    public long getDelta() {
+        return spinner.getDelta();
+    }
+
+    public void setDelta(final int delta) {
+        spinner.setDelta(delta);
+    }
+
+    public void setWrapValues(final boolean wrapValues) {
+        spinner.setWrapValues(wrapValues);
     }
 
     public int getIntValue() {

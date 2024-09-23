@@ -15,7 +15,7 @@
 #     * Push the docker images
 #     * Create a Github release and add all the artefacts
 
-# Depoendencies for this script:
+# Dependencies for this script:
 #   * bash + standard shell tools (sed, grep, etc.)
 #   * docker
 #   * docker-compose
@@ -46,9 +46,9 @@ LATEST_SUFFIX="-LATEST"
 # This is the branch containing the current stable release of stroom
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
-CURRENT_STROOM_RELEASE_BRANCH="6.1"
-# The version of stroom-resources used for running the DB
-STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.192-2"
+
+# The version of stroom-resources used for running the DB, should be a tag really
+STROOM_RESOURCES_GIT_TAG="7.5-stroom-7.0-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
@@ -96,7 +96,8 @@ stop_and_clear_down_stroom_all_dbs() {
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
 }
 
-start_stroom_all_dbs() {
+start_databases() {
+  local dbs_to_start=( "$@" )
 
   if [[ ! -d "${STROOM_RESOURCES_DIR}" ]]; then
     echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
@@ -115,12 +116,12 @@ start_stroom_all_dbs() {
   #export JAVA_OPTS=-Xmx1024m
   #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
-  echo -e "${GREEN}Starting stroom-all-dbs in the background${NC}"
+  echo -e "${GREEN}Starting [${dbs_to_start[*]}] in the background${NC}"
   ./bounceIt.sh \
     'up -d --build' \
     -y \
     -x \
-    stroom-all-dbs
+    "${dbs_to_start[@]}"
 
   popd > /dev/null
 }
@@ -131,7 +132,7 @@ generate_ddl_dump() {
 
   stop_and_clear_down_stroom_all_dbs
 
-  start_stroom_all_dbs
+  start_databases stroom-all-dbs
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -330,7 +331,7 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+  if [[ -z "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
       "tags: ${GREEN}${allTagArgs[*]}${NC}"
     docker \
@@ -429,16 +430,28 @@ check_for_out_of_date_puml_svgs() {
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
 
   # shellcheck disable=SC2068
+  # Convert any .puml files into .puml.svg if the sha1 hash of the .puml file
+  # does not match that in .puml.sha1 (or .puml.sha1 doesn't exist)
   ${convert_cmd[@]}
 
   # Now see if git thinks there are any differences
   # if so, fail the build as it means the puml has been changed
-  # but the svg has not been regenerated.
+  # but the svg has not been regenerated and checked in.
+  # This is to ensure that the svgs that are checked in to git
+  # are up to date with their puml file.
+  # This is different to stroom-docs which does not check in svg files.
 
   # Example git status --porcelain output:
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
   # ?? stroom-proxy/stroom-proxy-app/doc/storing-dataX.svg
+
+  # Run the git status so we can see what git thinks has changed
+  echo -e "Checking for any changes to .puml.svg files"
+  # OR with true as no match on grep gives non-zero exit
+  git status --porcelain \
+    | grep -Po "(?<=( M|\?\?) ).*\.puml\.svg" \
+    || true
 
   local out_of_date_file_count=0
   # grep the git status output for modified/untracked svg files and
@@ -453,7 +466,7 @@ check_for_out_of_date_puml_svgs() {
       out_of_date_file_count=$((out_of_date_file_count + 1))
     fi
   done < <(git status --porcelain \
-    | grep -Po "(?<=( M|\?\?) ).*\.svg")
+    | grep -Po "(?<=( M|\?\?) ).*\.puml\.svg")
 
   if [[ ${out_of_date_file_count} -gt 0 ]]; then
     echo -e "${RED}ERROR${NC}: ${out_of_date_file_count} PlantUML generated" \
@@ -486,11 +499,10 @@ echo -e "BUILD_BRANCH:                  [${GREEN}${BUILD_BRANCH}${NC}]"
 echo -e "BUILD_TAG:                     [${GREEN}${BUILD_TAG}${NC}]"
 echo -e "BUILD_IS_PULL_REQUEST:         [${GREEN}${BUILD_IS_PULL_REQUEST}${NC}]"
 echo -e "BUILD_VERSION:                 [${GREEN}${BUILD_VERSION}${NC}]"
-echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 echo -e "STROOM_RESOURCES_GIT_TAG:      [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
 echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
-echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
+echo -e "docker-compose version:        [${GREEN}$(docker compose version)${NC}]"
 echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
 
 # Normal commit/PR/tag build
@@ -567,8 +579,8 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs"
-start_stroom_all_dbs
+echo "::group::Start stroom-all-dbs & scylladb"
+start_databases stroom-all-dbs scylladb
 echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it

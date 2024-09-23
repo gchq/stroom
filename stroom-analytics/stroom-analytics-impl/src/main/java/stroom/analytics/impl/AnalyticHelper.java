@@ -1,10 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
@@ -72,24 +87,25 @@ public class AnalyticHelper {
         final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
         if (analyticProcessConfig instanceof
                 final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-            tableBuilderAnalyticProcessConfig.setEnabled(false);
-            final AnalyticRuleDoc modified = analyticRuleDoc
+            TableBuilderAnalyticProcessConfig updatedProcessConfig = tableBuilderAnalyticProcessConfig
                     .copy()
-                    .analyticProcessConfig(tableBuilderAnalyticProcessConfig)
+                    .enabled(false)
                     .build();
-            analyticRuleStore.writeDocument(modified);
-        } else if (analyticProcessConfig instanceof
-                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-            scheduledQueryAnalyticProcessConfig.setEnabled(false);
             final AnalyticRuleDoc modified = analyticRuleDoc
                     .copy()
-                    .analyticProcessConfig(scheduledQueryAnalyticProcessConfig)
+                    .analyticProcessConfig(updatedProcessConfig)
                     .build();
             analyticRuleStore.writeDocument(modified);
         }
     }
 
     public List<AnalyticRuleDoc> getRules() {
+        // TODO this is not very efficient. It fetches all the docrefs from the DB,
+        //  then loops over them to fetch+deser the associated doc for each one (one by one)
+        //  so the caller can filter half of them out by type.
+        //  It would be better if we had a json type col in the doc table, so that the
+        //  we can pass some kind of json path query to the persistence layer that the DBPersistence
+        //  can translate to a MySQL json path query.
         final List<DocRef> docRefList = analyticRuleStore.list();
         final List<AnalyticRuleDoc> rules = new ArrayList<>();
         for (final DocRef docRef : docRefList) {
@@ -127,30 +143,30 @@ public class AnalyticHelper {
                                final int length) {
         // Don't select deleted streams.
         final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                 .build();
 
         ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .addOperator(expression);
         if (minMetaId != null) {
-            builder = builder.addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            builder = builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
         }
 
         if (minMetaCreateTimeMs != null) {
-            builder = builder.addTerm(MetaFields.CREATE_TIME,
+            builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                     Condition.GREATER_THAN_OR_EQUAL_TO,
                     DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
         }
         if (maxMetaCreateTimeMs != null) {
-            builder = builder.addTerm(MetaFields.CREATE_TIME,
+            builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                     Condition.LESS_THAN_OR_EQUAL_TO,
                     DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
         }
         builder = builder.addOperator(statusExpression);
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-        findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+        findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
         findMetaCriteria.obtainPageRequest().setLength(length);
 
         return metaService.find(findMetaCriteria).getValues();
@@ -158,17 +174,8 @@ public class AnalyticHelper {
 
     public String getErrorFeedName(final AnalyticRuleDoc analyticRuleDoc) {
         String errorFeedName = null;
-        if (analyticRuleDoc.getAnalyticProcessConfig() instanceof
-                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-            if (scheduledQueryAnalyticProcessConfig.getErrorFeed() != null) {
-                errorFeedName = scheduledQueryAnalyticProcessConfig.getErrorFeed().getName();
-            }
-        }
-        if (analyticRuleDoc.getAnalyticProcessConfig() instanceof
-                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-            if (tableBuilderAnalyticProcessConfig.getErrorFeed() != null) {
-                errorFeedName = tableBuilderAnalyticProcessConfig.getErrorFeed().getName();
-            }
+        if (analyticRuleDoc.getErrorFeed() != null) {
+            errorFeedName = analyticRuleDoc.getErrorFeed().getName();
         }
         if (errorFeedName == null) {
             LOGGER.debug(() -> "Error feed not defined: " +

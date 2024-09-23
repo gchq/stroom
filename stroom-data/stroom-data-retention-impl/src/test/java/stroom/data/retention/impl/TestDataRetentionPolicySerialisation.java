@@ -39,8 +39,8 @@ class TestDataRetentionPolicySerialisation {
     @Test
     void test() throws Exception {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        builder.addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
-        builder.addTerm(MetaFields.FEED, Condition.IS_DOC_REF, DocRef
+        builder.addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+        builder.addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, DocRef
                 .builder()
                 .type(FeedDoc.DOCUMENT_TYPE)
                 .uuid("test")

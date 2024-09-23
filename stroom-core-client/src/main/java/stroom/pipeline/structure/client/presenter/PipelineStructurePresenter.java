@@ -19,7 +19,7 @@ package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -27,7 +27,6 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -48,7 +47,6 @@ import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -128,8 +126,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         // Get a map of all available elements and properties.
-        final Rest<List<FetchPropertyTypesResult>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PIPELINE_RESOURCE)
+                .method(PipelineResource::getPropertyTypes)
                 .onSuccess(result -> {
                     final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
                             result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType,
@@ -154,8 +153,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         Collections.sort(types);
                     }
                 })
-                .call(PIPELINE_RESOURCE)
-                .getPropertyTypes();
+                .taskMonitorFactory(this)
+                .exec();
 
         setAdvancedMode(true);
         enableButtons();
@@ -234,8 +233,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             }
             pipelinePresenter.setSelectedEntityReference(document.getParentPipeline());
 
-            final Rest<List<PipelineData>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(PIPELINE_RESOURCE)
+                    .method(res -> res.fetchPipelineData(docRef))
                     .onSuccess(result -> {
                         final PipelineData pipelineData = result.get(result.size() - 1);
                         final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
@@ -260,8 +260,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                         }
                     })
-                    .call(PIPELINE_RESOURCE)
-                    .fetchPipelineData(docRef);
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
@@ -500,11 +500,12 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
-            xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
+            xmlEditor.getView().asWidget().getElement().addClassName("form-control-border default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
-            final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(PIPELINE_RESOURCE)
+                    .method(res -> res.fetchPipelineXml(docRef))
                     .onSuccess(result -> {
                         String text = "";
                         if (result != null) {
@@ -518,7 +519,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                 .onShow(e -> xmlEditor.focus())
                                 .onHideRequest(e -> {
                                     if (e.isOk()) {
-                                        querySave(xmlEditor);
+                                        querySave(xmlEditor, e);
                                     } else {
                                         e.hide();
                                     }
@@ -529,33 +530,36 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
-                    .call(PIPELINE_RESOURCE)
-                    .fetchPipelineXml(docRef);
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
-    private void querySave(final EditorPresenter xmlEditor) {
+    private void querySave(final EditorPresenter xmlEditor,
+                           final HidePopupRequestEvent event) {
         ConfirmEvent.fire(PipelineStructurePresenter.this,
                 "Are you sure you want to save changes to the underlying XML?", ok -> {
                     if (ok) {
-                        doActualSave(xmlEditor);
+                        doActualSave(xmlEditor, event);
                     } else {
-                        HidePopupEvent.builder(xmlEditor).ok(false).fire();
+                        event.hide();
                     }
                 });
     }
 
-    private void doActualSave(final EditorPresenter xmlEditor) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+    private void doActualSave(final EditorPresenter xmlEditor, final HidePopupRequestEvent event) {
+        restFactory
+                .create(PIPELINE_RESOURCE)
+                .method(res -> res.savePipelineXml(new SavePipelineXmlRequest(docRef, xmlEditor.getText())))
                 .onSuccess(result -> {
                     // Hide the popup.
-                    HidePopupEvent.builder(xmlEditor).fire();
+                    event.hide();
                     // Reload the entity.
                     RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
                 })
-                .call(PIPELINE_RESOURCE)
-                .savePipelineXml(new SavePipelineXmlRequest(docRef, xmlEditor.getText()));
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     private void enableButtons() {
@@ -597,8 +601,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             }
 
         } else {
-            final Rest<List<PipelineData>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(PIPELINE_RESOURCE)
+                    .method(res -> res.fetchPipelineData(parentPipeline))
                     .onSuccess(result -> {
                         pipelineModel.setBaseStack(result);
 
@@ -611,8 +616,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                     null);
                         }
                     })
-                    .call(PIPELINE_RESOURCE)
-                    .fetchPipelineData(parentPipeline);
+                    .taskMonitorFactory(this)
+                    .exec();
         }
 
         // We have changed the parent pipeline so set dirty.
@@ -656,8 +661,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         public void execute() {
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
-                final HidePopupRequestEvent.Handler handler = event -> {
-                    if (event.isOk()) {
+                final HidePopupRequestEvent.Handler handler = e -> {
+                    if (e.isOk()) {
                         final String id = newElementPresenter.getElementId();
                         final PipelineElementType elementType = newElementPresenter.getElementInfo();
                         try {
@@ -665,14 +670,14 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                     elementType, id);
                             pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
                             setDirty(true);
-                        } catch (final RuntimeException e) {
+                        } catch (final RuntimeException ex) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
-                                    e.getMessage(),
-                                    null);
+                                    ex.getMessage(),
+                                    e::reset);
                         }
                     }
-                    event.hide();
+                    e.hide();
                 };
 
                 // We need to suggest a unique id for the element, else the user will get an

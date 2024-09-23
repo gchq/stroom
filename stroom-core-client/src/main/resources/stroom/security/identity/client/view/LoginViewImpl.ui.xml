@@ -1,0 +1,53 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:p="urn:import:stroom.widget.button.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="LoginView">
+
+        <g:FlowPanel styleName="LoginViewFormPanel">
+            <g:FlowPanel styleName="max form-padding form LoginViewForm">
+
+                <g:SimplePanel styleName="LoginViewUserImageContainer">
+                    <g:SimplePanel ui:field="userImage" styleName="LoginViewUserImage"/>
+                </g:SimplePanel>
+
+                <!-- User Name -->
+                <form:FormGroup identity="userName" label="User Name">
+                    <g:FlowPanel>
+                        <!-- Add user name text box -->
+                        <g:FlowPanel addStyleNames="userNameTextBoxOuter">
+                            <g:TextBox ui:field="userName" addStyleNames="userNameTextBox"/>
+                        </g:FlowPanel>
+
+                        <!-- Add feedback -->
+                        <g:Label ui:field="userNameFeedback" styleName="feedback"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+
+                <!-- Password -->
+                <form:FormGroup identity="password" label="Password">
+                    <g:FlowPanel>
+                        <!-- Add password text box -->
+                        <g:FlowPanel addStyleNames="passwordTextBoxOuter">
+                            <g:PasswordTextBox ui:field="password" addStyleNames="passwordTextBox"/>
+                            <g:FlowPanel addStyleNames="passwordTextBoxOverlay">
+                                <p:InlineSvgButton ui:field="showPassword" addStyleNames="showPassword"/>
+                            </g:FlowPanel>
+                        </g:FlowPanel>
+
+                        <!-- Add feedback -->
+                        <g:Label ui:field="passwordFeedback" styleName="feedback"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+
+
+                <b:Button ui:field="signInButton" text="Sign In" addStyleNames="LoginViewSignInButton Button--contained-primary allow-focus"/>
+
+                <g:Hyperlink ui:field="forgotPasswordLink" styleName="LoginViewForgotPassword">Forgot password?</g:Hyperlink>
+
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -255,4 +255,13 @@ public class StringUtil {
             return "'" + str + "'";
         }
     }
+
+    /**
+     * @return "Yes" if bool is non-null and true, else "No"
+     */
+    public static String asYesNo(final Boolean bool) {
+        return bool != null && bool
+                ? "Yes"
+                : "No";
+    }
 }

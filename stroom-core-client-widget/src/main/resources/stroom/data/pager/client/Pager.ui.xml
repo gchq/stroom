@@ -1,6 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:paging="urn:import:stroom.widget.button.client">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:paging="urn:import:stroom.widget.button.client"
+             xmlns:refresh-button="urn:import:stroom.data.pager.client">
     <g:FlowPanel styleName="pager-paging">
         <g:Label ui:field="lblTitle" styleName="pager-label"/>
         <g:HTMLPanel styleName="pager-space">&nbsp;</g:HTMLPanel>
@@ -17,7 +19,7 @@
             <paging:SvgButton ui:field="prev"/>
             <paging:SvgButton ui:field="next"/>
             <paging:SvgButton ui:field="last"/>
-            <paging:SvgButton ui:field="refresh"/>
+            <refresh-button:RefreshButton ui:field="refresh"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

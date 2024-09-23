@@ -42,7 +42,9 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
     protected LmdbEnv lmdbEnv = null;
-    private Path dbDir = null;
+    protected Path dbDir = null;
+    protected final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+    protected final TempDirProvider tempDirProvider = () -> dbDir;
 
     @BeforeEach
     final void createEnv() throws IOException {
@@ -56,10 +58,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
                 dbDir.toAbsolutePath(),
                 Arrays.toString(envFlags));
 
-        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
-        final TempDirProvider tempDirProvider = () -> dbDir;
-
-        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+        lmdbEnv = new LmdbEnvFactory(pathCreator, new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)

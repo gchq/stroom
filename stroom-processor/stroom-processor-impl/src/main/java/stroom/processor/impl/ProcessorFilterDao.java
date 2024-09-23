@@ -6,8 +6,12 @@ import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.Set;
 
 public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
+
+    Optional<ProcessorFilter> fetchByUuid(String uuid);
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
@@ -30,5 +34,5 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
      * @param deleteThreshold Only physically delete filters with an update time older than the threshold.
      * @return The number of physically deleted filters.
      */
-    int physicalDeleteOldProcessorFilters(Instant deleteThreshold);
+    Set<String> physicalDeleteOldProcessorFilters(Instant deleteThreshold);
 }

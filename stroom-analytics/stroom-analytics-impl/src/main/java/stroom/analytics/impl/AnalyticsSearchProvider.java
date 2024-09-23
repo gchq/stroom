@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.expression.api.DateTimeSettings;
@@ -37,7 +35,7 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.FederatedSearchExecutor;
 import stroom.search.impl.FederatedSearchTask;
-import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -66,8 +64,15 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(AnalyticFields.getFields()).build();
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(AnalyticFields.getFields())
+                .build();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(AnalyticFields.getFields());
     }
 
     @Override
@@ -81,7 +86,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return AnalyticFields.TIME_FIELD;
     }
 

@@ -16,9 +16,9 @@
 
 package stroom.data.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaResource;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 
@@ -39,11 +39,13 @@ public class DataTypeUiManager {
         this.restFactory = restFactory;
     }
 
-    public void getTypes(final Consumer<List<String>> consumer) {
-        final Rest<List<String>> streamTypesRest = restFactory.create();
-        streamTypesRest
-                .onSuccess(consumer::accept)
-                .call(META_RESOURCE)
-                .getTypes();
+    public void getTypes(final Consumer<List<String>> consumer,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(META_RESOURCE)
+                .method(MetaResource::getTypes)
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 }

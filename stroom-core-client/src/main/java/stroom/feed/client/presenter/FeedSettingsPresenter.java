@@ -20,7 +20,6 @@ package stroom.feed.client.presenter;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -31,25 +30,22 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.ResultPage;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.InputEvent;
-import com.google.gwt.event.dom.client.InputHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
-
-public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
+public class FeedSettingsPresenter
+        extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
     private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
+    private final DataTypeUiManager dataTypeUiManager;
     private final RestFactory restFactory;
 
     @Inject
@@ -58,30 +54,24 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                                  final DataTypeUiManager dataTypeUiManager,
                                  final RestFactory restFactory) {
         super(eventBus, view);
+        this.dataTypeUiManager = dataTypeUiManager;
         this.restFactory = restFactory;
 
         updateEncodings();
         updateVolumeGroups();
-
+        updateTypes();
         view.getFeedStatus().addItems(FeedStatus.values());
-        dataTypeUiManager.getTypes(list -> {
-            view.getReceivedType().clear();
-            if (list != null && !list.isEmpty()) {
-                view.getReceivedType().addItems(list);
-                final FeedDoc feed = getEntity();
-                if (feed != null) {
-                    view.getReceivedType().setValue(feed.getStreamType());
-                }
-            }
-        });
+    }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
         // Add listeners for dirty events.
-        final InputHandler inputHandler = event -> setDirty(true);
         final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
-        registerHandler(view.getClassification().addDomHandler(inputHandler, InputEvent.getType()));
-        registerHandler(view.getReference().addValueChangeHandler(checkHandler));
-        registerHandler(view.getDataEncoding().addValueChangeHandler(event -> {
-            final String dataEncoding = ensureEncoding(view.getDataEncoding().getValue());
+        registerHandler(getView().getClassification().addValueChangeHandler(e -> setDirty(true)));
+        registerHandler(getView().getReference().addValueChangeHandler(checkHandler));
+        registerHandler(getView().getDataEncoding().addValueChangeHandler(event -> {
+            final String dataEncoding = ensureEncoding(getView().getDataEncoding().getValue());
             getView().getDataEncoding().setValue(dataEncoding);
 
             if (!EqualsUtil.isEquals(dataEncoding, getEntity().getEncoding())) {
@@ -89,8 +79,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 setDirty(true);
             }
         }));
-        registerHandler(view.getContextEncoding().addValueChangeHandler(event -> {
-            final String contextEncoding = ensureEncoding(view.getContextEncoding().getValue());
+        registerHandler(getView().getContextEncoding().addValueChangeHandler(event -> {
+            final String contextEncoding = ensureEncoding(getView().getContextEncoding().getValue());
             getView().getContextEncoding().setValue(contextEncoding);
 
             if (!EqualsUtil.isEquals(contextEncoding, getEntity().getContextEncoding())) {
@@ -98,9 +88,9 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 getEntity().setContextEncoding(contextEncoding);
             }
         }));
-        registerHandler(view.getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(view.getReceivedType().addValueChangeHandler(event -> {
-            final String streamType = view.getReceivedType().getValue();
+        registerHandler(getView().getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getReceivedType().addValueChangeHandler(event -> {
+            final String streamType = getView().getReceivedType().getValue();
             getView().getReceivedType().setValue(streamType);
 
             if (!EqualsUtil.isEquals(streamType, getEntity().getStreamType())) {
@@ -108,8 +98,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 getEntity().setStreamType(streamType);
             }
         }));
-        registerHandler(view.getVolumeGroup().addValueChangeHandler(event -> {
-            final String volumeGroup = view.getVolumeGroup().getValue();
+        registerHandler(getView().getVolumeGroup().addValueChangeHandler(event -> {
+            final String volumeGroup = getView().getVolumeGroup().getValue();
             if (!EqualsUtil.isEquals(volumeGroup, getEntity().getVolumeGroup())) {
                 setDirty(true);
                 getEntity().setVolumeGroup(volumeGroup);
@@ -118,8 +108,9 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
     }
 
     private void updateEncodings() {
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(FEED_RESOURCE)
+                .method(FeedResource::fetchSupportedEncodings)
                 .onSuccess(result -> {
                     getView().getDataEncoding().clear();
                     getView().getContextEncoding().clear();
@@ -137,13 +128,14 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                         getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
                     }
                 })
-                .call(FEED_RESOURCE)
-                .fetchSupportedEncodings();
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     private void updateVolumeGroups() {
-        final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(VOLUME_GROUP_RESOURCE)
+                .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();
                     getView().getVolumeGroup().setNonSelectString("");
@@ -158,8 +150,21 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                         getView().getVolumeGroup().setValue(feed.getVolumeGroup());
                     }
                 })
-                .call(VOLUME_GROUP_RESOURCE)
-                .find(new ExpressionCriteria());
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void updateTypes() {
+        dataTypeUiManager.getTypes(list -> {
+            getView().getReceivedType().clear();
+            if (list != null && !list.isEmpty()) {
+                getView().getReceivedType().addItems(list);
+                final FeedDoc feed = getEntity();
+                if (feed != null) {
+                    getView().getReceivedType().setValue(feed.getStreamType());
+                }
+            }
+        }, this);
     }
 
     @Override

@@ -111,14 +111,6 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             @Parameter(description = "request", required = true) QuerySearchRequest request) {
         return search(null, request);
     }
-//
-//    @POST
-//    @Path("/destroy")
-//    @Operation(
-//            summary = "Destroy a running query",
-//            operationId = "queryDestroySearch")
-//    Boolean destroy(
-//            @Parameter(description = "request", required = true) DestroyQueryRequest request);
 
     @GET
     @Path("/fetchTimeZones")
@@ -140,7 +132,7 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     @Operation(
             summary = "Fetch completions for the query",
             operationId = "fetchCompletions")
-    ResultPage<CompletionValue> fetchCompletions(CompletionsRequest completionsRequest);
+    ResultPage<CompletionItem> fetchCompletions(CompletionsRequest completionsRequest);
 
     @POST
     @Path("/fetchDetail")

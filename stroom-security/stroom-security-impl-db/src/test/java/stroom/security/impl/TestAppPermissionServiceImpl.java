@@ -16,6 +16,8 @@
 
 package stroom.security.impl;
 
+import stroom.security.impl.db.SecurityDbConnProvider;
+import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -23,6 +25,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -49,6 +52,13 @@ class TestAppPermissionServiceImpl {
     private UserGroupsCache userGroupsCache;
     @Inject
     private UserAppPermissionsCache userAppPermissionsCache;
+    @Inject
+    private SecurityDbConnProvider securityDbConnProvider;
+
+    @AfterEach
+    void tearDown() {
+        SecurityTestUtil.teardown(securityDbConnProvider);
+    }
 
     @Test
     void test() {

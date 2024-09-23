@@ -19,13 +19,16 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.job.client.event.OpenJobNodeEvent;
 import stroom.job.client.presenter.JobPresenter;
+import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -37,22 +40,42 @@ import javax.inject.Singleton;
 public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
 
     @Inject
-    public JobListPlugin(final EventBus eventBus, final ContentManager eventManager,
-                         final Provider<JobPresenter> presenterProvider, final ClientSecurityContext securityContext) {
+    public JobListPlugin(final EventBus eventBus,
+                         final ContentManager eventManager,
+                         final Provider<JobPresenter> presenterProvider,
+                         final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(
+                OpenJobNodeEvent.getType(), openJobNodeEvent -> {
+                    final JobNode jobNode = openJobNodeEvent.getJobNode();
+                    final JobPresenter jobPresenter = open();
+                    jobPresenter.setSelected(jobNode);
+                }));
     }
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_JOBS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(9)
                             .icon(SvgImage.JOBS)
                             .iconColour(IconColour.GREY)
                             .text("Jobs")
+                            .action(getOpenAction())
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    protected String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_JOBS_PERMISSION;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return Action.GOTO_JOBS;
     }
 }

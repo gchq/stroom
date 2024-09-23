@@ -10,6 +10,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 //  volume/stream sizes, however it probably ought to become a ByteValueCell and ByteValueColumn
 //  with a standard approach for formatting the byte value and the tooltip. Leaving it here
 //  in case such a thing ever happens.
+
 /**
  * A text cell with a tool tip
  */
@@ -26,7 +27,12 @@ public class ToolTipCell extends AbstractCell<ToolTipCellValue> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class ToolTipCellValue {
+
         private final String cellValue;
         private final String toolTipValue;
 

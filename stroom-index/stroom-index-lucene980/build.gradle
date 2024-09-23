@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
@@ -24,6 +25,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation project(path: ":stroom-index:lucene980-shaded", configuration: 'shadow') // Use shadow JAR
+    implementation libs.jackson_annotations
     implementation libs.guice
     implementation libs.slf4j_api
     implementation libs.vavr

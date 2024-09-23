@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
@@ -34,9 +33,12 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QLVisResult;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -44,8 +46,6 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -59,6 +59,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
@@ -106,7 +107,7 @@ public class QueryEditPresenter
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
 
-        final ResultConsumer resultConsumer = new ResultConsumer() {
+        final ResultComponent resultConsumer = new ResultComponent() {
             boolean start;
             boolean hasData;
 
@@ -148,12 +149,11 @@ public class QueryEditPresenter
                     if (!start) {
                         createNewVis();
                         currentVisPresenter.startSearch();
-                        currentVisPresenter.reset();
                         start = true;
                     }
 
                     final QLVisResult visResult = (QLVisResult) componentResult;
-                    if (visResult.getJsonData() != null && visResult.getJsonData().length() > 0) {
+                    if (!GwtNullSafe.isBlankString(visResult.getJsonData())) {
                         hasData = true;
                         setVisHidden(false);
                     }
@@ -170,10 +170,16 @@ public class QueryEditPresenter
                     }
                 }
             }
+
+            @Override
+            public void setQueryModel(final QueryModel queryModel) {
+
+            }
         };
 
 
         queryModel = new QueryModel(
+                eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
@@ -200,6 +206,7 @@ public class QueryEditPresenter
 
         this.editorPresenter = editorPresenter;
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
+        this.editorPresenter.getBasicAutoCompletionOption().setOff();
 
 //        // This glues the editor code completion to the QueryHelpPresenter's completion provider
 //        // Need to do this via addAttachHandler so the editor is fully loaded
@@ -241,6 +248,8 @@ public class QueryEditPresenter
     private void createNewVis() {
         destroyCurrentVis();
         currentVisPresenter = visPresenterProvider.get();
+        currentVisPresenter.setQueryModel(queryModel);
+        currentVisPresenter.setTaskMonitorFactory(this);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
@@ -265,20 +274,12 @@ public class QueryEditPresenter
             queryHelpPresenter.setQuery(editorPresenter.getText());
             setDirty(true);
         }));
-        registerHandler(editorPresenter.getView().asWidget().addDomHandler(e -> {
-            if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
-                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
-                e.preventDefault();
-                run(true, true);
-            } else if (KeyCodes.KEY_ESCAPE == e.getNativeKeyCode() &&
-                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
-                e.preventDefault();
-                stop();
-            }
-        }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> startStop()));
-        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
+        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
+            run(true, true);
+            setDirty(true);
+        }));
         queryHelpPresenter.linkToEditor(editorPresenter);
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
@@ -321,7 +322,7 @@ public class QueryEditPresenter
         destroyCurrentVis();
     }
 
-    private void startStop() {
+    void toggleStart() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         } else {
@@ -329,13 +330,23 @@ public class QueryEditPresenter
         }
     }
 
-    private void stop() {
+    void start() {
+        if (queryModel.isSearching()) {
+            queryModel.stop();
+        }
+        run(true, true);
+    }
+
+    void stop() {
         queryModel.stop();
     }
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()));
+        // No point running the search if there is no query
+        if (!GwtNullSafe.isBlankString(editorPresenter.getText())) {
+            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()), this);
+        }
     }
 
     private void run(final boolean incremental,
@@ -357,7 +368,14 @@ public class QueryEditPresenter
                 incremental,
                 storeHistory,
                 queryInfo.getMessage());
-//        }
+    }
+
+    public TimeRange getTimeRange() {
+        return queryToolbarPresenter.getTimeRange();
+    }
+
+    public void setTimeRange(final TimeRange timeRange) {
+        queryToolbarPresenter.setTimeRange(timeRange);
     }
 
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
@@ -366,7 +384,8 @@ public class QueryEditPresenter
         queryModel.init(docRef.getUuid());
         if (query != null) {
             reading = true;
-            if (editorPresenter.getText().length() == 0 || !editorPresenter.getText().equals(query)) {
+            if (GwtNullSafe.isBlankString(editorPresenter.getText())
+                    || !Objects.equals(editorPresenter.getText(), query)) {
                 editorPresenter.setText(query);
                 queryHelpPresenter.setQuery(query);
             }
@@ -390,7 +409,13 @@ public class QueryEditPresenter
     }
 
     public void setSourceType(final SourceType sourceType) {
-        this.queryModel.setSourceType(sourceType);
+        queryModel.setSourceType(sourceType);
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        queryModel.setTaskMonitorFactory(taskMonitorFactory);
+        queryHelpPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
 

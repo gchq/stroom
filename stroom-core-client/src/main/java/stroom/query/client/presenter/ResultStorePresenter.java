@@ -123,15 +123,6 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .caption("Search Result Stores")
-//                .onShow(e -> getView().focus())
-//                .onHide(e -> {
-//                    if (e.isOk() && groupConsumer != null) {
-//                        final User selected = getSelectionModel().getSelected();
-//                        if (selected != null) {
-//                            groupConsumer.accept(selected);
-//                        }
-//                    }
-//                })
                 .fire();
     }
 

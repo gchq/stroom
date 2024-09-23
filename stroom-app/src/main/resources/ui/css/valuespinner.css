@@ -17,7 +17,11 @@
 .valueSpinner {
 	display: inline-block;
 	position: relative;
-	width: 50px;
+	width: 60px;
+}
+
+.stroom-font-size-large .valueSpinner {
+	width: 65px;
 }
 
 .valueSpinner .gwt-TextBox {
@@ -25,11 +29,41 @@
 	/*padding: 3px 15px 3px 5px;*/
 	width: 100%;
 	height: 100%;
+	/* To allow for the spinner arrows */
+	padding-right: 18px;
+	text-align: right;
 }
 
 /* Limit the height of the spinner in a table */
 .dataGridWidget .valueSpinner .gwt-TextBox {
     height: 22px
+}
+
+.valueSpinner .resetPanel {
+    position: absolute;
+    right: 18px;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    font-size: 0;
+    display: flex;
+    align-items: center;
+}
+
+.valueSpinner .reset {
+/*
+    position: absolute;
+    right: 18px;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    font-size: 0;
+    */
+    cursor: pointer;
+}
+
+.valueSpinner .reset svg {
+    color: var(--text-color);
 }
 
 .valueSpinner .arrows {
@@ -44,6 +78,7 @@
 .valueSpinner-arrow {
    width: 100%;
    height: 50%;
+   cursor: pointer;
 }
 
 .valueSpinner-arrow .svg-image {

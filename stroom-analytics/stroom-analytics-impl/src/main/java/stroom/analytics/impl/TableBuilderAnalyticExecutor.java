@@ -1,6 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.api.NotificationState;
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
@@ -47,7 +46,6 @@ import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.FieldValueExtractorFactory;
 import stroom.search.extraction.MemoryIndex;
-import stroom.search.extraction.ValueConsumerHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -99,7 +97,6 @@ public class TableBuilderAnalyticExecutor {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
-    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final Provider<ExtractionState> extractionStateProvider;
     private final AnalyticDataStores analyticDataStores;
@@ -109,7 +106,6 @@ public class TableBuilderAnalyticExecutor {
     private final ExpressionMatcher metaExpressionMatcher;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
-    private final NotificationStateService notificationStateService;
     private final FieldValueExtractorFactory fieldValueExtractorFactory;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
@@ -125,7 +121,6 @@ public class TableBuilderAnalyticExecutor {
                                         final PipelineStore pipelineStore,
                                         final PipelineDataCache pipelineDataCache,
                                         final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
-                                        final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                         final Provider<ExtractionState> extractionStateProvider,
                                         final TaskContextFactory taskContextFactory,
@@ -137,7 +132,6 @@ public class TableBuilderAnalyticExecutor {
                                         final AnalyticHelper analyticHelper,
                                         final NodeInfo nodeInfo,
                                         final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
-                                        final NotificationStateService notificationStateService,
                                         final FieldValueExtractorFactory fieldValueExtractorFactory) {
         this.executorProvider = executorProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
@@ -145,7 +139,6 @@ public class TableBuilderAnalyticExecutor {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.analyticsStreamProcessorProvider = analyticsStreamProcessorProvider;
-        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
@@ -157,20 +150,15 @@ public class TableBuilderAnalyticExecutor {
         this.analyticHelper = analyticHelper;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
-        this.notificationStateService = notificationStateService;
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
     }
 
-    private void info(final Supplier<String> messageSupplier) {
-        LOGGER.info(messageSupplier);
-        taskContextFactory.current().info(messageSupplier);
-    }
-
     public void exec() {
+        final TaskContext taskContext = taskContextFactory.current();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             info(() -> "Starting table builder analytic processing");
-            processUntilAllComplete();
+            processUntilAllComplete(taskContext);
             info(() -> LogUtil.message("Finished table builder analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
@@ -182,7 +170,7 @@ public class TableBuilderAnalyticExecutor {
         }
     }
 
-    private void processUntilAllComplete() {
+    private void processUntilAllComplete(final TaskContext taskContext) {
         securityContext.asProcessingUser(() -> {
             // Delete old data stores.
             deleteOldStores();
@@ -190,12 +178,12 @@ public class TableBuilderAnalyticExecutor {
             boolean allComplete = false;
             // Keep going until we have processed everything we can.
             while (!allComplete) {
-                allComplete = processAll();
+                allComplete = processAll(taskContext);
             }
         });
     }
 
-    private boolean processAll() {
+    private boolean processAll(final TaskContext taskContext) {
         final AtomicBoolean allComplete = new AtomicBoolean(true);
 
         // Load event and aggregate rules.
@@ -225,17 +213,16 @@ public class TableBuilderAnalyticExecutor {
                         LogUtil.namedCount("group", analyticGroupMap.size())));
 
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-        final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<TableBuilderAnalytic>> entry : analyticGroupMap.entrySet()) {
             final Optional<CompletableFuture<Void>> optional =
-                    processGroup(parentTaskContext, entry.getKey(), entry.getValue(), allComplete);
+                    processGroup(taskContext, entry.getKey(), entry.getValue(), allComplete);
             optional.ifPresent(completableFutures::add);
         }
 
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
 
-        return allComplete.get() || parentTaskContext.isTerminated();
+        return allComplete.get() || taskContext.isTerminated();
     }
 
     private Optional<CompletableFuture<Void>> processGroup(final TaskContext parentTaskContext,
@@ -245,7 +232,7 @@ public class TableBuilderAnalyticExecutor {
         final DocRef pipelineRef = groupKey.pipeline();
         final String ownerUuid = groupKey.ownerUuid();
         if (!analytics.isEmpty()) {
-            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+            final UserIdentity userIdentity = securityContext.getIdentityByUserUuid(ownerUuid);
             return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
                 final String pipelineIdentity = pipelineRef.toInfoString();
                 final Runnable runnable = taskContextFactory.childContext(
@@ -409,9 +396,6 @@ public class TableBuilderAnalyticExecutor {
                                 fieldListConsumerHolderProvider.get();
                         fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
 
-                        final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
-                        valueConsumerHolder.setFieldListConsumer(fieldListConsumer);
-
                         try {
                             fieldListConsumer.start();
 
@@ -449,7 +433,8 @@ public class TableBuilderAnalyticExecutor {
                                 analytic.trackerData.addEventCount(extractionState.getCount());
                             });
                         }
-                    }).run();
+                        return !taskContext.isTerminated();
+                    }).get();
         }
     }
 
@@ -481,7 +466,6 @@ public class TableBuilderAnalyticExecutor {
                 searchRequest,
                 fieldIndex,
                 fieldValueExtractor,
-                NotificationState.NO_OP,
                 lmdbDataStore,
                 memoryIndex,
                 minEventId);
@@ -564,44 +548,38 @@ public class TableBuilderAnalyticExecutor {
                                          final AnalyticDataStore dataStore,
                                          final CurrentDbState currentDbState,
                                          final TaskContext parentTaskContext) {
-        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
-        // Only execute if the state is enabled.
-        notificationState.enableIfPossible();
-        if (notificationState.isEnabled()) {
-            final Provider<DetectionConsumer> detectionConsumerProvider = detectionConsumerFactory
-                    .create(analytic.analyticRuleDoc());
-            final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
-            analyticErrorWritingExecutor.wrap(
-                    "Analytics Aggregate Rule Executor",
-                    errorFeedName,
-                    null,
-                    parentTaskContext,
-                    taskContext -> {
-                        final DetectionConsumer detectionConsumer = detectionConsumerProvider.get();
-                        detectionConsumer.start();
+        final Provider<DetectionConsumer> detectionConsumerProvider = detectionConsumerFactory
+                .create(analytic.analyticRuleDoc());
+        final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
+        analyticErrorWritingExecutor.wrap(
+                "Analytics Aggregate Rule Executor",
+                errorFeedName,
+                null,
+                parentTaskContext,
+                taskContext -> {
+                    final DetectionConsumer detectionConsumer = detectionConsumerProvider.get();
+                    detectionConsumer.start();
+                    try {
                         try {
-                            try {
-                                runNotification(analytic,
-                                        notificationState,
-                                        detectionConsumer,
-                                        dataStore,
-                                        currentDbState);
-                            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                                LOGGER.debug(e::getMessage, e);
-                                throw e;
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e::getMessage, e);
-                                throw e;
-                            }
-                        } finally {
-                            detectionConsumer.end();
+                            runNotification(analytic,
+                                    detectionConsumer,
+                                    dataStore,
+                                    currentDbState);
+                            return true;
+                        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                            LOGGER.debug(e::getMessage, e);
+                            throw e;
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            throw e;
                         }
-                    }).run();
-        }
+                    } finally {
+                        detectionConsumer.end();
+                    }
+                }).get();
     }
 
     private void runNotification(final TableBuilderAnalytic analytic,
-                                 final NotificationState notificationState,
                                  final DetectionConsumer detectionConsumer,
                                  final AnalyticDataStore dataStore,
                                  final CurrentDbState currentDbState) {
@@ -651,7 +629,7 @@ public class TableBuilderAnalyticExecutor {
             ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
             resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
             final TableResultConsumer tableResultConsumer =
-                    new TableResultConsumer(analytic.analyticRuleDoc(), notificationState, detectionConsumer);
+                    new TableResultConsumer(analytic.analyticRuleDoc(), detectionConsumer);
 
             final ColumnFormatter columnFormatter =
                     new ColumnFormatter(new FormatterFactory(null));
@@ -723,16 +701,13 @@ public class TableBuilderAnalyticExecutor {
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
 
         private final AnalyticRuleDoc analyticRuleDoc;
-        private final NotificationState notificationState;
         private final DetectionConsumer detectionConsumer;
 
         private List<Column> columns;
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
-                                   final NotificationState notificationState,
                                    final DetectionConsumer detectionConsumer) {
             this.analyticRuleDoc = analyticRuleDoc;
-            this.notificationState = notificationState;
             this.detectionConsumer = detectionConsumer;
         }
 
@@ -757,63 +732,61 @@ public class TableBuilderAnalyticExecutor {
 
         @Override
         public TableResultConsumer addRow(final Row row) {
-            if (notificationState.isEnabled()) {
-                try {
-                    final List<DetectionValue> values = new ArrayList<>();
+            try {
+                final List<DetectionValue> values = new ArrayList<>();
 
-                    int index = 0;
-                    Long streamId = null;
-                    Long eventId = null;
-                    for (final Column column : columns) {
-                        final String fieldValue = row.getValues().get(index);
-                        if (fieldValue != null) {
-                            final String fieldName = column.getDisplayValue();
+                int index = 0;
+                Long streamId = null;
+                Long eventId = null;
+                for (final Column column : columns) {
+                    final String fieldValue = row.getValues().get(index);
+                    if (fieldValue != null) {
+                        final String fieldName = column.getDisplayValue();
 
-                            if (IndexConstants.STREAM_ID.equals(fieldName)) {
-                                try {
-                                    streamId = Long.parseLong(fieldValue);
-                                } catch (final RuntimeException e) {
-                                    LOGGER.debug(e.getMessage(), e);
-                                }
-                            } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
-                                try {
-                                    eventId = Long.parseLong(fieldValue);
-                                } catch (final RuntimeException e) {
-                                    LOGGER.debug(e.getMessage(), e);
-                                }
-                            } else {
-                                values.add(new DetectionValue(fieldName, fieldValue));
+                        if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                            try {
+                                streamId = Long.parseLong(fieldValue);
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
                             }
+                        } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                            try {
+                                eventId = Long.parseLong(fieldValue);
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                        } else {
+                            values.add(new DetectionValue(fieldName, fieldValue));
                         }
-
-                        index++;
                     }
 
-                    final Detection detection = new Detection(
-                            DateUtil.createNormalDateTimeString(),
-                            analyticRuleDoc.getName(),
-                            analyticRuleDoc.getUuid(),
-                            analyticRuleDoc.getVersion(),
-                            null,
-                            null,
-                            analyticRuleDoc.getDescription(),
-                            null,
-                            UUID.randomUUID().toString(),
-                            0,
-                            false,
-                            values,
-                            List.of(new DetectionLinkedEvent(null, streamId, eventId))
-                    );
-
-                    detectionConsumer.accept(detection);
-
-                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    throw e;
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw e;
+                    index++;
                 }
+
+                final List<DetectionLinkedEvent> linkedEvents =
+                        List.of(new DetectionLinkedEvent(null, streamId, eventId));
+                final Detection detection = Detection
+                        .builder()
+                        .withDetectTime(DateUtil.createNormalDateTimeString())
+                        .withDetectorName(analyticRuleDoc.getName())
+                        .withDetectorUuid(analyticRuleDoc.getUuid())
+                        .withDetectorVersion(analyticRuleDoc.getVersion())
+                        .withDetailedDescription(analyticRuleDoc.getDescription())
+                        .withDetectionUniqueId(UUID.randomUUID().toString())
+                        .withDetectionRevision(0)
+                        .notDefunct()
+                        .withValues(values)
+                        .withLinkedEvents(linkedEvents)
+                        .build();
+
+                detectionConsumer.accept(detection);
+
+            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw e;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
             }
 
             return this;
@@ -919,6 +892,11 @@ public class TableBuilderAnalyticExecutor {
         }
         info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
+    }
+
+    private void info(final Supplier<String> messageSupplier) {
+        LOGGER.info(messageSupplier);
+        taskContextFactory.current().info(messageSupplier);
     }
 
     private record TableBuilderAnalytic(String ruleIdentity,

@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 
@@ -14,11 +14,11 @@ import java.util.Map;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 
-    private final Provider<Serialisers> serialisersProvider;
+    private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
 
     @Inject
-    public MapDataStoreFactory(final Provider<Serialisers> serialisersProvider) {
-        this.serialisersProvider = serialisersProvider;
+    public MapDataStoreFactory(final Provider<SearchResultStoreConfig> resultStoreConfigProvider) {
+        this.resultStoreConfigProvider = resultStoreConfigProvider;
     }
 
     @Override
@@ -31,19 +31,16 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final Map<String, String> paramMap,
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
-        if (dataStoreSettings.isProducePayloads()) {
-            throw new RuntimeException("MapDataStore cannot produce payloads");
-        }
-
+        final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         return new MapDataStore(
-                serialisersProvider.get(),
                 componentId,
                 tableSettings,
                 expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,
-                errorConsumer);
+                errorConsumer,
+                resultStoreConfig.getMapConfig());
     }
 
     @Override

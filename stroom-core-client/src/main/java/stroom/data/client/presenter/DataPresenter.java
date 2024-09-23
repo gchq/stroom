@@ -16,14 +16,12 @@
 
 package stroom.data.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.meta.shared.Meta;
@@ -37,6 +35,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -241,13 +240,11 @@ public class DataPresenter
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        action.accept(uiConfig.getSource()))
-                .onFailure(caught -> AlertEvent.fireError(
-                        DataPresenter.this,
-                        caught.getMessage(),
-                        null));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                action.accept(uiConfig.getSource());
+            }
+        }, dataView);
     }
 
     private void addTab(final TabData tab) {
@@ -461,9 +458,9 @@ public class DataPresenter
 
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
-
-        final Rest<Meta> rest = restFactory.create();
-        rest
+        restFactory
+                .create(META_RESOURCE)
+                .method(res -> res.fetch(sourceLocation.getMetaId()))
                 .onSuccess(meta -> {
                     fetchData(meta, sourceLocation, false);
                 })
@@ -474,8 +471,8 @@ public class DataPresenter
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
-                .call(META_RESOURCE)
-                .fetch(sourceLocation.getMetaId());
+                .taskMonitorFactory(dataView)
+                .exec();
     }
 
     public void fetchData(final Meta meta) {
@@ -572,8 +569,11 @@ public class DataPresenter
 
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
-                    restFactory.builder()
-                            .forSetOf(String.class)
+                    restFactory
+                            .create(DATA_RESOURCE)
+                            .method(res -> res.getChildStreamTypes(
+                                    currentSourceLocation.getMetaId(),
+                                    currentSourceLocation.getPartIndex()))
                             .onSuccess(availableChildStreamTypes -> {
 //                                GWT.log("Received available child stream types " + availableChildStreamTypes);
                                 currentAvailableStreamTypes = availableChildStreamTypes;
@@ -581,10 +581,8 @@ public class DataPresenter
                             })
                             .onFailure(caught ->
                                     itemNavigatorPresenter.setRefreshing(false))
-                            .call(DATA_RESOURCE)
-                            .getChildStreamTypes(
-                                    currentSourceLocation.getMetaId(),
-                                    currentSourceLocation.getPartIndex());
+                            .taskMonitorFactory(dataView)
+                            .exec();
                 } else {
                     showInvalidStreamErrorMsg();
                     itemNavigatorPresenter.setRefreshing(false);
@@ -749,8 +747,9 @@ public class DataPresenter
                         final FetchDataRequest request = actionQueue.get(actionQueue.size() - 1);
                         actionQueue.clear();
 
-                        final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .create(DATA_RESOURCE)
+                                .method(res -> res.fetch(request))
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
                                     // update the text.
@@ -761,8 +760,8 @@ public class DataPresenter
                                 })
                                 .onFailure(caught ->
                                         itemNavigatorPresenter.setRefreshing(false))
-                                .call(DATA_RESOURCE)
-                                .fetch(request);
+                                .taskMonitorFactory(dataView)
+                                .exec();
                     }
                 }
             };
@@ -1116,11 +1115,12 @@ public class DataPresenter
 
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
-            restFactory.builder()
-                    .forListOf(DataInfoSection.class)
+            restFactory
+                    .create(DATA_RESOURCE)
+                    .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
-                    .call(DATA_RESOURCE)
-                    .viewInfo(metaId);
+                    .taskMonitorFactory(dataView)
+                    .exec();
         }
     }
 
@@ -1227,7 +1227,7 @@ public class DataPresenter
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    public interface DataView extends View, Focus {
+    public interface DataView extends View, Focus, TaskMonitorFactory {
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
 

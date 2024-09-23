@@ -136,7 +136,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     }
 
     @Override
-    public final OutputStream getByteArrayOutputStream() {
+    public final OutputStream getOutputStream() {
         return getOutputStream(null, null);
     }
 

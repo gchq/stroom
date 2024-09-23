@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.token;
 
 import stroom.query.language.token.QuotedStringToken.Builder;
@@ -40,7 +56,7 @@ public class Tokeniser {
         splitParam("\\$\\{[^}]*}", 0, TokenType.PARAM);
 
         // Tag keywords.
-        TokenType.KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
+        TokenType.ALL_KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
         // Treat other conjunctions as keywords.
         tagKeyword("in", TokenType.IN);
         tagKeyword("by", TokenType.BY);
@@ -89,7 +105,7 @@ public class Tokeniser {
     }
 
     private void tagKeyword(final String pattern, final TokenType tokenType) {
-        split("(^|\\s|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
+        split("(^\\s*|[^=]\\s+|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
     }
 
     public static List<Token> parse(final String string) {
@@ -116,8 +132,7 @@ public class Tokeniser {
     private void split(final String regex,
                        final int group,
                        final TokenType tokenType) {
-        final Pattern pattern = PATTERN_CACHE
-                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+        final Pattern pattern = getPattern(regex);
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
@@ -165,11 +180,15 @@ public class Tokeniser {
         this.tokens = out;
     }
 
+    private static Pattern getPattern(final String regex) {
+        return PATTERN_CACHE.computeIfAbsent(regex, k ->
+                Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+    }
+
     private void splitParam(final String regex,
                             final int group,
                             final TokenType tokenType) {
-        final Pattern pattern = PATTERN_CACHE
-                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+        final Pattern pattern = getPattern(regex);
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {

@@ -16,7 +16,7 @@
 
 package stroom.query.api.v2;
 
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -51,7 +51,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
 
     @Schema(required = true)
     @JsonProperty
-    private final TimeZone timeZone;
+    private final UserTimeZone timeZone;
 
     /**
      * @param pattern  A date time formatting pattern string conforming to the specification of
@@ -61,7 +61,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
     @JsonCreator
     public DateTimeFormatSettings(@JsonProperty("usePreferences") final boolean usePreferences,
                                   @JsonProperty("pattern") final String pattern,
-                                  @JsonProperty("timeZone") final TimeZone timeZone) {
+                                  @JsonProperty("timeZone") final UserTimeZone timeZone) {
         this.usePreferences = usePreferences;
         this.pattern = pattern;
         this.timeZone = timeZone;
@@ -79,9 +79,9 @@ public final class DateTimeFormatSettings implements FormatSettings {
     }
 
     /**
-     * @return The the {@link TimeZone timeZone} to use when formatting the date
+     * @return The the {@link UserTimeZone timeZone} to use when formatting the date
      */
-    public TimeZone getTimeZone() {
+    public UserTimeZone getTimeZone() {
         return timeZone;
     }
 
@@ -133,7 +133,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
 
         private boolean usePreferences = true;
         private String pattern;
-        private TimeZone timeZone;
+        private UserTimeZone timeZone;
 
         private Builder() {
         }
@@ -161,10 +161,10 @@ public final class DateTimeFormatSettings implements FormatSettings {
         }
 
         /**
-         * @param value Set the {@link TimeZone timeZone} to use when formatting the date
+         * @param value Set the {@link UserTimeZone timeZone} to use when formatting the date
          * @return this builder, enabling method chaining
          */
-        public Builder timeZone(final TimeZone value) {
+        public Builder timeZone(final UserTimeZone value) {
             this.timeZone = value;
             return this;
         }

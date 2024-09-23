@@ -48,7 +48,7 @@ public class MockSecurityContext implements SecurityContext {
     public String getUserUuid() {
         // This gets set when the admin user is first created.
         if (authenticationServiceProvider != null) {
-            final String subjectId = User.ADMIN_SUBJECT_ID;
+            final String subjectId = User.ADMIN_USER_SUBJECT_ID;
             // This method ensures the internal admin user exists
             return authenticationServiceProvider.get().getUser(subjectId)
                     .map(UserName::getUuid)
@@ -68,12 +68,17 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String subjectId) {
+    public UserIdentity getOrCreateUserIdentity(final String subjectId) {
         return ADMIN_USER_IDENTITY;
     }
 
     @Override
-    public UserIdentity createIdentityByUserUuid(final String userUuid) {
+    public UserIdentity getIdentityBySubjectId(final String subjectId, final boolean isGroup) {
+        return ADMIN_USER_IDENTITY;
+    }
+
+    @Override
+    public UserIdentity getIdentityByUserUuid(final String userUuid) {
         return ADMIN_USER_IDENTITY;
     }
 
@@ -189,12 +194,12 @@ public class MockSecurityContext implements SecurityContext {
 
         @Override
         public String getSubjectId() {
-            return User.ADMIN_SUBJECT_ID;
+            return User.ADMIN_USER_SUBJECT_ID;
         }
 
         @Override
         public String getDisplayName() {
-            return User.ADMIN_SUBJECT_ID;
+            return User.ADMIN_USER_SUBJECT_ID;
         }
 
         @Override

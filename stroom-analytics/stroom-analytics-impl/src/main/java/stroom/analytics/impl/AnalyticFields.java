@@ -1,8 +1,22 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 
 import java.util.ArrayList;
@@ -28,11 +42,11 @@ public class AnalyticFields {
     private static final Map<String, QueryField> FIELD_MAP;
 
     // Times
-    public static final DateField TIME_FIELD = new DateField(TIME);
+    public static final QueryField TIME_FIELD = QueryField.createDate(TIME);
 
-    public static final TextField NAME_FIELD = new TextField(NAME);
-    public static final TextField UUID_FIELD = new TextField(UUID);
-    public static final TextField VALUE_FIELD = new TextField(VALUE);
+    public static final QueryField NAME_FIELD = QueryField.createText(NAME);
+    public static final QueryField UUID_FIELD = QueryField.createText(UUID);
+    public static final QueryField VALUE_FIELD = QueryField.createText(VALUE);
 
     static {
         FIELDS.add(TIME_FIELD);
@@ -40,7 +54,8 @@ public class AnalyticFields {
         FIELDS.add(UUID_FIELD);
         FIELDS.add(VALUE_FIELD);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {

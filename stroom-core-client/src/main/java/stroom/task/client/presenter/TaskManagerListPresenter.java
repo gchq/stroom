@@ -31,10 +31,13 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
+import stroom.node.shared.FindNodeStatusCriteria;
+import stroom.node.shared.Node;
+import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -100,6 +103,7 @@ public class TaskManagerListPresenter
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final Map<String, List<String>> errorMap = new HashMap<>();
+    private final Set<String> enabledNodeNames = new HashSet<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
     private final MyDataGrid<TaskProgress> dataGrid;
 
@@ -145,16 +149,17 @@ public class TaskManagerListPresenter
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
 
-        expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.with("Expand All", false));
-        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
-        warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
-        warningsButton.setVisible(false);
+        expandAllButton = getView().addButton(SvgPresets.EXPAND_ALL.enabled(false));
+        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_ALL.enabled(false));
 
         wrapToggleButton = new InlineSvgToggleButton();
         wrapToggleButton.setSvg(SvgImage.TEXT_WRAP);
         wrapToggleButton.setTitle("Toggle wrapping of Info column");
         wrapToggleButton.setOff();
         getView().addButton(wrapToggleButton);
+
+        warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton.setVisible(false);
 
         updateButtonStates();
 
@@ -165,11 +170,11 @@ public class TaskManagerListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<TaskProgressResponse> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final RestErrorHandler errorHandler) {
                 TaskManagerListPresenter.this.range = range;
                 TaskManagerListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, throwableConsumer);
+                fetchNodes(range, dataConsumer, errorHandler);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -314,10 +319,7 @@ public class TaskManagerListPresenter
 
         // Node.
         dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                taskProgress.getNodeName() != null
-                                        ? taskProgress.getNodeName()
-                                        : "?"))
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(this::getNodeName))
                         .withSorting(FindTaskProgressCriteria.FIELD_NODE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NODE,
@@ -368,10 +370,22 @@ public class TaskManagerListPresenter
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
+    private String getNodeName(final TaskProgress taskProgress) {
+        final String nodeName = taskProgress.getNodeName();
+        if (nodeName == null) {
+            return "?";
+        } else {
+            return enabledNodeNames.contains(nodeName)
+                    ? nodeName
+                    : nodeName + " (Disabled)";
+        }
+    }
+
     private SafeHtml buildTooltipHtml(final TaskProgress row) {
         final TableBuilder tableBuilder = new TableBuilder()
                 .row(TableCell.header("Task", 2))
                 .row("Name", row.getTaskName())
+                .row("Node", getNodeName(row))
                 .row("User", row.getUserName())
                 .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                 .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
@@ -437,31 +451,59 @@ public class TaskManagerListPresenter
 
     public void fetchNodes(final Range range,
                            final Consumer<TaskProgressResponse> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
-        nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                           final RestErrorHandler errorConsumer) {
+        nodeManager.fetchNodeStatus(
+                fetchNodeStatusResponse -> {
+                    final List<String> allNodeNames = fetchNodeStatusResponse.stream()
+                            .map(NodeStatusResult::getNode)
+                            .map(Node::getName)
+                            .collect(Collectors.toList());
+                    final Set<String> enabledNodeNames = fetchNodeStatusResponse.stream()
+                            .map(NodeStatusResult::getNode)
+                            .filter(Node::isEnabled)
+                            .map(Node::getName)
+                            .collect(Collectors.toSet());
+                    // Update our instance view of which nodes are enabled
+                    this.enabledNodeNames.removeIf(nodeName ->
+                            !enabledNodeNames.contains(nodeName));
+                    this.enabledNodeNames.addAll(enabledNodeNames);
+
+                    fetchTasksForNodes(range, dataConsumer, allNodeNames, enabledNodeNames);
+                },
+                errorConsumer,
+                new FindNodeStatusCriteria(),
+                TaskManagerListPresenter.this);
     }
 
     private void fetchTasksForNodes(final Range range,
                                     final Consumer<TaskProgressResponse> dataConsumer,
-                                    final List<String> nodeNames) {
+                                    final List<String> allNodeNames,
+                                    final Set<String> enabledNodeNames) {
         responseMap.clear();
-        for (final String nodeName : nodeNames) {
-            final Rest<TaskProgressResponse> rest = restFactory.create();
-            rest
+        errorMap.clear();
+        for (final String nodeName : allNodeNames) {
+            restFactory
+                    .create(TASK_RESOURCE)
+                    .method(res -> res.find(nodeName, request))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
-                        errorMap.put(nodeName, response.getErrors());
+                        // No point in seeing errors for disabled nodes as they are likely down
+                        // but do show results for disabled nodes in case they are still doing
+                        // work for some reason
+                        if (enabledNodeNames.contains(nodeName)) {
+                            errorMap.put(nodeName, response.getErrors());
+                        }
                         delayedUpdate.update();
                     })
                     .onFailure(throwable -> {
                         responseMap.remove(nodeName);
-                        errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
+                        if (enabledNodeNames.contains(nodeName)) {
+                            errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
+                        }
                         delayedUpdate.update();
                     })
-                    .call(TASK_RESOURCE)
-                    .find(nodeName, request);
+                    .taskMonitorFactory(getView())
+                    .exec();
         }
     }
 
@@ -473,7 +515,7 @@ public class TaskManagerListPresenter
                 responseMap.values(),
                 treeAction);
 
-        final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>(resultPage.getValues());
+        final HashSet<TaskProgress> currentTaskSet = new HashSet<>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
 
         final String allErrors = errorMap.entrySet()
@@ -516,9 +558,11 @@ public class TaskManagerListPresenter
         final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
         findTaskCriteria.addId(taskProgress.getId());
         final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
-        restFactory.create()
-                .call(TASK_RESOURCE)
-                .terminate(taskProgress.getNodeName(), request);
+        restFactory
+                .create(TASK_RESOURCE)
+                .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                .taskMonitorFactory(getView())
+                .exec();
     }
 
     @Override
@@ -545,7 +589,6 @@ public class TaskManagerListPresenter
             }
 
             if (!Objects.equals(filter, criteria.getNameFilter())) {
-
                 // This is a new filter so reset all the expander states
                 treeAction.reset();
                 criteria.setNameFilter(filter);

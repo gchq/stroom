@@ -1,5 +1,8 @@
 package stroom.db.util;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,6 +11,8 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 public abstract class DataSourceProxy implements DataSource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSourceProxy.class);
 
     private final DataSource dataSource;
     private final String name;
@@ -19,6 +24,21 @@ public abstract class DataSourceProxy implements DataSource {
 
     @Override
     public Connection getConnection() throws SQLException {
+        // Commenting this out for now as this is a hit on every single db call
+//        if (LOGGER.isTraceEnabled()) {
+//            // Useful for spotting if code is not closing connections and therefore exhausting
+//            // the pool
+//            if (dataSource instanceof HikariDataSource hikariDataSource) {
+//                final HikariPoolMXBean hikariPoolMXBean = hikariDataSource.getHikariPoolMXBean();
+//                LOGGER.trace("Datasource '{}', pool '{}' - Total: {}, active: {}, idle: {}, waiting: {}",
+//                        name,
+//                        hikariPoolMXBean.toString(),
+//                        hikariPoolMXBean.getTotalConnections(),
+//                        hikariPoolMXBean.getActiveConnections(),
+//                        hikariPoolMXBean.getIdleConnections(),
+//                        hikariPoolMXBean.getThreadsAwaitingConnection());
+//            }
+//        }
         return dataSource.getConnection();
     }
 

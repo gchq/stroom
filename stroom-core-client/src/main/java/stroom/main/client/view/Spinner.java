@@ -17,7 +17,7 @@
 package stroom.main.client.view;
 
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
-import stroom.widget.spinner.client.SpinnerWhite;
+import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -33,13 +33,17 @@ import com.google.gwt.user.client.ui.Widget;
 public class Spinner extends Composite implements SpinnerDisplay {
 
     private static final Binder binder = GWT.create(Binder.class);
-    private SpinnerWhite spinner;
+    private final SpinnerLarge spinner;
     private boolean spinning;
 
     private final Timer timer;
 
     public Spinner() {
         initWidget(binder.createAndBindUi(this));
+        spinner = new SpinnerLarge();
+        spinner.setSoft(true);
+        spinner.setVisible(false);
+        getElement().appendChild(spinner.getElement());
 
         timer = new Timer() {
             @Override
@@ -61,9 +65,6 @@ public class Spinner extends Composite implements SpinnerDisplay {
 
     private void startSpinner() {
         spinning = true;
-        spinner = new SpinnerWhite();
-        getElement().removeAllChildren();
-        getElement().appendChild(spinner.getElement());
         spinner.setVisible(true);
     }
 
@@ -74,8 +75,7 @@ public class Spinner extends Composite implements SpinnerDisplay {
         }
         if (spinning) {
             spinning = false;
-            getElement().removeAllChildren();
-            spinner = null;
+            spinner.setVisible(false);
         }
     }
 

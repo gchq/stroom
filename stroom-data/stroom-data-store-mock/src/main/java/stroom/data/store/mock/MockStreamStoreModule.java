@@ -16,6 +16,7 @@
 
 package stroom.data.store.mock;
 
+import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
@@ -27,6 +28,7 @@ public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Store.class).to(MockStore.class);
+        bind(DataService.class).to(MockDataService.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockStore.class);
     }

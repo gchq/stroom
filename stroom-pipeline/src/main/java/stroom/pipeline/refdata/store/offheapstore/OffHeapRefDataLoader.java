@@ -693,7 +693,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     void migrateKeyEntry(final BatchingWriteTxn batchingWriteTxn,
                          final MapDefinition mapDefinition,
                          final ByteBuffer sourceKeyBuffer,
-                         final int valueTypeId,
+                         final byte valueTypeId,
                          final ByteBuffer refDataValueBuffer) {
         newEntriesCount++;
         // Need to assign a new map UID in the dest store
@@ -724,7 +724,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     void migrateRangeEntry(final BatchingWriteTxn batchingWriteTxn,
                            final MapDefinition mapDefinition,
                            final ByteBuffer sourceKeyBuffer,
-                           final int valueTypeId,
+                           final byte valueTypeId,
                            final ByteBuffer refDataValueBuffer) {
         newEntriesCount++;
 
@@ -775,7 +775,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // release our pooled buffers back to the pool
         pooledByteBuffers.forEach(pooledByteBuffer -> {
             try {
-                pooledByteBuffer.release();
+                pooledByteBuffer.close();
             } catch (Exception e) {
                 LOGGER.error("Error releasing pooled buffer: {}", e.getMessage(), e);
             }

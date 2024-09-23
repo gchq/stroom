@@ -16,7 +16,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -27,6 +26,7 @@ import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 
@@ -39,8 +39,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
-
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
         implements Focus {
@@ -50,6 +48,7 @@ public class NewPipelineReferencePresenter
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final DocSelectionBoxPresenter feedPresenter;
     private final RestFactory restFactory;
+    private final UiConfigCache uiConfigCache;
     private final SelectionBox<String> dataTypeWidget;
     private boolean dirty;
     private boolean initialised;
@@ -65,15 +64,10 @@ public class NewPipelineReferencePresenter
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
+        this.uiConfigCache = uiConfigCache;
 
-        // Filter the pipeline picker by tags, if configured
-        uiConfigCache.get().onSuccess(extendedUiConfig ->
-                GwtNullSafe.consume(
-                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
-                        ExplorerTreeFilter::createTagQuickFilterInput,
-                        pipelinePresenter::setQuickFilter));
-
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
+        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE, StateDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
@@ -96,6 +90,16 @@ public class NewPipelineReferencePresenter
     }
 
     public void read(final PipelineReference pipelineReference) {
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                GwtNullSafe.consume(
+                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePresenter::setQuickFilter);
+            }
+        }, this);
+
         getView().setElement(pipelineReference.getElement());
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
@@ -142,8 +146,9 @@ public class NewPipelineReferencePresenter
     private void updateDataTypes(final String selectedDataType) {
         dataTypeWidget.clear();
 
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(META_RESOURCE)
+                .method(MetaResource::getTypes)
                 .onSuccess(result -> {
                     if (result != null) {
                         dataTypeWidget.addItems(result);
@@ -155,8 +160,8 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
-                .call(META_RESOURCE)
-                .getTypes();
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     public boolean isDirty() {

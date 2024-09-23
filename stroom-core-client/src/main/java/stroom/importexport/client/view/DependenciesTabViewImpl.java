@@ -70,10 +70,19 @@ public class DependenciesTabViewImpl
         getUiHandlers().changeQuickFilter(text);
     }
 
+    @Override
+    public void focusFilter() {
+        quickFilter.focus();
+    }
+
     @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().changeQuickFilter(event.getValue());
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, DependenciesTabViewImpl> {
 

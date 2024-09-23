@@ -18,8 +18,12 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -28,7 +32,10 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
+import java.util.function.Supplier;
+
+public class EntityTreePresenter
+        extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
         implements EntityTreeUiHandlers, Focus {
 
     private final ExplorerTree explorerTree;
@@ -36,18 +43,30 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
     @Inject
     public EntityTreePresenter(final EventBus eventBus,
                                final EntityTreeView view,
-                               final RestFactory restFactory) {
+                               final RestFactory restFactory,
+                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         view.setUiHandlers(this);
 
         // Debatable whether we want to show alerts or not
         explorerTree = new ExplorerTree(
                 restFactory,
+                this,
                 false,
                 false);
 
         // Add views.
         view.setCellTree(explorerTree);
+
+        // Same field defs as the Explorer Tree
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Choose Item Quick Filter",
+                        ExplorerTreeFilter.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     @Override
@@ -95,5 +114,7 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
     public interface EntityTreeView extends View, Focus, HasUiHandlers<EntityTreeUiHandlers> {
 
         void setCellTree(Widget cellTree);
+
+        void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier);
     }
 }

@@ -18,9 +18,13 @@
 
     <logger name="stroom" level="info" />
 
+    <logger name="stroom.query.impl" level="debug" />
+
     <logger name="stroom.proxy" level="info" />
 
     <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
+<!--    <logger name="stroom.db.util.DataSourceProxy" level="trace" />-->
+
 
 <!--    <logger name="stroom.pipeline.state.LocationHolder" level="INFO" />-->
 
@@ -28,6 +32,8 @@
     <logger name="stroom.processor.impl" level="INFO" />
     <logger name="stroom.processor.impl.ProcessorTaskManagerImpl" level="INFO" />
     <logger name="stroom.processor.impl.db.ProcessorTaskDaoImpl" level="INFO" />
+
+<!--    <logger name="stroom.pipeline.refdata" level="DEBUG" />-->
 
 
 <!--    <logger name="stroom.data.store.impl.fs.PhysicalDeleteExecutor" level="DEBUG" />-->

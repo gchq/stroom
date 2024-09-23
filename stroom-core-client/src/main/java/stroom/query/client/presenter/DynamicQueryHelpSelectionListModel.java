@@ -1,6 +1,22 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -10,35 +26,48 @@ import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicQueryHelpSelectionListModel implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem> {
+public class DynamicQueryHelpSelectionListModel
+        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private static final String NONE_TITLE = "[ none ]";
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private DocRef dataSourceRef;
     private String query;
-    private boolean showAll = true;
+    private Set<QueryHelpType> includedTypes = QueryHelpType.ALL_TYPES;
     private QueryHelpRequest lastRequest;
     private SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
 
     @Inject
-    public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
+    public DynamicQueryHelpSelectionListModel(final EventBus eventBus,
+                                              final RestFactory restFactory) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
     }
 
@@ -61,7 +90,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
 
         final StringMatch stringMatch = StringMatch.contains(filter);
         final CriteriaFieldSort sort = new CriteriaFieldSort(
-                FindFieldInfoCriteria.SORT_BY_NAME,
+                FindFieldCriteria.SORT_BY_NAME,
                 false,
                 true);
         final QueryHelpRequest request = new QueryHelpRequest(
@@ -71,19 +100,20 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                 dataSourceRef,
                 parentId,
                 stringMatch,
-                showAll);
+                includedTypes);
 
         // Only fetch if the request has changed.
         if (!request.equals(lastRequest)) {
             lastRequest = request;
 
-            restFactory.builder()
-                    .forResultPageOf(QueryHelpRow.class)
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(res -> res.fetchQueryHelpItems(request))
                     .onSuccess(response -> {
                         // Only update if the request is still current.
                         if (request == lastRequest) {
                             final ResultPage<QueryHelpSelectionItem> resultPage;
-                            if (response.getValues().size() > 0) {
+                            if (GwtNullSafe.hasItems(response.getValues())) {
                                 List<QueryHelpSelectionItem> items = response
                                         .getValues()
                                         .stream()
@@ -99,14 +129,16 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                                                 .id(parentId + "none")
                                                 .title(NONE_TITLE)
                                                 .build()));
-                                resultPage = new ResultPage<>(rows, new PageResponse(0, 1, 1L, true));
+                                resultPage = new ResultPage<>(
+                                        rows,
+                                        new PageResponse(0, 1, 1L, true));
                             }
 
                             consumer.accept(resultPage);
                         }
                     })
-                    .call(QUERY_RESOURCE)
-                    .fetchQueryHelpItems(request);
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
         }
     }
 
@@ -156,7 +188,17 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
         this.dataSourceRef = dataSourceRef;
     }
 
-    public void setShowAll(final boolean showAll) {
-        this.showAll = showAll;
+    public void setIncludedTypes(final Set<QueryHelpType> includedTypes) {
+        this.includedTypes = includedTypes;
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

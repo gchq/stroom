@@ -148,6 +148,10 @@ public abstract class AbstractCommandLineTool {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Example extends AbstractCommandLineTool {
 
         @Override

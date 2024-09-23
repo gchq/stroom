@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;

@@ -18,7 +18,7 @@
 package stroom.script.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,26 +67,30 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ScriptDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ScriptDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(SCRIPT_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(SCRIPT_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final ScriptDoc document,
                      final Consumer<ScriptDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ScriptDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(SCRIPT_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(SCRIPT_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

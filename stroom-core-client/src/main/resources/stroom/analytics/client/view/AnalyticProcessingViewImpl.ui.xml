@@ -5,10 +5,8 @@
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
-            <form:FormGroup identity="analyticProcessingQuery"
-                            label="Query">
-                <g:SimplePanel ui:field="queryEditorContainer"
-                               styleName="stroom-control__no-padding default-min-sizes overflow-hidden"/>
+            <form:FormGroup identity="analyticProcessingErrorFeed" label="Feed For Errors">
+                <g:SimplePanel ui:field="errorFeed"/>
             </form:FormGroup>
             <form:FormGroup identity="analyticProcessingType" label="Processing Type">
                 <l:SelectionBox ui:field="processingType"/>

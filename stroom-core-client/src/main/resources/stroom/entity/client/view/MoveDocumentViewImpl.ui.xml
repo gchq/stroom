@@ -4,11 +4,27 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form overflow-hidden">
-        <form:FormGroup identity="moveDocumentSelectParentGroup" label="Select the parent group"
+        <form:FormGroup identity="moveDocumentSelectParentGroup"
+                        label="Select the parent folder"
+                        helpText="The folder that the document(s) will be moved into."
                         addStyleNames="dock-max overflow-hidden">
             <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden"/>
         </form:FormGroup>
         <form:FormGroup identity="moveDocumentPermissions" label="Permissions" addStyleNames="dock-min">
+            <form:HelpHTML>
+                <p>Determines the document's permissions and ownership after it has been moved.</p>
+                <ul>
+                    <li><Strong>None</Strong> - Removes all current permissions.
+                        Ignores permissions of the destination folder.
+                        You will be the owner of the moved document if not already.</li>
+                    <li><strong>Source</strong> - Keep the current permissions and ownership as they are.</li>
+                    <li><strong>Destination</strong> - Removes all current permissions.
+                        Adds the permissions of the destination folder.</li>
+                        You will be the owner of the moved document if not already.
+                    <li><strong>Combined</strong> - Keep the current permissions and add the permissions
+                        of the destination folder. You will be the owner of the moved document if not already.</li>
+                </ul>
+            </form:HelpHTML>
             <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

@@ -25,11 +25,8 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -41,6 +38,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
+import stroom.util.shared.Version;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -59,6 +57,8 @@ import java.util.function.BiConsumer;
 class DashboardStoreImpl implements DashboardStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardStoreImpl.class);
+
+    private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
 
     private static final String TEMPLATE_FILE = "DashboardTemplate.json";
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
@@ -87,8 +87,10 @@ class DashboardStoreImpl implements DashboardStore {
             try (final InputStream is = getClass().getResourceAsStream(TEMPLATE_FILE)) {
                 if (is != null) {
                     final byte[] bytes = is.readAllBytes();
-                    template = serialiser.getDashboardConfigFromJson(bytes);
-                    template.setDesignMode(true);
+                    final DashboardConfig config = serialiser.getDashboardConfigFromJson(bytes);
+                    config.setModelVersion(VERSION_7_2_0);
+                    config.setDesignMode(true);
+                    template = config;
                 } else {
                     LOGGER.error("Error reading dashboard template as template not found: " + TEMPLATE_FILE);
                 }
@@ -346,14 +348,7 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
-    }
-
-    @Override
-    public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                final String extension,
-                                                final StringMatch filter) {
-        return store.fetchHighlights(docRef, extension, filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

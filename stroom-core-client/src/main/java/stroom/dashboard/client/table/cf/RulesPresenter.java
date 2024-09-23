@@ -22,7 +22,6 @@ import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.QueryField;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -99,6 +98,7 @@ public class RulesPresenter
 
     @Override
     protected void onBind() {
+        registerHandler(listPresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(addButton.addClickHandler(event -> {
             add();
         }));
@@ -201,7 +201,7 @@ public class RulesPresenter
                 .build();
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
-        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        selectionBoxModel.addItems(fields);
         editRulePresenter.read(newRule, selectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 550);
@@ -209,7 +209,7 @@ public class RulesPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Add New Rule")
-                .onShow(e -> addButton.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
@@ -219,6 +219,8 @@ public class RulesPresenter
                         setDirty(true);
                     }
                     e.hide();
+                    // Return focus to the add button
+                    addButton.focus();
                 })
                 .fire();
     }
@@ -226,15 +228,15 @@ public class RulesPresenter
     private void edit(final ConditionalFormattingRule existingRule) {
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
-        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        selectionBoxModel.addItems(fields);
         editRulePresenter.read(existingRule, selectionBoxModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
-                .onShow(e -> addButton.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
@@ -251,6 +253,8 @@ public class RulesPresenter
                         }
                     }
                     e.hide();
+                    // Return focus to the add button
+                    addButton.focus();
                 })
                 .fire();
     }
@@ -358,6 +362,10 @@ public class RulesPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RulesView extends View {
 

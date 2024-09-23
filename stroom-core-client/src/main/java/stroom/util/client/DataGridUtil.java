@@ -1,9 +1,17 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
+import stroom.cell.info.client.PercentBarCell;
+import stroom.cell.info.client.RedGreenTextCell;
 import stroom.cell.info.client.SvgCell;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
+import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
@@ -16,22 +24,27 @@ import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.GwtUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeAction;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -39,6 +52,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -47,32 +62,27 @@ import java.util.stream.Collectors;
 
 public class DataGridUtil {
 
+    public static final int DEFAULT_PCT_WARNING_THRESHOLD = 80;
+    public static final int DEFAULT_PCT_DANGER_THRESHOLD = 90;
+
     private static final String DISABLED_CELL_CLASS = "dataGridDisabledCell";
     private static final String LOW_LIGHT_COLOUR = "#666666";
 
     private DataGridUtil() {
     }
 
-
     public static Header<SafeHtml> createRightAlignedHeader(final String headerText) {
-        final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<div style=\"text-align: right;\">")
-                .appendEscaped(headerText)
-                .appendHtmlConstant("</div>")
-                .toSafeHtml();
-
-        final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
+        final Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headerText));
+        header.setHeaderStyleNames(GwtUtil.appendStyles(
+                header.getHeaderStyleNames(), "right-align"));
         return header;
     }
 
     public static Header<SafeHtml> createCenterAlignedHeader(final String headerText) {
-        final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<div style=\"text-align: center;\">")
-                .appendEscaped(headerText)
-                .appendHtmlConstant("</div>")
-                .toSafeHtml();
-
-        final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
+        final Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headerText));
+        header.setHeaderStyleNames(GwtUtil.appendStyles(
+                header.getHeaderStyleNames(),
+                "center-align"));
         return header;
     }
 
@@ -308,6 +318,33 @@ public class DataGridUtil {
         });
     }
 
+    /**
+     * @return "Yes" or "No"
+     */
+    public static String formatAsYesNo(final boolean val) {
+        return val
+                ? "Yes"
+                : "No";
+    }
+
+    /**
+     * @return A IEC byte string (e.g. '369G') or '?'
+     */
+    public static String formatAsIECByteString(final OptionalLong optSizeBytes) {
+        return optSizeBytes != null && optSizeBytes.isPresent()
+                ? ModelStringUtil.formatIECByteSizeString(optSizeBytes.getAsLong())
+                : "?";
+    }
+
+    /**
+     * @return An integer percentage suffixed with '%' or '?'
+     */
+    public static String formatPercentage(final OptionalDouble optPct) {
+        return optPct != null && optPct.isPresent()
+                ? ((long) optPct.getAsDouble()) + "%"
+                : "?";
+    }
+
     // There ought to be a better way of doing this so we don't have to have so many
     // methods to initiate the builder
 
@@ -340,11 +377,172 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
     }
 
+    /**
+     * A simple text cell with the value of the cell also as the hover tool tip value.
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textWithTooltipColumnBuilder(
+            final Function<T_ROW, String> cellExtractor) {
+        return textWithTooltipColumnBuilder(cellExtractor, Function.identity());
+    }
+
+    /**
+     * A simple text cell with the value of the hover tooltip provided by tooltipFunction, which is
+     * applied to the cell value.
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textWithTooltipColumnBuilder(
+            final Function<T_ROW, String> cellExtractor,
+            final Function<String, String> tooltipFunction) {
+
+        final Supplier<Cell<String>> cellSupplier = () -> new TextCell() {
+
+            @Override
+            public void render(final Context context, final String data, final SafeHtmlBuilder sb) {
+                if (tooltipFunction != null) {
+                    final String tooltip = tooltipFunction.apply(data);
+                    if (data != null) {
+                        if (tooltip != null) {
+                            sb.appendHtmlConstant("<div title=\"")
+                                    .appendEscaped(tooltip)
+                                    .appendHtmlConstant("\">");
+                        }
+                        sb.append(SafeHtmlUtils.fromString(data));
+                        if (tooltip != null) {
+                            sb.appendHtmlConstant("</div>");
+                        }
+                    }
+                } else {
+                    super.render(context, data, sb);
+                }
+            }
+        };
+
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), cellSupplier);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, Boolean, Cell<Boolean>> redGreenTextColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor,
+            final String greenText,
+            final String redText) {
+
+        return new ColumnBuilder<>(cellExtractor, Function.identity(),
+                () -> new RedGreenTextCell(greenText, redText));
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
+            final Function<T_ROW, Number> cellExtractor, final long minValue, final long maxValue) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                Function.identity(),
+                () -> new ValueSpinnerCell(minValue, maxValue));
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, ColourSwatchCell> colourSwatchColumnBuilder(
+            final Function<T_ROW, String> cssColourExtractor) {
+        return new ColumnBuilder<>(cssColourExtractor, Function.identity(), ColourSwatchCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, TextCell> iecByteStringColumnBuilder(
+            final Function<T_ROW, Long> bytesExtractor, final String valueIfNull) {
+
+        final Function<T_ROW, String> bytesAsStrExtractor = row -> {
+            if (row == null || bytesExtractor == null) {
+                return valueIfNull;
+            } else {
+                final Long bytes = bytesExtractor.apply(row);
+                if (bytes == null) {
+                    return valueIfNull;
+                } else {
+                    return ModelStringUtil.formatIECByteSizeString(bytes);
+                }
+            }
+        };
+
+        return new ColumnBuilder<>(bytesAsStrExtractor, Function.identity(), TextCell::new);
+    }
+
+    /**
+     * Builds a read only tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                bool -> GwtNullSafe.isTrue(bool)
+                        ? TickBoxState.TICK
+                        : TickBoxState.UNTICK,
+                () -> TickBoxCell.create(
+                        new NoBorderAppearance(),
+                        false,
+                        false,
+                        false));
+    }
+
+    /**
+     * Builds an updatable tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                bool -> GwtNullSafe.isTrue(bool)
+                        ? TickBoxState.TICK
+                        : TickBoxState.UNTICK,
+                () -> TickBoxCell.create(
+                        new DefaultAppearance(),
+                        false,
+                        false,
+                        true));
+    }
+
+    /**
+     * A builder for creating a text column with a hover icon to copy the text content of the cell
+     *
+     * @param cellExtractor Function to extract a String from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> copyTextColumnBuilder(
             final Function<T_ROW, String> cellExtractor) {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), CopyTextCell::new);
     }
 
+    /**
+     * A builder for creating a text column with a hover icon to copy the text content of the cell
+     *
+     * @param cellExtractor Function to extract a T_RAW_VAL from the {@code T_ROW}.
+     * @param formatter     Function to convert T_RAW_VAL into a {@link String}.
+     * @param <T_ROW>       The row type
+     * @param <T_RAW_VAL>>  The type of the extracted value from the row.
+     */
+    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, String, Cell<String>> copyTextColumnBuilder(
+            final Function<T_ROW, T_RAW_VAL> cellExtractor,
+            final Function<T_RAW_VAL, String> formatter) {
+        return new ColumnBuilder<>(cellExtractor, formatter, CopyTextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, Cell<Number>> percentBarColumnBuilder(
+            final Function<T_ROW, Number> cellExtractor,
+            final int warningThreshold,
+            final int dangerThreshold) {
+
+        return new ColumnBuilder<>(
+                cellExtractor,
+                Function.identity(),
+                () -> new PercentBarCell(warningThreshold, dangerThreshold));
+    }
+
+    /**
+     * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
+     * and to open the doc.
+     *
+     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
     public static <T_ROW> ColumnBuilder<T_ROW, DocRef, DocRef, Cell<DocRef>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> cellExtractor,
             final EventBus eventBus,
@@ -394,6 +592,14 @@ public class DataGridUtil {
                 () -> new SvgCell(isButton));
     }
 
+    public static HeadingBuilder headingBuilder(final String headingText) {
+        return new HeadingBuilder(headingText);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
 
         private final Function<T_ROW, T_RAW_VAL> valueExtractor;
@@ -407,6 +613,8 @@ public class DataGridUtil {
         private boolean isIgnoreCaseOrdering = false;
         private List<String> styleNames = null;
         private List<Function<T_ROW, String>> styleFunctions = null;
+        private FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater = null;
+        private BrowserEventHandler<T_ROW> browserEventHandler = null;
 
         private ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
                               final Function<T_RAW_VAL, T_CELL_VAL> formatter,
@@ -500,64 +708,50 @@ public class DataGridUtil {
             return this;
         }
 
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withFieldUpdater(
+                final FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater) {
+            this.fieldUpdater = fieldUpdater;
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withBrowserEventHandler(
+                final BrowserEventHandler<T_ROW> browserEventHandler) {
+            this.browserEventHandler = browserEventHandler;
+            return this;
+        }
+
         private String buildCellStyles(final String baseStyleNames,
                                        final T_ROW object) {
+
+            final String styleNames = String.join(" ", GwtNullSafe.list(this.styleNames));
+            final String functionStyleNames = GwtNullSafe.stream(styleFunctions)
+                    .filter(Objects::nonNull)
+                    .map(func -> func.apply(object))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(" "));
+
             return String.join(" ",
                     GwtNullSafe.string(baseStyleNames),
-                    GwtNullSafe.stream(styleNames)
-                            .collect(Collectors.joining(" ")),
-                    GwtNullSafe.stream(styleFunctions)
-                            .filter(Objects::nonNull)
-                            .map(func -> func.apply(object))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.joining(" ")));
+                    styleNames,
+                    functionStyleNames);
+        }
+
+        private T_CELL_VAL extractFormattedValue(final T_ROW row) {
+            return Optional.ofNullable(row)
+                    .map(valueExtractor)
+                    .map(formatter)
+                    .orElse(null);
         }
 
         public Column<T_ROW, T_CELL_VAL> build() {
 
-            final Function<T_ROW, T_CELL_VAL> nullSafeFormattedValExtractor = row ->
-                    Optional.ofNullable(row)
-                            .map(valueExtractor)
-                            .map(formatter)
-                            .orElse(null);
-
             final Column<T_ROW, T_CELL_VAL> column;
             if (isSorted) {
                 // Explicit generics typing for GWT
-                column = new OrderByColumn<T_ROW, T_CELL_VAL>(
-                        cellSupplier.get(),
-                        fieldName,
-                        isIgnoreCaseOrdering) {
-
-                    @Override
-                    public T_CELL_VAL getValue(final T_ROW row) {
-                        return nullSafeFormattedValExtractor.apply(row);
-                    }
-
-                    @Override
-                    public boolean isSortable() {
-                        return isSortableSupplier.getAsBoolean();
-                    }
-
-                    @Override
-                    public String getCellStyleNames(final Context context, final T_ROW object) {
-                        return buildCellStyles(super.getCellStyleNames(context, object), object);
-                    }
-
-                };
+                column = createSortableColumn();
             } else {
                 // Explicit generics typing for GWT
-                column = new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
-                    @Override
-                    public T_CELL_VAL getValue(final T_ROW row) {
-                        return nullSafeFormattedValExtractor.apply(row);
-                    }
-
-                    @Override
-                    public String getCellStyleNames(final Context context, final T_ROW object) {
-                        return buildCellStyles(super.getCellStyleNames(context, object), object);
-                    }
-                };
+                column = createNonSortableColumn();
             }
             if (horizontalAlignment != null) {
                 column.setHorizontalAlignment(horizontalAlignment);
@@ -567,7 +761,180 @@ public class DataGridUtil {
                 column.setVerticalAlignment(verticalAlignment);
             }
 
+            if (fieldUpdater != null) {
+                column.setFieldUpdater(fieldUpdater);
+            }
+
             return column;
         }
+
+        private Column<T_ROW, T_CELL_VAL> createNonSortableColumn() {
+            return new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
+                @Override
+                public T_CELL_VAL getValue(final T_ROW row) {
+                    return extractFormattedValue(row);
+                }
+
+                @Override
+                public String getCellStyleNames(final Context context, final T_ROW object) {
+                    return buildCellStyles(super.getCellStyleNames(context, object), object);
+                }
+
+                @Override
+                public void onBrowserEvent(final Context context,
+                                           final Element elem,
+                                           final T_ROW object,
+                                           final NativeEvent event) {
+                    super.onBrowserEvent(context, elem, object, event);
+                    if (browserEventHandler != null) {
+                        browserEventHandler.handle(context, elem, object, event);
+                    }
+                }
+            };
+        }
+
+        private Column<T_ROW, T_CELL_VAL> createSortableColumn() {
+            return new OrderByColumn<T_ROW, T_CELL_VAL>(
+                    cellSupplier.get(),
+                    fieldName,
+                    isIgnoreCaseOrdering) {
+
+                @Override
+                public T_CELL_VAL getValue(final T_ROW row) {
+                    return extractFormattedValue(row);
+                }
+
+                @Override
+                public boolean isSortable() {
+                    return isSortableSupplier.getAsBoolean();
+                }
+
+                @Override
+                public String getCellStyleNames(final Context context, final T_ROW object) {
+                    return buildCellStyles(super.getCellStyleNames(context, object), object);
+                }
+
+                @Override
+                public void onBrowserEvent(final Context context,
+                                           final Element elem,
+                                           final T_ROW object,
+                                           final NativeEvent event) {
+                    super.onBrowserEvent(context, elem, object, event);
+                    if (browserEventHandler != null) {
+                        browserEventHandler.handle(context, elem, object, event);
+                    }
+                }
+            };
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class HeadingBuilder {
+
+        private HeadingAlignment headingAlignment = null;
+        private String headingText;
+        private String toolTip;
+
+        public HeadingBuilder(final String headingText) {
+            this.headingText = headingText;
+        }
+
+        public HeadingBuilder leftAligned() {
+            this.headingAlignment = HeadingAlignment.LEFT;
+            return this;
+        }
+
+        public HeadingBuilder centerAligned() {
+            this.headingAlignment = HeadingAlignment.CENTER;
+            return this;
+        }
+
+        public HeadingBuilder rightAligned() {
+            this.headingAlignment = HeadingAlignment.RIGHT;
+            return this;
+        }
+
+        public HeadingBuilder withToolTip(final String toolTip) {
+            this.toolTip = toolTip;
+            return this;
+        }
+
+        public Header<SafeHtml> build() {
+
+            final boolean hasToolTip = !GwtNullSafe.isBlankString(toolTip);
+            final boolean hasAlignment = headingAlignment != null && headingAlignment != HeadingAlignment.LEFT;
+            if (headingText == null) {
+                headingText = "";
+            }
+
+            final Header<SafeHtml> header;
+            String headingStyle = null;
+            if (hasAlignment) {
+                if (HeadingAlignment.CENTER == headingAlignment) {
+                    headingStyle = "center-align";
+                } else if (HeadingAlignment.RIGHT == headingAlignment) {
+                    headingStyle = "right-align";
+                }
+            }
+
+//            if (hasToolTip || hasAlignment) {
+            if (hasToolTip) {
+
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder()
+                        .appendHtmlConstant("<span");
+//                if (hasToolTip) {
+                builder.appendHtmlConstant(" title=\"")
+                        .appendEscaped(toolTip)
+                        .appendHtmlConstant("\"");
+//                }
+//                if (hasAlignment) {
+//                    if (HeadingAlignment.CENTER == headingAlignment) {
+//                        builder.appendHtmlConstant(" style=\"text-align: center;\"");
+//                        headingStyle = "center-align";
+//                    } else if (HeadingAlignment.RIGHT == headingAlignment) {
+//                        builder.appendHtmlConstant(" style=\"text-align: right;\"");
+//                        headingStyle = "right-align";
+//                    }
+//                }
+
+                final SafeHtml safeHtml = builder
+                        .appendHtmlConstant(">")
+                        .appendEscaped(headingText)
+                        .appendHtmlConstant("</span>")
+                        .toSafeHtml();
+                header = new SafeHtmlHeader(safeHtml);
+            } else {
+                header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headingText));
+            }
+
+            // Apply a class to the header itself
+            GwtNullSafe.consume(headingStyle, header::setHeaderStyleNames);
+            return header;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum HeadingAlignment {
+        LEFT,
+        CENTER,
+        RIGHT;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static interface BrowserEventHandler<T_ROW> {
+
+        void handle(final Context context,
+                    final Element elem,
+                    final T_ROW row,
+                    final NativeEvent event);
     }
 }

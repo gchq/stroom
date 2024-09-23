@@ -4,7 +4,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportConverter;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -30,7 +30,7 @@ public class LegacyImpexModule extends AbstractModule {
                 .bind(ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterDataMapConverter.class)
                 .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDataMapConverter.class)
                 .bind(FeedDoc.DOCUMENT_TYPE, FeedDataMapConverter.class)
-                .bind(IndexDoc.DOCUMENT_TYPE, IndexDataMapConverter.class)
+                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexDataMapConverter.class)
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineDataMapConverter.class)
                 .bind(ScriptDoc.DOCUMENT_TYPE, ScriptDataMapConverter.class)
                 .bind(SolrIndexDoc.DOCUMENT_TYPE, SolrIndexDataMapConverter.class)

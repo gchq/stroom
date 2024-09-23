@@ -19,7 +19,6 @@ package stroom.kafka.client.presenter;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -31,7 +30,6 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
@@ -123,11 +121,12 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     protected void onBind() {
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(KAFKA_CONFIG_RESOURCE)
+                    .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .call(KAFKA_CONFIG_RESOURCE)
-                    .download(docRef);
+                    .taskMonitorFactory(this)
+                    .exec();
         }));
     }
 

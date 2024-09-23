@@ -3,8 +3,8 @@ package stroom.explorer.client.presenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocContentHighlights;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -15,12 +15,12 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.TextRangeUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TextRange;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -64,7 +64,7 @@ public class FindInContentPresenter
     private final RestFactory restFactory;
 
     private FindInContentRequest currentQuery = new FindInContentRequest(
-            new PageRequest(0, 100),
+            PageRequest.createDefault(),
             null,
             StringMatch.any());
     private boolean initialised;
@@ -101,6 +101,7 @@ public class FindInContentPresenter
                 }
             }
         };
+        cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
@@ -118,7 +119,7 @@ public class FindInContentPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindInContentResult>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final RestErrorHandler errorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 currentQuery = new FindInContentRequest(pageRequest,
                         currentQuery.getSortList(),
@@ -137,8 +138,9 @@ public class FindInContentPresenter
                     resetFocus();
 
                 } else {
-                    restFactory.builder()
-                            .forResultPageOf(FindInContentResult.class)
+                    restFactory
+                            .create(EXPLORER_RESOURCE)
+                            .method(res -> res.findInContent(currentQuery))
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                     cellTable.setPageStart(resultPage.getPageStart());
@@ -155,9 +157,9 @@ public class FindInContentPresenter
 
                                 resetFocus();
                             })
-                            .onFailure(throwableConsumer)
-                            .call(EXPLORER_RESOURCE)
-                            .findInContent(currentQuery);
+                            .onFailure(errorHandler)
+                            .taskMonitorFactory(pagerView)
+                            .exec();
                 }
             }
         };
@@ -194,8 +196,9 @@ public class FindInContentPresenter
                     selection.getDocContentMatch().getDocRef(),
                     selection.getDocContentMatch().getExtension(),
                     currentQuery.getFilter());
-            restFactory.builder()
-                    .forType(DocContentHighlights.class)
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchHighlights(fetchHighlightsRequest))
                     .onSuccess(response -> {
                         if (response != null && response.getText() != null) {
                             editorPresenter.setText(response.getText());
@@ -207,8 +210,8 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
-                    .call(EXPLORER_RESOURCE)
-                    .fetchHighlights(fetchHighlightsRequest);
+                    .taskMonitorFactory(getView().getTaskListener())
+                    .exec();
         }
     }
 
@@ -226,19 +229,12 @@ public class FindInContentPresenter
 
     @Override
     public void changePattern(final String pattern, final boolean matchCase, final boolean regex) {
-        String trimmed;
-        if (pattern == null) {
-            trimmed = "";
-        } else {
-            trimmed = pattern.trim();
-        }
-
         final FindInContentRequest query = new FindInContentRequest(
                 currentQuery.getPageRequest(),
                 currentQuery.getSortList(),
                 regex
-                        ? StringMatch.regex(trimmed, matchCase)
-                        : StringMatch.contains(trimmed, matchCase));
+                        ? StringMatch.regex(pattern, matchCase)
+                        : StringMatch.contains(pattern, matchCase));
 
         if (!Objects.equals(currentQuery, query)) {
             this.currentQuery = query;
@@ -283,14 +279,13 @@ public class FindInContentPresenter
                     .popupSize(popupSize)
                     .caption("Find In Content")
                     .onShow(e -> getView().focus())
-                    .onHideRequest(HidePopupRequestEvent::hide)
                     .onHide(e -> showing = false)
                     .fire();
         }
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     @ProxyCodeSplit
@@ -305,5 +300,7 @@ public class FindInContentPresenter
         void setResultView(View view);
 
         void setTextView(View view);
+
+        TaskMonitorFactory getTaskListener();
     }
 }

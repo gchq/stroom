@@ -1,13 +1,16 @@
 package stroom.query.common.v2;
 
 import stroom.query.language.functions.ValSerialiser;
+import stroom.query.language.functions.ref.DataReader;
+import stroom.query.language.functions.ref.DataWriter;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.KryoDataReader;
+import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
-import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.nio.ByteBuffer;
@@ -69,8 +72,8 @@ public class KeyFactoryFactory {
                     for (final String encodedGroup : openGroups) {
                         try {
                             final ByteBuffer buffer = ByteBuffer.wrap(Base64.getDecoder().decode(encodedGroup));
-                            try (final ByteBufferInput input = new ByteBufferInput(buffer)) {
-                                keys.add(read(input));
+                            try (final DataReader reader = new KryoDataReader(new ByteBufferInput(buffer))) {
+                                keys.add(read(reader));
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e::getMessage, e);
@@ -85,8 +88,9 @@ public class KeyFactoryFactory {
         public String encode(final Key key, final ErrorConsumer errorConsumer) {
             return Metrics.measure("Encoding groups", () -> {
                 try (final Output output = new Output(bufferSize, -1)) {
-                    write(key, output);
-                    output.flush();
+                    try (final DataWriter writer = new KryoDataWriter(output)) {
+                        write(key, writer);
+                    }
                     final byte[] bytes = output.toBytes();
                     bufferSize = Math.max(bufferSize, output.getBuffer().length);
                     return Base64.getEncoder().encodeToString(bytes);
@@ -106,16 +110,16 @@ public class KeyFactoryFactory {
     private static class FlatGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final DataWriter writer) {
             // Write single key part.
-            final KeyPart keyPart = key.getKeyParts().get(0);
-            keyPart.write(output);
+            final KeyPart keyPart = key.getKeyParts().getFirst();
+            keyPart.write(writer);
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final DataReader reader) {
             // Read single key part.
-            final GroupKeyPart groupKeyPart = new GroupKeyPart(ValSerialiser.readArray(input));
+            final GroupKeyPart groupKeyPart = new GroupKeyPart(ValSerialiser.readArray(reader));
             final List<KeyPart> list = Collections.singletonList(groupKeyPart);
             return new Key(0, list);
         }
@@ -127,16 +131,16 @@ public class KeyFactoryFactory {
     private static class FlatUngroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final DataWriter writer) {
             // Write single key part.
-            final KeyPart keyPart = key.getKeyParts().get(0);
-            keyPart.write(output);
+            final KeyPart keyPart = key.getKeyParts().getFirst();
+            keyPart.write(writer);
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final DataReader reader) {
             // Read single key part.
-            final UngroupedKeyPart keyPart = new UngroupedKeyPart(input.readLong());
+            final UngroupedKeyPart keyPart = new UngroupedKeyPart(reader.readLong());
             final List<KeyPart> list = Collections.singletonList(keyPart);
             return new Key(0, list);
         }
@@ -148,22 +152,22 @@ public class KeyFactoryFactory {
     private static class FlatTimeGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final DataWriter writer) {
             // Write time millis since epoch.
-            output.writeLong(key.getTimeMs());
+            writer.writeLong(key.getTimeMs());
 
             // Write single key part.
-            final KeyPart keyPart = key.getKeyParts().get(0);
-            keyPart.write(output);
+            final KeyPart keyPart = key.getKeyParts().getFirst();
+            keyPart.write(writer);
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final DataReader reader) {
             // Read time millis since epoch.
-            final long timeMs = input.readLong();
+            final long timeMs = reader.readLong();
 
             // Read single key part.
-            final GroupKeyPart groupKeyPart = new GroupKeyPart(ValSerialiser.readArray(input));
+            final GroupKeyPart groupKeyPart = new GroupKeyPart(ValSerialiser.readArray(reader));
             final List<KeyPart> list = Collections.singletonList(groupKeyPart);
             return new Key(timeMs, list);
         }
@@ -175,22 +179,22 @@ public class KeyFactoryFactory {
     private static class FlatTimeUngroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final DataWriter writer) {
             // Write time millis since epoch.
-            output.writeLong(key.getTimeMs());
+            writer.writeLong(key.getTimeMs());
 
             // Write single key part.
-            final KeyPart keyPart = key.getKeyParts().get(0);
-            keyPart.write(output);
+            final KeyPart keyPart = key.getKeyParts().getFirst();
+            keyPart.write(writer);
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final DataReader reader) {
             // Read time millis since epoch.
-            final long timeMs = input.readLong();
+            final long timeMs = reader.readLong();
 
             // Read single key part.
-            final UngroupedKeyPart keyPart = new UngroupedKeyPart(input.readLong());
+            final UngroupedKeyPart keyPart = new UngroupedKeyPart(reader.readLong());
             final List<KeyPart> list = Collections.singletonList(keyPart);
             return new Key(timeMs, list);
         }
@@ -202,32 +206,32 @@ public class KeyFactoryFactory {
     private static class NestedGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final DataWriter writer) {
             // Write number of key parts (depth).
-            output.writeByte(key.getKeyParts().size());
+            writer.writeByteUnsigned(key.getKeyParts().size());
 
             // Write key parts.
             for (final KeyPart keyPart : key.getKeyParts()) {
                 // Record if this is a grouped part.
-                output.writeBoolean(keyPart.isGrouped());
-                keyPart.write(output);
+                writer.writeBoolean(keyPart.isGrouped());
+                keyPart.write(writer);
             }
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final DataReader reader) {
             // Read number of key parts (depth).
-            final int size = Byte.toUnsignedInt(input.readByte());
+            final int size = (reader.readByteUnsigned());
 
             // Read key parts.
             final List<KeyPart> list = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 // Determine if this is a grouped part.
-                final boolean grouped = input.readBoolean();
+                final boolean grouped = reader.readBoolean();
                 if (grouped) {
-                    list.add(new GroupKeyPart(ValSerialiser.readArray(input)));
+                    list.add(new GroupKeyPart(ValSerialiser.readArray(reader)));
                 } else {
-                    list.add(new UngroupedKeyPart(input.readLong()));
+                    list.add(new UngroupedKeyPart(reader.readLong()));
                 }
             }
             return new Key(0, list);
@@ -240,38 +244,38 @@ public class KeyFactoryFactory {
     private static class NestedTimeGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final DataWriter writer) {
             // Write number of key parts (depth).
-            output.writeByte(key.getKeyParts().size());
+            writer.writeByteUnsigned(key.getKeyParts().size());
 
             // Write time millis since epoch.
-            output.writeLong(key.getTimeMs());
+            writer.writeLong(key.getTimeMs());
 
             // Write key parts.
             for (final KeyPart keyPart : key.getKeyParts()) {
                 // Record if this is a grouped part.
-                output.writeBoolean(keyPart.isGrouped());
-                keyPart.write(output);
+                writer.writeBoolean(keyPart.isGrouped());
+                keyPart.write(writer);
             }
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final DataReader reader) {
             // Read number of key parts (depth).
-            final int size = Byte.toUnsignedInt(input.readByte());
+            final int size = reader.readByteUnsigned();
 
             // Read time millis since epoch.
-            final long timeMs = input.readLong();
+            final long timeMs = reader.readLong();
 
             // Read key parts.
             final List<KeyPart> list = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 // Determine if this is a grouped part.
-                final boolean grouped = input.readBoolean();
+                final boolean grouped = reader.readBoolean();
                 if (grouped) {
-                    list.add(new GroupKeyPart(ValSerialiser.readArray(input)));
+                    list.add(new GroupKeyPart(ValSerialiser.readArray(reader)));
                 } else {
-                    list.add(new UngroupedKeyPart(input.readLong()));
+                    list.add(new UngroupedKeyPart(reader.readLong()));
                 }
             }
             return new Key(timeMs, list);

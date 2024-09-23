@@ -11,7 +11,7 @@ public class NullValue implements RefDataValue {
      * MUST not change this else it is stored in the ref store. MUST be unique over all
      * {@link RefDataValue} impls.
      */
-    public static final int TYPE_ID = 3;
+    public static final byte TYPE_ID = 3;
     private static final ByteBuffer ZERO_LENGTH_BTYE_BUFFER = ByteBuffer.wrap(new byte[0]);
     private static final NullValue INSTANCE = new NullValue();
 
@@ -28,7 +28,7 @@ public class NullValue implements RefDataValue {
     }
 
     @Override
-    public int getTypeId() {
+    public byte getTypeId() {
         return TYPE_ID;
     }
 

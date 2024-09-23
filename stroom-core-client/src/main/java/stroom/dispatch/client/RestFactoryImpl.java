@@ -1,20 +1,25 @@
 package stroom.dispatch.client;
 
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
-import stroom.util.shared.ResultPage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
-import com.google.inject.TypeLiteral;
 import com.google.web.bindery.event.shared.EventBus;
 import org.fusesource.restygwt.client.Defaults;
+import org.fusesource.restygwt.client.DirectRestService;
 import org.fusesource.restygwt.client.Dispatcher;
+import org.fusesource.restygwt.client.Method;
+import org.fusesource.restygwt.client.MethodCallback;
+import org.fusesource.restygwt.client.REST;
 
-import java.util.List;
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
 
@@ -25,171 +30,199 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         this.eventBus = eventBus;
 
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
-        hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
-        hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
+        hostPageBaseUrl = trimPath(hostPageBaseUrl);
+        hostPageBaseUrl = trimPath(hostPageBaseUrl);
         final String apiUrl = hostPageBaseUrl + "/api/";
         Defaults.setServiceRoot(apiUrl);
         Defaults.setDispatcher(dispatcher);
     }
 
-    @Override
-    public RestBuilder builder() {
-        return new RestBuilderImpl(this, false);
+    private String trimPath(final String hostPageBaseUrl) {
+        int start = hostPageBaseUrl.indexOf("//");
+        if (start != -1) {
+            start++;
+            int index = hostPageBaseUrl.lastIndexOf("/");
+            if (index != -1 && start != index) {
+                return hostPageBaseUrl.substring(0, index);
+            }
+        }
+        return hostPageBaseUrl;
     }
 
     @Override
-    public RestBuilder builder(final boolean isQuiet) {
-        return new RestBuilderImpl(this, isQuiet);
+    public <T extends DirectRestService> Resource<T> create(final T service) {
+        return new ResourceImpl<>(this, service);
     }
 
-    @Override
-    public <R> Rest<R> create() {
-        return new RestImpl<>(this);
+    private static class ResourceImpl<T extends DirectRestService> implements Resource<T> {
+
+        private final HasHandlers hasHandlers;
+        private final T service;
+
+        public ResourceImpl(final HasHandlers hasHandlers,
+                            final T service) {
+            this.hasHandlers = hasHandlers;
+            this.service = service;
+        }
+
+        @Override
+        public <R> MethodExecutor<T, R> method(final Function<T, R> function) {
+            return new MethodExecutorImpl<>(hasHandlers, service, function);
+        }
+
+        @Override
+        public MethodExecutor<T, Void> call(final Consumer<T> consumer) {
+            final Function<T, Void> function = t -> {
+                consumer.accept(t);
+                return null;
+            };
+            return new MethodExecutorImpl<>(hasHandlers, service, function);
+        }
     }
 
-    @Override
-    public <R> Rest<R> createQuiet() {
-        return new QuietRestImpl<>(this);
+    private static class MethodExecutorImpl<T extends DirectRestService, R> implements MethodExecutor<T, R> {
+
+        private final HasHandlers hasHandlers;
+        private final T service;
+        private final Function<T, R> function;
+
+        private Consumer<R> resultConsumer;
+        private RestErrorHandler errorConsumer;
+
+        public MethodExecutorImpl(final HasHandlers hasHandlers,
+                                  final T service,
+                                  final Function<T, R> function) {
+            this.hasHandlers = hasHandlers;
+            this.service = service;
+            this.function = function;
+        }
+
+        @Override
+        public TaskExecutor<T, R> taskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+            return taskMonitorFactory(taskMonitorFactory, null);
+        }
+
+        @Override
+        public TaskExecutor<T, R> taskMonitorFactory(final TaskMonitorFactory taskMonitorFactory,
+                                                     final String taskMessage) {
+            return new TaskExecutorImpl<>(
+                    hasHandlers,
+                    service,
+                    function,
+                    resultConsumer,
+                    errorConsumer,
+                    taskMonitorFactory,
+                    taskMessage);
+        }
+
+        @Override
+        public MethodExecutor<T, R> onSuccess(final Consumer<R> resultConsumer) {
+            this.resultConsumer = resultConsumer;
+            return this;
+        }
+
+        @Override
+        public MethodExecutor<T, R> onFailure(final RestErrorHandler errorHandler) {
+            this.errorConsumer = errorHandler;
+            return this;
+        }
     }
+
+    private static class TaskExecutorImpl<T extends DirectRestService, R> implements TaskExecutor<T, R> {
+
+        private final HasHandlers hasHandlers;
+        private final T service;
+        private final Function<T, R> function;
+
+        private final Consumer<R> resultConsumer;
+        private final RestErrorHandler errorHandler;
+        private final TaskMonitorFactory taskMonitorFactory;
+        private final Task task;
+
+        public TaskExecutorImpl(final HasHandlers hasHandlers,
+                                final T service,
+                                final Function<T, R> function,
+                                final Consumer<R> resultConsumer,
+                                final RestErrorHandler errorHandler,
+                                final TaskMonitorFactory taskMonitorFactory,
+                                final String taskMessage) {
+            this.hasHandlers = hasHandlers;
+            this.service = service;
+            this.function = function;
+            this.resultConsumer = resultConsumer;
+            this.errorHandler = errorHandler;
+            this.taskMonitorFactory = taskMonitorFactory;
+            this.task = new RestFactoryTask<>(service, function, taskMessage);
+        }
+
+        @Override
+        public void exec() {
+            final RestErrorHandler errorHandler = GwtNullSafe
+                    .requireNonNullElseGet(this.errorHandler, () -> new DefaultErrorHandler(hasHandlers, null));
+            final TaskMonitorFactory taskMonitorFactory = GwtNullSafe
+                    .requireNonNullElseGet(this.taskMonitorFactory, () -> new DefaultTaskMonitorFactory(hasHandlers));
+
+            final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
+            final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
+                    hasHandlers,
+                    resultConsumer,
+                    errorHandler,
+                    taskMonitor,
+                    task);
+            final REST<R> rest = REST.withCallback(methodCallback);
+            taskMonitor.onStart(task);
+            function.apply(rest.call(service));
+        }
+    }
+
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
     }
 
-    @Override
-    public String getImportFileURL() {
-        return GWT.getHostPageBaseURL() + "importfile.rpc";
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class RestBuilderImpl implements RestBuilder {
-
-        @SuppressWarnings("Convert2Diamond")
-        private static final TypeLiteral<Void> VOID_TYPE_LITERAL = new TypeLiteral<Void>() {
-        };
-        @SuppressWarnings("Convert2Diamond")
-        private static final TypeLiteral<Boolean> BOOLEAN_TYPE_LITERAL = new TypeLiteral<Boolean>() {
-        };
+    private static class MethodCallbackImpl<R> implements MethodCallback<R> {
 
         private final HasHandlers hasHandlers;
-        private final boolean isQuiet;
+        private final Consumer<R> resultConsumer;
+        private final RestErrorHandler errorHandler;
+        private final TaskMonitor taskMonitor;
+        private final Task task;
 
-        private RestBuilderImpl(final HasHandlers hasHandlers,
-                                final boolean isQuiet) {
+        public MethodCallbackImpl(final HasHandlers hasHandlers,
+                                  final Consumer<R> resultConsumer,
+                                  final RestErrorHandler errorHandler,
+                                  final TaskMonitor taskMonitor,
+                                  final Task task) {
             this.hasHandlers = hasHandlers;
-            this.isQuiet = isQuiet;
-        }
-
-        private <R> AbstractRest<R> createRest(final TypeLiteral<R> typeLiteral) {
-            return isQuiet
-                    ? new QuietRestImpl<>(hasHandlers, typeLiteral)
-                    : new RestImpl<>(hasHandlers, typeLiteral);
+            this.resultConsumer = resultConsumer;
+            this.errorHandler = errorHandler;
+            this.taskMonitor = taskMonitor;
+            this.task = task;
         }
 
         @Override
-        public Rest<Void> forVoid() {
-            return createRest(VOID_TYPE_LITERAL);
+        public void onFailure(final Method method, final Throwable throwable) {
+            try {
+                errorHandler.onError(new RestError(method, throwable));
+            } catch (final Throwable t) {
+                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
+            } finally {
+                taskMonitor.onEnd(task);
+            }
         }
 
         @Override
-        public Rest<Boolean> forBoolean() {
-            return createRest(BOOLEAN_TYPE_LITERAL);
-        }
-
-        @Override
-        public <R> Rest<R> forType(final Class<R> type) {
-            return createRest(new TypeLiteral<R>() {
-            });
-        }
-
-        @Override
-        public <R> Rest<R> forWrappedType(final TypeLiteral<R> typeLiteral) {
-            return createRest(typeLiteral);
-        }
-
-        @Override
-        public <T> Rest<List<T>> forListOf(final Class<T> itemType) {
-            //noinspection Convert2Diamond
-            return createRest(new TypeLiteral<List<T>>() {
-            });
-        }
-
-        @Override
-        public <T> Rest<Set<T>> forSetOf(final Class<T> itemType) {
-            //noinspection Convert2Diamond
-            return createRest(new TypeLiteral<Set<T>>() {
-            });
-        }
-
-        @Override
-        public <T> Rest<ResultPage<T>> forResultPageOf(final Class<T> itemType) {
-            //noinspection Convert2Diamond
-            return createRest(new TypeLiteral<ResultPage<T>>() {
-            });
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class RestImpl<R> extends AbstractRest<R> {
-
-        private final HasHandlers hasHandlers;
-
-        RestImpl(final HasHandlers hasHandlers) {
-            super(hasHandlers);
-            this.hasHandlers = hasHandlers;
-        }
-
-        // typeLiteral used to fix the type
-        @SuppressWarnings("unused")
-        RestImpl(final HasHandlers hasHandlers, TypeLiteral<R> typeLiteral) {
-            super(hasHandlers);
-            this.hasHandlers = hasHandlers;
-        }
-
-        @Override
-        protected void incrementTaskCount() {
-            // Add the task to the map.
-            TaskStartEvent.fire(hasHandlers);
-        }
-
-        @Override
-        protected void decrementTaskCount() {
-            // Remove the task from the task count.
-            TaskEndEvent.fire(hasHandlers);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class QuietRestImpl<R> extends AbstractRest<R> {
-
-        QuietRestImpl(final HasHandlers hasHandlers) {
-            super(hasHandlers);
-        }
-
-        // typeLiteral used to fix the type
-        @SuppressWarnings("unused")
-        QuietRestImpl(final HasHandlers hasHandlers, final TypeLiteral<R> typeLiteral) {
-            super(hasHandlers);
-        }
-
-        @Override
-        protected void incrementTaskCount() {
-            // Do nothing.
-        }
-
-        @Override
-        protected void decrementTaskCount() {
-            // Do nothing.
+        public void onSuccess(final Method method, final R response) {
+            try {
+                if (resultConsumer != null) {
+                    resultConsumer.accept(response);
+                }
+            } catch (final Throwable t) {
+                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
+            } finally {
+                taskMonitor.onEnd(task);
+            }
         }
     }
 }

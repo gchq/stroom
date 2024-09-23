@@ -26,7 +26,8 @@ public interface DataStore extends ValuesConsumer {
      * @param timeFilter The time filter to use to limit the data returned.
      * @return The filtered child items for the parent key.
      */
-    <R> void fetch(OffsetRange range,
+    <R> void fetch(List<Column> columns,
+                   OffsetRange range,
                    OpenGroups openGroups,
                    TimeFilter timeFilter,
                    ItemMapper<R> mapper,
@@ -63,8 +64,6 @@ public interface DataStore extends ValuesConsumer {
     void writePayload(Output output);
 
     long getByteSize();
-
-    Serialisers getSerialisers();
 
     KeyFactory getKeyFactory();
 

@@ -4,6 +4,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -48,6 +49,14 @@ public class FindPresenter
                     .fire();
         }
     }
+
+    @Override
+    protected void updateFilter(final ExplorerTreeFilterBuilder explorerTreeFilterBuilder) {
+        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface FindProxy extends Proxy<FindPresenter> {

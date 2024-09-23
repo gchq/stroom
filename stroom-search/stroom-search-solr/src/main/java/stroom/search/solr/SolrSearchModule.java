@@ -17,10 +17,12 @@
 package stroom.search.solr;
 
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.SolrSearchProvider;
@@ -31,11 +33,10 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class SolrSearchModule extends AbstractModule {
 
@@ -43,7 +44,7 @@ public class SolrSearchModule extends AbstractModule {
     protected void configure() {
         install(new SolrIndexingElementModule());
 
-        bind(SolrIndexCache.class).to(SolrIndexCacheImpl.class);
+        bind(SolrIndexDocCache.class).to(SolrIndexDocCacheImpl.class);
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
@@ -51,18 +52,21 @@ public class SolrSearchModule extends AbstractModule {
                 .addBinding(SolrSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
                 .addBinding(SolrSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
+                .addBinding(SolrSearchProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(SolrIndexCacheImpl.class);
+                .addBinding(SolrIndexDocCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(SolrIndexCacheImpl.class)
+                .addBinding(SolrIndexDocCacheImpl.class)
                 .addBinding(SolrIndexClientCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(SolrIndexStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(SolrIndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(SolrIndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
@@ -77,11 +81,11 @@ public class SolrSearchModule extends AbstractModule {
                         .name("Solr Index Retention")
                         .description("Logically delete indexed documents in Solr indexes based on the specified " +
                                 "deletion query")
-                        .schedule(CRON, "0 2 *"))
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_2AM.getExpression()))
                 .bindJobTo(SolrIndexOptimiseExecutorJob.class, builder -> builder
                         .name("Solr Index Optimise")
                         .description("Optimise Solr indexes")
-                        .schedule(CRON, "0 3 *"));
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_3AM.getExpression()));
     }
 
     private static class DataRetention extends RunnableWrapper {

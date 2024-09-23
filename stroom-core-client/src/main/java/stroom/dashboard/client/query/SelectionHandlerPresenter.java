@@ -26,6 +26,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -138,6 +139,12 @@ public class SelectionHandlerPresenter
                 allFields.addAll(fields);
             }
         }
+    }
+
+    @Override
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface SelectionHandlerView extends View, Focus, HasUiHandlers<SelectionHandlerUiHandlers> {

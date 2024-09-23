@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -95,8 +94,8 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
                             valueBuffer,
                             false);
                     // Destroy the buffers
-                    ByteBufferSupport.unmap((MappedByteBuffer) keyBuffer);
-                    ByteBufferSupport.unmap((MappedByteBuffer) valueBuffer);
+                    ByteBufferSupport.unmap(keyBuffer);
+                    ByteBufferSupport.unmap(valueBuffer);
                 }
             });
 
@@ -117,7 +116,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 //                        assertThat(optValue).isPresent();
                 });
                 // Destroy the buffer
-                ByteBufferSupport.unmap((MappedByteBuffer) keyBuffer);
+                ByteBufferSupport.unmap(keyBuffer);
             }
         }, "testNoReuse-get");
 

@@ -19,7 +19,6 @@ package stroom.pipeline.stepping.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -35,7 +34,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.ResultPage;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -72,48 +71,46 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
 
     @Override
     public void onBegin(final BeginPipelineSteppingEvent event) {
-        if (event.getPipelineRef() != null) {
-            choosePipeline(event.getPipelineRef(),
-                    event.getStepType(),
-                    event.getStepLocation(),
-                    event.getChildStreamType());
-        } else {
-            // If we don't have a pipeline id then try to guess one for the
-            // supplied stream.
-            final Rest<DocRef> rest = restFactory.create();
-            rest
-                    .onSuccess(result ->
-                            choosePipeline(
-                                    result,
-                                    event.getStepType(),
-                                    event.getStepLocation(),
-                                    event.getChildStreamType()))
-                    .call(STEPPING_RESOURCE)
-                    .getPipelineForStepping(new GetPipelineForMetaRequest(
-                            event.getStepLocation().getMetaId(),
-                            event.getChildStreamId()));
-        }
-    }
-
-    private void choosePipeline(final DocRef initialPipelineRef,
-                                final StepType stepType,
-                                final StepLocation stepLocation,
-                                final String childStreamType) {
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
 
-        if (initialPipelineRef != null) {
-            chooser.setSelectedEntityReference(initialPipelineRef);
+        final Runnable onShow;
+        if (event.getPipelineRef() != null) {
+            onShow = () -> chooser.setSelectedEntityReference(event.getPipelineRef());
+        } else {
+            // If we don't have a pipeline id then try to guess one for the
+            // supplied stream.
+            onShow = () -> restFactory
+                    .create(STEPPING_RESOURCE)
+                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
+                            event.getStepLocation().getMetaId(),
+                            event.getChildStreamId())))
+                    .onSuccess(chooser::setSelectedEntityReference)
+                    .taskMonitorFactory(chooser)
+                    .exec();
         }
 
+        choosePipeline(chooser,
+                event.getStepType(),
+                event.getStepLocation(),
+                event.getChildStreamType(),
+                onShow);
+    }
+
+    private void choosePipeline(final DocSelectionPopup chooser,
+                                final StepType stepType,
+                                final StepLocation stepLocation,
+                                final String childStreamType,
+                                final Runnable onShow) {
         chooser.show(pipeline -> {
             if (pipeline != null) {
                 final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                         stepLocation.getMetaId());
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(META_RESOURCE)
+                        .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {
                                 final MetaRow row = result.getFirst();
@@ -124,9 +121,10 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                         childStreamType);
                             }
                         })
-                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
+                        .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
+                        .exec();
             }
-        });
+        }, onShow);
     }
 
     private void openEditor(final DocRef pipeline,

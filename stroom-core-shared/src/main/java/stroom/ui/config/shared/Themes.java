@@ -16,7 +16,6 @@ public class Themes {
     static {
         putTheme(THEME_NAME_LIGHT, "stroom-theme-light", ThemeType.LIGHT);
         putTheme(THEME_NAME_DARK, "stroom-theme-dark", ThemeType.DARK);
-//        themeMap.put("Dark 2", "stroom-theme-dark stroom-theme-dark2");
     }
 
     private static void putTheme(final String name, final String clazz, final ThemeType themeType) {

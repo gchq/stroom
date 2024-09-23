@@ -13,48 +13,49 @@ import java.util.Objects;
 public class ScheduledQueryAnalyticTrackerData extends AnalyticTrackerData {
 
     @JsonProperty
-    private Long lastExecutionTimeMs;
+    private Long actualExecutionTimeMs;
     @JsonProperty
-    private Long lastWindowStartTimeMs;
+    private Long lastEffectiveExecutionTimeMs;
     @JsonProperty
-    private Long lastWindowEndTimeMs;
+    private Long nextEffectiveExecutionTimeMs;
 
     public ScheduledQueryAnalyticTrackerData() {
     }
 
     @JsonCreator
-    public ScheduledQueryAnalyticTrackerData(@JsonProperty("lastExecutionTimeMs") final Long lastExecutionTimeMs,
-                                             @JsonProperty("lastWindowStartTimeMs") final Long lastWindowStartTimeMs,
-                                             @JsonProperty("lastWindowEndTimeMs") final Long lastWindowEndTimeMs,
-                                             @JsonProperty("message") final String message) {
+    public ScheduledQueryAnalyticTrackerData(
+            @JsonProperty("actualExecutionTimeMs") final Long actualExecutionTimeMs,
+            @JsonProperty("lastEffectiveExecutionTimeMs") final Long lastEffectiveExecutionTimeMs,
+            @JsonProperty("nextEffectiveExecutionTimeMs") final Long nextEffectiveExecutionTimeMs,
+            @JsonProperty("message") final String message) {
         super(message);
-        this.lastExecutionTimeMs = lastExecutionTimeMs;
-        this.lastWindowStartTimeMs = lastWindowStartTimeMs;
-        this.lastWindowEndTimeMs = lastWindowEndTimeMs;
+        this.actualExecutionTimeMs = actualExecutionTimeMs;
+        this.lastEffectiveExecutionTimeMs = lastEffectiveExecutionTimeMs;
+        this.nextEffectiveExecutionTimeMs = nextEffectiveExecutionTimeMs;
     }
 
-    public Long getLastExecutionTimeMs() {
-        return lastExecutionTimeMs;
+    public Long getActualExecutionTimeMs() {
+        return actualExecutionTimeMs;
     }
 
-    public void setLastExecutionTimeMs(final Long lastExecutionTimeMs) {
-        this.lastExecutionTimeMs = lastExecutionTimeMs;
+    public void setActualExecutionTimeMs(final Long actualExecutionTimeMs) {
+        this.actualExecutionTimeMs = actualExecutionTimeMs;
     }
 
-    public Long getLastWindowStartTimeMs() {
-        return lastWindowStartTimeMs;
+    public Long getLastEffectiveExecutionTimeMs() {
+        return lastEffectiveExecutionTimeMs;
     }
 
-    public void setLastWindowStartTimeMs(final Long lastWindowStartTimeMs) {
-        this.lastWindowStartTimeMs = lastWindowStartTimeMs;
+    public void setLastEffectiveExecutionTimeMs(final Long lastEffectiveExecutionTimeMs) {
+        this.lastEffectiveExecutionTimeMs = lastEffectiveExecutionTimeMs;
     }
 
-    public Long getLastWindowEndTimeMs() {
-        return lastWindowEndTimeMs;
+    public Long getNextEffectiveExecutionTimeMs() {
+        return nextEffectiveExecutionTimeMs;
     }
 
-    public void setLastWindowEndTimeMs(final Long lastWindowEndTimeMs) {
-        this.lastWindowEndTimeMs = lastWindowEndTimeMs;
+    public void setNextEffectiveExecutionTimeMs(final Long nextEffectiveExecutionTimeMs) {
+        this.nextEffectiveExecutionTimeMs = nextEffectiveExecutionTimeMs;
     }
 
     @Override
@@ -69,13 +70,23 @@ public class ScheduledQueryAnalyticTrackerData extends AnalyticTrackerData {
             return false;
         }
         final ScheduledQueryAnalyticTrackerData that = (ScheduledQueryAnalyticTrackerData) o;
-        return Objects.equals(lastExecutionTimeMs, that.lastExecutionTimeMs) &&
-                Objects.equals(lastWindowStartTimeMs, that.lastWindowStartTimeMs) &&
-                Objects.equals(lastWindowEndTimeMs, that.lastWindowEndTimeMs);
+        return Objects.equals(actualExecutionTimeMs, that.actualExecutionTimeMs) &&
+                Objects.equals(lastEffectiveExecutionTimeMs, that.lastEffectiveExecutionTimeMs) &&
+                Objects.equals(nextEffectiveExecutionTimeMs, that.nextEffectiveExecutionTimeMs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), lastExecutionTimeMs, lastWindowStartTimeMs, lastWindowEndTimeMs);
+        return Objects.hash(super.hashCode(), actualExecutionTimeMs, lastEffectiveExecutionTimeMs,
+                nextEffectiveExecutionTimeMs);
+    }
+
+    @Override
+    public String toString() {
+        return "ScheduledQueryAnalyticTrackerData{" +
+                "actualExecutionTimeMs=" + actualExecutionTimeMs +
+                ", lastEffectiveExecutionTimeMs=" + lastEffectiveExecutionTimeMs +
+                ", nextEffectiveExecutionTimeMs=" + nextEffectiveExecutionTimeMs +
+                '}';
     }
 }

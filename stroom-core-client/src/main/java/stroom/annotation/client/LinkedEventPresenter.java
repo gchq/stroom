@@ -10,19 +10,17 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -31,7 +29,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
+public class LinkedEventPresenter
+        extends MyPresenterWidget<LinkedEventView> {
 
     private final MyDataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
@@ -81,12 +80,11 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         view.setEventListView(pagerView);
         view.setDataView(dataPresenter.getView());
 
-        dataGrid.addResizableColumn(new Column<EventId, String>(new TextCell()) {
-            @Override
-            public String getValue(final EventId eventId) {
-                return eventId.toString();
-            }
-        }, "Id", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.copyTextColumnBuilder(EventId::toString)
+                        .build(),
+                "Id",
+                ColumnSizeConstants.MEDIUM_COL);
     }
 
     @Override
@@ -99,10 +97,12 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 dirty = true;
 
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                final Rest<List<EventId>> rest = restFactory.create();
-                rest.onSuccess(this::setData)
-                        .call(annotationResource)
-                        .link(new EventLink(annotation.getId(), eventId));
+                restFactory
+                        .create(annotationResource)
+                        .method(res -> res.link(new EventLink(annotation.getId(), eventId)))
+                        .onSuccess(this::setData)
+                        .taskMonitorFactory(this)
+                        .exec();
             }
         })));
 
@@ -120,10 +120,12 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 }
 
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                final Rest<List<EventId>> rest = restFactory.create();
-                rest.onSuccess(this::setData)
-                        .call(annotationResource)
-                        .unlink(new EventLink(annotation.getId(), selected));
+                restFactory
+                        .create(annotationResource)
+                        .method(res -> res.unlink(new EventLink(annotation.getId(), selected)))
+                        .onSuccess(this::setData)
+                        .taskMonitorFactory(this)
+                        .exec();
             }
         }));
     }
@@ -134,14 +136,18 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         dirty = false;
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        final Rest<List<EventId>> rest = restFactory.create();
-        rest.onSuccess(this::show).call(annotationResource).getLinkedEvents(annotation.getId());
+        restFactory
+                .create(annotationResource)
+                .method(res -> res.getLinkedEvents(annotation.getId()))
+                .onSuccess(this::show)
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     private void show(final List<EventId> data) {
         setData(data);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        final PopupSize popupSize = PopupSize.resizable(1100, 600);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
@@ -157,7 +163,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         dataGrid.setRowCount(data.size());
 
         // Change the selection if we need to.
-        if (data.size() > 0) {
+        if (!data.isEmpty()) {
             final EventId currentSelection = selectionModel.getSelected();
             if (nextSelection != null && data.contains(nextSelection)) {
                 selectionModel.setSelected(nextSelection);

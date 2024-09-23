@@ -1,12 +1,12 @@
 package stroom.search.impl;
 
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.TimePartition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.TimeFilter;
@@ -27,22 +27,28 @@ import java.util.Map;
 public class NodeSearchTaskCreator implements NodeTaskCreator {
 
     private final IndexStore indexStore;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
 
     @Inject
     public NodeSearchTaskCreator(final IndexStore indexStore,
-                                 final IndexShardService indexShardService) {
+                                 final IndexShardDao indexShardDao) {
         this.indexStore = indexStore;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
     }
 
     @Override
     public Map<String, NodeSearchTask> createNodeSearchTasks(final FederatedSearchTask task,
                                                              final Query query,
                                                              final TaskContext parentContext) {
+        // Get the partition time range.
+        final Range<Long> partitionTimeRange = getPartitionTimeRange(task, query);
+
         // Get a list of search index shards to look through.
-        final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
+        final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria
+                .builder()
+                .partitionTimeRange(partitionTimeRange)
+                .build();
         findIndexShardCriteria.getIndexUuidSet().add(query.getDataSource().getUuid());
         // Only non deleted indexes.
         findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
@@ -50,10 +56,7 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
         findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
         findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
 
-        // Set the partition time range.
-        setPartitionTimeRange(findIndexShardCriteria, task, query);
-
-        final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
+        final ResultPage<IndexShard> indexShards = indexShardDao.find(findIndexShardCriteria);
 
         // Build a map of nodes that will deal with each set of shards.
         final Map<String, List<Long>> shardMap = new HashMap<>();
@@ -86,11 +89,10 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
         return clusterTaskMap;
     }
 
-    private void setPartitionTimeRange(final FindIndexShardCriteria findIndexShardCriteria,
-                                       final FederatedSearchTask task,
-                                       final Query query) {
+    private Range<Long> getPartitionTimeRange(final FederatedSearchTask task,
+                                              final Query query) {
         // Get the index doc.
-        final IndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
+        final LuceneIndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
         if (indexDoc == null) {
             throw new SearchException("Index not found");
         }
@@ -112,7 +114,6 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
                 partitionTo = timePartition.getPartitionToTime();
             }
         }
-        final Range<Long> range = new Range<>(partitionFrom, partitionTo);
-        findIndexShardCriteria.setPartitionTimeRange(range);
+        return new Range<>(partitionFrom, partitionTo);
     }
 }

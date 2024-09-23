@@ -58,6 +58,10 @@ public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManager
         taskList.remove(task.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, UserTaskManagerViewImpl> {
 
     }

@@ -16,6 +16,11 @@
 
 package com.gwtplatform.mvp.client;
 
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event;
@@ -24,29 +29,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>> extends Presenter<T_VIEW, T_PROXY>
-        implements Layer {
+public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
+        extends Presenter<T_VIEW, T_PROXY>
+        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory {
 
-//    private double opacity;
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
     private boolean firstReveal = true;
 
     public MyPresenter(final EventBus eventBus, final T_VIEW view, final T_PROXY proxy) {
         super(eventBus, view, proxy);
     }
-
-//    @Override
-//    public double getOpacity() {
-//        return opacity;
-//    }
-//
-//    /**************
-//     * Start Layer
-//     **************/
-//    @Override
-//    public void setOpacity(final double opacity) {
-//        this.opacity = opacity;
-//        getWidget().getElement().getStyle().setOpacity(opacity);
-//    }
 
     @Override
     public void setLayerVisible(final boolean fade, final boolean visible) {
@@ -55,7 +47,6 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
 
     @Override
     public void addLayer(final LayerContainer tabContentView) {
-//        setOpacity(opacity);
         tabContentView.add(getWidget());
     }
 
@@ -71,10 +62,6 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
             ((RequiresResize) getWidget()).onResize();
         }
     }
-
-    //*************
-    // End Layer
-    //*************
 
     /**
      * Only called the first time the widget is revealed.
@@ -100,5 +87,15 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
 
     protected final <H extends EventHandler> void addRegisteredHandlerToSource(final Type<H> type, final H handler) {
         registerHandler(addHandlerToSource(type, handler));
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
+    }
+
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return taskMonitorFactory.createTaskMonitor();
     }
 }

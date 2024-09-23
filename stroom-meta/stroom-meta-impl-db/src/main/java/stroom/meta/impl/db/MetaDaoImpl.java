@@ -17,8 +17,9 @@ import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
+import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaServiceConfig;
@@ -40,6 +41,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -230,18 +232,18 @@ public class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.STATUS, meta.STATUS, value ->
                 MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.STATUS_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.STATUS_TIME.getFldName(), value));
         expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.CREATE_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.CREATE_TIME.getFldName(), value));
         expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.EFFECTIVE_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.EFFECTIVE_TIME.getFldName(), value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value ->
                 MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getFldName(), value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         valueMapper = new ValueMapper();
@@ -257,9 +259,9 @@ public class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
                 .orElse(ValNull.INSTANCE));
-        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
-        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
-        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValDate::create);
+        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValDate::create);
+        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValDate::create);
     }
 
     private Val getPipelineName(final String uuid) {
@@ -618,7 +620,7 @@ public class MetaDaoImpl implements MetaDao {
         final boolean containsPipelineCondition = NullSafe.test(
                 expression,
                 expr ->
-                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+                        expr.containsField(MetaFields.PIPELINE.getFldName(), MetaFields.PIPELINE_NAME.getFldName()));
 
         if (containsPipelineCondition) {
             // Only add in the join to meta_processor if we need it
@@ -780,8 +782,8 @@ public class MetaDaoImpl implements MetaDao {
 
             final boolean requiresMetaProcessorTable = rulesContainField(
                     activeRules,
-                    MetaFields.PIPELINE.getName(),
-                    MetaFields.PIPELINE_NAME.getName());
+                    MetaFields.PIPELINE.getFldName(),
+                    MetaFields.PIPELINE_NAME.getFldName());
 
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
@@ -929,9 +931,9 @@ public class MetaDaoImpl implements MetaDao {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
-            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(),
+            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getFldName(),
                     ruleActions)
-                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getName(), ruleActions);
+                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getFldName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
 
@@ -1223,13 +1225,13 @@ public class MetaDaoImpl implements MetaDao {
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         final String[] fieldNames = fieldIndex.getFields();
-        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getName()), fieldNames, criteria);
-        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getName()), fieldNames, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getName()), fieldNames, criteria);
+        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getFldName()), fieldNames, criteria);
+        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getFldName()), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getFldName()), fieldNames, criteria);
         final Set<String> extendedFieldNames = MetaFields
                 .getExtendedFields()
                 .stream()
-                .map(QueryField::getName)
+                .map(QueryField::getFldName)
                 .collect(Collectors.toSet());
         final boolean extendedValuesUsed = isUsed(extendedFieldNames, fieldNames, criteria);
 
@@ -1391,7 +1393,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(QueryField::getName).collect(Collectors.toList());
+            MetaFields.getExtendedFields().stream().map(QueryField::getFldName).collect(Collectors.toList());
 
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
                                                           final Set<Integer> identified) {
@@ -1725,17 +1727,17 @@ public class MetaDaoImpl implements MetaDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (MetaFields.ID.getName().equals(sort.getId())) {
+            if (MetaFields.ID.getFldName().equals(sort.getId())) {
                 field = meta.ID;
-            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getId())) {
+            } else if (MetaFields.CREATE_TIME.getFldName().equals(sort.getId())) {
                 field = meta.CREATE_TIME;
-            } else if (MetaFields.FEED.getName().equals(sort.getId())) {
+            } else if (MetaFields.FEED.getFldName().equals(sort.getId())) {
                 field = metaFeed.NAME;
-            } else if (MetaFields.TYPE.getName().equals(sort.getId())) {
+            } else if (MetaFields.TYPE.getFldName().equals(sort.getId())) {
                 field = metaType.NAME;
-            } else if (MetaFields.PARENT_ID.getName().equals(sort.getId())) {
+            } else if (MetaFields.PARENT_ID.getFldName().equals(sort.getId())) {
                 field = meta.PARENT_ID;
-            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getId())) {
+            } else if (MetaFields.PARENT_CREATE_TIME.getFldName().equals(sort.getId())) {
                 field = parent.CREATE_TIME;
             } else {
                 field = meta.ID;
@@ -1797,7 +1799,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public List<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
+    public EffectiveMetaSet getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
 
         LOGGER.debug("getEffectiveStreams({})", effectiveMetaDataCriteria);
 
@@ -1807,31 +1809,28 @@ public class MetaDaoImpl implements MetaDao {
         final long fromMs = Objects.requireNonNull(period.getFromMs());
         // Exclusive
         final long toMs = Objects.requireNonNull(period.getToMs());
+        final String feedName = effectiveMetaDataCriteria.getFeed();
+        final String typeName = effectiveMetaDataCriteria.getType();
 
         // Debatable whether we should throw an exception if the feed/type don't exist
-        final Optional<Integer> optFeedId = feedDao.get(effectiveMetaDataCriteria.getFeed());
+        final Optional<Integer> optFeedId = feedDao.get(feedName);
         if (optFeedId.isEmpty()) {
             LOGGER.debug("Feed {} not found in the {} table.",
-                    effectiveMetaDataCriteria.getFeed(), META_FEED.NAME);
-            return Collections.emptyList();
+                    feedName, META_FEED.NAME);
+            return EffectiveMetaSet.empty();
         }
         final int feedId = optFeedId.get();
 
-        final Optional<Integer> optTypeId = metaTypeDao.get(effectiveMetaDataCriteria.getType());
+        final Optional<Integer> optTypeId = metaTypeDao.get(typeName);
         if (optTypeId.isEmpty()) {
-            LOGGER.warn("Meta Type {} not found in the database", effectiveMetaDataCriteria.getType());
-            return Collections.emptyList();
+            LOGGER.warn("Meta Type {} not found in the database", typeName);
+            return EffectiveMetaSet.empty();
         }
         final int typeId = optTypeId.get();
 
-        final Function<Record2<Long, Long>, EffectiveMeta> mapper = rec ->
-                new EffectiveMeta(
-                        rec.get(meta.ID),
-                        effectiveMetaDataCriteria.getFeed(),
-                        effectiveMetaDataCriteria.getType(),
-                        rec.get(meta.EFFECTIVE_TIME));
+        final Builder metaSetBuilder = EffectiveMetaSet.builder(feedName, typeName);
 
-        final List<EffectiveMeta> streamsInOrBelowRange = JooqUtil.contextResult(metaDbConnProvider,
+        JooqUtil.context(metaDbConnProvider,
                 context -> {
                     // Try to get a single stream that is just before our range.  This is so that we always
                     // have a stream (unless there are no streams at all) that was effective at the start
@@ -1853,12 +1852,20 @@ public class MetaDaoImpl implements MetaDao {
 
                     LOGGER.debug("select:\n{}", select);
 
-                    return select.fetch()
-                            .map(mapper::apply);
+                    select.fetch()
+                            .forEach(rec ->
+                                    metaSetBuilder.add(
+                                            rec.get(meta.ID),
+                                            rec.get(meta.EFFECTIVE_TIME)));
                 });
 
-        LOGGER.debug(() -> LogUtil.message("returning {} streams for criteria: {}",
-                streamsInOrBelowRange.size(), effectiveMetaDataCriteria));
+        final EffectiveMetaSet streamsInOrBelowRange = metaSetBuilder.build();
+
+        LOGGER.debug(() -> LogUtil.message("returning {} effective streams for feedId: {}, typeId: {}, criteria: {}",
+                streamsInOrBelowRange.size(),
+                streamsInOrBelowRange.getFeedName(),
+                streamsInOrBelowRange.getTypeName(),
+                effectiveMetaDataCriteria));
 
         return streamsInOrBelowRange;
     }
@@ -1950,7 +1957,7 @@ public class MetaDaoImpl implements MetaDao {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getFieldType().getTypeName(), term));
+                                field.getFldType().getTypeName(), term));
                     } else {
                         return true;
                     }

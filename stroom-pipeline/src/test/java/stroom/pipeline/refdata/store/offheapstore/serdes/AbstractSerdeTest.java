@@ -18,8 +18,6 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
-import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
 
@@ -40,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Make sure T implements equals as {@link AbstractSerdeTest#doSerialisationDeserialisationTest(Object)} will do an
  * equality check. If your serde doesn't have a no-args constructor then implement
  * {@link AbstractSerdeTest#getSerdeSupplier()}.
+ *
  * @param <T> The type of the object being (de-)serialised.
  * @param <S> The type of the serde.
  */
@@ -48,8 +47,6 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
 
     private static final int BYTE_BUFFER_SIZE = 10_000;
-
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     private S serde = null;
 

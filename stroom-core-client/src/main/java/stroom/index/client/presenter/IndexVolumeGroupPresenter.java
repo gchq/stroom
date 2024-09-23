@@ -20,7 +20,6 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
@@ -38,6 +37,7 @@ import java.util.List;
 
 public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
+    public static final String TAB_TYPE = "IndexVolumes";
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
@@ -110,42 +110,27 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void add() {
         final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
-        presenter.show("", name -> {
-            if (name != null) {
-                final Rest<IndexVolumeGroup> rest = restFactory.create();
-                rest
-                        .onSuccess(indexVolumeGroup -> {
-                            edit(indexVolumeGroup);
-                            presenter.hide();
-                            refresh();
-                        })
-                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                        .create(name);
-            } else {
-                presenter.hide();
-            }
+        presenter.show("", indexVolumeGroup -> {
+            edit(indexVolumeGroup);
+            refresh();
         });
     }
 
     private void edit() {
         final IndexVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<IndexVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
-                    .call(INDEX_VOLUME_GROUP_RESOURCE)
-                    .fetch(volume.getId());
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
         final IndexVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> {
-            if (result != null) {
-                refresh();
-            }
-            editor.hide();
-        });
+        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> refresh());
     }
 
     private void delete() {
@@ -160,9 +145,12 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolumeGroup volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response ->
-                                        refresh()).call(INDEX_VOLUME_GROUP_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .create(INDEX_VOLUME_GROUP_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
+                                        .onSuccess(response -> refresh())
+                                        .taskMonitorFactory(this)
+                                        .exec();
                             }
                         }
                     });
@@ -192,5 +180,10 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     @Override
     public String getLabel() {
         return "Index Volumes";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

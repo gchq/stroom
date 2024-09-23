@@ -44,11 +44,14 @@ class TestStroomIndexViewResource {
     // local.yml is not in source control and is created using local.yml.sh
     public static final DropwizardAppExtension<Config> RULE = new DropwizardAppExtension<>(App.class, "../local.yml");
 
-    public static final String SEARCH_TARGET = "http://localhost:8080" +
-            ResourcePaths.ROOT_PATH +
-            ResourcePaths.API_ROOT_PATH +
-            RegisteredService.INDEX_V2.getVersionedPath() +
-            "/search";
+    public static final String SEARCH_TARGET = ResourcePaths
+            .builder()
+            .addPathPart("http://localhost:8080")
+            .addPathPart(ResourcePaths.ROOT_PATH)
+            .addPathPart(ResourcePaths.API_ROOT_PATH)
+            .addPathPart(RegisteredService.INDEX_V2.getVersionedPath())
+            .addPathPart("/search")
+            .build();
 
     private String jwtToken;
 
@@ -64,14 +67,13 @@ class TestStroomIndexViewResource {
 
         List<ResultRequest> resultRequestList = new ArrayList<>();
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
-        boolean incremental = false;
         SearchRequest searchRequest = new SearchRequest(
                 null,
                 queryKey,
                 query,
                 resultRequestList,
                 dateTimeSettings,
-                incremental);
+                false);
         return searchRequest;
     }
 

@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.index.shared.IndexField;
+import stroom.datasource.api.v2.IndexField;
 import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -26,30 +26,9 @@ public class FieldValueExtractor {
     private final IndexField[] indexFields;
 
     FieldValueExtractor(final FieldIndex fieldIndex,
-                        final IndexStructure indexStructure) {
+                        final IndexField[] indexFields) {
         this.fieldIndex = fieldIndex;
-        indexFields = new IndexField[fieldIndex.size()];
-
-        // Populate the index field map with the expected fields.
-        for (final String fieldName : fieldIndex.getFields()) {
-            final int pos = fieldIndex.getPos(fieldName);
-            IndexField indexField = null;
-
-            if (indexStructure != null &&
-                    indexStructure.getIndexFieldsMap() != null) {
-                indexField = indexStructure.getIndexFieldsMap().get(fieldName);
-            }
-
-            if (indexField == null) {
-                indexField = IndexField
-                        .builder()
-                        .fieldName(fieldName)
-                        .indexed(false)
-                        .build();
-            }
-
-            indexFields[pos] = indexField;
-        }
+        this.indexFields = indexFields;
     }
 
     public FieldValue convert(final int pos, final String stringValue) {
@@ -73,32 +52,32 @@ public class FieldValueExtractor {
 
     private Val convertValue(final IndexField indexField, final String value) {
         try {
-            switch (indexField.getFieldType()) {
-                case LONG_FIELD, NUMERIC_FIELD, ID -> {
+            switch (indexField.getFldType()) {
+                case LONG, ID -> {
                     final long val = Long.parseLong(value);
                     return ValLong.create(val);
                 }
-                case BOOLEAN_FIELD -> {
+                case BOOLEAN -> {
                     final boolean val = Boolean.parseBoolean(value);
                     return ValBoolean.create(val);
                 }
-                case INTEGER_FIELD -> {
+                case INTEGER -> {
                     final int val = Integer.parseInt(value);
                     return ValInteger.create(val);
                 }
-                case FLOAT_FIELD -> {
+                case FLOAT -> {
                     final float val = Float.parseFloat(value);
                     return ValFloat.create(val);
                 }
-                case DOUBLE_FIELD -> {
+                case DOUBLE -> {
                     final double val = Double.parseDouble(value);
                     return ValDouble.create(val);
                 }
-                case DATE_FIELD -> {
+                case DATE -> {
                     final long val = DateUtil.parseNormalDateTimeString(value);
                     return ValDate.create(val);
                 }
-                case FIELD -> {
+                case TEXT -> {
                     return ValString.create(value);
                 }
             }

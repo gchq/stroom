@@ -19,7 +19,7 @@ package stroom.statistics.impl.hbase.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -36,6 +36,7 @@ import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StatsStoreResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -95,16 +96,18 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                 // persistent version, and not one that has had
                 // fields added/removed/changed
                 load(DocRefUtil.create(entity),
-                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb),
+                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, presenter),
                         throwable -> {
-                        });
+                        },
+                        presenter);
             }
         }
     }
 
     private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
                                final StroomStatsStoreDoc entity,
-                               final StroomStatsStoreDoc entityFromDb) {
+                               final StroomStatsStoreDoc entityFromDb,
+                               final TaskMonitorFactory taskMonitorFactory) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -132,7 +135,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                             "the change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
-                            doSave(presenter, entity);
+                            doSave(presenter, entity, taskMonitorFactory);
                         } else {
                             // Re-enable popup buttons.
                         }
@@ -140,41 +143,47 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         } else {
             // user has changed some attributes we don't care about so just do
             // the save
-            doSave(presenter, entity);
+            doSave(presenter, entity, taskMonitorFactory);
         }
     }
 
     private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
-                        final StroomStatsStoreDoc entity) {
+                        final StroomStatsStoreDoc entity,
+                        final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->
                         presenter.read(DocRefUtil.create(doc), doc,
                                 presenter.isReadOnly()),
                 throwable -> {
-                });
+                },
+                taskMonitorFactory);
     }
 
     @Override
     public void load(final DocRef docRef,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<StroomStatsStoreDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(STATS_STORE_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(STATS_STORE_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final StroomStatsStoreDoc document,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<StroomStatsStoreDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(STATS_STORE_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(STATS_STORE_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 }

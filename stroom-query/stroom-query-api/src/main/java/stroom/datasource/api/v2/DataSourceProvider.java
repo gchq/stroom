@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,11 @@ public interface DataSourceProvider {
 
     String getType();
 
-    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> getFieldInfo(FindFieldCriteria criteria);
 
-    Optional<String> fetchDocumentation(DocRef dataSourceRef);
+    int getFieldCount(DocRef docRef);
 
-    DocRef fetchDefaultExtractionPipeline(DocRef dataSourceRef);
+    Optional<String> fetchDocumentation(DocRef docRef);
+
+    DocRef fetchDefaultExtractionPipeline(DocRef docRef);
 }

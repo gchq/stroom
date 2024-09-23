@@ -47,8 +47,6 @@ import java.util.stream.Stream;
 @Singleton
 public class CacheManagerImpl implements CacheManager, HasSystemInfo {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheManagerImpl.class);
-
     private static final String PARAM_NAME_LIMIT = "limit";
     private static final String PARAM_NAME_CACHE_NAME = "name";
 

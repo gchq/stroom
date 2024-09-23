@@ -22,16 +22,17 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.guice.AbstractTestModule;
 import stroom.util.AuditUtil;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
@@ -72,6 +73,8 @@ class AbstractProcessorTest {
     protected ProcessorNodeCache processorNodeCache;
     @Inject
     protected ProcessorFeedCache processorFeedCache;
+    @Inject
+    protected DocumentPermissionService mockDocumentPermissionService;
 
     @Inject
     protected Set<Clearable> clearables;
@@ -88,26 +91,18 @@ class AbstractProcessorTest {
                 new MockClusterLockModule(),
                 new DbTestModule(),
                 new MockSecurityContextModule(),
-                new AbstractModule() {
+                new AbstractTestModule() {
                     @Override
                     protected void configure() {
-                        final ExpressionMapper expressionMapper = Mockito.mock(ExpressionMapper.class);
-                        final ExpressionMapperFactory expressionMapperFactory =
-                                Mockito.mock(ExpressionMapperFactory.class);
-                        Mockito.when(expressionMapperFactory.create())
-                                .thenReturn(expressionMapper);
+                        final ExpressionMapper mockExpressionMapper = bindMock(ExpressionMapper.class);
+                        Mockito.when(bindMock(ExpressionMapperFactory.class).create())
+                                .thenReturn(mockExpressionMapper);
 
-                        bind(ExpressionMapper.class).toInstance(expressionMapper);
-                        bind(ExpressionMapperFactory.class)
-                                .toInstance(expressionMapperFactory);
-                        bind(DocRefInfoService.class)
-                                .toInstance(Mockito.mock(DocRefInfoService.class));
-                        bind(NodeInfo.class)
-                                .toInstance(Mockito.mock(NodeInfo.class));
-                        bind(ProcessorTaskQueueManager.class)
-                                .toInstance(Mockito.mock(ProcessorTaskQueueManager.class));
-                        bind(DocumentEventLog.class)
-                                .toInstance(Mockito.mock(DocumentEventLog.class));
+                        bindMock(DocRefInfoService.class);
+                        bindMock(NodeInfo.class);
+                        bindMock(ProcessorTaskQueueManager.class);
+                        bindMock(DocumentEventLog.class);
+                        bindMock(DocumentPermissionService.class);
                         // Not using all the DB modules so just bind to an empty anonymous class
                         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
                         });

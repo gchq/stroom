@@ -89,6 +89,12 @@
     white-space: nowrap;
     text-align: right;
     flex-grow: 1;
+    /* Stolen from editor.css */
+    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
+    font-size: 94%;
+    font-weight: 300;
+    letter-spacing:0.04em;
+    margin-top: -0.1em;
 }
 
 .menuItem-expandArrow {

@@ -16,7 +16,10 @@
 
 package stroom.job.shared;
 
+import stroom.util.shared.scheduler.Schedule;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,22 +30,35 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class ScheduledTimes {
 
     @JsonProperty
-    private final String lastExecutedTime;
+    private final Schedule schedule;
     @JsonProperty
-    private final String nextScheduledTime;
+    private final Long nextScheduledTimeMs;
+    @JsonProperty
+    private final String error;
 
     @JsonCreator
-    public ScheduledTimes(@JsonProperty("lastExecutedTime") final String lastExecutedTime,
-                          @JsonProperty("nextScheduledTime") final String nextScheduledTime) {
-        this.lastExecutedTime = lastExecutedTime;
-        this.nextScheduledTime = nextScheduledTime;
+    public ScheduledTimes(@JsonProperty("schedule") Schedule schedule,
+                          @JsonProperty("nextScheduledTimeMs") final Long nextScheduledTimeMs,
+                          @JsonProperty("error") final String error) {
+        this.schedule = schedule;
+        this.nextScheduledTimeMs = nextScheduledTimeMs;
+        this.error = error;
     }
 
-    public String getLastExecutedTime() {
-        return lastExecutedTime;
+    public Schedule getSchedule() {
+        return schedule;
     }
 
-    public String getNextScheduledTime() {
-        return nextScheduledTime;
+    public Long getNextScheduledTimeMs() {
+        return nextScheduledTimeMs;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    @JsonIgnore
+    public boolean isError() {
+        return error != null && error.trim().length() > 0;
     }
 }

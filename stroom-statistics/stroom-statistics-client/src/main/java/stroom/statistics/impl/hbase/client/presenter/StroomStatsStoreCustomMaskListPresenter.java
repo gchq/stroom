@@ -23,7 +23,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -35,7 +34,6 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -195,16 +193,18 @@ public class StroomStatsStoreCustomMaskListPresenter
                         "permutations for the field list?",
                 result -> {
                     if (result) {
-                        final Rest<ResultPage<CustomRollUpMask>> rest = restFactory.create();
-                        rest
-//                        restFactory.builder()
+                        restFactory
+                                .create(STATS_STORE_ROLLUP_RESOURCE)
+                                .method(res ->
+                                        res.bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount()))
+//                        restFactory
 //                                .forResultPage(CustomRollUpMask.class)
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res.getValues()));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
-                                .call(STATS_STORE_ROLLUP_RESOURCE)
-                                .bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount());
+                                .taskMonitorFactory(this)
+                                .exec();
                     }
                 });
     }
@@ -289,16 +289,16 @@ public class StroomStatsStoreCustomMaskListPresenter
                                        final StroomStatsStoreEntityData newEntityData) {
         // grab the mask list from this presenter
         oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-
-        final Rest<StroomStatsStoreEntityData> rest = restFactory.create();
-        rest
+        restFactory
+                .create(STATS_STORE_ROLLUP_RESOURCE)
+                .method(res -> res.fieldChange(new StroomStatsStoreFieldChangeRequest(oldEntityData, newEntityData)))
                 .onSuccess(result -> {
                     newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
                     updateState(result.getCustomRollUpMasks());
                 })
-                .call(STATS_STORE_ROLLUP_RESOURCE)
-                .fieldChange(new StroomStatsStoreFieldChangeRequest(oldEntityData, newEntityData));
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     /**

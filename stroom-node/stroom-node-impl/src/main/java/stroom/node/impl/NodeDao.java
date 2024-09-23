@@ -22,7 +22,7 @@ import stroom.util.shared.ResultPage;
 
 public interface NodeDao {
 
-    Node create(Node node);
+    Node tryCreate(Node node);
 
     Node update(Node node);
 

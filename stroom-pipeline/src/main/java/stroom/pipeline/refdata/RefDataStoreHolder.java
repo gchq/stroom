@@ -30,6 +30,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import jakarta.inject.Inject;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -87,6 +88,23 @@ class RefDataStoreHolder {
         // This map is populated post load once the maps in the stream are known.
         // A stream may contain 1-* map names.
         final Set<String> mapNames = refStreamDefToMapNamesMap.get(refStreamDefinition);
+        final MapAvailability mapAvailability = getMapAvailability(mapName, mapNames);
+
+        LOGGER.trace(() -> LogUtil.message(
+                "mapAvailability: {}, map: {}, available maps: {}, feed: {}, type: {}, stream: {}, partIdx: {}",
+                mapAvailability,
+                mapName,
+                NullSafe.toStringOrElse(mapNames, "<NOT YET KNOWN>"),
+                NullSafe.get(pipelineReference, PipelineReference::getFeed, DocRef::getName),
+                NullSafe.get(pipelineReference, PipelineReference::getStreamType),
+                NullSafe.get(refStreamDefinition, RefStreamDefinition::getStreamId),
+                NullSafe.get(refStreamDefinition, RefStreamDefinition::getPartIndex)));
+
+        return mapAvailability;
+    }
+
+    @NotNull
+    static MapAvailability getMapAvailability(final String mapName, final Set<String> mapNames) {
         final MapAvailability mapAvailability;
         if (mapNames == null) {
             // Not done a lookup yet so can't be sure what maps are in the stream, therefore
@@ -99,17 +117,6 @@ class RefDataStoreHolder {
                     ? MapAvailability.PRESENT
                     : MapAvailability.NOT_PRESENT;
         }
-
-        LOGGER.trace(() -> LogUtil.message(
-                "mapAvailability: {}, map: {}, available maps: {}, feed: {}, type: {}, stream: {}, partIdx: {}",
-                mapAvailability,
-                mapName,
-                NullSafe.toStringOrElse(mapNames, "<NOT YET KNOWN>"),
-                NullSafe.get(pipelineReference, PipelineReference::getFeed, DocRef::getName),
-                NullSafe.get(pipelineReference, PipelineReference::getStreamType),
-                NullSafe.get(refStreamDefinition, RefStreamDefinition::getStreamId),
-                NullSafe.get(refStreamDefinition, RefStreamDefinition::getPartIndex)));
-
         return mapAvailability;
     }
 

@@ -254,10 +254,12 @@ public class StroomEventLoggingUtil {
     }
 
     private static AdvancedQueryItem convertTerm(final ExpressionTerm expressionTerm) {
-
         final Condition condition = expressionTerm.getCondition();
-        final AdvancedQueryItem result;
+        if (condition == null) {
+            return null;
+        }
 
+        final AdvancedQueryItem result;
         if (condition.equals(Condition.IN)) {
             final String[] parts = expressionTerm.getValue().split(",");
             if (parts.length >= 2) {

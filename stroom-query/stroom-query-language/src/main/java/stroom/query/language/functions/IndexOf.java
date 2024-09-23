@@ -29,8 +29,8 @@ import java.util.function.Supplier;
         commonReturnType = ValInteger.class,
         commonReturnDescription = "The first position of subString.",
         signatures = @FunctionSignature(
-                description = "Finds the first position (zero based) of subString in inputString or `null` if " +
-                        "it cannot be found. Uses a simple literal match.",
+                description = "Finds the first position (zero based) of subString in inputString or `-1` if it " +
+                        "cannot be found. Uses a simple literal match.",
                 args = {
                         @FunctionArg(
                                 name = "inputString",
@@ -74,13 +74,9 @@ class IndexOf extends AbstractFunction {
                 if (string != null) {
                     final String value = param.toString();
                     final int index = value.indexOf(string);
-                    if (index < 0) {
-                        gen = Null.GEN;
-                    } else {
-                        gen = new StaticValueGen(ValInteger.create(index));
-                    }
+                    gen = new StaticValueGen(ValInteger.create(index));
                 } else {
-                    gen = Null.GEN;
+                    gen = new StaticValueGen(ValInteger.create(-1));
                 }
             }
         }
@@ -113,11 +109,6 @@ class IndexOf extends AbstractFunction {
         return requiresChildData;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.INTEGER;
-    }
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator stringGenerator;
@@ -146,25 +137,7 @@ class IndexOf extends AbstractFunction {
                 return ValErr.wrap(strVal);
             }
             final String str = strVal.toString();
-
-            final int index = value.indexOf(str);
-            if (index >= 0) {
-                return ValInteger.create(index);
-            }
-
-            return ValNull.INSTANCE;
+            return ValInteger.create(value.indexOf(str));
         }
-//
-//        @Override
-//        public void read(final Input input) {
-//            super.read(input);
-//            stringGenerator.read(input);
-//        }
-//
-//        @Override
-//        public void write(final Output output) {
-//            super.write(output);
-//            stringGenerator.write(output);
-//        }
     }
 }

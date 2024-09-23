@@ -30,7 +30,7 @@ body {
 
 .themed-icons-panel {
   width: 200px;
-  background: var(--app__background-color);
+  background: var(--page__background-color);
 }
 
 .svgIcon.themed-icons-svg {

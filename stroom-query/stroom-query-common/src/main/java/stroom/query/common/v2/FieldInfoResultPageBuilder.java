@@ -1,7 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.resultpage.InexactResultPageBuilder;
 import stroom.util.resultpage.ResultPageBuilder;
@@ -13,17 +12,19 @@ import java.util.List;
 public class FieldInfoResultPageBuilder {
 
     private final StringMatcher stringMatcher;
+    private final Boolean queryable;
 
-    private final ResultPageBuilder<FieldInfo> resultPageBuilder;
+    private final ResultPageBuilder<QueryField> resultPageBuilder;
     private boolean addMore = true;
 
 
-    private FieldInfoResultPageBuilder(final FindFieldInfoCriteria criteria) {
+    private FieldInfoResultPageBuilder(final FindFieldCriteria criteria) {
         stringMatcher = new StringMatcher(criteria.getStringMatch());
+        queryable = criteria.getQueryable();
         resultPageBuilder = new InexactResultPageBuilder<>(criteria.getPageRequest());
     }
 
-    public static FieldInfoResultPageBuilder builder(final FindFieldInfoCriteria criteria) {
+    public static FieldInfoResultPageBuilder builder(final FindFieldCriteria criteria) {
         return new FieldInfoResultPageBuilder(criteria);
     }
 
@@ -37,13 +38,15 @@ public class FieldInfoResultPageBuilder {
     }
 
     public boolean add(final QueryField field) {
-        if (stringMatcher.match(field.getName()).isPresent()) {
-            addMore = resultPageBuilder.add(FieldInfo.create(field));
+        if (queryable == null || field.queryable() == queryable) {
+            if (stringMatcher.match(field.getFldName()).isPresent()) {
+                addMore = resultPageBuilder.add(field);
+            }
         }
         return addMore;
     }
 
-    public ResultPage<FieldInfo> build() {
+    public ResultPage<QueryField> build() {
         return resultPageBuilder.build();
     }
 }

@@ -27,6 +27,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -62,14 +63,23 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-//        if (getSecurityContext().hasAppPermission(DBTableStatus.MANAGE_DB_PERMISSION)) {
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                 new IconMenuItem.Builder()
                         .priority(150)
                         .icon(SvgImage.DEPENDENCIES)
+                        .action(getOpenAction())
                         .text("Dependencies")
                         .command(this::open)
                         .build());
-//        }
+    }
+
+    @Override
+    protected String getRequiredAppPermission() {
+        return null;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return Action.GOTO_DEPENDENCIES;
     }
 }

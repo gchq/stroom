@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.Format;
@@ -51,7 +51,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         view.setUiHandlers(this);
         view.setTypes(Format.TYPES);
-        getView().setTimeZoneIds(timeZones.getIds());
+        timeZones.getIds(ids -> getView().setTimeZoneIds(ids));
     }
 
     public void show(final Column column,
@@ -81,7 +81,6 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
                             columnChangeConsumer.accept(column, column.copy().format(newFormat).build());
                         }
                     }
-
                     e.hide();
                 })
                 .fire();
@@ -132,7 +131,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private void setDateTimeSettings(final FormatSettings settings) {
-        TimeZone timeZone = TimeZone.utc();
+        UserTimeZone timeZone = UserTimeZone.utc();
 
         if (!(settings instanceof DateTimeFormatSettings)) {
             getView().setPattern(null);
@@ -148,12 +147,15 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         setTimeZone(timeZone);
     }
 
-    private TimeZone getTimeZone() {
-        return new TimeZone(getView().getTimeZoneUse(), getView().getTimeZoneId(), getView().getTimeZoneOffsetHours(),
+    private UserTimeZone getTimeZone() {
+        return new UserTimeZone(
+                getView().getTimeZoneUse(),
+                getView().getTimeZoneId(),
+                getView().getTimeZoneOffsetHours(),
                 getView().getTimeZoneOffsetMinutes());
     }
 
-    private void setTimeZone(final TimeZone timeZone) {
+    private void setTimeZone(final UserTimeZone timeZone) {
         getView().setTimeZoneUse(timeZone.getUse());
 
         if (timeZone.getId() == null) {
@@ -190,9 +192,9 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         void setTimeZoneIds(List<String> timeZoneIds);
 
-        TimeZone.Use getTimeZoneUse();
+        UserTimeZone.Use getTimeZoneUse();
 
-        void setTimeZoneUse(TimeZone.Use use);
+        void setTimeZoneUse(UserTimeZone.Use use);
 
         String getTimeZoneId();
 

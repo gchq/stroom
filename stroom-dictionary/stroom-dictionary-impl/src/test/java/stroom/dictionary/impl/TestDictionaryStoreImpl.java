@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -164,6 +165,39 @@ class TestDictionaryStoreImpl {
         final String expected = String.join("\n", data1, data2, data3);
         assertThat(combinedData)
                 .isEqualTo(expected);
+    }
+
+    @Test
+    void emptyDict() {
+        final DocRef docRef1 = createDoc("""
+                """, "doc1");
+
+        final String[] words = getDictionaryStore().getWords(docRef1);
+
+        Assertions.assertThat(words)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void blankDict() {
+        final DocRef docRef1 = createDoc("""
+                     \t
+
+                \t
+                """, "doc1");
+
+        final String[] words = getDictionaryStore().getWords(docRef1);
+
+        Assertions.assertThat(words)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void nullWords() {
+        final String[] words = getDictionaryStore().getWords(DictionaryDoc.buildDocRef().randomUuid().build());
+        Assertions.assertThat(words.length).isZero();
     }
 
     private DocRef createDoc(final String data, final String name, final DocRef... imports) {

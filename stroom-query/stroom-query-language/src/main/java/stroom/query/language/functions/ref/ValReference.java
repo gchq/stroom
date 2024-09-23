@@ -4,9 +4,6 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValSerialiser;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 public class ValReference implements ValueReference<Val> {
 
     private final int index;
@@ -36,13 +33,13 @@ public class ValReference implements ValueReference<Val> {
     }
 
     @Override
-    public void read(final StoredValues storedValues, final Input input) {
-        set(storedValues, ValSerialiser.read(input));
+    public void read(final StoredValues storedValues, final DataReader reader) {
+        set(storedValues, ValSerialiser.read(reader));
     }
 
     @Override
-    public void write(final StoredValues storedValues, final Output output) {
-        ValSerialiser.write(output, get(storedValues));
+    public void write(final StoredValues storedValues, final DataWriter writer) {
+        ValSerialiser.write(writer, get(storedValues));
     }
 
     @Override

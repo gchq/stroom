@@ -21,16 +21,14 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -47,7 +45,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -100,7 +97,6 @@ public class ManageActivityPresenter
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
         updateQuickFilterTooltipContentSupplier();
-
     }
 
     @Override
@@ -140,54 +136,58 @@ public class ManageActivityPresenter
     }
 
     void showInitial(final Consumer<Activity> consumer) {
-        uiConfigCache.get().onSuccess(uiConfig -> {
-            final boolean show = uiConfig.getActivity().isChooseOnStartup() &&
-                    uiConfig.getActivity().isEnabled();
-            if (show) {
-                if (urlParameters.isEmbedded()) {
-                    // If we are in embedded more then see if we can find a current activity set in the session.
-                    currentActivity.getActivity(activity -> {
-                        // If no activity is set then ask the user to choose.
-                        if (activity == null) {
-                            show(null, consumer);
-                        } else {
-                            consumer.accept(activity);
-                        }
-                    });
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                final boolean show = uiConfig.getActivity().isChooseOnStartup() &&
+                        uiConfig.getActivity().isEnabled();
+                if (show) {
+                    if (urlParameters.isEmbedded()) {
+                        // If we are in embedded more then see if we can find a current activity set in the session.
+                        currentActivity.getActivity(activity -> {
+                            // If no activity is set then ask the user to choose.
+                            if (activity == null) {
+                                show(null, consumer);
+                            } else {
+                                consumer.accept(activity);
+                            }
+                        }, this);
+                    } else {
+                        show(null, consumer);
+                    }
                 } else {
-                    show(null, consumer);
+                    consumer.accept(null);
                 }
-            } else {
-                consumer.accept(null);
             }
-        });
+        }, this);
     }
 
     private void updateQuickFilterTooltipContentSupplier() {
-        uiConfigCache.get().onSuccess(uiConfig -> {
-            final String helpUrl = uiConfig.getHelpUrlQuickFilter();
-            final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
-            // Separate to aid type inference
-            rest
-                    .onSuccess(fieldDefinitions -> {
-                        quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
-                                "Choose Activity Quick Filter",
-                                fieldDefinitions,
-                                helpUrl);
-                    })
-                    .onFailure(throwable -> {
-                        // Just use the basic tooltip content
-                        quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
-                                "Choose Activity Quick Filter",
-                                helpUrl);
-                    })
-                    .call(ACTIVITY_RESOURCE)
-                    .listFieldDefinitions();
-        });
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                final String helpUrl = uiConfig.getHelpUrlQuickFilter();
+                restFactory
+                        .create(ACTIVITY_RESOURCE)
+                        .method(ActivityResource::listFieldDefinitions)
+                        .onSuccess(fieldDefinitions -> {
+                            quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
+                                    "Choose Activity Quick Filter",
+                                    fieldDefinitions,
+                                    helpUrl);
+                        })
+                        .onFailure(throwable -> {
+                            // Just use the basic tooltip content
+                            quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
+                                    "Choose Activity Quick Filter",
+                                    helpUrl);
+                        })
+                        .taskMonitorFactory(this)
+                        .exec();
+            }
+        }, this);
     }
 
     public void show(final Consumer<Activity> consumer) {
-        currentActivity.getActivity(activity -> show(activity, consumer));
+        currentActivity.getActivity(activity -> show(activity, consumer), this);
     }
 
     private void show(final Activity activity, final Consumer<Activity> consumer) {
@@ -200,28 +200,30 @@ public class ManageActivityPresenter
             listPresenter.refresh();
         }
 
-        uiConfigCache.get().onSuccess(uiConfig -> {
-            final String title = uiConfig.getActivity().getManagerTitle();
-            final PopupSize popupSize = PopupSize.resizable(1000, 600);
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.CLOSE_DIALOG)
-                    .popupSize(popupSize)
-                    .caption(title)
-                    .modal(true)
-                    .onShow(e -> getView().focus())
-                    .onHide(e -> {
-                        final Activity selected = getSelected();
-                        currentActivity.setActivity(selected);
-                        consumer.accept(getSelected());
-                    })
-                    .fire();
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                final String title = uiConfig.getActivity().getManagerTitle();
+                final PopupSize popupSize = PopupSize.resizable(1000, 600);
+                ShowPopupEvent.builder(this)
+                        .popupType(PopupType.CLOSE_DIALOG)
+                        .popupSize(popupSize)
+                        .caption(title)
+                        .modal(true)
+                        .onShow(e -> getView().focus())
+                        .onHide(e -> {
+                            final Activity selected = getSelected();
+                            currentActivity.setActivity(selected, this);
+                            consumer.accept(getSelected());
+                        })
+                        .fire();
 
-            enableButtons();
-        });
+                enableButtons();
+            }
+        }, this);
     }
 
     public void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     private void enableButtons() {
@@ -243,11 +245,12 @@ public class ManageActivityPresenter
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            final Rest<Activity> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(ACTIVITY_RESOURCE)
+                    .method(res -> res.fetch(e.getId()))
                     .onSuccess(this::onEdit)
-                    .call(ACTIVITY_RESOURCE)
-                    .fetch(e.getId());
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
@@ -272,15 +275,16 @@ public class ManageActivityPresenter
                     result -> {
                         if (result) {
                             // Delete the activity
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .create(ACTIVITY_RESOURCE)
+                                    .method(res -> res.delete(entity.getId()))
                                     .onSuccess(success -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
                                         updateQuickFilterTooltipContentSupplier();
                                     })
-                                    .call(ACTIVITY_RESOURCE)
-                                    .delete(entity.getId());
+                                    .taskMonitorFactory(this)
+                                    .exec();
                         }
                     });
         }
@@ -316,7 +320,7 @@ public class ManageActivityPresenter
         return quickFilterTooltipSupplier.get();
     }
 
-    interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
+    public interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
     }

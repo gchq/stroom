@@ -50,6 +50,7 @@ public class InfoDocumentPresenter
         implements ShowInfoDocumentDialogEvent.Handler {
 
     private final DateTimeFormatter dateTimeFormatter;
+    private boolean isShowing = false;
 
     @Inject
     public InfoDocumentPresenter(final EventBus eventBus,
@@ -68,13 +69,21 @@ public class InfoDocumentPresenter
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(500, 500);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Info")
-                .onShow(e -> getView().focus())
-                .fire();
+        // Popup is not modal so, allow the user to click Info for another doc
+        // which will just update the view and not need a new show event.
+        if (!isShowing) {
+            final PopupSize popupSize = PopupSize.resizable(500, 500);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Info")
+                    .onShow(e -> {
+                        getView().focus();
+                        isShowing = true;
+                    })
+                    .onHide(e -> isShowing = false)
+                    .fire();
+        }
     }
 
     @ProxyEvent
@@ -135,8 +144,6 @@ public class InfoDocumentPresenter
                     .sorted()
                     .forEach(tag ->
                             appendLine("\t", tag, sb));
-
-
 //            sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
         }
 
@@ -156,10 +163,11 @@ public class InfoDocumentPresenter
         sb.appendHtmlConstant("<b>");
         sb.appendEscaped(key);
         sb.appendHtmlConstant("</b>");
-        if (key.trim().length() > 0) {
+        if (!GwtNullSafe.isBlankString(key)) {
             sb.appendEscaped(": ");
         }
     }
+
 
     // --------------------------------------------------------------------------------
 
@@ -168,6 +176,10 @@ public class InfoDocumentPresenter
 
         void setInfo(SafeHtml info);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface InfoDocumentProxy extends Proxy<InfoDocumentPresenter> {

@@ -23,121 +23,35 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.util.shared.TextRange;
+import stroom.widget.util.client.GlobalKeyHandler;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 import java.util.function.Function;
 
 public class EditorPresenter
-        extends MyPresenterWidget<EditorView>
-        implements HasFormatHandlers,
-        HasText,
-        HasValueChangeHandlers<String> {
+        extends AbstractEditorPresenter<EditorView> implements HasFormatHandlers {
 
     protected static final String VIM_KEY_BINDS_NAME = "VIM";
     private final EditorMenuPresenter contextMenu;
-    private final DelegatingAceCompleter delegatingAceCompleter;
 
     @Inject
     public EditorPresenter(final EventBus eventBus,
                            final EditorView view,
                            final EditorMenuPresenter contextMenu,
                            final DelegatingAceCompleter delegatingAceCompleter,
-                           final CurrentPreferences currentPreferences) {
-        super(eventBus, view);
+                           final CurrentPreferences currentPreferences,
+                           final GlobalKeyHandler globalKeyHandler) {
+        super(eventBus, view, delegatingAceCompleter, currentPreferences, globalKeyHandler);
         this.contextMenu = contextMenu;
-        this.delegatingAceCompleter = delegatingAceCompleter;
-        view.setTheme(getTheme(currentPreferences));
-        setEditorKeyBindings(view, currentPreferences.getEditorKeyBindings());
-        view.setUserLiveAutoCompletePreference(currentPreferences.getEditorLiveAutoCompletion().isOn());
-
-//        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 
         registerHandler(view.addContextMenuHandler(event ->
-            contextMenu.show(
-                    EditorPresenter.this,
+                contextMenu.show(
+                        EditorPresenter.this,
                         event.getPopupPosition())));
-        registerHandler(view.addKeyDownHandler(event -> {
-            if (event.isAltKeyDown() || event.isControlKeyDown()) {
-                eventBus.fireEvent(event);
-            }
-        }));
-        registerHandler(eventBus.addHandler(
-                ChangeCurrentPreferencesEvent.getType(),
-                this::handlePreferencesChange));
-    }
-
-    private void handlePreferencesChange(final ChangeCurrentPreferencesEvent event) {
-        final EditorView view = getView();
-        view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()));
-        // For the moment only standard and vim bindings are supported given the boolean
-        // nature of the context menu
-        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(event.getEditorKeyBindings()));
-        view.setUserLiveAutoCompletePreference(event.getEditorLiveAutoCompletion().isOn());
-    }
-
-    private void setEditorKeyBindings(final EditorView view, final String editorKeyBindingsName) {
-        // For the moment only standard and vim bindings are supported given the boolean
-        // nature of the context menu
-        view.setUserKeyBindingsPreference(VIM_KEY_BINDS_NAME.equalsIgnoreCase(editorKeyBindingsName));
-    }
-
-    private AceEditorTheme getTheme(final CurrentPreferences currentPreferences) {
-        return getTheme(currentPreferences.getTheme(), currentPreferences.getEditorTheme());
-    }
-
-
-    private AceEditorTheme getTheme(final String theme, final String editorTheme) {
-        // Just in case it is null
-        return Optional.ofNullable(editorTheme)
-                .map(AceEditorTheme::fromName)
-                .orElseGet(() ->
-                        theme != null && theme.toLowerCase(Locale.ROOT).contains("dark")
-                                ? AceEditorTheme.DEFAULT_DARK_THEME
-                                : AceEditorTheme.DEFAULT_LIGHT_THEME);
-    }
-
-    public String getEditorId() {
-        return getView().getEditorId();
-    }
-
-    public void focus() {
-        getView().focus();
-    }
-
-    @Override
-    public String getText() {
-        return getView().getText();
-    }
-
-    /**
-     * Sets the text for this control. If XML is supplied it will be turned into
-     * HTML for styling.
-     */
-    @Override
-    public void setText(final String text) {
-        setText(text, false);
-    }
-
-    public boolean isClean() {
-        return getView().isClean();
-    }
-
-    public void markClean() {
-        getView().markClean();
     }
 
     /**
@@ -145,18 +59,6 @@ public class EditorPresenter
      */
     public void setErrorText(final String title, final String errorText) {
         getView().setErrorText(title, errorText);
-    }
-
-    public void insertTextAtCursor(final String text) {
-        getView().insertTextAtCursor(text);
-    }
-
-    public void replaceSelectedText(final String text) {
-        getView().replaceSelectedText(text);
-    }
-
-    public void insertSnippet(final String snippet) {
-        getView().insertSnippet(snippet);
     }
 
     public void setText(final String text, final boolean format) {
@@ -248,6 +150,20 @@ public class EditorPresenter
         getView().setControlsVisible(visible);
     }
 
+    public void setOptionsToDefaultAvailability() {
+        getView().setOptionsToDefaultAvailability();
+    }
+
+    public EditorMenuPresenter getContextMenu() {
+        return contextMenu;
+    }
+
+    @Override
+    public HandlerRegistration addFormatHandler(final FormatHandler handler) {
+        return getView().addFormatHandler(handler);
+    }
+
+    @Override
     public void setReadOnly(final boolean readOnly) {
         if (readOnly) {
             getFormatAction().setUnavailable();
@@ -270,64 +186,5 @@ public class EditorPresenter
         }
 
         getView().setReadOnly(readOnly);
-    }
-
-    public void setOptionsToDefaultAvailability() {
-        getView().setOptionsToDefaultAvailability();
-    }
-
-    public void setMode(final AceEditorMode mode) {
-        getView().setMode(mode);
-    }
-
-    public void setTheme(final AceEditorTheme theme) {
-        getView().setTheme(theme);
-    }
-
-    public EditorMenuPresenter getContextMenu() {
-        return contextMenu;
-    }
-
-    @Override
-    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
-        return getView().addValueChangeHandler(handler);
-    }
-
-    @Override
-    public HandlerRegistration addFormatHandler(final FormatHandler handler) {
-        return getView().addFormatHandler(handler);
-    }
-
-    /**
-     * Registers completion providers specific to this editor instance and mode
-     */
-    public void registerCompletionProviders(final AceEditorMode aceEditorMode,
-                                            final AceCompletionProvider... completionProviders) {
-        // scheduleDeferred to ensure editor is initialised before getId is called
-        Scheduler.get().scheduleDeferred(() -> {
-            delegatingAceCompleter.registerCompletionProviders(
-                    getEditorId(), aceEditorMode, completionProviders);
-        });
-    }
-
-    /**
-     * Registers mode agnostic completion providers specific to this editor instance
-     */
-    public void registerCompletionProviders(final AceCompletionProvider... completionProviders) {
-        // scheduleDeferred to ensure editor is initialised before getId is called
-        Scheduler.get().scheduleDeferred(() -> {
-            delegatingAceCompleter.registerCompletionProviders(
-                    getEditorId(), completionProviders);
-        });
-    }
-
-    /**
-     * Removes all completion providers specific to this editor instance
-     */
-    public void deRegisterCompletionProviders() {
-        // scheduleDeferred to ensure editor is initialised before getId is called
-        Scheduler.get().scheduleDeferred(() -> {
-            delegatingAceCompleter.deRegisterCompletionProviders(getEditorId());
-        });
     }
 }

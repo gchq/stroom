@@ -33,7 +33,7 @@
     padding-right: 2px;
     text-align: left;
 
-    background-color: var(--app__background-color);
+    background-color: var(--page__background-color);
     color: black;
     overflow: hidden;
     white-space: nowrap;
@@ -46,7 +46,7 @@
     padding-left: 2px;
     padding-right: 2px;
     text-align: left;
-    background-color: var(--app__background-color);
+    background-color: var(--page__background-color);
     color: black;
     overflow: hidden;
     white-space: nowrap;
