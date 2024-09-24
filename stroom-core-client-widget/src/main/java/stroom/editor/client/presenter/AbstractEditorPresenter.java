@@ -1,5 +1,6 @@
 package stroom.editor.client.presenter;
 
+import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.GlobalKeyHandler;
 
@@ -12,7 +13,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.Locale;
 import java.util.Optional;

@@ -19,6 +19,8 @@
 
 package edu.ycp.cs.dh.acegwt.client.ace;
 
+import stroom.ui.config.shared.AceEditorTheme;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;

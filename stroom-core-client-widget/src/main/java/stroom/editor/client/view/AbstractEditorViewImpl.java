@@ -17,6 +17,7 @@
 package stroom.editor.client.view;
 
 import stroom.editor.client.presenter.Option;
+import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.gwtplatform.mvp.client.ViewImpl;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 public abstract class AbstractEditorViewImpl extends ViewImpl {
 

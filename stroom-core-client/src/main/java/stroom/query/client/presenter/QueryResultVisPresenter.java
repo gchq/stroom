@@ -30,7 +30,7 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
-import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
@@ -207,7 +207,7 @@ public class QueryResultVisPresenter
     }
 
     private String getClassName(final String theme) {
-        return "vis " + Themes.getClassName(theme);
+        return "vis " + Theme.getClassName(theme);
     }
 
     @Override

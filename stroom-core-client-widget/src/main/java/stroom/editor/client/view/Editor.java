@@ -16,6 +16,7 @@
 
 package stroom.editor.client.view;
 
+import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.widget.util.client.Rect;
@@ -40,7 +41,6 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 
