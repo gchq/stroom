@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.15] - 2024-09-24
+
+* Issue **#4146** : Fix audit events for deleting/restoring streams.
+
+* Change the alert dialog message styling to have a max-height of 600px so long messages get a scrollbar.
+
+* Issue **#4468** : Fix selection box keyboard selection behavior when no quick filter is visible.
+
+* Issue **#4471** : Fix NPE with stepping filter.
+
+
 ## [v7.5-beta.14] - 2024-09-20
 
 * Issue **#4451** : Add S3 pipeline appender.
@@ -826,7 +837,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.15...HEAD
+[v7.5-beta.15]: https://github.com/gchq/stroom/compare/v7.5-beta.14...v7.5-beta.15
 [v7.5-beta.14]: https://github.com/gchq/stroom/compare/v7.5-beta.13...v7.5-beta.14
 [v7.5-beta.13]: https://github.com/gchq/stroom/compare/v7.5-beta.12...v7.5-beta.13
 [v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
