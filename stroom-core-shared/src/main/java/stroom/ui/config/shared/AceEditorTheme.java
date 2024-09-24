@@ -37,6 +37,12 @@ import java.util.stream.Collectors;
  */
 public enum AceEditorTheme {
 
+    /*
+    ------- IMPORTANT!!! -------
+    If these theme names change then please update the constants in UserPreferences
+    ------- IMPORTANT!!! -------
+    */
+
     AMBIANCE("ambiance", AceThemeType.DARK),
     CHAOS("chaos", AceThemeType.DARK),
     CHROME("chrome", AceThemeType.LIGHT),
@@ -83,7 +89,7 @@ public enum AceEditorTheme {
     private final AceThemeType aceThemeType;
     private static final EnumMap<AceThemeType, Set<AceEditorTheme>> TYPE_TO_THEME_MAP = new EnumMap<>(
             AceThemeType.class);
-    private static Map<String, AceEditorTheme> NAME_TO_THEME_MAP = Arrays.stream(AceEditorTheme.values())
+    private static final Map<String, AceEditorTheme> NAME_TO_THEME_MAP = Arrays.stream(AceEditorTheme.values())
             .collect(Collectors.toMap(AceEditorTheme::getName, Function.identity()));
 
     static {
@@ -142,11 +148,7 @@ public enum AceEditorTheme {
     }
 
     public static boolean isValidThemeName(final String themeName) {
-        if (themeName == null) {
-            return false;
-        } else {
-            return NAME_TO_THEME_MAP.containsKey(themeName);
-        }
+        return themeName != null && NAME_TO_THEME_MAP.containsKey(themeName);
     }
 
     public static List<AceEditorTheme> getLightThemes() {

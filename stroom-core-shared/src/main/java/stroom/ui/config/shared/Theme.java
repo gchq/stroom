@@ -10,6 +10,7 @@ public class Themes {
 
     public static final String THEME_NAME_DARK = "Dark";
     public static final String THEME_NAME_LIGHT = "Light";
+
     private static final Map<String, String> THEME_TO_CLASS_MAP = new HashMap<>();
     private static final Map<String, ThemeType> THEME_TO_TYPE_MAP = new HashMap<>();
 
@@ -47,20 +48,7 @@ public class Themes {
         return className;
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum ThemeType {
-        DARK,
-        LIGHT;
-
-        public boolean isDark() {
-            return DARK.equals(this);
-        }
-
-        public boolean isLight() {
-            return LIGHT.equals(this);
-        }
+    public static boolean isValidTheme(final String themeName) {
+        return themeName != null && THEME_TO_TYPE_MAP.containsKey(themeName);
     }
 }
