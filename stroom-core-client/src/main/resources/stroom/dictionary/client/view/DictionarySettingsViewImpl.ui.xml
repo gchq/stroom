@@ -8,7 +8,8 @@
                 <form:FormGroup identity="dictionarySettingsImports"
                                 label="Imports"
                                 helpText="Adding an import Dictionary means all the words in the imported dictionary
-                                         (and any from its imports) will be included in this Dictionary."
+                                         (and any from its imports) will be included in this Dictionary. Words from
+                                         imported dictionaries come before words in this dictionary."
                                 addStyleNames="default-min-sizes flex-grow-2">
                     <g:SimplePanel ui:field="importsPanel" addStyleNames="dock-max stroom-control"/>
                 </form:FormGroup>

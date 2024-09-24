@@ -30,10 +30,10 @@ class TestWord {
 
     @Test
     void testEquality() {
-        Word word1a = new Word("cat", "100");
-        Word word1b = new Word("cat", "100");
-        Word word2a = new Word("cat", "200");
-        Word word2b = new Word("dog", "200");
+        Word word1a = new Word("cat", "100", null);
+        Word word1b = new Word("cat", "100", null);
+        Word word2a = new Word("cat", "200", null);
+        Word word2b = new Word("dog", "200", null);
 
         assertThat(word1a)
                 .isEqualTo(word1b);
@@ -57,7 +57,7 @@ class TestWord {
                 .withInputType(String.class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase ->
-                        new Word(testCase.getInput(), "myUuid").getWord())
+                        new Word(testCase.getInput(), "myUuid", null).getWord())
                 .withSimpleEqualityAssertion()
                 .addCase("foo", "foo")
                 .addCase(" foo", "foo")

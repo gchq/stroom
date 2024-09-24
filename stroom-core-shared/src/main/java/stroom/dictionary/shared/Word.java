@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -46,12 +47,18 @@ public class Word {
     private final String word;
     @JsonProperty
     private final String sourceUuid;
+    @JsonProperty
+    private final List<String> additionalSourceUuids;
 
     @JsonCreator
     public Word(@JsonProperty("word") final String word,
-                @JsonProperty("sourceUuid") final String sourceUuid) {
+                @JsonProperty("sourceUuid") final String sourceUuid,
+                @JsonProperty("additionalSourceUuids") final List<String> additionalSourceUuids) {
         // Trim all words
         this.word = Objects.requireNonNull(word).trim();
+        this.additionalSourceUuids = GwtNullSafe.hasItems(additionalSourceUuids)
+                ? additionalSourceUuids
+                : null;
         if (GwtNullSafe.isBlankString(word)) {
             throw new IllegalArgumentException("Blank words not allowed");
         }
@@ -59,18 +66,41 @@ public class Word {
     }
 
     public Word(final String word,
+                final String sourceUuid) {
+        this(word, sourceUuid, null);
+    }
+
+    public Word(final String word,
                 final DocRef source) {
+        this(word, Objects.requireNonNull(source).getUuid(), null);
+    }
+
+    public Word(final String word,
+                final DocRef source,
+                final List<String> additionalSourceUuids) {
         // Trim all words
         this.word = Objects.requireNonNull(word).trim();
         this.sourceUuid = Objects.requireNonNull(source).getUuid();
+        this.additionalSourceUuids = additionalSourceUuids;
     }
 
     public String getWord() {
         return word;
     }
 
+    /**
+     * @return The primary source document for this word
+     */
     public String getSourceUuid() {
         return sourceUuid;
+    }
+
+    /**
+     * @return The list of other source documents that contain this word. This will only
+     * contain items if the word list has been de-duplicated.
+     */
+    public List<String> getAdditionalSourceUuids() {
+        return GwtNullSafe.list(additionalSourceUuids);
     }
 
     @Override
@@ -82,12 +112,13 @@ public class Word {
             return false;
         }
         final Word word1 = (Word) object;
-        return Objects.equals(word, word1.word) && Objects.equals(sourceUuid, word1.sourceUuid);
+        return Objects.equals(word, word1.word) && Objects.equals(sourceUuid,
+                word1.sourceUuid) && Objects.equals(additionalSourceUuids, word1.additionalSourceUuids);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(word, sourceUuid);
+        return Objects.hash(word, sourceUuid, additionalSourceUuids);
     }
 
     @Override
@@ -95,6 +126,7 @@ public class Word {
         return "Word{" +
                 "word='" + word + '\'' +
                 ", sourceUuid='" + sourceUuid + '\'' +
+                ", additionalSourceUuids=" + additionalSourceUuids +
                 '}';
     }
 }

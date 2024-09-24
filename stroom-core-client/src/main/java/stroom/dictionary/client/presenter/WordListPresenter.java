@@ -43,14 +43,17 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class WordListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
 
     private static final String FIELD_WORD = "Word";
     private static final String FIELD_SOURCE_NAME = "SourceName";
-
+    private static final String FIELD_TYPE = "Types";
     private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
 
     private final RestFactory restFactory;
@@ -60,6 +63,13 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
     // The docRef of the dictionary we are presenting
     private DocRef docRef = null;
     private CriteriaFieldSort fieldSort = null;
+
+    private final Comparator<Word> wordComparator = Comparator.nullsFirst(Comparator.comparing(
+            Word::getWord, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
+    private final Comparator<Word> sourceNameComparator = Comparator.nullsFirst(Comparator.comparing(
+            this::mapWordToSourceName, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
+    private final Comparator<Word> typeComparator = Comparator.nullsFirst(Comparator.comparing(
+            this::mapWordToImportType, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
 
     @Inject
     public WordListPresenter(final EventBus eventBus,
@@ -113,9 +123,20 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
                 DataGridUtil.headingBuilder("Word")
                         .withToolTip("The Dictionary word or line.")
                         .build(),
-                500);
+                300);
 
-        // Source
+        // Type
+        final Column<Word, String> typeColumn = DataGridUtil.textColumnBuilder(this::mapWordToImportType)
+                .withSorting(FIELD_TYPE)
+                .build();
+        dataGrid.addResizableColumn(
+                typeColumn,
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("Whether the word is local to this dictionary or imported from another.")
+                        .build(),
+                80);
+
+        // Primary Source
         final Column<Word, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
                         buildOpenDocCommandLink())
                 .withSorting(FIELD_SOURCE_NAME)
@@ -124,14 +145,26 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
         dataGrid.addResizableColumn(
                 nodeNameColumn,
                 DataGridUtil.headingBuilder("Source Dictionary")
-                        .withToolTip("The Dictionary that contains the word.")
+                        .withToolTip("The first Dictionary that contains the word.")
                         .build(),
-                500);
+                300);
+
+        // Additional sources
+        final Column<Word, String> additionalSourcesColumn = DataGridUtil.textColumnBuilder(
+                        this::wordToAdditionalSourcesStr)
+                .build();
+        dataGrid.addResizableColumn(
+                additionalSourcesColumn,
+                DataGridUtil.headingBuilder("Additional Source Dictionaries")
+                        .withToolTip("Additional Dictionaries that also contain the word.")
+                        .build(),
+                400);
 
         dataGrid.addEndColumn(new EndColumn<>());
 
         dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                //noinspection PatternVariableCanBeUsed // cos GWT
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
 
                 fieldSort = new CriteriaFieldSort(
@@ -141,6 +174,26 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
                 updateGrid();
             }
         });
+    }
+
+    private String mapWordToImportType(final Word word) {
+        return Objects.equals(getDocRef(), wordList.getSource(word).orElse(null))
+                ? "Local"
+                : "Imported";
+    }
+
+    private String wordToAdditionalSourcesStr(final Word word) {
+        if (word == null || GwtNullSafe.isEmptyCollection(word.getAdditionalSourceUuids())) {
+            return null;
+        } else {
+            return word.getAdditionalSourceUuids()
+                    .stream()
+                    .map(wordList::getSource)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .map(DocRef::getName)
+                    .collect(Collectors.joining(", "));
+        }
     }
 
     private Function<Word, CommandLink> buildOpenDocCommandLink() {
@@ -169,30 +222,27 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
     private void updateGrid() {
         final List<Word> words;
         if (fieldSort == null) {
-            words = wordList.getSortedList();
+            words = wordList.getWordList();
         } else {
             final String sortId = fieldSort.getId();
+            final boolean isDescending = fieldSort.isDesc();
             Comparator<Word> comparator;
             if (FIELD_WORD.equals(sortId)) {
-                comparator = Comparator.nullsFirst(Comparator.comparing(
-                                Word::getWord,
-                                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))
-                        .thenComparing(Word::getSourceUuid));
+                comparator = buildComparator(isDescending, wordComparator, sourceNameComparator);
             } else if (FIELD_SOURCE_NAME.equals(sortId)) {
-                comparator = Comparator.nullsFirst(Comparator.comparing(
-                                this::getSourceName,
-                                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))
-                        .thenComparing(Word::getWord));
+                comparator = buildComparator(isDescending, sourceNameComparator, wordComparator);
+            } else if (FIELD_TYPE.equals(sortId)) {
+                comparator = buildComparator(isDescending, typeComparator, sourceNameComparator, wordComparator);
             } else {
-                comparator = Word.CASE_INSENSE_WORD_COMPARATOR;
+                comparator = null;
             }
-            if (fieldSort.isDesc()) {
-                comparator = comparator.reversed();
+            Stream<Word> wordStream = wordList.getWordList()
+                    .stream();
+
+            if (comparator != null) {
+                wordStream = wordStream.sorted(comparator);
             }
-            words = wordList.getWordList()
-                    .stream()
-                    .sorted(comparator)
-                    .collect(Collectors.toList());
+            words = wordStream.collect(Collectors.toList());
         }
 
         dataGrid.setRowData(0, words);
@@ -200,8 +250,8 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
         dataGrid.redraw();
     }
 
-    private String getSourceName(final Word word) {
-        return wordList.getSource(word)
+    private String mapWordToSourceName(final Word word) {
+        return getWordList().getSource(word)
                 .map(DocRef::getName)
                 .orElse(null);
     }
@@ -225,5 +275,23 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
 
     public void refresh() {
         fetchData();
+    }
+
+    private Comparator<Word> buildComparator(final boolean isDescending,
+                                             final Comparator<Word> primaryComparator,
+                                             final Comparator<Word>... subsequentComparators) {
+        Objects.requireNonNull(primaryComparator);
+        Comparator<Word> comparator = primaryComparator;
+        if (isDescending) {
+            comparator = comparator.reversed();
+        }
+
+        for (final Comparator<Word> subsequentComparator : GwtNullSafe.asList(subsequentComparators)) {
+            if (subsequentComparator != null) {
+                comparator = comparator.thenComparing(comparator);
+            }
+        }
+
+        return Comparator.nullsFirst(comparator);
     }
 }

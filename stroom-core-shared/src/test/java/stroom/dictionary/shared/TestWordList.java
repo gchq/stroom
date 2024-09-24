@@ -58,27 +58,29 @@ class TestWordList {
         assertThat(wordList.size())
                 .isEqualTo(6);
         assertThat(wordList.sourceCount())
-                .isEqualTo(2);
+                .isEqualTo(3);
         assertThat(wordList.getWordList())
                 .containsExactlyElementsOf(List.of(
-                        new Word("cat", petsRef.getUuid()),
-                        new Word("dog", petsRef.getUuid()),
-                        new Word("hamster", petsRef.getUuid()),
-                        new Word("pig", petsRef.getUuid()),
-                        new Word("cow", farmAnimalsRef.getUuid()),
-                        new Word("goat", farmAnimalsRef.getUuid())));
+                        new Word("cat", petsRef.getUuid(), null),
+                        new Word("dog", petsRef.getUuid(), null),
+                        new Word("hamster", petsRef.getUuid(), null),
+                        new Word("pig", petsRef.getUuid(),
+                                List.of(farmAnimalsRef.getUuid(), wildAnimalsRef.getUuid())),
+                        new Word("cow", farmAnimalsRef.getUuid(), null),
+                        new Word("goat", farmAnimalsRef.getUuid(), null)));
         assertThat(wordList.getSortedList())
                 .containsExactlyElementsOf(List.of(
-                        new Word("cat", petsRef.getUuid()),
-                        new Word("cow", farmAnimalsRef.getUuid()),
-                        new Word("dog", petsRef.getUuid()),
-                        new Word("goat", farmAnimalsRef.getUuid()),
-                        new Word("hamster", petsRef.getUuid()),
-                        new Word("pig", petsRef.getUuid())));
+                        new Word("cat", petsRef.getUuid(), null),
+                        new Word("cow", farmAnimalsRef.getUuid(), null),
+                        new Word("dog", petsRef.getUuid(), null),
+                        new Word("goat", farmAnimalsRef.getUuid(), null),
+                        new Word("hamster", petsRef.getUuid(), null),
+                        new Word("pig", petsRef.getUuid(),
+                                List.of(farmAnimalsRef.getUuid(), wildAnimalsRef.getUuid()))));
 
-        assertThat(wordList.getSource(new Word("cat", petsRef.getUuid())))
+        assertThat(wordList.getSource(new Word("cat", petsRef.getUuid(), null)))
                 .hasValue(petsRef);
-        assertThat(wordList.getSource(new Word("cow", farmAnimalsRef.getUuid())))
+        assertThat(wordList.getSource(new Word("cow", farmAnimalsRef.getUuid(), null)))
                 .hasValue(farmAnimalsRef);
 
         assertThat(wordList.asString())
@@ -98,7 +100,13 @@ class TestWordList {
                         "cow",
                         "goat");
         assertThat(wordList.getSources())
-                .containsExactlyInAnyOrder(petsRef, farmAnimalsRef);
+                .containsExactlyInAnyOrder(petsRef, farmAnimalsRef, wildAnimalsRef);
+
+        final Word pig = wordList.getWord("pig").orElseThrow();
+        assertThat(pig.getSourceUuid())
+                .isEqualTo(petsRef.getUuid());
+        assertThat(pig.getAdditionalSourceUuids())
+                .containsExactly(farmAnimalsRef.getUuid(), wildAnimalsRef.getUuid());
     }
 
     @Test
@@ -202,9 +210,9 @@ class TestWordList {
                 .addWord("pig", petsRef)
                 .build();
 
-        assertThat(wordList.getSource(new Word("pig", petsRef.getUuid())))
+        assertThat(wordList.getSource(new Word("pig", petsRef.getUuid(), null)))
                 .hasValue(petsRef);
-        assertThat(wordList.getSource(new Word("pig", farmAnimalsRef.getUuid())))
+        assertThat(wordList.getSource(new Word("pig", farmAnimalsRef.getUuid(), null)))
                 .isEmpty();
     }
 

@@ -41,6 +41,7 @@ import stroom.util.shared.PermissionException;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Collection;
@@ -64,13 +65,14 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
             DictionaryDoc.DOCUMENT_TYPE,
             DictionaryDoc.ICON);
     private final Store<DictionaryDoc> store;
-    private final DocRefInfoService docRefInfoService;
+    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final DictionarySerialiser serialiser,
-                        final DocRefInfoService docRefInfoService) {
-        this.docRefInfoService = docRefInfoService;
+                        final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+
+        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.store = storeFactory.createStore(
                 serialiser,
                 DictionaryDoc.DOCUMENT_TYPE,
@@ -183,15 +185,17 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
      */
     private void decorateImports(final DictionaryDoc dictionaryDoc) {
         if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
+            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
             final List<DocRef> decoratedImports = dictionaryDoc.getImports()
                     .stream()
-                    .map(this::decorateDocRef)
+                    .map(docRef -> decorateDocRef(docRefInfoService, docRef))
                     .toList();
             dictionaryDoc.setImports(decoratedImports);
         }
     }
 
-    private DocRef decorateDocRef(final DocRef docRef) {
+    private DocRef decorateDocRef(final DocRefInfoService docRefInfoService,
+                                  final DocRef docRef) {
         if (docRef == null) {
             return null;
         } else {
@@ -295,7 +299,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         final Builder builder = WordList.builder(deDup);
         final Set<DocRef> visited = new HashSet<>();
         final Stack<DocRef> visitPath = new Stack<>();
-        doGetCombinedWordList(builder, docRef, visited, visitPath);
+        doGetCombinedWordList(docRefInfoServiceProvider.get(), builder, docRef, visited, visitPath);
 
 
         final WordList wordList = builder.build();
@@ -316,14 +320,15 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         return getCombinedWordList(dictionaryRef, true);
     }
 
-    private void doGetCombinedWordList(final WordList.Builder wordListBuilder,
+    private void doGetCombinedWordList(final DocRefInfoService docRefInfoService,
+                                       final WordList.Builder wordListBuilder,
                                        final DocRef docRef,
                                        final Set<DocRef> visited,
                                        final Stack<DocRef> visitPath) {
 
         // As we are adding the docRef to the WordList, we want to ensure it
         // has a name and the correct name
-        final DocRef decorateDocRef = decorateDocRef(docRef);
+        final DocRef decorateDocRef = decorateDocRef(docRefInfoService, docRef);
         LOGGER.debug(() -> LogUtil.message("decorateDocRef: {}, visitPath: {}",
                 decorateDocRef.toShortString(), docRefsToStr(visitPath)));
         visitPath.push(decorateDocRef);
@@ -333,21 +338,15 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
             visited.add(decorateDocRef);
 
             try {
-                // If deDup is true then the highest level dict will win, or
+                // If deDup is true then the lowest level dict will win, or
                 // if duplicates appear in multiple sibling imports then the first
                 // sibling encountered with it will win.
+                // This is to be consistent with existing behaviour where imports come first
+                // in the combined word list.
                 // Precedence only impacts the source inside the Word object.
                 final DictionaryDoc doc = readDocument(decorateDocRef);
                 if (doc != null) {
-                    // Add the words from this dict first as the higher level takes precedence
-                    final String data = doc.getData();
-                    if (NullSafe.isNonBlankString(data)) {
-                        StringUtil.splitToLines(data, true)
-                                .forEach(line ->
-                                        wordListBuilder.addWord(line, decorateDocRef));
-                    }
-
-                    // Now add the words from each of the imports (and recursing into their imports too)
+                    // First add the words from each of the imports (and recursing into their imports too)
                     final List<DocRef> imports = doc.getImports();
                     if (NullSafe.hasItems(imports)) {
                         LOGGER.debug(() -> LogUtil.message("docRef: {} has imports: {}",
@@ -355,8 +354,21 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
                         for (final DocRef importDocRef : imports) {
                             // Recurse
-                            doGetCombinedWordList(wordListBuilder, importDocRef, visited, visitPath);
+                            doGetCombinedWordList(
+                                    docRefInfoService,
+                                    wordListBuilder,
+                                    importDocRef,
+                                    visited,
+                                    visitPath);
                         }
+                    }
+
+                    // Add the words from this dict first as the higher level takes precedence
+                    final String data = doc.getData();
+                    if (NullSafe.isNonBlankString(data)) {
+                        StringUtil.splitToLines(data, true)
+                                .forEach(line ->
+                                        wordListBuilder.addWord(line, decorateDocRef));
                     }
                 }
             } catch (final PermissionException e) {

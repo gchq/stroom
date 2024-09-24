@@ -117,8 +117,7 @@ class TestDictionaryStoreImpl {
         final String data2 = """
                 four
                 five
-                six
-                """;
+                six""";
 
         final DocRef docRef1 = createDoc(data1, "doc1");
         final DocRef docRef2 = createDoc(data2, "doc2", docRef1);
@@ -245,13 +244,13 @@ class TestDictionaryStoreImpl {
                         Mockito.eq(DictionaryDoc.class)))
                 .thenReturn(mockStore);
 
-        Mockito.when(mockDocRefInfoService.decorate(Mockito.any(DocRef.class)))
+        Mockito.when(mockDocRefInfoService.decorate(Mockito.any(DocRef.class), Mockito.anyBoolean()))
                 .thenAnswer(invocation ->
                         invocation.getArgument(0));
 
         return new DictionaryStoreImpl(
                 mockStoreFactory,
                 mockDictionarySerialiser,
-                mockDocRefInfoService);
+                () -> mockDocRefInfoService);
     }
 }
