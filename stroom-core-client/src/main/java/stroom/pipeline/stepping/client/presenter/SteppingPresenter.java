@@ -44,7 +44,6 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -640,8 +639,9 @@ public class SteppingPresenter
                 .onSuccess(response -> {
                     if (!response.isComplete()) {
                         if (busyTranslating) {
-                            final StepLocation stepLocation = response.getStepLocation();
-                            stepMessage.getElement().setInnerHTML("Stepping..." + getStepLocationText(stepLocation));
+                            final StepLocation progressLocation = response.getProgressLocation();
+                            stepMessage.getElement().setInnerHTML("Stepping... " +
+                                    getStepLocationText(progressLocation));
                             requestBuilder.sessionUuid(response.getSessionUuid());
                             poll();
                         } else {
@@ -661,6 +661,10 @@ public class SteppingPresenter
     }
 
     private String getStepLocationText(final StepLocation stepLocation) {
+        if (stepLocation == null) {
+            return "";
+        }
+
         return "[" +
                 stepLocation.getMetaId() + ":" +
                 (stepLocation.getPartIndex() + 1) + ":" +
@@ -698,7 +702,7 @@ public class SteppingPresenter
                 steppingResult = currentResult;
             } else {
                 if (lastFoundResult != null
-                        && Objects.equals(currentResult.getStepLocation(), lastFoundResult.getStepLocation())
+                        && Objects.equals(currentResult.getFoundLocation(), lastFoundResult.getFoundLocation())
                         && GwtNullSafe.isEmptyCollection(currentResult.getGeneralErrors())
                         && !GwtNullSafe.test(currentResult.getStepData(), SharedStepData::hasIndicators)) {
                     // Same location as last time and no errors/indicators in the curr result, so just display
@@ -789,8 +793,8 @@ public class SteppingPresenter
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
                 // position ready for the next step.
-                requestBuilder.stepLocation(result.getStepLocation());
-                stepLocationLinkPresenter.setStepLocation(result.getStepLocation());
+                requestBuilder.stepLocation(result.getFoundLocation());
+                stepLocationLinkPresenter.setStepLocation(result.getFoundLocation());
             }
 
             // Sync step filters.
@@ -815,7 +819,7 @@ public class SteppingPresenter
                     foundRecord,
                     fatalErrors.isPresent(),
                     result.hasActiveFilter(),
-                    result.getStepLocation());
+                    result.getFoundLocation());
             busyTranslating = false;
         }
     }

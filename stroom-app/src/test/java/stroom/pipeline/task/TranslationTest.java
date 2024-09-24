@@ -589,6 +589,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 null,
                 null,
                 null,
+                null,
                 false,
                 null,
                 false,
@@ -721,7 +722,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         newResponse = new SteppingResult(
                                 null,
                                 stepResponse.getStepFilterMap(),
-                                stepResponse.getStepLocation(),
+                                stepResponse.getProgressLocation(),
+                                stepResponse.getFoundLocation(),
                                 newStepData,
                                 stepResponse.getCurrentStreamOffset(),
                                 stepResponse.isFoundRecord(),
@@ -733,7 +735,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 // Set the request to use the last response location to move on
                 // from.
-                requestBuilder.stepLocation(stepResponse.getStepLocation());
+                requestBuilder.stepLocation(stepResponse.getFoundLocation());
             }
         }
 

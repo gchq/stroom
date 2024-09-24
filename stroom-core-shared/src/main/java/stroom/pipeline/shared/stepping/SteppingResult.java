@@ -34,7 +34,9 @@ public class SteppingResult {
     @JsonProperty
     private final Map<String, SteppingFilterSettings> stepFilterMap;
     @JsonProperty
-    private final StepLocation stepLocation;
+    private final StepLocation progressLocation;
+    @JsonProperty
+    private final StepLocation foundLocation;
     @JsonProperty
     private final SharedStepData stepData;
     @JsonProperty
@@ -52,7 +54,8 @@ public class SteppingResult {
     @JsonCreator
     public SteppingResult(@JsonProperty("sessionUuid") final String sessionUuid,
                           @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
-                          @JsonProperty("stepLocation") final StepLocation stepLocation,
+                          @JsonProperty("progressLocation") final StepLocation progressLocation,
+                          @JsonProperty("foundLocation") final StepLocation foundLocation,
                           @JsonProperty("stepData") final SharedStepData stepData,
                           @JsonProperty("currentStreamOffset") final Integer currentStreamOffset,
                           @JsonProperty("foundRecord") final boolean foundRecord,
@@ -64,7 +67,8 @@ public class SteppingResult {
         // requests.
         this.sessionUuid = sessionUuid;
         this.stepFilterMap = stepFilterMap;
-        this.stepLocation = stepLocation;
+        this.progressLocation = progressLocation;
+        this.foundLocation = foundLocation;
         this.stepData = stepData;
         this.currentStreamOffset = currentStreamOffset;
         this.foundRecord = foundRecord;
@@ -77,8 +81,12 @@ public class SteppingResult {
         return sessionUuid;
     }
 
-    public StepLocation getStepLocation() {
-        return stepLocation;
+    public StepLocation getProgressLocation() {
+        return progressLocation;
+    }
+
+    public StepLocation getFoundLocation() {
+        return foundLocation;
     }
 
     public SharedStepData getStepData() {

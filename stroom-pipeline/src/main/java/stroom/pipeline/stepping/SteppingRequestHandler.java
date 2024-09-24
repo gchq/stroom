@@ -261,6 +261,7 @@ class SteppingRequestHandler {
         return new SteppingResult(
                 request.getSessionUuid(),
                 request.getStepFilterMap(),
+                controller.getProgressLocation(),
                 currentLocation,
                 NullSafe.get(stepData, StepData::convertToShared),
                 curentStreamOffset,

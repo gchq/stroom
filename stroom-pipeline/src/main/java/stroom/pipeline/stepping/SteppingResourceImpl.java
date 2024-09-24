@@ -69,8 +69,8 @@ class SteppingResourceImpl implements SteppingResource {
 
             // Only log when complete.
             if (result.isComplete()) {
-                if (result.getStepLocation() != null) {
-                    stepLocation = result.getStepLocation();
+                if (result.getFoundLocation() != null) {
+                    stepLocation = result.getFoundLocation();
                 }
 
                 if (stepLocation != null) {
