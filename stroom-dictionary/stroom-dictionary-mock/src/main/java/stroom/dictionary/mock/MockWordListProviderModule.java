@@ -19,6 +19,7 @@ package stroom.dictionary.mock;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefDecorator;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -53,7 +54,8 @@ public class MockWordListProviderModule extends AbstractModule {
             }
 
             @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef) {
+            public WordList getCombinedWordList(final DocRef dictionaryRef,
+                                                final DocRefDecorator docRefDecorator) {
                 return null;
             }
         };

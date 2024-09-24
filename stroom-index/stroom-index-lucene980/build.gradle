@@ -32,6 +32,7 @@ dependencies {
     implementation libs.ws_rs_api
 
     testImplementation project(':stroom-index:stroom-index-mock')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-api')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core

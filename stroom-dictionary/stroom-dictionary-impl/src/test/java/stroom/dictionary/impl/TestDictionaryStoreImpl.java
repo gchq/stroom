@@ -18,7 +18,6 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 
@@ -42,8 +41,6 @@ class TestDictionaryStoreImpl {
     private Store<DictionaryDoc> mockStore;
     @Mock
     private StoreFactory mockStoreFactory;
-    @Mock
-    private DocRefInfoService mockDocRefInfoService;
 
     @Test
     void getWords_unix() {
@@ -244,13 +241,8 @@ class TestDictionaryStoreImpl {
                         Mockito.eq(DictionaryDoc.class)))
                 .thenReturn(mockStore);
 
-        Mockito.when(mockDocRefInfoService.decorate(Mockito.any(DocRef.class), Mockito.anyBoolean()))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0));
-
         return new DictionaryStoreImpl(
                 mockStoreFactory,
-                mockDictionarySerialiser,
-                () -> mockDocRefInfoService);
+                mockDictionarySerialiser);
     }
 }

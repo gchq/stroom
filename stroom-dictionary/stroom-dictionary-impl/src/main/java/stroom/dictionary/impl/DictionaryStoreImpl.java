@@ -22,7 +22,7 @@ import stroom.dictionary.shared.WordList;
 import stroom.dictionary.shared.WordList.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -41,7 +41,6 @@ import stroom.util.shared.PermissionException;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Collection;
@@ -65,14 +64,11 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
             DictionaryDoc.DOCUMENT_TYPE,
             DictionaryDoc.ICON);
     private final Store<DictionaryDoc> store;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
-                        final DictionarySerialiser serialiser,
-                        final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                        final DictionarySerialiser serialiser) {
 
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.store = storeFactory.createStore(
                 serialiser,
                 DictionaryDoc.DOCUMENT_TYPE,
@@ -170,37 +166,37 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public DictionaryDoc readDocument(final DocRef docRef) {
         final DictionaryDoc dictionaryDoc = store.readDocument(docRef);
-        decorateImports(dictionaryDoc);
         return dictionaryDoc;
     }
 
     @Override
     public DictionaryDoc writeDocument(final DictionaryDoc document) {
-        decorateImports(document);
         return store.writeDocument(document);
     }
 
-    /**
-     * Ensure all the imports have the correct names. Modifies the import list.
-     */
-    private void decorateImports(final DictionaryDoc dictionaryDoc) {
-        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
-            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
-            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
-                    .stream()
-                    .map(docRef -> decorateDocRef(docRefInfoService, docRef))
-                    .toList();
-            dictionaryDoc.setImports(decoratedImports);
-        }
-    }
+//    /**
+//     * Ensure all the imports have the correct names. Modifies the import list.
+//     */
+//    private void decorateImports(final DictionaryDoc dictionaryDoc) {
+//        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
+//            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+//            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
+//                    .stream()
+//                    .map(docRef -> decorateDocRef(docRefInfoService, docRef))
+//                    .toList();
+//            dictionaryDoc.setImports(decoratedImports);
+//        }
+//    }
 
-    private DocRef decorateDocRef(final DocRefInfoService docRefInfoService,
+    private DocRef decorateDocRef(final DocRefDecorator docRefDecorator,
                                   final DocRef docRef) {
         if (docRef == null) {
             return null;
+        } else if (docRefDecorator == null) {
+            return docRef;
         } else {
             try {
-                return docRefInfoService.decorate(docRef, true);
+                return docRefDecorator.decorate(docRef, true);
             } catch (Exception e) {
                 // Likely docRef doesn't exist, so we will just leave it as is, i.e.
                 // a broken dep
@@ -291,15 +287,16 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String getCombinedData(final DocRef docRef) {
-        return getCombinedWordList(docRef, true).asString();
+        return getCombinedWordList(docRef, null, true).asString();
     }
 
     public WordList getCombinedWordList(final DocRef docRef,
+                                        final DocRefDecorator docRefDecorator,
                                         final boolean deDup) {
         final Builder builder = WordList.builder(deDup);
         final Set<DocRef> visited = new HashSet<>();
         final Stack<DocRef> visitPath = new Stack<>();
-        doGetCombinedWordList(docRefInfoServiceProvider.get(), builder, docRef, visited, visitPath);
+        doGetCombinedWordList(docRefDecorator, builder, docRef, visited, visitPath);
 
 
         final WordList wordList = builder.build();
@@ -312,15 +309,16 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
-        return getCombinedWordList(dictionaryRef, true).asWordArray();
+        return getCombinedWordList(dictionaryRef, null, true).asWordArray();
     }
 
     @Override
-    public WordList getCombinedWordList(final DocRef dictionaryRef) {
-        return getCombinedWordList(dictionaryRef, true);
+    public WordList getCombinedWordList(final DocRef dictionaryRef,
+                                        final DocRefDecorator docRefDecorator) {
+        return getCombinedWordList(dictionaryRef, docRefDecorator, true);
     }
 
-    private void doGetCombinedWordList(final DocRefInfoService docRefInfoService,
+    private void doGetCombinedWordList(final DocRefDecorator docRefDecorator,
                                        final WordList.Builder wordListBuilder,
                                        final DocRef docRef,
                                        final Set<DocRef> visited,
@@ -328,7 +326,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
         // As we are adding the docRef to the WordList, we want to ensure it
         // has a name and the correct name
-        final DocRef decorateDocRef = decorateDocRef(docRefInfoService, docRef);
+        final DocRef decorateDocRef = decorateDocRef(docRefDecorator, docRef);
         LOGGER.debug(() -> LogUtil.message("decorateDocRef: {}, visitPath: {}",
                 decorateDocRef.toShortString(), docRefsToStr(visitPath)));
         visitPath.push(decorateDocRef);
@@ -355,7 +353,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         for (final DocRef importDocRef : imports) {
                             // Recurse
                             doGetCombinedWordList(
-                                    docRefInfoService,
+                                    docRefDecorator,
                                     wordListBuilder,
                                     importDocRef,
                                     visited,

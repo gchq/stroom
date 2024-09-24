@@ -20,6 +20,7 @@ import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupService;
@@ -98,7 +99,8 @@ class TestModule extends AbstractModule {
             }
 
             @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef) {
+            public WordList getCombinedWordList(final DocRef dictionaryRef,
+                                                final DocRefDecorator docRefDecorator) {
                 return null;
             }
         };

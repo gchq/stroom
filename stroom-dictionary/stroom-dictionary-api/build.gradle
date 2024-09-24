@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.dictionary.api'
 dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
 
     implementation libs.jackson_annotations
     implementation libs.jaxb_api

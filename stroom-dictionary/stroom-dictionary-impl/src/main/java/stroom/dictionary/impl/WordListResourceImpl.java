@@ -21,6 +21,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
 import stroom.dictionary.shared.WordListResource;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 
 import jakarta.inject.Inject;
@@ -34,10 +35,13 @@ class WordListResourceImpl implements WordListResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(WordListResourceImpl.class);
 
     private final Provider<WordListProvider> wordListProviderProvider;
+    private final Provider<DocRefDecorator> docRefDecoratorProvider;
 
     @Inject
-    WordListResourceImpl(final Provider<WordListProvider> wordListProviderProvider) {
+    WordListResourceImpl(final Provider<WordListProvider> wordListProviderProvider,
+                         final Provider<DocRefDecorator> docRefDecoratorProvider) {
         this.wordListProviderProvider = wordListProviderProvider;
+        this.docRefDecoratorProvider = docRefDecoratorProvider;
     }
 
     @Override
@@ -48,7 +52,7 @@ class WordListResourceImpl implements WordListResource {
                     .build();
 
             @SuppressWarnings("UnnecessaryLocalVariable") final WordList wordList = wordListProviderProvider.get()
-                    .getCombinedWordList(dictDocRef);
+                    .getCombinedWordList(dictDocRef, docRefDecoratorProvider.get());
             return wordList;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
