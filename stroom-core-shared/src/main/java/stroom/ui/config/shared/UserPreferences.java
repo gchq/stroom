@@ -18,7 +18,6 @@ package stroom.ui.config.shared;
 
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
-import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,13 +34,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class UserPreferences {
 
-    public static final String DEFAULT_THEME = Themes.THEME_NAME_DARK;
-
     public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
     public static final Toggle DEFAULT_EDITOR_LIVE_AUTO_COMPLETION = Toggle.OFF;
-    public static final String DEFAULT_EDITOR_THEME_LIGHT = "chrome";
-    public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
     public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
+
+    // Keep these two in sync, i.e. a dark stroom theme needs a dark ace theme
+    public static final String DEFAULT_THEME_NAME = Theme.DEFAULT_THEME.getThemeName();
 
     @JsonProperty
     @JsonPropertyDescription("The theme to use, e.g. `light`, `dark`")
@@ -206,16 +204,13 @@ public class UserPreferences {
         return new Builder(this);
     }
 
-    public static String getDefaultEditorTheme(final String themeName) {
-        final ThemeType themeType = Themes.getThemeType(themeName);
-        switch (themeType) {
-            case DARK:
-                return DEFAULT_EDITOR_THEME_DARK;
-            case LIGHT:
-                return DEFAULT_EDITOR_THEME_LIGHT;
-            default:
-                throw new RuntimeException("Unknown theme name '" + themeName + "'");
-        }
+    /**
+     * Get the default editor theme that corresponds to the passed stroom theme name.
+     * e.g. a dark editor theme for a dark stroom theme.
+     */
+    public static String getDefaultEditorTheme(final String stroomThemeName) {
+        final ThemeType themeType = Theme.getThemeType(stroomThemeName);
+        return AceEditorTheme.getDefaultEditorTheme(themeType).getName();
     }
 
 
@@ -225,6 +220,8 @@ public class UserPreferences {
     public enum EditorKeyBindings {
         STANDARD("Standard"),
         VIM("Vim");
+
+        public static final EditorKeyBindings DEFAULT_KEY_BINDINGS = STANDARD;
 
         private final String displayValue;
 
@@ -239,8 +236,10 @@ public class UserPreferences {
         public static EditorKeyBindings fromDisplayValue(final String displayValue) {
             if (VIM.displayValue.equalsIgnoreCase(displayValue)) {
                 return VIM;
-            } else {
+            } else if (STANDARD.displayValue.equalsIgnoreCase(displayValue)) {
                 return STANDARD;
+            } else {
+                return DEFAULT_KEY_BINDINGS;
             }
         }
     }
@@ -263,8 +262,8 @@ public class UserPreferences {
         private Boolean enableTransparency;
 
         private Builder() {
-            theme = DEFAULT_THEME;
-            editorTheme = getDefaultEditorTheme(DEFAULT_THEME);
+            theme = DEFAULT_THEME_NAME;
+            editorTheme = getDefaultEditorTheme(theme);
             editorKeyBindings = DEFAULT_EDITOR_KEY_BINDINGS;
             editorLiveAutoCompletion = DEFAULT_EDITOR_LIVE_AUTO_COMPLETION;
             density = "Compact";
