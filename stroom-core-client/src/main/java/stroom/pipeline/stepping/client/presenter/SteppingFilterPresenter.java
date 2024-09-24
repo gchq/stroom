@@ -293,18 +293,19 @@ public class SteppingFilterPresenter extends
 
         final String elementId = GwtNullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
-            final SteppingFilterSettings settings = settingsMap.get(element.getId());
             getView().setName(element.getDisplayName());
-            getView().setSkipToErrors(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToSeverity));
-            getView().setSkipToOutput(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToOutput));
-
             xPathFilters = xPathListPresenter.getDataProvider().getList();
             xPathFilters.clear();
-            if (settings.getFilters() != null && settings.getFilters().size() > 0) {
-                xPathFilters.addAll(settings.getFilters());
+
+            final SteppingFilterSettings settings = settingsMap.get(element.getId());
+            if (settings != null) {
+                getView().setSkipToErrors(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToSeverity));
+                getView().setSkipToOutput(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToOutput));
+                if (GwtNullSafe.hasItems(settings.getFilters())) {
+                    xPathFilters.addAll(settings.getFilters());
+                }
             }
         }
-
         currentElementId = elementId;
     }
 
