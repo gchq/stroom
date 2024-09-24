@@ -19215,6 +19215,27 @@
           "ageRange" : {
             "$ref" : "#/components/schemas/RangeLong"
           },
+          "distinctFeeds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "distinctStatuses" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "distinctTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
           "feedCount" : {
             "type" : "integer",
             "format" : "int64"
