@@ -36,6 +36,10 @@
     -moz-user-select: text;     /* Firefox 43+ */
     -ms-user-select: text;      /* No support yet */
     user-select: text;          /* Likely future */
+
+    /* Stop long messages falling off the screen, e.g. the selection summary */
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 .alert-showHide {
