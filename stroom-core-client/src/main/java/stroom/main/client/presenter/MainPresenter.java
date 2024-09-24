@@ -82,10 +82,10 @@ public class MainPresenter
         view.setUiHandlers(this);
 
         // Handle key presses
-        view.asWidget().addDomHandler(globalKeyHandler::onKeyDown, KeyDownEvent.getType());
+        RootPanel.get().addDomHandler(globalKeyHandler::onKeyDown, KeyDownEvent.getType());
 
         // Inspect the keyUp so we can catch stuff like 'shift,shift'
-        view.asWidget().addDomHandler(globalKeyHandler::onKeyUp, KeyUpEvent.getType());
+        RootPanel.get().addDomHandler(globalKeyHandler::onKeyUp, KeyUpEvent.getType());
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());

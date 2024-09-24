@@ -1111,4 +1111,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         this.commandLine = cmdLine;
         this.commandLine.setCommandLineListener(command -> execCommand(command));
     }
+
+    public native Element getTextInputElement()/*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		return editor.textInput.getElement();
+	}-*/;
 }
