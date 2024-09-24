@@ -18,6 +18,7 @@ package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -56,8 +57,15 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
                         "explorerCell-icon");
                 content.append(iconSafeHtml);
             }
-            content.append(template.div(getCellClassName() + "-text",
-                    SafeHtmlUtils.fromString(row.getLabel())));
+            if (row.hasRenderedLabel()) {
+                content.append(template.div(
+                        getCellClassName() + "-content",
+                        row.getRenderedLabel()));
+            } else {
+                content.append(template.div(
+                        getCellClassName() + "-text",
+                        SafeHtmlUtil.getSafeHtml(row.getLabel())));
+            }
 
             // Add parent indicator arrow.
             if (row.isHasChildren()) {

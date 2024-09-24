@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
@@ -98,15 +114,14 @@ class TestDictionaryStoreImpl {
         final String data2 = """
                 four
                 five
-                six
-                """;
+                six""";
 
         final DocRef docRef1 = createDoc(data1, "doc1");
         final DocRef docRef2 = createDoc(data2, "doc2", docRef1);
 
         final String combinedData = getDictionaryStore().getCombinedData(docRef2);
 
-        final String expected = String.join("\n", data1, data2);
+        final String expected = String.join("\n", data1, data2).trim();
         assertThat(combinedData)
                 .isEqualTo(expected);
     }
@@ -226,6 +241,8 @@ class TestDictionaryStoreImpl {
                         Mockito.eq(DictionaryDoc.class)))
                 .thenReturn(mockStore);
 
-        return new DictionaryStoreImpl(mockStoreFactory, mockDictionarySerialiser);
+        return new DictionaryStoreImpl(
+                mockStoreFactory,
+                mockDictionarySerialiser);
     }
 }

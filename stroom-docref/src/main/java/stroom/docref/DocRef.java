@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,6 +204,13 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         return hashCode;
     }
 
+    /**
+     * @return The {@link DocRef} in the form '{@code {type:uuid:name}}'
+     */
+    public String toShortString() {
+        return "{" + type + ":" + uuid + ":" + name + "}";
+    }
+
     @Override
     public String toString() {
         // TODO: 15/12/2022 I Think we ought to change the output to this shorter form, but not sure
@@ -222,6 +229,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
     /**
      * Create a {@link DocRef} builder for a given type
+     *
      * @param type The document type
      */
     public static TypedBuilder builder(final String type) {
@@ -282,6 +290,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
         /**
          * Sets the uuid to a new random UUID.
+         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder randomUuid() {
@@ -331,6 +340,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
         /**
          * Generate a new random UUID and set it as the uuid.
+         *
          * @return The {@link Builder}, enabling method chaining
          */
         public TypedBuilder randomUuid() {

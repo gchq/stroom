@@ -1,9 +1,27 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.item.client;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +36,7 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
 
     private SimpleSelectionItemWrapper<T> nonSelectItem;
     private Function<T, String> displayValueFunction = null;
+    private Function<T, SafeHtml> renderFunction = null;
 
     @Override
     public void onRangeChange(final SimpleSelectionItemWrapper<T> parent,
@@ -44,11 +63,20 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
     }
 
     /**
-     * This function will be used to provide a display value for the item. Useful if the item
+     * This function will be used to optionally provide a display value for the item. Useful if the item
      * does not implement {@link HasDisplayValue}.
      */
     public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
         this.displayValueFunction = displayValueFunction;
+    }
+
+    /**
+     * This function will be used to optionally provide a rendered form of the item instead of plain text.
+     * If not set then it will fall back on displayValueFunction, {@link HasDisplayValue} or
+     * {@link Object#toString()}.
+     */
+    public void setRenderFunction(final Function<T, SafeHtml> renderFunction) {
+        this.renderFunction = renderFunction;
     }
 
     public void setNonSelectString(final String nonSelectString) {
@@ -111,7 +139,12 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
             } else {
                 displayValue = item.toString();
             }
-            return new SimpleSelectionItemWrapper<>(displayValue, item);
+            if (renderFunction != null) {
+                return new SimpleSelectionItemWrapper<>(displayValue, item, (label, item1) ->
+                        renderFunction.apply(item));
+            } else {
+                return new SimpleSelectionItemWrapper<>(displayValue, item);
+            }
         }
     }
 

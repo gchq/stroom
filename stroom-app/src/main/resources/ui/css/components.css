@@ -2092,7 +2092,7 @@ button.main-menu svg {
 
 .SelectionPopup .listContainer {
     min-width: 200px;
-    max-width: 300px;
+    max-width: 400px;
     max-height: 400px;
 }
 
@@ -2317,4 +2317,9 @@ button.main-menu svg {
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
+}
+
+/* Add a smidge of a gap between the split and the next form group */
+.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+    margin-top: 0.5em;
 }
