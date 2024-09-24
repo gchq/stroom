@@ -66,6 +66,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -151,9 +152,6 @@ public class SteppingPresenter
         final ButtonPanel buttonPanel = new ButtonPanel();
         buttonPanel.addButton(terminateButton);
 
-        this.stepMessage = new SimplePanel();
-
-        view.addWidgetRight(stepMessage);
         view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
         view.addWidgetRight(buttonPanel);
@@ -177,7 +175,9 @@ public class SteppingPresenter
                 false,
                 null);
 
-        saveButton = addButtonLeft(SvgPresets.SAVE);
+        leftButtons = new ButtonPanel();
+        saveButton = leftButtons.addButton(SvgPresets.SAVE);
+
         // Create but don't add yet
         toggleLogPaneButton = new InlineSvgToggleButton();
         toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
@@ -186,6 +186,14 @@ public class SteppingPresenter
         leftButtons.addButton(toggleLogPaneButton);
 
         sourcePresenter.setClassificationUiHandlers(this);
+
+        this.stepMessage = new SimplePanel();
+
+        final FlowPanel stepToolbar = new FlowPanel();
+        stepToolbar.addStyleName("stepToolbar dock-container-horizontal dock-min");
+        stepToolbar.add(leftButtons);
+        stepToolbar.add(stepMessage);
+        getView().addWidgetLeft(stepToolbar);
     }
 
     @Override
@@ -346,15 +354,6 @@ public class SteppingPresenter
                 getDescendantFilters(child, childMap, descendants);
             }
         }
-    }
-
-    private ButtonView addButtonLeft(final Preset preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            getView().addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.addButton(preset);
     }
 
     private PresenterWidget<?> getContent(final PipelineElement element) {
@@ -642,7 +641,7 @@ public class SteppingPresenter
                     if (!response.isComplete()) {
                         if (busyTranslating) {
                             final StepLocation stepLocation = response.getStepLocation();
-                            stepLocationLinkPresenter.setStepLocationLabelOnly(stepLocation);
+                            stepMessage.getElement().setInnerHTML("Stepping..." + getStepLocationText(stepLocation));
                             requestBuilder.sessionUuid(response.getSessionUuid());
                             poll();
                         } else {
@@ -659,6 +658,14 @@ public class SteppingPresenter
                 })
                 .taskMonitorFactory(this)
                 .exec();
+    }
+
+    private String getStepLocationText(final StepLocation stepLocation) {
+        return "[" +
+                stepLocation.getMetaId() + ":" +
+                (stepLocation.getPartIndex() + 1) + ":" +
+                (stepLocation.getRecordIndex() + 1) +
+                "]";
     }
 
     public void terminate() {

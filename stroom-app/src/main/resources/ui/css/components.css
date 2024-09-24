@@ -1374,6 +1374,10 @@
     padding: 6px 8px;
 }
 
+.stepToolbar {
+    align-items: center;
+}
+
 .steppingFilterViewImpl {
 }
 
