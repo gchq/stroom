@@ -19215,6 +19215,27 @@
           "ageRange" : {
             "$ref" : "#/components/schemas/RangeLong"
           },
+          "distinctFeeds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "distinctStatuses" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "distinctTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
           "feedCount" : {
             "type" : "integer",
             "format" : "int64"
@@ -19907,6 +19928,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "foundLocation" : {
+            "$ref" : "#/components/schemas/StepLocation"
+          },
           "foundRecord" : {
             "type" : "boolean"
           },
@@ -19916,6 +19940,9 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          },
+          "progressLocation" : {
+            "$ref" : "#/components/schemas/StepLocation"
           },
           "segmentedData" : {
             "type" : "boolean"
@@ -19931,9 +19958,6 @@
             "additionalProperties" : {
               "$ref" : "#/components/schemas/SteppingFilterSettings"
             }
-          },
-          "stepLocation" : {
-            "$ref" : "#/components/schemas/StepLocation"
           }
         }
       },

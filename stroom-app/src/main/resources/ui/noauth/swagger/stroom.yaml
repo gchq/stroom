@@ -14790,6 +14790,21 @@ components:
       properties:
         ageRange:
           $ref: '#/components/schemas/RangeLong'
+        distinctFeeds:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        distinctStatuses:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        distinctTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         feedCount:
           type: integer
           format: int64
@@ -15335,6 +15350,8 @@ components:
         currentStreamOffset:
           type: integer
           format: int32
+        foundLocation:
+          $ref: '#/components/schemas/StepLocation'
         foundRecord:
           type: boolean
         generalErrors:
@@ -15342,6 +15359,8 @@ components:
           items:
             type: string
           uniqueItems: true
+        progressLocation:
+          $ref: '#/components/schemas/StepLocation'
         segmentedData:
           type: boolean
         sessionUuid:
@@ -15352,8 +15371,6 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/SteppingFilterSettings'
-        stepLocation:
-          $ref: '#/components/schemas/StepLocation'
     StoredError:
       type: object
       properties:
