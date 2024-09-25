@@ -65,12 +65,15 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        if (criteria.getDataSourceRef() != null && !loadedIndexes.contains(criteria.getDataSourceRef())) {
-            transferFieldsToDB(criteria.getDataSourceRef());
-            loadedIndexes.add(criteria.getDataSourceRef());
-        }
-
+        ensureLoaded(criteria.getDataSourceRef());
         return indexFieldDao.findFields(criteria);
+    }
+
+    private void ensureLoaded(final DocRef dataSourceRef) {
+        if (dataSourceRef != null && !loadedIndexes.contains(dataSourceRef)) {
+            transferFieldsToDB(dataSourceRef);
+            loadedIndexes.add(dataSourceRef);
+        }
     }
 
     @Override
@@ -100,6 +103,12 @@ public class IndexFieldServiceImpl implements IndexFieldService {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        ensureLoaded(docRef);
+        return indexFieldDao.getFieldCount(docRef);
     }
 
     @Override

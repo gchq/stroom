@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
@@ -19,6 +35,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -926,6 +943,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                 @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
@@ -985,6 +1003,7 @@ class TestConfigMapper {
                     contentIndexConfig,
                     contentPackImportConfig,
                     legacyConfig,
+                    dashboardConfig,
                     dataConfig,
                     docStoreConfig,
                     elasticConfig,

@@ -13,7 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.5-beta.12] - 2024-09-06
+* Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
+
+* Issue **#4448** : Fix query refresh tooltip when not refreshing.
+
+* Issue **#4457** : Fix ctrl+enter shortcut for query start.
+
+* Issue **#4441** : Improve sorted column matching.
+
+* Issue **#4449** : Reload Scheduled Query Analytics between executions.
+
+* Issue **#4420** : Make app title dynamic.
+
+* Issue **#4453** : Dictionaries will ignore imports if a user has no permission to read them.
+
+* Issue **#4404** : Change the Query editor completions to be context aware, e.g. it only lists Datasources after a `from `.
+
+* Issue **#4450** : Fix editor completion in Query editor so that it doesn't limit completions to 100. Added the property `stroom.ui.maxEditorCompletionEntries` to control the maximum number of completions items that are shown. In the event that the property is exceeded, Stroom will pre-filter the completions based on the user's input.
+
+* Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
 
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 

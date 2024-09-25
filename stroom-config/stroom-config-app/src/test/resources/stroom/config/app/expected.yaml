@@ -182,6 +182,12 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  dashboard:
+    visualisationDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -1144,6 +1150,7 @@ appConfig:
     helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
     helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
     htmlTitle: "Stroom"
+    maxEditorCompletionEntries: 1000
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     nestedIndexFieldsDelimiterPattern: "[.:]"
     nodeMonitoring:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
@@ -207,6 +206,7 @@ public class QueryEditPresenter
 
         this.editorPresenter = editorPresenter;
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
+        this.editorPresenter.getBasicAutoCompletionOption().setOff();
 
 //        // This glues the editor code completion to the QueryHelpPresenter's completion provider
 //        // Need to do this via addAttachHandler so the editor is fully loaded

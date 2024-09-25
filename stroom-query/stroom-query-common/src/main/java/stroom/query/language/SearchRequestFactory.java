@@ -123,6 +123,8 @@ public class SearchRequestFactory {
         void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
             // Get a list of tokens.
             final List<Token> tokens = Tokeniser.parse(string);
+
+
             if (tokens.isEmpty()) {
                 throw new TokenException(null, "No tokens");
             }
@@ -258,11 +260,9 @@ public class SearchRequestFactory {
                         localConsumedTokens.add(tokenType);
                         consumedTokens.add(tokenType);
                         allowFollowing.add(tokenType);
-                        allowFollowing.addAll(Set.of(TokenType.AND, TokenType.OR, TokenType.NOT));
+                        allowFollowing.addAll(TokenType.ALL_LOGICAL_OPERATORS);
                         whereGroup.add(keywordGroup);
-                    } else if (TokenType.AND.equals(tokenType) ||
-                            TokenType.OR.equals(tokenType) ||
-                            TokenType.NOT.equals(tokenType)) {
+                    } else if (TokenType.ALL_LOGICAL_OPERATORS.contains(tokenType)) {
                         // Check we have already consumed the expected keyword token.
                         checkTokenOrder(token, localConsumedTokens, Set.of(TokenType.FROM, keyword), allowFollowing);
                         localConsumedTokens.add(tokenType);
@@ -301,7 +301,7 @@ public class SearchRequestFactory {
             if (!TokenType.isString(fieldToken) && !TokenType.PARAM.equals(fieldToken.getTokenType())) {
                 throw new TokenException(fieldToken, "Expected field string");
             }
-            if (!TokenType.CONDITIONS.contains(conditionToken.getTokenType())) {
+            if (!TokenType.ALL_CONDITIONS.contains(conditionToken.getTokenType())) {
                 throw new TokenException(conditionToken, "Expected condition token");
             }
 
@@ -669,17 +669,11 @@ public class SearchRequestFactory {
                 if (token instanceof final KeywordGroup keywordGroup) {
                     switch (keywordGroup.getTokenType()) {
                         case FROM -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(),
-                                    Set.of());
+                            checkTokenOrder(token, consumedTokens);
                             remaining = addDataSource(remaining, queryBuilder::dataSource, false);
                         }
                         case WHERE -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    Set.of(TokenType.FROM));
+                            checkTokenOrder(token, consumedTokens);
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
@@ -688,28 +682,19 @@ public class SearchRequestFactory {
                                             queryBuilder::expression);
                         }
                         case EVAL -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL));
+                            checkTokenOrder(token, consumedTokens);
                             processEval(keywordGroup);
                             remaining.remove(0);
                         }
                         case WINDOW -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL));
+                            checkTokenOrder(token, consumedTokens);
                             processWindow(
                                     keywordGroup,
                                     tableSettingsBuilder);
                             remaining.remove(0);
                         }
                         case FILTER -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    Set.of(TokenType.FROM, TokenType.WHERE, TokenType.EVAL, TokenType.WINDOW));
+                            checkTokenOrder(token, consumedTokens);
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
@@ -722,28 +707,14 @@ public class SearchRequestFactory {
                                             tableSettingsBuilder::valueFilter);
                         }
                         case SORT -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    inverse(Set.of(
-                                            TokenType.LIMIT,
-                                            TokenType.SELECT,
-                                            TokenType.HAVING,
-                                            TokenType.SHOW)));
+                            checkTokenOrder(token, consumedTokens);
                             processSortBy(
                                     keywordGroup,
                                     sortMap);
                             remaining.remove(0);
                         }
                         case GROUP -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    inverse(Set.of(
-                                            TokenType.LIMIT,
-                                            TokenType.SELECT,
-                                            TokenType.HAVING,
-                                            TokenType.SHOW)));
+                            checkTokenOrder(token, consumedTokens);
                             processGroupBy(
                                     keywordGroup,
                                     groupMap,
@@ -753,10 +724,7 @@ public class SearchRequestFactory {
                         }
                         case HAVING -> {
                             inHaving = true;
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.SHOW)));
+                            checkTokenOrder(token, consumedTokens);
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
@@ -766,10 +734,7 @@ public class SearchRequestFactory {
                             inHaving = false;
                         }
                         case SELECT -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SELECT, TokenType.SHOW)));
+                            checkTokenOrder(token, consumedTokens);
                             processSelect(
                                     keywordGroup,
                                     sortMap,
@@ -779,20 +744,14 @@ public class SearchRequestFactory {
                             remaining.remove(0);
                         }
                         case LIMIT -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SELECT, TokenType.SHOW)));
+                            checkTokenOrder(token, consumedTokens);
                             processLimit(
                                     keywordGroup,
                                     tableSettingsBuilder);
                             remaining.remove(0);
                         }
                         case SHOW -> {
-                            checkTokenOrder(token,
-                                    consumedTokens,
-                                    Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SHOW)));
+                            checkTokenOrder(token, consumedTokens);
                             final TableSettings parentTableSettings = tableSettingsBuilder.build();
                             visTableSettings = visualisationTokenConsumer
                                     .processVis(keywordGroup, parentTableSettings);
@@ -1212,6 +1171,30 @@ public class SearchRequestFactory {
             }
             if (fieldName != null) {
                 groupMap.put(fieldName, groupDepth);
+            }
+        }
+
+        private void checkTokenOrder(final AbstractToken token,
+                                     final List<TokenType> consumedTokens) {
+
+            final TokenType tokenType = token.getTokenType();
+
+            final Set<TokenType> keywordsRequiredBefore = TokenType.getKeywordsRequiredBefore(tokenType);
+
+            for (final TokenType requiredType : keywordsRequiredBefore) {
+                if (!consumedTokens.contains(requiredType)) {
+                    throw new TokenException(token,
+                            "Required token " + requiredType + " before " + tokenType);
+                }
+            }
+
+            final Set<TokenType> keywordsValidBefore = TokenType.getKeywordsValidBefore(tokenType);
+
+            for (final TokenType consumedType : consumedTokens) {
+                if (!keywordsValidBefore.contains(consumedType)) {
+                    throw new TokenException(token,
+                            "Unexpected token " + tokenType + " after " + consumedType);
+                }
             }
         }
 

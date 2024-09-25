@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
@@ -14,6 +30,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -25,6 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -42,7 +60,7 @@ public class DynamicQueryHelpSelectionListModel
 
     private DocRef dataSourceRef;
     private String query;
-    private boolean showAll = true;
+    private Set<QueryHelpType> includedTypes = QueryHelpType.ALL_TYPES;
     private QueryHelpRequest lastRequest;
     private SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
 
@@ -82,7 +100,7 @@ public class DynamicQueryHelpSelectionListModel
                 dataSourceRef,
                 parentId,
                 stringMatch,
-                showAll);
+                includedTypes);
 
         // Only fetch if the request has changed.
         if (!request.equals(lastRequest)) {
@@ -95,7 +113,7 @@ public class DynamicQueryHelpSelectionListModel
                         // Only update if the request is still current.
                         if (request == lastRequest) {
                             final ResultPage<QueryHelpSelectionItem> resultPage;
-                            if (response.getValues().size() > 0) {
+                            if (GwtNullSafe.hasItems(response.getValues())) {
                                 List<QueryHelpSelectionItem> items = response
                                         .getValues()
                                         .stream()
@@ -111,7 +129,9 @@ public class DynamicQueryHelpSelectionListModel
                                                 .id(parentId + "none")
                                                 .title(NONE_TITLE)
                                                 .build()));
-                                resultPage = new ResultPage<>(rows, new PageResponse(0, 1, 1L, true));
+                                resultPage = new ResultPage<>(
+                                        rows,
+                                        new PageResponse(0, 1, 1L, true));
                             }
 
                             consumer.accept(resultPage);
@@ -168,8 +188,8 @@ public class DynamicQueryHelpSelectionListModel
         this.dataSourceRef = dataSourceRef;
     }
 
-    public void setShowAll(final boolean showAll) {
-        this.showAll = showAll;
+    public void setIncludedTypes(final Set<QueryHelpType> includedTypes) {
+        this.includedTypes = includedTypes;
     }
 
     @Override

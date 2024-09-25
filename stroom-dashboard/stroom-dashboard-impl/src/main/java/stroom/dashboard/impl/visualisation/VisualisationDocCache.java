@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.datasource.api.v2;
+package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.ResultPage;
+import stroom.visualisation.shared.VisualisationDoc;
 
-import java.util.List;
-import java.util.Optional;
+public interface VisualisationDocCache {
 
-public interface DataSourceProvider {
+    VisualisationDoc get(DocRef docRef);
 
-    List<DocRef> list();
-
-    String getType();
-
-    ResultPage<QueryField> getFieldInfo(FindFieldCriteria criteria);
-
-    int getFieldCount(DocRef docRef);
-
-    Optional<String> fetchDocumentation(DocRef docRef);
-
-    DocRef fetchDefaultExtractionPipeline(DocRef docRef);
+    void remove(DocRef docRef);
 }
