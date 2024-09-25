@@ -137,7 +137,7 @@ public class AnnotationEditPresenter
                     .create(annotationResource)
                     .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         });
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
@@ -146,7 +146,7 @@ public class AnnotationEditPresenter
                     .create(annotationResource)
                     .method(res -> res.getComment(filter))
                     .onSuccess(consumer)
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         });
     }
@@ -169,7 +169,7 @@ public class AnnotationEditPresenter
                 .create(annotationResource)
                 .method(res -> res.getComment(null))
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -293,7 +293,7 @@ public class AnnotationEditPresenter
                         AnnotationEditPresenter.this,
                         caught.getMessage(),
                         null))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -327,7 +327,7 @@ public class AnnotationEditPresenter
                         .create(annotationResource)
                         .method(res -> res.get(annotation.getId()))
                         .onSuccess(this::edit)
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         }
@@ -390,7 +390,7 @@ public class AnnotationEditPresenter
                             setStatus(values.get(0));
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
 
@@ -892,7 +892,7 @@ public class AnnotationEditPresenter
                             .create(annotationResource)
                             .method(res -> res.get(annotationDetail.getAnnotation().getId()))
                             .onSuccess(this::updateHistory)
-                            .taskHandlerFactory(this)
+                            .taskMonitorFactory(this)
                             .exec();
                 }
             });

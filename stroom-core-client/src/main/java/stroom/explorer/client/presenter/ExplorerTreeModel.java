@@ -28,7 +28,7 @@ import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
@@ -56,7 +56,7 @@ public class ExplorerTreeModel {
     private final ExplorerTreeFilter.Builder explorerTreeFilterBuilder = ExplorerTreeFilter.builder();
     private final AbstractExplorerTree explorerTree;
     private final RestFactory restFactory;
-    private final TaskHandlerFactory taskHandlerFactory;
+    private final TaskMonitorFactory taskMonitorFactory;
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
@@ -72,10 +72,10 @@ public class ExplorerTreeModel {
 
     ExplorerTreeModel(final AbstractExplorerTree explorerTree,
                       final RestFactory restFactory,
-                      final TaskHandlerFactory taskHandlerFactory) {
+                      final TaskMonitorFactory taskMonitorFactory) {
         this.explorerTree = explorerTree;
         this.restFactory = restFactory;
-        this.taskHandlerFactory = taskHandlerFactory;
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     /**
@@ -191,7 +191,7 @@ public class ExplorerTreeModel {
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
-                            .taskHandlerFactory(taskHandlerFactory)
+                            .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 });
             }

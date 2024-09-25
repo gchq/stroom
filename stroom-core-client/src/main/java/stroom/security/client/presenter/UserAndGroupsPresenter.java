@@ -255,7 +255,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         memberOfList.refresh();
                         membersInList.refresh();
                     })
-                    .taskHandlerFactory(userListPresenter.getPagerView())
+                    .taskMonitorFactory(userListPresenter.getPagerView())
                     .exec();
         }
     }
@@ -281,7 +281,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                             userListPresenter.getSelectionModel().setSelected(nextSelection);
                         }
                     })
-                    .taskHandlerFactory(userListPresenter.getPagerView())
+                    .taskMonitorFactory(userListPresenter.getPagerView())
                     .exec();
         }
     }
@@ -329,7 +329,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                         userList.getSelectionModel().clear(true);
                                         userList.refresh();
                                     })
-                                    .taskHandlerFactory(userList.getPagerView())
+                                    .taskMonitorFactory(userList.getPagerView())
                                     .exec();
                         }
                     });

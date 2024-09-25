@@ -279,7 +279,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                         "Unable to connect to Solr please check connection",
                         throwable.getMessage(),
                         null))
-                .taskHandlerFactory(pagerView)
+                .taskMonitorFactory(pagerView)
                 .exec();
     }
 

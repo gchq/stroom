@@ -128,7 +128,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         };
@@ -143,7 +143,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         };
@@ -158,7 +158,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         };
@@ -173,7 +173,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         };
@@ -189,7 +189,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
 

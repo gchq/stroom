@@ -34,11 +34,11 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -99,13 +99,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
-                                     final TaskHandlerFactory taskHandlerFactory) {
+                                     final TaskMonitorFactory taskMonitorFactory) {
         MyPresenterWidget<?> presenter = null;
-        final TaskHandler taskHandler = taskHandlerFactory.createTaskHandler();
+        final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
         final Task task = new SimpleTask("Opening: " + docRef);
         try {
             // Start spinning.
-            taskHandler.onStart(task);
+            taskMonitor.onStart(task);
 
             final DocumentTabData existing = documentToTabDataMap.get(docRef);
             // If we already have a tab item for this document then make sure it is
@@ -124,8 +124,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 final MyPresenterWidget<?> documentEditPresenter = createEditor();
                 presenter = documentEditPresenter;
 
-                if (documentEditPresenter instanceof HasTaskHandlerFactory) {
-                    ((HasTaskHandlerFactory) documentEditPresenter).setTaskHandlerFactory(taskHandlerFactory);
+                if (documentEditPresenter instanceof HasTaskMonitorFactory) {
+                    ((HasTaskMonitorFactory) documentEditPresenter).setTaskMonitorFactory(taskMonitorFactory);
                 }
 
                 if (documentEditPresenter instanceof DocumentTabData) {
@@ -137,13 +137,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
                     // Load the document and show the tab.
                     final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
-                    showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskHandlerFactory);
+                    showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskMonitorFactory);
                 }
             }
 
         } finally {
             // Stop spinning.
-            taskHandler.onEnd(task);
+            taskMonitor.onEnd(task);
         }
 
         return presenter;
@@ -155,7 +155,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                 final CloseContentEvent.Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskHandlerFactory taskHandlerFactory) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         final RestErrorHandler errorHandler = caught ->
                 AlertEvent.fireError(
                         DocumentPlugin.this,
@@ -186,7 +186,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                         }
                                     },
                                     throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
-                                    taskHandlerFactory);
+                                    taskMonitorFactory);
                 } else {
                     // Open the tab.
                     if (fullScreen) {
@@ -199,7 +199,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         };
 
         // Load the document and show the tab.
-        load(docRef, loadConsumer, errorHandler, taskHandlerFactory);
+        load(docRef, loadConsumer, errorHandler, taskMonitorFactory);
     }
 
     private void showFullScreen(final MyPresenterWidget<?> documentEditPresenter) {
@@ -522,13 +522,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public abstract void load(final DocRef docRef,
                               final Consumer<D> resultConsumer,
                               final RestErrorHandler errorHandler,
-                              final TaskHandlerFactory taskHandlerFactory);
+                              final TaskMonitorFactory taskMonitorFactory);
 
     public abstract void save(final DocRef docRef,
                               final D document,
                               final Consumer<D> resultConsumer,
                               final RestErrorHandler errorHandler,
-                              final TaskHandlerFactory taskHandlerFactory);
+                              final TaskMonitorFactory taskMonitorFactory);
 
     protected abstract DocRef getDocRef(D document);
 

@@ -5,7 +5,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
@@ -42,44 +42,44 @@ public class UserPreferencesManager {
         this.currentPreferences = currentPreferences;
     }
 
-    public void fetch(final Consumer<UserPreferences> consumer, final TaskHandlerFactory taskHandlerFactory) {
+    public void fetch(final Consumer<UserPreferences> consumer, final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer,
-                       final TaskHandlerFactory taskHandlerFactory) {
+                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer,
-                                          final TaskHandlerFactory taskHandlerFactory) {
+                                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer,
-                                              final TaskHandlerFactory taskHandlerFactory) {
+                                              final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

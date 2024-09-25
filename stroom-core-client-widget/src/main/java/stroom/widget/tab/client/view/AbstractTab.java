@@ -17,13 +17,13 @@
 package stroom.widget.tab.client.view;
 
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class AbstractTab extends Widget implements TaskHandlerFactory {
+public abstract class AbstractTab extends Widget implements TaskMonitorFactory {
 
     private boolean hidden;
 
@@ -54,8 +54,8 @@ public abstract class AbstractTab extends Widget implements TaskHandlerFactory {
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return new TaskHandler() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
             @Override
             public void onStart(final Task task) {
 

@@ -15,7 +15,7 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.TextRangeUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
@@ -158,7 +158,7 @@ public class FindInContentPresenter
                                 resetFocus();
                             })
                             .onFailure(errorHandler)
-                            .taskHandlerFactory(pagerView)
+                            .taskMonitorFactory(pagerView)
                             .exec();
                 }
             }
@@ -210,7 +210,7 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
-                    .taskHandlerFactory(getView().getTaskListener())
+                    .taskMonitorFactory(getView().getTaskListener())
                     .exec();
         }
     }
@@ -301,6 +301,6 @@ public class FindInContentPresenter
 
         void setTextView(View view);
 
-        TaskHandlerFactory getTaskListener();
+        TaskMonitorFactory getTaskListener();
     }
 }

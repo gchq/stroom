@@ -19,9 +19,9 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.JSONUtil;
 
 import com.google.gwt.core.client.Callback;
@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MessageSupport
-        implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers>, HasTaskHandlerFactory {
+        implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers>, HasTaskMonitorFactory {
 
     private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
@@ -50,7 +50,7 @@ public class MessageSupport
     private final EventBus eventBus;
     private final Element frame;
     private final int frameId;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private SelectionUiHandlers uiHandlers;
 
@@ -114,7 +114,7 @@ public class MessageSupport
             final String href = JSONUtil.getString(message.get("href"));
             final String target = JSONUtil.getString(message.get("target"));
             final Hyperlink hyperlink = Hyperlink.builder().href(href).type(target).build();
-            HyperlinkEvent.fire(this, hyperlink, taskHandlerFactory);
+            HyperlinkEvent.fire(this, hyperlink, taskMonitorFactory);
 
         } else if ("select".equals(functionName)) {
             final JSONValue selection = message.get("selection");
@@ -167,7 +167,7 @@ public class MessageSupport
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 }

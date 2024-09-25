@@ -16,7 +16,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 import stroom.widget.popup.client.event.RenamePopupEvent;
@@ -135,7 +135,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case ANNOTATION: {
-                    openAnnotation(href, event.getTaskHandlerFactory());
+                    openAnnotation(href, event.getTaskMonitorFactory());
                     break;
                 }
                 default:
@@ -146,7 +146,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         }
     }
 
-    private void openAnnotation(final String href, final TaskHandlerFactory taskHandlerFactory) {
+    private void openAnnotation(final String href, final TaskMonitorFactory taskMonitorFactory) {
         final Long annotationId = getLongParam(href, "annotationId");
         final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
         final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));

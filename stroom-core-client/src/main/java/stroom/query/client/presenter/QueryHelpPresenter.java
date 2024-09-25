@@ -24,7 +24,7 @@ import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -212,10 +212,10 @@ public class QueryHelpPresenter
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        model.setTaskHandlerFactory(taskHandlerFactory);
-        keyedAceCompletionProvider.setTaskHandlerFactory(taskHandlerFactory);
-        detailProvider.setTaskHandlerFactory(taskHandlerFactory);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        model.setTaskMonitorFactory(taskMonitorFactory);
+        keyedAceCompletionProvider.setTaskMonitorFactory(taskMonitorFactory);
+        detailProvider.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {

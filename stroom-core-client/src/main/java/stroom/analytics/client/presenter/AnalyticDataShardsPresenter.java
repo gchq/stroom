@@ -112,7 +112,7 @@ public class AnalyticDataShardsPresenter
                         queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
                         queryToolbarPresenter.onSearching(false);
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

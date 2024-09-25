@@ -114,7 +114,7 @@ public class QueryResultVisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
-        visFrame.setTaskHandlerFactory(getView().getRefreshButton());
+        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
 //        visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
 
@@ -198,7 +198,7 @@ public class QueryResultVisPresenter
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -471,7 +471,7 @@ public class QueryResultVisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -482,7 +482,7 @@ public class QueryResultVisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 

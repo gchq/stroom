@@ -206,7 +206,7 @@ public class ProcessorEditPresenter
                 .onFailure(throwable -> {
                     AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -298,7 +298,7 @@ public class ProcessorEditPresenter
                     .method(res -> res.update(filter.getId(), filter))
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
         } else {
@@ -318,7 +318,7 @@ public class ProcessorEditPresenter
                     .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.create(request))
                     .onSuccess(r -> hide(r, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

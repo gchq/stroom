@@ -71,7 +71,7 @@ public class AboutPresenter
                     getView().getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
 
         clientPropertyCache.get(result -> {

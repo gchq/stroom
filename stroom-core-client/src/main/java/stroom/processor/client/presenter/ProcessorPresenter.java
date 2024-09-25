@@ -379,7 +379,7 @@ public class ProcessorPresenter
                                 edit(loadedFilter, null);
                             }
                         })
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         }
@@ -440,7 +440,7 @@ public class ProcessorPresenter
                                             countDownAndRun.countdown())
                                     .onFailure(new DefaultErrorHandler(this, () ->
                                             countDownAndRun.countdown()))
-                                    .taskHandlerFactory(this)
+                                    .taskMonitorFactory(this)
                                     .exec();
                         }
                     }

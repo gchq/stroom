@@ -22,7 +22,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -85,7 +85,7 @@ public class SplashPresenter
                                                 consumer.accept(e.isOk());
                                             })
                                             .onFailure(RestErrorHandler.forPopup(this, e))
-                                            .taskHandlerFactory(this)
+                                            .taskMonitorFactory(this)
                                             .exec();
                                 } else {
                                     AlertEvent.fireWarn(SplashPresenter.this,
@@ -104,7 +104,7 @@ public class SplashPresenter
                     consumer.accept(true);
                 }
             }
-        }, new DefaultTaskListener(this));
+        }, new DefaultTaskMonitorFactory(this));
     }
 
     public void setHtml(final String html) {

@@ -160,7 +160,7 @@ public class AppUserPermissionsListPresenter
                                     .method(res -> res.fetchAppUserPermissions(builder.build()))
                                     .onSuccess(dataConsumer)
                                     .onFailure(errorHandler)
-                                    .taskHandlerFactory(pagerView)
+                                    .taskMonitorFactory(pagerView)
                                     .exec();
                         }
                     };

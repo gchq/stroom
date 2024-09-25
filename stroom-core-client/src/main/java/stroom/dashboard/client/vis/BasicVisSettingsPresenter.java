@@ -138,7 +138,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                         final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
                         readSettings(settings, dynamicSettings);
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

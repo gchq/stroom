@@ -31,7 +31,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -121,9 +121,9 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     public void selectTab(final TabData tab) {
-        final TaskHandler taskHandler = createTaskHandler();
+        final TaskMonitor taskMonitor = createTaskMonitor();
         final Task task = new SimpleTask("Selecting tab");
-        taskHandler.onStart(task);
+        taskMonitor.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -155,7 +155,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
                     }
                 });
             }
-            taskHandler.onEnd(task);
+            taskMonitor.onEnd(task);
         });
     }
 

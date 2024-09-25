@@ -28,7 +28,7 @@ import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
@@ -121,14 +121,14 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
                                       final DocumentPermission permission,
                                       final Consumer<Boolean> consumer,
                                       final Consumer<Throwable> errorHandler,
-                                      final TaskHandlerFactory taskHandlerFactory) {
+                                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(DOC_PERMISSION_RESOURCE)
                 .method(res ->
                         res.checkDocumentPermission(new CheckDocumentPermissionRequest(docRef, permission)))
                 .onSuccess(consumer)
                 .onFailure(t -> errorHandler.accept(t.getException()))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

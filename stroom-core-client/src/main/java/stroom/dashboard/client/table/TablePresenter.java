@@ -79,7 +79,7 @@ import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
@@ -184,7 +184,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
 
-        columnSelectionListModel.setTaskHandlerFactory(this);
+        columnSelectionListModel.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -306,7 +306,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -422,7 +422,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 this,
                                                 result))
-                                        .taskHandlerFactory(this)
+                                        .taskMonitorFactory(this)
                                         .exec();
                             }
                             e.hide();
@@ -1067,9 +1067,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public synchronized void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        columnSelectionListModel.setTaskHandlerFactory(taskHandlerFactory);
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        columnSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     // --------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ package stroom.security.client.api;
 import stroom.docref.DocRef;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
 
 import java.util.function.Consumer;
@@ -54,8 +54,8 @@ public interface ClientSecurityContext {
      * Check if the user associated with this security context has the requested
      * permission on the document specified by the document uuid.
      *
-     * @param docRef The ref of the document.
-     * @param permission   The permission we are checking for.
+     * @param docRef     The ref of the document.
+     * @param permission The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.
      */
@@ -63,5 +63,5 @@ public interface ClientSecurityContext {
                                DocumentPermission permission,
                                Consumer<Boolean> consumer,
                                Consumer<Throwable> errorHandler,
-                               TaskHandlerFactory taskHandlerFactory);
+                               TaskMonitorFactory taskMonitorFactory);
 }

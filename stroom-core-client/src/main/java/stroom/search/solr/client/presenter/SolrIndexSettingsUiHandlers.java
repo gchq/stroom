@@ -16,7 +16,7 @@
 
 package stroom.search.solr.client.presenter;
 
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
@@ -24,5 +24,5 @@ public interface SolrIndexSettingsUiHandlers extends UiHandlers {
 
     void onChange();
 
-    void onTestConnection(TaskHandlerFactory taskHandlerFactory);
+    void onTestConnection(TaskMonitorFactory taskMonitorFactory);
 }

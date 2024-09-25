@@ -34,7 +34,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -88,7 +88,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                             event.getStepLocation().getMetaId(),
                             event.getChildStreamId())))
                     .onSuccess(chooser::setSelectedEntityReference)
-                    .taskHandlerFactory(chooser)
+                    .taskMonitorFactory(chooser)
                     .exec();
         }
 
@@ -121,7 +121,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                         childStreamType);
                             }
                         })
-                        .taskHandlerFactory(new DefaultTaskListener(this))
+                        .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                         .exec();
             }
         }, onShow);

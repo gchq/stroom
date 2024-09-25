@@ -10,9 +10,9 @@ import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicQueryHelpSelectionListModel
-        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskHandlerFactory, HasHandlers {
+        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -38,7 +38,7 @@ public class DynamicQueryHelpSelectionListModel
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private DocRef dataSourceRef;
     private String query;
@@ -117,7 +117,7 @@ public class DynamicQueryHelpSelectionListModel
                             consumer.accept(resultPage);
                         }
                     })
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }
@@ -173,8 +173,8 @@ public class DynamicQueryHelpSelectionListModel
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

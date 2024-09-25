@@ -147,7 +147,7 @@ public class UserTaskManagerPresenter
                             delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         }
@@ -217,7 +217,7 @@ public class UserTaskManagerPresenter
             restFactory
                     .create(TASK_RESOURCE)
                     .method(res -> res.terminate(taskProgress.getNodeName(), request))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         });
     }

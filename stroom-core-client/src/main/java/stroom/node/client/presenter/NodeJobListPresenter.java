@@ -189,7 +189,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 //                            changeData(new JobNodeAndInfoListResponse(Collections.emptyList()));
 //                            errorHandler.onError(error);
 //                        })
-                        .taskHandlerFactory(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
 

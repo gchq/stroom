@@ -153,7 +153,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         Collections.sort(types);
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
 
         setAdvancedMode(true);
@@ -260,7 +260,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -530,7 +530,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -558,7 +558,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -616,7 +616,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                     null);
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
 

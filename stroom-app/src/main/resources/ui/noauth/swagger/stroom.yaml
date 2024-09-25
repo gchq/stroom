@@ -8472,6 +8472,13 @@ components:
         expireTimeMs:
           type: integer
           format: int64
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
         name:
           type: string
         owner:
@@ -11438,6 +11445,13 @@ components:
         expireTimeMs:
           type: integer
           format: int64
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
         id:
           type: integer
           format: int32
@@ -16036,6 +16050,13 @@ components:
           $ref: '#/components/schemas/AnalyticUiDefaultConfig'
         authErrorMessage:
           type: string
+        defaultApiKeyHashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:

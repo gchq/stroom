@@ -139,7 +139,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     setVisibleRules(policy.getRules());
                     update();
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -463,7 +463,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                         update();
                         setDirty(false);
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }));
     }

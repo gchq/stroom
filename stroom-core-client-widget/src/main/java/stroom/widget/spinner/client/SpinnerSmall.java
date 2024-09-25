@@ -18,15 +18,15 @@ package stroom.widget.spinner.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SpinnerSmall extends Widget implements TaskHandlerFactory {
+public class SpinnerSmall extends Widget implements TaskMonitorFactory {
 
     private int taskCount;
 
@@ -53,8 +53,8 @@ public class SpinnerSmall extends Widget implements TaskHandlerFactory {
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return new TaskHandler() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
             @Override
             public void onStart(final Task task) {
                 taskCount++;
