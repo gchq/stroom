@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4146** : Fix audit events for deleting/restoring streams.
+
+* Change the alert dialog message styling to have a max-height of 600px so long messages get a scrollbar.
+
+* Issue **#4468** : Fix selection box keyboard selection behavior when no quick filter is visible.
+
+* Issue **#4471** : Fix NPE with stepping filter.
+
+* Issue **#4451** : Add S3 pipeline appender.
+
+* Issue **#4401** : Improve content search.
+
+* Issue **#4417** : Show stepping progress and allow termination.
+
 * Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
 
 * Issue **#4448** : Fix query refresh tooltip when not refreshing.

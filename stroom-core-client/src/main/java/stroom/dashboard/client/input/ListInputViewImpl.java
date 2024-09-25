@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,18 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
+import stroom.dashboard.client.input.ListInputPresenter.WordItem;
+import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -31,14 +40,49 @@ import java.util.List;
 
 public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> implements ListInputView {
 
+    private static final SafeHtml DICT_ICON_HTML = SvgImageUtil.toSafeHtml(
+            "Source Dictionary",
+            SvgImage.DOCUMENT_DICTIONARY,
+            "explorerCell-icon");
+
     private final Widget widget;
 
     @UiField
-    SelectionBox<String> value;
+    SelectionBox<WordItem> valueSelectionBox;
+
+    private boolean allowTextEntry;
 
     @Inject
     public ListInputViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        valueSelectionBox.setRenderFunction(wordItem -> {
+            final String word = wordItem.getWord();
+
+            return wordItem.getSourceDocRef()
+                    .map(docRef ->
+                            GwtNullSafe.getOrElseGet(docRef,
+                                    DocRef::getName,
+                                    docRef::getUuid))
+                    .map(sourceVal -> {
+                        return HtmlBuilder.builder()
+                                .div(containerBuilder -> containerBuilder
+                                                .div(word, cssClass("-word"))
+                                                .div(sourceBuilder -> {
+                                                    sourceBuilder
+                                                            .div(sourceVal, cssClass("-source-text"))
+                                                            .append(DICT_ICON_HTML);
+                                                }, cssClass("-source")),
+                                        cssClass("-container"))
+                                .toSafeHtml();
+                    })
+                    .orElseGet(() ->
+                            SafeHtmlUtils.fromString(word));
+        });
+    }
+
+    private Attribute cssClass(final String suffix) {
+        return Attribute.className("listInputItem" + suffix);
     }
 
     @Override
@@ -47,37 +91,46 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     }
 
     @Override
-    public void setValues(final List<String> values) {
-        final String selected = value.getValue();
-        value.clear();
+    public void setValues(final List<WordItem> values) {
+        final WordItem selected = valueSelectionBox.getValue();
+        valueSelectionBox.clear();
         if (values != null) {
-            value.addItem("");
-            value.addItems(values);
+            valueSelectionBox.addItem(WordItem.EMPTY);
+            valueSelectionBox.addItems(values);
         }
-        value.setValue(selected);
+        valueSelectionBox.setValue(selected);
     }
 
     @Override
-    public void setSelectedValue(final String selected) {
-        this.value.setValue(selected);
+    public void setSelectedValue(final WordItem selected) {
+        this.valueSelectionBox.setValue(selected);
     }
 
     @Override
     public String getSelectedValue() {
-        return value.getText();
+        return valueSelectionBox.getText();
     }
 
     @Override
     public void setAllowTextEntry(final boolean allowTextEntry) {
-        value.setAllowTextEntry(allowTextEntry);
+        this.allowTextEntry = allowTextEntry;
+        this.valueSelectionBox.setAllowTextEntry(allowTextEntry);
     }
 
-    @UiHandler("value")
-    public void onSelectionChange(final ValueChangeEvent<String> event) {
+    @UiHandler("valueSelectionBox")
+    public void onSelectionChange(final ValueChangeEvent<WordItem> event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onValueChanged(value.getText());
+            if (allowTextEntry) {
+                getUiHandlers().onValueChanged(WordItem.simpleWord(valueSelectionBox.getText()));
+            } else {
+                getUiHandlers().onValueChanged(valueSelectionBox.getValue());
+            }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, ListInputViewImpl> {
 

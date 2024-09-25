@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dictionary.impl;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.dictionary.shared.WordList;
+import stroom.dictionary.shared.WordList.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -30,8 +32,10 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.string.StringUtil;
@@ -39,11 +43,13 @@ import stroom.util.string.StringUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -62,6 +68,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final DictionarySerialiser serialiser) {
+
         this.store = storeFactory.createStore(
                 serialiser,
                 DictionaryDoc.DOCUMENT_TYPE,
@@ -158,12 +165,46 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DictionaryDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        final DictionaryDoc dictionaryDoc = store.readDocument(docRef);
+        return dictionaryDoc;
     }
 
     @Override
     public DictionaryDoc writeDocument(final DictionaryDoc document) {
         return store.writeDocument(document);
+    }
+
+//    /**
+//     * Ensure all the imports have the correct names. Modifies the import list.
+//     */
+//    private void decorateImports(final DictionaryDoc dictionaryDoc) {
+//        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
+//            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+//            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
+//                    .stream()
+//                    .map(docRef -> decorateDocRef(docRefInfoService, docRef))
+//                    .toList();
+//            dictionaryDoc.setImports(decoratedImports);
+//        }
+//    }
+
+    private DocRef decorateDocRef(final DocRefDecorator docRefDecorator,
+                                  final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        } else if (docRefDecorator == null) {
+            return docRef;
+        } else {
+            try {
+                return docRefDecorator.decorate(docRef, true);
+            } catch (Exception e) {
+                // Likely docRef doesn't exist, so we will just leave it as is, i.e.
+                // a broken dep
+                LOGGER.debug(() -> LogUtil.message("Unable to decorate docRef {}: {}",
+                        docRef, LogUtil.exceptionMessage(e)), e);
+                return docRef;
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -246,54 +287,109 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String getCombinedData(final DocRef docRef) {
-        return doGetCombinedData(docRef, new HashSet<>());
+        return getCombinedWordList(docRef, null, true).asString();
+    }
+
+    public WordList getCombinedWordList(final DocRef docRef,
+                                        final DocRefDecorator docRefDecorator,
+                                        final boolean deDup) {
+        final Builder builder = WordList.builder(deDup);
+        final Set<DocRef> visited = new HashSet<>();
+        final Stack<DocRef> visitPath = new Stack<>();
+        doGetCombinedWordList(docRefDecorator, builder, docRef, visited, visitPath);
+
+
+        final WordList wordList = builder.build();
+
+        LOGGER.debug(() -> LogUtil.message("Returning wordList with {} 'words' and {} sources.",
+                wordList.size(), wordList.sourceCount()));
+
+        return wordList;
     }
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
-        // returns null if doc not found
-        final String words = getCombinedData(dictionaryRef);
-        if (words.isBlank()) {
-            return new String[0];
-        } else {
-            // Split by line break (`LF` or `CRLF`) and trim whitespace from each resulting line
-            return StringUtil.splitToLines(words, true)
-                    .toArray(String[]::new);
-        }
+        return getCombinedWordList(dictionaryRef, null, true).asWordArray();
     }
 
-    private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {
-        final StringBuilder sb = new StringBuilder();
-        // Prevent circular dependencies.
-        if (!visited.contains(docRef)) {
-            visited.add(docRef);
+    @Override
+    public WordList getCombinedWordList(final DocRef dictionaryRef,
+                                        final DocRefDecorator docRefDecorator) {
+        return getCombinedWordList(dictionaryRef, docRefDecorator, true);
+    }
+
+    private void doGetCombinedWordList(final DocRefDecorator docRefDecorator,
+                                       final WordList.Builder wordListBuilder,
+                                       final DocRef docRef,
+                                       final Set<DocRef> visited,
+                                       final Stack<DocRef> visitPath) {
+
+        // As we are adding the docRef to the WordList, we want to ensure it
+        // has a name and the correct name
+        final DocRef decorateDocRef = decorateDocRef(docRefDecorator, docRef);
+        LOGGER.debug(() -> LogUtil.message("decorateDocRef: {}, visitPath: {}",
+                decorateDocRef.toShortString(), docRefsToStr(visitPath)));
+        visitPath.push(decorateDocRef);
+
+        // Prevent circular import dependencies.
+        if (!visited.contains(decorateDocRef)) {
+            visited.add(decorateDocRef);
 
             try {
-                final DictionaryDoc doc = readDocument(docRef);
+                // If deDup is true then the lowest level dict will win, or
+                // if duplicates appear in multiple sibling imports then the first
+                // sibling encountered with it will win.
+                // This is to be consistent with existing behaviour where imports come first
+                // in the combined word list.
+                // Precedence only impacts the source inside the Word object.
+                final DictionaryDoc doc = readDocument(decorateDocRef);
                 if (doc != null) {
-                    if (doc.getImports() != null) {
-                        for (final DocRef ref : doc.getImports()) {
-                            final String data = doGetCombinedData(ref, visited);
-                            if (!data.isEmpty()) {
-                                if (!sb.isEmpty()) {
-                                    sb.append("\n");
-                                }
-                                sb.append(data);
-                            }
+                    // First add the words from each of the imports (and recursing into their imports too)
+                    final List<DocRef> imports = doc.getImports();
+                    if (NullSafe.hasItems(imports)) {
+                        LOGGER.debug(() -> LogUtil.message("docRef: {} has imports: {}",
+                                decorateDocRef.toShortString(), docRefsToStr(imports)));
+
+                        for (final DocRef importDocRef : imports) {
+                            // Recurse
+                            doGetCombinedWordList(
+                                    docRefDecorator,
+                                    wordListBuilder,
+                                    importDocRef,
+                                    visited,
+                                    visitPath);
                         }
                     }
-                    if (doc.getData() != null) {
-                        if (!sb.isEmpty()) {
-                            sb.append("\n");
-                        }
-                        sb.append(doc.getData());
+
+                    // Add the words from this dict first as the higher level takes precedence
+                    final String data = doc.getData();
+                    if (NullSafe.isNonBlankString(data)) {
+                        StringUtil.splitToLines(data, true)
+                                .forEach(line ->
+                                        wordListBuilder.addWord(line, decorateDocRef));
                     }
                 }
             } catch (final PermissionException e) {
-                // Silently ignore permission exceptions.
-                LOGGER.debug(e::getMessage, e);
+                // Silently ignore permission exceptions as not all users will be able to read all dicts
+                LOGGER.debug(() -> LogUtil.message("Permission exception reading {}: {}",
+                        decorateDocRef, e.getMessage()), e);
             }
+        } else {
+            LOGGER.debug(() -> LogUtil.message("Found circular import, ignoring {}, visitPath: {}",
+                    decorateDocRef.toShortString(), docRefsToStr(visitPath)));
         }
-        return sb.toString();
+
+        visitPath.pop();
+    }
+
+    private String docRefsToStr(final Collection<DocRef> docRefs) {
+        if (NullSafe.hasItems(docRefs)) {
+            return "[" + docRefs.stream()
+                    .map(DocRef::toShortString)
+                    .collect(Collectors.joining(", ")) + "]";
+
+        } else {
+            return "[]";
+        }
     }
 }

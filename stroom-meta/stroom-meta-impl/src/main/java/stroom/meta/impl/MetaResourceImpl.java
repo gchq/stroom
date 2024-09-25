@@ -26,19 +26,46 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
-import event.logging.SearchEventAction;
+import event.logging.BaseObject;
+import event.logging.Criteria;
+import event.logging.Data;
+import event.logging.Data.Builder;
+import event.logging.DeleteEventAction;
+import event.logging.EventAction;
+import event.logging.MultiObject;
+import event.logging.OtherObject;
+import event.logging.Query;
+import event.logging.SimpleQuery;
+import event.logging.UpdateEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @AutoLogged
 class MetaResourceImpl implements MetaResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaResourceImpl.class);
+    private static final Pattern IN_LIST_DELIMITER_PATTERN = Pattern.compile(
+            Pattern.quote(Condition.IN_CONDITION_DELIMITER));
 
     private final Provider<MetaService> metaServiceProvider;
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
@@ -60,30 +87,203 @@ class MetaResourceImpl implements MetaResource {
     public Integer updateStatus(final UpdateStatusRequest request) {
         final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
 
-        final ExpressionOperator expression = request.getCriteria().getExpression();
+        final ExpressionOperator expression = Objects.requireNonNull(request.getCriteria().getExpression());
+        final boolean isDelete = request.getNewStatus() == Status.DELETED;
+        String currentStatus = NullSafe.getOrElse(
+                request.getCurrentStatus(), Status::getDisplayValue, "unspecified/unknown");
+        final String newStatus = NullSafe.getOrElse(
+                request.getNewStatus(), Status::getDisplayValue, "unspecified/unknown");
 
-        final String currentStatus = (request.getCurrentStatus() != null)
-                ?
-                request.getCurrentStatus().getDisplayValue()
-                : "selected";
-        final String newStatus = (request.getNewStatus() != null)
-                ?
-                request.getNewStatus().getDisplayValue()
-                : "unspecified / unknown";
+        final BaseObject baseObjectBefore;
+        final BaseObject baseObjectAfter;
+        final String description;
+        final List<Data> dataItems = new ArrayList<>();
 
-        final SearchEventAction action = SearchEventAction.builder()
-                .withQuery(StroomEventLoggingUtil.convertExpression(expression))
-                .build();
+        if (expression.getChildren().size() == 1
+                && expression.getChildren().get(0) instanceof final ExpressionTerm term
+                && term.hasCondition(Condition.EQUALS)) {
+            final String metaIdStr = term.getValue();
+
+            try {
+                long metaId = Long.parseLong(metaIdStr);
+                final Meta meta = metaServiceProvider.get().getMeta(metaId, true);
+                dataItems.add(Data.builder()
+                        .withName("Feed")
+                        .withValue(meta.getFeedName())
+                        .build());
+                dataItems.add(Data.builder()
+                        .withName("Type")
+                        .withValue(meta.getTypeName())
+                        .build());
+                currentStatus = meta.getStatus().getDisplayValue();
+            } catch (Exception e) {
+                LOGGER.error(LogUtil.message("Error fetching meta for id '{}' for audit logging: {}",
+                        metaIdStr, LogUtil.exceptionMessage(e), e));
+            }
+
+            baseObjectBefore = OtherObject.builder()
+                    .withId(term.getValue())
+                    .withState(currentStatus)
+                    .build();
+            baseObjectAfter = OtherObject.builder()
+                    .withId(term.getValue())
+                    .withState(newStatus)
+                    .build();
+            description = isDelete
+                    ? "Delete stream with ID " + metaIdStr
+                    : "Update the status of stream with ID " + metaIdStr
+                            + " from " + currentStatus + " to " + newStatus;
+        } else if (expression.getChildren().size() == 1
+                && expression.getChildren().get(0) instanceof final ExpressionTerm term
+                && term.hasCondition(Condition.IN)) {
+            final String streamIdsStr = term.getValue();
+            final String[] idArr = NullSafe.getOrElse(
+                    streamIdsStr,
+                    IN_LIST_DELIMITER_PATTERN::split,
+                    new String[0]);
+            final int count = idArr.length;
+            baseObjectBefore = null;
+            baseObjectAfter = Criteria.builder()
+                    .withQuery(Query.builder()
+                            .withSimple(SimpleQuery.builder()
+                                    .withInclude(streamIdsStr)
+                                    .build())
+                            .build())
+                    .build();
+            description = isDelete
+                    ? "Delete " + count + " streams"
+                    : "Update the status of " + count + " streams from " + currentStatus + " to " + newStatus;
+            addSelectionSummaryDataItems(dataItems, request.getCriteria());
+        } else {
+            baseObjectBefore = null;
+            baseObjectAfter = Criteria.builder()
+                    .withQuery(StroomEventLoggingUtil.convertExpression(expression))
+                    .build();
+            description = isDelete
+                    ? "Delete streams matching a criteria"
+                    : "Update the status of streams matching a criteria from " + currentStatus + " to " + newStatus;
+            addSelectionSummaryDataItems(dataItems, request.getCriteria());
+        }
+
+        final EventAction eventAction;
+        if (isDelete) {
+            DeleteEventAction.Builder<Void> deleteBuilder = DeleteEventAction.builder()
+                    .addData(dataItems);
+            NullSafe.firstNonNull(baseObjectBefore, baseObjectAfter)
+                    .ifPresent(deleteBuilder::withObjects);
+            eventAction = deleteBuilder.build();
+        } else {
+            UpdateEventAction.Builder<Void> updateBuilder = UpdateEventAction.builder()
+                    .withAfter(MultiObject.builder()
+                            .withObjects(baseObjectAfter)
+                            .build())
+                    .addData(dataItems);
+            if (baseObjectBefore != null) {
+                updateBuilder.withBefore(MultiObject.builder()
+                        .withObjects(baseObjectBefore)
+                        .build());
+            }
+            eventAction = updateBuilder.build();
+        }
 
         return eventLoggingService.loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "updateStatus"))
-                .withDescription("Modify the status of " + currentStatus + " streams to " + newStatus)
-                .withDefaultEventAction(action)
+                .withDescription(description)
+                .withDefaultEventAction(eventAction)
                 .withSimpleLoggedResult(() -> metaServiceProvider.get().updateStatus(
                         request.getCriteria(),
                         request.getCurrentStatus(),
                         request.getNewStatus()))
                 .getResultAndLog();
+    }
+
+    private void addSelectionSummaryDataItems(
+            final List<Data> dataItems,
+            final FindMetaCriteria criteria) {
+        try {
+            final SelectionSummary selectionSummary = getSelectionSummary(criteria);
+            if (selectionSummary != null) {
+                addData(dataItems, "Count", selectionSummary.getItemCount());
+                addData(dataItems, "FeedCount", selectionSummary.getFeedCount());
+                addData(dataItems, "TypeCount", selectionSummary.getTypeCount());
+                addData(dataItems, "ProcessorCount", selectionSummary.getProcessorCount());
+                addData(dataItems, "PipelineCount", selectionSummary.getProcessorCount());
+                addData(dataItems, "StatusCount", selectionSummary.getStatusCount());
+                addDataValues(dataItems,
+                        "Feeds",
+                        "Feed",
+                        selectionSummary.getFeedCount(),
+                        selectionSummary.getDistinctFeeds());
+                addDataValues(dataItems,
+                        "Types",
+                        "Type",
+                        selectionSummary.getTypeCount(),
+                        selectionSummary.getDistinctTypes());
+                addDataValues(dataItems,
+                        "Statuses",
+                        "Status",
+                        selectionSummary.getStatusCount(),
+                        selectionSummary.getDistinctStatuses());
+
+                final String minCreateTime = NullSafe.get(
+                        selectionSummary.getAgeRange(),
+                        Range::getFrom,
+                        DateUtil::createNormalDateTimeString);
+                addData(dataItems, "MinCreateTime", minCreateTime);
+
+                final String maxCreateTime = NullSafe.get(
+                        selectionSummary.getAgeRange(),
+                        Range::getTo,
+                        DateUtil::createNormalDateTimeString);
+                addData(dataItems, "MaxCreateTime", maxCreateTime);
+            }
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error building selection summary for criteria {}: {}",
+                    criteria, LogUtil.exceptionMessage(e), e));
+        }
+    }
+
+    private void addDataValues(final List<Data> list,
+                               final String parentName,
+                               final String itemName,
+                               final long count,
+                               final Set<String> values) {
+        if (NullSafe.hasItems(values)) {
+            final Builder<Void> builder = Data.builder()
+                    .withName(parentName);
+            values.stream()
+                    .sorted()
+                    .forEach(val ->
+                            builder.addData(Data.builder()
+                                    .withName(itemName)
+                                    .withValue(val)
+                                    .build()));
+            if (values.size() < count) {
+                builder.addData(Data.builder()
+                        .withName("IsListTruncated")
+                        .withValue("true")
+                        .build());
+            }
+            list.add(builder.build());
+        }
+    }
+
+    private void addData(final List<Data> list, final String name, final String value) {
+        if (value != null) {
+            Objects.requireNonNull(list).add(Data.builder()
+                    .withName(name)
+                    .withValue(value)
+                    .build());
+        }
+    }
+
+    private void addData(final List<Data> list, final String name, final Long value) {
+        if (value != null) {
+            Objects.requireNonNull(list).add(Data.builder()
+                    .withName(name)
+                    .withValue(String.valueOf(value))
+                    .build());
+        }
     }
 
     @AutoLogged(OperationType.SEARCH)

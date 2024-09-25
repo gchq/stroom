@@ -81,10 +81,10 @@ public final class JsonUtil {
             getMapper().writeValue(outputFile.toFile(), object);
         } catch (final JsonProcessingException e) {
             throw new RuntimeException(String.format("Error serialising object %s to json",
-                    object.toString()), e);
+                    object), e);
         } catch (final IOException e) {
             throw new UncheckedIOException(String.format("Error writing json to file %s",
-                    outputFile.toAbsolutePath().toString()), e);
+                    outputFile.toAbsolutePath()), e);
         }
     }
 
@@ -94,8 +94,8 @@ public final class JsonUtil {
         try {
             return getMapper().readValue(content, valueType);
         } catch (final JsonProcessingException e) {
-            throw new RuntimeException(String.format("Error deserialising object %s",
-                    content), e);
+            throw new RuntimeException(String.format("Error deserialising object %s %s",
+                    content, e.getMessage()), e);
         }
     }
 

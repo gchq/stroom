@@ -679,17 +679,35 @@ class TestMetaDaoImpl {
                 MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
         assertThat(selectionSummary.getItemCount())
                 .isEqualTo(20);
+        assertThat(selectionSummary.getDistinctFeeds())
+                .containsExactly(TEST1_FEED_NAME);
+        assertThat(selectionSummary.getDistinctTypes())
+                .containsExactlyInAnyOrder(RAW_STREAM_TYPE_NAME, PROCESSED_STREAM_TYPE_NAME);
+        assertThat(selectionSummary.getDistinctStatuses())
+                .containsExactlyInAnyOrder(Status.UNLOCKED.getDisplayValue());
 
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                 TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount())
                 .isEqualTo(20);
+        assertThat(selectionSummary.getDistinctFeeds())
+                .containsExactly(TEST2_FEED_NAME);
+        assertThat(selectionSummary.getDistinctTypes())
+                .containsExactlyInAnyOrder(RAW_STREAM_TYPE_NAME, PROCESSED_STREAM_TYPE_NAME);
+        assertThat(selectionSummary.getDistinctStatuses())
+                .containsExactlyInAnyOrder(Status.UNLOCKED.getDisplayValue());
 
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(
                 TEST1_FEED_NAME,
                 TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount())
                 .isEqualTo(totalMetaCount);
+        assertThat(selectionSummary.getDistinctFeeds())
+                .containsExactlyInAnyOrder(TEST1_FEED_NAME, TEST2_FEED_NAME);
+        assertThat(selectionSummary.getDistinctTypes())
+                .containsExactlyInAnyOrder(RAW_STREAM_TYPE_NAME, PROCESSED_STREAM_TYPE_NAME);
+        assertThat(selectionSummary.getDistinctStatuses())
+                .containsExactlyInAnyOrder(Status.UNLOCKED.getDisplayValue());
 
         selectionSummary = metaDao.getSelectionSummary(
                 new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
@@ -705,6 +723,12 @@ class TestMetaDaoImpl {
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(expression));
         assertThat(selectionSummary.getItemCount())
                 .isEqualTo(10);
+        assertThat(selectionSummary.getDistinctFeeds())
+                .containsExactly(TEST1_FEED_NAME);
+        assertThat(selectionSummary.getDistinctTypes())
+                .containsExactly(RAW_STREAM_TYPE_NAME);
+        assertThat(selectionSummary.getDistinctStatuses())
+                .containsExactlyInAnyOrder(Status.UNLOCKED.getDisplayValue());
     }
 
     @Test
@@ -1079,8 +1103,8 @@ class TestMetaDaoImpl {
 
         assertThat(ids)
                 .containsExactlyInAnyOrderElementsOf(LongStream.range(metaMinId, metaMinId + 40)
-                .boxed()
-                .collect(Collectors.toList()));
+                        .boxed()
+                        .collect(Collectors.toList()));
 
         assertThat(inputIds.containsAll(ids))
                 .isTrue();

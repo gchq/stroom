@@ -216,7 +216,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             final List<DocContentMatch> matches = new ArrayList<>();
 
             final Query query = getQuery(request.getFilter());
-            final Highlighter highlighter = getHighlighter(request.getFilter());
+            final ContentHighlighter highlighter = getHighlighter(request.getFilter());
 
             long total = 0;
             try (final DirectoryReader directoryReader = DirectoryReader.open(directory)) {
@@ -229,24 +229,16 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                     final DocRef docRef = new DocRef(doc.get(TYPE), doc.get(UUID), doc.get(NAME));
                     final String extension = doc.get(EXTENSION);
                     final String text = doc.get(TEXT);
-                    if (highlighter.filter(text)) {
+                    final List<StringMatchLocation> highlights = highlighter.getHighlights(text, 1);
+                    if (!highlights.isEmpty()) {
                         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                             if (total >= pageRequest.getOffset() &&
                                     total < pageRequest.getOffset() + pageRequest.getLength()) {
                                 try {
-                                    final List<StringMatchLocation> highlights = highlighter
-                                            .getHighlights(directoryReader, docId, text, 1);
-                                    if (!highlights.isEmpty()) {
-                                        matches.add(DocContentMatch.create(docRef,
-                                                extension,
-                                                text,
-                                                highlights.getFirst()));
-                                    } else {
-                                        matches.add(DocContentMatch.create(docRef,
-                                                extension,
-                                                text,
-                                                new StringMatchLocation(0, 0)));
-                                    }
+                                    matches.add(DocContentMatch.create(docRef,
+                                            extension,
+                                            text,
+                                            highlights.getFirst()));
                                 } catch (final Exception e) {
                                     LOGGER.debug(e::getMessage, e);
                                 }
@@ -273,13 +265,15 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         }
     }
 
-    private Highlighter getHighlighter(final StringMatch stringMatch) throws ParseException {
-        if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
-            return new BasicContentHighlighter(stringMatch);
-        }
-
-        final Query basicQuery = getBasicQuery(stringMatch);
-        return new LuceneContentHighlighter(getNGramField(stringMatch), basicQuery);
+    private ContentHighlighter getHighlighter(final StringMatch stringMatch) throws ParseException {
+        return new BasicContentHighlighter(stringMatch);
+//
+//        if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
+//            return new BasicContentHighlighter(stringMatch);
+//        }
+//
+//        final Query basicQuery = getBasicQuery(stringMatch);
+//        return new LuceneContentHighlighter(getNGramField(stringMatch), basicQuery);
     }
 
     private String getNGramField(final StringMatch stringMatch) {
@@ -379,9 +373,8 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                 final String text = doc.get(TEXT);
 
                 try {
-                    final Highlighter highlighter = getHighlighter(request.getFilter());
-                    final List<StringMatchLocation> highlights = highlighter
-                            .getHighlights(directoryReader, docId, text, MAX_HIGHLIGHTS);
+                    final ContentHighlighter highlighter = getHighlighter(request.getFilter());
+                    final List<StringMatchLocation> highlights = highlighter.getHighlights(text, MAX_HIGHLIGHTS);
                     return new DocContentHighlights(request.getDocRef(), text, highlights);
 
                 } catch (final RuntimeException e) {

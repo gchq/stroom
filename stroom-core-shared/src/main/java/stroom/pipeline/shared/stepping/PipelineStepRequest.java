@@ -22,9 +22,9 @@ import stroom.meta.shared.FindMetaCriteria;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Map;
-import java.util.Map.Entry;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PipelineStepRequest {
@@ -33,34 +33,39 @@ public class PipelineStepRequest {
      * This is what chooses the input to the translation.
      */
     @JsonProperty
-    private FindMetaCriteria criteria;
+    private final String sessionUuid;
     @JsonProperty
-    private String childStreamType;
+    private final FindMetaCriteria criteria;
     @JsonProperty
-    private StepLocation stepLocation;
+    private final String childStreamType;
     @JsonProperty
-    private StepType stepType;
+    private final StepLocation stepLocation;
     @JsonProperty
-    private Map<String, SteppingFilterSettings> stepFilterMap;
+    private final StepType stepType;
     @JsonProperty
-    private DocRef pipeline;
+    private final Map<String, SteppingFilterSettings> stepFilterMap;
     @JsonProperty
-    private Map<String, String> code;
+    private final DocRef pipeline;
     @JsonProperty
-    private int stepSize = 1;
-
-    public PipelineStepRequest() {
-    }
+    private final Map<String, String> code;
+    @JsonProperty
+    private final int stepSize;
+    @JsonPropertyDescription("Set the maximum time (in ms) for the server to wait for a complete result")
+    @JsonProperty
+    private final Long timeout;
 
     @JsonCreator
-    public PipelineStepRequest(@JsonProperty("criteria") final FindMetaCriteria criteria,
+    public PipelineStepRequest(@JsonProperty("sessionUuid") final String sessionUuid,
+                               @JsonProperty("criteria") final FindMetaCriteria criteria,
                                @JsonProperty("childStreamType") final String childStreamType,
                                @JsonProperty("stepLocation") final StepLocation stepLocation,
                                @JsonProperty("stepType") final StepType stepType,
                                @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
                                @JsonProperty("pipeline") final DocRef pipeline,
                                @JsonProperty("code") final Map<String, String> code,
-                               @JsonProperty("stepSize") int stepSize) {
+                               @JsonProperty("stepSize") int stepSize,
+                               @JsonProperty("timeout") final Long timeout) {
+        this.sessionUuid = sessionUuid;
         this.criteria = criteria;
         this.childStreamType = childStreamType;
         this.stepLocation = stepLocation;
@@ -69,62 +74,39 @@ public class PipelineStepRequest {
         this.pipeline = pipeline;
         this.code = code;
         this.stepSize = stepSize;
+        this.timeout = timeout;
+    }
+
+    public String getSessionUuid() {
+        return sessionUuid;
     }
 
     public FindMetaCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(final FindMetaCriteria criteria) {
-        this.criteria = criteria;
-    }
-
     public String getChildStreamType() {
         return childStreamType;
-    }
-
-    public void setChildStreamType(final String childStreamType) {
-        this.childStreamType = childStreamType;
     }
 
     public DocRef getPipeline() {
         return pipeline;
     }
 
-    public void setPipeline(final DocRef pipeline) {
-        this.pipeline = pipeline;
-    }
-
     public Map<String, String> getCode() {
         return code;
-    }
-
-    public void setCode(final Map<String, String> code) {
-        this.code = code;
     }
 
     public StepLocation getStepLocation() {
         return stepLocation;
     }
 
-    public void setStepLocation(final StepLocation stepLocation) {
-        this.stepLocation = stepLocation;
-    }
-
     public StepType getStepType() {
         return stepType;
     }
 
-    public void setStepType(final StepType stepType) {
-        this.stepType = stepType;
-    }
-
     public Map<String, SteppingFilterSettings> getStepFilterMap() {
         return stepFilterMap;
-    }
-
-    public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
-        this.stepFilterMap = stepFilterMap;
     }
 
     public SteppingFilterSettings getStepFilterSettings(final String elementId) {
@@ -138,20 +120,109 @@ public class PipelineStepRequest {
         return stepSize;
     }
 
-    public void setStepSize(final int stepSize) {
-        this.stepSize = stepSize;
+    public Long getTimeout() {
+        return timeout;
     }
 
-    public void reset() {
-        stepLocation = null;
-        stepType = null;
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-        // Remove remembered values from the step filters.
-        if (stepFilterMap != null) {
-            for (final Entry<String, SteppingFilterSettings> entry : stepFilterMap.entrySet()) {
-                final SteppingFilterSettings settings = entry.getValue();
-                settings.clearUniqueValues();
-            }
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private String sessionUuid;
+        private FindMetaCriteria criteria;
+        private String childStreamType;
+        private StepLocation stepLocation;
+        private StepType stepType;
+        private Map<String, SteppingFilterSettings> stepFilterMap;
+        private DocRef pipeline;
+        private Map<String, String> code;
+        private int stepSize = 1;
+        private Long timeout = 1000L;
+
+        private Builder() {
+        }
+
+        private Builder(PipelineStepRequest request) {
+            this.sessionUuid = request.sessionUuid;
+            this.criteria = request.criteria;
+            this.childStreamType = request.childStreamType;
+            this.stepLocation = request.stepLocation;
+            this.stepType = request.stepType;
+            this.stepFilterMap = request.stepFilterMap;
+            this.pipeline = request.pipeline;
+            this.code = request.code;
+            this.stepSize = request.stepSize;
+            this.timeout = request.timeout;
+        }
+
+        public Builder sessionUuid(final String sessionUuid) {
+            this.sessionUuid = sessionUuid;
+            return this;
+        }
+
+        public Builder criteria(final FindMetaCriteria criteria) {
+            this.criteria = criteria;
+            return this;
+        }
+
+        public Builder childStreamType(final String childStreamType) {
+            this.childStreamType = childStreamType;
+            return this;
+        }
+
+        public Builder stepLocation(final StepLocation stepLocation) {
+            this.stepLocation = stepLocation;
+            return this;
+        }
+
+        public Builder stepType(final StepType stepType) {
+            this.stepType = stepType;
+            return this;
+        }
+
+        public Builder stepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
+            this.stepFilterMap = stepFilterMap;
+            return this;
+        }
+
+        public Builder pipeline(final DocRef pipeline) {
+            this.pipeline = pipeline;
+            return this;
+        }
+
+        public Builder code(final Map<String, String> code) {
+            this.code = code;
+            return this;
+        }
+
+        public Builder stepSize(final int stepSize) {
+            this.stepSize = stepSize;
+            return this;
+        }
+
+        public Builder timeout(final Long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public PipelineStepRequest build() {
+            return new PipelineStepRequest(
+                    sessionUuid,
+                    criteria,
+                    childStreamType,
+                    stepLocation,
+                    stepType,
+                    stepFilterMap,
+                    pipeline,
+                    code,
+                    stepSize,
+                    timeout);
         }
     }
 }

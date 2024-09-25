@@ -43,7 +43,7 @@ public class ThemeCssUtil {
 
         if (currentUserPreferences != null) {
             GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
-                    classJoiner.add(Themes.getClassName(theme)));
+                    classJoiner.add(Theme.getClassName(theme)));
 
             if (GwtNullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
                 classJoiner.add("transparency");
@@ -65,7 +65,7 @@ public class ThemeCssUtil {
     }
 
     public static List<String> getThemes() {
-        return Themes.getThemeNames();
+        return Theme.getThemeNames();
     }
 
     public static List<String> getFonts() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package stroom.dictionary.impl;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.resource.api.ResourceStore;
+import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
@@ -38,6 +40,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 
 @AutoLogged
 class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<DictionaryDoc> {
@@ -47,19 +50,34 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
     private final Provider<DictionaryStore> dictionaryStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
+    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
 
     @Inject
     DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
                            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-                           final Provider<ResourceStore> resourceStoreProvider) {
+                           final Provider<ResourceStore> resourceStoreProvider,
+                           final Provider<DocRefInfoService> docRefInfoServiceProvider) {
         this.dictionaryStoreProvider = dictionaryStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
+        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
     }
 
     @Override
     public DictionaryDoc fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(dictionaryStoreProvider.get(), getDocRef(uuid));
+        final DictionaryDoc dictionaryDoc = documentResourceHelperProvider.get()
+                .read(dictionaryStoreProvider.get(), getDocRef(uuid));
+
+        //
+        if (NullSafe.hasItems(dictionaryDoc.getImports())) {
+            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
+                    .stream()
+                    .map(importDocRef -> docRefInfoService.decorate(importDocRef, true))
+                    .toList();
+            dictionaryDoc.setImports(decoratedImports);
+        }
+        return dictionaryDoc;
     }
 
     @Override
@@ -67,7 +85,8 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelperProvider.get().update(dictionaryStoreProvider.get(), doc);
+        return documentResourceHelperProvider.get()
+                .update(dictionaryStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {

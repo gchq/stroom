@@ -17,10 +17,34 @@
 package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public interface SelectionItem {
 
+    /**
+     * @return The plain text label for the item
+     */
     String getLabel();
+
+    /**
+     * @return The rendered HTML form of the label, which by default is simply the label text with no markup.
+     * Implementations can choose to render the label how they like.
+     */
+    default SafeHtml getRenderedLabel() {
+        final String label = getLabel();
+        if (GwtNullSafe.isBlankString(label)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+            return SafeHtmlUtils.fromString(getLabel());
+        }
+    }
+
+    default boolean hasRenderedLabel() {
+        return false;
+    }
 
     SvgImage getIcon();
 

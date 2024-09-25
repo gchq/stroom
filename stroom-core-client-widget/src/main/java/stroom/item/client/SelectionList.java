@@ -80,8 +80,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             protected void onBrowserEvent2(final Event event) {
                 if (event.getTypeInt() == Event.ONKEYDOWN) {
                     if (event.getKeyCode() == KeyCodes.KEY_UP) {
-                        if (cellTable.getKeyboardSelectedRow() == 0) {
-                            quickFilter.focus();
+                        if (model.displayFilter()) {
+                            if (cellTable.getKeyboardSelectedRow() == 0) {
+                                quickFilter.focus();
+                            }
                         }
                     } else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
                         CloseEvent.fire(SelectionList.this);
@@ -151,7 +153,30 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void focus() {
-        quickFilter.forceFocus();
+        if (model.displayFilter()) {
+            quickFilter.forceFocus();
+        } else {
+            final int selectionIndex = getSelectionIndex();
+            if (selectionIndex >= 0) {
+                cellTable.setKeyboardSelectedRow(selectionIndex, true);
+            } else if (cellTable.getKeyboardSelectedRow() >= 0) {
+                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
+            } else {
+                cellTable.setKeyboardSelectedRow(0, true);
+            }
+        }
+    }
+
+    private int getSelectionIndex() {
+        final List<I> items = cellTable.getVisibleItems();
+        if (items != null) {
+            for (int i = 0; i < items.size(); i++) {
+                if (cellTable.getSelectionModel().isSelected(items.get(i))) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     @Override

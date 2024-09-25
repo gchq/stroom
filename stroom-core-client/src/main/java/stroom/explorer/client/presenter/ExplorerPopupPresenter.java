@@ -131,14 +131,6 @@ public class ExplorerPopupPresenter
                                     "You must choose a valid item.", e::reset);
                         }
                     } else {
-                        final ExplorerNode selected = initialSelection;
-                        if (isSelectionAllowed(selected)) {
-                            selectionChangeConsumer.accept(selected);
-                            explorerTree.getSelectionModel().setSelected(selected);
-                            consumer.accept(selected == null
-                                    ? null
-                                    : selected.getDocRef());
-                        }
                         e.hide();
                     }
                 })

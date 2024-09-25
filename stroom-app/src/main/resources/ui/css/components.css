@@ -1374,6 +1374,10 @@
     padding: 6px 8px;
 }
 
+.stepToolbar {
+    align-items: center;
+}
+
 .steppingFilterViewImpl {
 }
 
@@ -2088,7 +2092,7 @@ button.main-menu svg {
 
 .SelectionPopup .listContainer {
     min-width: 200px;
-    max-width: 300px;
+    max-width: 400px;
     max-height: 400px;
 }
 
@@ -2264,4 +2268,9 @@ button.main-menu svg {
 
 .bold {
     font-weight: 600;
+}
+
+/* Add a smidge of a gap between the split and the next form group */
+.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+    margin-top: 0.5em;
 }

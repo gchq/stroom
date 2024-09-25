@@ -127,6 +127,13 @@ public class StroomEventLoggingUtil {
                 .build();
     }
 
+    public static Data createData(final String name, final String value) {
+        return Data.builder()
+                .withName(name)
+                .withValue(value)
+                .build();
+    }
+
     public static CopyMoveOutcome createCopyMoveOutcome(final Throwable throwable) {
         final CopyMoveOutcome outcome;
         if (throwable != null) {

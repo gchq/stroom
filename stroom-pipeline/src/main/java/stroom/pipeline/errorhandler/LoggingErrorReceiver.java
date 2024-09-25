@@ -24,19 +24,20 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
  * Implements a SAX error handler for logging all errors to log4j.
  */
 public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
+
     // elementId => Indicators
 //    private final Map<String, Indicators> indicatorsMap = new HashMap<>();
-    private final Map<String, Map<ErrorType, Indicators>> indicatorsMap = new HashMap<>();
-    private final Map<Severity, StoredErrorStats> statsMap = new HashMap<>();
+    private final Map<String, Map<ErrorType, Indicators>> indicatorsMap = new ConcurrentHashMap<>();
+    private final Map<Severity, StoredErrorStats> statsMap = new ConcurrentHashMap<>();
 
 //    public LoggingErrorReceiver() {
 //        this(new HashMap<>());
@@ -74,7 +75,7 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
         // Store an indicator.
 //        indicatorsMap.computeIfAbsent(elementId, k -> new Indicators())
 //                        .add(storedError);
-        indicatorsMap.computeIfAbsent(elementId, k -> new HashMap<>())
+        indicatorsMap.computeIfAbsent(elementId, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(storedError.getErrorType(), k -> new Indicators())
                 .add(storedError);
     }
