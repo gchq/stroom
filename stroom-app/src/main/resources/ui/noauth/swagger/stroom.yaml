@@ -16095,8 +16095,6 @@ components:
           items:
             type: string
           uniqueItems: true
-        requireReactWrapper:
-          type: boolean
         source:
           $ref: '#/components/schemas/SourceConfig'
         splash:

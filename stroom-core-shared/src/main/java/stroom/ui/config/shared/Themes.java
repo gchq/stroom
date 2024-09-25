@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 public class Themes {
 
     public static final String THEME_NAME_DARK = "Dark";
-    public static final String THEME_NAME_DARKER = "Darker";
     public static final String THEME_NAME_LIGHT = "Light";
     private static final Map<String, String> THEME_TO_CLASS_MAP = new HashMap<>();
     private static final Map<String, ThemeType> THEME_TO_TYPE_MAP = new HashMap<>();
@@ -17,7 +16,6 @@ public class Themes {
     static {
         putTheme(THEME_NAME_LIGHT, "stroom-theme-light", ThemeType.LIGHT);
         putTheme(THEME_NAME_DARK, "stroom-theme-dark", ThemeType.DARK);
-        putTheme(THEME_NAME_DARKER, "stroom-theme-dark stroom-theme-darker", ThemeType.DARK);
     }
 
     private static void putTheme(final String name, final String clazz, final ThemeType themeType) {

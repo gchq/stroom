@@ -21,6 +21,7 @@ import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.shared.IsServlet;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Set;
 
@@ -35,9 +36,9 @@ public class DashboardServlet extends AppServlet implements IsServlet {
     private static final Set<String> PATH_SPECS = Set.of(PATH_PART);
 
     @Inject
-    DashboardServlet(final UiConfig uiConfig,
-                     final UserPreferencesService userPreferencesService) {
-        super(uiConfig, userPreferencesService);
+    DashboardServlet(final Provider<UiConfig> uiConfigProvider,
+                     final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+        super(uiConfigProvider, userPreferencesServiceProvider);
     }
 
     String getScript() {

@@ -130,15 +130,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final SourceConfig source;
 
     @JsonProperty
-    @JsonPropertyDescription("The Stroom GWT UI is now wrapped in a new React UI that provides some additional " +
-            "features. To use the React UI the GWT UI must be wrapped in an IFrame which is hosted at the root URL. " +
-            "If a user navigates to the GWT UI directly via `stroom/ui` then the React additions will not function. " +
-            "When this property is set to true that will be prevented as the user will be redirected back to the " +
-            "root URL. This behaviour is configurable as development of the GWT UI still requires direct access via " +
-            "`stroom/ui`")
-    private Boolean requireReactWrapper;
-
-    @JsonProperty
     private final NodeMonitoringConfig nodeMonitoring;
 
     @JsonProperty
@@ -190,7 +181,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         splash = new SplashConfig();
         activity = new ActivityConfig();
         source = new SourceConfig();
-        requireReactWrapper = true;
         nodeMonitoring = new NodeMonitoringConfig();
         analyticUiDefaultConfig = new AnalyticUiDefaultConfig();
         nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
@@ -222,7 +212,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("source") final SourceConfig source,
-                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
                     @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
                     @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
@@ -249,7 +238,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.splash = splash;
         this.activity = activity;
         this.source = source;
-        this.requireReactWrapper = requireReactWrapper;
         this.nodeMonitoring = nodeMonitoring;
         this.analyticUiDefaultConfig = analyticUiDefaultConfig;
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
@@ -401,14 +389,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return source;
     }
 
-    public Boolean getRequireReactWrapper() {
-        return requireReactWrapper;
-    }
-
-    public void setRequireReactWrapper(final Boolean requireReactWrapper) {
-        this.requireReactWrapper = requireReactWrapper;
-    }
-
     public NodeMonitoringConfig getNodeMonitoring() {
         return nodeMonitoring;
     }
@@ -458,7 +438,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(splash, uiConfig.splash)
                 && Objects.equals(activity, uiConfig.activity)
                 && Objects.equals(source, uiConfig.source)
-                && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper)
                 && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
                 && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
                 && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
@@ -487,7 +466,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 splash,
                 activity,
                 source,
-                requireReactWrapper,
                 nodeMonitoring,
                 analyticUiDefaultConfig,
                 nestedIndexFieldsDelimiterPattern,
@@ -517,7 +495,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", splash=" + splash +
                 ", activity=" + activity +
                 ", source=" + source +
-                ", requireReactWrapper=" + requireReactWrapper +
                 ", nodeMonitoring=" + nodeMonitoring +
                 ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
                 ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +

@@ -14,8 +14,8 @@ import stroom.util.db.ForceLegacyMigration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.mockito.Mockito.mock;
@@ -61,13 +61,13 @@ class TestModule extends AbstractModule {
         return new WordListProvider() {
 
             @Override
-            public Set<DocRef> listDocuments() {
-                return Collections.emptySet();
+            public List<DocRef> findByName(final String name) {
+                return List.of();
             }
 
             @Override
-            public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-                return Collections.emptyList();
+            public Optional<DocRef> findByUuid(final String uuid) {
+                return Optional.empty();
             }
 
             @Override

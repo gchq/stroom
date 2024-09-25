@@ -96,9 +96,7 @@ public class QueryDataLogUtil {
 
                             if (docRef != null) {
                                 final String words = wordListProvider.getCombinedData(docRef);
-                                if (words != null) {
-                                    value += " (" + words + ")";
-                                }
+                                value += " (" + words + ")";
 
                                 appendTerm(items, field, TermCondition.EQUALS, value);
 
