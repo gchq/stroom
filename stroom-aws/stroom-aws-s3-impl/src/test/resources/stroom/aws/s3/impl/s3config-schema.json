@@ -1,0 +1,403 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema#",
+  "title" : "S 3 Client Config",
+  "type" : "object",
+  "additionalProperties" : false,
+  "properties" : {
+    "credentials" : {
+      "oneOf" : [ {
+        "$ref" : "#/definitions/AwsAnonymousCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsBasicCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsDefaultCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsEnvironmentVariableCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsProfileCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsSessionCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsSystemPropertyCredentials"
+      }, {
+        "$ref" : "#/definitions/AwsWebCredentials"
+      } ]
+    },
+    "assumeRole" : {
+      "$ref" : "#/definitions/AwsAssumeRole"
+    },
+    "readBufferSizeInBytes" : {
+      "type" : "integer"
+    },
+    "region" : {
+      "type" : "string"
+    },
+    "minimalPartSizeInBytes" : {
+      "type" : "integer"
+    },
+    "targetThroughputInGbps" : {
+      "type" : "number"
+    },
+    "maxConcurrency" : {
+      "type" : "integer"
+    },
+    "endpointOverride" : {
+      "type" : "string"
+    },
+    "checksumValidationEnabled" : {
+      "type" : "boolean"
+    },
+    "httpConfiguration" : {
+      "$ref" : "#/definitions/AwsHttpConfig"
+    },
+    "accelerate" : {
+      "type" : "boolean"
+    },
+    "forcePathStyle" : {
+      "type" : "boolean"
+    },
+    "numRetries" : {
+      "type" : "integer"
+    },
+    "crossRegionAccessEnabled" : {
+      "type" : "boolean"
+    },
+    "thresholdInBytes" : {
+      "type" : "integer"
+    },
+    "async" : {
+      "type" : "boolean"
+    },
+    "multipart" : {
+      "type" : "boolean"
+    },
+    "createBuckets" : {
+      "type" : "boolean"
+    },
+    "bucketName" : {
+      "type" : "string"
+    },
+    "keyPattern" : {
+      "type" : "string"
+    }
+  },
+  "required" : [ "crossRegionAccessEnabled", "async", "multipart", "createBuckets" ],
+  "definitions" : {
+    "AwsAnonymousCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "anonymous" ],
+          "default" : "anonymous"
+        }
+      },
+      "title" : "anonymous",
+      "required" : [ "type" ]
+    },
+    "AwsBasicCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "basic" ],
+          "default" : "basic"
+        },
+        "accessKeyId" : {
+          "type" : "string"
+        },
+        "secretAccessKey" : {
+          "type" : "string"
+        }
+      },
+      "title" : "basic",
+      "required" : [ "type" ]
+    },
+    "AwsDefaultCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "default" ],
+          "default" : "default"
+        }
+      },
+      "title" : "default",
+      "required" : [ "type" ]
+    },
+    "AwsEnvironmentVariableCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "environment" ],
+          "default" : "environment"
+        }
+      },
+      "title" : "environment",
+      "required" : [ "type" ]
+    },
+    "AwsProfileCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "profile" ],
+          "default" : "profile"
+        },
+        "profileName" : {
+          "type" : "string"
+        },
+        "profileFilePath" : {
+          "type" : "string"
+        }
+      },
+      "title" : "profile",
+      "required" : [ "type" ]
+    },
+    "AwsSessionCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "session" ],
+          "default" : "session"
+        },
+        "accessKeyId" : {
+          "type" : "string"
+        },
+        "secretAccessKey" : {
+          "type" : "string"
+        },
+        "sessionToken" : {
+          "type" : "string"
+        }
+      },
+      "title" : "session",
+      "required" : [ "type" ]
+    },
+    "AwsSystemPropertyCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "system" ],
+          "default" : "system"
+        }
+      },
+      "title" : "system",
+      "required" : [ "type" ]
+    },
+    "AwsWebCredentials" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "web" ],
+          "default" : "web"
+        },
+        "roleArn" : {
+          "type" : "string"
+        },
+        "roleSessionName" : {
+          "type" : "string"
+        },
+        "webIdentityTokenFile" : {
+          "type" : "string"
+        },
+        "asyncCredentialUpdateEnabled" : {
+          "type" : "boolean"
+        },
+        "prefetchTime" : {
+          "type" : "string"
+        },
+        "staleTime" : {
+          "type" : "string"
+        },
+        "sessionDuration" : {
+          "type" : "string"
+        }
+      },
+      "title" : "web",
+      "required" : [ "type" ]
+    },
+    "AwsAssumeRole" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "clientConfig" : {
+          "$ref" : "#/definitions/AwsAssumeRoleClientConfig"
+        },
+        "request" : {
+          "$ref" : "#/definitions/AwsAssumeRoleRequest"
+        }
+      }
+    },
+    "AwsAssumeRoleClientConfig" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "credentials" : {
+          "oneOf" : [ {
+            "$ref" : "#/definitions/AwsAnonymousCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsBasicCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsDefaultCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsEnvironmentVariableCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsProfileCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsSessionCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsSystemPropertyCredentials"
+          }, {
+            "$ref" : "#/definitions/AwsWebCredentials"
+          } ]
+        },
+        "region" : {
+          "type" : "string"
+        },
+        "endpointOverride" : {
+          "type" : "string"
+        }
+      }
+    },
+    "AwsAssumeRoleRequest" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "roleArn" : {
+          "type" : "string"
+        },
+        "roleSessionName" : {
+          "type" : "string"
+        },
+        "policyArns" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/AwsPolicyDescriptorType"
+          }
+        },
+        "policy" : {
+          "type" : "string"
+        },
+        "durationSeconds" : {
+          "type" : "integer"
+        },
+        "tags" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/AwsTag"
+          }
+        },
+        "transitiveTagKeys" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "externalId" : {
+          "type" : "string"
+        },
+        "serialNumber" : {
+          "type" : "string"
+        },
+        "tokenCode" : {
+          "type" : "string"
+        },
+        "sourceIdentity" : {
+          "type" : "string"
+        },
+        "providedContexts" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/AwsProvidedContext"
+          }
+        }
+      }
+    },
+    "AwsPolicyDescriptorType" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "arn" : {
+          "type" : "string"
+        }
+      }
+    },
+    "AwsTag" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "key" : {
+          "type" : "string"
+        },
+        "value" : {
+          "type" : "string"
+        }
+      }
+    },
+    "AwsProvidedContext" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "providerArn" : {
+          "type" : "string"
+        },
+        "contextAssertion" : {
+          "type" : "string"
+        }
+      }
+    },
+    "AwsHttpConfig" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "connectionTimeout" : {
+          "type" : "string"
+        },
+        "trustAllCertificatesEnabled" : {
+          "type" : "boolean"
+        },
+        "proxyConfiguration" : {
+          "$ref" : "#/definitions/AwsProxyConfig"
+        }
+      }
+    },
+    "AwsProxyConfig" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "properties" : {
+        "host" : {
+          "type" : "string"
+        },
+        "port" : {
+          "type" : "integer"
+        },
+        "scheme" : {
+          "type" : "string"
+        },
+        "username" : {
+          "type" : "string"
+        },
+        "password" : {
+          "type" : "string"
+        },
+        "useSystemPropertyValues" : {
+          "type" : "boolean"
+        }
+      },
+      "required" : [ "port" ]
+    }
+  }
+}

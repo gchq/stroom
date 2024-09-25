@@ -1,10 +1,13 @@
 package stroom.aws.s3.impl;
 
-import stroom.aws.s3.shared.AwsAnonymousCredentials;
+import stroom.aws.s3.shared.AwsAssumeRole;
+import stroom.aws.s3.shared.AwsAssumeRoleClientConfig;
+import stroom.aws.s3.shared.AwsAssumeRoleRequest;
 import stroom.aws.s3.shared.AwsHttpConfig;
-import stroom.aws.s3.shared.AwsProfileCredentials;
+import stroom.aws.s3.shared.AwsPolicyDescriptorType;
+import stroom.aws.s3.shared.AwsProvidedContext;
 import stroom.aws.s3.shared.AwsProxyConfig;
-import stroom.aws.s3.shared.AwsWebCredentials;
+import stroom.aws.s3.shared.AwsTag;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
@@ -17,6 +20,7 @@ import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -44,6 +48,13 @@ import software.amazon.awssdk.services.s3.model.S3Request;
 import software.amazon.awssdk.services.s3.model.S3Response;
 import software.amazon.awssdk.services.s3.model.Tag;
 import software.amazon.awssdk.services.s3.model.Tagging;
+import software.amazon.awssdk.services.sts.StsAsyncClient;
+import software.amazon.awssdk.services.sts.StsAsyncClientBuilder;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.PolicyDescriptorType;
+import software.amazon.awssdk.services.sts.model.ProvidedContext;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
@@ -65,6 +76,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -174,7 +187,118 @@ public class S3Manager {
     }
 
     private AwsCredentialsProvider createCredentialsProvider(final S3ClientConfig s3ClientConfig) {
-        final stroom.aws.s3.shared.AwsCredentials awsCredentials = s3ClientConfig.getCredentials();
+        if (s3ClientConfig.getAssumeRole() != null && s3ClientConfig.getAssumeRole().getRequest() != null) {
+            // If the config asks the client to assume a role then get assumed role credentials.
+            try (final StsAsyncClient stsAsyncClient =
+                    createStsAsyncClient(s3ClientConfig)) {
+                final AssumeRoleRequest assumeRoleRequest =
+                        createAssumeRoleRequest(s3ClientConfig.getAssumeRole().getRequest());
+                final Future<AssumeRoleResponse> responseFuture = stsAsyncClient.assumeRole(assumeRoleRequest);
+                final AssumeRoleResponse response = responseFuture.get();
+                final Credentials credentials = response.credentials();
+                final AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(
+                        credentials.accessKeyId(),
+                        credentials.secretAccessKey(),
+                        credentials.sessionToken());
+                return AwsCredentialsProviderChain.builder()
+                        .credentialsProviders(StaticCredentialsProvider.create(sessionCredentials))
+                        .build();
+            } catch (final InterruptedException | ExecutionException | RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+
+        return createCredentialsProvider(s3ClientConfig.getCredentials());
+    }
+
+    private AssumeRoleRequest createAssumeRoleRequest(final AwsAssumeRoleRequest config) {
+        final AssumeRoleRequest.Builder builder = AssumeRoleRequest.builder();
+        if (config.getRoleArn() != null) {
+            builder.roleArn(config.getRoleArn());
+        }
+        if (config.getRoleSessionName() != null) {
+            builder.roleSessionName(config.getRoleSessionName());
+        }
+        if (config.getPolicyArns() != null) {
+            builder.policyArns(config.getPolicyArns().stream().map(this::createPolicyDescriptorType).toList());
+        }
+        if (config.getPolicy() != null) {
+            builder.policy(config.getPolicy());
+        }
+        if (config.getDurationSeconds() != null) {
+            builder.durationSeconds(config.getDurationSeconds());
+        }
+        if (config.getTags() != null) {
+            builder.tags(config.getTags().stream().map(this::createStsTag).toList());
+        }
+        if (config.getTransitiveTagKeys() != null) {
+            builder.transitiveTagKeys(config.getTransitiveTagKeys());
+        }
+        if (config.getExternalId() != null) {
+            builder.externalId(config.getExternalId());
+        }
+        if (config.getSerialNumber() != null) {
+            builder.serialNumber(config.getSerialNumber());
+        }
+        if (config.getTokenCode() != null) {
+            builder.tokenCode(config.getTokenCode());
+        }
+        if (config.getSourceIdentity() != null) {
+            builder.sourceIdentity(config.getSourceIdentity());
+        }
+        if (config.getProvidedContexts() != null) {
+            builder.providedContexts(config.getProvidedContexts().stream().map(this::createProvidedContext).toList());
+        }
+        return builder.build();
+    }
+
+    private ProvidedContext createProvidedContext(final AwsProvidedContext awsProvidedContext) {
+        return ProvidedContext
+                .builder()
+                .contextAssertion(awsProvidedContext.getContextAssertion())
+                .providerArn(awsProvidedContext.getProviderArn())
+                .build();
+    }
+
+    private PolicyDescriptorType createPolicyDescriptorType(final AwsPolicyDescriptorType awsPolicyDescriptorType) {
+        return PolicyDescriptorType.builder().arn(awsPolicyDescriptorType.getArn()).build();
+    }
+
+    private software.amazon.awssdk.services.sts.model.Tag createStsTag(final AwsTag awsTag) {
+        return software.amazon.awssdk.services.sts.model.Tag
+                .builder()
+                .key(awsTag.getKey())
+                .value(awsTag.getValue())
+                .build();
+    }
+
+    private StsAsyncClient createStsAsyncClient(final S3ClientConfig s3ClientConfig) {
+        final StsAsyncClientBuilder builder = StsAsyncClient.builder();
+
+        final AwsAssumeRole assumeRole = s3ClientConfig.getAssumeRole();
+        final AwsAssumeRoleClientConfig awsAssumeRoleClientConfig = assumeRole.getClientConfig();
+        if (awsAssumeRoleClientConfig != null && awsAssumeRoleClientConfig.getCredentials() != null) {
+            builder.credentialsProvider(createCredentialsProvider(awsAssumeRoleClientConfig.getCredentials()));
+        } else if (s3ClientConfig.getCredentials() != null) {
+            builder.credentialsProvider(createCredentialsProvider(s3ClientConfig.getCredentials()));
+        }
+
+        if (awsAssumeRoleClientConfig != null && awsAssumeRoleClientConfig.getRegion() != null) {
+            builder.region(createRegion(awsAssumeRoleClientConfig.getRegion()));
+        } else if (s3ClientConfig.getRegion() != null) {
+            builder.region(createRegion(s3ClientConfig.getRegion()));
+        }
+
+        if (awsAssumeRoleClientConfig != null && awsAssumeRoleClientConfig.getEndpointOverride() != null) {
+            builder.endpointOverride(createUri(awsAssumeRoleClientConfig.getEndpointOverride()));
+        }
+
+        return builder.build();
+    }
+
+    private AwsCredentialsProvider createCredentialsProvider(
+            final stroom.aws.s3.shared.AwsCredentials awsCredentials) {
 
         if (awsCredentials != null) {
             switch (awsCredentials) {

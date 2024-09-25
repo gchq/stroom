@@ -16,6 +16,8 @@ public class S3ClientConfig {
 
     @JsonProperty
     private final AwsCredentials credentials;
+    @JsonProperty
+    private final AwsAssumeRole assumeRole;
 
     @JsonProperty
     private final Long readBufferSizeInBytes;
@@ -58,6 +60,7 @@ public class S3ClientConfig {
 
     @JsonCreator
     public S3ClientConfig(@JsonProperty("credentials") final AwsCredentials credentials,
+                          @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
                           @JsonProperty("readBufferSizeInBytes") final Long readBufferSizeInBytes,
                           @JsonProperty("region") final String region,
                           @JsonProperty("minimalPartSizeInBytes") final Long minimalPartSizeInBytes,
@@ -77,6 +80,7 @@ public class S3ClientConfig {
                           @JsonProperty("bucketName") final String bucketName,
                           @JsonProperty("keyPattern") final String keyPattern) {
         this.credentials = credentials;
+        this.assumeRole = assumeRole;
         this.readBufferSizeInBytes = readBufferSizeInBytes;
         this.region = region;
         this.minimalPartSizeInBytes = minimalPartSizeInBytes;
@@ -99,6 +103,10 @@ public class S3ClientConfig {
 
     public AwsCredentials getCredentials() {
         return credentials;
+    }
+
+    public AwsAssumeRole getAssumeRole() {
+        return assumeRole;
     }
 
     public Long getReadBufferSizeInBytes() {
@@ -264,6 +272,7 @@ public class S3ClientConfig {
     public static class Builder {
 
         private AwsCredentials credentials;
+        private AwsAssumeRole assumeRole;
 
         private Long readBufferSizeInBytes;
         private String region;
@@ -315,6 +324,11 @@ public class S3ClientConfig {
 
         public Builder credentials(final AwsCredentials credentials) {
             this.credentials = credentials;
+            return this;
+        }
+
+        public Builder assumeRole(final AwsAssumeRole assumeRole) {
+            this.assumeRole = assumeRole;
             return this;
         }
 
@@ -411,6 +425,7 @@ public class S3ClientConfig {
         public S3ClientConfig build() {
             return new S3ClientConfig(
                     credentials,
+                    assumeRole,
                     readBufferSizeInBytes,
                     region,
                     minimalPartSizeInBytes,
