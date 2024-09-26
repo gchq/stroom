@@ -77,7 +77,7 @@ public class TableResultCreator implements ResultCreator {
             // maxResults defines the max number of records to come back and the paging can happen up to
             // that maxResults threshold
             final List<Column> columns = dataStore.getColumns();
-            TableSettings tableSettings = resultRequest.getMappings().get(0);
+            TableSettings tableSettings = resultRequest.getMappings().getFirst();
 
             resultBuilder.columns(columns);
 

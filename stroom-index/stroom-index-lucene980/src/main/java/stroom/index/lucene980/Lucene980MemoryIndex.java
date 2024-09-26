@@ -2,7 +2,9 @@ package stroom.index.lucene980;
 
 import stroom.datasource.api.v2.IndexField;
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.index.shared.LuceneIndexField;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.extraction.FieldValue;
@@ -21,48 +23,81 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 class Lucene980MemoryIndex implements stroom.search.extraction.MemoryIndex {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lucene980MemoryIndex.class);
 
-    private final SearchExpressionQueryCache searchExpressionQueryCache;
+    private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
+    private final Map<String, Analyzer> analyzerMap = new HashMap<>();
+    private Map<String, Optional<IndexField>> cachedFields;
+    private SearchExpressionQuery cachedQuery;
 
     @Inject
-    public Lucene980MemoryIndex(final SearchExpressionQueryCache searchExpressionQueryCache) {
-        this.searchExpressionQueryCache = searchExpressionQueryCache;
+    public Lucene980MemoryIndex(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory) {
+        this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
     }
 
     @Override
     public boolean match(final SearchRequest searchRequest, final List<FieldValue> fieldValues) {
-        final MemoryIndex memoryIndex = new MemoryIndex();
-        final Map<String, IndexField> indexFieldMap = new HashMap<>();
+        // Instantiate the cached fields we care about.
+        if (cachedFields == null) {
+            final List<String> fields = ExpressionUtil.fields(searchRequest.getQuery().getExpression());
+            cachedFields = new HashMap<>();
+            fields.forEach(field -> cachedFields.put(field, Optional.empty()));
+        }
+
+        // OPTIMISATION: If we have no fields in the expression then match.
+        if (cachedFields.isEmpty()) {
+            return true;
+        }
+
+        MemoryIndex memoryIndex = null;
         for (final FieldValue fieldValue : fieldValues) {
             final IndexField indexField = fieldValue.field();
             final LuceneIndexField luceneIndexField = LuceneIndexField
                     .fromIndexField(indexField);
 
-            indexFieldMap.put(indexField.getFldName(), indexField);
+            final Optional<IndexField> cachedField = cachedFields.get(indexField.getFldName());
+            // Ignore fields we don't need.
+            if (cachedField != null) {
+                if (!Objects.equals(cachedField.orElse(null), indexField)) {
+                    // We are adding a field.
+                    cachedFields.put(indexField.getFldName(), Optional.of(indexField));
+                    // Since we changed the fields we will need to recreate the query.
+                    cachedQuery = null;
+                }
 
-            if (luceneIndexField.isIndexed()) {
-                final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(luceneIndexField);
-                final IndexableField field = FieldFactory.create(fieldValue);
-                if (field != null) {
-                    memoryIndex.addField(field, fieldAnalyzer);
+                // If the field is indexed then add it to the in memory index.
+                if (luceneIndexField.isIndexed()) {
+                    final Analyzer fieldAnalyzer = getAnalyser(luceneIndexField);
+                    final IndexableField field = FieldFactory.create(fieldValue);
+                    if (field != null) {
+                        // OPTIMISATION: Lazily create the memory index.
+                        if (memoryIndex == null) {
+                            memoryIndex = new MemoryIndex();
+                        }
+                        memoryIndex.addField(field, fieldAnalyzer);
+                    }
                 }
             }
         }
 
+        // OPTIMISATION: If there was no memory index created then return false as we cannot match.
+        if (memoryIndex == null) {
+            return false;
+        }
+
         // See if this set of fields matches the rule expression.
-        final IndexFieldCache indexFieldCache = (key, fieldName) -> indexFieldMap.get(fieldName);
-        return matchQuery(searchRequest, memoryIndex, indexFieldCache);
+        return matchQuery(searchRequest, memoryIndex);
     }
 
     private boolean matchQuery(final SearchRequest searchRequest,
-                               final MemoryIndex memoryIndex,
-                               final IndexFieldCache indexFieldCache) {
+                               final MemoryIndex memoryIndex) {
         try {
-            final SearchExpressionQuery query = searchExpressionQueryCache.getQuery(searchRequest, indexFieldCache);
+            final SearchExpressionQuery query = getQuery(searchRequest);
             final IndexSearcher indexSearcher = memoryIndex.createSearcher();
             final TopDocs docs = indexSearcher.search(query.getQuery(), 100);
 
@@ -78,5 +113,41 @@ class Lucene980MemoryIndex implements stroom.search.extraction.MemoryIndex {
         }
 
         return false;
+    }
+
+    private SearchExpressionQuery getQuery(final SearchRequest searchRequest) {
+        try {
+            // We will cache the query until the fields change.
+            if (cachedQuery == null) {
+                final IndexFieldCache indexFieldCache = (key, fieldName) -> cachedFields.get(fieldName).orElse(null);
+                final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
+                        searchExpressionQueryBuilderFactory.create(
+                                searchRequest.getQuery().getDataSource(),
+                                indexFieldCache,
+                                searchRequest.getDateTimeSettings());
+                cachedQuery = searchExpressionQueryBuilder
+                        .buildQuery(searchRequest.getQuery().getExpression());
+            }
+            return cachedQuery;
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
+    }
+
+    private Analyzer getAnalyser(final LuceneIndexField indexField) {
+        try {
+            Analyzer fieldAnalyzer = analyzerMap.get(indexField.getFldName());
+            if (fieldAnalyzer == null) {
+                // Add the field analyser.
+                fieldAnalyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
+                        indexField.isCaseSensitive());
+                analyzerMap.put(indexField.getFldName(), fieldAnalyzer);
+            }
+            return fieldAnalyzer;
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
     }
 }

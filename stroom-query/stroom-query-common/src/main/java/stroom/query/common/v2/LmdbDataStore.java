@@ -25,7 +25,6 @@ import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
@@ -69,7 +68,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +81,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class LmdbDataStore implements DataStore {
@@ -95,8 +94,6 @@ public class LmdbDataStore implements DataStore {
 
     private final LmdbEnv env;
     private final LmdbDb db;
-    private final ColumnExpressionMatcher columnExpressionMatcher;
-    private final ExpressionOperator valueFilter;
     private final ValueReferenceIndex valueReferenceIndex;
     private final List<Column> columns;
     private final CompiledColumns compiledColumns;
@@ -107,6 +104,7 @@ public class LmdbDataStore implements DataStore {
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
     private final AtomicBoolean shutdown = new AtomicBoolean();
+    private final Predicate<Val[]> valueFilter;
 
     private final LmdbWriteQueue queue;
     private final CountDownLatch complete = new CountDownLatch(1);
@@ -170,11 +168,9 @@ public class LmdbDataStore implements DataStore {
         columns = Objects.requireNonNullElse(modifiedTableSettings.getColumns(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize(), bufferFactory);
         maxSortedItems = resultStoreConfig.getMaxSortedItems();
-        valueFilter = modifiedTableSettings.getValueFilter();
         this.dateTimeSettings = expressionContext == null
                 ? null
                 : expressionContext.getDateTimeSettings();
-        columnExpressionMatcher = new ColumnExpressionMatcher(columns, dateTimeSettings);
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
@@ -213,6 +209,14 @@ public class LmdbDataStore implements DataStore {
                 .build();
         this.db = env.openDb(queryKey + "_" + componentId);
 
+        // Create a filter for incoming data.
+        valueFilter = ValFilter.create(
+                modifiedTableSettings.getValueFilter(),
+                compiledColumns,
+                dateTimeSettings,
+                paramMap,
+                this::error);
+
         // Filter puts to the store if we need to. This filter has the effect of preventing addition of items if we have
         // reached the max result size if specified and aren't grouping or sorting.
         putFilter = LmdbPutFilterFactory.create(
@@ -237,53 +241,18 @@ public class LmdbDataStore implements DataStore {
     @Override
     public void accept(final Val[] values) {
         // Filter incoming data.
-        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
-        Map<String, Object> fieldIdToValueMap = null;
-        for (final CompiledColumn compiledColumn : compiledColumnArray) {
-            final Generator generator = compiledColumn.getGenerator();
-            if (generator != null) {
-                final CompiledFilter compiledFilter = compiledColumn.getCompiledFilter();
-                String string = null;
-                if (compiledFilter != null || valueFilter != null) {
-                    generator.set(values, storedValues);
-                    string = generator.eval(storedValues, null).toString();
+        if (valueFilter.test(values)) {
+            // Now add the rows if we aren't filtering.
+            if (windowSupport.getOffsets() != null) {
+                int iteration = 0;
+                for (SimpleDuration offset : windowSupport.getOffsets()) {
+                    final Val[] modifiedValues = windowSupport.addWindow(fieldIndex, values, offset);
+                    addInternal(modifiedValues, iteration);
+                    iteration++;
                 }
-
-                if (compiledFilter != null && !compiledFilter.match(string)) {
-                    // We want to exclude this item so get out of this method ASAP.
-                    return;
-                } else if (valueFilter != null) {
-                    if (fieldIdToValueMap == null) {
-                        fieldIdToValueMap = new HashMap<>();
-                    }
-                    fieldIdToValueMap.put(compiledColumn.getColumn().getName(),
-                            string);
-                }
+            } else {
+                addInternal(values, -1);
             }
-        }
-
-        if (fieldIdToValueMap != null) {
-            try {
-                // If the value filter doesn't match then get out of here now.
-                if (!columnExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
-                    return;
-                }
-            } catch (final RuntimeException e) {
-                error(e);
-                return;
-            }
-        }
-
-        // Now add the rows if we aren't filtering.
-        if (windowSupport.getOffsets() != null) {
-            int iteration = 0;
-            for (SimpleDuration offset : windowSupport.getOffsets()) {
-                final Val[] modifiedValues = windowSupport.addWindow(fieldIndex, values, offset);
-                addInternal(modifiedValues, iteration);
-                iteration++;
-            }
-        } else {
-            addInternal(values, -1);
         }
     }
 
@@ -729,6 +698,10 @@ public class LmdbDataStore implements DataStore {
 
     public FieldIndex getFieldIndex() {
         return fieldIndex;
+    }
+
+    public CompiledColumns getCompiledColumns() {
+        return compiledColumns;
     }
 
     private void putCurrentDbState(final WriteTxn writeTxn, final CurrentDbState currentDbState) {

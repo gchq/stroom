@@ -21,7 +21,6 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.core.dataprocess.ProcessorTaskDecorator;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
-import stroom.meta.shared.Meta;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.SearchRequest;
@@ -29,7 +28,9 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.StringFieldValue;
+import stroom.query.common.v2.ValFilter;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.extraction.FieldValue;
@@ -47,6 +48,7 @@ import jakarta.inject.Provider;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDecorator {
 
@@ -64,7 +66,6 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     private AnalyticFieldListConsumer fieldListConsumer;
 
     private StreamingAnalytic analytic;
-    private String userDefinedErrorFeedName;
 
     @Inject
     public StreamingAnalyticProcessorTaskDecorator(final StreamingAnalyticCache streamingAnalyticCache,
@@ -84,35 +85,14 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     }
 
     @Override
-    public void init(final ProcessorFilter processorFilter) {
+    public void beforeProcessing(final ProcessorFilter processorFilter) {
         // Load rule.
         final DocRef analyticRuleRef = new DocRef(AnalyticRuleDoc.DOCUMENT_TYPE, processorFilter.getPipelineUuid());
-        final Optional<StreamingAnalytic> optional = streamingAnalyticCache.get(analyticRuleRef);
-        if (optional.isEmpty()) {
+        analytic = streamingAnalyticCache.get(analyticRuleRef);
+        if (analytic == null) {
             throw new RuntimeException("Unable to get analytic from cache: " + analyticRuleRef);
         }
-        analytic = optional.get();
-        final AnalyticRuleDoc doc = analytic.analyticRuleDoc();
-        if (doc != null && doc.getErrorFeed() != null) {
-            userDefinedErrorFeedName = doc.getErrorFeed().getName();
-        }
-    }
 
-    @Override
-    public DocRef getPipeline() {
-        return analytic.viewDoc().getPipeline();
-    }
-
-    @Override
-    public String getErrorFeedName(final Meta meta) {
-        if (userDefinedErrorFeedName != null) {
-            return userDefinedErrorFeedName;
-        }
-        return meta.getFeedName();
-    }
-
-    @Override
-    public void beforeProcessing() {
         fieldListConsumer = createEventConsumer(analytic).orElse(new NullFieldListConsumer());
         fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
         fieldListConsumer.start();
@@ -120,7 +100,14 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
 
     @Override
     public void afterProcessing() {
-        fieldListConsumer.end();
+        if (fieldListConsumer != null) {
+            fieldListConsumer.end();
+        }
+    }
+
+    @Override
+    public DocRef getPipeline() {
+        return analytic.viewDoc().getPipeline();
     }
 
     private Optional<AnalyticFieldListConsumer> createEventConsumer(final StreamingAnalytic analytic) {
@@ -135,24 +122,36 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                 paramMap);
         final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
+        // We need to filter values as we aren't using the LMDB consumer that normally does this for us.
+        final Predicate<Val[]> valFilter = ValFilter.create(
+                tableSettings.getValueFilter(),
+                compiledColumns,
+                searchRequest.getDateTimeSettings(),
+                paramMap,
+                e -> {
+                    throw new RuntimeException(e);
+                });
+
         try {
             final Provider<DetectionConsumer> detectionConsumerProvider =
                     detectionConsumerFactory.create(analytic.analyticRuleDoc());
             detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
             detectionConsumerProxy.setCompiledColumns(compiledColumns);
             detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+            detectionConsumerProxy.setValFilter(valFilter);
 
             final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
                     .create(searchRequest.getQuery().getDataSource(), fieldIndex);
 
             return Optional.of(new StreamingAnalyticFieldListConsumer(
                     searchRequest,
-                    fieldIndex,
+                    compiledColumns,
                     fieldValueExtractor,
                     detectionConsumerProxy,
                     memoryIndex,
                     null,
-                    detectionConsumerProxy));
+                    detectionConsumerProxy,
+                    valFilter));
 
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug(e::getMessage, e);
