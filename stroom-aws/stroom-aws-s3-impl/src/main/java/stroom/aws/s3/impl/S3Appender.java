@@ -170,7 +170,7 @@ public class S3Appender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Set the key name pattern if you want to override the one provided by the S3 config.",
-            defaultValue = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip",
+            defaultValue = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.gz",
             displayPriority = 3)
     public void setKeyNamePattern(final String keyNamePattern) {
         this.keyNamePattern = keyNamePattern;
@@ -202,7 +202,7 @@ public class S3Appender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Apply compression to output objects.",
-            defaultValue = "false",
+            defaultValue = "true",
             displayPriority = 7)
     public void setUseCompression(final boolean useCompression) {
         outputFactory.setUseCompression(useCompression);
