@@ -43,6 +43,7 @@ import org.junit.jupiter.api.TestFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1147,6 +1148,22 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testCollection() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Collection<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.collection(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(Collections.singleton("bar"), List.of("bar"))
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .addCase(Set.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testList() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
@@ -1154,6 +1171,27 @@ class TestNullSafe {
                 .withTestFunction(testCase ->
                         NullSafe.list(testCase.getInput()))
                 .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("bar"), List.of("bar"))
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testUnmodifiableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifialbeList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
                 .addCase(null, Collections.emptyList())
                 .addCase(Collections.emptyList(), Collections.emptyList())
                 .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
@@ -1215,6 +1253,28 @@ class TestNullSafe {
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptySet())
                 .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("bar"), Set.of("bar"))
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testUnmodifiableSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifialbeSet(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("bar"), Set.of("bar"))
                 .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
                 .build();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.explorer.client.presenter;
@@ -51,7 +50,7 @@ public class ExplorerTreeModel {
             .build();
 
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
-    private final NameFilterTimer timer = new NameFilterTimer();
+    private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
     private final RestFactory restFactory;
@@ -81,9 +80,9 @@ public class ExplorerTreeModel {
      * For use when the filter input is being typed by a user.
      */
     public void changeNameFilter(final String name) {
-        timer.setName(name);
-        timer.cancel();
-        timer.schedule(400);
+        nameFilterTimer.setName(name);
+        nameFilterTimer.cancel();
+        nameFilterTimer.schedule(400);
     }
 
     /**
@@ -123,11 +122,12 @@ public class ExplorerTreeModel {
 
     public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
         this.ensureVisible = null;
-        if (ensureVisible != null && ensureVisible.size() > 0) {
+        if (GwtNullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
+//                    GWT.log("setEnsureVisible: " + node.getName());
                 }
             }
         }
@@ -135,11 +135,12 @@ public class ExplorerTreeModel {
 
     public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = null;
-        if (ensureVisible != null && ensureVisible.length > 0) {
+        if (GwtNullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
+//                    GWT.log("setEnsureVisible: " + node.getName());
                 }
             }
         }
@@ -213,7 +214,7 @@ public class ExplorerTreeModel {
             onDataChanged(result);
             // If we have asked the server to ensure one or more nodes are visible then some
             // folders might have been opened to make this happen. The server will tell us which
-            // folders these were so we can add them to the set of open folders to ensure they
+            // folders these were, so we can add them to the set of open folders to ensure they
             // aren't immediately closed on the next refresh.
             if (result.getOpenedItems() != null) {
                 for (final ExplorerNodeKey openedItem : result.getOpenedItems()) {
@@ -235,17 +236,9 @@ public class ExplorerTreeModel {
             // that try and select one of the folders that has been forced open in an attempt to
             // make the requested item visible.
             ExplorerNode nextSelection = forceSelection;
-            if (nextSelection == null &&
-                    criteria.getEnsureVisible() != null &&
-                    criteria.getEnsureVisible().size() > 0) {
-                final ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
-                if (uniqueKey != null) {
-                    nextSelection = ExplorerNode.builder()
-                            .type(uniqueKey.getType())
-                            .uuid(uniqueKey.getUuid())
-                            .rootNodeUuid(uniqueKey.getRootNodeUuid())
-                            .build();
-                }
+            if (nextSelection == null && GwtNullSafe.hasItems(criteria.getEnsureVisible())) {
+                final ExplorerNodeKey ensureVisibleUniqueKey = criteria.getEnsureVisible().iterator().next();
+                nextSelection = GwtNullSafe.get(ensureVisibleUniqueKey, ExplorerNode::fromExplorerNodeKey);
 
                 // If we are allowing null selection then select the NULL node if we have been
                 // asked to ensure NULL is selected after refresh.
@@ -255,21 +248,10 @@ public class ExplorerTreeModel {
                 int index = rows.indexOf(nextSelection);
                 if (index == -1) {
                     nextSelection = null;
+//                    nextSelection = includeNullSelection
+//                            ? NULL_SELECTION
+//                            : null;
 
-                    if (result.getOpenedItems() != null) {
-                        final int openedItemsCnt = result.getOpenedItems().size();
-                        for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
-                            final ExplorerNodeKey item = result.getOpenedItems().get(i);
-                            final ExplorerNode explorerNode = ExplorerNode.builder()
-                                    .type(item.getType())
-                                    .uuid(item.getUuid())
-                                    .rootNodeUuid(item.getRootNodeUuid())
-                                    .build();
-                            if (rows.contains(explorerNode)) {
-                                nextSelection = explorerNode;
-                            }
-                        }
-                    }
                 } else {
                     // Reassign the selection because matches are only by UUID and this will ensure
                     // that we get the latest version with any new name it might have.
@@ -277,6 +259,7 @@ public class ExplorerTreeModel {
                 }
             }
             if (nextSelection != null) {
+//                GWT.log("nextSelection: " + nextSelection);
                 explorerTree.setInitialSelectedItem(nextSelection);
             }
 
@@ -287,8 +270,11 @@ public class ExplorerTreeModel {
             // want to close some folders. To do this we need to forget which nodes we wanted to
             // ensure visibility of. We can forget them now as we have a result that should have
             // opened required folders to make them visible.
-            ensureVisible = null;
-            forceSelection = null;
+            if (nextSelection != null && !NULL_SELECTION.equals(nextSelection)) {
+//                GWT.log("Clearing ensureVisible & forceSelection");
+                ensureVisible = null;
+                forceSelection = null;
+            }
         }
     }
 
@@ -302,7 +288,7 @@ public class ExplorerTreeModel {
         // If we are allowing null selection then insert a node at the root to make it
         // possible.
         if (includeNullSelection) {
-            if (rows.size() == 0 || rows.get(0) != NULL_SELECTION) {
+            if (rows.isEmpty() || rows.get(0) != NULL_SELECTION) {
                 // If there is any quick filter then NULL_SELECTION is a non-match
                 final boolean isFilterMatch = GwtNullSafe.isBlankString(GwtNullSafe.get(
                         currentCriteria,

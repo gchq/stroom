@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
@@ -8,6 +24,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 
@@ -16,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {
@@ -114,21 +132,41 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         } else {
             return docRefs.stream()
                     .filter(Objects::nonNull)
-                    .map(docRef -> decorate(docRef, false))
+                    .map(docRef ->
+                            decorate(docRef, false, null))
                     .collect(Collectors.toList());
         }
     }
 
     @Override
-    public DocRef decorate(final DocRef docRef, final boolean force) {
+    public DocRef decorate(final DocRef docRef,
+                           final boolean force) {
+        return decorate(docRef, force, null);
+    }
+
+    @Override
+    public DocRef decorate(final DocRef docRef,
+                           final boolean force,
+                           final Set<String> requiredPermissions) {
         Objects.requireNonNull(docRef);
 
+        final String uuid = docRef.getUuid();
+        // Allows the caller to do a perm check at the same time as decorating the docRef
+        NullSafe.forEach(requiredPermissions, permName -> {
+            if (!securityContext.hasDocumentPermission(uuid, permName)) {
+                throw new PermissionException(
+                        securityContext.getUserIdentityForAudit(),
+                        "You do not have permission to decorate this "
+                                + Objects.requireNonNullElse(docRef.getType(), "document"));
+            }
+        });
+
         // Special case for System that isn't in the db.
-        if (ExplorerConstants.SYSTEM_DOC_REF.getUuid().equals(docRef.getUuid())) {
+        if (ExplorerConstants.SYSTEM_DOC_REF.getUuid().equals(uuid)) {
             return ExplorerConstants.SYSTEM_DOC_REF;
         }
 
-        // Allow decorate by name alone if feed (special case).
+        // Allow decoration by name alone if feed (special case).
         if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
             final List<DocRef> list = findByName(docRef.getType(), docRef.getName(), false);
             if (!NullSafe.isEmptyCollection(list)) {
@@ -152,4 +190,5 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
             return docRef;
         }
     }
+
 }

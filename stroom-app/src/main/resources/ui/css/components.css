@@ -506,6 +506,20 @@
     cursor: pointer;
 }
 
+.dropDownView-warning {
+    position: absolute;
+    display: flex;
+    bottom: 6px;
+    right: 26px;
+	width: 18px;
+	height: 18px;
+    cursor: pointer;
+}
+
+.dropDownView-warning svg {
+    width: 18px;
+    height: 18px;
+}
 .dropDownView-button svg {
 	width: 15px;
 	height: 15px;

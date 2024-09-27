@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.explorer.client.presenter;
@@ -28,6 +27,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -56,6 +56,7 @@ public class ExplorerPopupPresenter
     private String caption = "Choose item";
     private String initialQuickFilter;
     private ExplorerNode initialSelection;
+    //    private ExplorerNode selection;
     private Consumer<ExplorerNode> selectionChangeConsumer = e -> {
 
     };
@@ -98,32 +99,32 @@ public class ExplorerPopupPresenter
     protected void onHide() {
     }
 
-    public void show(final Consumer<DocRef> consumer) {
-        show(consumer, () -> {
-        });
+    public void show(final Consumer<DocRef> onHideOk) {
+        show(onHideOk, null);
     }
 
-    public void show(final Consumer<DocRef> consumer, final Runnable onShow) {
+    public void show(final Consumer<DocRef> onHideOk, final Runnable onShow) {
         initialSelection = getCurrentSelection();
+
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
+
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> {
-                    onShow.run();
+                    GwtNullSafe.run(onShow);
                     getView().focus();
                 })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode selected = getSelectedEntityData();
                         if (isSelectionAllowed(selected)) {
+//                            selection = selected;
                             selectionChangeConsumer.accept(selected);
                             explorerTree.getSelectionModel().setSelected(selected);
-                            consumer.accept(selected == null
-                                    ? null
-                                    : selected.getDocRef());
+                            onHideOk.accept(GwtNullSafe.get(selected, ExplorerNode::getDocRef));
                             e.hide();
                         } else {
                             AlertEvent.fireError(ExplorerPopupPresenter.this,
@@ -172,7 +173,7 @@ public class ExplorerPopupPresenter
 
     @Override
     public void nameFilterChanged(final String text) {
-//        GWT.log("nameFilterChanged: " + text);
+//        GWT.log("nameFilterChanged: " + text + ", selected: " + explorerTree.getSelectionModel().getSelected());
         explorerTree.changeNameFilter(text);
     }
 
@@ -206,19 +207,22 @@ public class ExplorerPopupPresenter
     }
 
     public DocRef getSelectedEntityReference() {
-        final ExplorerNode explorerNode = getSelectedEntityData();
-        if (explorerNode == null) {
-            return null;
-        }
-        return explorerNode.getDocRef();
+        return GwtNullSafe.get(getSelectedEntityData(), ExplorerNode::getDocRef);
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
+        setSelectedEntityReference(docRef, null);
+    }
+
+    public void setSelectedEntityReference(final DocRef docRef, Runnable onSetSelected) {
         if (docRef != null) {
             restFactory
                     .create(EXPLORER_RESOURCE)
                     .method(res -> res.getFromDocRef(docRef))
-                    .onSuccess(this::setSelectedEntityData)
+                    .onSuccess(explorerNode -> {
+                        setSelectedEntityData(explorerNode);
+                        GwtNullSafe.run(onSetSelected);
+                    })
                     .taskMonitorFactory(this)
                     .exec();
         }
@@ -231,7 +235,6 @@ public class ExplorerPopupPresenter
     private void setSelectedEntityData(final ExplorerNode explorerNode) {
         explorerTree.getSelectionModel().setSelected(explorerNode);
         selectionChangeConsumer.accept(explorerNode);
-        refresh();
     }
 
     public void setAllowFolderSelection(final boolean allowFolderSelection) {

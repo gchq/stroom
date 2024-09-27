@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.client.presenter;
@@ -113,7 +112,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
-        clusterPresenter.setSelectedEntityReference(index.getClusterRef());
+        clusterPresenter.setSelectedEntityReference(index.getClusterRef(), true);
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
         getView().setSearchScrollSize(index.getSearchScrollSize());
@@ -126,7 +125,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         fieldSelectionBoxModel.setDataSourceRef(docRef);
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
     @Override
