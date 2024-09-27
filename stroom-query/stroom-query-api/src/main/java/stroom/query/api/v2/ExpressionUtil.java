@@ -307,10 +307,10 @@ public class ExpressionUtil {
         if (expressionItem == null) {
             return null;
         }
-        if (expressionItem instanceof final ExpressionOperator operator) {
-            return operator;
+        if (expressionItem instanceof ExpressionOperator) {
+            return (ExpressionOperator) expressionItem;
         }
-        return ExpressionOperator.builder().op(Op.AND).children(List.of(expressionItem)).build();
+        return ExpressionOperator.builder().op(Op.AND).children(Collections.singletonList(expressionItem)).build();
     }
 
     private static ExpressionItem simplifyExpressionItem(final ExpressionItem item) {
@@ -319,7 +319,9 @@ public class ExpressionUtil {
             return null;
         }
 
-        if (item instanceof final ExpressionOperator operator) {
+        if (item instanceof ExpressionOperator) {
+            final ExpressionOperator operator = (ExpressionOperator) item;
+
             // Remove empty children.
             final List<ExpressionItem> children = operator.getChildren();
             if (children == null || children.isEmpty()) {
@@ -330,15 +332,16 @@ public class ExpressionUtil {
             for (final ExpressionItem child : children) {
                 final ExpressionItem simplifiedChild = simplifyExpressionItem(child);
                 if (simplifiedChild != null) {
-                    if (simplifiedChild instanceof final ExpressionOperator childOperator) {
+                    if (simplifiedChild instanceof ExpressionOperator) {
+                        final ExpressionOperator childOperator = (ExpressionOperator) simplifiedChild;
                         if (childOperator.getChildren() != null && !childOperator.getChildren().isEmpty()) {
                             if (childOperator.getChildren().size() == 1) {
                                 if (!Op.NOT.equals(operator.op())) {
                                     // Simplify AND(AND()) or AND(OR()) or OR(AND()) or OR(OR())
-                                    simplifiedChildren.add(childOperator.getChildren().getFirst());
+                                    simplifiedChildren.add(childOperator.getChildren().get(0));
                                 } else if (Op.NOT.equals(childOperator.op())) {
                                     // Simplify NOT(NOT())
-                                    simplifiedChildren.add(childOperator.getChildren().getFirst());
+                                    simplifiedChildren.add(childOperator.getChildren().get(0));
                                 } else {
                                     simplifiedChildren.add(childOperator);
                                 }
