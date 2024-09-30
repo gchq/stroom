@@ -7,6 +7,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.SearchRequest;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -16,13 +17,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 import stroom.view.shared.ViewDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-
-import java.util.Optional;
 
 @Singleton
 @EntityEventHandler(
@@ -36,7 +36,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
     private final AnalyticHelper analyticHelper;
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
-    private final LoadingStroomCache<DocRef, Optional<StreamingAnalytic>> cache;
+    private final LoadingStroomCache<DocRef, StreamingAnalytic> cache;
     private final SecurityContext securityContext;
 
     @Inject
@@ -56,11 +56,15 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 this::loadStreamingAnalytic);
     }
 
-    public Optional<StreamingAnalytic> get(final DocRef analyticRuleRef) {
+    public StreamingAnalytic get(final DocRef analyticRuleRef) {
+        if (!securityContext.hasDocumentPermission(analyticRuleRef.getUuid(), DocumentPermissionNames.USE)) {
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                    "You do not have permission to use this analytic doc");
+        }
         return cache.get(analyticRuleRef);
     }
 
-    private Optional<StreamingAnalytic> loadStreamingAnalytic(final DocRef analyticRuleRef) {
+    private StreamingAnalytic loadStreamingAnalytic(final DocRef analyticRuleRef) {
         return securityContext.asProcessingUserResult(() -> {
             try {
                 LOGGER.debug("Loading streaming analytic: {}", analyticRuleRef);
@@ -85,15 +89,15 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 }
 
                 LOGGER.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
-                return Optional.of(new StreamingAnalytic(
+                return new StreamingAnalytic(
                         ruleIdentity,
                         analyticRuleDoc,
                         searchRequest,
-                        viewDoc));
+                        viewDoc);
             } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.debug(e::getMessage, e);
+                throw e;
             }
-            return Optional.empty();
         });
     }
 

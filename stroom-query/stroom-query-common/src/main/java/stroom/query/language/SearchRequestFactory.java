@@ -22,6 +22,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.ParamSubstituteUtil;
@@ -277,7 +278,9 @@ public class SearchRequestFactory {
 
             if (!whereGroup.isEmpty()) {
                 final ExpressionOperator expressionOperator = processLogic(whereGroup);
-                expressionConsumer.accept(expressionOperator);
+                // Simplify expression.
+                final ExpressionOperator simplifiedExpression = ExpressionUtil.simplify(expressionOperator);
+                expressionConsumer.accept(simplifiedExpression);
             } else {
                 expressionConsumer.accept(ExpressionOperator.builder().build());
             }

@@ -19,42 +19,27 @@ select StreamId, EventId, EventTime, Status
         "children" : [ {
           "type" : "operator",
           "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "operator",
-              "children" : [ {
-                "type" : "term",
-                "field" : "UserId",
-                "condition" : "EQUALS",
-                "value" : "user5"
-              } ]
-            } ]
+            "type" : "term",
+            "field" : "UserId",
+            "condition" : "EQUALS",
+            "value" : "user5"
           }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Description",
-              "condition" : "EQUALS",
-              "value" : "e0567"
-            } ]
+            "type" : "term",
+            "field" : "Description",
+            "condition" : "EQUALS",
+            "value" : "e0567"
           } ]
         }, {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "LESS_THAN_OR_EQUAL_TO",
-            "value" : "2000-01-01T00:00:00.000Z"
-          } ]
-        } ]
-      }, {
-        "type" : "operator",
-        "children" : [ {
           "type" : "term",
           "field" : "EventTime",
-          "condition" : "GREATER_THAN_OR_EQUAL_TO",
-          "value" : "2016-01-02T00:00:00.000Z"
+          "condition" : "LESS_THAN_OR_EQUAL_TO",
+          "value" : "2000-01-01T00:00:00.000Z"
         } ]
+      }, {
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "value" : "2016-01-02T00:00:00.000Z"
       } ]
     }
   },
@@ -126,42 +111,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "children" : [ {
           "type" : "operator",
           "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "operator",
-              "children" : [ {
-                "type" : "term",
-                "field" : "UserId",
-                "condition" : "EQUALS",
-                "value" : "user5"
-              } ]
-            } ]
+            "type" : "term",
+            "field" : "UserId",
+            "condition" : "EQUALS",
+            "value" : "user5"
           }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Description",
-              "condition" : "EQUALS",
-              "value" : "e0567"
-            } ]
+            "type" : "term",
+            "field" : "Description",
+            "condition" : "EQUALS",
+            "value" : "e0567"
           } ]
         }, {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "LESS_THAN_OR_EQUAL_TO",
-            "value" : "2000-01-01T00:00:00.000Z"
-          } ]
-        } ]
-      }, {
-        "type" : "operator",
-        "children" : [ {
           "type" : "term",
           "field" : "EventTime",
-          "condition" : "GREATER_THAN_OR_EQUAL_TO",
-          "value" : "2016-01-02T00:00:00.000Z"
+          "condition" : "LESS_THAN_OR_EQUAL_TO",
+          "value" : "2000-01-01T00:00:00.000Z"
         } ]
+      }, {
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "value" : "2016-01-02T00:00:00.000Z"
       } ]
     }
   },
@@ -234,41 +204,117 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "children" : [ {
           "type" : "operator",
           "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "operator",
-              "children" : [ {
-                "type" : "term",
-                "field" : "UserId",
-                "condition" : "EQUALS",
-                "value" : "user5"
-              } ]
-            } ]
+            "type" : "term",
+            "field" : "UserId",
+            "condition" : "EQUALS",
+            "value" : "user5"
           }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Description",
-              "condition" : "EQUALS",
-              "value" : "e0567"
-            } ]
+            "type" : "term",
+            "field" : "Description",
+            "condition" : "EQUALS",
+            "value" : "e0567"
           } ]
         }, {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "LESS_THAN_OR_EQUAL_TO",
-            "value" : "2000-01-01T00:00:00.000Z"
-          } ]
-        } ]
-      }, {
-        "type" : "operator",
-        "children" : [ {
           "type" : "term",
           "field" : "EventTime",
-          "condition" : "GREATER_THAN_OR_EQUAL_TO",
-          "value" : "2016-01-02T00:00:00.000Z"
+          "condition" : "LESS_THAN_OR_EQUAL_TO",
+          "value" : "2000-01-01T00:00:00.000Z"
+        } ]
+      }, {
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "value" : "2016-01-02T00:00:00.000Z"
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN",
+        "value" : "2023-05-05T00:00:00.000Z"
+      }, {
+        "type" : "operator",
+        "op" : "OR",
+        "children" : [ {
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blah"
+        }, {
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blip"
         } ]
       } ]
     }
@@ -343,144 +389,23 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "GREATER_THAN",
-            "value" : "2023-05-05T00:00:00.000Z"
-          } ]
-        } ]
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN",
+        "value" : "2023-05-05T00:00:00.000Z"
       }, {
         "type" : "operator",
+        "op" : "OR",
         "children" : [ {
-          "type" : "operator",
-          "op" : "OR",
-          "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blah"
-            } ]
-          }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blip"
-            } ]
-          } ]
-        } ]
-      } ]
-    }
-  },
-  "resultRequests" : [ {
-    "componentId" : "table",
-    "mappings" : [ {
-      "fields" : [ {
-        "id" : "StreamId",
-        "name" : "Stream Id",
-        "expression" : "${StreamId}",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      }, {
-        "id" : "EventId",
-        "name" : "Event Id",
-        "expression" : "${EventId}",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      }, {
-        "id" : "EventTime",
-        "name" : "Event Time",
-        "expression" : "${EventTime}",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      }, {
-        "id" : "Status",
-        "name" : "Status",
-        "expression" : "${Status}",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      }, {
-        "id" : "UserId",
-        "name" : "User Id",
-        "expression" : "upperCase(${UserId})",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      } ]
-    } ],
-    "resultStyle" : "TABLE",
-    "fetch" : "ALL"
-  } ],
-  "incremental" : false,
-  "dateTimeSettings" : {
-    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
-    "localZoneId" : "Z",
-    "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
-  }
-}
------
-from 'Test Index'
-where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
-eval UserId = upperCase(UserId)
-select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
-=====
-{
-  "key" : {
-    "uuid" : "test"
-  },
-  "query" : {
-    "dataSource" : {
-      "name" : "Test Index"
-    },
-    "expression" : {
-      "type" : "operator",
-      "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "GREATER_THAN",
-            "value" : "2023-05-05T00:00:00.000Z"
-          } ]
-        } ]
-      }, {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "operator",
-          "op" : "OR",
-          "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blah"
-            } ]
-          }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blip"
-            } ]
-          } ]
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blah"
+        }, {
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blip"
         } ]
       } ]
     }
@@ -555,13 +480,10 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "EventTime",
-          "condition" : "LESS_THAN_OR_EQUAL_TO",
-          "value" : "day()-1d-1h"
-        } ]
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "LESS_THAN_OR_EQUAL_TO",
+        "value" : "day()-1d-1h"
       } ]
     }
   },
@@ -634,13 +556,10 @@ select StreamId
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "EventTime",
-          "condition" : "BETWEEN",
-          "value" : "2022-05-05T00:00:00.000Z, 2023-05-05T00:00:00.000Z"
-        } ]
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "BETWEEN",
+        "value" : "2022-05-05T00:00:00.000Z, 2023-05-05T00:00:00.000Z"
       } ]
     }
   },
@@ -693,13 +612,10 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "my.name",
-          "condition" : "EQUALS",
-          "value" : "foo bar"
-        } ]
+        "type" : "term",
+        "field" : "my.name",
+        "condition" : "EQUALS",
+        "value" : "foo bar"
       } ]
     }
   },
@@ -773,13 +689,10 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "my.name",
-          "condition" : "EQUALS",
-          "value" : "foo bar"
-        } ]
+        "type" : "term",
+        "field" : "my.name",
+        "condition" : "EQUALS",
+        "value" : "foo bar"
       } ]
     }
   },
@@ -853,13 +766,10 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "my.name",
-          "condition" : "EQUALS",
-          "value" : "\"foo bar\""
-        } ]
+        "type" : "term",
+        "field" : "my.name",
+        "condition" : "EQUALS",
+        "value" : "\"foo bar\""
       } ]
     }
   },
@@ -1207,13 +1117,10 @@ select ${Stream Id}, ${Event Time}
       "aggregateFilter" : {
         "type" : "operator",
         "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "Stream Id",
-            "condition" : "GREATER_THAN",
-            "value" : "-2"
-          } ]
+          "type" : "term",
+          "field" : "Stream Id",
+          "condition" : "GREATER_THAN",
+          "value" : "-2"
         } ]
       }
     } ],
@@ -1272,13 +1179,10 @@ select ${Event Time}
       "aggregateFilter" : {
         "type" : "operator",
         "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "Stream Id",
-            "condition" : "GREATER_THAN",
-            "value" : "-2"
-          } ]
+          "type" : "term",
+          "field" : "Stream Id",
+          "condition" : "GREATER_THAN",
+          "value" : "-2"
         } ]
       }
     } ],
@@ -1311,15 +1215,12 @@ select StreamId
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "StreamId",
-          "condition" : "IN_DICTIONARY",
-          "docRef" : {
-            "name" : "my_dictionary"
-          }
-        } ]
+        "type" : "term",
+        "field" : "StreamId",
+        "condition" : "IN_DICTIONARY",
+        "docRef" : {
+          "name" : "my_dictionary"
+        }
       } ]
     }
   },
@@ -1371,13 +1272,10 @@ select StreamId
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "term",
-          "field" : "StreamId",
-          "condition" : "IN",
-          "value" : "123, 456"
-        } ]
+        "type" : "term",
+        "field" : "StreamId",
+        "condition" : "IN",
+        "value" : "123, 456"
       } ]
     }
   },
@@ -1439,38 +1337,23 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "GREATER_THAN",
-            "value" : "2023-05-05T00:00:00.000Z"
-          } ]
-        } ]
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN",
+        "value" : "2023-05-05T00:00:00.000Z"
       }, {
         "type" : "operator",
+        "op" : "OR",
         "children" : [ {
-          "type" : "operator",
-          "op" : "OR",
-          "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blah"
-            } ]
-          }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blip"
-            } ]
-          } ]
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blah"
+        }, {
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blip"
         } ]
       } ]
     }
@@ -1554,38 +1437,23 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "GREATER_THAN",
-            "value" : "2023-05-05T00:00:00.000Z"
-          } ]
-        } ]
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN",
+        "value" : "2023-05-05T00:00:00.000Z"
       }, {
         "type" : "operator",
+        "op" : "OR",
         "children" : [ {
-          "type" : "operator",
-          "op" : "OR",
-          "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blah"
-            } ]
-          }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blip"
-            } ]
-          } ]
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blah"
+        }, {
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blip"
         } ]
       } ]
     }
@@ -1670,38 +1538,23 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "expression" : {
       "type" : "operator",
       "children" : [ {
-        "type" : "operator",
-        "children" : [ {
-          "type" : "operator",
-          "children" : [ {
-            "type" : "term",
-            "field" : "EventTime",
-            "condition" : "GREATER_THAN",
-            "value" : "2023-05-05T00:00:00.000Z"
-          } ]
-        } ]
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "GREATER_THAN",
+        "value" : "2023-05-05T00:00:00.000Z"
       }, {
         "type" : "operator",
+        "op" : "OR",
         "children" : [ {
-          "type" : "operator",
-          "op" : "OR",
-          "children" : [ {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blah"
-            } ]
-          }, {
-            "type" : "operator",
-            "children" : [ {
-              "type" : "term",
-              "field" : "Field",
-              "condition" : "EQUALS",
-              "value" : "blip"
-            } ]
-          } ]
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blah"
+        }, {
+          "type" : "term",
+          "field" : "Field",
+          "condition" : "EQUALS",
+          "value" : "blip"
         } ]
       } ]
     }

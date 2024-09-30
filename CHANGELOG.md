@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
+
+* Issue **#4476** : Fix streaming analytic issue where it failed to match after seeing records with missing query fields.
+
 * Issue **#4412** : Fix `/` key not working in quick filter text input fields.
 
 * Issue **#4463** : Fix NPE with analytic rule email templating.
