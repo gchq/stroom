@@ -13,6 +13,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.16] - 2024-09-30
+
+* Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
+
+* Issue **#4455** : Add Goto Document links to the Imports sub-tab of the Dictionary screen. Also add new Effective Words tab to list all the words in the dictionary that include those from its imports (and their imports).
+
+* Issue **#4468** : Improve handling of key sequences and detection of key events from ACE editor.
+
+* Issue **#4472** : Change the User Preferences dialog to cope with redundant stroom/editor theme names.
+
+* Issue **#4479** : Add ability to assume role for S3.
+
+* Issue **#4202** : Fix problems with Dashboard Extraction Pipeline picker incorrectly changing the selected pipeline.
+
+* Change the DocRef picker so that it shows a warning icon if the selected DocRef no longer exists or the user doesn't have permission to view it.
+
+* Change the Extraction Pipeline picker on the Index Settings screen to pre-filter on `tag:extraction`. This is configured using the property `stroom.ui.query.indexPipelineSelectorIncludedTags`.
+
 * Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
 
 * Issue **#4476** : Fix streaming analytic issue where it failed to match after seeing records with missing query fields.
@@ -21,6 +39,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4463** : Fix NPE with analytic rule email templating.
  
+
 
 ## [v7.5-beta.15] - 2024-09-24
 
@@ -82,7 +101,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Change the hard-coded test credentials to match those in v7.2 so that a test stack with 7.0 proxy and 7.2 stroom can communicate with each other. This change has no bearing on production deployments.
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
-
 
 
 ## [v7.5-beta.11] - 2024-09-04
@@ -845,7 +863,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.16...HEAD
+[v7.5-beta.16]: https://github.com/gchq/stroom/compare/v7.5-beta.15...v7.5-beta.16
 [v7.5-beta.15]: https://github.com/gchq/stroom/compare/v7.5-beta.14...v7.5-beta.15
 [v7.5-beta.14]: https://github.com/gchq/stroom/compare/v7.5-beta.13...v7.5-beta.14
 [v7.5-beta.13]: https://github.com/gchq/stroom/compare/v7.5-beta.12...v7.5-beta.13
