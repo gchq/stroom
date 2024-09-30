@@ -67,6 +67,7 @@ public class ExplorerTreeModel {
     private boolean includeNullSelection;
 
     private List<ExplorerNode> currentRootNodes;
+    private boolean selectParentIfNotFound = false;
 
     ExplorerTreeModel(final AbstractExplorerTree explorerTree,
                       final RestFactory restFactory,
@@ -148,6 +149,10 @@ public class ExplorerTreeModel {
 
     public void setShowAlerts(final boolean showAlerts) {
         this.showAlerts = showAlerts;
+    }
+
+    public void setSelectParentIfNotFound(final boolean selectParentIfNotFound) {
+        this.selectParentIfNotFound = selectParentIfNotFound;
     }
 
     public void refresh() {
@@ -248,10 +253,26 @@ public class ExplorerTreeModel {
                 int index = rows.indexOf(nextSelection);
                 if (index == -1) {
                     nextSelection = null;
-//                    nextSelection = includeNullSelection
-//                            ? NULL_SELECTION
-//                            : null;
 
+                    // In some use cases, like copy/move, the selected item will not be found as it is not
+                    // a folder, so we want to select the parent of the 'selected item' so we can copy/move
+                    // into that folder as a default.
+                    if (selectParentIfNotFound) {
+                        if (result.getOpenedItems() != null) {
+                            final int openedItemsCnt = result.getOpenedItems().size();
+                            for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
+                                final ExplorerNodeKey item = result.getOpenedItems().get(i);
+                                final ExplorerNode explorerNode = ExplorerNode.builder()
+                                        .type(item.getType())
+                                        .uuid(item.getUuid())
+                                        .rootNodeUuid(item.getRootNodeUuid())
+                                        .build();
+                                if (rows.contains(explorerNode)) {
+                                    nextSelection = explorerNode;
+                                }
+                            }
+                        }
+                    }
                 } else {
                     // Reassign the selection because matches are only by UUID and this will ensure
                     // that we get the latest version with any new name it might have.

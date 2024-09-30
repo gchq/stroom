@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -101,20 +102,24 @@ public class ContentManager implements HasHandlers {
                        final boolean logoffAfterClose,
                        final TabData tabData) {
         final CloseContentEvent.Handler closeHandler = handlerMap.get(tabData);
-        Callback callback = ok -> {
-            if (ok) {
-                forceClose(tabData);
+        if (closeHandler != null) {
+            Callback callback = ok -> {
+                if (ok) {
+                    forceClose(tabData);
 
-                // Logoff if there are no more open tabs and we have been
-                // asked
-                // to logoff after close.
-                if (logoffAfterClose && handlerMap.size() == 0) {
-                    LogoutEvent.fire(ContentManager.this);
+                    // Logoff if there are no more open tabs and we have been
+                    // asked
+                    // to logoff after close.
+                    if (logoffAfterClose && handlerMap.isEmpty()) {
+                        LogoutEvent.fire(ContentManager.this);
+                    }
                 }
-            }
-        };
-        final CloseContentEvent event = new CloseContentEvent(ignoreIfDirty, callback);
-        closeHandler.onCloseRequest(event);
+            };
+            final CloseContentEvent event = new CloseContentEvent(ignoreIfDirty, callback);
+            closeHandler.onCloseRequest(event);
+        } else {
+            GWT.log("No close handler for " + tabData.getType() + " - " + tabData.getLabel());
+        }
     }
 
     public void forceClose(final TabData tabData) {

@@ -137,6 +137,21 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                         "With incorrect day of week",
                         List.of("Mon Aug 14 2024", "EEE MMM dd yyyy"), // Should be a Wed
                         NoSuchElementException.class)
+                .addCase(List.of("2001 12 31", "y M d"), "2001-12-31T00:00:00.000Z")
+                .addCase(List.of("2001 12 31", "yy MM dd"), "2001-12-31T00:00:00.000Z")
+                .addThrowsCase(List.of("2001 12 31", "yyy MMM ddd"), NoSuchElementException.class)
+                .addThrowsCase(List.of("2001 12 31", "yyy MM ddd"), NoSuchElementException.class)
+                .addCase(List.of("2001 12 31", "yyy MMM dd"), "2001-12-31T00:00:00.000Z")
+                .addCase(List.of("2001 12 31", "yyy MM dd"), "2001-12-31T00:00:00.000Z")
+                .addCase(List.of("2001 12 31", "yyyy MM dd"), "2001-12-31T00:00:00.000Z")
+                .addThrowsCase(List.of("2001 Dec 31", "y M d"), NoSuchElementException.class)
+                .addCase(List.of("2001 Dec 31", "y MMM d"), "2001-12-31T00:00:00.000Z")
+                .addCase(List.of("2001 12 31 22:58:32.123", "y M d H:m:s.S"),
+                        "2001-12-31T22:58:32.123Z")
+                .addCase(List.of("2001 12 31 22:58:32.123", "y M d HH:mm:ss.SSS"),
+                        "2001-12-31T22:58:32.123Z")
+                .addCase(List.of("2001 12 31 9:3:5.12 pm", "y M d h:m:s.S a"),
+                        "2001-12-31T21:03:05.120Z")
                 .build();
     }
 
