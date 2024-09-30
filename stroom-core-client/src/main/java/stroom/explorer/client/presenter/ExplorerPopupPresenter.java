@@ -55,8 +55,6 @@ public class ExplorerPopupPresenter
     private boolean allowFolderSelection;
     private String caption = "Choose item";
     private String initialQuickFilter;
-    private ExplorerNode initialSelection;
-    //    private ExplorerNode selection;
     private Consumer<ExplorerNode> selectionChangeConsumer = e -> {
 
     };
@@ -104,7 +102,6 @@ public class ExplorerPopupPresenter
     }
 
     public void show(final Consumer<DocRef> onHideOk, final Runnable onShow) {
-        initialSelection = getCurrentSelection();
 
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
@@ -150,7 +147,6 @@ public class ExplorerPopupPresenter
             // update the name of their selected item properly.
             if (initial) {
                 selectionChangeConsumer.accept(selected);
-                initialSelection = selected;
 
             } else if (selectionType.isDoubleSelect()) {
                 selectionChangeConsumer.accept(selected);

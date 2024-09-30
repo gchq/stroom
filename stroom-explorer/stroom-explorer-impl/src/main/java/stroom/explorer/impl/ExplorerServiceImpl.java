@@ -933,7 +933,11 @@ class ExplorerServiceImpl
      */
     private DocRef getDestinationFolderRef(final ExplorerNode destinationFolder) {
         if (destinationFolder != null) {
-            return destinationFolder.getDocRef();
+            final DocRef destDocRef = destinationFolder.getDocRef();
+            if (!ExplorerConstants.isFolder(destDocRef) && !ExplorerConstants.isRootNode(destinationFolder)) {
+                throw new IllegalArgumentException(destDocRef + " is not a valid destination folder");
+            }
+            return destDocRef;
         }
 
         final ExplorerNode rootNode = explorerNodeService.getRoot();
@@ -1051,7 +1055,8 @@ class ExplorerServiceImpl
                 // Create the explorer node
                 if (destinationDocRef != null) {
                     // Copy the explorer node.
-                    explorerNodeService.copyNode(sourceNode.getDocRef(),
+                    explorerNodeService.copyNode(
+                            sourceNode,
                             destinationDocRef,
                             destinationFolderRef,
                             permissionInheritance);

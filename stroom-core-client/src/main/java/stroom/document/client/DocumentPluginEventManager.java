@@ -572,7 +572,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
         boolean success = true;
-        if (result.getMessage().length() > 0) {
+        if (GwtNullSafe.isNonBlankString(result.getMessage())) {
             AlertEvent.fireInfo(DocumentPluginEventManager.this,
                     "Unable to delete some items",
                     result.getMessage(),
@@ -581,7 +581,10 @@ public class DocumentPluginEventManager extends Plugin {
             success = false;
         }
 
-        RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
+        if (selectedTab != null) {
+            // TODO not sure why this is here
+            RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
+        }
 
         // Refresh the tree
         RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
