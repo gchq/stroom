@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.view.client.presenter;
@@ -95,8 +94,8 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
     @Override
     protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
-        dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
-        pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
+        dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource(), true);
+        pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline(), true);
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(MetaFields.getAllFields());
         expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);

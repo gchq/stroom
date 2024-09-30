@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ui.config.shared;
 
 import stroom.explorer.shared.ExplorerNode;
@@ -26,6 +42,8 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
     private final Set<String> dashboardPipelineSelectorIncludedTags;
     @JsonProperty
     private final Set<String> viewPipelineSelectorIncludedTags;
+    @JsonProperty
+    private final Set<String> indexPipelineSelectorIncludedTags;
 
     public QueryConfig() {
         infoPopup = new InfoPopupConfig();
@@ -33,6 +51,7 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
         // At some point we might want to do this if we are certain
         dashboardPipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(StandardExplorerTags.EXTRACTION);
         viewPipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(StandardExplorerTags.EXTRACTION);
+        indexPipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(StandardExplorerTags.EXTRACTION);
     }
 
     //    @Inject
@@ -41,7 +60,8 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
     public QueryConfig(
             @JsonProperty("infoPopup") final InfoPopupConfig infoPopup,
             @JsonProperty("dashboardPipelineSelectorIncludedTags") final Set<String> dashboardPipelineSelectorIncludedTags,
-            @JsonProperty("viewPipelineSelectorIncludedTags") final Set<String> viewPipelineSelectorIncludedTags) {
+            @JsonProperty("viewPipelineSelectorIncludedTags") final Set<String> viewPipelineSelectorIncludedTags,
+            @JsonProperty("indexPipelineSelectorIncludedTags") final Set<String> indexPipelineSelectorIncludedTags) {
         this.infoPopup = infoPopup;
 //        if (infoPopup != null) {
 //            this.infoPopup = infoPopup;
@@ -50,6 +70,7 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
 //        }
         this.dashboardPipelineSelectorIncludedTags = dashboardPipelineSelectorIncludedTags;
         this.viewPipelineSelectorIncludedTags = viewPipelineSelectorIncludedTags;
+        this.indexPipelineSelectorIncludedTags = indexPipelineSelectorIncludedTags;
     }
 
     public InfoPopupConfig getInfoPopup() {
@@ -73,6 +94,14 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
         return viewPipelineSelectorIncludedTags;
     }
 
+    @AllMatchPattern(pattern = ExplorerNode.TAG_PATTERN_STR)
+    @JsonPropertyDescription("Set of explorer tags to use as a filter on the Index screen's Pipeline selector. " +
+            "Explorer nodes will only be included if they have at least all the tags in this property. " +
+            "This property should contain a sub set of the tags in property stroom.explorer.suggestedTags")
+    public Set<String> getIndexPipelineSelectorIncludedTags() {
+        return indexPipelineSelectorIncludedTags;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -84,11 +113,26 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
         final QueryConfig that = (QueryConfig) o;
         return Objects.equals(infoPopup, that.infoPopup)
                 && Objects.equals(dashboardPipelineSelectorIncludedTags, that.dashboardPipelineSelectorIncludedTags)
-                && Objects.equals(viewPipelineSelectorIncludedTags, that.viewPipelineSelectorIncludedTags);
+                && Objects.equals(viewPipelineSelectorIncludedTags, that.viewPipelineSelectorIncludedTags)
+                && Objects.equals(indexPipelineSelectorIncludedTags, that.indexPipelineSelectorIncludedTags);
+
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(infoPopup, dashboardPipelineSelectorIncludedTags, viewPipelineSelectorIncludedTags);
+        return Objects.hash(infoPopup,
+                dashboardPipelineSelectorIncludedTags,
+                viewPipelineSelectorIncludedTags,
+                indexPipelineSelectorIncludedTags);
+    }
+
+    @Override
+    public String toString() {
+        return "QueryConfig{" +
+                "infoPopup=" + infoPopup +
+                ", dashboardPipelineSelectorIncludedTags=" + dashboardPipelineSelectorIncludedTags +
+                ", viewPipelineSelectorIncludedTags=" + viewPipelineSelectorIncludedTags +
+                ", indexPipelineSelectorIncludedTags=" + indexPipelineSelectorIncludedTags +
+                '}';
     }
 }

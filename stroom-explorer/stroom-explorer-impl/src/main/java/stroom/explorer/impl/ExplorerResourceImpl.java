@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -29,6 +30,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DecorateRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
@@ -51,7 +53,10 @@ import stroom.explorer.shared.FindResult;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.user.api.UserNameService;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
@@ -71,6 +76,8 @@ import java.util.stream.Collectors;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
 
     private final Provider<ExplorerService> explorerServiceProvider;
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
@@ -184,10 +191,23 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public DocRef decorate(final DocRef docRef) {
-        return NullSafe.get(docRef,
-                docRef2 -> docRefInfoServiceProvider.get()
-                        .decorate(docRef, true));
+    public DocRef decorate(final DecorateRequest decorateRequest) {
+
+        Objects.requireNonNull(decorateRequest);
+        try {
+            return NullSafe.get(decorateRequest,
+                    req -> docRefInfoServiceProvider.get()
+                            .decorate(req.getDocRef(),
+                                    true,
+                                    req.getRequiredPermissions()));
+        } catch (DocumentNotFoundException | PermissionException e) {
+            LOGGER.debug("docRef not found - {}", decorateRequest, e);
+            return null;
+        } catch (Exception e) {
+            // Something unexpected
+            LOGGER.error("Error decorating docRef - {}", decorateRequest, e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

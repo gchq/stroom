@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class ImportConfigConfirmPresenter extends
         super(eventBus, view, proxy);
         this.rootFolderPresenter = rootFolderPresenter;
 
-        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF);
+        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF, false);
         rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER);
         rootFolderPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         rootFolderPresenter.setAllowFolderSelection(true);

@@ -1169,6 +1169,8 @@ appConfig:
     query:
       dashboardPipelineSelectorIncludedTags:
       - "extraction"
+      indexPipelineSelectorIncludedTags:
+      - "extraction"
       infoPopup:
         enabled: false
         title: "Please Provide Query Info"

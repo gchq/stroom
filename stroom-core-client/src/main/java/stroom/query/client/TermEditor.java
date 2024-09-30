@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.StringUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -44,6 +43,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TermEditor extends Composite {
 
@@ -355,7 +355,7 @@ public class TermEditor extends Composite {
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
             }
-            docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef());
+            docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef(), true);
         }
     }
 
@@ -441,7 +441,7 @@ public class TermEditor extends Composite {
         if (docSelectionBoxPresenter != null) {
             registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
                 final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
-                if (!EqualsUtil.isEquals(term.getDocRef(), selection)) {
+                if (!Objects.equals(term.getDocRef(), selection)) {
                     write(term);
                     fireDirty();
                 }

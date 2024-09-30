@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client;
@@ -62,6 +61,7 @@ import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DecorateRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
@@ -346,14 +346,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the copy document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (result.getMessage().length() > 0) {
+                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to copy some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (result.getExplorerNodes().size() > 0) {
+                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -733,18 +733,43 @@ public class DocumentPluginEventManager extends Plugin {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory
                     .create(EXPLORER_RESOURCE)
-                    .method(res -> res.decorate(docRef))
+                    .method(res ->
+                            res.decorate(DecorateRequest.create(docRef)))
                     .onSuccess(decoratedDocRef -> {
-                        if (decoratedDocRef != null) {
-                            documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
-                                    new DefaultTaskMonitorFactory(this));
-                            highlight(decoratedDocRef, explorerListener);
-                        }
+                        documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
+                                new DefaultTaskMonitorFactory(this));
+                        highlight(decoratedDocRef, explorerListener);
+                    })
+                    .onFailure(error -> {
+                        AlertEvent.fireError(DocumentPluginEventManager.this,
+                                buildNotFoundMessage(docRef),
+                                null);
                     })
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+        }
+    }
+
+    public static String buildNotFoundMessage(final DocRef docRef) {
+        if (docRef != null) {
+            final String type = docRef.getType();
+            final String uuid = docRef.getUuid();
+            final String displayName = GwtNullSafe.getOrElse(
+                    docRef.getName(),
+                    name -> "'" + name + "' (" + uuid + ")",
+                    uuid);
+            final String prefix = type != null
+                    ? type
+                    : "Document";
+
+            return prefix +
+                    " " +
+                    displayName +
+                    " doesn't exist or you do not have permission to open it.";
+        } else {
+            return null;
         }
     }
 
