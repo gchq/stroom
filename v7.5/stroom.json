@@ -3570,11 +3570,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
+                "$ref" : "#/components/schemas/DecorateRequest"
               }
             }
           },
-          "description" : "docRef",
+          "description" : "decorateRequest",
           "required" : true
         },
         "responses" : {
@@ -10782,10 +10782,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
+                  "$ref" : "#/components/schemas/WordList"
                 }
               }
             },
@@ -11576,6 +11573,85 @@
           "$ref" : "#/components/schemas/AwsCredentials"
         } ]
       },
+      "AwsAssumeRole" : {
+        "type" : "object",
+        "properties" : {
+          "clientConfig" : {
+            "$ref" : "#/components/schemas/AwsAssumeRoleClientConfig"
+          },
+          "request" : {
+            "$ref" : "#/components/schemas/AwsAssumeRoleRequest"
+          }
+        }
+      },
+      "AwsAssumeRoleClientConfig" : {
+        "type" : "object",
+        "properties" : {
+          "credentials" : {
+            "$ref" : "#/components/schemas/AwsCredentials"
+          },
+          "endpointOverride" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AwsAssumeRoleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "durationSeconds" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "externalId" : {
+            "type" : "string"
+          },
+          "policy" : {
+            "type" : "string"
+          },
+          "policyArns" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AwsPolicyDescriptorType"
+            }
+          },
+          "providedContexts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AwsProvidedContext"
+            }
+          },
+          "roleArn" : {
+            "type" : "string"
+          },
+          "roleSessionName" : {
+            "type" : "string"
+          },
+          "serialNumber" : {
+            "type" : "string"
+          },
+          "sourceIdentity" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AwsTag"
+            }
+          },
+          "tokenCode" : {
+            "type" : "string"
+          },
+          "transitiveTagKeys" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
       "AwsBasicCredentials" : {
         "type" : "object",
         "allOf" : [ {
@@ -11630,6 +11706,14 @@
           }
         }
       },
+      "AwsPolicyDescriptorType" : {
+        "type" : "object",
+        "properties" : {
+          "arn" : {
+            "type" : "string"
+          }
+        }
+      },
       "AwsProfileCredentials" : {
         "type" : "object",
         "allOf" : [ {
@@ -11645,6 +11729,17 @@
             }
           }
         } ]
+      },
+      "AwsProvidedContext" : {
+        "type" : "object",
+        "properties" : {
+          "contextAssertion" : {
+            "type" : "string"
+          },
+          "providerArn" : {
+            "type" : "string"
+          }
+        }
       },
       "AwsProxyConfig" : {
         "type" : "object",
@@ -11694,6 +11789,17 @@
         "allOf" : [ {
           "$ref" : "#/components/schemas/AwsCredentials"
         } ]
+      },
+      "AwsTag" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
       },
       "AwsWebCredentials" : {
         "type" : "object",
@@ -12943,6 +13049,21 @@
           }
         },
         "required" : [ "localZoneId", "referenceTime" ]
+      },
+      "DecorateRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
       },
       "DefaultLocation" : {
         "type" : "object",
@@ -17487,6 +17608,13 @@
             },
             "uniqueItems" : true
           },
+          "indexPipelineSelectorIncludedTags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
           "infoPopup" : {
             "$ref" : "#/components/schemas/InfoPopupConfig"
           },
@@ -18657,6 +18785,9 @@
         "properties" : {
           "accelerate" : {
             "type" : "boolean"
+          },
+          "assumeRole" : {
+            "$ref" : "#/components/schemas/AwsAssumeRole"
           },
           "async" : {
             "type" : "boolean"
@@ -19928,6 +20059,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "foundLocation" : {
+            "$ref" : "#/components/schemas/StepLocation"
+          },
           "foundRecord" : {
             "type" : "boolean"
           },
@@ -19937,6 +20071,9 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          },
+          "progressLocation" : {
+            "$ref" : "#/components/schemas/StepLocation"
           },
           "segmentedData" : {
             "type" : "boolean"
@@ -19952,9 +20089,6 @@
             "additionalProperties" : {
               "$ref" : "#/components/schemas/SteppingFilterSettings"
             }
-          },
-          "stepLocation" : {
-            "$ref" : "#/components/schemas/StepLocation"
           }
         }
       },
@@ -21408,6 +21542,40 @@
           }
         },
         "required" : [ "type" ]
+      },
+      "Word" : {
+        "type" : "object",
+        "properties" : {
+          "additionalSourceUuids" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "sourceUuid" : {
+            "type" : "string"
+          },
+          "word" : {
+            "type" : "string"
+          }
+        }
+      },
+      "WordList" : {
+        "type" : "object",
+        "properties" : {
+          "sourceUuidToDocRefMap" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "wordList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Word"
+            }
+          }
+        }
       },
       "XPathFilter" : {
         "type" : "object",

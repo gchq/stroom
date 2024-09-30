@@ -2450,8 +2450,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
+              $ref: '#/components/schemas/DecorateRequest'
+        description: decorateRequest
         required: true
       responses:
         default:
@@ -7404,9 +7404,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/WordList'
           description: default response
       summary: Fetch a list of words from a dictionary by its UUID
       tags:
@@ -7960,6 +7958,58 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AwsCredentials'
+    AwsAssumeRole:
+      type: object
+      properties:
+        clientConfig:
+          $ref: '#/components/schemas/AwsAssumeRoleClientConfig'
+        request:
+          $ref: '#/components/schemas/AwsAssumeRoleRequest'
+    AwsAssumeRoleClientConfig:
+      type: object
+      properties:
+        credentials:
+          $ref: '#/components/schemas/AwsCredentials'
+        endpointOverride:
+          type: string
+        region:
+          type: string
+    AwsAssumeRoleRequest:
+      type: object
+      properties:
+        durationSeconds:
+          type: integer
+          format: int32
+        externalId:
+          type: string
+        policy:
+          type: string
+        policyArns:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsPolicyDescriptorType'
+        providedContexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsProvidedContext'
+        roleArn:
+          type: string
+        roleSessionName:
+          type: string
+        serialNumber:
+          type: string
+        sourceIdentity:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsTag'
+        tokenCode:
+          type: string
+        transitiveTagKeys:
+          type: array
+          items:
+            type: string
     AwsBasicCredentials:
       type: object
       allOf:
@@ -7996,6 +8046,11 @@ components:
           $ref: '#/components/schemas/AwsProxyConfig'
         trustAllCertificatesEnabled:
           type: boolean
+    AwsPolicyDescriptorType:
+      type: object
+      properties:
+        arn:
+          type: string
     AwsProfileCredentials:
       type: object
       allOf:
@@ -8006,6 +8061,13 @@ components:
             type: string
           profileName:
             type: string
+    AwsProvidedContext:
+      type: object
+      properties:
+        contextAssertion:
+          type: string
+        providerArn:
+          type: string
     AwsProxyConfig:
       type: object
       properties:
@@ -8038,6 +8100,13 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AwsCredentials'
+    AwsTag:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
     AwsWebCredentials:
       type: object
       allOf:
@@ -8941,6 +9010,16 @@ components:
       required:
       - localZoneId
       - referenceTime
+    DecorateRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     DefaultLocation:
       type: object
       properties:
@@ -13275,6 +13354,11 @@ components:
           items:
             type: string
           uniqueItems: true
+        indexPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         infoPopup:
           $ref: '#/components/schemas/InfoPopupConfig'
         viewPipelineSelectorIncludedTags:
@@ -14372,6 +14456,8 @@ components:
       properties:
         accelerate:
           type: boolean
+        assumeRole:
+          $ref: '#/components/schemas/AwsAssumeRole'
         async:
           type: boolean
         bucketName:
@@ -15350,6 +15436,8 @@ components:
         currentStreamOffset:
           type: integer
           format: int32
+        foundLocation:
+          $ref: '#/components/schemas/StepLocation'
         foundRecord:
           type: boolean
         generalErrors:
@@ -15357,6 +15445,8 @@ components:
           items:
             type: string
           uniqueItems: true
+        progressLocation:
+          $ref: '#/components/schemas/StepLocation'
         segmentedData:
           type: boolean
         sessionUuid:
@@ -15367,8 +15457,6 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/SteppingFilterSettings'
-        stepLocation:
-          $ref: '#/components/schemas/StepLocation'
     StoredError:
       type: object
       properties:
@@ -16460,6 +16548,28 @@ components:
           type: string
       required:
       - type
+    Word:
+      type: object
+      properties:
+        additionalSourceUuids:
+          type: array
+          items:
+            type: string
+        sourceUuid:
+          type: string
+        word:
+          type: string
+    WordList:
+      type: object
+      properties:
+        sourceUuidToDocRefMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DocRef'
+        wordList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Word'
     XPathFilter:
       type: object
       properties:
