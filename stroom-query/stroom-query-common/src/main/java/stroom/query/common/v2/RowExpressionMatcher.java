@@ -23,6 +23,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
@@ -40,34 +41,51 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public class ColumnExpressionMatcher {
+public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ColumnExpressionMatcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RowExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
     private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
-    private final Map<String, Column> fieldNameToFieldMap;
+    private final Map<String, Column> columnNameToColumnMap;
     private final DateTimeSettings dateTimeSettings;
+    private final ExpressionItem item;
 
-    public ColumnExpressionMatcher(final List<Column> columns,
-                                   final DateTimeSettings dateTimeSettings) {
-        this.dateTimeSettings = dateTimeSettings;
-        this.fieldNameToFieldMap = new HashMap<>();
+    public static Optional<RowExpressionMatcher> create(final List<Column> columns,
+                                                        final DateTimeSettings dateTimeSettings,
+                                                        final ExpressionOperator expression) {
+        if (!ExpressionUtil.hasTerms(expression)) {
+            return Optional.empty();
+        }
+
+        final Map<String, Column> columnNameToColumnMap = new HashMap<>();
         for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            fieldNameToFieldMap.putIfAbsent(column.getId(), column);
-            fieldNameToFieldMap.putIfAbsent(column.getName(), column);
+            columnNameToColumnMap.putIfAbsent(column.getId(), column);
+            columnNameToColumnMap.putIfAbsent(column.getName(), column);
         }
+
+        return Optional.of(new RowExpressionMatcher(columnNameToColumnMap, dateTimeSettings, expression));
     }
 
-    public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
-        // If the initial item is null or not enabled then don't match.
-        if (item == null || !item.enabled()) {
-            return false;
-        }
+    private RowExpressionMatcher(final Map<String, Column> columnNameToColumnMap,
+                                 final DateTimeSettings dateTimeSettings,
+                                 final ExpressionItem item) {
+        this.columnNameToColumnMap = columnNameToColumnMap;
+        this.dateTimeSettings = dateTimeSettings;
+        this.item = item;
+    }
+
+    public boolean isRequiredColumn(final String name) {
+        return columnNameToColumnMap.containsKey(name);
+    }
+
+    @Override
+    public boolean test(final Map<String, Object> attributeMap) {
         return matchItem(attributeMap, item);
     }
 
@@ -111,7 +129,7 @@ public class ColumnExpressionMatcher {
                 yield false;
             }
             case NOT -> operator.getChildren().size() == 1
-                    && !matchItem(attributeMap, operator.getChildren().get(0));
+                    && !matchItem(attributeMap, operator.getChildren().getFirst());
         };
     }
 
@@ -125,7 +143,7 @@ public class ColumnExpressionMatcher {
             throw new MatchException("Field not set");
         }
         termField = termField.trim();
-        final Column column = fieldNameToFieldMap.get(termField);
+        final Column column = columnNameToColumnMap.get(termField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
         }

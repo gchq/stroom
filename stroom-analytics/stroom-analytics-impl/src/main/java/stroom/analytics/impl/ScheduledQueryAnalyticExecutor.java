@@ -34,9 +34,11 @@ import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
+import stroom.query.common.v2.ValFilter;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -67,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class ScheduledQueryAnalyticExecutor {
@@ -355,13 +358,22 @@ public class ScheduledQueryAnalyticExecutor {
                             expressionContext,
                             tableSettings.getColumns(),
                             paramMap);
+                    final Predicate<Val[]> valFilter = ValFilter.create(
+                            tableSettings.getValueFilter(),
+                            compiledColumns,
+                            modifiedRequest.getDateTimeSettings(),
+                            paramMap,
+                            errorConsumer::add);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
                             detectionConsumerFactory.create(analytic);
                     final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                     detectionConsumerProxy.setAnalyticRuleDoc(analytic);
                     detectionConsumerProxy.setExecutionSchedule(executionSchedule);
+                    detectionConsumerProxy.setExecutionTime(executionTime);
+                    detectionConsumerProxy.setEffectiveExecutionTime(effectiveExecutionTime);
                     detectionConsumerProxy.setCompiledColumns(compiledColumns);
+                    detectionConsumerProxy.setValFilter(valFilter);
                     detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
                     try (final DuplicateCheck duplicateCheck =

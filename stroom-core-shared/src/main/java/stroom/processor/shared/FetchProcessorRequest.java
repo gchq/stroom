@@ -55,7 +55,7 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
     @JsonIgnore
     @Override
     public boolean isConstrained() {
-        return ExpressionUtil.termCount(expression) > 0;
+        return ExpressionUtil.hasTerms(expression);
     }
 
     public ExpressionOperator getExpression() {
