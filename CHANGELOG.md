@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.18] - 2024-09-30
+
+* Issue **#4478** : Fix boolean expression precedence in StroomQL.
+
+
 ## [v7.4.17] - 2024-09-30
 
 * Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
@@ -750,7 +755,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.18...HEAD
+[v7.4.18]: https://github.com/gchq/stroom/compare/v7.4.17...v7.4.18
 [v7.4.17]: https://github.com/gchq/stroom/compare/v7.4.16...v7.4.17
 [v7.4.16]: https://github.com/gchq/stroom/compare/v7.4.15...v7.4.16
 [v7.4.15]: https://github.com/gchq/stroom/compare/v7.4.14...v7.4.15
