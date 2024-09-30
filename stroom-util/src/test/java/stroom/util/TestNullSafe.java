@@ -1154,7 +1154,10 @@ class TestNullSafe {
                 })
                 .withTestFunction(testCase ->
                         NullSafe.collection(testCase.getInput()))
-                .withSimpleEqualityAssertion()
+                .withAssertions(outcome -> {
+                    assertThat(outcome.getActualOutput())
+                            .containsExactlyInAnyOrderElementsOf(outcome.getExpectedOutput());
+                })
                 .addCase(null, Collections.emptyList())
                 .addCase(Collections.emptyList(), Collections.emptyList())
                 .addCase(Collections.singleton("bar"), List.of("bar"))
