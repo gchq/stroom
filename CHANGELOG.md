@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4478** : Fix boolean expression precedence in StroomQL.
+
+
 ## [v7.5-beta.16] - 2024-09-30
 
 * Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.

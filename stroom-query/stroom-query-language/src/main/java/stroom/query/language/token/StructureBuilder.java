@@ -60,7 +60,7 @@ public class StructureBuilder {
 
         AbstractTokenGroup.AbstractTokenGroupBuilder<?, ?> currentGroup = out;
 
-        boolean ignoreNextAnd = false;
+        boolean isBetweenAnd = false;
         int index = start;
         for (; index < tokens.size(); index++) {
             final Token token = tokens.get(index);
@@ -93,31 +93,36 @@ public class StructureBuilder {
                     currentGroup.add(group.build());
                 }
             } else if (TokenType.ALL_KEYWORDS.contains(tokenType)) {
-                if (ignoreNextAnd && TokenType.AND.equals(tokenType)) {
-                    final Token betweenAnd = new Token.Builder(token).tokenType(TokenType.BETWEEN_AND).build();
-                    currentGroup.end(betweenAnd.getEnd());
-                    currentGroup.add(betweenAnd);
-
-                } else {
-                    if (currentGroup != null && currentGroup != out) {
-                        out.add(currentGroup.build());
-                    }
-
-                    currentGroup = new KeywordGroup.Builder()
-                            .tokenType(tokenType)
-                            .chars(token.getChars())
-                            .start(token.getStart())
-                            .end(token.getEnd());
+                Objects.requireNonNull(out);
+                if (currentGroup != null && currentGroup != out) {
+                    out.add(currentGroup.build());
                 }
 
-                ignoreNextAnd = false;
+                currentGroup = new KeywordGroup.Builder()
+                        .tokenType(tokenType)
+                        .chars(token.getChars())
+                        .start(token.getStart())
+                        .end(token.getEnd());
+
+                isBetweenAnd = false;
 
             } else if (TokenType.CLOSE_BRACKET.equals(tokenType)) {
                 currentGroup.end(token.getEnd());
                 break;
+            } else if (TokenType.AND.equals(tokenType)) {
+                if (isBetweenAnd) {
+                    final Token betweenAnd = new Token.Builder(token).tokenType(TokenType.BETWEEN_AND).build();
+                    currentGroup.end(betweenAnd.getEnd());
+                    currentGroup.add(betweenAnd);
+                    isBetweenAnd = false;
+                } else {
+                    currentGroup.end(token.getEnd());
+                    currentGroup.add(token);
+                }
+
             } else if (TokenType.BETWEEN.equals(tokenType)) {
                 // Special case that allows use of `and` for `X between Y and Z`
-                ignoreNextAnd = true;
+                isBetweenAnd = true;
                 currentGroup.end(token.getEnd());
                 currentGroup.add(token);
             } else {

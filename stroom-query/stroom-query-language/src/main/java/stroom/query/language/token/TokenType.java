@@ -113,9 +113,6 @@ public enum TokenType {
     public static final Set<TokenType> ALL_KEYWORDS = Collections.unmodifiableSet(EnumSet.of(
             FROM,
             WHERE,
-            AND,
-            OR,
-            NOT,
             FILTER,
             EVAL,
             SELECT,
@@ -125,6 +122,11 @@ public enum TokenType {
             LIMIT,
             HAVING,
             SHOW));
+
+    public static final Set<TokenType> EXPRESSION_KEYWORDS = Set.of(
+            WHERE,
+            FILTER,
+            HAVING);
 
     public static final Set<TokenType> ALL_CONDITIONS = Collections.unmodifiableSet(EnumSet.of(
             EQUALS,

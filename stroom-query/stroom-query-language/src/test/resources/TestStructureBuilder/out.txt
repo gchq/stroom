@@ -81,12 +81,11 @@ where this = that and foo = 'test of inner \' strings '
       <STRING>this</STRING>
       <EQUALS>=</EQUALS>
       <STRING>that</STRING>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <STRING>foo</STRING>
       <EQUALS>=</EQUALS>
       <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
-   </AND>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 from "Test Index"
@@ -102,22 +101,19 @@ and EventTime >= 2016-01-02T00:00:00.000Z
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </AND>
-   <AND>
+      <AND>and</AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <DATE_TIME>2000-01-01T00:00:00.000Z</DATE_TIME>
-   </AND>
-   <AND>
+      <AND>and</AND>
       <STRING>EventTime</STRING>
       <GREATER_THAN_OR_EQUAL_TO>>=</GREATER_THAN_OR_EQUAL_TO>
       <DATE_TIME>2016-01-02T00:00:00.000Z</DATE_TIME>
-   </AND>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 from "Test Index"
@@ -132,18 +128,16 @@ and EventTime <= now()
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </AND>
-   <AND>
+      <AND>and</AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
-   </AND>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 from "Test Index"
@@ -158,20 +152,18 @@ and EventTime <= now() + 3d
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </AND>
-   <AND>
+      <AND>and</AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
       <PLUS>+</PLUS>
       <DURATION>3d</DURATION>
-   </AND>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 from "Test Index"
@@ -186,20 +178,18 @@ and EventTime <= now() + 3
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </AND>
-   <AND>
+      <AND>and</AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
       <PLUS>+</PLUS>
       <NUMBER>3</NUMBER>
-   </AND>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 from "Test Index"
@@ -214,13 +204,11 @@ and EventTime <= day()-1d-1h
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <STRING>Description</STRING>
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
-   </AND>
-   <AND>
+      <AND>and</AND>
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <FUNCTION_GROUP FUNCTION_NAME="day">
@@ -229,7 +217,7 @@ and EventTime <= day()-1d-1h
       <DURATION>1d</DURATION>
       <MINUS>-</MINUS>
       <DURATION>1h</DURATION>
-   </AND>
+   </WHERE>
 </TOKEN_GROUP>
 -----
 from Events
@@ -259,19 +247,17 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
       <STRING>EventTime</STRING>
       <GREATER_THAN>></GREATER_THAN>
       <DATE_TIME>2023-05-05T00:00:00.000Z</DATE_TIME>
-   </WHERE>
-   <AND>
+      <AND>and</AND>
       <TOKEN_GROUP>
          <STRING>Field</STRING>
          <EQUALS>=</EQUALS>
          <SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING>
-         <OR>
-            <STRING>Field</STRING>
-            <EQUALS>=</EQUALS>
-            <SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING>
-         </OR>
+         <OR>or</OR>
+         <STRING>Field</STRING>
+         <EQUALS>=</EQUALS>
+         <SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING>
       </TOKEN_GROUP>
-   </AND>
+   </WHERE>
    <EVAL>
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
@@ -386,6 +372,89 @@ select StreamId, EventId, Feed
       <STRING>EventId</STRING>
       <COMMA>,</COMMA>
       <STRING>Feed</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+from 'Test Index'
+where not UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+or EventTime = 2016-01-02T00:00:00.000Z
+select StreamId, EventId, EventTime, Status
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <NOT>not</NOT>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+      <AND>and</AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+      <AND>and</AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <DATE_TIME>2000-01-01T00:00:00.000Z</DATE_TIME>
+      <OR>or</OR>
+      <STRING>EventTime</STRING>
+      <EQUALS>=</EQUALS>
+      <DATE_TIME>2016-01-02T00:00:00.000Z</DATE_TIME>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventTime</STRING>
+      <COMMA>,</COMMA>
+      <STRING>Status</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+from 'Test Index'
+where not UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+or EventTime = 2016-01-02T00:00:00.000Z
+and UserId = user10
+select StreamId, EventId, EventTime, Status
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <NOT>not</NOT>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+      <AND>and</AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+      <AND>and</AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <DATE_TIME>2000-01-01T00:00:00.000Z</DATE_TIME>
+      <OR>or</OR>
+      <STRING>EventTime</STRING>
+      <EQUALS>=</EQUALS>
+      <DATE_TIME>2016-01-02T00:00:00.000Z</DATE_TIME>
+      <AND>and</AND>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user10</STRING>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventTime</STRING>
+      <COMMA>,</COMMA>
+      <STRING>Status</STRING>
    </SELECT>
 </TOKEN_GROUP>
 -----

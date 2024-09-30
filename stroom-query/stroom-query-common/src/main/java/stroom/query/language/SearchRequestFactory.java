@@ -18,6 +18,7 @@ package stroom.query.language;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -49,6 +50,7 @@ import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -214,7 +216,7 @@ public class SearchRequestFactory {
         private List<AbstractToken> addDataSource(final List<AbstractToken> tokens,
                                                   final Consumer<DocRef> consumer,
                                                   final boolean isLenient) {
-            AbstractToken token = tokens.get(0);
+            AbstractToken token = tokens.getFirst();
 
             // The first token must be `FROM`.
             if (!TokenType.FROM.equals(token.getTokenType())) {
@@ -291,11 +293,15 @@ public class SearchRequestFactory {
             return Collections.emptyList();
         }
 
-        private void addTerm(
-                final List<AbstractToken> tokens,
-                final ExpressionOperator.Builder parentBuilder) {
-            if (tokens.size() < 3) {
-                throw new TokenException(tokens.get(0), "Incomplete term");
+
+        private ExpressionTerm createTerm(
+                final List<AbstractToken> tokens) {
+            ExpressionTerm expressionTerm;
+
+            if (NullSafe.isEmptyCollection(tokens)) {
+                throw new RuntimeException("createTerm called with empty list");
+            } else if (tokens.size() < 3) {
+                throw new TokenException(tokens.getFirst(), "Incomplete term");
             }
 
             final AbstractToken fieldToken = tokens.get(0);
@@ -309,7 +315,7 @@ public class SearchRequestFactory {
             }
 
             if (TokenType.IN.equals(conditionToken.getTokenType())) {
-                addInTerm(tokens, parentBuilder);
+                expressionTerm = createInTerm(tokens);
 
             } else {
                 final String field = fieldToken.getUnescapedText();
@@ -318,7 +324,7 @@ public class SearchRequestFactory {
 
                 if (TokenType.BETWEEN.equals(conditionToken.getTokenType())) {
                     if (tokens.size() == end) {
-                        throw new TokenException(tokens.get(tokens.size() - 1), "Expected between and");
+                        throw new TokenException(tokens.getLast(), "Expected between and");
                     }
 
                     final AbstractToken betweenAnd = tokens.get(end);
@@ -349,13 +355,12 @@ public class SearchRequestFactory {
                     default -> throw new TokenException(conditionToken, "Unknown condition: " + conditionToken);
                 }
 
-                final ExpressionTerm expressionTerm = ExpressionTerm
+                expressionTerm = ExpressionTerm
                         .builder()
                         .field(field)
                         .condition(cond)
                         .value(value.toString().trim())
                         .build();
-                parentBuilder.addTerm(expressionTerm);
             }
 
             if (inHaving) {
@@ -369,11 +374,14 @@ public class SearchRequestFactory {
                     }
                 }
             }
+
+            return expressionTerm;
         }
 
-        private void addInTerm(
-                final List<AbstractToken> tokens,
-                final ExpressionOperator.Builder parentBuilder) {
+        private ExpressionTerm createInTerm(
+                final List<AbstractToken> tokens) {
+            ExpressionTerm expressionTerm;
+
             final AbstractToken fieldToken = tokens.get(0);
             final AbstractToken conditionToken = tokens.get(1);
             final AbstractToken valueToken = tokens.get(2);
@@ -404,13 +412,12 @@ public class SearchRequestFactory {
                     throw new TokenException(dictionaryNameToken, e.getMessage());
                 }
 
-                final ExpressionTerm expressionTerm = ExpressionTerm
+                expressionTerm = ExpressionTerm
                         .builder()
                         .field(field)
                         .condition(Condition.IN_DICTIONARY)
                         .docRef(dictionaryRef)
                         .build();
-                parentBuilder.addTerm(expressionTerm);
 
             } else if (valueToken instanceof final TokenGroup tokenGroup) {
                 if (tokens.size() > 3) {
@@ -451,17 +458,18 @@ public class SearchRequestFactory {
                 }
 
                 final String field = fieldToken.getUnescapedText();
-                final ExpressionTerm expressionTerm = ExpressionTerm
+                expressionTerm = ExpressionTerm
                         .builder()
                         .field(field)
                         .condition(Condition.IN)
                         .value(sb.toString())
                         .build();
-                parentBuilder.addTerm(expressionTerm);
 
             } else {
                 throw new TokenException(valueToken, "Expected parentheses after IN clause");
             }
+
+            return expressionTerm;
         }
 
         private int addValue(final List<AbstractToken> tokens,
@@ -542,115 +550,136 @@ public class SearchRequestFactory {
         }
 
         private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
-            ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.AND);
+            // Replace all term tokens with expression items.
+            List<Object> out = gatherTerms(tokens);
+
+            // Apply NOT operators.
+            out = applyNotOperators(out);
+
+            // Apply AND operators.
+            out = applyAndOrOperators(out, TokenType.AND, Op.AND);
+
+            // Apply OR operators.
+            out = applyAndOrOperators(out, TokenType.OR, Op.OR);
+
+            // Gather final expression items.
+            final List<ExpressionItem> list = new ArrayList<>(out.size());
+            for (final Object object : out) {
+                if (object instanceof final ExpressionItem expressionItem) {
+                    list.add(expressionItem);
+                } else if (object instanceof final AbstractToken token) {
+                    throw new TokenException(token, "Unexpected token");
+                }
+            }
+
+            if (list.size() == 1 && list.getFirst() instanceof final ExpressionOperator expressionOperator) {
+                return expressionOperator;
+            }
+
+            return ExpressionOperator
+                    .builder()
+                    .op(Op.AND)
+                    .children(list)
+                    .build();
+        }
+
+        private List<Object> gatherTerms(final List<AbstractToken> tokens) {
+            final List<Object> out = new ArrayList<>(tokens.size());
+
+            // Gather terms.
             final List<AbstractToken> termTokens = new ArrayList<>();
-
-            int i = 0;
-            AbstractToken lastToken = null;
-            for (; i < tokens.size(); i++) {
-                final AbstractToken token = tokens.get(i);
-                final TokenType tokenType = token.getTokenType();
-
-                final boolean logic =
-                        TokenType.AND.equals(tokenType) ||
-                                TokenType.OR.equals(tokenType) ||
-                                TokenType.NOT.equals(tokenType);
-
-                if (lastToken != null && TokenType.IN.equals(lastToken.getTokenType())) {
-                    // Treat token following IN as part of term.
-                    termTokens.add(token);
-
-                } else if (!(token instanceof KeywordGroup) &&
-                        !(token instanceof TokenGroup) &&
-                        !logic) {
-
-                    // Treat token as part of a term.
-                    termTokens.add(token);
-                } else {
-                    // Add current term.
+            for (final AbstractToken token : tokens) {
+                if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
+                    out.add(processLogic(keywordGroup.getChildren()));
+                } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
+                    out.add(processLogic(tokenGroup.getChildren()));
+                } else if (TokenType.AND.equals(token.getTokenType()) ||
+                        TokenType.OR.equals(token.getTokenType()) ||
+                        TokenType.NOT.equals(token.getTokenType())) {
                     if (!termTokens.isEmpty()) {
-                        addTerm(termTokens, builder);
+                        out.add(createTerm(termTokens));
                         termTokens.clear();
                     }
-
-                    if (token instanceof final KeywordGroup keywordGroup) {
-                        switch (tokenType) {
-                            case WHERE, HAVING, FILTER, AND -> builder = addAnd(builder, keywordGroup.getChildren());
-                            case OR -> builder = addOr(builder, keywordGroup.getChildren());
-                            case NOT -> builder = addNot(builder, keywordGroup.getChildren());
-                            default -> throw new TokenException(token, "Unexpected pipe operation in query");
-                        }
-
-                    } else if (token instanceof final TokenGroup tokenGroup) {
-                        builder = addAnd(builder, tokenGroup.getChildren());
-
-                    } else if (logic) {
-                        final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
-                        i = tokens.size();
-
-                        switch (tokenType) {
-                            case AND -> builder = addAnd(builder, remaining);
-                            case OR -> builder = addOr(builder, remaining);
-                            case NOT -> builder = addNot(builder, remaining);
-                            default -> throw new TokenException(token, "Unexpected token");
-                        }
-                    }
+                    out.add(token);
+                } else {
+                    termTokens.add(token);
                 }
-
-                lastToken = token;
             }
-
-            // Add remaining term.
             if (!termTokens.isEmpty()) {
-                addTerm(termTokens, builder);
-                termTokens.clear();
+                out.add(createTerm(termTokens));
             }
 
-            return builder.build();
+            return out;
         }
 
-        private ExpressionOperator.Builder addAnd(final ExpressionOperator.Builder builder,
-                                                  final List<AbstractToken> tokens) {
-            ExpressionOperator.Builder nextBuilder = builder;
-            final ExpressionOperator childOperator = processLogic(tokens);
-            if (childOperator.hasChildren()) {
-                nextBuilder = ExpressionOperator.builder().op(Op.AND);
-                final ExpressionOperator current = builder.build();
-                if (current.hasChildren()) {
-                    nextBuilder.addOperator(current);
+        private List<Object> applyNotOperators(final List<Object> in) {
+            final List<Object> out = new ArrayList<>(in.size());
+            for (int i = 0; i < in.size(); i++) {
+                final Object object = in.get(i);
+                if (object instanceof final AbstractToken token && TokenType.NOT.equals(token.getTokenType())) {
+                    // Get next token.
+                    i++;
+                    if (i < in.size()) {
+                        final Object next = in.get(i);
+                        if (next instanceof final ExpressionItem expressionItem) {
+                            final ExpressionOperator not = ExpressionOperator
+                                    .builder()
+                                    .op(Op.NOT)
+                                    .children(List.of(expressionItem))
+                                    .build();
+                            out.add(not);
+                        } else {
+                            throw new TokenException(token, "Expected term after NOT");
+                        }
+                    } else {
+                        throw new TokenException(token, "Trailing NOT");
+                    }
+
+                } else {
+                    out.add(object);
                 }
-                nextBuilder.addOperator(childOperator);
             }
-            return nextBuilder;
+            return out;
         }
 
-        private ExpressionOperator.Builder addOr(final ExpressionOperator.Builder builder,
-                                                 final List<AbstractToken> tokens) {
-            ExpressionOperator.Builder nextBuilder = builder;
-            final ExpressionOperator childOperator = processLogic(tokens);
-            if (childOperator.hasChildren()) {
-                nextBuilder = ExpressionOperator.builder().op(Op.OR);
-                final ExpressionOperator current = builder.build();
-                if (current.hasChildren()) {
-                    nextBuilder.addOperator(current);
+        private List<Object> applyAndOrOperators(final List<Object> in, final TokenType tokenType, final Op op) {
+            final List<Object> out = new ArrayList<>(in.size());
+            Object previous = null;
+            for (int i = 0; i < in.size(); i++) {
+                final Object object = in.get(i);
+                if (object instanceof final AbstractToken token && tokenType.equals(token.getTokenType())) {
+                    if (previous instanceof final ExpressionItem previousExpressionItem) {
+                        // Get next token.
+                        i++;
+                        if (i < in.size()) {
+                            final Object next = in.get(i);
+                            if (next instanceof final ExpressionItem expressionItem) {
+                                previous = ExpressionOperator
+                                        .builder()
+                                        .op(op)
+                                        .children(List.of(previousExpressionItem, expressionItem))
+                                        .build();
+                            } else {
+                                throw new TokenException(token, "Expected term after " + tokenType.name());
+                            }
+                        } else {
+                            throw new TokenException(token, "Trailing " + tokenType.name());
+                        }
+
+                    } else {
+                        throw new TokenException(token, "Expected term before " + tokenType.name());
+                    }
+                } else {
+                    if (previous != null) {
+                        out.add(previous);
+                    }
+                    previous = object;
                 }
-                nextBuilder.addOperator(childOperator);
             }
-            return nextBuilder;
-        }
-
-        private ExpressionOperator.Builder addNot(final ExpressionOperator.Builder builder,
-                                                  final List<AbstractToken> tokens) {
-            final ExpressionOperator childOperator = processLogic(tokens);
-            if (childOperator.hasChildren()) {
-                final ExpressionOperator not = ExpressionOperator
-                        .builder()
-                        .op(Op.NOT)
-                        .addOperator(childOperator)
-                        .build();
-                builder.addOperator(not);
+            if (previous != null) {
+                out.add(previous);
             }
-            return builder;
+            return out;
         }
 
         private void addTableSettings(final List<AbstractToken> tokens,
@@ -667,7 +696,7 @@ public class SearchRequestFactory {
 
             List<AbstractToken> remaining = new LinkedList<>(tokens);
             while (!remaining.isEmpty()) {
-                final AbstractToken token = remaining.get(0);
+                final AbstractToken token = remaining.getFirst();
 
                 if (token instanceof final KeywordGroup keywordGroup) {
                     switch (keywordGroup.getTokenType()) {
@@ -687,14 +716,14 @@ public class SearchRequestFactory {
                         case EVAL -> {
                             checkTokenOrder(token, consumedTokens);
                             processEval(keywordGroup);
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         case WINDOW -> {
                             checkTokenOrder(token, consumedTokens);
                             processWindow(
                                     keywordGroup,
                                     tableSettingsBuilder);
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         case FILTER -> {
                             checkTokenOrder(token, consumedTokens);
@@ -714,7 +743,7 @@ public class SearchRequestFactory {
                             processSortBy(
                                     keywordGroup,
                                     sortMap);
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         case GROUP -> {
                             checkTokenOrder(token, consumedTokens);
@@ -723,7 +752,7 @@ public class SearchRequestFactory {
                                     groupMap,
                                     groupDepth);
                             groupDepth++;
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         case HAVING -> {
                             inHaving = true;
@@ -744,21 +773,21 @@ public class SearchRequestFactory {
                                     groupMap,
                                     filterMap,
                                     tableSettingsBuilder);
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         case LIMIT -> {
                             checkTokenOrder(token, consumedTokens);
                             processLimit(
                                     keywordGroup,
                                     tableSettingsBuilder);
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         case SHOW -> {
                             checkTokenOrder(token, consumedTokens);
                             final TableSettings parentTableSettings = tableSettingsBuilder.build();
                             visTableSettings = visualisationTokenConsumer
                                     .processVis(keywordGroup, parentTableSettings);
-                            remaining.remove(0);
+                            remaining.removeFirst();
                         }
                         default -> throw new TokenException(token, "Unexpected token");
                     }
@@ -846,7 +875,7 @@ public class SearchRequestFactory {
 
             // Get field name.
             if (!children.isEmpty()) {
-                final AbstractToken token = children.get(0);
+                final AbstractToken token = children.getFirst();
                 if (!TokenType.isString(token)) {
                     throw new TokenException(token, "Syntax exception");
                 }
@@ -917,7 +946,7 @@ public class SearchRequestFactory {
             if (children.isEmpty()) {
                 throw new TokenException(keywordGroup, "Expected variable name following eval");
             }
-            final AbstractToken variableToken = children.get(0);
+            final AbstractToken variableToken = children.getFirst();
             if (!TokenType.isString(variableToken)) {
                 throw new TokenException(variableToken, "Expected variable name");
             }
