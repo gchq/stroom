@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4463** : Fix NPE with analytic rule email templating.
+ 
+
 ## [v7.5-beta.15] - 2024-09-24
 
 * Issue **#4146** : Fix audit events for deleting/restoring streams.
@@ -74,7 +79,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
 
-* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
 
 
 ## [v7.5-beta.11] - 2024-09-04
