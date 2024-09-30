@@ -13,6 +13,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
+
+* Issue **#4476** : Fix streaming analytic issue where it failed to match after seeing records with missing query fields.
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4463** : Fix NPE with analytic rule email templating.
+
 * Issue **#4146** : Fix audit events for deleting/restoring streams.
 
 * Change the alert dialog message styling to have a max-height of 600px so long messages get a scrollbar.
@@ -63,7 +71,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
 
-* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
 
 * Issue **#4426** : Add INFO message when an index shard is created.
 

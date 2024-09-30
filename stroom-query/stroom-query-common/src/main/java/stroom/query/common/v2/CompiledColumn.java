@@ -26,20 +26,17 @@ public class CompiledColumn {
     private final Generator generator;
     private final boolean hasAggregate;
     private final boolean requiresChildData;
-    private final CompiledFilter compiledFilter;
 
     public CompiledColumn(final Column column,
                           final int groupDepth,
                           final Generator generator,
                           final boolean hasAggregate,
-                          final boolean requiresChildData,
-                          final CompiledFilter compiledFilter) {
+                          final boolean requiresChildData) {
         this.column = column;
         this.groupDepth = groupDepth;
         this.generator = generator;
         this.hasAggregate = hasAggregate;
         this.requiresChildData = requiresChildData;
-        this.compiledFilter = compiledFilter;
     }
 
     public Column getColumn() {
@@ -74,17 +71,12 @@ public class CompiledColumn {
         return requiresChildData;
     }
 
-    public CompiledFilter getCompiledFilter() {
-        return compiledFilter;
-    }
-
     @Override
     public String toString() {
         return "CompiledField{" +
                 "column=" + column +
                 ", groupDepth=" + groupDepth +
                 ", generator=" + generator +
-                ", compiledFilter=" + compiledFilter +
                 '}';
     }
 }

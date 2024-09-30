@@ -146,20 +146,21 @@ public class MapDataStore implements DataStore {
                     final ValCache valCache = new ValCache(generator);
                     Val value;
 
-                    // If this is the first level then check if we should filter out this data.
-                    if (depth == 0) {
-                        final CompiledFilter compiledFilter = compiledColumn.getCompiledFilter();
-                        if (compiledFilter != null) {
-                            // If we are filtering then we need to evaluate this field
-                            // now so that we can filter the resultant value.
-                            value = valCache.getVal(values, storedValues);
-
-                            if (value != null && !compiledFilter.match(value.toString())) {
-                                // We want to exclude this item so get out of this method ASAP.
-                                return;
-                            }
-                        }
-                    }
+                    // ALL VALUE FILTERING IS DONE IN LMDB SO NOT NEEDED HERE.
+//                    // If this is the first level then check if we should filter out this data.
+//                    if (depth == 0) {
+//                        final Optional<Predicate<String>> optionalCompiledFilter = compiledColumn.getCompiledFilter();
+//                        if (optionalCompiledFilter.isPresent()) {
+//                            // If we are filtering then we need to evaluate this field
+//                            // now so that we can filter the resultant value.
+//                            value = valCache.getVal(values, storedValues);
+//
+//                            if (value != null && !optionalCompiledFilter.get().test(value.toString())) {
+//                                // We want to exclude this item so get out of this method ASAP.
+//                                return;
+//                            }
+//                        }
+//                    }
 
                     // If we are grouping at this level then evaluate the expression and add to the group values.
                     if (groupIndices[columnIndex]) {

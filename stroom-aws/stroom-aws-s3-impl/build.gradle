@@ -18,6 +18,7 @@ dependencies {
 
     implementation libs.aws_crt
     implementation libs.aws_s3_transfer_manager
+    implementation libs.aws_sts
     implementation libs.commons_compress
     implementation libs.guava
     implementation libs.guice
@@ -35,6 +36,7 @@ dependencies {
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
+    testImplementation libs.mbknor_jackson_jsonSchema
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

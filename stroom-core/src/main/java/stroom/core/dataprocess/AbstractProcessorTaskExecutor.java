@@ -210,12 +210,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         // Setup the error handler and receiver.
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
-        // Initialise the helper class that will ensure we only keep the latest output for this stream source and
-        // processor.
-        final ProcessorTaskDecorator processDecorator = getProcessDecorator();
-        processDecorator.init(processorFilter);
         final Meta meta = streamSource.getMeta();
-        final String errorFeedName = getProcessDecorator().getErrorFeedName(meta);
+        final String errorFeedName = meta.getFeedName();
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
@@ -230,19 +226,24 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         recordCount,
                         errorReceiverProxy,
                         volumeGroupNameProvider)) {
-
+            ProcessorTaskDecorator processDecorator = null;
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
-                processDecorator.beforeProcessing();
+
+                processDecorator = getProcessDecorator();
+                processDecorator.beforeProcessing(processorFilter);
+
                 process(taskContext);
 
             } catch (final Exception e) {
                 outputFatalError(e);
             } finally {
                 try {
-                    processDecorator.afterProcessing();
+                    if (processDecorator != null) {
+                        processDecorator.afterProcessing();
+                    }
                 } catch (final Exception e) {
                     outputFatalError(e);
                 }
