@@ -42,6 +42,9 @@ public class Tokeniser {
         // Tag keywords.
         TokenType.KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
         // Treat other conjunctions as keywords.
+        tagKeyword("and", TokenType.AND);
+        tagKeyword("or", TokenType.OR);
+        tagKeyword("not", TokenType.NOT);
         tagKeyword("in", TokenType.IN);
         tagKeyword("by", TokenType.BY);
         tagKeyword("as", TokenType.AS);

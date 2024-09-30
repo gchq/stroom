@@ -80,9 +80,6 @@ public enum TokenType {
     public static final Set<TokenType> KEYWORDS = Set.of(
             FROM,
             WHERE,
-            AND,
-            OR,
-            NOT,
             FILTER,
             EVAL,
             SELECT,

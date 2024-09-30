@@ -336,10 +336,10 @@ public class ExpressionUtil {
                         final ExpressionOperator childOperator = (ExpressionOperator) simplifiedChild;
                         if (childOperator.getChildren() != null && !childOperator.getChildren().isEmpty()) {
                             if (childOperator.getChildren().size() == 1) {
-                                if (!Op.NOT.equals(operator.op())) {
+                                if (!Op.NOT.equals(operator.op()) && !Op.NOT.equals(childOperator.op())) {
                                     // Simplify AND(AND()) or AND(OR()) or OR(AND()) or OR(OR())
                                     simplifiedChildren.add(childOperator.getChildren().get(0));
-                                } else if (Op.NOT.equals(childOperator.op())) {
+                                } else if (Op.NOT.equals(operator.op()) && Op.NOT.equals(childOperator.op())) {
                                     // Simplify NOT(NOT())
                                     simplifiedChildren.add(childOperator.getChildren().get(0));
                                 } else {
