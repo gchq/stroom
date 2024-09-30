@@ -90,6 +90,11 @@ public enum TokenType {
             HAVING,
             SHOW);
 
+    public static final Set<TokenType> EXPRESSION_KEYWORD = Set.of(
+            WHERE,
+            FILTER,
+            HAVING);
+
     public static final Set<TokenType> CONDITIONS = Set.of(
             EQUALS,
             NOT_EQUALS,
