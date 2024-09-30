@@ -22,6 +22,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.date.DateUtil;
 
 import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
 import net.sf.saxon.om.Sequence;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -128,6 +129,14 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                         "Single digit day and month, plus padding",
                         List.of("2001 12 31", "yyyy ppM ppd"),
                         "2001-12-31T00:00:00.000Z")
+                .addNamedCase(
+                        "With day of week",
+                        List.of("Wed Aug 14 2024", "E MMM dd yyyy"),
+                        "2024-08-14T00:00:00.000Z")
+                .addNamedThrowsCase(
+                        "With incorrect day of week",
+                        List.of("Mon Aug 14 2024", "EEE MMM dd yyyy"), // Should be a Wed
+                        NoSuchElementException.class)
                 .addCase(List.of("2001 12 31", "y M d"), "2001-12-31T00:00:00.000Z")
                 .addCase(List.of("2001 12 31", "yy MM dd"), "2001-12-31T00:00:00.000Z")
                 .addThrowsCase(List.of("2001 12 31", "yyy MMM ddd"), NoSuchElementException.class)
@@ -153,22 +162,41 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
         assertThat(callAsUTC("E/w/YYYY", "Mon/1/2018")).isEqualTo("2018-01-01T00:00:00.000Z");
     }
 
-    @Test
-    void testDayOfWeekAndWeek() {
+    @TestFactory
+    Stream<DynamicTest> testDayOfWeekAndWeek() {
+        // 2010-03-04 is a Thur
         setMetaCreateTime("2010-03-04T12:45:22.643Z");
-        assertThat(callAsUTC("ccc/w", "Fri/2")).isEqualTo("2010-01-08T00:00:00.000Z");
-        assertThat(callAsUTC("E/w", "Fri/2")).isEqualTo("2010-01-08T00:00:00.000Z");
-        assertThat(callAsUTC("ccc/w", "Fri/40")).isEqualTo("2009-10-02T00:00:00.000Z");
-        assertThat(callAsUTC("E/w", "Fri/40")).isEqualTo("2009-10-02T00:00:00.000Z");
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> callAsUTC(testCase.getInput()._1, testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("ccc/w", "Fri/2"), "2010-01-08T00:00:00.000Z")
+                .addCase(Tuple.of("E/w", "Fri/2"), "2010-01-08T00:00:00.000Z")
+                .addCase(Tuple.of("ccc/w", "Fri/40"), "2009-10-02T00:00:00.000Z")
+                .addCase(Tuple.of("E/w", "Fri/40"), "2009-10-02T00:00:00.000Z")
+                .build();
     }
 
-    @Test
-    void testDayOfWeek() {
+    @TestFactory
+    Stream<DynamicTest> testDayOfWeek() {
+        // 2010-03-04 is a Thur
         setMetaCreateTime("2010-03-04T12:45:22.643Z");
-        assertThat(callAsUTC("ccc", "Mon")).isEqualTo("2010-03-01T00:00:00.000Z");
-        assertThat(callAsUTC("E", "Mon")).isEqualTo("2010-03-01T00:00:00.000Z");
-        assertThat(callAsUTC("ccc", "Fri")).isEqualTo("2010-02-26T00:00:00.000Z");
-        assertThat(callAsUTC("E", "Fri")).isEqualTo("2010-02-26T00:00:00.000Z");
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> callAsUTC(testCase.getInput()._1, testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("ccc", "Mon"), "2010-03-01T00:00:00.000Z")
+                .addCase(Tuple.of("E", "Mon"), "2010-03-01T00:00:00.000Z")
+                .addCase(Tuple.of("ccc", "Fri"), "2010-02-26T00:00:00.000Z")
+                .addCase(Tuple.of("E", "Fri"), "2010-02-26T00:00:00.000Z")
+                .addCase(Tuple.of("eee", "Fri"), "2010-02-26T00:00:00.000Z")
+                .addCase(Tuple.of("eee YYYY", "Fri 2010"), "2010-03-05T00:00:00.000Z")
+                .addCase(Tuple.of("eee dd MMM YYYY", "Fri 05 Mar 2010"), "2010-03-05T00:00:00.000Z")
+                .addCase(Tuple.of("eee E ccc dd MMM YYYY", "Fri Fri Fri 05 Mar 2010"),
+                        "2010-03-05T00:00:00.000Z")
+                .build();
     }
 
     @Test
