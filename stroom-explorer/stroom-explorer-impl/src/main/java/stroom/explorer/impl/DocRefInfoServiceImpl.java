@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
@@ -185,7 +186,8 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                 || force) {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
-                    .orElseThrow(() -> new RuntimeException("No docRefInfo for docRef: " + docRef));
+                    .orElseThrow(() ->
+                            new DocumentNotFoundException(docRef));
         } else {
             return docRef;
         }

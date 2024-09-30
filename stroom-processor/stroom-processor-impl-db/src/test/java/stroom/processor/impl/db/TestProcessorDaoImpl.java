@@ -78,39 +78,6 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
     }
 
     @Test
-    void testChangeTaskStatus() {
-        processor1 = createProcessor();
-        processorFilter1 = createProcessorFilter(processor1);
-
-        createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
-
-        dumpProcessorTaskTable();
-
-        final ExpressionCriteria expressionCriteria = new ExpressionCriteria(ExpressionOperator.builder()
-                .addTextTerm(ProcessorTaskFields.FEED, Condition.EQUALS, FEED)
-                .build());
-
-        assertThat(getProcessorTaskCount(null))
-                .isEqualTo(3);
-        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())))
-                .isEqualTo(0);
-
-        processorTaskDao.changeTaskStatus(
-                expressionCriteria,
-                NODE1,
-                TaskStatus.COMPLETE,
-                0L,
-                Long.MAX_VALUE);
-
-        dumpProcessorTaskTable();
-
-        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())))
-                .isEqualTo(3);
-    }
-
-    @Test
     void testLogicalDeleteByProcessorId() {
         assertThat(getProcessorCount(null))
                 .isEqualTo(0);

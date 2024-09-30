@@ -20,9 +20,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.DecorateRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.NodeFlag;
@@ -131,6 +131,10 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         }
     }
 
+    public Set<String> getRequiredPermissions() {
+        return requiredPermissions;
+    }
+
     public DocRef getSelectedEntityReference() {
         return value;
     }
@@ -177,19 +181,22 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
             // so decorate it to ensure we have the right name
             restFactory
                     .create(EXPLORER_RESOURCE)
-                    .method(res -> res.decorate(docRef))
+                    .method(res ->
+                            res.decorate(DecorateRequest.createWithPermCheck(docRef, getRequiredPermissions())))
                     .onSuccess(decoratedDocRef -> {
-                        explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
-                        setFieldValue(decoratedDocRef, null);
-                        if (!Objects.equals(docRef, decoratedDocRef)) {
-                            // The decorated one is different so we need to update
-                            if (onDocRefDecoration != null) {
-                                onDocRefDecoration.accept(decoratedDocRef);
+                        if (decoratedDocRef != null) {
+                            explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
+                            setFieldValue(decoratedDocRef, null);
+                            if (!Objects.equals(docRef, decoratedDocRef)) {
+                                // The decorated one is different so we need to update
+                                if (onDocRefDecoration != null) {
+                                    onDocRefDecoration.accept(decoratedDocRef);
+                                }
                             }
+                        } else {
+                            handleDecorateError(docRef, onDocRefNotFound);
                         }
                     })
-                    .onFailure(error ->
-                            handleDecorateError(docRef, onDocRefNotFound, error))
                     .taskMonitorFactory(this)
                     .exec();
         } else {
@@ -200,31 +207,39 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     }
 
     private void handleDecorateError(final DocRef docRef,
-                                     final Runnable onDocRefNotFound,
-                                     final RestError error) {
+                                     final Runnable onDocRefNotFound) {
 //        GWT.log(error.getException().getClass().getSimpleName() + " - " + error.getMessage());
         // likely doesn't exist or user can't see it, so leave it as is
         // but show a warning, so they know there is a problem
-        final String type = docRef.getType();
-        final String uuid = docRef.getUuid();
-        final String displayName = GwtNullSafe.getOrElse(
-                docRef.getName(),
-                name -> "'" + name + "' (" + uuid + ")",
-                uuid);
-        final String prefix = type != null
-                ? type
-                : "Document";
 
         // Even thought it doesn't exist, set the value as requested but display a
         value = docRef;
-        errorMsg = prefix +
-                " " +
-                displayName +
-                " doesn't exist or you do not have permission to view it.\n" +
-                "Select a different Extraction Pipeline or speak to your administrator.";
+        errorMsg = buildNotFoundMessage(docRef);
         setFieldValue(docRef, errorMsg);
 
         GwtNullSafe.run(onDocRefNotFound);
+    }
+
+    public static String buildNotFoundMessage(final DocRef docRef) {
+        if (docRef != null) {
+            final String type = docRef.getType();
+            final String uuid = docRef.getUuid();
+            final String displayName = GwtNullSafe.getOrElse(
+                    docRef.getName(),
+                    name -> "'" + name + "' (" + uuid + ")",
+                    uuid);
+            final String prefix = type != null
+                    ? type
+                    : "Document";
+
+            return prefix +
+                    " " +
+                    displayName +
+                    " doesn't exist or you do not have permission to view it.\n" +
+                    "Select a different Extraction Pipeline or speak to your administrator.";
+        } else {
+            return null;
+        }
     }
 
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
