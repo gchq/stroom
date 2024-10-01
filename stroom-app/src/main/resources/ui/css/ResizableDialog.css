@@ -19,17 +19,78 @@
 }
 
 /* Resize handle */
-.resizableDialog-resizeHandle {
+.resizableDialog-resize {
+    position: absolute;
+    opacity: .4;
+}
+
+.resizableDialog-resizeN {
+    left: 0;
+    top: -10px;
+    width: 100%;
+    height: 12px;
+    cursor: n-resize;
+}
+
+.resizableDialog-resizeE {
+    right: -10px;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    cursor: e-resize;
+}
+
+.resizableDialog-resizeS {
+    left: 0;
+    bottom: -10px;
+    width: 100%;
+    height: 12px;
+    cursor: s-resize;
+}
+
+.resizableDialog-resizeW {
+    left: -10px;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    cursor: w-resize;
+}
+
+.resizableDialog-resizeNE {
+    right: -10px;
+    top: -10px;
+    width: 12px;
+    height: 12px;
+    cursor: ne-resize;
+}
+
+.resizableDialog-resizeNW {
+    left: -10px;
+    top: -10px;
+    width: 12px;
+    height: 12px;
+    cursor: nw-resize;
+}
+
+.resizableDialog-resizeSE {
     position: absolute;
     right: -16px;
     bottom: -16px;
     width: 32px;
     height: 32px;
-    cursor: nw-resize;
+    cursor: se-resize;
     opacity: .4;
 }
 
-.resizableDialog-resizeHandle svg {
+.resizableDialog-resizeSW {
+    left: -10px;
+    bottom: -10px;
+    width: 12px;
+    height: 12px;
+    cursor: sw-resize;
+}
+
+.resizableDialog-resizeSE svg {
 	width: 20px;
 	height: 20px;
 	cursor: nw-resize;

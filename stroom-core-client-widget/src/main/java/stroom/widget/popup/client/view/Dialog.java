@@ -22,6 +22,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -59,6 +60,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     private boolean dragging;
     private int dragStartX;
     private int dragStartY;
+    private Rect dragStartWindow;
 
     private Element dialogContent;
     private Element dialogButtons;
@@ -185,8 +187,9 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
         getDragGlass().show();
 
         dragging = true;
-        dragStartX = event.getX();
-        dragStartY = event.getY();
+        dragStartX = event.getClientX();
+        dragStartY = event.getClientY();
+        dragStartWindow = new Rect(getElement());
         DOM.setCapture(getElement());
     }
 
@@ -200,21 +203,21 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
      */
     private void continueDragging(final MouseMoveEvent event) {
         if (dragging) {
-            final int x = event.getX();
-            final int y = event.getY();
+            final int x = event.getClientX();
+            final int y = event.getClientY();
+            double dx = x - dragStartX;
+            double dy = y - dragStartY;
 
-            final int absX = x + getAbsoluteLeft();
-            final int absY = y + getAbsoluteTop();
-            int left = absX - dragStartX;
-            int top = absY - dragStartY;
+            double left = dragStartWindow.getLeft() + dx;
+            double top = dragStartWindow.getTop() + dy;
 
             // Add some constraints to stop the dialog being moved off screen.
-//            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
-//            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
+            //            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
+            //            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
             left = Math.max(0, Math.min(Window.getClientWidth() - 22, left));
             top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
 
-            setPopupPosition(left, top);
+            setPopupPosition((int) left, (int) top);
         }
     }
 
