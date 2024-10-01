@@ -5,6 +5,7 @@ import java.util.Arrays;
 public class StoredValues {
 
     private final Object[] values;
+    private int iteration;
 
     public StoredValues(final Object[] values) {
         this.values = values;
@@ -16,6 +17,14 @@ public class StoredValues {
 
     public void set(final int index, final Object val) {
         this.values[index] = val;
+    }
+
+    public int getIteration() {
+        return iteration;
+    }
+
+    public void setIteration(final int iteration) {
+        this.iteration = iteration;
     }
 
     @Override

@@ -32,7 +32,6 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.ChildData;
-import stroom.query.language.functions.CountPrevious;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
@@ -270,6 +269,7 @@ public class LmdbDataStore implements DataStore {
         final LmdbKV[] rows = new LmdbKV[groupIndicesByDepth.length];
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+            storedValues.setIteration(iteration);
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
             for (int columnIndex = 0; columnIndex < compiledColumnArray.length; columnIndex++) {
@@ -279,17 +279,7 @@ public class LmdbDataStore implements DataStore {
                 // If we need a value at this level then set the raw values.
                 if (valueIndices[columnIndex] ||
                         columnIndex == keyFactoryConfig.getTimeColumnIndex()) {
-                    if (iteration != -1) {
-                        if (generator instanceof CountPrevious.Gen gen) {
-                            if (gen.getIteration() == iteration) {
-                                generator.set(values, storedValues);
-                            }
-                        } else {
-                            generator.set(values, storedValues);
-                        }
-                    } else {
-                        generator.set(values, storedValues);
-                    }
+                    generator.set(values, storedValues);
                 }
             }
 

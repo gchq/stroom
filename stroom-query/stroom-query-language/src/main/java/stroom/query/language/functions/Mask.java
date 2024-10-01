@@ -23,13 +23,12 @@ import stroom.query.language.token.Param;
 import java.text.ParseException;
 import java.util.function.Supplier;
 
-@Deprecated
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = CountPrevious.NAME,
+        name = Mask.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = Val.class,
-        commonDescription = "DEPRECATED alias for mask(), here for backward compatibility.",
+        commonDescription = "Provides a masking effect for nested functions for specific window iterations",
         signatures = @FunctionSignature(
                 returnDescription = "Computed values for masked functions",
                 args = {
@@ -42,13 +41,13 @@ import java.util.function.Supplier;
                                 description = "Inner function to apply mask to",
                                 argType = Val.class)
                 }))
-public class CountPrevious extends AbstractFunction implements AggregateFunction {
+public class Mask extends AbstractFunction implements AggregateFunction {
 
-    static final String NAME = "countPrevious";
+    static final String NAME = "mask";
     private int iteration;
     private Function function;
 
-    public CountPrevious(final String name) {
+    public Mask(final String name) {
         super(name, 1, 2);
     }
 
