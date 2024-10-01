@@ -22,10 +22,12 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -51,8 +53,6 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
 
     private static final Binder binder = GWT.create(Binder.class);
 
-    private final PopupSize popupSize;
-
     @UiField
     SimplePanel icon;
     @UiField
@@ -64,13 +64,19 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     @UiField
     SpinnerLarge spinner;
 
+    private final PopupSize popupSize;
     private DragType dragType;
     private boolean dragging;
     private int dragStartX;
     private int dragStartY;
-    private int windowWidth;
-    private int windowHeight;
+    private int dragStartWidth;
+    private int dragStartHeight;
+    private int initialWindowWidth;
+    private int initialWindowHeight;
     private HandlerRegistration resizeHandlerRegistration;
+
+    private Element dialogContent;
+    private Element dialogButtons;
 
     /**
      * Creates an empty dialog box. It should not be shown until its child
@@ -117,8 +123,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         setStyleName("resizableDialog-popup");
         setWidget(binder.createAndBindUi(this));
 
-        windowWidth = Window.getClientWidth();
-        windowHeight = Window.getClientHeight();
+        initialWindowWidth = Window.getClientWidth();
+        initialWindowHeight = Window.getClientHeight();
 
         final MouseHandler mouseHandler = new MouseHandler();
         addDomHandler(mouseHandler, MouseDownEvent.getType());
@@ -155,8 +161,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     public void show() {
         if (resizeHandlerRegistration == null) {
             resizeHandlerRegistration = Window.addResizeHandler(event -> {
-                windowWidth = event.getWidth();
-                windowHeight = event.getHeight();
+                initialWindowWidth = event.getWidth();
+                initialWindowHeight = event.getHeight();
             });
         }
         super.show();
@@ -201,6 +207,9 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                 if (!dragging && !isCaptionEvent(event) && !isResizeHandleEvent(event)) {
                     return;
                 }
+                break;
+            default:
+                // Don't care about all mouse events
         }
 
         super.onBrowserEvent(event);
@@ -218,14 +227,14 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         getDragGlass().show();
 
         dragging = true;
-        if (isCaptionEvent(event.getNativeEvent())) {
-            dragType = DragType.MOVE;
-            dragStartX = event.getX();
-            dragStartY = event.getY();
-        } else {
+        dragStartX = event.getX();
+        dragStartY = event.getY();
+        dragStartWidth = getOffsetWidth();
+        dragStartHeight = getOffsetHeight();
+        if (isResizeHandleEvent(event.getNativeEvent())) {
             dragType = DragType.RESIZE;
-            dragStartX = getOffsetWidth() - event.getX();
-            dragStartY = getOffsetHeight() - event.getY();
+        } else {
+            dragType = DragType.MOVE;
         }
         DOM.setCapture(getElement());
     }
@@ -250,8 +259,10 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                 int top = absY - dragStartY;
 
                 // Add some constraints to stop the dialog being moved off screen.
-                left = Math.min(windowWidth - 22, Math.max(0, left));
-                top = Math.min(windowHeight - 22, Math.max(0, top));
+//            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
+//            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
+                left = Math.max(0, Math.min(Window.getClientWidth() - 22, left));
+                top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
 
                 setPopupPosition(left, top);
 
@@ -262,7 +273,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                 final Size heightSize = popupSize.getHeight();
 
                 if (widthSize != null && widthSize.isResizable()) {
-                    int width = x + dragStartX;
+                    int width = dragStartWidth + (x - dragStartX);
                     // Constrain width.
                     if (widthSize.getMin() != null && width < widthSize.getMin()) {
                         width = widthSize.getMin();
@@ -270,12 +281,12 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                         width = widthSize.getMax();
                     }
                     // Add window based size constraint.
-                    width = Math.min(windowWidth, width);
+                    width = Math.min(initialWindowWidth, width);
 
                     elem.getStyle().setPropertyPx("width", width);
                 }
                 if (heightSize != null && heightSize.isResizable()) {
-                    int height = y + dragStartY;
+                    int height = dragStartHeight + (y - dragStartY);
                     // Constrain height.
                     if (heightSize.getMin() != null && height < heightSize.getMin()) {
                         height = heightSize.getMin();
@@ -283,7 +294,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                         height = heightSize.getMax();
                     }
                     // Add window based size constraint.
-                    height = Math.min(windowHeight, height);
+                    height = Math.min(initialWindowHeight, height);
 
                     elem.getStyle().setPropertyPx("height", height);
                 }
@@ -299,6 +310,11 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     /**
      * Called on mouse up in the caption area, ends dragging by ending event
      * capture.
+     *
+     * @param event the mouse up event that ended dragging
+     * @see DOM#releaseCapture
+     * @see #beginDragging
+     * @see #endDragging
      */
     private void endDragging(final MouseUpEvent event) {
         dragging = false;
@@ -324,9 +340,27 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     }
 
     private boolean isCaptionEvent(final NativeEvent event) {
+        // Lazy init content elements.
+        if (dialogContent == null) {
+            dialogContent = ElementUtil.findChild(content.getElement(), "dialog-content");
+            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog-buttons");
+        }
+
         final EventTarget target = event.getEventTarget();
         if (Element.is(target)) {
-            return titleText.getElement().isOrHasChild(Element.as(target));
+            final Element element = Element.as(target);
+            // Check the event targets the dialog.
+            if (getElement().isOrHasChild(element)) {
+                // If the target is dialog content then ensure the event does not target child elements.
+                if (dialogContent != null && dialogContent.isOrHasChild(element)) {
+                    return dialogContent.equals(element);
+                }
+                // If the target is dialog buttons then ensure the event does not target child elements.
+                if (dialogButtons != null && dialogButtons.isOrHasChild(element)) {
+                    return dialogButtons.equals(element);
+                }
+                return true;
+            }
         }
         return false;
     }
