@@ -18,13 +18,18 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
+import stroom.test.common.TestOutcome;
 import stroom.test.common.TestUtil;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import net.sf.saxon.om.Sequence;
-import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -32,20 +37,34 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.TextStyle;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFormatDate.class);
 
     private static final Instant META_CREATE_TIME = LocalDateTime.of(
                     2010, 3, 1, 12, 45, 22, 643 * 1_000_000)
@@ -66,51 +85,225 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
 
         final Optional<String> optVal = getAsStringValue(sequence);
 
-        Assertions.assertThat(optVal)
+        assertThat(optVal)
                 .hasValue(DateUtil.createNormalDateTimeString(now.toEpochMilli()));
     }
 
     @TestFactory
-    Stream<DynamicTest> testCall_string() {
+    Stream<DynamicTest> testParseExamples() throws IOException {
+        // Dump each test case to a file, so we can add it to the stroom-docs easily
+        // content/en/docs/user-guide/pipelines/xslt/xslt-functions.md#format-date
+        final Path tempFile = Files.createTempFile("format-date-", ".md");
+//        Files.writeString(tempFile, """
+//                Function Call | Output | Notes
+//                ------------- | ------ | -----
+//                """, StandardOpenOption.APPEND);
 
-//        setMetaCreateTime();
+        LOGGER.info("Outputting examples to {}", tempFile.toAbsolutePath());
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {
                 })
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final Object[] args = testCase.getInput().toArray(new Object[0]);
+                    final List<String> strArgs = testCase.getInput();
+                    final Object[] args = strArgs.toArray(new Object[0]);
                     final Sequence sequence = callFunctionWithSimpleArgs(args);
                     final Optional<String> optVal = getAsStringValue(sequence);
                     return optVal.orElseThrow();
                 })
-                .withSimpleEqualityAssertion()
+                .withAssertions(outcome -> {
+                    final String actualOutput = writeFunctionCallStr(outcome, tempFile);
+                    assertThat(actualOutput)
+                            .isEqualTo(outcome.getExpectedOutput());
+                })
+                .addNamedCase("Date in millis since UNIX epoch",
+                        List.of("1269270011640"),
+                        "2010-03-22T15:00:11.640Z")
                 .addNamedCase(
-                        "Standard out fmt with TZ",
-                        List.of("2001/08/01", "yyyy/MM/dd", "-07:00"),
-                        "2001-08-01T07:00:00.000Z")
+                        "Simple date UK style date",
+                        List.of("29/08/24", "dd/MM/yy"),
+                        "2024-08-29T00:00:00.000Z")
                 .addNamedCase(
-                        "Standard out fmt with TZ",
-                        List.of("2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "-08:00"),
-                        "2001-08-01T09:00:00.000Z")
+                        "Simple date US style date",
+                        List.of("08/29/24", "MM/dd/yy"),
+                        "2024-08-29T00:00:00.000Z")
                 .addNamedCase(
-                        "Standard out fmt with TZ",
-                        List.of("2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "+01:00"),
-                        "2001-08-01T00:00:00.000Z")
+                        "ISO date with no delimiters",
+                        List.of("20010801184559", "yyyyMMddHHmmss"),
+                        "2001-08-01T18:45:59.000Z")
                 .addNamedCase(
-                        "Standard out fmt no TZ",
+                        "Standard output, no TZ",
                         List.of("2001/08/01 18:45:59", "yyyy/MM/dd HH:mm:ss"),
                         "2001-08-01T18:45:59.000Z")
                 .addNamedCase(
-                        "Specific out fmt no TZ",
+                        "Standard output, date only, with TZ",
+                        List.of("2001/08/01", "yyyy/MM/dd", "-07:00"),
+                        "2001-08-01T07:00:00.000Z")
+                .addNamedCase(
+                        "Standard output, with TZ",
+                        List.of("2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "-08:00"),
+                        "2001-08-01T09:00:00.000Z")
+                .addNamedCase(
+                        "Standard output, with TZ",
+                        List.of("2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "+01:00"),
+                        "2001-08-01T00:00:00.000Z")
+                .addNamedCase(
+                        "Single digit day and month, no padding",
+                        List.of("2001 8 1", "yyyy MM dd"),
+                        "2001-08-01T00:00:00.000Z")
+                .addNamedCase(
+                        "Double digit day and month, no padding",
+                        List.of("2001 12 28", "yyyy MM dd"),
+                        "2001-12-28T00:00:00.000Z")
+                .addNamedCase(
+                        "Single digit day and month, with optional padding",
+                        List.of("2001  8  1", "yyyy ppMM ppdd"),
+                        "2001-08-01T00:00:00.000Z")
+                .addNamedCase(
+                        "Double digit day and month, with optional padding",
+                        List.of("2001 12 31", "yyyy ppMM ppdd"),
+                        "2001-12-31T00:00:00.000Z")
+                .addNamedCase(
+                        "With abbreviated day of week month",
+                        List.of("Wed Aug 14 2024", "EEE MMM dd yyyy"),
+                        "2024-08-14T00:00:00.000Z")
+                .addNamedCase(
+                        "With long form day of week and month",
+                        List.of("Wednesday August 14 2024", "EEEE MMMM dd yyyy"),
+                        "2024-08-14T00:00:00.000Z")
+                .addNamedThrowsCase(
+                        "With incorrect day of week",
+                        List.of("Mon Aug 14 2024", "EEE MMM dd yyyy"), // Should be a Wed
+                        NoSuchElementException.class)
+                .addNamedCase(
+                        "With 12 hour clock, AM",
+                        List.of("Wed Aug 14 2024 10:32:58 AM", "E MMM dd yyyy hh:mm:ss a"),
+                        "2024-08-14T10:32:58.000Z")
+                .addNamedCase(
+                        "With 12 hour clock, PM (lower case)",
+                        List.of("Wed Aug 14 2024 10:32:58 pm", "E MMM dd yyyy hh:mm:ss a"),
+                        "2024-08-14T22:32:58.000Z")
+                .addNamedCase("Using minimal symbols",
+                        List.of("2001 12 31 22:58:32.123", "y M d H:m:s.S"),
+                        "2001-12-31T22:58:32.123Z")
+                .addNamedCase("Optional time portion, with time",
+                        List.of("2001/12/31 22:58:32.123", "yyyy/MM/dd[ HH:mm:ss.SSS]"),
+                        "2001-12-31T22:58:32.123Z")
+                .addNamedCase("Optional time portion, without time",
+                        List.of("2001/12/31", "yyyy/MM/dd[ HH:mm:ss.SSS]"),
+                        "2001-12-31T00:00:00.000Z")
+                .addNamedCase("Optional millis portion, with millis",
+                        List.of("2001/12/31 22:58:32.123", "yyyy/MM/dd HH:mm:ss[.SSS]"),
+                        "2001-12-31T22:58:32.123Z")
+                .addNamedCase("Optional millis portion, without millis",
+                        List.of("2001/12/31 22:58:32", "yyyy/MM/dd HH:mm:ss[.SSS]"),
+                        "2001-12-31T22:58:32.000Z")
+                .addNamedCase("Optional millis/nanos portion, with nanos",
+                        List.of("2001/12/31 22:58:32.123456", "yyyy/MM/dd HH:mm:ss[.SSS]"),
+                        "2001-12-31T22:58:32.123Z")
+                .addNamedCase("Fixed text",
+                        List.of("Date: 2001/12/31 Time: 22:58:32.123", "'Date: 'yyyy/MM/dd 'Time: 'HH:mm:ss.SSS"),
+                        "2001-12-31T22:58:32.123Z")
+                .addThrowsCase(List.of("2001 12 31", "yyy MMM ddd"), NoSuchElementException.class)
+                .addThrowsCase(List.of("2001 12 31", "yyy MM ddd"), NoSuchElementException.class)
+                .addThrowsCase(List.of("2001 Dec 31", "y M d"), NoSuchElementException.class)
+                .addNamedCase("GMT/BST date that is BST",
+                        List.of("2009/06/01 12:34:11", "yyyy/MM/dd HH:mm:ss", "GMT/BST"),
+                        "2009-06-01T11:34:11.000Z")
+                .addNamedCase("GMT/BST date that is GMT",
+                        List.of("2009/02/01 12:34:11", "yyyy/MM/dd HH:mm:ss", "GMT/BST"),
+                        "2009-02-01T12:34:11.000Z")
+                .addNamedCase("Time zone offset",
+                        List.of("2009/02/01 12:34:11", "yyyy/MM/dd HH:mm:ss", "+01:00"),
+                        "2009-02-01T11:34:11.000Z")
+                .addNamedCase("Named timezone",
+                        List.of("2009/02/01 23:34:11", "yyyy/MM/dd HH:mm:ss", "US/Eastern"),
+                        "2009-02-02T04:34:11.000Z")
+                .build();
+    }
+
+    private static String writeFunctionCallStr(final TestOutcome<List<String>, String> outcome, final Path tempFile) {
+        final String name = NullSafe.getOrElse(
+                outcome.getName(),
+                n -> "<!-- " + n + " -->\n",
+                "");
+        final String actualOutput = outcome.getActualOutput();
+        final List<String> args = outcome.getInput();
+        NullSafe.consume(argsToFuncCallStr(args), funcCallStr -> {
+            final String line = LogUtil.message("""
+                                                
+                    ```xml
+                    {}{}
+                    -> '{}'
+                    ```
+                    """, name, funcCallStr, actualOutput);
+//                    "`"
+//                    + funcCallStr
+//                    + "` | `" + actualOutput
+//                    + "` | " + name
+//                    + "\n";
+            try {
+                Files.writeString(tempFile, line, StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return actualOutput;
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCustomFormatExamples() throws IOException {
+        // Dump each test case to a file, so we can add it to the stroom-docs easily
+        // content/en/docs/user-guide/pipelines/xslt/xslt-functions.md#format-date
+        final Path tempFile = Files.createTempFile("format-date-", ".md");
+//        Files.writeString(tempFile, """
+//                Function Call | Output | Notes
+//                ------------- | ------ | -----
+//                """, StandardOpenOption.APPEND);
+
+        LOGGER.info("Outputting examples to {}", tempFile.toAbsolutePath());
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final List<String> strArgs = testCase.getInput();
+                    final Object[] args = strArgs.toArray(new Object[0]);
+                    final Sequence sequence = callFunctionWithSimpleArgs(args);
+                    final Optional<String> optVal = getAsStringValue(sequence);
+                    return optVal.orElseThrow();
+                })
+                .withAssertions(outcome -> {
+                    final String actualOutput = writeFunctionCallStr(outcome, tempFile);
+
+                    assertThat(actualOutput)
+                            .isEqualTo(outcome.getExpectedOutput());
+                })
+                .addNamedCase(
+                        "Specific output, no input or output TZ",
+                        Arrays.asList("2001/08/01 14:30:59",
+                                "yyyy/MM/dd HH:mm:ss",
+                                null,
+                                "E dd MMM yyyy HH:mm (s 'secs')"),
+                        "Wed 01 Aug 2001 14:30 (59 secs)")
+                .addNamedCase(
+                        "Specific output, UTC input, no output TZ",
+                        Arrays.asList("2001/08/01 14:30:59",
+                                "yyyy/MM/dd HH:mm:ss",
+                                "UTC",
+                                "E dd MMM yyyy HH:mm (s 'secs')"),
+                        "Wed 01 Aug 2001 14:30 (59 secs)")
+                .addNamedCase(
+                        "Specific output, no output TZ",
                         List.of("2001/08/01 14:30:59",
                                 "yyyy/MM/dd HH:mm:ss",
                                 "+01:00",
                                 "E dd MMM yyyy HH:mm (s 'secs')"),
                         "Wed 01 Aug 2001 13:30 (59 secs)")
                 .addNamedCase(
-                        "Specific out fmt with TZ",
+                        "Specific output, with input and output TZ",
                         List.of("2001/08/01 14:30:59",
                                 "yyyy/MM/dd HH:mm:ss",
                                 "+01:00",
@@ -118,40 +311,33 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                                 "+02:00"),
                         "Wed 01 Aug 2001 15:30")
                 .addNamedCase(
-                        "Single digit day and month",
-                        List.of("2001 8 1", "yyyy M d"),
-                        "2001-08-01T00:00:00.000Z")
+                        "Padded 12 hour clock output",
+                        List.of("2001/08/01 14:07:05.123",
+                                "yyyy/MM/dd HH:mm:ss.SSS",
+                                "UTC",
+                                "E dd MMM yyyy pph:ppm:pps a"),
+                        "Wed 01 Aug 2001  2: 7: 5 PM")
                 .addNamedCase(
-                        "Single digit day and month, plus padding",
-                        List.of("2001  8  1", "yyyy ppM ppd"),
-                        "2001-08-01T00:00:00.000Z")
+                        "Padded 12 hour clock output",
+                        List.of("2001/08/01 22:27:25.123",
+                                "yyyy/MM/dd HH:mm:ss.SSS",
+                                "UTC",
+                                "E dd MMM yyyy pph:ppm:pps a"),
+                        "Wed 01 Aug 2001 10:27:25 PM")
                 .addNamedCase(
-                        "Single digit day and month, plus padding",
-                        List.of("2001 12 31", "yyyy ppM ppd"),
-                        "2001-12-31T00:00:00.000Z")
+                        "Non-Padded 12 hour clock output",
+                        List.of("2001/08/01 14:07:05.123",
+                                "yyyy/MM/dd HH:mm:ss.SSS",
+                                "UTC",
+                                "E dd MMM yyyy h:m:s a"),
+                        "Wed 01 Aug 2001 2:7:5 PM")
                 .addNamedCase(
-                        "With day of week",
-                        List.of("Wed Aug 14 2024", "E MMM dd yyyy"),
-                        "2024-08-14T00:00:00.000Z")
-                .addNamedThrowsCase(
-                        "With incorrect day of week",
-                        List.of("Mon Aug 14 2024", "EEE MMM dd yyyy"), // Should be a Wed
-                        NoSuchElementException.class)
-                .addCase(List.of("2001 12 31", "y M d"), "2001-12-31T00:00:00.000Z")
-                .addCase(List.of("2001 12 31", "yy MM dd"), "2001-12-31T00:00:00.000Z")
-                .addThrowsCase(List.of("2001 12 31", "yyy MMM ddd"), NoSuchElementException.class)
-                .addThrowsCase(List.of("2001 12 31", "yyy MM ddd"), NoSuchElementException.class)
-                .addCase(List.of("2001 12 31", "yyy MMM dd"), "2001-12-31T00:00:00.000Z")
-                .addCase(List.of("2001 12 31", "yyy MM dd"), "2001-12-31T00:00:00.000Z")
-                .addCase(List.of("2001 12 31", "yyyy MM dd"), "2001-12-31T00:00:00.000Z")
-                .addThrowsCase(List.of("2001 Dec 31", "y M d"), NoSuchElementException.class)
-                .addCase(List.of("2001 Dec 31", "y MMM d"), "2001-12-31T00:00:00.000Z")
-                .addCase(List.of("2001 12 31 22:58:32.123", "y M d H:m:s.S"),
-                        "2001-12-31T22:58:32.123Z")
-                .addCase(List.of("2001 12 31 22:58:32.123", "y M d HH:mm:ss.SSS"),
-                        "2001-12-31T22:58:32.123Z")
-                .addCase(List.of("2001 12 31 9:3:5.12 pm", "y M d h:m:s.S a"),
-                        "2001-12-31T21:03:05.120Z")
+                        "Long form text",
+                        List.of("2001/08/01 14:07:05.123",
+                                "yyyy/MM/dd HH:mm:ss.SSS",
+                                "UTC",
+                                "EEEE d MMMM yyyy HH:mm:ss"),
+                        "Wednesday 1 August 2001 14:07:05")
                 .build();
     }
 
@@ -354,6 +540,77 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                 .isEqualTo("2018-01-18T01:01:01Z");
     }
 
+    @Disabled // Not a test
+    @Test
+    void dumpAllTimeZones() {
+        final String str = Arrays.stream(TimeZone.getAvailableIDs())
+                .map(zoneId1 -> {
+                    try {
+                        return ZoneId.of(zoneId1);
+                    } catch (Exception e) {
+                        LOGGER.warn("No ZoneId for '{}'", zoneId1);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .map(zoneId -> "`" + zoneId.getId() + "` | " + zoneId.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                .collect(Collectors.joining("\n"));
+
+        LOGGER.info("ZoneIds:\n{}", str);
+    }
+
+    @Test
+    void testTimeZones() {
+        final String str = Stream.of(
+                        "Zulu",
+                        "UTC",
+                        "+00:00",
+                        "-00:00",
+                        "+00",
+                        "+0",
+                        "+3",
+                        "+03",
+                        "+03:00")
+                .map(ZoneId::of)
+                .map(zoneId -> "`" + zoneId.getId() + "` | " + zoneId.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                .collect(Collectors.joining("\n"));
+        LOGGER.info("ZoneIds:\n{}", str);
+    }
+
+    @Test
+    void testGetBaseTime() {
+        final Instant startTime = Instant.now();
+        final Instant baseTime = formatDate.getBaseTime();
+        assertThat(baseTime)
+                .isAfter(startTime);
+        final Duration delta = Duration.between(startTime, baseTime);
+        assertThat(delta)
+                .isLessThan(Duration.ofMillis(250));
+    }
+
+    @Test
+    void testGetBaseTime_nonNullHolder() {
+        Mockito.when(mockMetaHolder.getMeta())
+                .thenReturn(null);
+
+        final Instant startTime = Instant.now();
+        final Instant baseTime = formatDate.getBaseTime();
+        assertThat(baseTime)
+                .isAfter(startTime);
+        final Duration delta = Duration.between(startTime, baseTime);
+        assertThat(delta)
+                .isLessThan(Duration.ofMillis(250));
+    }
+
+    @Test
+    void testGetBaseTime_nonNullHolderAndMeta() {
+        setMetaCreateTime();
+
+        final Instant baseTime = formatDate.getBaseTime();
+        assertThat(baseTime)
+                .isEqualTo(META_CREATE_TIME);
+    }
+
     private ZonedDateTime callAsUTCToZonedDateTime(final String pattern, final String dateStr) {
 //        setMetaCreateTime("2010-03-01T12:45:22.643Z");
         final String outputDateStr = call(dateStr, pattern, "UTC");
@@ -395,5 +652,19 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
     @Override
     String getFunctionName() {
         return FormatDate.FUNCTION_NAME;
+    }
+
+    private static String argsToFuncCallStr(final List<String> args) {
+        if (NullSafe.hasItems(args)) {
+            return "stroom:format-date(" + args.stream()
+                    .map(arg ->
+                            arg == null
+                                    ? "null"
+                                    : "'" + arg + "'")
+                    .collect(Collectors.joining(", "))
+                    + ")";
+        } else {
+            return null;
+        }
     }
 }
