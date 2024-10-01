@@ -43,6 +43,7 @@ import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
 import stroom.query.language.token.AbstractToken;
+import stroom.query.language.token.FunctionGroup;
 import stroom.query.language.token.KeywordGroup;
 import stroom.query.language.token.StructureBuilder;
 import stroom.query.language.token.Token;
@@ -984,80 +985,128 @@ public class SearchRequestFactory {
                                    final TableSettings.Builder tableSettingsBuilder) {
             final List<AbstractToken> children = keywordGroup.getChildren();
             AbstractToken fieldToken = null;
+            Expression fieldExpression = null;
             String columnName = null;
             boolean afterAs = false;
+            boolean doneAs = false;
+            int columnCount = 0;
 
             for (final AbstractToken token : children) {
-                if (TokenType.isString(token)) {
+
+                if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
+                    // If a function has been used for a column then parse it.
+                    if (fieldExpression != null || fieldToken != null) {
+                        throw new TokenException(token, "Unexpected expression");
+                    }
+
+                    final FunctionGroup functionGroup = (FunctionGroup) token;
+                    columnName = functionGroup.getName();
+                    final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+                    try {
+                        fieldExpression = expressionParser
+                                .parse(expressionContext, fieldIndex, Collections.singletonList(token));
+                    } catch (final ParseException e) {
+                        throw new TokenException(keywordGroup, e.getMessage());
+                    }
+
+                } else if (TokenType.isString(token)) {
+                    // If we have a string then it is either a field name or a column name if provided after AS.
                     if (afterAs) {
-                        if (columnName != null) {
+                        if (doneAs) {
                             throw new TokenException(token, "Syntax exception, unexpected column name");
                         } else {
                             columnName = token.getUnescapedText();
+                            doneAs = true;
                         }
                     } else if (fieldToken == null) {
+                        if (fieldExpression != null) {
+                            throw new TokenException(token, "Unexpected field");
+                        }
+
                         fieldToken = token;
+                        columnName = token.getUnescapedText();
                     } else {
                         throw new TokenException(token, "Syntax exception, expected AS");
                     }
+
                 } else if (TokenType.AS.equals(token.getTokenType())) {
-                    if (fieldToken == null) {
-                        throw new TokenException(token, "Syntax exception, expected field name");
+                    // We found AS so prepare for a column name.
+                    if (fieldToken == null && fieldExpression == null) {
+                        throw new TokenException(token, "Syntax exception, expected field name or expression");
+                    }
+                    if (afterAs) {
+                        throw new TokenException(token, "Unexpected AS");
                     }
 
                     afterAs = true;
 
                 } else if (TokenType.COMMA.equals(token.getTokenType())) {
-                    if (fieldToken == null) {
+                    if (fieldToken != null) {
+                        columnCount++;
+                        final String columnId = "column-" + columnCount;
+                        addField(fieldToken,
+                                columnId,
+                                fieldToken.getUnescapedText(),
+                                columnName,
+                                true,
+                                false,
+                                sortMap,
+                                groupMap,
+                                filterMap,
+                                tableSettingsBuilder);
+
+                    } else if (fieldExpression != null) {
+                        columnCount++;
+                        final String columnId = "column-" + columnCount;
+                        addField(columnId,
+                                fieldExpression,
+                                columnName,
+                                true,
+                                false,
+                                sortMap,
+                                groupMap,
+                                filterMap,
+                                tableSettingsBuilder);
+                    } else {
                         throw new TokenException(token, "Syntax exception, expected field name");
                     }
 
-                    addField(fieldToken,
-                            fieldToken.getUnescapedText(),
-                            fieldToken.getUnescapedText(),
-                            columnName,
-                            sortMap,
-                            groupMap,
-                            filterMap,
-                            tableSettingsBuilder);
-
                     fieldToken = null;
+                    fieldExpression = null;
                     columnName = null;
                     afterAs = false;
+                    doneAs = false;
                 }
             }
 
             // Add final field if we have one.
             if (fieldToken != null) {
+                columnCount++;
+                final String columnId = "column-" + columnCount;
                 addField(fieldToken,
-                        fieldToken.getUnescapedText(),
+                        columnId,
                         fieldToken.getUnescapedText(),
                         columnName,
+                        true,
+                        false,
+                        sortMap,
+                        groupMap,
+                        filterMap,
+                        tableSettingsBuilder);
+
+            } else if (fieldExpression != null) {
+                columnCount++;
+                final String columnId = "column-" + columnCount;
+                addField(columnId,
+                        fieldExpression,
+                        columnName,
+                        true,
+                        false,
                         sortMap,
                         groupMap,
                         filterMap,
                         tableSettingsBuilder);
             }
-        }
-
-        private void addField(final AbstractToken token,
-                              final String id,
-                              final String fieldName,
-                              final String columnName,
-                              final Map<String, Sort> sortMap,
-                              final Map<String, Integer> groupMap,
-                              final Map<String, Filter> filterMap,
-                              final TableSettings.Builder tableSettingsBuilder) {
-            addField(token,
-                    id,
-                    fieldName,
-                    columnName,
-                    true,
-                    false,
-                    sortMap,
-                    groupMap,
-                    filterMap,
-                    tableSettingsBuilder);
         }
 
         private void addField(final AbstractToken token,
@@ -1094,6 +1143,30 @@ public class SearchRequestFactory {
                     .sort(sortMap.get(fieldName))
                     .group(groupMap.get(fieldName))
                     .filter(filterMap.get(fieldName))
+                    .visible(visible)
+                    .special(special)
+                    .build();
+            tableSettingsBuilder.addColumns(field);
+        }
+
+        private void addField(final String id,
+                              final Expression expression,
+                              final String columnName,
+                              final boolean visible,
+                              final boolean special,
+                              final Map<String, Sort> sortMap,
+                              final Map<String, Integer> groupMap,
+                              final Map<String, Filter> filterMap,
+                              final TableSettings.Builder tableSettingsBuilder) {
+            addedFields.add(columnName);
+            final String expressionString = expression.toString();
+            final Column field = Column.builder()
+                    .id(id)
+                    .name(columnName)
+                    .expression(expressionString)
+                    .sort(sortMap.get(columnName))
+                    .group(groupMap.get(columnName))
+                    .filter(filterMap.get(columnName))
                     .visible(visible)
                     .special(special)
                     .build();
