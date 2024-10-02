@@ -47,28 +47,28 @@ select StreamId, EventId, EventTime, Status
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
@@ -139,28 +139,28 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
@@ -232,35 +232,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -323,35 +323,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -414,35 +414,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -491,35 +491,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -567,7 +567,7 @@ select StreamId
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
@@ -623,35 +623,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -700,35 +700,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -777,35 +777,35 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
         "width" : 200,
@@ -848,7 +848,7 @@ select StreamId as "Stream Id", count as Count
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "group" : 0,
@@ -856,7 +856,7 @@ select StreamId as "Stream Id", count as Count
         "visible" : true,
         "special" : false
       }, {
-        "id" : "count",
+        "id" : "column-2",
         "name" : "Count",
         "expression" : "count()",
         "width" : 200,
@@ -936,7 +936,7 @@ select comp
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "comp",
+        "id" : "column-1",
         "name" : "comp",
         "expression" : "max(toFloat(day()-10d))",
         "width" : 200,
@@ -993,7 +993,7 @@ select StreamId, EventTime
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "group" : 0,
@@ -1001,7 +1001,7 @@ select StreamId, EventTime
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-2",
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "group" : 1,
@@ -1045,7 +1045,7 @@ select ${Stream Id}, ${Event Time}
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "Stream Id",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${Stream Id}",
         "group" : 0,
@@ -1053,7 +1053,7 @@ select ${Stream Id}, ${Event Time}
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Event Time",
+        "id" : "column-2",
         "name" : "Event Time",
         "expression" : "${Event Time}",
         "group" : 1,
@@ -1098,7 +1098,7 @@ select ${Stream Id}, ${Event Time}
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "Stream Id",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${Stream Id}",
         "group" : 0,
@@ -1106,7 +1106,7 @@ select ${Stream Id}, ${Event Time}
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Event Time",
+        "id" : "column-2",
         "name" : "Event Time",
         "expression" : "${Event Time}",
         "group" : 1,
@@ -1160,7 +1160,7 @@ select ${Event Time}
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "Event Time",
+        "id" : "column-1",
         "name" : "Event Time",
         "expression" : "${Event Time}",
         "group" : 1,
@@ -1228,7 +1228,7 @@ select StreamId
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
@@ -1283,7 +1283,7 @@ select StreamId
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
@@ -1362,42 +1362,42 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "${UserId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "test",
+        "id" : "column-6",
         "name" : "test",
         "expression" : "if(indexOf(${UserId}, 'user1')>=0, 1, 0)",
         "width" : 200,
@@ -1462,42 +1462,42 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "${UserId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "test",
+        "id" : "column-6",
         "name" : "test",
         "expression" : "if(and(indexOf(${UserId}, 'user1')>=0, indexOf(${UserId}, 'user')>=0), 1, 0)",
         "width" : 200,
@@ -1563,42 +1563,42 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "Event Id",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "Event Time",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "UserId",
+        "id" : "column-5",
         "name" : "User Id",
         "expression" : "${UserId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "test",
+        "id" : "column-6",
         "name" : "test",
         "expression" : "if(and(indexOf(${UserId}, 'user1')>=0, indexOf(${UserId}, 'user')>=0), 1, 0)",
         "width" : 200,
@@ -1674,28 +1674,28 @@ select StreamId, EventId, EventTime, Status
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
@@ -1780,28 +1780,28 @@ select StreamId, EventId, EventTime, Status
     "componentId" : "table",
     "mappings" : [ {
       "fields" : [ {
-        "id" : "StreamId",
+        "id" : "column-1",
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
+        "id" : "column-2",
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventTime",
+        "id" : "column-3",
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
-        "id" : "Status",
+        "id" : "column-4",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
