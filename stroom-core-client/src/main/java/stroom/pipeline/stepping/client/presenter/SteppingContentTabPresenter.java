@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.stepping.client.presenter;
@@ -23,6 +22,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -70,27 +70,34 @@ public class SteppingContentTabPresenter
 
     @Override
     public void onCloseRequest(final CloseContentEvent event) {
-        if (dirty) {
-            if (!event.isIgnoreIfDirty()) {
+        final DirtyMode dirtyMode = event.getDirtyMode();
+        if (dirty && DirtyMode.FORCE != dirtyMode) {
+            if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
                 ConfirmEvent.fire(this,
                         pipeline.getType() + " '" + pipeline.getName()
                                 + "' has unsaved changes. Are you sure you want to close this item?",
                         result -> {
-                            event.getCallback().closeTab(result);
-                            if (result) {
-                                steppingPresenter.terminate();
-                                unbind();
-                                hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
-                            }
+                            doClose(event, result);
                         });
+            } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
+                // Do nothing
+            } else {
+                throw new RuntimeException("Unexpected DirtyMode: " + dirtyMode);
             }
         } else {
-            event.getCallback().closeTab(true);
+            doClose(event, true);
+        }
+    }
+
+    private void doClose(final CloseContentEvent event, final boolean result) {
+        event.getCallback().closeTab(result);
+        if (result) {
             steppingPresenter.terminate();
             unbind();
             hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
         }
     }
+
 
     public void read(final DocRef pipeline,
                      final StepType stepType,

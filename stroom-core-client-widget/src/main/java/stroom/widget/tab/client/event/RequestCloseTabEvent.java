@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,22 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
 
     private static Type<Handler> TYPE;
     private final TabData tabData;
+    private final boolean force;
 
-    private RequestCloseTabEvent(final TabData tabData) {
+    private RequestCloseTabEvent(final TabData tabData, final boolean force) {
         this.tabData = tabData;
+        this.force = force;
     }
 
     public static void fire(final HasHandlers handlers, final TabData tabData) {
-        handlers.fireEvent(new RequestCloseTabEvent(tabData));
+        handlers.fireEvent(new RequestCloseTabEvent(tabData, false));
+    }
+
+    /**
+     * @param force If true the tab will be closed even if dirty.
+     */
+    public static void fire(final HasHandlers handlers, final TabData tabData, final boolean force) {
+        handlers.fireEvent(new RequestCloseTabEvent(tabData, force));
     }
 
     public static Type<Handler> getType() {
@@ -46,6 +55,10 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
         return tabData;
     }
 
+    public boolean isForce() {
+        return force;
+    }
+
     @Override
     public Type<Handler> getAssociatedType() {
         return getType();
@@ -55,6 +68,10 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
     protected void dispatch(final Handler handler) {
         handler.onCloseTab(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 
