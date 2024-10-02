@@ -232,7 +232,7 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
         final List<String> args = outcome.getInput();
         NullSafe.consume(argsToFuncCallStr(args), funcCallStr -> {
             final String line = LogUtil.message("""
-                                                
+
                     ```xml
                     {}{}
                     -> '{}'
