@@ -215,6 +215,38 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testFirst() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.first(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(Collections.emptyList(), null)
+                .addCase(List.of("bar"), "bar")
+                .addCase(List.of("foo", "bar"), "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testLast() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.last(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(Collections.emptyList(), null)
+                .addCase(List.of("bar"), "bar")
+                .addCase(List.of("foo", "bar"), "bar")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testCoalesce_twoValues() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class)
