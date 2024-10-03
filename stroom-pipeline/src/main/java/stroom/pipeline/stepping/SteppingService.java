@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.stepping;
 
 import stroom.docref.DocRef;
@@ -29,6 +45,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
@@ -147,9 +164,9 @@ public class SteppingService {
 
         // Also remove old handlers for dead stepping tasks and terminate them.
         final Instant oldest = Instant.now().minusSeconds(10);
-        currentHandlers.entrySet().forEach(entry -> {
-            if (entry.getValue().getLastRequestTime().isBefore(oldest)) {
-                terminate(entry.getKey());
+        currentHandlers.forEach((key1, value) -> {
+            if (value.getLastRequestTime().isBefore(oldest)) {
+                terminate(key1);
             }
         });
 
@@ -202,29 +219,25 @@ public class SteppingService {
     private Meta getMeta(final Long id) {
         if (id == null) {
             return null;
+        } else {
+            return securityContext.asProcessingUserResult(() -> {
+                final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
+                final List<Meta> streamList = metaService.find(criteria).getValues();
+                return NullSafe.first(streamList);
+            });
         }
-
-        return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
-            final List<Meta> streamList = metaService.find(criteria).getValues();
-            if (streamList != null && streamList.size() > 0) {
-                return streamList.get(0);
-            }
-
-            return null;
-        });
     }
 
     private Meta getFirstChildMeta(final Long id) {
         if (id == null) {
             return null;
+        } else {
+            return securityContext.asProcessingUserResult(() -> {
+                final FindMetaCriteria criteria =
+                        new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
+                return metaService.find(criteria).getFirst();
+            });
         }
-
-        return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria =
-                    new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
-            return metaService.find(criteria).getFirst();
-        });
     }
 
     private DocRef getPipeline(final Meta meta) {
@@ -279,14 +292,20 @@ public class SteppingService {
                         null);
             }
 
-            if (elementInstance instanceof SupportsCodeInjection) {
-                final SupportsCodeInjection supportsCodeInjection = (SupportsCodeInjection) elementInstance;
-                return supportsCodeInjection.findDoc(request.getFeedName(), request.getPipelineName(), LOGGER::debug);
+            if (elementInstance instanceof SupportsCodeInjection supportsCodeInjection) {
+                return supportsCodeInjection.findDoc(
+                        request.getFeedName(),
+                        request.getPipelineName(),
+                        LOGGER::debug);
             }
 
             throw new PipelineFactoryException("Element does not support code injection " + elementClass);
         });
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public record Key(UserIdentity userIdentity, String uuid) {
 

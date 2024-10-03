@@ -161,6 +161,29 @@ public class NullSafe {
         return Optional.empty();
     }
 
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T first(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.getFirst();
+        }
+    }
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T last(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.getLast();
+        }
+    }
+
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */

@@ -16,10 +16,12 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.NullSafe;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -363,19 +365,15 @@ class FormatDate extends StroomExtensionFunctionCall {
         return ZoneOffset.UTC;
     }
 
-    private Instant getBaseTime() {
+    // Pkg private for testing
+    Instant getBaseTime() {
         if (baseTime == null) {
-            Long createMs = null;
-            if (metaHolder != null) {
-                if (metaHolder.getMeta() != null) {
-                    createMs = metaHolder.getMeta().getCreateMs();
-                }
-            }
-            if (createMs != null) {
-                baseTime = Instant.ofEpochMilli(createMs);
-            } else {
-                baseTime = Instant.now();
-            }
+            baseTime = NullSafe.getOrElseGet(
+                    metaHolder,
+                    MetaHolder::getMeta,
+                    Meta::getCreateMs,
+                    Instant::ofEpochMilli,
+                    Instant::now);
         }
         return baseTime;
     }

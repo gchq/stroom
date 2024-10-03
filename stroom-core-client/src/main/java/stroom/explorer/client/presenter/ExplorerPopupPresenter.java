@@ -221,11 +221,18 @@ public class ExplorerPopupPresenter
                     })
                     .taskMonitorFactory(this)
                     .exec();
+        } else {
+            clearSelected();
+            GwtNullSafe.run(onSetSelected);
         }
     }
 
     private ExplorerNode getSelectedEntityData() {
         return resolve(explorerTree.getSelectionModel().getSelected());
+    }
+
+    private void clearSelected() {
+        explorerTree.getSelectionModel().clear();
     }
 
     private void setSelectedEntityData(final ExplorerNode explorerNode) {
