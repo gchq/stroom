@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -532,6 +532,7 @@ public abstract class AbstractMetaListPresenter
             final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
             showSummary(
                     criteria,
+                    DocumentPermissionNames.READ,
                     null,
                     null,
                     "Selection Summary",
@@ -541,12 +542,13 @@ public abstract class AbstractMetaListPresenter
     }
 
     public void download() {
-        validateSelection("download", () -> {
+        confirmSelection("download", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
                 final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
+                        DocumentPermissionNames.READ,
                         "downloaded",
                         "download",
                         "Confirm Download",
@@ -579,13 +581,14 @@ public abstract class AbstractMetaListPresenter
     private void doProcess(final ProcessChoice processChoice) {
         choosePipeline(docRef -> {
             if (docRef != null) {
-                validateSelection("process", () -> {
+                confirmSelection("process", () -> {
                     final Selection<Long> selection = getSelection();
                     final ExpressionOperator expression = selectionToExpression(this.criteria, selection);
                     validateExpression(expression, exp -> {
                         final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                         showSummary(
                                 criteria,
+                                DocumentPermissionNames.READ,
                                 "processed",
                                 "process",
                                 "Confirm Process",
@@ -598,12 +601,13 @@ public abstract class AbstractMetaListPresenter
     }
 
     private void doReprocess(final ProcessChoice processChoice) {
-        validateSelection("reprocess", () -> {
+        confirmSelection("reprocess", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
                 final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
+                        DocumentPermissionNames.READ,
                         "reprocessed",
                         "reprocess",
                         "Confirm Reprocess",
@@ -631,13 +635,22 @@ public abstract class AbstractMetaListPresenter
         chooser.show(consumer);
     }
 
+    /**
+     * @return The effective criteria taking into account the active filter and any
+     * row selections.
+     */
+    FindMetaCriteria getSelectedCriteria() {
+        return expressionToNonPagedCriteria(selectionToExpression(this.criteria, getSelection()));
+    }
+
     public void delete() {
-        validateSelection("delete", () -> {
+        confirmSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
                 final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
+                        DocumentPermissionNames.DELETE,
                         "deleted",
                         "delete",
                         "Confirm Delete",
@@ -648,12 +661,13 @@ public abstract class AbstractMetaListPresenter
     }
 
     public void restore() {
-        validateSelection("restore", () -> {
+        confirmSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
                 final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
+                        DocumentPermissionNames.UPDATE,
                         "restored",
                         "restore",
                         "Confirm Restore",
@@ -803,6 +817,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     private void showSummary(final FindMetaCriteria criteria,
+                             final String permission,
                              final String postAction,
                              final String action,
                              final String caption,
@@ -810,6 +825,7 @@ public abstract class AbstractMetaListPresenter
                              final Runnable runnable) {
         selectionSummaryPresenterProvider.get().show(
                 criteria,
+                permission,
                 postAction,
                 action,
                 caption,
@@ -817,7 +833,9 @@ public abstract class AbstractMetaListPresenter
                 runnable);
     }
 
-    private void validateSelection(final String actionType, final Runnable runnable) {
+    private void confirmSelection(final String actionType, final Runnable runnable) {
+        // TODO For select ALL we get three confirm dialogs, else two.
+        //  Not sure we need the initial one, just the summary one with the useful data in it.
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
             ConfirmEvent.fire(this,
@@ -826,9 +844,10 @@ public abstract class AbstractMetaListPresenter
                         if (confirm) {
                             if (selection.isMatchAll()) {
                                 ConfirmEvent.fireWarn(AbstractMetaListPresenter.this,
-                                        "You have selected all items.  Are you sure you want to " +
-                                                actionType +
-                                                " all the selected items?",
+                                        "You have clicked the select all checkbox.  " +
+                                                "If you continue Stroom will " +
+                                                actionType + " all items that match the filter, not just those " +
+                                                "visible on screen.\n\nAre you sure you want to continue?",
                                         confirm1 -> {
                                             if (confirm1) {
                                                 runnable.run();

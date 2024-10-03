@@ -20,44 +20,37 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(Include.NON_NULL)
-public class UpdateStatusRequest {
+@JsonPropertyOrder(alphabetic = true)
+public class SelectionSummaryRequest {
 
     @JsonProperty
-    private final FindMetaCriteria criteria;
+    private final FindMetaCriteria findMetaCriteria;
     @JsonProperty
-    private final Status currentStatus;
-    @JsonProperty
-    private final Status newStatus;
+    private final String requiredPermission;
 
     @JsonCreator
-    public UpdateStatusRequest(@JsonProperty("criteria") final FindMetaCriteria criteria,
-                               @JsonProperty("currentStatus") final Status currentStatus,
-                               @JsonProperty("newStatus") final Status newStatus) {
-        this.criteria = criteria;
-        this.currentStatus = currentStatus;
-        this.newStatus = newStatus;
+    public SelectionSummaryRequest(@JsonProperty("findMetaCriteria") final FindMetaCriteria findMetaCriteria,
+                                   @JsonProperty("requiredPermission") final String requiredPermission) {
+        this.findMetaCriteria = findMetaCriteria;
+        this.requiredPermission = requiredPermission;
     }
 
-    public FindMetaCriteria getCriteria() {
-        return criteria;
+    public FindMetaCriteria getFindMetaCriteria() {
+        return findMetaCriteria;
     }
 
-    public Status getCurrentStatus() {
-        return currentStatus;
-    }
-
-    public Status getNewStatus() {
-        return newStatus;
+    public String getRequiredPermission() {
+        return requiredPermission;
     }
 
     @Override
     public String toString() {
-        return "UpdateStatusRequest{" +
-                "criteria=" + criteria +
-                ", currentStatus=" + currentStatus +
-                ", newStatus=" + newStatus +
+        return "SelectionSummaryRequest{" +
+                "findMetaCriteria=" + findMetaCriteria +
+                ", requiredPermission='" + requiredPermission + '\'' +
                 '}';
     }
 }
