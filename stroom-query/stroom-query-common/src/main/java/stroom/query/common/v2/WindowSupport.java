@@ -98,13 +98,13 @@ public class WindowSupport {
                         final int index = columns.indexOf(column);
                         columns.set(index, column
                                 .copy()
-                                .expression("countPrevious(" + i + ")")
+                                .expression("mask(" + i + ", count())")
                                 .build());
                     } else {
                         columns.add(Column.builder()
                                 .id(fieldId)
                                 .name(fieldId)
-                                .expression("countPrevious(" + i + ")")
+                                .expression("mask(" + i + ", count())")
                                 .visible(true)
                                 .build());
                     }

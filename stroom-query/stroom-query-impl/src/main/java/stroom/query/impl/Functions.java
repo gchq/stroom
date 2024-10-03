@@ -115,7 +115,8 @@ public class Functions {
                                         convertSignature(functionDef, functionSignature, countsByCategoryPath);
                                 addSignature(localMap, row);
                             });
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
+                            LOGGER.error(e.getMessage(), e);
                             throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
                         }
                     }
