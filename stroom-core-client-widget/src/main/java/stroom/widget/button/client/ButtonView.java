@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,4 +40,13 @@ public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers, Focu
      * @return This view as a DOM object.
      */
     Widget asWidget();
+
+    /**
+     * Null-safe setting of the enabled state. If buttonView is null, it is a no-op.
+     */
+    static void setEnabled(final ButtonView buttonView, final boolean enabled) {
+        if (buttonView != null) {
+            buttonView.setEnabled(enabled);
+        }
+    }
 }
