@@ -3896,8 +3896,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -3916,8 +3916,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -14909,6 +14909,13 @@ components:
         typeCount:
           type: integer
           format: int64
+    SelectionSummaryRequest:
+      type: object
+      properties:
+        findMetaCriteria:
+          $ref: '#/components/schemas/FindMetaCriteria'
+        requiredPermission:
+          type: string
     SelectionVolumeUseStatus:
       type: object
       properties:
