@@ -29,8 +29,6 @@ public class DownloadQueryResultsRequest {
     @JsonProperty
     private final QuerySearchRequest searchRequest;
     @JsonProperty
-    private final String componentId;
-    @JsonProperty
     private final DownloadSearchResultFileType fileType;
     @JsonProperty
     private final boolean sample;
@@ -39,12 +37,10 @@ public class DownloadQueryResultsRequest {
 
     @JsonCreator
     public DownloadQueryResultsRequest(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest,
-                                       @JsonProperty("componentId") final String componentId,
                                        @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                                        @JsonProperty("sample") final boolean sample,
                                        @JsonProperty("percent") final int percent) {
         this.searchRequest = searchRequest;
-        this.componentId = componentId;
         this.fileType = fileType;
         this.sample = sample;
         this.percent = percent;
@@ -52,10 +48,6 @@ public class DownloadQueryResultsRequest {
 
     public QuerySearchRequest getSearchRequest() {
         return searchRequest;
-    }
-
-    public String getComponentId() {
-        return componentId;
     }
 
     public DownloadSearchResultFileType getFileType() {

@@ -52,7 +52,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     public static final String TABLE_COMPONENT_ID = "table";
     public static final String VIS_COMPONENT_ID = "vis";
 
-
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private String queryUuid;
@@ -62,7 +61,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     private String currentNode;
     private QueryKey currentQueryKey;
-    private QueryContext currentQueryContext;
     private QuerySearchRequest currentSearch;
     private boolean searching;
     private boolean polling;
@@ -74,7 +72,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private final Map<String, ResultComponent> resultComponents = new HashMap<>();
 
     private final ResultComponent tablePresenter;
-    private final ResultComponent visPresenter;
 
     public QueryModel(final EventBus eventBus,
                       final RestFactory restFactory,
@@ -87,7 +84,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
         this.tablePresenter = tablePresenter;
-        this.visPresenter = visPresenter;
         tablePresenter.setQueryModel(this);
         visPresenter.setQueryModel(this);
 
@@ -161,7 +157,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 //                // Copy the expression.
 //                ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 //
-        currentQueryContext = QueryContext
+        final QueryContext currentQueryContext = QueryContext
                 .builder()
                 .params(params)
                 .timeRange(timeRange)
@@ -386,42 +382,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         searchStateListeners.forEach(listener -> listener.onSearching(searching));
     }
 
-
-//    public boolean isSearching() {
-//        return searching;
-//    }
-//
-//    public QueryKey getCurrentQueryKey() {
-//        return currentQueryKey;
-//    }
-//
-//    public Search getCurrentSearch() {
-//        return currentSearch;
-//    }
-//
-//    public IndexLoader getIndexLoader() {
-//        return indexLoader;
-//    }
-//
-//    public DashboardSearchResponse getCurrentResponse() {
-//        return currentResponse;
-//    }
-
-//    public void addComponent(final String componentId, final ResultConsumer resultComponent) {
-//        // Create and assign a new map here to prevent concurrent modification exceptions.
-//        final Map<String, ResultConsumer> componentMap = new HashMap<>(this.componentMap);
-//        componentMap.put(componentId, resultComponent);
-//        this.componentMap = componentMap;
-//    }
-
-    //    public void removeComponent(final String componentId) {
-//        // Create and assign a new map here to prevent concurrent modification exceptions.
-//        final Map<String, ResultConsumer> componentMap = new HashMap<>(this.componentMap);
-//        componentMap.remove(componentId);
-//        this.componentMap = componentMap;
-//    }
-
-
     public void addSearchStateListener(final SearchStateListener listener) {
         searchStateListeners.add(listener);
     }
@@ -458,5 +418,17 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     @Override
     public void fireEvent(final GwtEvent<?> gwtEvent) {
         eventBus.fireEvent(gwtEvent);
+    }
+
+    public QueryKey getCurrentQueryKey() {
+        return currentQueryKey;
+    }
+
+    public QuerySearchRequest getCurrentSearch() {
+        return currentSearch;
+    }
+
+    public String getCurrentNode() {
+        return currentNode;
     }
 }

@@ -8,7 +8,7 @@
         <form:FormGroup identity="searchDownloadFileType" label="File Type">
             <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup ui:field="downloadAll">
           <view:CustomCheckBox ui:field="downloadAllTables" identity="searchDownloadAllTables" label="Download All Tables"/>
         </form:FormGroup>
         <form:FormGroup>
