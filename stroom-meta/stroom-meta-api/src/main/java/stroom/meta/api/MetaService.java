@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.api;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -194,6 +210,14 @@ public interface MetaService {
      */
     SelectionSummary getSelectionSummary(FindMetaCriteria criteria);
 
+    /**
+     * Get a summary of the items included by the current selection.
+     *
+     * @param criteria The selection criteria.
+     * @return An object that provides a summary of the current selection.
+     */
+    SelectionSummary getSelectionSummary(FindMetaCriteria criteria, final String permission);
+
 
     /**
      * Get a summary of the parent items of the current selection for reprocessing purposes.
@@ -203,6 +227,15 @@ public interface MetaService {
      * reprocessing purposes.
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
+
+    /**
+     * Get a summary of the parent items of the current selection for reprocessing purposes.
+     *
+     * @param criteria The selection criteria.
+     * @return An object that provides a summary of the parent items of the current selection for
+     * reprocessing purposes.
+     */
+    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria, final String permission);
 
     /**
      * Return back a aet of meta data records that are effective for a period in

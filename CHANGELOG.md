@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.18] - 2024-10-03
+
+* Issue **#4485** : Improve dialog move/resize behaviour.
+
+* Issue **#4492** : Make Lucene behave like SQL for OR(NOT()) queries.
+
+* Issue **#4494** : Allow functions in StroomQL select, e.g. `count()`.
+
+* Issue **#4202** : Fix default destination not being selected when you do _Save As_.
+
+* Issue **#4475** : Add `mask()` function and deprecate `countPrevious()`.
+
+* Issue **#4491** : Fix tab closure when deleting items in the explorer tree.
+
+* Issue **#4502** : Fix inability to step an un-processed stream.
+
+* Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
+
+
 ## [v7.5-beta.17] - 2024-09-30
 
 * Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
@@ -872,7 +891,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.18...HEAD
+[v7.5-beta.18]: https://github.com/gchq/stroom/compare/v7.5-beta.17...v7.5-beta.18
 [v7.5-beta.17]: https://github.com/gchq/stroom/compare/v7.5-beta.16...v7.5-beta.17
 [v7.5-beta.16]: https://github.com/gchq/stroom/compare/v7.5-beta.15...v7.5-beta.16
 [v7.5-beta.15]: https://github.com/gchq/stroom/compare/v7.5-beta.14...v7.5-beta.15

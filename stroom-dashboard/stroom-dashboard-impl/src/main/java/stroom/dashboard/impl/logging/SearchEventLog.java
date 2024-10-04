@@ -20,6 +20,8 @@ import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.shared.DownloadQueryResultsRequest;
 
 import java.util.List;
 
@@ -60,6 +62,20 @@ public interface SearchEventLog {
     }
 
     void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
+                         Long resultCount,
+                         Exception ex);
+
+    default void downloadResults(DownloadQueryResultsRequest downloadSearchResultsRequest,
+                                 SearchRequest request,
+                                 Long resultCount) {
+        downloadResults(downloadSearchResultsRequest,
+                request,
+                resultCount,
+                null);
+    }
+
+    void downloadResults(DownloadQueryResultsRequest req,
+                         SearchRequest request,
                          Long resultCount,
                          Exception ex);
 }

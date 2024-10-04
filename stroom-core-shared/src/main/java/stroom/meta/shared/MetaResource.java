@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public interface MetaResource extends RestResource, DirectRestService {
             summary = "Get a summary of the selected meta data",
             operationId = "getMetaSelectionSummary")
     SelectionSummary getSelectionSummary(
-            @Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
+            @Parameter(description = "request", required = true) SelectionSummaryRequest request);
 
     @POST
     @Path("getReprocessSelectionSummary")
@@ -77,7 +77,7 @@ public interface MetaResource extends RestResource, DirectRestService {
             summary = "Get a summary of the parent items of the selected meta data",
             operationId = "getMetaReprocessSelectionSummary")
     SelectionSummary getReprocessSelectionSummary(
-            @Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
+            @Parameter(description = "request", required = true) SelectionSummaryRequest request);
 
     @GET
     @Path("getTypes")
