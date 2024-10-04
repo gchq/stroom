@@ -49,6 +49,7 @@ class TestQueryServiceImpl {
                 null,
                 null,
                 null,
+                null,
                 null);
 
         return TestUtil.buildDynamicTestStream()
