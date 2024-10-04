@@ -37,32 +37,30 @@ abstract class AbstractTimeFunction extends AbstractFunction {
 
     ZonedDateTime getReferenceTime() {
         final DateTimeSettings dateTimeSettings = expressionContext.getDateTimeSettings();
-        Objects.requireNonNull(dateTimeSettings, "dateTimeSettings not set in searchRequest");
+        final ZoneId zoneId = getZoneId(dateTimeSettings);
         Objects.requireNonNull(dateTimeSettings.getReferenceTime(),
                 "referenceTime not set in searchRequest.dateTimeSettings");
 
         final Instant instant = Instant.ofEpochMilli(dateTimeSettings.getReferenceTime());
+        return ZonedDateTime.ofInstant(instant, zoneId);
+    }
+
+    public static ZoneId getZoneId(final DateTimeSettings dateTimeSettings) {
+        Objects.requireNonNull(dateTimeSettings, "dateTimeSettings not set in searchRequest");
         switch (dateTimeSettings.getTimeZone().getUse()) {
             case LOCAL -> {
-                final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
-                return ZonedDateTime.ofInstant(instant, zoneId);
-            }
-            case UTC -> {
-                final ZoneId zoneId = ZoneId.of("Z");
-                return ZonedDateTime.ofInstant(instant, zoneId);
+                return ZoneId.of(dateTimeSettings.getLocalZoneId());
             }
             case ID -> {
-                final ZoneId zoneId = ZoneId.of(dateTimeSettings.getTimeZone().getId());
-                return ZonedDateTime.ofInstant(instant, zoneId);
+                return ZoneId.of(dateTimeSettings.getTimeZone().getId());
             }
             case OFFSET -> {
-                final ZoneOffset zoneOffset = ZoneOffset
+                return ZoneOffset
                         .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
                                 dateTimeSettings.getTimeZone().getOffsetMinutes());
-                return ZonedDateTime.ofInstant(instant, zoneOffset);
             }
             default -> {
-                return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+                return ZoneOffset.UTC;
             }
         }
     }
