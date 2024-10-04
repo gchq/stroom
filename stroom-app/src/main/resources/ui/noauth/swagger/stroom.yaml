@@ -11588,6 +11588,8 @@ components:
         properties:
           advanceSize:
             type: string
+          function:
+            type: string
           timeField:
             type: string
           windowSize:
