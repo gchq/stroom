@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.19] - 2024-10-07
+
+* Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
+
+* Issue **#4341** : Allow download from query table.
+
+* Issue **#4507** : Fix index shard permission issue.
+
+* Issue **#4510** : Fix right click in editor pane.
+
+* Issue **#4511** : Fix StreamId, EventId selection in query tables.
+
+
 ## [v7.5-beta.18] - 2024-10-03
 
 * Issue **#4485** : Improve dialog move/resize behaviour.
@@ -891,7 +904,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.19...HEAD
+[v7.5-beta.19]: https://github.com/gchq/stroom/compare/v7.5-beta.18...v7.5-beta.19
 [v7.5-beta.18]: https://github.com/gchq/stroom/compare/v7.5-beta.17...v7.5-beta.18
 [v7.5-beta.17]: https://github.com/gchq/stroom/compare/v7.5-beta.16...v7.5-beta.17
 [v7.5-beta.16]: https://github.com/gchq/stroom/compare/v7.5-beta.15...v7.5-beta.16
