@@ -77,14 +77,6 @@ public class FieldIndex {
         return fieldToPos.entrySet().stream();
     }
 
-    public int getWindowTimeFieldIndex() {
-        final int index = getTimeFieldIndex();
-        if (index == -1) {
-            throw new RuntimeException("Cannot apply window when there is no time field");
-        }
-        return index;
-    }
-
     public int getTimeFieldIndex() {
         if (timeFieldIndex == null) {
             timeFieldIndex =

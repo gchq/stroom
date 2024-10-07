@@ -3570,11 +3570,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
+                "$ref" : "#/components/schemas/DecorateRequest"
               }
             }
           },
-          "description" : "docRef",
+          "description" : "decorateRequest",
           "required" : true
         },
         "responses" : {
@@ -13050,6 +13050,21 @@
         },
         "required" : [ "localZoneId", "referenceTime" ]
       },
+      "DecorateRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "DefaultLocation" : {
         "type" : "object",
         "properties" : {
@@ -15489,6 +15504,9 @@
             "advanceSize" : {
               "type" : "string"
             },
+            "function" : {
+              "type" : "string"
+            },
             "timeField" : {
               "type" : "string"
             },
@@ -17587,6 +17605,13 @@
         "type" : "object",
         "properties" : {
           "dashboardPipelineSelectorIncludedTags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "indexPipelineSelectorIncludedTags" : {
             "type" : "array",
             "items" : {
               "type" : "string"

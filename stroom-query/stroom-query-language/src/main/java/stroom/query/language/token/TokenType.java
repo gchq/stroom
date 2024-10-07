@@ -200,7 +200,7 @@ public enum TokenType {
                     entry(AND, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
                     entry(OR, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
                     entry(NOT, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(EVAL, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL)),
+                    entry(EVAL, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW)),
                     entry(WINDOW, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL)),
                     entry(FILTER, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW)),
                     entry(SORT, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, GROUP)),

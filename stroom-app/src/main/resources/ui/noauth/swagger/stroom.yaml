@@ -2450,8 +2450,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
+              $ref: '#/components/schemas/DecorateRequest'
+        description: decorateRequest
         required: true
       responses:
         default:
@@ -9010,6 +9010,16 @@ components:
       required:
       - localZoneId
       - referenceTime
+    DecorateRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     DefaultLocation:
       type: object
       properties:
@@ -11578,6 +11588,8 @@ components:
         properties:
           advanceSize:
             type: string
+          function:
+            type: string
           timeField:
             type: string
           windowSize:
@@ -13340,6 +13352,11 @@ components:
       type: object
       properties:
         dashboardPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        indexPipelineSelectorIncludedTags:
           type: array
           items:
             type: string
