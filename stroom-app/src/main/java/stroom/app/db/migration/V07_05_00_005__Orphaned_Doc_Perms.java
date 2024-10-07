@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.db.migration;
 
 import stroom.db.util.DbUtil;
@@ -65,13 +81,23 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
         final Set<String> validDocUuids = getValidDocUuids();
 
         // Create the empty backup table
-        LOGGER.info("Creating empty backup table {}", BACKUP_TBL_NAME);
-        DbUtil.executeStatement(securityDbConnProvider, String.format("""
-                create table %s as
-                select *
-                from doc_permission
-                where 1 = 0""", BACKUP_TBL_NAME));
+        final boolean doesBackupTblExist = DbUtil.doesTableExist(
+                securityDbConnProvider.getConnection(), BACKUP_TBL_NAME);
 
+        if (!doesBackupTblExist) {
+            LOGGER.info("Creating empty backup table {}", BACKUP_TBL_NAME);
+            DbUtil.executeStatement(securityDbConnProvider, String.format("""
+                    create table %s (primary key (id)) as
+                    select *
+                    from doc_permission
+                    where 1 = 0""", BACKUP_TBL_NAME));
+            doMigration(validDocUuids, timer);
+        } else {
+            LOGGER.info("Table {} already exists, nothing to do", BACKUP_TBL_NAME);
+        }
+    }
+
+    private void doMigration(final Set<String> validDocUuids, final DurationTimer timer) {
         AtomicInteger totalOrphanedDocCnt = new AtomicInteger(0);
         AtomicInteger totalDeleteCount = new AtomicInteger(0);
 
@@ -112,7 +138,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                                     totalOrphanedDocCnt.incrementAndGet();
                                     orphanedDocUuids.add(docUuid);
                                     LOGGER.info("Found {} orphaned doc_permission records for doc '{}' with " +
-                                                    "max doc_permission ID {}",
+                                                "max doc_permission ID {}",
                                             permCnt, docUuid, maxId);
                                 }
                             }
@@ -122,7 +148,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                             break;
                         }
                         LOGGER.info("Batch summary - total docs: {}, orphaned docs: {}, " +
-                                        "cumulative orphaned docs: {}, max doc_permission ID: {}",
+                                    "cumulative orphaned docs: {}, max doc_permission ID: {}",
                                 rowsFoundInBatch, orphanedDocUuids.size(), totalOrphanedDocCnt, lastMaxId);
 
                         final int deleteCount = deleteOrphanedDocs(orphanedDocUuids);
@@ -131,7 +157,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                 }));
 
         LOGGER.info("Completed purge of {} orphaned document permissions for {} orphaned docs in {}. " +
-                        "All purged data has been copied to table '{}'",
+                    "All purged data has been copied to table '{}'",
                 totalDeleteCount.get(), totalOrphanedDocCnt.get(), timer, BACKUP_TBL_NAME);
     }
 
@@ -142,9 +168,9 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
         // Should be same as ExplorerConstants.SYSTEM_DOC_REF.getUuid() when this mig was written
 
         final Set<String> validDocUuids = new HashSet<>(allFolderUuids.size()
-                + processorFilterUuids.size()
-                + docUuids.size()
-                + 1);
+                                                        + processorFilterUuids.size()
+                                                        + docUuids.size()
+                                                        + 1);
         validDocUuids.addAll(allFolderUuids);
         validDocUuids.addAll(processorFilterUuids);
         validDocUuids.addAll(docUuids);
