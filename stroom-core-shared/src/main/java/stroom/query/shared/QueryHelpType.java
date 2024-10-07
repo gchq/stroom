@@ -45,6 +45,10 @@ public enum QueryHelpType {
      * A Visualisation Doc.
      */
     VISUALISATION,
+    /**
+     * A dictionary Doc.
+     */
+    DICTIONARY,
     ;
 
     public static final Set<QueryHelpType> ALL_TYPES = Collections.unmodifiableSet(EnumSet.allOf(QueryHelpType.class));
