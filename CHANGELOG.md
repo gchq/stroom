@@ -13,7 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.5-beta.18] - 2024-10-03
+* Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
+
+* Issue **#4341** : Allow download from query table.
+
+* Issue **#4507** : Fix index shard permission issue.
+
+* Issue **#4510** : Fix right click in editor pane.
+
+* Issue **#4511** : Fix StreamId, EventId selection in query tables.
 
 * Issue **#4485** : Improve dialog move/resize behaviour.
 
@@ -31,17 +39,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
 
-
-## [v7.5-beta.17] - 2024-09-30
-
 * Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
 
 * Issue **#4458** : Fix explorer node tags not being copied. Also fix copy/move not selecting the parent folder of the source as the default destination folder.
 
 * Issue **#4478** : Fix boolean expression precedence in StroomQL.
-
-
-## [v7.5-beta.16] - 2024-09-30
 
 * Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
 

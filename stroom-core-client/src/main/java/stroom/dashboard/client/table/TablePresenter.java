@@ -607,6 +607,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
+                cellsMap.put(column.getName(), cell);
                 cellsMap.put(column.getId(), cell);
             }
 
