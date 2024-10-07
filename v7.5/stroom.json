@@ -13392,9 +13392,6 @@
       "DownloadQueryResultsRequest" : {
         "type" : "object",
         "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV" ]
@@ -15502,6 +15499,9 @@
           "type" : "object",
           "properties" : {
             "advanceSize" : {
+              "type" : "string"
+            },
+            "function" : {
               "type" : "string"
             },
             "timeField" : {

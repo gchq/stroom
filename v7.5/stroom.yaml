@@ -9448,8 +9448,6 @@ components:
     DownloadQueryResultsRequest:
       type: object
       properties:
-        componentId:
-          type: string
         fileType:
           type: string
           enum:
@@ -11587,6 +11585,8 @@ components:
       - type: object
         properties:
           advanceSize:
+            type: string
+          function:
             type: string
           timeField:
             type: string
