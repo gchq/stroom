@@ -35,6 +35,8 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.Window;
+import stroom.query.common.v2.CompiledWindow;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.language.functions.Expression;
@@ -67,8 +69,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SearchRequestFactory {
@@ -115,6 +119,7 @@ public class SearchRequestFactory {
         private final Set<String> addedFields = new HashSet<>();
         private final List<AbstractToken> additionalFields = new ArrayList<>();
         private boolean inHaving;
+        private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
                 final DocResolver docResolver) {
@@ -814,7 +819,7 @@ public class SearchRequestFactory {
                 final String fieldName = token.getUnescapedText();
                 if (!addedFields.contains(fieldName)) {
                     final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
-                    addField(token,
+                    tableSettingsBuilder.addColumns(createColumn(token,
                             id,
                             fieldName,
                             fieldName,
@@ -822,8 +827,7 @@ public class SearchRequestFactory {
                             true,
                             sortMap,
                             groupMap,
-                            filterMap,
-                            tableSettingsBuilder);
+                            filterMap));
                 }
             }
 
@@ -868,11 +872,9 @@ public class SearchRequestFactory {
 
         private void processWindow(final KeywordGroup keywordGroup,
                                    final TableSettings.Builder builder) {
-            final List<AbstractToken> children = keywordGroup.getChildren();
+            final List<AbstractToken> children = new ArrayList<>(keywordGroup.getChildren());
 
-            String field;
-            String durationString;
-            String advanceString = null;
+            final HoppingWindow.Builder hoppingWindowBuilder = HoppingWindow.builder();
 
             // Get field name.
             if (!children.isEmpty()) {
@@ -880,64 +882,83 @@ public class SearchRequestFactory {
                 if (!TokenType.isString(token)) {
                     throw new TokenException(token, "Syntax exception");
                 }
-                field = token.getUnescapedText();
+                final String field = token.getUnescapedText();
+                hoppingWindowBuilder.timeField(field);
+                children.removeFirst();
             } else {
                 throw new TokenException(keywordGroup, "Expected field");
             }
 
-            // Get BY.
-            if (children.size() > 1) {
-                final AbstractToken token = children.get(1);
-                if (!TokenType.BY.equals(token.getTokenType())) {
-                    throw new TokenException(token, "Syntax exception, expected by");
-                }
-            } else {
+            // Get `by` and duration.
+            final int byIndex = getTokenIndex(children, token -> TokenType.BY.equals(token.getTokenType()));
+            if (byIndex == -1) {
                 throw new TokenException(keywordGroup, "Syntax exception, expected by");
-            }
-
-            // Get duration.
-            if (children.size() > 2) {
-                final AbstractToken token = children.get(2);
+            } else if (children.size() > byIndex  + 1) {
+                final AbstractToken token = children.get(byIndex  + 1);
                 if (!TokenType.DURATION.equals(token.getTokenType())) {
                     throw new TokenException(token, "Syntax exception, expected valid window duration");
                 }
-                durationString = token.getUnescapedText();
+                final String durationString = token.getUnescapedText();
+                hoppingWindowBuilder.windowSize(durationString);
+                hoppingWindowBuilder.advanceSize(durationString);
+
+                // We found the duration so remove the tokens.
+                children.remove(byIndex  + 1);
+                children.remove(byIndex);
             } else {
-                throw new TokenException(keywordGroup, "Syntax exception, expected window duration");
+                throw new TokenException(children.get(byIndex), "Syntax exception, expected window duration");
             }
 
-            // Get advance.
-            if (children.size() > 3) {
-                final AbstractToken token = children.get(3);
-                if (!TokenType.isString(token) || !token.getUnescapedText().equals("advance")) {
-                    throw new TokenException(token, "Syntax exception, expected advance");
-                }
-            }
-
-            // If advance then get advance duration.
-            if (children.size() > 3) {
-                if (children.size() > 4) {
-                    final AbstractToken token = children.get(4);
+            // Get `advance` and duration.
+            final int advanceIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
+                    token.getUnescapedText().equalsIgnoreCase("advance"));
+            if (advanceIndex != -1) {
+                if (children.size() > advanceIndex + 1) {
+                    final AbstractToken token = children.get(advanceIndex + 1);
                     if (!TokenType.DURATION.equals(token.getTokenType())) {
                         throw new TokenException(token, "Syntax exception, expected valid advance duration");
                     }
-                    advanceString = token.getUnescapedText();
+                    final String advanceString = token.getUnescapedText();
+                    hoppingWindowBuilder.advanceSize(advanceString);
+
+                    // We found the duration so remove the tokens.
+                    children.remove(advanceIndex + 1);
+                    children.remove(advanceIndex);
                 } else {
-                    throw new TokenException(keywordGroup, "Syntax exception, expected advance duration");
+                    throw new TokenException(children.get(advanceIndex), "Syntax exception, expected advance duration");
                 }
             }
 
-            if (children.size() > 5) {
-                throw new TokenException(children.get(5), "Unexpected token");
+            // Get `using` and function.
+            final int usingIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
+                    token.getUnescapedText().equalsIgnoreCase("using"));
+            if (usingIndex != -1) {
+                if (children.size() > usingIndex + 1) {
+                    final AbstractToken token = children.get(usingIndex + 1);
+//                    if (!TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
+//                        throw new TokenException(token, "Syntax exception, expected valid using function");
+//                    }
+                    final String function = token.getUnescapedText();
+                    hoppingWindowBuilder.function(function);
+
+                    // We found the duration so remove the tokens.
+                    children.remove(usingIndex + 1);
+                    children.remove(usingIndex);
+                } else {
+                    throw new TokenException(children.get(usingIndex), "Syntax exception, expected using function");
+                }
             }
 
-            builder.window(HoppingWindow.builder()
-                    .timeField(field)
-                    .windowSize(durationString)
-                    .advanceSize(advanceString == null
-                            ? durationString
-                            : advanceString)
-                    .build());
+            if (!children.isEmpty()) {
+                throw new TokenException(children.getFirst(), "Unexpected token");
+            }
+
+            final Window window = hoppingWindowBuilder.build();
+            final CompiledWindow compiledWindow = CompiledWindow.create(window);
+            // Add time window fields so they can be used by other expressions.
+            compiledWindow.addWindowFields(expressionContext, fieldIndex, expressionMap);
+            optionalCompiledWindow = Optional.of(compiledWindow);
+            builder.window(window);
         }
 
         private void processEval(final KeywordGroup keywordGroup) {
@@ -990,6 +1011,7 @@ public class SearchRequestFactory {
             boolean afterAs = false;
             boolean doneAs = false;
             int columnCount = 0;
+            final List<Column> columns = new ArrayList<>();
 
             for (final AbstractToken token : children) {
 
@@ -1044,7 +1066,8 @@ public class SearchRequestFactory {
                     if (fieldToken != null) {
                         columnCount++;
                         final String columnId = "column-" + columnCount;
-                        addField(fieldToken,
+                        columns.add(createColumn(
+                                fieldToken,
                                 columnId,
                                 fieldToken.getUnescapedText(),
                                 columnName,
@@ -1052,21 +1075,18 @@ public class SearchRequestFactory {
                                 false,
                                 sortMap,
                                 groupMap,
-                                filterMap,
-                                tableSettingsBuilder);
+                                filterMap));
 
                     } else if (fieldExpression != null) {
                         columnCount++;
                         final String columnId = "column-" + columnCount;
-                        addField(columnId,
+                        columns.add(createColumn(
+                                columnId,
                                 fieldExpression,
                                 columnName,
-                                true,
-                                false,
                                 sortMap,
                                 groupMap,
-                                filterMap,
-                                tableSettingsBuilder);
+                                filterMap));
                     } else {
                         throw new TokenException(token, "Syntax exception, expected field name");
                     }
@@ -1083,7 +1103,8 @@ public class SearchRequestFactory {
             if (fieldToken != null) {
                 columnCount++;
                 final String columnId = "column-" + columnCount;
-                addField(fieldToken,
+                columns.add(createColumn(
+                        fieldToken,
                         columnId,
                         fieldToken.getUnescapedText(),
                         columnName,
@@ -1091,34 +1112,35 @@ public class SearchRequestFactory {
                         false,
                         sortMap,
                         groupMap,
-                        filterMap,
-                        tableSettingsBuilder);
+                        filterMap));
 
             } else if (fieldExpression != null) {
                 columnCount++;
                 final String columnId = "column-" + columnCount;
-                addField(columnId,
+                columns.add(createColumn(
+                        columnId,
                         fieldExpression,
                         columnName,
-                        true,
-                        false,
                         sortMap,
                         groupMap,
-                        filterMap,
-                        tableSettingsBuilder);
+                        filterMap));
             }
+
+            // Modify columns if we have a time window.
+            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
+                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
+            tableSettingsBuilder.addColumns(modifiedColumns);
         }
 
-        private void addField(final AbstractToken token,
-                              final String id,
-                              final String fieldName,
-                              final String columnName,
-                              final boolean visible,
-                              final boolean special,
-                              final Map<String, Sort> sortMap,
-                              final Map<String, Integer> groupMap,
-                              final Map<String, Filter> filterMap,
-                              final TableSettings.Builder tableSettingsBuilder) {
+        private Column createColumn(final AbstractToken token,
+                                    final String id,
+                                    final String fieldName,
+                                    final String columnName,
+                                    final boolean visible,
+                                    final boolean special,
+                                    final Map<String, Sort> sortMap,
+                                    final Map<String, Integer> groupMap,
+                                    final Map<String, Filter> filterMap) {
             addedFields.add(fieldName);
             Expression expression = expressionMap.get(fieldName);
             if (expression == null) {
@@ -1134,11 +1156,9 @@ public class SearchRequestFactory {
             }
 
             final String expressionString = expression.toString();
-            final Column field = Column.builder()
+            return Column.builder()
                     .id(id)
-                    .name(columnName != null
-                            ? columnName
-                            : fieldName)
+                    .name(columnName)
                     .expression(expressionString)
                     .sort(sortMap.get(fieldName))
                     .group(groupMap.get(fieldName))
@@ -1146,31 +1166,26 @@ public class SearchRequestFactory {
                     .visible(visible)
                     .special(special)
                     .build();
-            tableSettingsBuilder.addColumns(field);
         }
 
-        private void addField(final String id,
-                              final Expression expression,
-                              final String columnName,
-                              final boolean visible,
-                              final boolean special,
-                              final Map<String, Sort> sortMap,
-                              final Map<String, Integer> groupMap,
-                              final Map<String, Filter> filterMap,
-                              final TableSettings.Builder tableSettingsBuilder) {
+        private Column createColumn(final String id,
+                                    final Expression expression,
+                                    final String columnName,
+                                    final Map<String, Sort> sortMap,
+                                    final Map<String, Integer> groupMap,
+                                    final Map<String, Filter> filterMap) {
             addedFields.add(columnName);
             final String expressionString = expression.toString();
-            final Column field = Column.builder()
+            return Column.builder()
                     .id(id)
                     .name(columnName)
                     .expression(expressionString)
                     .sort(sortMap.get(columnName))
                     .group(groupMap.get(columnName))
                     .filter(filterMap.get(columnName))
-                    .visible(visible)
-                    .special(special)
+                    .visible(true)
+                    .special(false)
                     .build();
-            tableSettingsBuilder.addColumns(field);
         }
 
         private void processLimit(final KeywordGroup keywordGroup,
@@ -1197,9 +1212,8 @@ public class SearchRequestFactory {
             final List<AbstractToken> children = keywordGroup.getChildren();
             boolean first = true;
             for (final AbstractToken t : children) {
-                if (first && TokenType.BY.equals(t.getTokenType())) {
-                    // Ignore
-                } else {
+                // Ignore BY
+                if (!(first && TokenType.BY.equals(t.getTokenType()))) {
                     if (TokenType.isString(t)) {
                         if (fieldName == null) {
                             fieldName = t.getUnescapedText();
@@ -1252,9 +1266,8 @@ public class SearchRequestFactory {
             final List<AbstractToken> children = keywordGroup.getChildren();
             boolean first = true;
             for (final AbstractToken t : children) {
-                if (first && TokenType.BY.equals(t.getTokenType())) {
-                    // Ignore
-                } else {
+                // Ignore BY
+                if (!(first && TokenType.BY.equals(t.getTokenType()))) {
                     if (TokenType.isString(t)) {
                         if (fieldName == null) {
                             fieldName = t.getUnescapedText();
@@ -1326,5 +1339,15 @@ public class SearchRequestFactory {
             set.removeAll(tokenTypes);
             return set;
         }
+    }
+
+    private static int getTokenIndex(final List<AbstractToken> tokens, final Predicate<AbstractToken> predicate) {
+        for (int i = 0; i < tokens.size(); i++) {
+            final AbstractToken token = tokens.get(i);
+            if (predicate.test(token)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

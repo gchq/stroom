@@ -31,25 +31,21 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.LegacyHandlerWrapper;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Editor extends Composite implements
         HasValueChangeHandlers<String>,
         HasKeyDownHandlers,
         HasKeyUpHandlers {
 
-    private final EventBus eventBus = new SimpleEventBus();
     private final AceEditor editor;
     private String text = "";
     private boolean textDirty;
@@ -120,9 +116,9 @@ public class Editor extends Composite implements
                     started = true;
 
                     DOM.setEventListener(editor.getTextInputElement(), e -> {
-                        if (e.getType() == "keydown") {
+                        if (Objects.equals(e.getType(), "keydown")) {
                             KeyDownEvent.fireNativeEvent(e, Editor.this, editor.getTextInputElement());
-                        } else if (e.getType() == "keyup") {
+                        } else if (Objects.equals(e.getType(), "keyup")) {
                             KeyUpEvent.fireNativeEvent(e, Editor.this, editor.getTextInputElement());
                         }
                     });
@@ -573,22 +569,17 @@ public class Editor extends Composite implements
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
         addChangeHandler = true;
         updateChangeHandler();
-        return new LegacyHandlerWrapper(eventBus.addHandler(ValueChangeEvent.getType(), handler));
+        return addHandler(handler, ValueChangeEvent.getType());
     }
 
     @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-        return new LegacyHandlerWrapper(eventBus.addHandler(KeyDownEvent.getType(), handler));
+        return addHandler(handler, KeyDownEvent.getType());
     }
 
     @Override
     public HandlerRegistration addKeyUpHandler(final KeyUpHandler handler) {
-        return new LegacyHandlerWrapper(eventBus.addHandler(KeyUpEvent.getType(), handler));
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
+        return addHandler(handler, KeyUpEvent.getType());
     }
 
     private void updateChangeHandler() {

@@ -25,36 +25,37 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = Mask.NAME,
+        name = Period.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = Val.class,
-        commonDescription = "Provides a masking effect for nested functions for specific window iterations",
+        commonDescription = "This function provides a way of selectively applying functions to values for a specific " +
+                "period when using the window feature",
         signatures = @FunctionSignature(
-                returnDescription = "Computed values for masked functions",
+                returnDescription = "A value computed by the nested functions for the specified period",
                 args = {
                         @FunctionArg(
-                                name = "iteration",
-                                description = "The window iteration to mask",
+                                name = "period",
+                                description = "The window period to apply functions to.",
                                 argType = ValInteger.class),
                         @FunctionArg(
                                 name = "function",
-                                description = "Inner function to apply mask to",
+                                description = "The function to apply to values for the selected period.",
                                 argType = Val.class)
                 }))
-public class Mask extends AbstractFunction implements AggregateFunction {
+public class Period extends AbstractFunction implements AggregateFunction {
 
-    static final String NAME = "mask";
-    private int iteration;
+    static final String NAME = "period";
+    private int period;
     private Function function;
 
-    public Mask(final String name) {
+    public Period(final String name) {
         super(name, 1, 2);
     }
 
     @Override
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
-        iteration = Integer.parseInt(params[0].toString());
+        period = Integer.parseInt(params[0].toString());
 
         if (params.length == 2) {
             final Param param = params[1];
@@ -76,7 +77,7 @@ public class Mask extends AbstractFunction implements AggregateFunction {
     @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new Gen(iteration, childGenerator);
+        return new Gen(period, childGenerator);
     }
 
     @Override
@@ -91,18 +92,18 @@ public class Mask extends AbstractFunction implements AggregateFunction {
 
     public static final class Gen extends AbstractNoChildGenerator {
 
-        private final int iteration;
+        private final int period;
         private final Generator childGenerator;
 
-        public Gen(final int iteration, final Generator childGenerator) {
-            this.iteration = iteration;
+        public Gen(final int period, final Generator childGenerator) {
+            this.period = period;
             this.childGenerator = childGenerator;
         }
 
         @Override
         public void set(final Val[] values, final StoredValues storedValues) {
-            // Filter on iteration.
-            if (storedValues.getIteration() == iteration) {
+            // Filter on period.
+            if (storedValues.getPeriod() == period) {
                 childGenerator.set(values, storedValues);
             }
         }
@@ -117,8 +118,8 @@ public class Mask extends AbstractFunction implements AggregateFunction {
             childGenerator.merge(existingValues, newValues);
         }
 
-        public int getIteration() {
-            return iteration;
+        public int getPeriod() {
+            return period;
         }
     }
 }
