@@ -161,6 +161,29 @@ public class NullSafe {
         return Optional.empty();
     }
 
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T first(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.getFirst();
+        }
+    }
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T last(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.getLast();
+        }
+    }
+
     /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
@@ -482,11 +505,29 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed collection if it is non-null else returns an immutable empty collection.
+     */
+    public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
+        return collection != null
+                ? collection
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an immutable empty list.
      */
     public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
                 ? list
+                : Collections.emptyList();
+    }
+
+    /**
+     * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
+     */
+    public static <L extends List<T>, T> List<T> unmodifialbeList(final L list) {
+        return list != null
+                ? Collections.unmodifiableList(list)
                 : Collections.emptyList();
     }
 
@@ -532,6 +573,15 @@ public class NullSafe {
     public static <S extends Set<T>, T> Set<T> set(final S set) {
         return set != null
                 ? set
+                : Collections.emptySet();
+    }
+
+    /**
+     * Returns an unmodifiable view of the passed set if it is non-null else returns an immutable empty set.
+     */
+    public static <S extends Set<T>, T> Set<T> unmodifialbeSet(final S set) {
+        return set != null
+                ? Collections.unmodifiableSet(set)
                 : Collections.emptySet();
     }
 

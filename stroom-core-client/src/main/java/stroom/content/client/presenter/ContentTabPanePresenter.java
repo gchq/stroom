@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,8 @@ public class ContentTabPanePresenter
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
                 event -> {
                     final TabData selectedTab = getSelectedTab();
-                    if (selectedTab != null && selectedTab instanceof Refreshable) {
+                    if (selectedTab instanceof Refreshable) {
+                        //noinspection PatternVariableCanBeUsed // Not in GWT
                         final Refreshable refreshable = (Refreshable) selectedTab;
                         refreshable.refresh();
                     }
@@ -97,13 +98,13 @@ public class ContentTabPanePresenter
                     } else {
                         final String key = event.getValue();
 
-                        final int id = Integer.valueOf(key);
+                        final int id = Integer.parseInt(key);
                         final int diff = id - currentHistoryId;
                         currentHistoryId = id;
 
                         currentIndex = currentIndex + diff;
 
-                        if (historyList.size() == 0) {
+                        if (historyList.isEmpty()) {
                             currentIndex = 0;
                         } else {
                             if (currentIndex >= historyList.size()) {

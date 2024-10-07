@@ -30,9 +30,9 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
+import stroom.query.common.v2.CompiledWindow.WindowProcessor;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.ChildData;
-import stroom.query.language.functions.CountPrevious;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
@@ -51,7 +51,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
@@ -121,9 +120,7 @@ public class LmdbDataStore implements DataStore {
     private final KeyFactory keyFactory;
     private final LmdbPayloadCreator payloadCreator;
     private final TransferState transferState = new TransferState();
-
-    private final WindowSupport windowSupport;
-
+    private final WindowProcessor windowProcessor;
 
     private final int maxPutsBeforeCommit;
     private final CurrentDbStateFactory currentDbStateFactory;
@@ -162,10 +159,9 @@ public class LmdbDataStore implements DataStore {
                         .map(SearchRequestSource::getSourceType)
                         .orElse(SourceType.DASHBOARD_UI);
 
-        this.windowSupport = new WindowSupport(tableSettings);
-        final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
+        this.windowProcessor = CompiledWindow.create(tableSettings.getWindow()).createWindowProcessor(fieldIndex);
         final List<Column> columns = Objects
-                .requireNonNullElse(modifiedTableSettings.getColumns(), Collections.emptyList());
+                .requireNonNullElse(tableSettings.getColumns(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize(), bufferFactory);
         maxSortedItems = resultStoreConfig.getMaxSortedItems();
         this.dateTimeSettings = expressionContext == null
@@ -174,7 +170,7 @@ public class LmdbDataStore implements DataStore {
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
-        compiledDepths = new CompiledDepths(this.compiledColumnArray, modifiedTableSettings.showDetail());
+        compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         writerFactory = new DataWriterFactory(
                 errorConsumer,
@@ -211,7 +207,7 @@ public class LmdbDataStore implements DataStore {
 
         // Create a filter for incoming data.
         valueFilter = ValFilter.create(
-                modifiedTableSettings.getValueFilter(),
+                tableSettings.getValueFilter(),
                 compiledColumns,
                 dateTimeSettings,
                 paramMap,
@@ -243,21 +239,12 @@ public class LmdbDataStore implements DataStore {
         // Filter incoming data.
         if (valueFilter.test(values)) {
             // Now add the rows if we aren't filtering.
-            if (windowSupport.getOffsets() != null) {
-                int iteration = 0;
-                for (SimpleDuration offset : windowSupport.getOffsets()) {
-                    final Val[] modifiedValues = windowSupport.addWindow(fieldIndex, values, offset);
-                    addInternal(modifiedValues, iteration);
-                    iteration++;
-                }
-            } else {
-                addInternal(values, -1);
-            }
+            windowProcessor.process(values, this::addInternal);
         }
     }
 
     private void addInternal(final Val[] values,
-                             final int iteration) {
+                             final int period) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
         LOGGER.trace(() -> "add() called for " + values.length + " values");
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
@@ -270,6 +257,7 @@ public class LmdbDataStore implements DataStore {
         final LmdbKV[] rows = new LmdbKV[groupIndicesByDepth.length];
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+            storedValues.setPeriod(period);
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
             for (int columnIndex = 0; columnIndex < compiledColumnArray.length; columnIndex++) {
@@ -279,17 +267,7 @@ public class LmdbDataStore implements DataStore {
                 // If we need a value at this level then set the raw values.
                 if (valueIndices[columnIndex] ||
                         columnIndex == keyFactoryConfig.getTimeColumnIndex()) {
-                    if (iteration != -1) {
-                        if (generator instanceof CountPrevious.Gen gen) {
-                            if (gen.getIteration() == iteration) {
-                                generator.set(values, storedValues);
-                            }
-                        } else {
-                            generator.set(values, storedValues);
-                        }
-                    } else {
-                        generator.set(values, storedValues);
-                    }
+                    generator.set(values, storedValues);
                 }
             }
 

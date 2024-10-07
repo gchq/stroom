@@ -16,7 +16,11 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.SearchResponseMapper;
+import stroom.dashboard.impl.download.DelimitedTarget;
+import stroom.dashboard.impl.download.ExcelTarget;
+import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -32,13 +36,20 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
+import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
+import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.token.Token;
@@ -50,15 +61,20 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
@@ -66,6 +82,11 @@ import stroom.util.string.StringUtil;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +94,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -80,6 +102,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @AutoLogged
@@ -90,6 +113,8 @@ class QueryServiceImpl implements QueryService {
     private static final ContextualQueryHelp EMPTY_QUERY_CONTEXT = new ContextualQueryHelp(
             EnumSet.of(QueryHelpType.STRUCTURE),
             Set.of(Structures.name(TokenType.FROM)));
+    private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
+    private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
     private final QueryStore queryStore;
     private final DocumentResourceHelper documentResourceHelper;
@@ -103,6 +128,7 @@ class QueryServiceImpl implements QueryService {
     private final NodeInfo nodeInfo;
     private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
+    private final ResourceStore resourceStore;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -116,7 +142,8 @@ class QueryServiceImpl implements QueryService {
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
                      final SearchRequestFactory searchRequestFactory,
-                     final ExpressionContextFactory expressionContextFactory) {
+                     final ExpressionContextFactory expressionContextFactory,
+                     final ResourceStore resourceStore) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -129,6 +156,7 @@ class QueryServiceImpl implements QueryService {
         this.nodeInfo = nodeInfo;
         this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
+        this.resourceStore = resourceStore;
     }
 
     @Override
@@ -170,113 +198,113 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return null;
-//        return securityContext.secureResult(AppPermissionEnum.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
-//            ResourceKey resourceKey;
-//
-//            final QuerySearchRequest searchRequest = request.getSearchRequest();
-//            final QueryKey queryKey = searchRequest.getQueryKey();
-//            final Search search = searchRequest.getSearch();
-//
-//            try {
-//                if (queryKey == null) {
-//                    throw new EntityServiceException("No query is active");
-//                }
-//                final ActiveQueries activeQueries = getActiveQueries(searchRequest);
-//                final Optional<ActiveQuery> optionalActiveQuery = activeQueries.getActiveQuery(queryKey);
-//                final ActiveQuery activeQuery = optionalActiveQuery
-//                        .orElseThrow(() -> new EntityServiceException("The requested search data is not available"));
-//                SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
-//                SearchResponse searchResponse = activeQuery.search(mappedRequest);
-//
-//                if (searchResponse == null || searchResponse.getResults() == null) {
-//                    throw new EntityServiceException("No results can be found");
-//                }
-//
-//                Result result = null;
-//                for (final Result res : searchResponse.getResults()) {
-//                    if (res.getComponentId().equals(request.getComponentId())) {
-//                        result = res;
-//                        break;
-//                    }
-//                }
-//
-//                if (result == null) {
-//                    throw new EntityServiceException("No result for component can be found");
-//                }
-//
-//                if (!(result instanceof TableResult)) {
-//                    throw new EntityServiceException("Result is not a table");
-//                }
-//
-//                final TableResult tableResult = (TableResult) result;
-//
-//                // Import file.
-//                String fileName = getResultsFilename(request);
-//
-//                resourceKey = resourceStore.createTempFile(fileName);
-//                final Path file = resourceStore.getTempFile(resourceKey);
-//
-//                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
-//                        .stream()
-//                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
-//                        .findFirst();
-//                if (optional.isEmpty()) {
-//                    throw new EntityServiceException("No component result request found");
-//                }
-//
-//                if (!(optional.get() instanceof TableResultRequest)) {
-//                    throw new EntityServiceException("Component result request is not a table");
-//                }
-//
-//                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
-//                final List<Field> fields = tableResultRequest.getTableSettings().getFields();
-//                final List<Row> rows = tableResult.getRows();
-//
-//                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent(),
-//                        searchRequest.getDateTimeSettings());
-//
-//                searchEventLog.downloadResults(search.getDataSourceRef(),
-//                        search.getExpression(),
-//                        search.getQueryInfo());
-//            } catch (final RuntimeException e) {
-//                searchEventLog.downloadResults(search.getDataSourceRef(),
-//                        search.getExpression(),
-//                        search.getQueryInfo(),
-//                        e);
-//                throw EntityServiceExceptionUtil.create(e);
-//            }
-//
-//            return new ResourceGeneration(resourceKey, new ArrayList<>());
-//        });
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+            final QuerySearchRequest searchRequest = request.getSearchRequest();
+            final QueryKey queryKey = searchRequest.getQueryKey();
+            ResourceKey resourceKey;
+            long totalRowCount = 0;
+            final SearchRequest mappedRequest = mapRequest(searchRequest);
+
+            try {
+                if (queryKey == null) {
+                    throw new EntityServiceException("No query is active");
+                }
+
+                final DateTimeSettings dateTimeSettings = searchRequest.getQueryContext().getDateTimeSettings();
+                final List<ResultRequest> resultRequests = mappedRequest
+                        .getResultRequests()
+                        .stream()
+                        .filter(req -> ResultStyle.TABLE.equals(req.getResultStyle()))
+                        .toList();
+
+                if (resultRequests.isEmpty()) {
+                    throw new EntityServiceException("No tables specified for download");
+                }
+
+                final RequestAndStore requestAndStore = searchResponseCreatorManager
+                        .getResultStore(mappedRequest);
+
+                // Import file.
+                final String fileName = getResultsFilename(request);
+                resourceKey = resourceStore.createTempFile(fileName);
+                final Path file = resourceStore.getTempFile(resourceKey);
+
+                final ColumnFormatter fieldFormatter =
+                        new ColumnFormatter(
+                                new FormatterFactory(dateTimeSettings));
+
+                // Start target
+                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
+                    final SearchResultWriter.Target target = switch (request.getFileType()) {
+                        case CSV -> new DelimitedTarget(outputStream, ",");
+                        case TSV -> new DelimitedTarget(outputStream, "\t");
+                        case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+                    };
+
+                    // Write delimited file.
+
+                    try {
+                        target.start();
+
+                        for (final ResultRequest resultRequest : resultRequests) {
+                            try {
+                                target.startTable("table");
+
+                                final SampleGenerator sampleGenerator =
+                                        new SampleGenerator(request.isSample(), request.getPercent());
+                                final SearchResultWriter searchResultWriter = new SearchResultWriter(
+                                        sampleGenerator,
+                                        target);
+                                final TableResultCreator tableResultCreator =
+                                        new TableResultCreator(fieldFormatter) {
+                                            @Override
+                                            public TableResultBuilder createTableResultBuilder() {
+                                                return searchResultWriter;
+                                            }
+                                        };
+
+                                final Map<String, ResultCreator> resultCreatorMap =
+                                        Map.of(resultRequest.getComponentId(), tableResultCreator);
+                                searchResponseCreatorManager.search(requestAndStore, resultCreatorMap);
+                                totalRowCount += searchResultWriter.getRowCount();
+
+                            } finally {
+                                target.endTable();
+                            }
+                        }
+                    } finally {
+                        target.end();
+                    }
+
+                } catch (final IOException e) {
+                    throw EntityServiceExceptionUtil.create(e);
+                }
+
+                searchEventLog.downloadResults(request, mappedRequest, totalRowCount);
+            } catch (final RuntimeException e) {
+                searchEventLog.downloadResults(request, mappedRequest, totalRowCount, e);
+                throw EntityServiceExceptionUtil.create(e);
+            }
+
+            return new ResourceGeneration(resourceKey, new ArrayList<>());
+        });
     }
-//
-//    private String getResultsFilename(final DownloadSearchResultsRequest request) {
-//        final DashboardSearchRequest searchRequest = request.getSearchRequest();
-//        final String basename = request.getComponentId() + "__" + searchRequest.getQueryKey().getUuid();
-//        return getFileName(basename, request.getFileType().getExtension());
-//    }
-//
-//    private String getQueryFileName(final DashboardSearchRequest request) {
-//        final DocRefInfo dashDocRefInfo = queryStore.info(request.getDashboardUuid());
-//        final String dashboardName = NullSafe.getOrElse(
-//                dashDocRefInfo,
-//                DocRefInfo::getDocRef,
-//                DocRef::getName,
-//                request.getDashboardUuid());
-//        final String basename = dashboardName + "__" + request.getComponentId();
-//        return getFileName(basename, "json");
-//    }
-//
-//    private String getFileName(final String baseName,
-//                               final String extension) {
-//        String fileName = baseName;
-//        fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
-//        fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-//        fileName = fileName.replace(" ", "_");
-//        fileName = fileName + "." + extension;
-//        return fileName;
-//    }
+
+    private String getResultsFilename(final DownloadQueryResultsRequest request) {
+        final QuerySearchRequest searchRequest = request.getSearchRequest();
+        final String basename = searchRequest.getQueryKey().getUuid();
+        return getFileName(basename, request.getFileType().getExtension());
+    }
+
+    private String getFileName(final String baseName,
+                               final String extension) {
+        String fileName = baseName;
+        fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
+        fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
+        fileName = fileName.replace(" ", "_");
+        fileName = fileName + "." + extension;
+        return fileName;
+    }
 //
 //    private void download(final List<Field> fields,
 //                          final List<Row> rows,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.impl;
@@ -37,6 +36,8 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Message;
 import stroom.util.shared.Version;
 
@@ -244,9 +245,8 @@ class DashboardStoreImpl implements DashboardStore {
                                                                final DependencyRemapper dependencyRemapper) {
         final TableComponentSettings.Builder builder = tableComponentSettings.copy();
 
-        if (tableComponentSettings.getExtractionPipeline() != null &&
-                tableComponentSettings.getExtractionPipeline().getUuid() != null &&
-                tableComponentSettings.getExtractionPipeline().getUuid().length() > 0) {
+        final String uuid = GwtNullSafe.get(tableComponentSettings.getExtractionPipeline(), DocRef::getUuid);
+        if (NullSafe.isNonEmptyString(uuid)) {
             builder.extractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
         }
 

@@ -13,6 +13,52 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.18] - 2024-10-03
+
+* Issue **#4485** : Improve dialog move/resize behaviour.
+
+* Issue **#4492** : Make Lucene behave like SQL for OR(NOT()) queries.
+
+* Issue **#4494** : Allow functions in StroomQL select, e.g. `count()`.
+
+* Issue **#4202** : Fix default destination not being selected when you do _Save As_.
+
+* Issue **#4475** : Add `mask()` function and deprecate `countPrevious()`.
+
+* Issue **#4491** : Fix tab closure when deleting items in the explorer tree.
+
+* Issue **#4502** : Fix inability to step an un-processed stream.
+
+* Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
+
+
+## [v7.5-beta.17] - 2024-09-30
+
+* Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
+
+* Issue **#4458** : Fix explorer node tags not being copied. Also fix copy/move not selecting the parent folder of the source as the default destination folder.
+
+* Issue **#4478** : Fix boolean expression precedence in StroomQL.
+
+
+## [v7.5-beta.16] - 2024-09-30
+
+* Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
+
+* Issue **#4455** : Add Goto Document links to the Imports sub-tab of the Dictionary screen. Also add new Effective Words tab to list all the words in the dictionary that include those from its imports (and their imports).
+
+* Issue **#4468** : Improve handling of key sequences and detection of key events from ACE editor.
+
+* Issue **#4472** : Change the User Preferences dialog to cope with redundant stroom/editor theme names.
+
+* Issue **#4479** : Add ability to assume role for S3.
+
+* Issue **#4202** : Fix problems with Dashboard Extraction Pipeline picker incorrectly changing the selected pipeline.
+
+* Change the DocRef picker so that it shows a warning icon if the selected DocRef no longer exists or the user doesn't have permission to view it.
+
+* Change the Extraction Pipeline picker on the Index Settings screen to pre-filter on `tag:extraction`. This is configured using the property `stroom.ui.query.indexPipelineSelectorIncludedTags`.
+
 * Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
 
 * Issue **#4476** : Fix streaming analytic issue where it failed to match after seeing records with missing query fields.
@@ -70,7 +116,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Change the hard-coded test credentials to match those in v7.2 so that a test stack with 7.0 proxy and 7.2 stroom can communicate with each other. This change has no bearing on production deployments.
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
-
 
 * Issue **#4426** : Add INFO message when an index shard is created.
 

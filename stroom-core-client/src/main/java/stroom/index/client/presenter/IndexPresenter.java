@@ -24,6 +24,8 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -45,10 +47,17 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
                           final Provider<IndexSettingsPresenter> indexSettingsPresenterProvider,
                           final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
                           final Provider<IndexShardPresenter> indexShardPresenterProvider,
-                          final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                          final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                          final ClientSecurityContext securityContext) {
         super(eventBus, view);
 
-        addTab(SHARDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
+        TabData selectFirst = FIELDS;
+
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
+            selectFirst = SHARDS;
+            addTab(SHARDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
+        }
+
         addTab(FIELDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
         addTab(SETTINGS, new DocumentEditTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(eventBus, markdownEditPresenterProvider) {
@@ -68,7 +77,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
                 return document;
             }
         });
-        selectTab(SHARDS);
+        selectTab(selectFirst);
     }
 
     @Override

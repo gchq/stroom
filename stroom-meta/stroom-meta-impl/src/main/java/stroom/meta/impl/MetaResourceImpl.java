@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SelectionSummaryRequest;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -89,6 +91,9 @@ class MetaResourceImpl implements MetaResource {
 
         final ExpressionOperator expression = Objects.requireNonNull(request.getCriteria().getExpression());
         final boolean isDelete = request.getNewStatus() == Status.DELETED;
+        final DocumentPermission permission = isDelete
+                ? DocumentPermission.DELETE
+                : DocumentPermission.EDIT;
         String currentStatus = NullSafe.getOrElse(
                 request.getCurrentStatus(), Status::getDisplayValue, "unspecified/unknown");
         final String newStatus = NullSafe.getOrElse(
@@ -100,7 +105,7 @@ class MetaResourceImpl implements MetaResource {
         final List<Data> dataItems = new ArrayList<>();
 
         if (expression.getChildren().size() == 1
-                && expression.getChildren().get(0) instanceof final ExpressionTerm term
+                && expression.getChildren().getFirst() instanceof final ExpressionTerm term
                 && term.hasCondition(Condition.EQUALS)) {
             final String metaIdStr = term.getValue();
 
@@ -134,7 +139,7 @@ class MetaResourceImpl implements MetaResource {
                     : "Update the status of stream with ID " + metaIdStr
                             + " from " + currentStatus + " to " + newStatus;
         } else if (expression.getChildren().size() == 1
-                && expression.getChildren().get(0) instanceof final ExpressionTerm term
+                && expression.getChildren().getFirst() instanceof final ExpressionTerm term
                 && term.hasCondition(Condition.IN)) {
             final String streamIdsStr = term.getValue();
             final String[] idArr = NullSafe.getOrElse(
@@ -153,7 +158,7 @@ class MetaResourceImpl implements MetaResource {
             description = isDelete
                     ? "Delete " + count + " streams"
                     : "Update the status of " + count + " streams from " + currentStatus + " to " + newStatus;
-            addSelectionSummaryDataItems(dataItems, request.getCriteria());
+            addSelectionSummaryDataItems(dataItems, request.getCriteria(), permission);
         } else {
             baseObjectBefore = null;
             baseObjectAfter = Criteria.builder()
@@ -162,7 +167,7 @@ class MetaResourceImpl implements MetaResource {
             description = isDelete
                     ? "Delete streams matching a criteria"
                     : "Update the status of streams matching a criteria from " + currentStatus + " to " + newStatus;
-            addSelectionSummaryDataItems(dataItems, request.getCriteria());
+            addSelectionSummaryDataItems(dataItems, request.getCriteria(), permission);
         }
 
         final EventAction eventAction;
@@ -199,9 +204,11 @@ class MetaResourceImpl implements MetaResource {
 
     private void addSelectionSummaryDataItems(
             final List<Data> dataItems,
-            final FindMetaCriteria criteria) {
+            final FindMetaCriteria criteria,
+            final DocumentPermission permission) {
         try {
-            final SelectionSummary selectionSummary = getSelectionSummary(criteria);
+            final SelectionSummary selectionSummary = metaServiceProvider.get()
+                    .getSelectionSummary(criteria, permission);
             if (selectionSummary != null) {
                 addData(dataItems, "Count", selectionSummary.getItemCount());
                 addData(dataItems, "FeedCount", selectionSummary.getFeedCount());
@@ -294,14 +301,20 @@ class MetaResourceImpl implements MetaResource {
 
     @AutoLogged(OperationType.SEARCH)
     @Override
-    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
-        return metaServiceProvider.get().getSelectionSummary(criteria);
+    public SelectionSummary getSelectionSummary(final SelectionSummaryRequest request) {
+        Objects.requireNonNull(request);
+        return metaServiceProvider.get().getSelectionSummary(
+                request.getFindMetaCriteria(),
+                Objects.requireNonNullElse(request.getRequiredPermission(), DocumentPermission.VIEW));
     }
 
     @AutoLogged(OperationType.SEARCH)
     @Override
-    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
-        return metaServiceProvider.get().getReprocessSelectionSummary(criteria);
+    public SelectionSummary getReprocessSelectionSummary(final SelectionSummaryRequest request) {
+        Objects.requireNonNull(request);
+        return metaServiceProvider.get().getReprocessSelectionSummary(
+                request.getFindMetaCriteria(),
+                Objects.requireNonNullElse(request.getRequiredPermission(), DocumentPermission.VIEW));
     }
 
     @Override

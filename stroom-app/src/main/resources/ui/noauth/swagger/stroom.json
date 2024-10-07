@@ -3660,11 +3660,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
+                "$ref" : "#/components/schemas/DecorateRequest"
               }
             }
           },
-          "description" : "docRef",
+          "description" : "decorateRequest",
           "required" : true
         },
         "responses" : {
@@ -5762,11 +5762,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindMetaCriteria"
+                "$ref" : "#/components/schemas/SelectionSummaryRequest"
               }
             }
           },
-          "description" : "criteria",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -5792,11 +5792,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindMetaCriteria"
+                "$ref" : "#/components/schemas/SelectionSummaryRequest"
               }
             }
           },
-          "description" : "criteria",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -12892,6 +12892,22 @@
         },
         "required" : [ "localZoneId", "referenceTime" ]
       },
+      "DecorateRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "DefaultLocation" : {
         "type" : "object",
         "properties" : {
@@ -13285,9 +13301,6 @@
       "DownloadQueryResultsRequest" : {
         "type" : "object",
         "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV" ]
@@ -15387,6 +15400,9 @@
             "advanceSize" : {
               "type" : "string"
             },
+            "function" : {
+              "type" : "string"
+            },
             "timeField" : {
               "type" : "string"
             },
@@ -17468,6 +17484,13 @@
             },
             "uniqueItems" : true
           },
+          "indexPipelineSelectorIncludedTags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
           "infoPopup" : {
             "$ref" : "#/components/schemas/InfoPopupConfig"
           },
@@ -19317,6 +19340,18 @@
           "typeCount" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "SelectionSummaryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "findMetaCriteria" : {
+            "$ref" : "#/components/schemas/FindMetaCriteria"
+          },
+          "requiredPermission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
           }
         }
       },

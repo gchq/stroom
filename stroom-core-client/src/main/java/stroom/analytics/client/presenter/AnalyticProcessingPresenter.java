@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
@@ -33,6 +32,7 @@ import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -100,13 +100,11 @@ public class AnalyticProcessingPresenter
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                if (analyticRuleDoc.getErrorFeed() == null) {
-                    errorFeedPresenter.setSelectedEntityReference(
-                            extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
-                } else {
-                    errorFeedPresenter.setSelectedEntityReference(
-                            analyticRuleDoc.getErrorFeed());
-                }
+                final DocRef selectedDocRef = GwtNullSafe.requireNonNullElseGet(
+                        analyticRuleDoc.getErrorFeed(),
+                        () -> extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
+
+                errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
 
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
                 final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
@@ -121,6 +119,7 @@ public class AnalyticProcessingPresenter
                     streamingProcessingPresenter
                             .update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
                 } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
+                    //noinspection PatternVariableCanBeUsed // Not in GWT
                     final TableBuilderAnalyticProcessConfig ac =
                             (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
                     tableBuilderProcessingPresenter.read(docRef, ac);
@@ -185,6 +184,10 @@ public class AnalyticProcessingPresenter
         this.tableBuilderProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
         this.streamingProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
 

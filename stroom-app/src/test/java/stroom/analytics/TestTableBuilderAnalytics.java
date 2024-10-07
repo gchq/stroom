@@ -75,7 +75,6 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                 where UserId = user5
                 window EventTime by 1y advance 1y
                 group by UserId
-                // having count > countPrevious
                 select UserId""";
         basicTest(query, 9, 3);
     }
@@ -87,7 +86,7 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                 where UserId = user5
                 window EventTime by 1y advance 1y
                 group by UserId
-                having "period-0" = 0
+                having "period0" = 0
                 select UserId""";
         basicTest(query, 9, 2);
     }

@@ -506,6 +506,28 @@
     cursor: pointer;
 }
 
+.dropDownView-warning {
+    position: absolute;
+    display: flex;
+    bottom: 8px;
+    right: 3px;
+	width: 17px;
+	width: 17px;
+    cursor: pointer;
+}
+
+.dropDownView-warning svg {
+    width: 17px;
+    height: 17px;
+}
+
+.dropDownView-warning > .background {
+    /* Because the icon is inside the drop down text box, we need to alter its hover background
+       so it doesn't spill over the border of the text box. */
+    height: 88%;
+    margin-top: 2px;
+}
+
 .dropDownView-button svg {
 	width: 15px;
 	height: 15px;

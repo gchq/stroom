@@ -52,7 +52,6 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
 import stroom.query.common.v2.ValFilter;
-import stroom.query.common.v2.WindowSupport;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
@@ -366,7 +365,7 @@ public class ScheduledQueryAnalyticExecutor {
 
                     // Now consume all results as detections.
                     final TableSettings tableSettings = resultRequest.getMappings().getFirst();
-                    final List<Column> columns = WindowSupport.modifyColumns(tableSettings);
+                    final List<Column> columns = tableSettings.getColumns();
                     final Map<String, String> paramMap = ParamUtil
                             .createParamMap(mappedRequest.getQuery().getParams());
                     final CompiledColumns compiledColumns = CompiledColumns.create(

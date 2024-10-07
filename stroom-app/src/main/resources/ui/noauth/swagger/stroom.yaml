@@ -2511,8 +2511,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
+              $ref: '#/components/schemas/DecorateRequest'
+        description: decorateRequest
         required: true
       responses:
         default:
@@ -3957,8 +3957,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -3977,8 +3977,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -9020,6 +9020,22 @@ components:
       required:
       - localZoneId
       - referenceTime
+    DecorateRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - OWNER
+            - DELETE
+            - EDIT
+            - VIEW
+            - USE
+          uniqueItems: true
     DefaultLocation:
       type: object
       properties:
@@ -9506,8 +9522,6 @@ components:
     DownloadQueryResultsRequest:
       type: object
       properties:
-        componentId:
-          type: string
         fileType:
           type: string
           enum:
@@ -11660,6 +11674,8 @@ components:
         properties:
           advanceSize:
             type: string
+          function:
+            type: string
           timeField:
             type: string
           windowSize:
@@ -13411,6 +13427,11 @@ components:
           items:
             type: string
           uniqueItems: true
+        indexPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         infoPopup:
           $ref: '#/components/schemas/InfoPopupConfig'
         viewPipelineSelectorIncludedTags:
@@ -15015,6 +15036,19 @@ components:
         typeCount:
           type: integer
           format: int64
+    SelectionSummaryRequest:
+      type: object
+      properties:
+        findMetaCriteria:
+          $ref: '#/components/schemas/FindMetaCriteria'
+        requiredPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
     SelectionVolumeUseStatus:
       type: object
       properties:

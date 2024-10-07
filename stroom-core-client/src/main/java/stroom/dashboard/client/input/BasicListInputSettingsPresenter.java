@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class BasicListInputSettingsPresenter
             getView().setKey(settings.getKey());
             getView().setValues(settings.getValues());
             getView().setUseDictionary(settings.isUseDictionary());
-            dictionaryPresenter.setSelectedEntityReference(settings.getDictionary());
+            dictionaryPresenter.setSelectedEntityReference(settings.getDictionary(), true);
             getView().setAllowTextEntry(settings.isAllowTextEntry());
         }
     }
@@ -107,6 +107,10 @@ public class BasicListInputSettingsPresenter
 
         return !equal;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface BasicListInputSettingsView extends BasicSettingsView {
 

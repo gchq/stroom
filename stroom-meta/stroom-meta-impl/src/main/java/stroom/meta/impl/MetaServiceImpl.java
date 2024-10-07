@@ -55,6 +55,7 @@ import stroom.task.api.TaskManager;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -369,7 +370,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
                             // Add the children
                             ResultPage<Meta> children = findChildren(criteria, Collections.singletonList(lastParent));
-                            while (children.size() > 0) {
+                            while (!children.isEmpty()) {
                                 results.addAll(children.getValues());
                                 children = findChildren(criteria, children.getValues());
                             }
@@ -422,7 +423,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
                 .build();
         final ResultPage<Meta> parentList = simpleFind(expression);
-        if (parentList != null && parentList.size() > 0) {
+        if (parentList != null && !parentList.isEmpty()) {
             return parentList.getFirst();
         }
         return Meta
@@ -447,13 +448,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 .enabled(expressionOperator.enabled());
         if (expressionOperator.getChildren() != null) {
             expressionOperator.getChildren().forEach(expressionItem -> {
-                if (expressionItem instanceof ExpressionTerm) {
-                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+                if (expressionItem instanceof final ExpressionTerm expressionTerm) {
                     if (!excludedFields.contains(expressionTerm.getField())) {
                         builder.addTerm(expressionTerm);
                     }
-                } else if (expressionItem instanceof ExpressionOperator) {
-                    final ExpressionOperator operator = (ExpressionOperator) expressionItem;
+                } else if (expressionItem instanceof final ExpressionOperator operator) {
                     builder.addOperator(copyExpression(operator, excludedFields).build());
                 }
             });
@@ -525,7 +524,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         ResultPage<Meta> rows = find(findDataCriteria);
         final List<Meta> result = new ArrayList<>(rows.getValues());
 
-        if (rows.size() > 0) {
+        if (!rows.isEmpty()) {
             Meta row = rows.getFirst();
             LOGGER.logDurationIfTraceEnabled(
                     () -> addChildren(row, anyStatus, result),
@@ -552,7 +551,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private List<MetaRow> decorate(final List<Meta> metaList) {
         return LOGGER.logDurationIfTraceEnabled(
                 () -> {
-                    if (metaList == null || metaList.size() == 0) {
+                    if (NullSafe.isEmptyCollection(metaList)) {
                         return Collections.emptyList();
                     }
 
@@ -572,8 +571,15 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                DocumentPermission.VIEW,
+        return getSelectionSummary(criteria, DocumentPermission.VIEW);
+    }
+
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria,
+                                                final DocumentPermission permission) {
+        final ExpressionOperator expression = addPermissionConstraints(
+                criteria.getExpression(),
+                permission,
                 FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.getSelectionSummary(criteria);
@@ -581,8 +587,14 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
+        return getReprocessSelectionSummary(criteria, DocumentPermission.VIEW);
+    }
+
+    @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria,
+                                                         final DocumentPermission permission) {
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                DocumentPermission.VIEW,
+                permission,
                 ALL_FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.getReprocessSelectionSummary(criteria);
@@ -610,7 +622,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         if (child.getParentMetaId() != null) {
             final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(),
                     anyStatus))).getValues();
-            if (parents != null && parents.size() > 0) {
+            if (GwtNullSafe.hasItems(parents)) {
                 parents.forEach(parent -> {
                     result.add(parent);
                     addParents(parent, anyStatus, result);

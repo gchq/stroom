@@ -29,6 +29,8 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
@@ -211,7 +213,71 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 .build());
 
             } catch (final RuntimeException e2) {
-                LOGGER.error(e.getMessage(), e2);
+                LOGGER.error(e2.getMessage(), e2);
+            }
+        });
+    }
+
+    @Override
+    public void downloadResults(final DownloadQueryResultsRequest req,
+                                final SearchRequest request,
+                                final Long resultCount,
+                                final Exception ex) {
+        securityContext.insecure(() -> {
+            try {
+                final stroom.query.api.v2.Query query = NullSafe.get(
+                        request,
+                        SearchRequest::getQuery);
+                final DocRef dataSourceRef = NullSafe.get(
+                        query,
+                        stroom.query.api.v2.Query::getDataSource);
+
+                final String dataSourceName = getDataSourceName(dataSourceRef);
+                final List<Param> params = NullSafe.get(query, stroom.query.api.v2.Query::getParams);
+                final String fileType = NullSafe.get(req.getFileType(),
+                        DownloadSearchResultFileType::getExtension);
+
+                final ExpressionOperator deReferencedExpression = ExpressionUtil.replaceExpressionParameters(
+                        request.getQuery().getExpression(),
+                        params);
+
+                eventLoggingService.log(
+                        "Download search results",
+                        "Downloading search results - data source \"" + dataSourceRef.toInfoString(),
+                        getPurpose(req.getSearchRequest().getQueryContext().getQueryInfo()),
+                        ExportEventAction.builder()
+                                .withSource(MultiObject.builder()
+                                        .addCriteria(Criteria.builder()
+                                                .withDataSources(DataSources.builder()
+                                                        .addDataSource(dataSourceName)
+                                                        .build())
+                                                .withQuery(StroomEventLoggingUtil.convertExpression(
+                                                        deReferencedExpression))
+                                                .withTotalResults(NullSafe.get(
+                                                        resultCount,
+                                                        cnt -> BigInteger.valueOf(cnt)))
+                                                .addData(buildDataFromParams(params))
+                                                .build())
+                                        .build())
+                                .withDestination(
+                                        MultiObject.builder()
+                                                .addFile(File.builder()
+                                                        .withType(fileType)
+                                                        .addData(Data.builder()
+                                                                .withName("sample")
+                                                                .withValue(Boolean.toString(req.isSample()))
+                                                                .build())
+                                                        .addData(Data.builder()
+                                                                .withName("percent")
+                                                                .withValue(String.valueOf(req.getPercent()))
+                                                                .build())
+                                                        .build())
+                                                .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
+
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e2.getMessage(), e2);
             }
         });
     }

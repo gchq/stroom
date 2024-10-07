@@ -113,9 +113,6 @@ public enum TokenType {
     public static final Set<TokenType> ALL_KEYWORDS = Collections.unmodifiableSet(EnumSet.of(
             FROM,
             WHERE,
-            AND,
-            OR,
-            NOT,
             FILTER,
             EVAL,
             SELECT,
@@ -125,6 +122,11 @@ public enum TokenType {
             LIMIT,
             HAVING,
             SHOW));
+
+    public static final Set<TokenType> EXPRESSION_KEYWORDS = Set.of(
+            WHERE,
+            FILTER,
+            HAVING);
 
     public static final Set<TokenType> ALL_CONDITIONS = Collections.unmodifiableSet(EnumSet.of(
             EQUALS,
@@ -198,7 +200,7 @@ public enum TokenType {
                     entry(AND, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
                     entry(OR, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
                     entry(NOT, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(EVAL, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL)),
+                    entry(EVAL, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW)),
                     entry(WINDOW, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL)),
                     entry(FILTER, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW)),
                     entry(SORT, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, GROUP)),

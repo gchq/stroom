@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client;
@@ -62,6 +61,7 @@ import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DecorateRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
@@ -161,7 +161,8 @@ public class DocumentPluginEventManager extends Plugin {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
         });
-        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () -> RequestCloseAllTabsEvent.fire(this));
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () ->
+                RequestCloseAllTabsEvent.fire(this));
 
         KeyBinding.addCommand(Action.ITEM_SAVE, () -> {
             if (isDirty(selectedTab)) {
@@ -346,14 +347,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the copy document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (result.getMessage().length() > 0) {
+                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to copy some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (result.getExplorerNodes().size() > 0) {
+                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -365,14 +366,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the move document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (result.getMessage().length() > 0) {
+                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to move some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (result.getExplorerNodes().size() > 0) {
+                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -412,14 +413,14 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
-            if (getSelectedItems().size() > 0) {
+            if (GwtNullSafe.hasItems(getSelectedItems())) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap ->
                         documentTypeCache.fetch(documentTypes -> {
                             final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
                                     documentPermissionMap,
                                     DocumentPermission.DELETE,
                                     false);
-                            if (deletableItems.size() > 0) {
+                            if (!deletableItems.isEmpty()) {
                                 deleteItems(deletableItems, explorerListener);
                             }
                         }, explorerListener), explorerListener);
@@ -546,18 +547,18 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
 
-        if (dirtyList.size() > 0) {
+        if (!dirtyList.isEmpty()) {
             final DocRef docRef = dirtyList.get(0).getDocRef();
             AlertEvent.fireWarn(this, "You must save changes to " + docRef.getType() + " '"
                     + docRef.getDisplayValue()
                     + "' before it can be renamed.", null);
-        } else if (cleanList.size() > 0) {
+        } else if (!cleanList.isEmpty()) {
             ShowRenameDocumentDialogEvent.fire(DocumentPluginEventManager.this, cleanList);
         }
     }
 
     private void deleteItems(final List<ExplorerNode> explorerNodeList, final TaskMonitorFactory taskMonitorFactory) {
-        if (explorerNodeList != null && explorerNodeList.size() > 0) {
+        if (GwtNullSafe.hasItems(explorerNodeList)) {
             final List<DocRef> docRefs = explorerNodeList
                     .stream()
                     .map(ExplorerNode::getDocRef)
@@ -572,7 +573,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
         boolean success = true;
-        if (result.getMessage().length() > 0) {
+        if (GwtNullSafe.isNonBlankString(result.getMessage())) {
             AlertEvent.fireInfo(DocumentPluginEventManager.this,
                     "Unable to delete some items",
                     result.getMessage(),
@@ -581,7 +582,19 @@ public class DocumentPluginEventManager extends Plugin {
             success = false;
         }
 
-        RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
+        // results contains only the docs that were actually deleted, not the ones that failed
+        // to delete. So we need to close the open tab of any deleted doc.
+        final Map<String, List<DocRef>> typeToDocRefsMap = GwtNullSafe.stream(result.getExplorerNodes())
+                .map(ExplorerNode::getDocRef)
+                .collect(Collectors.groupingBy(DocRef::getType, Collectors.toList()));
+
+        typeToDocRefsMap.forEach((type, docRefs) -> {
+            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(type);
+            final List<DocumentTabData> openTabs = documentPlugin.getOpenDocuments(docRefs);
+            // Close even if dirty as we have already deleted the docs
+            openTabs.forEach(tab ->
+                    RequestCloseTabEvent.fire(DocumentPluginEventManager.this, tab, true));
+        });
 
         // Refresh the tree
         RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
@@ -733,18 +746,43 @@ public class DocumentPluginEventManager extends Plugin {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory
                     .create(EXPLORER_RESOURCE)
-                    .method(res -> res.decorate(docRef))
+                    .method(res ->
+                            res.decorate(DecorateRequest.create(docRef)))
                     .onSuccess(decoratedDocRef -> {
-                        if (decoratedDocRef != null) {
-                            documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
-                                    new DefaultTaskMonitorFactory(this));
-                            highlight(decoratedDocRef, explorerListener);
-                        }
+                        documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
+                                new DefaultTaskMonitorFactory(this));
+                        highlight(decoratedDocRef, explorerListener);
+                    })
+                    .onFailure(error -> {
+                        AlertEvent.fireError(DocumentPluginEventManager.this,
+                                buildNotFoundMessage(docRef),
+                                null);
                     })
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+        }
+    }
+
+    public static String buildNotFoundMessage(final DocRef docRef) {
+        if (docRef != null) {
+            final String type = docRef.getType();
+            final String uuid = docRef.getUuid();
+            final String displayName = GwtNullSafe.getOrElse(
+                    docRef.getName(),
+                    name -> "'" + name + "' (" + uuid + ")",
+                    uuid);
+            final String prefix = type != null
+                    ? type
+                    : "Document";
+
+            return prefix +
+                    " " +
+                    displayName +
+                    " doesn't exist or you do not have permission to open it.";
+        } else {
+            return null;
         }
     }
 
@@ -1177,6 +1215,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private DocRef getSelectedDoc(final TabData selectedTab) {
         if (selectedTab instanceof DocumentTabData) {
+            //noinspection PatternVariableCanBeUsed // Not in GWT
             final DocumentTabData documentTabData = (DocumentTabData) selectedTab;
             return documentTabData.getDocRef();
         }

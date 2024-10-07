@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.Set;
 @EntityEventHandler(action = {
         EntityAction.CREATE,
         EntityAction.UPDATE,
+        EntityAction.DELETE,
         EntityAction.UPDATE_EXPLORER_NODE})
 class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 

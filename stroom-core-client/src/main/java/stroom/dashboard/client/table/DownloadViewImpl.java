@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.item.client.SelectionBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -36,6 +37,8 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
 
     @UiField
     SelectionBox<DownloadSearchResultFileType> fileType;
+    @UiField
+    FormGroup downloadAll;
     @UiField
     CustomCheckBox downloadAllTables;
     @UiField
@@ -89,6 +92,11 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @Override
     public boolean downloadAllTables() {
         return downloadAllTables.getValue();
+    }
+
+    @Override
+    public void setShowDownloadAll(final boolean show) {
+        downloadAll.setVisible(show);
     }
 
     @Override

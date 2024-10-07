@@ -67,3 +67,16 @@ from View
 // eval MaxD=max(parseDuration('PT10M'))
 where EventTime < now() - 2dx
 select StreamId, EventId, Feed
+-----
+from 'Test Index'
+where not UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+or EventTime = 2016-01-02T00:00:00.000Z
+select StreamId, EventId, EventTime, Status
+-----
+from 'Test Index'
+where not UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+or EventTime = 2016-01-02T00:00:00.000Z
+and UserId = user10
+select StreamId, EventId, EventTime, Status

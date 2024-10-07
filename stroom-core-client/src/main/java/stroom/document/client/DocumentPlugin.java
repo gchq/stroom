@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client;
@@ -24,6 +23,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.HasSave;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
+import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.RestErrorHandler;
@@ -39,13 +39,17 @@ import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
@@ -500,6 +504,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         }
     }
 
+    public List<DocumentTabData> getOpenDocuments(final List<DocRef> docRefs) {
+        return GwtNullSafe.stream(docRefs)
+                .map(documentToTabDataMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
 //    private void deleteDocument(final DocRef document, final DocumentTabData tabData) {
 //        delete(document).onSuccess(e -> {
 //            if (tabData != null) {
@@ -534,6 +545,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     public abstract String getType();
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class EntityCloseHandler implements CloseContentEvent.Handler {
 
         private final DocumentTabData tabData;
@@ -548,13 +563,19 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             if (tabData != null) {
                 if (tabData instanceof DocumentEditPresenter<?, ?>) {
                     final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
-                    if (presenter.isDirty()) {
-                        if (!event.isIgnoreIfDirty()) {
+                    final DirtyMode dirtyMode = event.getDirtyMode();
+                    if (presenter.isDirty() && DirtyMode.FORCE != dirtyMode) {
+                        if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
                             final DocRef docRef = getDocRef(presenter.getEntity());
                             ConfirmEvent.fire(DocumentPlugin.this,
                                     docRef.getType() + " '" + docRef.getName()
                                             + "' has unsaved changes. Are you sure you want to close this item?",
-                                    result -> actuallyClose(tabData, event.getCallback(), presenter, result));
+                                    result ->
+                                            actuallyClose(tabData, event.getCallback(), presenter, result));
+                        } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
+                            // Do nothing
+                        } else {
+                            throw new RuntimeException("Unexpected DirtyMode: " + dirtyMode);
                         }
                     } else {
                         actuallyClose(tabData, event.getCallback(), presenter, true);
@@ -568,8 +589,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             }
         }
 
-        private void actuallyClose(final DocumentTabData tabData, final Callback callback,
-                                   final DocumentEditPresenter<?, D> presenter, final boolean ok) {
+        private void actuallyClose(final DocumentTabData tabData,
+                                   final Callback callback,
+                                   final DocumentEditPresenter<?, D> presenter,
+                                   final boolean ok) {
             if (ok) {
                 // Tell the presenter we are closing.
                 presenter.onClose();

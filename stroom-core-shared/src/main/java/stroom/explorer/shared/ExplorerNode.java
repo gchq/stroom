@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,11 @@ public class ExplorerNode implements HasDisplayValue {
         this.uniqueKey = uniqueKey;
         this.nodeInfoList = GwtNullSafe.get(nodeInfoList, Collections::unmodifiableList);
         this.nodeFlags = GwtNullSafe.get(nodeFlags, EnumSet::copyOf);
+    }
+
+    public static ExplorerNode fromExplorerNodeKey(final ExplorerNodeKey explorerNodeKey) {
+        return builder(explorerNodeKey)
+                .build();
     }
 
     public String getType() {
@@ -282,6 +287,14 @@ public class ExplorerNode implements HasDisplayValue {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static Builder builder(final ExplorerNodeKey explorerNodeKey) {
+        Objects.requireNonNull(explorerNodeKey);
+        return new Builder()
+                .type(explorerNodeKey.getType())
+                .uuid(explorerNodeKey.getUuid())
+                .rootNodeUuid(explorerNodeKey.getRootNodeUuid());
     }
 
     public Builder copy() {
