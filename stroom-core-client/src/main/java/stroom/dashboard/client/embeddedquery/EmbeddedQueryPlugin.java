@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
+package stroom.dashboard.client.embeddedquery;
 
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Result;
+import stroom.dashboard.client.main.ComponentRegistry;
 
-import java.util.Set;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
-public interface ResultComponent {
+public class EmbeddedQueryPlugin {
 
-    OffsetRange getRequestedRange();
-
-    Set<String> getOpenGroups();
-
-    void reset();
-
-    void startSearch();
-
-    void endSearch();
-
-    void setData(Result componentResult);
-
-    void setQueryModel(QueryModel queryModel);
+    @Inject
+    public EmbeddedQueryPlugin(final ComponentRegistry componentRegistry,
+                               final Provider<EmbeddedQueryPresenter> provider) {
+        componentRegistry.register(EmbeddedQueryPresenter.TYPE, provider);
+    }
 }

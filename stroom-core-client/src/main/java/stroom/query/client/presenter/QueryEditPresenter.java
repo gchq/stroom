@@ -32,7 +32,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QLVisResult;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
@@ -177,15 +176,14 @@ public class QueryEditPresenter
             }
         };
 
-
         queryModel = new QueryModel(
                 eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
-                resultStoreModel,
-                queryResultPresenter,
-                resultConsumer);
-        queryResultPresenter.setQueryModel(queryModel);
+                resultStoreModel);
+        queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
+        queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
+
         queryModel.addSearchErrorListener(queryToolbarPresenter);
         queryModel.addTokenErrorListener(e -> {
             final Indicators indicators = new Indicators();
@@ -406,10 +404,6 @@ public class QueryEditPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    public void setSourceType(final SourceType sourceType) {
-        queryModel.setSourceType(sourceType);
     }
 
     @Override

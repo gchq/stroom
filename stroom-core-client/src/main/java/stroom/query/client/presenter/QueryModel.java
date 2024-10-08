@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.DestroyReason;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -31,6 +32,7 @@ import stroom.query.shared.QuerySearchRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -43,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
@@ -71,24 +74,19 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
     private final Map<String, ResultComponent> resultComponents = new HashMap<>();
 
-    private final ResultComponent tablePresenter;
-
     public QueryModel(final EventBus eventBus,
                       final RestFactory restFactory,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
-                      final ResultStoreModel resultStoreModel,
-                      final ResultComponent tablePresenter,
-                      final ResultComponent visPresenter) {
+                      final ResultStoreModel resultStoreModel) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
-        this.tablePresenter = tablePresenter;
-        tablePresenter.setQueryModel(this);
-        visPresenter.setQueryModel(this);
+    }
 
-        resultComponents.put(TABLE_COMPONENT_ID, tablePresenter);
-        resultComponents.put(VIS_COMPONENT_ID, visPresenter);
+    public void addResultComponent(final String componentId, final ResultComponent resultComponent) {
+        resultComponent.setQueryModel(this);
+        resultComponents.put(componentId, resultComponent);
     }
 
     public void init(final String queryUuid) {
@@ -274,12 +272,18 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
+            final ResultComponent tablePresenter = resultComponents.get(TABLE_COMPONENT_ID);
+            final Set<String> openGroups = GwtNullSafe
+                    .getOrElse(tablePresenter, ResultComponent::getOpenGroups, Collections.emptySet());
+            final OffsetRange requestedRange = GwtNullSafe
+                    .getOrElse(tablePresenter, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
+
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(storeHistory)
-                    .openGroups(tablePresenter.getOpenGroups())
-                    .requestedRange(tablePresenter.getRequestedRange())
+                    .openGroups(openGroups)
+                    .requestedRange(requestedRange)
                     .build();
 
             restFactory

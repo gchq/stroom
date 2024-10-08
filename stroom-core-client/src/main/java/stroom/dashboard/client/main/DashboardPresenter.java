@@ -713,6 +713,7 @@ public class DashboardPresenter
             final Element selectedComponent = getFirstComponentElement(firstTabConfig);
             final Rect rect = ElementUtil.getClientRect(selectedComponent);
             layoutPresenter.enterNewComponentDestinationMode(
+                    null,
                     duplicatedComponents,
                     rect.getLeft() + (rect.getWidth() / 2),
                     rect.getTop() + (rect.getHeight() / 2));
@@ -889,10 +890,15 @@ public class DashboardPresenter
 
                     layoutPresenter.configure(tabLayoutConfig, layoutConstraints, preferredSize);
                     setDirty(true);
+
+                    // Show the component settings.
+                    componentPresenter.showSettings();
+
                 } else {
                     final Element element = getFirstComponentElement(firstTabConfig);
                     final Rect rect = ElementUtil.getClientRect(element);
                     layoutPresenter.enterNewComponentDestinationMode(
+                            componentPresenter,
                             Collections.singletonList(componentPresenter),
                             rect.getLeft() + (rect.getWidth() / 2),
                             rect.getTop() + (rect.getHeight() / 2));

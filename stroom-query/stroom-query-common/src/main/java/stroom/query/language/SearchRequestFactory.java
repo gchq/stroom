@@ -27,6 +27,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -115,6 +116,7 @@ public class SearchRequestFactory {
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
+        private Map<String, String> paramMap;
         private final Map<String, Expression> expressionMap;
         private final Set<String> addedFields = new HashSet<>();
         private final List<AbstractToken> additionalFields = new ArrayList<>();
@@ -126,6 +128,7 @@ public class SearchRequestFactory {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
             this.docResolver = docResolver;
             this.fieldIndex = new FieldIndex();
+            this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
         }
 
@@ -173,6 +176,7 @@ public class SearchRequestFactory {
 
                 final Query.Builder queryBuilder = Query.builder();
                 if (in.getQuery() != null) {
+                    paramMap = ParamUtil.createParamMap(in.getQuery().getParams());
                     queryBuilder.params(in.getQuery().getParams());
                     queryBuilder.timeRange(in.getQuery().getTimeRange());
                 }
@@ -484,12 +488,18 @@ public class SearchRequestFactory {
             for (int i = start; i < tokens.size(); i++) {
                 final AbstractToken token = tokens.get(i);
                 if (TokenType.BETWEEN_AND.equals(token.getTokenType())) {
-                    value.append(parseValueTokens(tokens.subList(start, i)));
+                    final String val = parseValueTokens(tokens.subList(start, i));
+                    if (val != null) {
+                        value.append(val);
+                    }
                     return i;
                 }
             }
 
-            value.append(parseValueTokens(tokens.subList(start, tokens.size())));
+            final String val = parseValueTokens(tokens.subList(start, tokens.size()));
+            if (val != null) {
+                value.append(val);
+            }
             return tokens.size();
         }
 
@@ -503,18 +513,24 @@ public class SearchRequestFactory {
             final StringBuilder sb = new StringBuilder();
             for (final AbstractToken token : tokens) {
                 if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
+                    final FunctionGroup functionGroup = (FunctionGroup) token;
                     DatePoint foundFunction = null;
-                    final String function = token.getUnescapedText();
-                    for (final DatePoint datePoint : DatePoint.values()) {
-                        if (datePoint.getFunction().equals(function)) {
-                            foundFunction = datePoint;
-                            break;
-                        }
-                    }
-                    if (foundFunction == null) {
-                        throw new TokenException(token, "Unexpected function in value");
+                    if (functionGroup.getName().equalsIgnoreCase("param")) {
+                        return resolveParam(functionGroup);
+
                     } else {
-                        dateExpression = true;
+                        final String function = token.getUnescapedText();
+                        for (final DatePoint datePoint : DatePoint.values()) {
+                            if (datePoint.getFunction().equals(function)) {
+                                foundFunction = datePoint;
+                                break;
+                            }
+                        }
+                        if (foundFunction == null) {
+                            throw new TokenException(token, "Unexpected function in value");
+                        } else {
+                            dateExpression = true;
+                        }
                     }
                 } else if (TokenType.DURATION.equals(token.getTokenType())) {
                     dateExpression = true;
@@ -553,6 +569,20 @@ public class SearchRequestFactory {
             }
 
             return expression;
+        }
+
+        private String resolveParam(final FunctionGroup functionGroup) {
+            if (functionGroup.getChildren().isEmpty()) {
+                throw new TokenException(functionGroup, "Expected param name");
+            } else if (functionGroup.getChildren().size() > 1) {
+                throw new TokenException(functionGroup.getChildren().get(1), "Unexpected token");
+            } else {
+                final AbstractToken child = functionGroup.getChildren().getFirst();
+                if (!TokenType.STRING.equals(child.getTokenType())) {
+                    throw new TokenException(child, "Expected param name");
+                }
+                return paramMap.get(child.getUnescapedText());
+            }
         }
 
         private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
@@ -893,8 +923,8 @@ public class SearchRequestFactory {
             final int byIndex = getTokenIndex(children, token -> TokenType.BY.equals(token.getTokenType()));
             if (byIndex == -1) {
                 throw new TokenException(keywordGroup, "Syntax exception, expected by");
-            } else if (children.size() > byIndex  + 1) {
-                final AbstractToken token = children.get(byIndex  + 1);
+            } else if (children.size() > byIndex + 1) {
+                final AbstractToken token = children.get(byIndex + 1);
                 if (!TokenType.DURATION.equals(token.getTokenType())) {
                     throw new TokenException(token, "Syntax exception, expected valid window duration");
                 }
@@ -903,7 +933,7 @@ public class SearchRequestFactory {
                 hoppingWindowBuilder.advanceSize(durationString);
 
                 // We found the duration so remove the tokens.
-                children.remove(byIndex  + 1);
+                children.remove(byIndex + 1);
                 children.remove(byIndex);
             } else {
                 throw new TokenException(children.get(byIndex), "Syntax exception, expected window duration");
