@@ -65,6 +65,7 @@ class QueryResourceImpl implements QueryResource {
     private final Provider<Fields> fieldsProvider;
     private final Provider<Functions> functionsProvider;
     private final Provider<Visualisations> visualisationProvider;
+    private final Provider<Dictionaries> dictionariesProvider;
 
     @Inject
     QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
@@ -73,7 +74,8 @@ class QueryResourceImpl implements QueryResource {
                       final Provider<Structures> structuresProvider,
                       final Provider<Fields> fieldsProvider,
                       final Provider<Functions> functionsProvider,
-                      final Provider<Visualisations> visualisationProvider) {
+                      final Provider<Visualisations> visualisationProvider,
+                      final Provider<Dictionaries> dictionariesProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
         this.dataSourcesProvider = dataSourcesProvider;
@@ -81,6 +83,7 @@ class QueryResourceImpl implements QueryResource {
         this.fieldsProvider = fieldsProvider;
         this.functionsProvider = functionsProvider;
         this.visualisationProvider = visualisationProvider;
+        this.dictionariesProvider = dictionariesProvider;
     }
 
     @Override
@@ -188,9 +191,14 @@ class QueryResourceImpl implements QueryResource {
         }
         if (request.isTypeIncluded(QueryHelpType.FUNCTION)) {
             functionsProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         if (request.isTypeIncluded(QueryHelpType.VISUALISATION)) {
             visualisationProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+        }
+        if (request.isTypeIncluded(QueryHelpType.DICTIONARY)) {
+            dictionariesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
         }
         return resultPageBuilder.build();
     }
@@ -226,6 +234,9 @@ class QueryResourceImpl implements QueryResource {
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.VISUALISATION)) {
             visualisationProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
         }
+        if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.DICTIONARY)) {
+            dictionariesProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
+        }
 
         return ResultPage.createUnboundedList(list);
     }
@@ -250,6 +261,7 @@ class QueryResourceImpl implements QueryResource {
         result = result.or(() -> fieldsProvider.get().fetchDetail(row));
         result = result.or(() -> functionsProvider.get().fetchDetail(row));
         result = result.or(() -> visualisationProvider.get().fetchDetail(row));
+        result = result.or(() -> dictionariesProvider.get().fetchDetail(row));
 
         return result.orElse(null);
     }

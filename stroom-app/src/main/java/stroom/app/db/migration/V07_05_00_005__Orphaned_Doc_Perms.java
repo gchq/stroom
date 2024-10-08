@@ -77,14 +77,15 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
         LOGGER.info("Starting purge of orphaned document permissions");
         final DurationTimer timer = DurationTimer.start();
 
-        // Find all the doc uuids that are in use as docs, folders, proc filters and System
-        final Set<String> validDocUuids = getValidDocUuids();
-
         // Create the empty backup table
         final boolean doesBackupTblExist = DbUtil.doesTableExist(
                 securityDbConnProvider.getConnection(), BACKUP_TBL_NAME);
+        LOGGER.info("doesBackupTblExist: {}", doesBackupTblExist);
 
         if (!doesBackupTblExist) {
+            // Find all the doc uuids that are in use as docs, folders, proc filters and System
+            final Set<String> validDocUuids = getValidDocUuids();
+
             LOGGER.info("Creating empty backup table {}", BACKUP_TBL_NAME);
             DbUtil.executeStatement(securityDbConnProvider, String.format("""
                     create table %s (primary key (id)) as
@@ -138,7 +139,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                                     totalOrphanedDocCnt.incrementAndGet();
                                     orphanedDocUuids.add(docUuid);
                                     LOGGER.info("Found {} orphaned doc_permission records for doc '{}' with " +
-                                                "max doc_permission ID {}",
+                                                    "max doc_permission ID {}",
                                             permCnt, docUuid, maxId);
                                 }
                             }
@@ -148,7 +149,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                             break;
                         }
                         LOGGER.info("Batch summary - total docs: {}, orphaned docs: {}, " +
-                                    "cumulative orphaned docs: {}, max doc_permission ID: {}",
+                                        "cumulative orphaned docs: {}, max doc_permission ID: {}",
                                 rowsFoundInBatch, orphanedDocUuids.size(), totalOrphanedDocCnt, lastMaxId);
 
                         final int deleteCount = deleteOrphanedDocs(orphanedDocUuids);
@@ -157,7 +158,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                 }));
 
         LOGGER.info("Completed purge of {} orphaned document permissions for {} orphaned docs in {}. " +
-                    "All purged data has been copied to table '{}'",
+                        "All purged data has been copied to table '{}'",
                 totalDeleteCount.get(), totalOrphanedDocCnt.get(), timer, BACKUP_TBL_NAME);
     }
 
@@ -168,9 +169,9 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
         // Should be same as ExplorerConstants.SYSTEM_DOC_REF.getUuid() when this mig was written
 
         final Set<String> validDocUuids = new HashSet<>(allFolderUuids.size()
-                                                        + processorFilterUuids.size()
-                                                        + docUuids.size()
-                                                        + 1);
+                + processorFilterUuids.size()
+                + docUuids.size()
+                + 1);
         validDocUuids.addAll(allFolderUuids);
         validDocUuids.addAll(processorFilterUuids);
         validDocUuids.addAll(docUuids);

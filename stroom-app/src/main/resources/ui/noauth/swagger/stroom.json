@@ -5672,11 +5672,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindMetaCriteria"
+                "$ref" : "#/components/schemas/SelectionSummaryRequest"
               }
             }
           },
-          "description" : "criteria",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -5702,11 +5702,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindMetaCriteria"
+                "$ref" : "#/components/schemas/SelectionSummaryRequest"
               }
             }
           },
-          "description" : "criteria",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -19393,6 +19393,17 @@
           "typeCount" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "SelectionSummaryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "findMetaCriteria" : {
+            "$ref" : "#/components/schemas/FindMetaCriteria"
+          },
+          "requiredPermission" : {
+            "type" : "string"
           }
         }
       },
