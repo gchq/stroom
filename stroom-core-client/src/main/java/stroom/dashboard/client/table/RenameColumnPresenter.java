@@ -19,7 +19,6 @@ package stroom.dashboard.client.table;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.table.RenameColumnPresenter.RenameColumnView;
 import stroom.query.api.v2.Column;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -87,7 +86,7 @@ public class RenameColumnPresenter
             final String newFieldName = getView().getName().getText();
             if (newFieldName != null
                     && !newFieldName.trim().isEmpty()
-                    && !EqualsUtil.isEquals(newFieldName, column.getName())) {
+                    && !Objects.equals(newFieldName, column.getName())) {
 
                 // Need to ensure any conditional formatting rules that use this field name
                 // are renamed too.

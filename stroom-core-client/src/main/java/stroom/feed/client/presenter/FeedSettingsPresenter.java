@@ -29,7 +29,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.SelectionBox;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
@@ -38,6 +37,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class FeedSettingsPresenter
         extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
@@ -74,7 +75,7 @@ public class FeedSettingsPresenter
             final String dataEncoding = ensureEncoding(getView().getDataEncoding().getValue());
             getView().getDataEncoding().setValue(dataEncoding);
 
-            if (!EqualsUtil.isEquals(dataEncoding, getEntity().getEncoding())) {
+            if (!Objects.equals(dataEncoding, getEntity().getEncoding())) {
                 getEntity().setEncoding(dataEncoding);
                 setDirty(true);
             }
@@ -83,7 +84,7 @@ public class FeedSettingsPresenter
             final String contextEncoding = ensureEncoding(getView().getContextEncoding().getValue());
             getView().getContextEncoding().setValue(contextEncoding);
 
-            if (!EqualsUtil.isEquals(contextEncoding, getEntity().getContextEncoding())) {
+            if (!Objects.equals(contextEncoding, getEntity().getContextEncoding())) {
                 setDirty(true);
                 getEntity().setContextEncoding(contextEncoding);
             }
@@ -93,14 +94,14 @@ public class FeedSettingsPresenter
             final String streamType = getView().getReceivedType().getValue();
             getView().getReceivedType().setValue(streamType);
 
-            if (!EqualsUtil.isEquals(streamType, getEntity().getStreamType())) {
+            if (!Objects.equals(streamType, getEntity().getStreamType())) {
                 setDirty(true);
                 getEntity().setStreamType(streamType);
             }
         }));
         registerHandler(getView().getVolumeGroup().addValueChangeHandler(event -> {
             final String volumeGroup = getView().getVolumeGroup().getValue();
-            if (!EqualsUtil.isEquals(volumeGroup, getEntity().getVolumeGroup())) {
+            if (!Objects.equals(volumeGroup, getEntity().getVolumeGroup())) {
                 setDirty(true);
                 getEntity().setVolumeGroup(volumeGroup);
             }

@@ -40,7 +40,6 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasItems;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -1074,7 +1073,7 @@ public class DataPresenter
                 && Objects.equals(getCurrentMetaId(), highlightMetaId)
                 && partIndex == highlightPartIndex
                 && result != null
-                && EqualsUtil.isEquals(result.getStreamTypeName(), highlightChildDataType)) {
+                && Objects.equals(result.getStreamTypeName(), highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);

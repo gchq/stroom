@@ -47,7 +47,6 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -244,7 +243,7 @@ public class VisPresenter
     public void setComponents(final Components components) {
         super.setComponents(components);
         registerHandler(components.addComponentChangeHandler(event -> {
-            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
+            if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(),
                     event.getComponentId())) {
                 updateTableId(event.getComponentId());
             }

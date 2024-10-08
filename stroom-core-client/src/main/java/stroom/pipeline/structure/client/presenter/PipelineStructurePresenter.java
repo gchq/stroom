@@ -39,7 +39,6 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -590,7 +589,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     private void changeParentPipeline(final DocRef parentPipeline) {
         // Don't do anything if the parent pipeline has not changed.
-        if (EqualsUtil.isEquals(this.parentPipeline, parentPipeline)) {
+        if (Objects.equals(this.parentPipeline, parentPipeline)) {
             return;
         }
 

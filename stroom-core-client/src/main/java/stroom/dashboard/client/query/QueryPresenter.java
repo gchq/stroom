@@ -72,7 +72,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -94,6 +93,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -370,7 +370,7 @@ public class QueryPresenter
 //                        currentTablePresenter = (TablePresenter) component;
 //                        update(currentTablePresenter);
 //                    }
-//                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
+//                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
 //                    if (component instanceof TablePresenter) {
 //                        currentTablePresenter = (TablePresenter) component;
 //                        update(currentTablePresenter);
@@ -458,10 +458,7 @@ public class QueryPresenter
         fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
 
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(getQuerySettings().getDataSource(), dataSourceRef);
-
-        if (!builder.isEquals()) {
+        if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
                     .copy()
                     .dataSource(dataSourceRef)

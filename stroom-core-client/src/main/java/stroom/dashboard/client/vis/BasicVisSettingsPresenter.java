@@ -30,7 +30,6 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.tab.client.presenter.TabData;
@@ -91,7 +90,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     @Override
     protected void onBind() {
         registerHandler(visualisationPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
+            if (!Objects.equals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
                 writeDynamicSettings(dynamicSettings);
                 loadVisualisation(visualisationPresenter.getSelectedEntityReference(), dynamicSettings);
             }

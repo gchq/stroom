@@ -16,8 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import java.util.Objects;
 
 public class StreamKey {
 
@@ -44,28 +43,22 @@ public class StreamKey {
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(feed);
-        builder.append(streamType);
-        builder.append(segmentOutput);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final StreamKey streamKey = (StreamKey) o;
+        return Objects.equals(feed, streamKey.feed) &&
+                Objects.equals(streamType, streamKey.streamType) &&
+                segmentOutput == streamKey.segmentOutput;
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof StreamKey)) {
-            return false;
-        }
-
-        final StreamKey streamKey = (StreamKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(feed, streamKey.feed);
-        builder.append(streamType, streamKey.streamType);
-        builder.append(segmentOutput, streamKey.segmentOutput);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(feed, streamType, segmentOutput);
     }
 
     @Override

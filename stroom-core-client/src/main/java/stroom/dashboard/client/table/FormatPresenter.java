@@ -24,7 +24,6 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.FormatSettings;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.client.presenter.TimeZones;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -37,6 +36,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
@@ -77,7 +77,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final Format newFormat = getFormat();
-                        if (!EqualsUtil.isEquals(newFormat, column.getFormat())) {
+                        if (!Objects.equals(newFormat, column.getFormat())) {
                             columnChangeConsumer.accept(column, column.copy().format(newFormat).build());
                         }
                     }

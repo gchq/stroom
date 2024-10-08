@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
@@ -185,28 +186,23 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(string);
-        builder.append(matchStyle);
-        builder.append(matchNull);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final StringCriteria that = (StringCriteria) o;
+        return caseInsensitive == that.caseInsensitive &&
+                Objects.equals(string, that.string) &&
+                matchStyle == that.matchStyle &&
+                Objects.equals(matchNull, that.matchNull);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof StringCriteria)) {
-            return false;
-        }
-
-        final StringCriteria stringCriteria = (StringCriteria) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(string, stringCriteria.string);
-        builder.append(matchStyle, stringCriteria.matchStyle);
-        builder.append(matchNull, stringCriteria.matchNull);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(string, matchStyle, caseInsensitive, matchNull);
     }
 
     public enum MatchStyle {

@@ -662,7 +662,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 //
 //        // If we can't get the same table id then set to null so that changes to any table can be listened to.
-//        if (!EqualsUtil.isEquals(tableId, newTableId)) {
+//        if (!Objects.equals(tableId, newTableId)) {
 //            newTableId = null;
 //        }
 //

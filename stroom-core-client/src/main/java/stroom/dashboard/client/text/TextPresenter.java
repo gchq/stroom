@@ -47,7 +47,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.Version;
 
@@ -65,6 +64,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class TextPresenter
@@ -306,7 +306,7 @@ public class TextPresenter
                         currentTablePresenter = (TablePresenter) component;
                         update(currentTablePresenter);
                     }
-                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
+                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
                     if (component instanceof TablePresenter) {
                         currentTablePresenter = (TablePresenter) component;
                         update(currentTablePresenter);
@@ -676,7 +676,7 @@ public class TextPresenter
         String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
-        if (!EqualsUtil.isEquals(tableId, newTableId)) {
+        if (!Objects.equals(tableId, newTableId)) {
             newTableId = null;
         }
 

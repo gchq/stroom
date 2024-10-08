@@ -29,7 +29,6 @@ import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
 import stroom.query.shared.QueryHelpType;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -45,6 +44,7 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
@@ -144,7 +144,7 @@ public class ColumnFunctionEditorPresenter
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final String expression = editorPresenter.getText();
-            if (EqualsUtil.isEquals(expression, column.getExpression())) {
+            if (Objects.equals(expression, column.getExpression())) {
                 e.hide();
             } else {
                 if (expression == null) {

@@ -228,7 +228,7 @@ public class QueryResultVisPresenter
 //    public void setComponents(final Components components) {
 //        super.setComponents(components);
 //        registerHandler(components.addComponentChangeHandler(event -> {
-//            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
+//            if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(),
 //                    event.getComponentId())) {
 //                updateTableId(event.getComponentId());
 //            }
@@ -328,7 +328,7 @@ public class QueryResultVisPresenter
         });
     }
 
-    void clear() {
+    public void clear() {
         currentData = EMPTY_DATA;
         currentError = null;
         update();
