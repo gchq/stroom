@@ -23,6 +23,7 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -525,10 +526,20 @@ public class NullSafe {
     /**
      * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
      */
-    public static <L extends List<T>, T> List<T> unmodifialbeList(final L list) {
+    public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
         return list != null
                 ? Collections.unmodifiableList(list)
                 : Collections.emptyList();
+    }
+
+    /**
+     * Returns a new {@link ArrayList}. If list is not null, the new {@link ArrayList} will
+     * contain the contents of list, else it will be empty.
+     */
+    public static <L extends List<T>, T> List<T> mutableList(final L list) {
+        return list != null
+                ? new ArrayList<>(list)
+                : new ArrayList<>();
     }
 
     /**
