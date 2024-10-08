@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.text;
 
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
@@ -114,7 +115,9 @@ public class BasicTextSettingsPresenter
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
+        final List<Component> list = getComponents().getSortedComponentsByType(
+                TablePresenter.TYPE.getId(),
+                EmbeddedQueryPresenter.TYPE.getId());
         setTableList(list);
 
         TextComponentSettings settings = (TextComponentSettings) componentConfig.getSettings();

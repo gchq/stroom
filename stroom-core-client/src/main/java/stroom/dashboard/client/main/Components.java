@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.unknown.UnknownComponentPresenter;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.docref.HasDisplayValue;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
@@ -34,6 +35,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -130,14 +132,16 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         return idMap.get(id);
     }
 
-    public List<Component> getSortedComponentsByType(final String type) {
-        List<Component> list = typeMap.get(type);
-        if (list != null) {
-            list = new ArrayList<>(list);
-            list.sort((o1, o2) -> o1.getDisplayValue().compareTo(o2.getDisplayValue()));
-            return list;
+    public List<Component> getSortedComponentsByType(final String... type) {
+        final List<Component> list = new ArrayList<>();
+        for (final String t : type) {
+            final List<Component> components = typeMap.get(t);
+            if (components != null) {
+                list.addAll(components);
+            }
         }
-        return new ArrayList<>(0);
+        list.sort(Comparator.comparing(HasDisplayValue::getDisplayValue));
+        return list;
     }
 
     public String validateOrGetLastComponentId(final String id, final String typeId) {

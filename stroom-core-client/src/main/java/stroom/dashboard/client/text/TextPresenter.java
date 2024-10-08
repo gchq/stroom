@@ -22,11 +22,11 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.table.HasSelectedRows;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
@@ -90,7 +90,7 @@ public class TextPresenter
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
-    private TablePresenter currentTablePresenter;
+    private HasSelectedRows currentTablePresenter;
 
     private EditorPresenter rawPresenter;
     private HtmlPresenter htmlPresenter;
@@ -302,13 +302,13 @@ public class TextPresenter
             if (getTextSettings() != null) {
                 final Component component = event.getComponent();
                 if (getTextSettings().getTableId() == null) {
-                    if (component instanceof TablePresenter) {
-                        currentTablePresenter = (TablePresenter) component;
+                    if (component instanceof HasSelectedRows) {
+                        currentTablePresenter = (HasSelectedRows) component;
                         update(currentTablePresenter);
                     }
                 } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
-                    if (component instanceof TablePresenter) {
-                        currentTablePresenter = (TablePresenter) component;
+                    if (component instanceof HasSelectedRows) {
+                        currentTablePresenter = (HasSelectedRows) component;
                         update(currentTablePresenter);
                     }
                 }
@@ -316,7 +316,7 @@ public class TextPresenter
         }));
     }
 
-    private void update(final TablePresenter tablePresenter) {
+    private void update(final HasSelectedRows hasSelectedRows) {
         boolean updating = false;
         String message = "";
 
@@ -332,16 +332,16 @@ public class TextPresenter
             currentRecordIndex = null;
             currentHighlightStrings = null;
 
-            if (tablePresenter != null) {
-                final List<TableRow> selection = tablePresenter.getSelectedRows();
+            if (hasSelectedRows != null) {
+                final List<TableRow> selection = hasSelectedRows.getSelectedRows();
                 if (selection != null && selection.size() == 1) {
-                    final Column streamIdColumn = chooseBestCol(tablePresenter, getTextSettings().getStreamIdColumn());
-                    final Column partNoColumn = chooseBestCol(tablePresenter, getTextSettings().getPartNoColumn());
-                    final Column recordNoColumn = chooseBestCol(tablePresenter, getTextSettings().getRecordNoColumn());
-                    final Column lineFromColumn = chooseBestCol(tablePresenter, getTextSettings().getLineFromColumn());
-                    final Column colFromColumn = chooseBestCol(tablePresenter, getTextSettings().getColFromColumn());
-                    final Column lineToColumn = chooseBestCol(tablePresenter, getTextSettings().getLineToColumn());
-                    final Column colToColumn = chooseBestCol(tablePresenter, getTextSettings().getColToColumn());
+                    final Column streamIdColumn = chooseBestCol(hasSelectedRows, getTextSettings().getStreamIdColumn());
+                    final Column partNoColumn = chooseBestCol(hasSelectedRows, getTextSettings().getPartNoColumn());
+                    final Column recordNoColumn = chooseBestCol(hasSelectedRows, getTextSettings().getRecordNoColumn());
+                    final Column lineFromColumn = chooseBestCol(hasSelectedRows, getTextSettings().getLineFromColumn());
+                    final Column colFromColumn = chooseBestCol(hasSelectedRows, getTextSettings().getColFromColumn());
+                    final Column lineToColumn = chooseBestCol(hasSelectedRows, getTextSettings().getLineToColumn());
+                    final Column colToColumn = chooseBestCol(hasSelectedRows, getTextSettings().getColToColumn());
 
                     // Just use the first row.
                     final TableRow selected = selection.get(0);
@@ -412,7 +412,7 @@ public class TextPresenter
                                 .withHighlight(highlight)
                                 .build();
 
-                        currentHighlightStrings = tablePresenter.getHighlights();
+                        currentHighlightStrings = hasSelectedRows.getHighlights();
 
 //                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
 
@@ -471,10 +471,10 @@ public class TextPresenter
         }
     }
 
-    private Column chooseBestCol(final TablePresenter tablePresenter, final Column col) {
+    private Column chooseBestCol(final HasSelectedRows hasSelectedRows, final Column col) {
         if (col != null) {
-            final TableComponentSettings tableComponentSettings = tablePresenter.getTableSettings();
-            final List<Column> columns = tableComponentSettings.getColumns();
+
+            final List<Column> columns = hasSelectedRows.getColumns();
             // Try and choose by id.
             for (final Column column : columns) {
                 if (column.getId() != null && column.getId().equals(col.getId())) {

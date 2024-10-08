@@ -118,7 +118,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasSelection {
+        implements HasDirtyHandlers, ResultComponent, HasSelection, HasSelectedRows {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -1024,6 +1024,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         setDataInternal(null);
     }
 
+    @Override
+    public List<Column> getColumns() {
+        return getTableSettings().getColumns();
+    }
+
+    @Override
     public List<TableRow> getSelectedRows() {
         return selectionModel.getSelectedItems();
     }
@@ -1038,6 +1044,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return TableComponentSettings.builder().maxResults(arr).build();
     }
 
+    @Override
     public Set<String> getHighlights() {
         if (currentSearchModel != null
                 && currentSearchModel.getCurrentResponse() != null

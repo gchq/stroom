@@ -68,6 +68,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private boolean searching;
     private boolean polling;
     private SourceType sourceType = SourceType.QUERY_UI;
+    private Set<String> currentHighlights;
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
@@ -132,6 +133,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         // Stop polling.
         polling = false;
         currentSearch = null;
+        currentHighlights = null;
     }
 
     /**
@@ -223,6 +225,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                         Result result = null;
                         try {
                             if (response != null && response.getResults() != null) {
+                                currentHighlights = response.getHighlights();
                                 for (final Result componentResult : response.getResults()) {
                                     if (componentId.equals(componentResult.getComponentId())) {
                                         result = componentResult;
@@ -434,5 +437,9 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public String getCurrentNode() {
         return currentNode;
+    }
+
+    public Set<String> getCurrentHighlights() {
+        return currentHighlights;
     }
 }

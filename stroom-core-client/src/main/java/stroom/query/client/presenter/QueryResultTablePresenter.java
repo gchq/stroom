@@ -20,6 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.table.DownloadPresenter;
+import stroom.dashboard.client.table.HasSelectedRows;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -40,6 +41,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -68,7 +70,7 @@ import java.util.Set;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent {
+        implements ResultComponent, HasSelectedRows {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -601,6 +603,20 @@ public class QueryResultTablePresenter
         }
     }
 
+    @Override
+    public List<Column> getColumns() {
+        return GwtNullSafe.list(currentFields);
+    }
+
+    @Override
+    public List<TableRow> getSelectedRows() {
+        return GwtNullSafe.list(selectionModel.getSelectedItems());
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        return GwtNullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
+    }
 
     // --------------------------------------------------------------------------------
 

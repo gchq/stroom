@@ -25,6 +25,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
+import stroom.dashboard.client.table.HasSelectedRows;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -32,6 +33,7 @@ import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
@@ -47,6 +49,7 @@ import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
+import stroom.query.client.presenter.TableRow;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
@@ -60,6 +63,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -70,7 +74,7 @@ import java.util.function.Function;
 
 public class EmbeddedQueryPresenter
         extends AbstractComponentPresenter<EmbeddedQueryView>
-        implements Queryable, SearchStateListener, SearchErrorListener, HasSelection {
+        implements Queryable, SearchStateListener, SearchErrorListener, HasSelection, HasSelectedRows {
 
     public static final String TAB_TYPE = "embedded-query-component";
 
@@ -101,6 +105,7 @@ public class EmbeddedQueryPresenter
 
     private QueryResultTablePresenter currentTablePresenter;
     private QueryResultVisPresenter currentVisPresenter;
+    private HandlerRegistration tableHandlerRegistration;
 
     private List<String> currentErrors;
     private boolean initialised;
@@ -315,10 +320,33 @@ public class EmbeddedQueryPresenter
             currentTablePresenter = tablePresenterProvider.get();
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
+            tableHandlerRegistration =
+                    currentTablePresenter.getSelectionModel().addSelectionHandler(event ->
+                            getComponents().fireComponentChangeEvent(this));
         }
     }
 
+    @Override
+    public List<Column> getColumns() {
+        return GwtNullSafe.list(GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getColumns));
+    }
+
+    @Override
+    public List<TableRow> getSelectedRows() {
+        return GwtNullSafe.list(GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getSelectedRows));
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        return GwtNullSafe.set(GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getHighlights));
+    }
+
     private void destroyCurrentTable() {
+        if (tableHandlerRegistration != null) {
+            tableHandlerRegistration.removeHandler();
+            tableHandlerRegistration = null;
+        }
+
         if (currentTablePresenter != null) {
 //            currentTablePresenter.onRemove();
             currentTablePresenter = null;
