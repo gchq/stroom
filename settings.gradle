@@ -292,3 +292,4 @@ include 'stroom-view:stroom-view-impl'
 
 include 'stroom-ssl-test'
 include 'stroom-view:stroom-view-api'
+include 'stroom-index:stroom-index-api'
