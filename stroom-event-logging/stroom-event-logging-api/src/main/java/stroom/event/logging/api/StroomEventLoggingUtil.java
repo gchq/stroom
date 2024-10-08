@@ -197,13 +197,11 @@ public class StroomEventLoggingUtil {
 
     private static AdvancedQueryItem convertItem(final ExpressionItem expressionItem) {
         if (expressionItem != null && expressionItem.enabled()) {
-            if (expressionItem instanceof ExpressionTerm) {
-                final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+            if (expressionItem instanceof final ExpressionTerm expressionTerm) {
 
                 return convertTerm(expressionTerm);
 
-            } else if (expressionItem instanceof ExpressionOperator) {
-                final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
+            } else if (expressionItem instanceof final ExpressionOperator expressionOperator) {
                 final AdvancedQueryItem operator;
                 if (expressionOperator.op().equals(Op.AND)) {
                     operator = And.builder()
@@ -294,21 +292,13 @@ public class StroomEventLoggingUtil {
             }
         } else {
             final TermCondition termCondition = convertCondition(expressionTerm.getCondition());
-            final String value;
+            final String value = switch (expressionTerm.getCondition()) {
+                case IN_DICTIONARY -> "dictionary: " + expressionTerm.getDocRef();
+                case IN_FOLDER -> "folder: " + expressionTerm.getDocRef();
+                case IS_DOC_REF -> "docRef: " + expressionTerm.getDocRef();
+                default -> expressionTerm.getValue();
+            };
 
-            switch (expressionTerm.getCondition()) {
-                case IN_DICTIONARY:
-                    value = "dictionary: " + expressionTerm.getDocRef();
-                    break;
-                case IN_FOLDER:
-                    value = "folder: " + expressionTerm.getDocRef();
-                    break;
-                case IS_DOC_REF:
-                    value = "docRef: " + expressionTerm.getDocRef();
-                    break;
-                default:
-                    value = expressionTerm.getValue();
-            }
             result = Term.builder()
                     .withName(expressionTerm.getField())
                     .withCondition(termCondition)
@@ -321,38 +311,19 @@ public class StroomEventLoggingUtil {
 
 
     private static TermCondition convertCondition(final Condition condition) {
-        final TermCondition termCondition;
-        switch (condition) {
-            case CONTAINS:
-                termCondition = TermCondition.CONTAINS;
-                break;
-            case EQUALS:
-            case IN_DICTIONARY:
-            case IN_FOLDER:
-            case IS_DOC_REF:
-                termCondition = TermCondition.EQUALS;
-                break;
-            case NOT_EQUALS:
-                termCondition = TermCondition.NOT_EQUALS;
-                break;
-            case GREATER_THAN:
-                termCondition = TermCondition.GREATER_THAN;
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                termCondition = TermCondition.GREATER_THAN_EQUAL_TO;
-                break;
-            case LESS_THAN:
-                termCondition = TermCondition.LESS_THAN;
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                termCondition = TermCondition.LESS_THAN_EQUAL_TO;
-                break;
-            case MATCHES_REGEX:
-                termCondition = TermCondition.REGEX;
-                break;
-            default:
-                throw new RuntimeException("Can't convert condition " + condition);
-        }
-        return termCondition;
+        return switch (condition) {
+            case CONTAINS -> TermCondition.CONTAINS;
+            case EQUALS,
+                    IN_DICTIONARY,
+                    IN_FOLDER,
+                    IS_DOC_REF -> TermCondition.EQUALS;
+            case NOT_EQUALS -> TermCondition.NOT_EQUALS;
+            case GREATER_THAN -> TermCondition.GREATER_THAN;
+            case GREATER_THAN_OR_EQUAL_TO -> TermCondition.GREATER_THAN_EQUAL_TO;
+            case LESS_THAN -> TermCondition.LESS_THAN;
+            case LESS_THAN_OR_EQUAL_TO -> TermCondition.LESS_THAN_EQUAL_TO;
+            case MATCHES_REGEX -> TermCondition.REGEX;
+            default -> throw new RuntimeException("Can't convert condition " + condition);
+        };
     }
 }
