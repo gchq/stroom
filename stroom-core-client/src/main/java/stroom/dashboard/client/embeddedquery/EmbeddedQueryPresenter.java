@@ -17,7 +17,6 @@
 package stroom.dashboard.client.embeddedquery;
 
 import stroom.core.client.event.WindowCloseEvent;
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -25,15 +24,16 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
-import stroom.dashboard.client.table.HasSelectedRows;
+import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
@@ -49,7 +49,6 @@ import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.query.client.presenter.TableRow;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
@@ -66,15 +65,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 public class EmbeddedQueryPresenter
         extends AbstractComponentPresenter<EmbeddedQueryView>
-        implements Queryable, SearchStateListener, SearchErrorListener, HasSelection, HasSelectedRows {
+        implements Queryable, SearchStateListener, SearchErrorListener, HasComponentSelection {
 
     public static final String TAB_TYPE = "embedded-query-component";
 
@@ -326,21 +324,6 @@ public class EmbeddedQueryPresenter
         }
     }
 
-    @Override
-    public List<Column> getColumns() {
-        return GwtNullSafe.list(GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getColumns));
-    }
-
-    @Override
-    public List<TableRow> getSelectedRows() {
-        return GwtNullSafe.list(GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getSelectedRows));
-    }
-
-    @Override
-    public Set<String> getHighlights() {
-        return GwtNullSafe.set(GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getHighlights));
-    }
-
     private void destroyCurrentTable() {
         if (tableHandlerRegistration != null) {
             tableHandlerRegistration.removeHandler();
@@ -355,9 +338,15 @@ public class EmbeddedQueryPresenter
 
     private void createNewVis() {
         if (currentVisPresenter == null) {
+            final VisSelectionModel visSelectionModel = new VisSelectionModel();
+            visSelectionModel.addSelectionHandler(event -> {
+                getComponents().fireComponentChangeEvent(EmbeddedQueryPresenter.this);
+            });
+
             currentVisPresenter = visPresenterProvider.get();
             currentVisPresenter.setQueryModel(queryModel);
             currentVisPresenter.setTaskMonitorFactory(this);
+            currentVisPresenter.setVisSelectionModel(visSelectionModel);
         }
     }
 
@@ -621,17 +610,33 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public List<QueryField> getFields() {
-        final List<QueryField> abstractFields = new ArrayList<>();
-//        // TODO : @66 TEMPORARY FIELDS
-//        abstractFields.add(QueryField.createText("name", true));
-//        abstractFields.add(QueryField.createText("value", true));
-        return abstractFields;
+    public List<ColumnRef> getColumns() {
+        if (currentVisPresenter != null) {
+            return currentVisPresenter.getColumns();
+        } else if (currentTablePresenter != null) {
+            return currentTablePresenter.getColumns();
+        }
+        return Collections.emptyList();
     }
 
     @Override
-    public List<Map<String, String>> getSelection() {
-        return null;//currentSelection;
+    public List<ComponentSelection> getSelection() {
+        if (currentVisPresenter != null) {
+            return currentVisPresenter.getSelection();
+        } else if (currentTablePresenter != null) {
+            return currentTablePresenter.getSelection();
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        if (currentVisPresenter != null) {
+            return currentVisPresenter.getHighlights();
+        } else if (currentTablePresenter != null) {
+            return currentTablePresenter.getHighlights();
+        }
+        return Collections.emptySet();
     }
 
     @Override

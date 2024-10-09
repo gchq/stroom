@@ -3896,8 +3896,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -3916,8 +3916,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -9448,8 +9448,6 @@ components:
     DownloadQueryResultsRequest:
       type: object
       properties:
-        componentId:
-          type: string
         fileType:
           type: string
           enum:
@@ -9653,6 +9651,24 @@ components:
           type: string
         ok:
           type: boolean
+    EmbeddedQueryComponentSettings:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/ComponentSettings'
+      - type: object
+        properties:
+          automate:
+            $ref: '#/components/schemas/Automate'
+          lastQueryKey:
+            $ref: '#/components/schemas/QueryKey'
+          lastQueryNode:
+            type: string
+          queryRef:
+            $ref: '#/components/schemas/DocRef'
+          selectionHandlers:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentSelectionHandler'
     EntityEvent:
       type: object
       properties:
@@ -14911,6 +14927,13 @@ components:
         typeCount:
           type: integer
           format: int64
+    SelectionSummaryRequest:
+      type: object
+      properties:
+        findMetaCriteria:
+          $ref: '#/components/schemas/FindMetaCriteria'
+        requiredPermission:
+          type: string
     SelectionVolumeUseStatus:
       type: object
       properties:

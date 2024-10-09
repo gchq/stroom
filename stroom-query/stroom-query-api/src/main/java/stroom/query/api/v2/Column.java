@@ -158,16 +158,6 @@ public final class Column implements HasDisplayValue {
         return name;
     }
 
-    public static boolean equalsId(final Column lhs, final Column rhs) {
-        if (lhs == null && rhs == null) {
-            return true;
-        }
-        if (lhs != null && rhs != null) {
-            return Objects.equals(lhs.id, rhs.id);
-        }
-        return false;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

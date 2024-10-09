@@ -5,6 +5,7 @@ import stroom.expression.api.UserTimeZone;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.util.shared.time.TimeUnit;
 
@@ -241,13 +242,13 @@ public final class MappingUtil {
 
         return new stroom.dashboard.shared.TextComponentSettings(
                 value.getTableId(),
-                map(value.getStreamIdField()),
-                map(value.getPartNoField()),
-                map(value.getRecordNoField()),
-                map(value.getLineFromField()),
-                map(value.getColFromField()),
-                map(value.getLineToField()),
-                map(value.getColToField()),
+                mapColumnRef(value.getStreamIdField()),
+                mapColumnRef(value.getPartNoField()),
+                mapColumnRef(value.getRecordNoField()),
+                mapColumnRef(value.getLineFromField()),
+                mapColumnRef(value.getColFromField()),
+                mapColumnRef(value.getLineToField()),
+                mapColumnRef(value.getColToField()),
                 map(value.getPipeline()),
                 value.isShowAsHtml(),
                 value.isShowStepping(),
@@ -336,6 +337,16 @@ public final class MappingUtil {
                 value.getWidth(),
                 value.isVisible(),
                 value.isSpecial());
+    }
+
+    public static ColumnRef mapColumnRef(stroom.legacy.model_6_1.Field value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new ColumnRef(
+                value.getId(),
+                value.getName());
     }
 
     public static stroom.query.api.v2.Sort map(stroom.legacy.model_6_1.Sort value) {

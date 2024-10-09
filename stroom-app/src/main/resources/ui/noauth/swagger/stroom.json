@@ -5672,11 +5672,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindMetaCriteria"
+                "$ref" : "#/components/schemas/SelectionSummaryRequest"
               }
             }
           },
-          "description" : "criteria",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -5702,11 +5702,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindMetaCriteria"
+                "$ref" : "#/components/schemas/SelectionSummaryRequest"
               }
             }
           },
-          "description" : "criteria",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -13392,9 +13392,6 @@
       "DownloadQueryResultsRequest" : {
         "type" : "object",
         "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV" ]
@@ -13657,6 +13654,34 @@
             "type" : "boolean"
           }
         }
+      },
+      "EmbeddedQueryComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "automate" : {
+              "$ref" : "#/components/schemas/Automate"
+            },
+            "lastQueryKey" : {
+              "$ref" : "#/components/schemas/QueryKey"
+            },
+            "lastQueryNode" : {
+              "type" : "string"
+            },
+            "queryRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "selectionHandlers" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ComponentSelectionHandler"
+              }
+            }
+          }
+        } ]
       },
       "EntityEvent" : {
         "type" : "object",
@@ -19393,6 +19418,17 @@
           "typeCount" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "SelectionSummaryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "findMetaCriteria" : {
+            "$ref" : "#/components/schemas/FindMetaCriteria"
+          },
+          "requiredPermission" : {
+            "type" : "string"
           }
         }
       },

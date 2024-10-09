@@ -20,13 +20,15 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.table.DownloadPresenter;
-import stroom.dashboard.client.table.HasSelectedRows;
+import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.ComponentSelection;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -67,10 +69,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasSelectedRows {
+        implements ResultComponent, HasComponentSelection {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -193,9 +196,7 @@ public class QueryResultTablePresenter
 //            }
 //        }));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
-            setPause(!pause, true);
-        }));
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
@@ -351,7 +352,7 @@ public class QueryResultTablePresenter
         }
     }
 
-    private List<Column> currentFields;
+    private List<Column> currentColumns;
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
 
     private void setDataInternal(final Result componentResult) {
@@ -364,7 +365,7 @@ public class QueryResultTablePresenter
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                if (!Objects.equals(currentFields, tableResult.getColumns())) {
+                if (!Objects.equals(currentColumns, tableResult.getColumns())) {
 //                    final Set<String> newIdSet = tableResult
 //                            .getFields()
 //                            .stream()
@@ -380,7 +381,7 @@ public class QueryResultTablePresenter
 //                    for (final Field field : tableResult.getFields()) {
 //                        addColumn(field);
 //                    }
-                    currentFields = tableResult.getColumns();
+                    currentColumns = tableResult.getColumns();
                 }
 
                 final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
@@ -604,13 +605,41 @@ public class QueryResultTablePresenter
     }
 
     @Override
-    public List<Column> getColumns() {
-        return GwtNullSafe.list(currentFields);
+    public List<ColumnRef> getColumns() {
+        return GwtNullSafe.list(currentColumns)
+                .stream()
+                .map(col -> new ColumnRef(col.getId(), col.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<TableRow> getSelectedRows() {
-        return GwtNullSafe.list(selectionModel.getSelectedItems());
+    public List<ComponentSelection> getSelection() {
+        return GwtNullSafe.list(selectionModel.getSelectedItems())
+                .stream()
+                .map(tableRow -> {
+                    final Map<String, String> values = new HashMap<>();
+                    final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+
+                    for (final ColumnRef column : columns) {
+                        if (column.getId() != null) {
+                            final String value = tableRow.getText(column.getId());
+                            if (value != null) {
+                                values.computeIfAbsent(column.getId(), k -> value);
+                            }
+                        }
+                    }
+                    for (final ColumnRef column : columns) {
+                        if (column.getName() != null) {
+                            final String value = tableRow.getText(column.getName());
+                            if (value != null) {
+                                values.computeIfAbsent(column.getName(), k -> value);
+                            }
+                        }
+                    }
+
+                    return new ComponentSelection(values);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override

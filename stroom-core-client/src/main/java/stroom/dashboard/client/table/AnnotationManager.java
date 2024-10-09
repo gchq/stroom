@@ -110,11 +110,11 @@ public class AnnotationManager {
         final List<String> streamIds = getValues(
                 tableComponentSettings,
                 selectedItems,
-                IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID));
+                IndexConstants.RESERVED_STREAM_ID_FIELD_NAME);
         final List<String> eventIds = getValues(
                 tableComponentSettings,
                 selectedItems,
-                IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID));
+                IndexConstants.RESERVED_EVENT_ID_FIELD_NAME);
         final List<String> eventIdLists = getValues(tableComponentSettings, selectedItems, "EventIdList");
 
         for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {

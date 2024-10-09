@@ -17,12 +17,10 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
@@ -129,16 +127,6 @@ public class SelectionHandlerPresenter
 //            }
 //            editExpressionPresenter.init(null, null, allFields);
 //        }
-    }
-
-    private void addFieldNames(final Component component, final List<QueryField> allFields) {
-        if (component instanceof HasSelection) {
-            final HasSelection hasSelection = (HasSelection) component;
-            final List<QueryField> fields = hasSelection.getFields();
-            if (fields != null && fields.size() > 0) {
-                allFields.addAll(fields);
-            }
-        }
     }
 
     @Override

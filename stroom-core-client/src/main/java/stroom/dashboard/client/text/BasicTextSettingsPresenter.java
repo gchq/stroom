@@ -20,13 +20,14 @@ import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -46,7 +47,7 @@ public class BasicTextSettingsPresenter
     private final DocSelectionBoxPresenter pipelinePresenter;
     private List<Component> tableList;
     private boolean ignoreTableChange;
-    private final List<Column> allColumns = new ArrayList<>();
+    private final List<ColumnRef> allColumns = new ArrayList<>();
 
     @Inject
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
@@ -93,10 +94,10 @@ public class BasicTextSettingsPresenter
         }
     }
 
-    private void addColumnNames(final Component component, final List<Column> allColumns) {
-        if (component instanceof TablePresenter) {
-            final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+    private void addColumnNames(final Component component, final List<ColumnRef> allColumns) {
+        if (component instanceof HasComponentSelection) {
+            final HasComponentSelection hasSelectedRows = (HasComponentSelection) component;
+            final List<ColumnRef> columns = hasSelectedRows.getColumns();
             if (columns != null && columns.size() > 0) {
                 allColumns.addAll(columns);
             }
@@ -150,12 +151,12 @@ public class BasicTextSettingsPresenter
         getView().setShowStepping(settings.isShowStepping());
     }
 
-    private Column getClosestColumn(final Column column) {
+    private ColumnRef getClosestColumn(final ColumnRef column) {
         if (column == null) {
             return null;
         }
-        Column bestMatch = null;
-        for (final Column col : allColumns) {
+        ColumnRef bestMatch = null;
+        for (final ColumnRef col : allColumns) {
             if (col.getId().equals(column.getId())) {
                 bestMatch = col;
                 break;
@@ -219,13 +220,13 @@ public class BasicTextSettingsPresenter
         final TextComponentSettings newSettings = writeSettings(oldSettings);
 
         final boolean equal = Objects.equals(oldSettings.getTableId(), newSettings.getTableId()) &&
-                Column.equalsId(oldSettings.getStreamIdColumn(), newSettings.getStreamIdColumn()) &&
-                Column.equalsId(oldSettings.getPartNoColumn(), newSettings.getPartNoColumn()) &&
-                Column.equalsId(oldSettings.getRecordNoColumn(), newSettings.getRecordNoColumn()) &&
-                Column.equalsId(oldSettings.getLineFromColumn(), newSettings.getLineFromColumn()) &&
-                Column.equalsId(oldSettings.getColFromColumn(), newSettings.getColFromColumn()) &&
-                Column.equalsId(oldSettings.getLineToColumn(), newSettings.getLineToColumn()) &&
-                Column.equalsId(oldSettings.getColToColumn(), newSettings.getColToColumn()) &&
+                Objects.equals(oldSettings.getStreamIdColumn(), newSettings.getStreamIdColumn()) &&
+                Objects.equals(oldSettings.getPartNoColumn(), newSettings.getPartNoColumn()) &&
+                Objects.equals(oldSettings.getRecordNoColumn(), newSettings.getRecordNoColumn()) &&
+                Objects.equals(oldSettings.getLineFromColumn(), newSettings.getLineFromColumn()) &&
+                Objects.equals(oldSettings.getColFromColumn(), newSettings.getColFromColumn()) &&
+                Objects.equals(oldSettings.getLineToColumn(), newSettings.getLineToColumn()) &&
+                Objects.equals(oldSettings.getColToColumn(), newSettings.getColToColumn()) &&
                 Objects.equals(oldSettings.getPipeline(), newSettings.getPipeline()) &&
                 Objects.equals(oldSettings.isShowAsHtml(), newSettings.isShowAsHtml()) &&
                 Objects.equals(oldSettings.isShowStepping(), newSettings.isShowStepping());
@@ -243,35 +244,35 @@ public class BasicTextSettingsPresenter
 
         void setTable(Component table);
 
-        void setColumns(List<Column> column);
+        void setColumns(List<ColumnRef> column);
 
-        Column getStreamIdColumn();
+        ColumnRef getStreamIdColumn();
 
-        void setStreamIdColumn(Column column);
+        void setStreamIdColumn(ColumnRef column);
 
-        Column getPartNoColumn();
+        ColumnRef getPartNoColumn();
 
-        void setPartNoColumn(Column column);
+        void setPartNoColumn(ColumnRef column);
 
-        Column getRecordNoColumn();
+        ColumnRef getRecordNoColumn();
 
-        void setRecordNoColumn(Column column);
+        void setRecordNoColumn(ColumnRef column);
 
-        Column getLineFromColumn();
+        ColumnRef getLineFromColumn();
 
-        void setLineFromColumn(Column column);
+        void setLineFromColumn(ColumnRef column);
 
-        Column getColFromColumn();
+        ColumnRef getColFromColumn();
 
-        void setColFromColumn(Column column);
+        void setColFromColumn(ColumnRef column);
 
-        Column getLineToColumn();
+        ColumnRef getLineToColumn();
 
-        void setLineToColumn(Column column);
+        void setLineToColumn(ColumnRef column);
 
-        Column getColToColumn();
+        ColumnRef getColToColumn();
 
-        void setColToColumn(Column column);
+        void setColToColumn(ColumnRef column);
 
         void setPipelineView(View view);
 

@@ -22,7 +22,8 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.table.HasSelectedRows;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -40,8 +41,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.query.api.v2.Column;
-import stroom.query.client.presenter.TableRow;
+import stroom.query.api.v2.ColumnRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.client.TaskMonitorFactory;
@@ -90,7 +90,7 @@ public class TextPresenter
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
-    private HasSelectedRows currentTablePresenter;
+    private HasComponentSelection currentTablePresenter;
 
     private EditorPresenter rawPresenter;
     private HtmlPresenter htmlPresenter;
@@ -302,13 +302,13 @@ public class TextPresenter
             if (getTextSettings() != null) {
                 final Component component = event.getComponent();
                 if (getTextSettings().getTableId() == null) {
-                    if (component instanceof HasSelectedRows) {
-                        currentTablePresenter = (HasSelectedRows) component;
+                    if (component instanceof HasComponentSelection) {
+                        currentTablePresenter = (HasComponentSelection) component;
                         update(currentTablePresenter);
                     }
                 } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
-                    if (component instanceof HasSelectedRows) {
-                        currentTablePresenter = (HasSelectedRows) component;
+                    if (component instanceof HasComponentSelection) {
+                        currentTablePresenter = (HasComponentSelection) component;
                         update(currentTablePresenter);
                     }
                 }
@@ -316,7 +316,7 @@ public class TextPresenter
         }));
     }
 
-    private void update(final HasSelectedRows hasSelectedRows) {
+    private void update(final HasComponentSelection hasSelectedRows) {
         boolean updating = false;
         String message = "";
 
@@ -333,25 +333,29 @@ public class TextPresenter
             currentHighlightStrings = null;
 
             if (hasSelectedRows != null) {
-                final List<TableRow> selection = hasSelectedRows.getSelectedRows();
+                final List<ComponentSelection> selection = hasSelectedRows.getSelection();
                 if (selection != null && selection.size() == 1) {
-                    final Column streamIdColumn = chooseBestCol(hasSelectedRows, getTextSettings().getStreamIdColumn());
-                    final Column partNoColumn = chooseBestCol(hasSelectedRows, getTextSettings().getPartNoColumn());
-                    final Column recordNoColumn = chooseBestCol(hasSelectedRows, getTextSettings().getRecordNoColumn());
-                    final Column lineFromColumn = chooseBestCol(hasSelectedRows, getTextSettings().getLineFromColumn());
-                    final Column colFromColumn = chooseBestCol(hasSelectedRows, getTextSettings().getColFromColumn());
-                    final Column lineToColumn = chooseBestCol(hasSelectedRows, getTextSettings().getLineToColumn());
-                    final Column colToColumn = chooseBestCol(hasSelectedRows, getTextSettings().getColToColumn());
-
                     // Just use the first row.
-                    final TableRow selected = selection.get(0);
-                    currentStreamId = getLong(streamIdColumn, selected);
-                    currentPartIndex = convertToIndex(getLong(partNoColumn, selected));
-                    currentRecordIndex = convertToIndex(getLong(recordNoColumn, selected));
-                    final Long currentLineFrom = getLong(lineFromColumn, selected);
-                    final Long currentColFrom = getLong(colFromColumn, selected);
-                    final Long currentLineTo = getLong(lineToColumn, selected);
-                    final Long currentColTo = getLong(colToColumn, selected);
+                    final ComponentSelection selected = selection.get(0);
+                    currentStreamId = getLong(getTextSettings().getStreamIdColumn(), selected);
+                    if (currentStreamId == null) {
+                        currentStreamId = getLong(selected.get(IndexConstants.STREAM_ID));
+                        if (currentStreamId == null) {
+                            currentStreamId = getLong(selected.get(IndexConstants.RESERVED_STREAM_ID_FIELD_NAME));
+                        }
+                    }
+                    currentPartIndex = convertToIndex(getLong(getTextSettings().getPartNoColumn(), selected));
+                    currentRecordIndex = convertToIndex(getLong(getTextSettings().getRecordNoColumn(), selected));
+                    if (currentRecordIndex == null) {
+                        currentRecordIndex = getLong(selected.get(IndexConstants.EVENT_ID));
+                        if (currentRecordIndex == null) {
+                            currentRecordIndex = getLong(selected.get(IndexConstants.RESERVED_EVENT_ID_FIELD_NAME));
+                        }
+                    }
+                    final Long currentLineFrom = getLong(getTextSettings().getLineFromColumn(), selected);
+                    final Long currentColFrom = getLong(getTextSettings().getColFromColumn(), selected);
+                    final Long currentLineTo = getLong(getTextSettings().getLineToColumn(), selected);
+                    final Long currentColTo = getLong(getTextSettings().getColToColumn(), selected);
 
 //                    GWT.log("TextPresenter - selected table row = " + selected);
 //                    GWT.log("TextPresenter - " +
@@ -471,26 +475,6 @@ public class TextPresenter
         }
     }
 
-    private Column chooseBestCol(final HasSelectedRows hasSelectedRows, final Column col) {
-        if (col != null) {
-
-            final List<Column> columns = hasSelectedRows.getColumns();
-            // Try and choose by id.
-            for (final Column column : columns) {
-                if (column.getId() != null && column.getId().equals(col.getId())) {
-                    return column;
-                }
-            }
-            // Try and choose by name.
-            for (final Column column : columns) {
-                if (column.getName() != null && column.getName().equals(col.getName())) {
-                    return column;
-                }
-            }
-        }
-        return null;
-    }
-
     private long getStartLine(final TextRange highlight) {
         int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
@@ -552,9 +536,13 @@ public class TextPresenter
         return null;
     }
 
-    private Long getLong(final Column column, final TableRow row) {
+    private Long getLong(final ColumnRef column, final ComponentSelection row) {
         if (column != null && row != null) {
-            return getLong(row.getText(column.getId()));
+            String val = row.get(column.getId());
+            if (val == null) {
+                val = row.get(column.getName());
+            }
+            return getLong(val);
         }
         return null;
     }
@@ -646,20 +634,18 @@ public class TextPresenter
             // special field names have changed from EventId to __event_id__ so we need to deal
             // with those and replace them, also rebuild existing special fields just in case
             if (textComponentSettings.getStreamIdColumn() == null
-                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))
-                    || (old && textComponentSettings.getStreamIdColumn().isSpecial())) {
-                builder.streamIdField(TablePresenter.buildSpecialColumn(IndexConstants.STREAM_ID));
+                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))) {
+                builder.streamIdField(new ColumnRef(IndexConstants.STREAM_ID, IndexConstants.STREAM_ID));
             }
             if (textComponentSettings.getRecordNoColumn() == null
-                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))
-                    || (old && textComponentSettings.getRecordNoColumn().isSpecial())) {
-                builder.recordNoField(TablePresenter.buildSpecialColumn(IndexConstants.EVENT_ID));
+                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))) {
+                builder.recordNoField(new ColumnRef(IndexConstants.EVENT_ID, IndexConstants.EVENT_ID));
             }
 
         } else {
             builder = TextComponentSettings.builder();
-            builder.streamIdField(TablePresenter.buildSpecialColumn(IndexConstants.STREAM_ID));
-            builder.recordNoField(TablePresenter.buildSpecialColumn(IndexConstants.EVENT_ID));
+            builder.streamIdField(new ColumnRef(IndexConstants.STREAM_ID, IndexConstants.STREAM_ID));
+            builder.recordNoField(new ColumnRef(IndexConstants.EVENT_ID, IndexConstants.EVENT_ID));
         }
 
         builder.modelVersion(CURRENT_MODEL_VERSION.toString());

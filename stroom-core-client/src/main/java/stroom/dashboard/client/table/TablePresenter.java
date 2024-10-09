@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -57,6 +56,7 @@ import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
@@ -83,6 +83,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -116,9 +117,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasSelection, HasSelectedRows {
+        implements HasDirtyHandlers, ResultComponent, HasComponentSelection {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -820,10 +822,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public static Column buildSpecialColumn(final String indexFieldName) {
-        final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
+        final String reservedColumnName = IndexConstants.generateReservedColumnName(indexFieldName);
         return Column.builder()
-                .id(obfuscatedColumnName)
-                .name(obfuscatedColumnName)
+                .id(reservedColumnName)
+                .name(reservedColumnName)
                 .expression(ParamSubstituteUtil.makeParam(indexFieldName))
                 .visible(false)
                 .special(true)
@@ -885,15 +887,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
         if (getTableSettings().getColumns() != null) {
-            final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
-            final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
+            final String reservedStreamId = IndexConstants.RESERVED_STREAM_ID_FIELD_NAME;
+            final String reservedEventId = IndexConstants.RESERVED_EVENT_ID_FIELD_NAME;
 
             final List<Column> columns = new ArrayList<>();
             getTableSettings().getColumns().forEach(column -> {
                 Column col = column;
-                if (obfuscatedStreamId.equals(col.getName())) {
+                if (reservedStreamId.equals(col.getName())) {
                     col = buildSpecialColumn(IndexConstants.STREAM_ID);
-                } else if (obfuscatedEventId.equals(col.getName())) {
+                } else if (reservedEventId.equals(col.getName())) {
                     col = buildSpecialColumn(IndexConstants.EVENT_ID);
                 } else if (column.getId() == null) {
                     col = column.copy().id(columnsManager.createRandomColumnId(usedFieldIds)).build();
@@ -978,32 +980,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    @Override
-    public List<QueryField> getFields() {
-        final List<QueryField> abstractFields = new ArrayList<>();
-        final List<Column> columns = getTableSettings().getColumns();
-        if (columns != null && columns.size() > 0) {
-            for (final Column column : columns) {
-                abstractFields.add(QueryField.createText(column.getName(), true));
-            }
-        }
-        return abstractFields;
-    }
-
-    @Override
-    public List<Map<String, String>> getSelection() {
-        final List<Map<String, String>> list = new ArrayList<>();
-        final List<Column> columns = getTableSettings().getColumns();
-        for (final TableRow tableRow : getSelectedRows()) {
-            final Map<String, String> map = new HashMap<>();
-            for (final Column column : columns) {
-                map.put(column.getName(), tableRow.getText(column.getId()));
-            }
-            list.add(map);
-        }
-        return list;
-    }
-
     void refresh() {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
@@ -1025,13 +1001,41 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public List<Column> getColumns() {
-        return getTableSettings().getColumns();
+    public List<ColumnRef> getColumns() {
+        return GwtNullSafe.list(getTableSettings().getColumns())
+                .stream()
+                .map(col -> new ColumnRef(col.getId(), col.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<TableRow> getSelectedRows() {
-        return selectionModel.getSelectedItems();
+    public List<ComponentSelection> getSelection() {
+        return GwtNullSafe.list(selectionModel.getSelectedItems())
+                .stream()
+                .map(tableRow -> {
+                    final Map<String, String> values = new HashMap<>();
+                    final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+
+                    for (final ColumnRef column : columns) {
+                        if (column.getId() != null) {
+                            final String value = tableRow.getText(column.getId());
+                            if (value != null) {
+                                values.computeIfAbsent(column.getId(), k -> value);
+                            }
+                        }
+                    }
+                    for (final ColumnRef column : columns) {
+                        if (column.getName() != null) {
+                            final String value = tableRow.getText(column.getName());
+                            if (value != null) {
+                                values.computeIfAbsent(column.getName(), k -> value);
+                            }
+                        }
+                    }
+
+                    return new ComponentSelection(values);
+                })
+                .collect(Collectors.toList());
     }
 
     private TableComponentSettings createSettings() {
@@ -1077,9 +1081,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setTaskMonitorFactory(taskMonitorFactory);
         columnSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
-
-    // --------------------------------------------------------------------------------
-
 
     public interface TableView extends View {
 

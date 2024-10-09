@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -121,14 +122,14 @@ public class MessageSupport
             GWT.log("Received selection from vis: " + selection.toString());
 
             if (uiHandlers != null) {
-                final List<Map<String, String>> list = new ArrayList<>();
+                final List<ComponentSelection> list = new ArrayList<>();
                 final JSONArray array = selection.isArray();
                 if (array != null) {
                     for (int i = 0; i < array.size(); i++) {
-                        list.add(toMap(array.get(i).isObject()));
+                        list.add(new ComponentSelection(toMap(array.get(i).isObject())));
                     }
                 } else {
-                    list.add(toMap(selection.isObject()));
+                    list.add(new ComponentSelection(toMap(selection.isObject())));
                 }
                 uiHandlers.onSelection(list);
             }

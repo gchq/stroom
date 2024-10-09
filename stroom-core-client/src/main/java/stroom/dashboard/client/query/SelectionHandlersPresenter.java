@@ -18,10 +18,10 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -273,7 +273,7 @@ public class SelectionHandlersPresenter
         componentList = getComponents()
                 .getComponents()
                 .stream()
-                .filter(c -> c instanceof HasSelection)
+                .filter(c -> c instanceof HasComponentSelection)
                 .collect(Collectors.toList());
 
         listPresenter.getSelectionModel().clear();
