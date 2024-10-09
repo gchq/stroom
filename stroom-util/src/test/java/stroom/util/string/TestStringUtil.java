@@ -126,7 +126,7 @@ class TestStringUtil {
                         \sfoo\s
                         """, "foo")
                 .addCase("""
-                                                
+
                         \s \s""", "")
                 .build();
     }
