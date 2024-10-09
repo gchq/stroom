@@ -184,16 +184,10 @@
     "settings" : {
       "type" : "text",
       "streamIdField" : {
-        "name" : "__stream_id__",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
+        "name" : "__stream_id__"
       },
       "recordNoField" : {
-        "name" : "__event_id__",
-        "width" : 200,
-        "visible" : true,
-        "special" : false
+        "name" : "__event_id__"
       },
       "showAsHtml" : false,
       "showStepping" : true,
@@ -207,59 +201,31 @@
       "type" : "text",
       "streamIdField" : {
         "id" : "table-IIO1T|JF4LB",
-        "name" : "src-id",
-        "expression" : "${src-id}",
-        "width" : 50,
-        "visible" : true,
-        "special" : false
+        "name" : "src-id"
       },
       "partNoField" : {
         "id" : "table-IIO1T|KM4VR",
-        "name" : "src-partNo",
-        "expression" : "${src-partNo}",
-        "width" : 72,
-        "visible" : true,
-        "special" : false
+        "name" : "src-partNo"
       },
       "recordNoField" : {
         "id" : "table-IIO1T|DGJKJ",
-        "name" : "src-recordNo",
-        "expression" : "${src-recordNo}",
-        "width" : 89,
-        "visible" : true,
-        "special" : false
+        "name" : "src-recordNo"
       },
       "lineFromField" : {
         "id" : "table-IIO1T|4VERB",
-        "name" : "src-lineFrom",
-        "expression" : "${src-lineFrom}",
-        "width" : 81,
-        "visible" : true,
-        "special" : false
+        "name" : "src-lineFrom"
       },
       "colFromField" : {
         "id" : "table-IIO1T|2QMF7",
-        "name" : "src-colFrom",
-        "expression" : "${src-colFrom}",
-        "width" : 81,
-        "visible" : true,
-        "special" : false
+        "name" : "src-colFrom"
       },
       "lineToField" : {
         "id" : "table-IIO1T|WJNZI",
-        "name" : "src-lineTo",
-        "expression" : "${src-lineTo}",
-        "width" : 70,
-        "visible" : true,
-        "special" : false
+        "name" : "src-lineTo"
       },
       "colToField" : {
         "id" : "table-IIO1T|ATRU5",
-        "name" : "src-colTo",
-        "expression" : "${src-colTo}",
-        "width" : 79,
-        "visible" : true,
-        "special" : false
+        "name" : "src-colTo"
       },
       "showAsHtml" : false,
       "showStepping" : true,

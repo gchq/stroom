@@ -132,7 +132,6 @@ class stroom.query.api.v2.Column - public java.lang.String stroom.query.api.v2.C
 class stroom.query.api.v2.Column - public java.lang.String stroom.query.api.v2.Column.getId()
 class stroom.query.api.v2.Column - public java.lang.String stroom.query.api.v2.Column.getName()
 class stroom.query.api.v2.Column - public java.lang.String stroom.query.api.v2.Column.toString()
-class stroom.query.api.v2.Column - public static boolean stroom.query.api.v2.Column.equalsId(stroom.query.api.v2.Column,stroom.query.api.v2.Column)
 class stroom.query.api.v2.Column - public static stroom.query.api.v2.Column$Builder stroom.query.api.v2.Column.builder()
 class stroom.query.api.v2.Column - public stroom.query.api.v2.Column$Builder stroom.query.api.v2.Column.copy()
 class stroom.query.api.v2.Column - public stroom.query.api.v2.Filter stroom.query.api.v2.Column.getFilter()

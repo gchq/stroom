@@ -214,19 +214,11 @@
       "type" : "text",
       "streamIdField" : {
         "id" : "__stream_id__",
-        "name" : "__stream_id__",
-        "expression" : "${StreamId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
+        "name" : "__stream_id__"
       },
       "recordNoField" : {
         "id" : "__event_id__",
-        "name" : "__event_id__",
-        "expression" : "${EventId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
+        "name" : "__event_id__"
       },
       "showAsHtml" : false,
       "showStepping" : false,
