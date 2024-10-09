@@ -131,7 +131,8 @@ public class BasicEmbeddedQuerySettingsPresenter
             return true;
         }
 
-        final EmbeddedQueryComponentSettings oldSettings = (EmbeddedQueryComponentSettings) componentConfig.getSettings();
+        final EmbeddedQueryComponentSettings oldSettings =
+                (EmbeddedQueryComponentSettings) componentConfig.getSettings();
         final EmbeddedQueryComponentSettings newSettings = writeSettings(oldSettings);
 
         final boolean equal = Objects.equals(oldSettings.getQueryRef(), newSettings.getQueryRef()) &&

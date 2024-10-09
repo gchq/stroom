@@ -12204,6 +12204,17 @@
         },
         "required" : [ "expression" ]
       },
+      "ColumnRef" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
       "CompletionItem" : {
         "type" : "object",
         "discriminator" : {
@@ -20852,28 +20863,28 @@
           "type" : "object",
           "properties" : {
             "colFromField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "colToField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "lineFromField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "lineToField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "modelVersion" : {
               "type" : "string"
             },
             "partNoField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "pipeline" : {
               "$ref" : "#/components/schemas/DocRef"
             },
             "recordNoField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "showAsHtml" : {
               "type" : "boolean"
@@ -20882,7 +20893,7 @@
               "type" : "boolean"
             },
             "streamIdField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "tableId" : {
               "type" : "string"

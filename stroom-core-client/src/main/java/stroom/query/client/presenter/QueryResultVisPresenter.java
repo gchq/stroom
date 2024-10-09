@@ -16,9 +16,8 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisFrame;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.data.pager.client.RefreshButton;
