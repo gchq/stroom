@@ -16,6 +16,7 @@
 
 package stroom.util.string;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
@@ -69,6 +70,18 @@ public class StringUtil {
             }
 
             return stream;
+        }
+    }
+
+    /**
+     * Trims all lines and removes any blank lines after trimming
+     */
+    public static String trimLines(final String text) {
+        if (NullSafe.isEmptyString(text)) {
+            return text;
+        } else {
+            return splitToLines(text, true)
+                    .collect(Collectors.joining("\n"));
         }
     }
 

@@ -145,7 +145,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
         dataGrid.addResizableColumn(
                 nodeNameColumn,
                 DataGridUtil.headingBuilder("Source Dictionary")
-                        .withToolTip("The first Dictionary that contains the word.")
+                        .withToolTip("The dictionary that contains the word.")
                         .build(),
                 300);
 

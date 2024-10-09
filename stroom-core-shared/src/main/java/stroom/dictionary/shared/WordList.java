@@ -160,12 +160,9 @@ public class WordList {
 
     public static class Builder {
 
-        private final List<String> wordList = new ArrayList<>();
-        // Needed if we are not de-duping. Essentially the primary source
-        private final List<String> sourceList = new ArrayList<>();
+        private final List<SourcedWord> wordList = new ArrayList<>();
         private final Set<String> wordSet = new HashSet<>();
         private final Map<String, DocRef> sourceUuidToDocRefMap = new HashMap<>();
-        private final Map<String, String> wordToPrimarySourceUuidMap = new HashMap<>();
         private final Map<String, List<String>> wordToSourceUuidsMap = new HashMap<>();
         private final boolean deDup;
 
@@ -179,9 +176,6 @@ public class WordList {
                 final String sourceUuid = Objects.requireNonNull(
                         source,
                         "Source DocRef required for word").getUuid();
-//                final Word wordObj = new Word(
-//                        word, Objects.requireNonNull(source, "Source DocRef required for word").getUuid(),
-//                        secondarySourceUuids);
                 boolean doAdd = true;
                 // Assumes that words are added in precedence order, i.e. most important source first
                 if (deDup) {
@@ -190,18 +184,16 @@ public class WordList {
                     }
                 }
                 if (doAdd) {
-                    wordList.add(word);
-                    sourceList.add(sourceUuid);
+                    wordList.add(new SourcedWord(word, sourceUuid));
+//                    sourceList.add(sourceUuid);
                     wordSet.add(word);
                 }
 
-                if (deDup) {
-                    // If not de-duping, then each word only has one source so we don't need this list
-                    final List<String> sourceUuids = wordToSourceUuidsMap.computeIfAbsent(
-                            word, k -> new ArrayList<>());
-                    if (!sourceUuids.contains(sourceUuid)) {
-                        sourceUuids.add(sourceUuid);
-                    }
+                // If not de-duping, then each word only has one source so we don't need this list
+                final List<String> sourceUuids = wordToSourceUuidsMap.computeIfAbsent(
+                        word, k -> new ArrayList<>());
+                if (!sourceUuids.contains(sourceUuid)) {
+                    sourceUuids.add(sourceUuid);
                 }
 
                 // Our reference lookup of uuid -> DocRef
@@ -215,24 +207,61 @@ public class WordList {
                 return EMPTY;
             } else {
                 final List<Word> wordObjList = new ArrayList<>(wordList.size());
-                for (int i = 0; i < wordList.size(); i++) {
-                    final String word = wordList.get(i);
-                    final String sourceUuid = Objects.requireNonNull(sourceList.get(i),
-                            () -> "Null source for word " + word);
+                for (final SourcedWord sourcedWord : wordList) {
+                    final String word = sourcedWord.word;
+                    final String sourceUuid = sourcedWord.sourceUuid;
 
                     List<String> additionalSources = null;
+                    final List<String> allSources = GwtNullSafe.list(wordToSourceUuidsMap.get(word));
                     if (deDup) {
-                        final List<String> allSources = GwtNullSafe.list(wordToSourceUuidsMap.get(word));
                         // First one is the primary source, so ignore it
                         if (allSources.size() > 1) {
                             additionalSources = allSources.subList(1, allSources.size());
                         }
+                    } else {
+                        // Not de-duping so get all sources except ours
+                        additionalSources = allSources.stream()
+                                .filter(uuid -> !Objects.equals(sourceUuid, uuid))
+                                .collect(Collectors.toList());
                     }
                     final Word wordObj = new Word(word, sourceUuid, additionalSources);
                     wordObjList.add(wordObj);
                 }
                 return new WordList(wordObjList, sourceUuidToDocRefMap);
             }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @SuppressWarnings("ClassCanBeRecord") // Not in GWT
+    private static final class SourcedWord {
+
+        private final String word;
+        private final String sourceUuid;
+
+        private SourcedWord(final String word, final String sourceUuid) {
+            Objects.requireNonNull(word);
+            Objects.requireNonNull(sourceUuid);
+            this.word = word;
+            this.sourceUuid = sourceUuid;
+        }
+
+        public String word() {
+            return word;
+        }
+
+        public String sourceUuid() {
+            return sourceUuid;
+        }
+
+        @Override
+        public String toString() {
+            return "SourcedWord[" +
+                    "word=" + word + ", " +
+                    "sourceUuid=" + sourceUuid + ']';
         }
     }
 }

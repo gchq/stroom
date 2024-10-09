@@ -167,6 +167,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
             sb.append(name);
         }
         if (uuid != null) {
+            //noinspection SizeReplaceableByIsEmpty // Not in GWT
             if (sb.length() > 0) {
                 sb.append(" ");
             }
@@ -175,6 +176,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
             sb.append("}");
         }
 
+        //noinspection SizeReplaceableByIsEmpty // Not in GWT
         if (sb.length() > 0) {
             return sb.toString();
         }
@@ -190,6 +192,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         if (!(o instanceof DocRef)) {
             return false;
         }
+        //noinspection PatternVariableCanBeUsed // Not in GWT
         final DocRef docRef = (DocRef) o;
         return Objects.equals(type, docRef.type) &&
                 Objects.equals(uuid, docRef.uuid);
