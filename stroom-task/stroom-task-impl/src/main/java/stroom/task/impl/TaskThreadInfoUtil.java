@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.task.impl;
 
+import stroom.util.NullSafe;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,8 +25,9 @@ import java.util.Map;
 import java.util.Set;
 
 class TaskThreadInfoUtil {
+
     public static String getInfo(final Collection<TaskContextImpl> taskContexts) {
-        if (taskContexts == null || taskContexts.size() == 0) {
+        if (NullSafe.isEmptyCollection(taskContexts)) {
             return "";
         }
 
@@ -54,7 +57,7 @@ class TaskThreadInfoUtil {
 
     private static void addLevel(final StringBuilder sb, final Map<TaskContextImpl, Set<TaskContextImpl>> map,
                                  final Set<TaskContextImpl> list, final String prefix) {
-        if (list != null && list.size() > 0) {
+        if (NullSafe.hasItems(list)) {
             for (final TaskContextImpl taskContext : list) {
                 // Indent the message if needed.
                 sb.append(prefix);
