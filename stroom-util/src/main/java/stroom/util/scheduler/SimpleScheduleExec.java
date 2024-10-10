@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,25 @@ public class SimpleScheduleExec {
     private final Trigger trigger;
     private Instant lastExecute;
     private Instant nextExecute;
+    private boolean runIfDisabled = false;
 
     public SimpleScheduleExec(final Trigger trigger) {
         this.trigger = trigger;
     }
 
+    public static SimpleScheduleExec createForImmediateExecution(final Trigger trigger) {
+        return new SimpleScheduleExec(trigger, Instant.now(), true);
+    }
+
     private SimpleScheduleExec(final Trigger trigger, final Instant nextExecute) {
         this.trigger = trigger;
         this.nextExecute = nextExecute;
+    }
+
+    private SimpleScheduleExec(final Trigger trigger, final Instant nextExecute, final boolean runIfDisabled) {
+        this.trigger = trigger;
+        this.nextExecute = nextExecute;
+        this.runIfDisabled = runIfDisabled;
     }
 
     /**
@@ -49,16 +60,22 @@ public class SimpleScheduleExec {
     }
 
     public boolean execute(final Instant now) {
+        LOGGER.trace("execute() (before) - now: {}, lastExecute: {}, nextExecute: {}, runIfDisabled: {}",
+                now, lastExecute, nextExecute, runIfDisabled);
         boolean willExecute = false;
         if (nextExecute == null) {
             nextExecute = trigger.getNextExecutionTimeAfter(now);
         } else if (now.isAfter(nextExecute)) {
             nextExecute = trigger.getNextExecutionTimeAfter(now);
             lastExecute = now;
+            // We are executing, so clear the runIfDisabled state for the next check
+            // which may be scheduled rather than as a result of the user doing a 'run now'.
+            runIfDisabled = false;
             willExecute = true;
         }
-        LOGGER.trace("execute() - now: {}, lastExecute: {}, nextExecute: {}, willExecute: {}",
-                now, lastExecute, nextExecute, willExecute);
+        LOGGER.trace(
+                "execute() (after) - now: {}, lastExecute: {}, nextExecute: {}, willExecute: {}, runIfDisabled: {}",
+                now, lastExecute, nextExecute, willExecute, runIfDisabled);
         return willExecute;
     }
 
@@ -67,6 +84,15 @@ public class SimpleScheduleExec {
             return lastExecute;
         }
         return Instant.now();
+    }
+
+    /**
+     * @return True if this schedule has been marked to disregard the enabled state of the
+     * job or jobNode. This MUST be called before {@link SimpleScheduleExec#execute()} is called
+     * as {@link SimpleScheduleExec#execute()} will reset the runIfDisabled state.
+     */
+    public boolean isRunIfDisabled() {
+        return runIfDisabled;
     }
 
     @Override
@@ -83,15 +109,19 @@ public class SimpleScheduleExec {
             sb.append(DateUtil.createNormalDateTimeString(nextExecute));
             sb.append("\" ");
         }
+        sb.append("runIfDisabled=")
+                .append(runIfDisabled);
         return sb.toString();
     }
 
-    public SimpleScheduleExec cloneWithImmediateExecution() {
-        // Set the nextExecute time to now, so that the next time execute() is called for this job, it will
-        // return true and thus run.
+    /**
+     * Set the nextExecute time to now, so that the next time execute() is called for this job, it will
+     * return true and thus run.
+     */
+    public SimpleScheduleExec cloneForImmediateExecution() {
         final Instant now = Instant.now();
         LOGGER.debug("cloneWithImmediateExecution() - now: {}, lastExecute: {}, nextExecute: {}",
                 now, lastExecute, nextExecute);
-        return new SimpleScheduleExec(trigger, now);
+        return new SimpleScheduleExec(trigger, now, true);
     }
 }
