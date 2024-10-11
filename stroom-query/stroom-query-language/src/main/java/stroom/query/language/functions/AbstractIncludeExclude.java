@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
             boolean found = false;
             for (int i = 1; i < params.length && !found; i++) {
                 final String regex = params[i].toString();
-                if (regex.length() == 0) {
+                if (regex.isEmpty()) {
                     throw new ParseException(
                             "An empty regex has been defined for argument of '" + name + "' function", 0);
                 }
@@ -78,7 +78,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
                 if (params[i] instanceof Val) {
                     // Test regex is valid.
                     final String regex = params[i].toString();
-                    if (regex.length() == 0) {
+                    if (regex.isEmpty()) {
                         throw new ParseException(
                                 "An empty regex has been defined for argument of '" + name + "' function", 0);
                     }
@@ -106,6 +106,10 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
 
     abstract boolean inverse();
 
+
+    // --------------------------------------------------------------------------------
+
+
     abstract static class AbstractGen extends AbstractManyChildGenerator {
 
         AbstractGen(final Generator[] childGenerators) {
@@ -127,7 +131,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
                     final Val v = childGenerators[i].eval(storedValues, childDataSupplier);
                     if (v.type().isValue()) {
                         final String regex = v.toString();
-                        if (regex.length() > 0) {
+                        if (!regex.isEmpty()) {
                             final Pattern pattern = PatternCache.get(regex);
                             if (pattern.matcher(value).matches()) {
                                 found = true;
