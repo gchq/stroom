@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.query.common.v2;
+package stroom.query.language.functions;
 
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValString;
+/**
+ * An assertion of a {@link Val}
+ */
+@FunctionalInterface
+public interface ValAssertion {
 
-import org.junit.jupiter.api.Test;
-
-public class TestValHasher {
-
-    @Test
-    void test() {
-        final ValHasher valHasher = new ValHasher(
-                new DataWriterFactory(new ErrorConsumerImpl(), 1000));
-
-        for (int i = 0; i < 1000; i++) {
-            final Val val = ValString.create("Text " + i + "test".repeat(1000));
-            valHasher.hash(Val.of(val));
-        }
-    }
+    /**
+     * The actual or output {@link Val} for the assertion to test.
+     */
+    void actual(Val actual);
 }

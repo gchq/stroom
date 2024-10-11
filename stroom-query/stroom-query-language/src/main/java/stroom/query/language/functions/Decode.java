@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ class Decode extends AbstractManyChildFunction {
             String newValue = params[params.length - 1].toString();
             for (int i = 1; i < params.length - 1; i += 2) {
                 final String regex = params[i].toString();
-                if (regex.length() == 0) {
+                if (regex.isEmpty()) {
                     throw new ParseException(
                             "An empty regex has been defined for argument of '" + name + "' function", 0);
                 }
@@ -113,7 +113,7 @@ class Decode extends AbstractManyChildFunction {
                 if (params[i] instanceof Val) {
                     // Test regex is valid.
                     final String regex = params[i].toString();
-                    if (regex.length() == 0) {
+                    if (regex.isEmpty()) {
                         throw new ParseException(
                                 "An empty regex has been defined for argument of '" + name + "' function", 0);
                     }
@@ -143,6 +143,10 @@ class Decode extends AbstractManyChildFunction {
         }
         return super.hasAggregate();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class Gen extends AbstractManyChildGenerator {
 
