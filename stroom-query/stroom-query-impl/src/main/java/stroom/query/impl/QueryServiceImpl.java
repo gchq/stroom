@@ -32,6 +32,8 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -414,6 +416,20 @@ class QueryServiceImpl implements QueryService {
                 searchRequest.getTimeout());
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
         SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+
+        // Mutate expression with selection expression.
+        Query qry = mappedRequest.getQuery();
+        ExpressionOperator expression = qry.getExpression();
+        expression = ExpressionUtil.combine(
+                expression,
+                NullSafe.get(queryContext, QueryContext::getAdditionalQueryExpression));
+        mappedRequest = mappedRequest
+                .copy()
+                .query(qry
+                        .copy()
+                        .expression(expression)
+                        .build())
+                .build();
 
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();

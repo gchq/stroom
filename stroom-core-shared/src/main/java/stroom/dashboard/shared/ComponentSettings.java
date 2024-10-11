@@ -37,11 +37,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 @JsonInclude(Include.NON_NULL)
 public interface ComponentSettings {
+    AbstractBuilder<?, ?> copy();
 
-    Builder copy();
+    abstract class AbstractBuilder<T extends ComponentSettings, B extends ComponentSettings.AbstractBuilder<T, ?>> {
 
-    interface Builder {
+        protected abstract B self();
 
-        ComponentSettings build();
+        public abstract T build();
     }
 }

@@ -1516,6 +1516,7 @@
     background-color: var(--navigation__background-color--selected-hovered);
 }
 
+/*
 .navigation .cellTableOddRow:focus-within,
 .navigation .cellTableEvenRow:focus-within {
     background-color: var(--navigation__background-color--focussed);
@@ -1524,6 +1525,20 @@
 .navigation .cellTableSelectedRow:focus-within {
     background-color: var(--navigation__background-color--selected--focussed);
 }
+*/
+
+.navigation .cellTableOddRow:focus-within,
+.navigation .cellTableEvenRow:focus-within {
+    /*background-color: var(--row__background-color--focussed);*/
+    box-shadow: inset 0 0 2px var(--text-color);
+}
+
+.navigation .cellTableSelectedRow:focus-within {
+    /*background-color: var(--row__background-color--selected--focussed);*/
+    box-shadow: inset 0 0 2px var(--row__text-color--selected);
+}
+
+
 
 .navigation-title-bar {
     display: flex;
@@ -2152,6 +2167,7 @@ button.main-menu svg {
     background-color: var(--row__background-color--selected--hovered);
 }
 
+/*
 .selectionList .cellTableOddRow:focus-within,
 .selectionList .cellTableEvenRow:focus-within {
     background-color: var(--row__background-color--focussed);
@@ -2159,6 +2175,18 @@ button.main-menu svg {
 
 .selectionList .cellTableSelectedRow:focus-within {
     background-color: var(--row__background-color--selected--focussed);
+}
+*/
+
+.selectionList .cellTableOddRow:focus-within,
+.selectionList .cellTableEvenRow:focus-within {
+    /*background-color: var(--row__background-color--focussed);*/
+    box-shadow: inset 0 0 2px var(--text-color);
+}
+
+.selectionList .cellTableSelectedRow:focus-within {
+    /*background-color: var(--row__background-color--selected--focussed);*/
+    box-shadow: inset 0 0 2px var(--row__text-color--selected);
 }
 
 .selectionList-links {

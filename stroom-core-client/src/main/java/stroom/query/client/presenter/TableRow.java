@@ -18,13 +18,19 @@ public class TableRow {
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
+    private final String backgroundColor;
+    private final String textColor;
 
     public TableRow(final Expander expander,
                     final String groupKey,
-                    final Map<String, Cell> cells) {
+                    final Map<String, Cell> cells,
+                    final String backgroundColor,
+                    final String textColor) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
+        this.backgroundColor = backgroundColor;
+        this.textColor = textColor;
     }
 
     public Expander getExpander() {
@@ -43,6 +49,14 @@ public class TableRow {
         } else {
             return SafeHtmlUtil.NBSP;
         }
+    }
+
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public String getTextColor() {
+        return textColor;
     }
 
     private SafeHtml decorateValue(final Cell cell) {

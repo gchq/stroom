@@ -22,6 +22,7 @@ import stroom.core.client.LocationManager;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableRowStyles;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -402,7 +403,6 @@ public class QueryResultTablePresenter
 
                 dataGrid.setRowData(0, new ArrayList<>());
                 dataGrid.setRowCount(0, true);
-
                 selectionModel.clear();
             }
         } catch (final RuntimeException e) {
@@ -489,18 +489,6 @@ public class QueryResultTablePresenter
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
-            SafeStylesBuilder rowStyle = new SafeStylesBuilder();
-
-            // Row styles.
-            if (row.getBackgroundColor() != null
-                    && !row.getBackgroundColor().isEmpty()) {
-                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
-            }
-            if (row.getTextColor() != null
-                    && !row.getTextColor().isEmpty()) {
-                rowStyle.trustedColor(row.getTextColor());
-            }
-
             final Map<String, Cell> cellsMap = new HashMap<>();
             for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
                 final Column column = columns.get(i);
@@ -509,7 +497,6 @@ public class QueryResultTablePresenter
                         : "";
 
                 SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
-                stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
                 if (column.getFormat() != null &&
@@ -538,12 +525,18 @@ public class QueryResultTablePresenter
                 expander = new Expander(row.getDepth(), false, true);
             }
 
-            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
+            processed.add(new TableRow(
+                    expander,
+                    row.getGroupKey(),
+                    cellsMap,
+                    row.getBackgroundColor(),
+                    row.getTextColor()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+        dataGrid.setRowStyles(new TableRowStyles());
 
         return processed;
     }

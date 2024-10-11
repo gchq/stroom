@@ -122,7 +122,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
         }
 
-        fieldSelectionBoxModel.setDataSourceRef(docRef);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);

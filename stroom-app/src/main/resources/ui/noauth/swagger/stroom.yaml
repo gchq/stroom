@@ -5099,6 +5099,24 @@ paths:
       summary: Fetch detail for help item
       tags:
       - Queries
+  /query/v1/fetchQueryDataSource:
+    post:
+      operationId: fetchQueryDataSource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocRef'
+          description: default response
+      summary: Fetch the datasource referenced by a query
+      tags:
+      - Queries
   /query/v1/fetchTimeZones:
     get:
       operationId: fetchTimeZones
@@ -13394,6 +13412,8 @@ components:
     QueryContext:
       type: object
       properties:
+        additionalQueryExpression:
+          $ref: '#/components/schemas/ExpressionOperator'
         dateTimeSettings:
           $ref: '#/components/schemas/DateTimeSettings'
         params:

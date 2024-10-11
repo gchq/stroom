@@ -253,7 +253,8 @@ public class TextComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder extends ComponentSettings
+            .AbstractBuilder<TextComponentSettings, TextComponentSettings.Builder> {
 
         private String tableId;
         private ColumnRef streamIdField;
@@ -288,61 +289,66 @@ public class TextComponentSettings implements ComponentSettings {
 
         public Builder tableId(final String tableId) {
             this.tableId = tableId;
-            return this;
+            return self();
         }
 
         public Builder streamIdField(final ColumnRef streamIdField) {
             this.streamIdField = streamIdField;
-            return this;
+            return self();
         }
 
         public Builder partNoField(final ColumnRef partNoField) {
             this.partNoField = partNoField;
-            return this;
+            return self();
         }
 
         public Builder recordNoField(final ColumnRef recordNoField) {
             this.recordNoField = recordNoField;
-            return this;
+            return self();
         }
 
         public Builder lineFromField(final ColumnRef lineFromField) {
             this.lineFromField = lineFromField;
-            return this;
+            return self();
         }
 
         public Builder colFromField(final ColumnRef colFromField) {
             this.colFromField = colFromField;
-            return this;
+            return self();
         }
 
         public Builder lineToField(final ColumnRef lineToField) {
             this.lineToField = lineToField;
-            return this;
+            return self();
         }
 
         public Builder colToField(final ColumnRef colToField) {
             this.colToField = colToField;
-            return this;
+            return self();
         }
 
         public Builder pipeline(final DocRef pipeline) {
             this.pipeline = pipeline;
-            return this;
+            return self();
         }
 
         public Builder showAsHtml(final boolean showAsHtml) {
             this.showAsHtml = showAsHtml;
-            return this;
+            return self();
         }
 
         public Builder showStepping(final boolean showStepping) {
             this.showStepping = showStepping;
-            return this;
+            return self();
         }
 
         public Builder modelVersion(final String modelVersion) {
             this.modelVersion = modelVersion;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

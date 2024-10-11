@@ -182,7 +182,6 @@
 }
 
 .dataGridKeyboardSelectedRowCell {
-
 }
 
 /*
@@ -213,7 +212,9 @@ don't want the open link to appear
     opacity: 0.3;
 }
 
-.dataGridSelectedRow {
+.dataGridSelectedRow,
+table .dataGridEvenRow.dataGridSelectedRow,
+table .dataGridOddRow.dataGridSelectedRow {
     background-color: var(--row__background-color--selected);
     color: var(--row__text-color--selected);
 }
@@ -227,13 +228,27 @@ don't want the open link to appear
     background-color: var(--row__background-color--selected--hovered);
 }
 
+
+/*
+.dataGridOddRow:hover .dataGridCell,
+.dataGridEvenRow:hover .dataGridCell {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.dataGridSelectedRow:hover .dataGridCell {
+    background-color: rgba(255,255,255,0.1);
+}
+*/
+
 .dataGridOddRow:focus-within,
 .dataGridEvenRow:focus-within {
-    background-color: var(--row__background-color--focussed);
+    /*background-color: var(--row__background-color--focussed);*/
+    box-shadow: inset 0 0 2px var(--text-color);
 }
 
 .dataGridSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected--focussed);
+    /*background-color: var(--row__background-color--selected--focussed);*/
+    box-shadow: inset 0 0 2px var(--row__text-color--selected);
 }
 
 .dataGridSelectedRowCell {

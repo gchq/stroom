@@ -28,11 +28,8 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
@@ -51,7 +48,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultStoreInfo;
@@ -94,8 +90,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class QueryPresenter
         extends AbstractComponentPresenter<QueryPresenter.QueryView>
@@ -135,6 +130,7 @@ public class QueryPresenter
     private Timer autoRefreshTimer;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
+    private ExpressionOperator currentDecoration;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -299,56 +295,19 @@ public class QueryPresenter
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
                 final Component component = event.getComponent();
-                if (component instanceof HasComponentSelection) {
-                    final HasComponentSelection hasComponentSelection = (HasComponentSelection) component;
-                    final List<ComponentSelection> selection = hasComponentSelection.getSelection();
-                    final List<ComponentSelectionHandler> selectionHandlers = getQuerySettings().getSelectionHandlers();
-                    if (selectionHandlers != null) {
-                        final List<ComponentSelectionHandler> matchingHandlers = selectionHandlers
-                                .stream()
-                                .filter(ComponentSelectionHandler::isEnabled)
-                                .filter(selectionHandler -> selectionHandler.getComponentId() == null ||
-                                        selectionHandler.getComponentId().equals(component.getId()))
-                                .collect(Collectors.toList());
-
-                        if (matchingHandlers.size() > 0) {
-                            final Function<ExpressionOperator, ExpressionOperator> decorator = (in) -> {
-                                final ExpressionOperator.Builder innerBuilder = ExpressionOperator
-                                        .builder();
-                                boolean added = false;
-                                for (final ComponentSelectionHandler selectionHandler : matchingHandlers) {
-                                    for (final ComponentSelection params : selection) {
-                                        ExpressionOperator ex = selectionHandler.getExpression();
-                                        ex = ExpressionUtil.replaceExpressionParameters(ex, params.getMap());
-                                        innerBuilder.addOperator(ex);
-
-                                        if (!added) {
-                                            added = true;
-                                        } else {
-                                            innerBuilder.op(Op.OR);
-                                        }
-                                    }
-                                }
-
-                                if (added) {
-                                    return ExpressionOperator
-                                            .builder()
-                                            .addOperator(in)
-                                            .addOperator(innerBuilder.build())
-                                            .build();
-                                }
-
-                                return in;
-                            };
+                final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
+                        .create(component, getQuerySettings().getSelectionHandlers());
 
 //                          this.params = params;
 //                          lastUsedQueryInfo = null;
 
-                            searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
-                            run(true, true, decorator);
-                        }
+                optional.ifPresent(selectionExpression -> {
+                    if (!Objects.equals(currentDecoration, selectionExpression)) {
+                        currentDecoration = selectionExpression;
+                        searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
+                        run(true, true, selectionExpression);
                     }
-                }
+                });
             }
 
 //            if (component instanceof HasAbstractFields) {
@@ -453,7 +412,7 @@ public class QueryPresenter
     }
 
     private void loadedDataSource(final DocRef dataSourceRef) {
-        fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(dataSourceRef));
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
@@ -628,12 +587,12 @@ public class QueryPresenter
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        run(incremental, storeHistory, Function.identity());
+        run(incremental, storeHistory, null);
     }
 
     private void run(final boolean incremental,
                      final boolean storeHistory,
-                     final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
+                     final ExpressionOperator expressionDecorator) {
         final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
@@ -646,7 +605,7 @@ public class QueryPresenter
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
-            final ExpressionOperator decorated = expressionDecorator.apply(root);
+            final ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
 
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();

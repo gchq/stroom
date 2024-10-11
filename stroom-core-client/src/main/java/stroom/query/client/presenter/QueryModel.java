@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.DestroyReason;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
@@ -144,7 +145,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                final TimeRange timeRange,
                                final boolean incremental,
                                final boolean storeHistory,
-                               final String queryInfo) {
+                               final String queryInfo,
+                               final ExpressionOperator additionalQueryExpression) {
         GWT.log("SearchModel - startNewSearch()");
 
         // Destroy the previous search and ready all components for a new search to begin.
@@ -163,6 +165,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .timeRange(timeRange)
                 .queryInfo(queryInfo)
                 .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
+                .additionalQueryExpression(additionalQueryExpression)
                 .build();
 
         currentSearch = QuerySearchRequest

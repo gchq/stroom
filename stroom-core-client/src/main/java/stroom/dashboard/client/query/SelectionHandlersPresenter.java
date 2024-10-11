@@ -22,9 +22,11 @@ import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.shared.AbstractQueryComponentSettings;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.ComponentSettings.AbstractBuilder;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -46,6 +48,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SelectionHandlersPresenter
@@ -66,7 +69,7 @@ public class SelectionHandlersPresenter
 
     private boolean dirty;
     private List<Component> componentList;
-    private BasicQuerySettingsPresenter basicQuerySettingsPresenter;
+    private Consumer<Consumer<DocRef>> dataSourceRefConsumer;
 
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
@@ -102,8 +105,8 @@ public class SelectionHandlersPresenter
         addButton.focus();
     }
 
-    public void setBasicQuerySettingsPresenter(final BasicQuerySettingsPresenter basicQuerySettingsPresenter) {
-        this.basicQuerySettingsPresenter = basicQuerySettingsPresenter;
+    public void setDataSourceRefConsumer(final Consumer<Consumer<DocRef>> dataSourceRefConsumer) {
+        this.dataSourceRefConsumer = dataSourceRefConsumer;
     }
 
     @Override
@@ -201,14 +204,13 @@ public class SelectionHandlersPresenter
     }
 
     private void add() {
-        final DocRef dataSource = basicQuerySettingsPresenter.getDataSource();
         final ComponentSelectionHandler newRule = ComponentSelectionHandler
                 .builder()
                 .id(RandomId.createId(5))
                 .enabled(true)
                 .build();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.read(newRule, componentList, dataSource);
+        editSelectionHandlerPresenter.read(newRule, componentList, dataSourceRefConsumer);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -230,10 +232,9 @@ public class SelectionHandlersPresenter
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
-        final DocRef dataSource = basicQuerySettingsPresenter.getDataSource();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
 
-        editSelectionHandlerPresenter.read(existingRule, componentList, dataSource);
+        editSelectionHandlerPresenter.read(existingRule, componentList, dataSourceRefConsumer);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -263,7 +264,7 @@ public class SelectionHandlersPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        final QueryComponentSettings settings = (QueryComponentSettings) componentConfig.getSettings();
+        final AbstractQueryComponentSettings settings = (AbstractQueryComponentSettings) componentConfig.getSettings();
         if (settings.getSelectionHandlers() != null) {
             this.selectionHandlers = settings.getSelectionHandlers();
         } else {
@@ -283,11 +284,15 @@ public class SelectionHandlersPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        final QueryComponentSettings oldSettings = (QueryComponentSettings) componentConfig.getSettings();
-        final QueryComponentSettings newSettings = oldSettings
-                .copy()
-                .selectionHandlers(selectionHandlers)
-                .build();
+        final AbstractQueryComponentSettings oldSettings =
+                (AbstractQueryComponentSettings) componentConfig.getSettings();
+        final AbstractBuilder<?, ?> builder = oldSettings.copy();
+        if (builder instanceof AbstractQueryComponentSettings.AbstractBuilder<?, ?>) {
+            final AbstractQueryComponentSettings.AbstractBuilder<?, ?> abstractBuilder =
+                    (AbstractQueryComponentSettings.AbstractBuilder<?, ?>) builder;
+            abstractBuilder.selectionHandlers(selectionHandlers);
+        }
+        final ComponentSettings newSettings = builder.build();
         return componentConfig.copy().settings(newSettings).build();
     }
 

@@ -124,7 +124,7 @@ public class SolrIndexSettingsPresenter
             index.setRetentionExpression(ExpressionOperator.builder().build());
         }
 
-        fieldSelectionBoxModel.setDataSourceRef(docRef);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);

@@ -36,6 +36,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class SelectionHandlerPresenter
         extends MyPresenterWidget<SelectionHandlerView>
@@ -64,7 +65,7 @@ public class SelectionHandlerPresenter
 
     void read(final ComponentSelectionHandler componentSelectionHandler,
               final List<Component> componentList,
-              final DocRef dataSourceRef) {
+              final Consumer<Consumer<DocRef>> dataSourceRefConsumer) {
         getView().setComponentList(componentList);
         final Optional<Component> optionalComponent = componentList
                 .stream()
@@ -73,7 +74,7 @@ public class SelectionHandlerPresenter
         getView().setComponent(optionalComponent.orElse(null));
 
         this.originalHandler = componentSelectionHandler;
-        fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(dataSourceRefConsumer);
         editExpressionPresenter.init(null, null, fieldSelectionBoxModel);
         this.originalHandler = componentSelectionHandler;
         if (componentSelectionHandler.getExpression() == null) {

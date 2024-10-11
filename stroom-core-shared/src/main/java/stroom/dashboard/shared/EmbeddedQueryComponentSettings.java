@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,18 +37,10 @@ import java.util.Objects;
         "lastQueryNode"
 })
 @JsonInclude(Include.NON_NULL)
-public class EmbeddedQueryComponentSettings implements ComponentSettings {
+public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettings {
 
     @JsonProperty
     private final DocRef queryRef;
-    @JsonProperty
-    private final Automate automate;
-    @JsonProperty
-    private final List<ComponentSelectionHandler> selectionHandlers;
-    @JsonProperty
-    private final QueryKey lastQueryKey;
-    @JsonProperty
-    private final String lastQueryNode;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
@@ -58,31 +49,12 @@ public class EmbeddedQueryComponentSettings implements ComponentSettings {
                                           @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
                                           @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
                                           @JsonProperty("lastQueryNode") final String lastQueryNode) {
+        super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
         this.queryRef = queryRef;
-        this.automate = automate;
-        this.selectionHandlers = selectionHandlers;
-        this.lastQueryKey = lastQueryKey;
-        this.lastQueryNode = lastQueryNode;
     }
 
     public DocRef getQueryRef() {
         return queryRef;
-    }
-
-    public Automate getAutomate() {
-        return automate;
-    }
-
-    public List<ComponentSelectionHandler> getSelectionHandlers() {
-        return selectionHandlers;
-    }
-
-    public QueryKey getLastQueryKey() {
-        return lastQueryKey;
-    }
-
-    public String getLastQueryNode() {
-        return lastQueryNode;
     }
 
     @Override
@@ -93,28 +65,16 @@ public class EmbeddedQueryComponentSettings implements ComponentSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
         final EmbeddedQueryComponentSettings that = (EmbeddedQueryComponentSettings) o;
-        return Objects.equals(queryRef, that.queryRef) &&
-                Objects.equals(automate, that.automate) &&
-                Objects.equals(selectionHandlers, that.selectionHandlers) &&
-                Objects.equals(lastQueryKey, that.lastQueryKey) &&
-                Objects.equals(lastQueryNode, that.lastQueryNode);
+        return Objects.equals(queryRef, that.queryRef);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryRef, automate, selectionHandlers, lastQueryKey, lastQueryNode);
-    }
-
-    @Override
-    public String toString() {
-        return "EmbeddedQueryComponentSettings{" +
-                "queryRef=" + queryRef +
-                ", automate=" + automate +
-                ", selectionHandlers=" + selectionHandlers +
-                ", lastQueryKey=" + lastQueryKey +
-                ", lastQueryNode='" + lastQueryNode + '\'' +
-                '}';
+        return Objects.hash(super.hashCode(), queryRef);
     }
 
     public static Builder builder() {
@@ -129,60 +89,27 @@ public class EmbeddedQueryComponentSettings implements ComponentSettings {
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder
+            extends AbstractBuilder<EmbeddedQueryComponentSettings, EmbeddedQueryComponentSettings.Builder> {
 
         private DocRef queryRef;
-        private Automate automate;
-        private List<ComponentSelectionHandler> selectionHandlers;
-        private QueryKey lastQueryKey;
-        private String lastQueryNode;
 
         private Builder() {
+            super();
         }
 
         private Builder(final EmbeddedQueryComponentSettings settings) {
+            super(settings);
             this.queryRef = settings.queryRef;
-            this.automate = settings.automate == null
-                    ? null
-                    : settings.automate.copy().build();
-            this.selectionHandlers = settings.selectionHandlers == null
-                    ? null
-                    : new ArrayList<>(settings.selectionHandlers);
-            this.lastQueryKey = settings.lastQueryKey;
-            this.lastQueryNode = settings.lastQueryNode;
         }
 
         public Builder queryRef(final DocRef queryRef) {
             this.queryRef = queryRef;
-            return this;
+            return self();
         }
 
-
-        public Builder automate(final Automate automate) {
-            this.automate = automate;
-            return this;
-        }
-
-        public Builder selectionHandlers(final List<ComponentSelectionHandler> selectionHandlers) {
-            this.selectionHandlers = selectionHandlers;
-            return this;
-        }
-
-        public Builder addSelectionHandler(final ComponentSelectionHandler selectionHandler) {
-            if (this.selectionHandlers == null) {
-                this.selectionHandlers = new ArrayList<>();
-            }
-            this.selectionHandlers.add(selectionHandler);
-            return this;
-        }
-
-        public Builder lastQueryKey(final QueryKey lastQueryKey) {
-            this.lastQueryKey = lastQueryKey;
-            return this;
-        }
-
-        public Builder lastQueryNode(final String lastQueryNode) {
-            this.lastQueryNode = lastQueryNode;
+        @Override
+        protected Builder self() {
             return this;
         }
 

@@ -266,7 +266,8 @@ public class TableComponentSettings implements ComponentSettings {
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder extends ComponentSettings
+            .AbstractBuilder<TableComponentSettings, TableComponentSettings.Builder> {
 
         private String queryId;
         private DocRef dataSourceRef;
@@ -309,17 +310,17 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder queryId(final String value) {
             this.queryId = value;
-            return this;
+            return self();
         }
 
         public Builder dataSourceRef(final DocRef dataSourceRef) {
             this.dataSourceRef = dataSourceRef;
-            return this;
+            return self();
         }
 
         public Builder columns(final List<Column> columns) {
             this.columns = columns;
-            return this;
+            return self();
         }
 
         /**
@@ -342,7 +343,7 @@ public class TableComponentSettings implements ComponentSettings {
             } else {
                 this.columns.addAll(values);
             }
-            return this;
+            return self();
         }
 
         /**
@@ -355,7 +356,7 @@ public class TableComponentSettings implements ComponentSettings {
             } else {
                 this.extractValues = Boolean.FALSE;
             }
-            return this;
+            return self();
         }
 
         public Builder useDefaultExtractionPipeline(final Boolean value) {
@@ -364,7 +365,7 @@ public class TableComponentSettings implements ComponentSettings {
             } else {
                 this.useDefaultExtractionPipeline = Boolean.TRUE;
             }
-            return this;
+            return self();
         }
 
 
@@ -374,7 +375,7 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder extractionPipeline(final DocRef value) {
             this.extractionPipeline = value;
-            return this;
+            return self();
         }
 
         /**
@@ -388,17 +389,17 @@ public class TableComponentSettings implements ComponentSettings {
         public Builder extractionPipeline(final String type,
                                           final String uuid,
                                           final String name) {
-            return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
+            return self().extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
         }
 
         public Builder maxResults(final List<Long> maxResults) {
             this.maxResults = maxResults;
-            return this;
+            return self();
         }
 
         public Builder pageSize(final Integer pageSize) {
             this.pageSize = pageSize;
-            return this;
+            return self();
         }
 
         /**
@@ -409,16 +410,21 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder showDetail(final Boolean value) {
             this.showDetail = value;
-            return this;
+            return self();
         }
 
         public Builder conditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
             this.conditionalFormattingRules = conditionalFormattingRules;
-            return this;
+            return self();
         }
 
         public Builder modelVersion(final String modelVersion) {
             this.modelVersion = modelVersion;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

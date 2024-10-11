@@ -571,18 +571,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
-            SafeStylesBuilder rowStyle = new SafeStylesBuilder();
-
-            // Row styles.
-            if (row.getBackgroundColor() != null
-                    && !row.getBackgroundColor().isEmpty()) {
-                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
-            }
-            if (row.getTextColor() != null
-                    && !row.getTextColor().isEmpty()) {
-                rowStyle.trustedColor(row.getTextColor());
-            }
-
             final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
             for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
                 final Column column = columns.get(i);
@@ -591,7 +579,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         : "";
 
                 SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
-                stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
                 if (column.getFormat() != null &&
@@ -620,12 +607,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 expander = new Expander(row.getDepth(), false, true);
             }
 
-            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
+            processed.add(new TableRow(
+                    expander,
+                    row.getGroupKey(),
+                    cellsMap,
+                    row.getBackgroundColor(),
+                    row.getTextColor()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+        dataGrid.setRowStyles(new TableRowStyles());
 
         return processed;
     }

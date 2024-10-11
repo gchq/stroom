@@ -365,7 +365,8 @@ public class QueryEditPresenter
                 queryToolbarPresenter.getTimeRange(),
                 incremental,
                 storeHistory,
-                queryInfo.getMessage());
+                queryInfo.getMessage(),
+                null);
     }
 
     public TimeRange getTimeRange() {

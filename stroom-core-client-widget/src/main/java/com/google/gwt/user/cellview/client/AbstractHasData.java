@@ -747,21 +747,36 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         if (!Element.is(eventTarget)) {
             return;
         }
-        Element target = Element.as(eventTarget);
         if (!getElement().isOrHasChild(Element.as(eventTarget))) {
             return;
         }
         super.onBrowserEvent(event);
 
-        String eventType = event.getType();
+        rememberFocus(event);
+
+        Scheduler.get().scheduleDeferred(() -> {
+            final String eventType = event.getType();
+            if (BrowserEvents.FOCUS.equals(eventType) && isFocused) {
+                onFocus();
+            } else if (BrowserEvents.BLUR.equals(eventType) && !isFocused) {
+                onBlur();
+            }
+
+            // Let subclasses handle the event now.
+            onBrowserEvent2(event);
+        });
+    }
+
+    private void rememberFocus(Event event) {
+        final String eventType = event.getType();
+        final EventTarget eventTarget = event.getEventTarget();
+        final Element target = Element.as(eventTarget);
         if (BrowserEvents.FOCUS.equals(eventType)) {
             // Remember the focus state.
             isFocused = true;
-            onFocus();
         } else if (BrowserEvents.BLUR.equals(eventType)) {
             // Remember the blur state.
             isFocused = false;
-            onBlur();
         } else if (BrowserEvents.KEYDOWN.equals(eventType)) {
             // A key event indicates that we already have focus.
             isFocused = true;
@@ -771,9 +786,6 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
             // focus.
             isFocused = true;
         }
-
-        // Let subclasses handle the event now.
-        onBrowserEvent2(event);
     }
 
     /**

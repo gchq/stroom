@@ -19,11 +19,14 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
+import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisSelectionModel;
@@ -67,8 +70,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 public class EmbeddedQueryPresenter
         extends AbstractComponentPresenter<EmbeddedQueryView>
@@ -108,6 +112,7 @@ public class EmbeddedQueryPresenter
     private List<String> currentErrors;
     private boolean initialised;
     private Timer autoRefreshTimer;
+    private ExpressionOperator currentDecoration;
 
     @Inject
     public EmbeddedQueryPresenter(final EventBus eventBus,
@@ -305,6 +310,58 @@ public class EmbeddedQueryPresenter
 //        }
 //    }
 
+
+    @Override
+    public void setComponents(final Components components) {
+        super.setComponents(components);
+
+        registerHandler(components.addComponentChangeHandler(event -> {
+            if (initialised) {
+                final Component component = event.getComponent();
+                final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
+                        .create(component, getQuerySettings().getSelectionHandlers());
+
+//                          this.params = params;
+//                          lastUsedQueryInfo = null;
+
+                optional.ifPresent(selectionExpression -> {
+                    if (!Objects.equals(currentDecoration, selectionExpression)) {
+                        currentDecoration = selectionExpression;
+                        queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
+                        run(true, true, selectionExpression);
+                    }
+                });
+            }
+
+//            if (component instanceof HasAbstractFields) {
+//                final VisPresenter visPresenter = (VisPresenter) component;
+//                final List<Map<String, String>> selection = visPresenter.getCurrentSelection();
+//                String params = "";
+//                if (selection != null) {
+//                    for (final Map<String, String> map : selection) {
+//                        for (final Entry<String, String> entry : map.entrySet()) {
+//                            params += entry.getKey() + "=" + entry.getValue() + " ";
+//                        }
+//                    }
+//                }
+//                onQuery(params, null);
+//            }
+
+//                if (getTextSettings().getTableId() == null) {
+//                    if (component instanceof TablePresenter) {
+//                        currentTablePresenter = (TablePresenter) component;
+//                        update(currentTablePresenter);
+//                    }
+//                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
+//                    if (component instanceof TablePresenter) {
+//                        currentTablePresenter = (TablePresenter) component;
+//                        update(currentTablePresenter);
+//                    }
+//                }
+//            }
+        }));
+    }
+
     private void updateVisibleResult() {
         if (currentVisPresenter != null) {
             getView().setResultView(currentVisPresenter.getView());
@@ -394,12 +451,12 @@ public class EmbeddedQueryPresenter
     private void run(final boolean incremental,
                      final boolean storeHistory) {
         // No point running the search if there is no query
-        run(incremental, storeHistory, Function.identity());
+        run(incremental, storeHistory, currentDecoration);
     }
 
     private void run(final boolean incremental,
                      final boolean storeHistory,
-                     final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
+                     final ExpressionOperator additionalQueryExpression) {
         if (GwtNullSafe.isNonBlankString(query)) {
             currentErrors = null;
 
@@ -419,7 +476,8 @@ public class EmbeddedQueryPresenter
                     dashboardContext.getTimeRange(),
                     incremental,
                     storeHistory,
-                    queryInfo.getMessage());
+                    queryInfo.getMessage(),
+                    additionalQueryExpression);
         }
     }
 

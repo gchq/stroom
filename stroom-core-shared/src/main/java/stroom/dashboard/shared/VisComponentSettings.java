@@ -105,7 +105,8 @@ public class VisComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder extends ComponentSettings
+            .AbstractBuilder<VisComponentSettings, VisComponentSettings.Builder> {
 
         private String tableId;
         private DocRef visualisation;
@@ -126,21 +127,26 @@ public class VisComponentSettings implements ComponentSettings {
 
         public Builder tableId(final String tableId) {
             this.tableId = tableId;
-            return this;
+            return self();
         }
 
         public Builder visualisation(final DocRef visualisation) {
             this.visualisation = visualisation;
-            return this;
+            return self();
         }
 
         public Builder json(final String json) {
             this.json = json;
-            return this;
+            return self();
         }
 
         public Builder tableSettings(final TableComponentSettings tableSettings) {
             this.tableSettings = tableSettings;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
