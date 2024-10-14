@@ -25,16 +25,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public class CompiledIncludeExcludeFilter implements Predicate<String> {
-
-    private final Filter filter;
-    private final Predicate<String> predicate;
-
-    private CompiledIncludeExcludeFilter(final Filter filter,
-                                         final Predicate<String> predicate) {
-        this.filter = filter;
-        this.predicate = predicate;
-    }
+public class CompiledIncludeExcludeFilter {
 
     public static Optional<Predicate<String>> create(final Filter filter, final Map<String, String> paramMap) {
         if (filter == null) {
@@ -73,14 +64,6 @@ public class CompiledIncludeExcludeFilter implements Predicate<String> {
         return optional;
     }
 
-    @Override
-    public boolean test(final String value) {
-        final String v = value == null
-                ? ""
-                : value;
-        return predicate.test(v);
-    }
-
     private static List<Pattern> createPatternList(final String patterns, final Map<String, String> paramMap) {
         List<Pattern> patternList = null;
         if (patterns != null && !patterns.trim().isEmpty()) {
@@ -96,10 +79,5 @@ public class CompiledIncludeExcludeFilter implements Predicate<String> {
         }
 
         return patternList;
-    }
-
-    @Override
-    public String toString() {
-        return filter.toString();
     }
 }
