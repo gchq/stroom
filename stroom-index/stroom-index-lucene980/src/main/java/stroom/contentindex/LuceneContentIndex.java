@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.contentindex;
 
 import stroom.datasource.api.v2.AnalyzerType;
@@ -16,15 +32,19 @@ import stroom.index.lucene980.Lucene980LockFactory;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.exception.ThrowingRunnable;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.PermissionException;
@@ -71,6 +91,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
@@ -185,23 +207,29 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        try {
-            if (event != null && event.getDocRef() != null && event.getDocRef().getType() != null) {
-                if (indexableMap.containsKey(event.getDocRef().getType())) {
+        NullSafe.consume(event, EntityEvent::getDocRef, DocRef::getType, type -> {
+            if (indexableMap.containsKey(type)) {
+                try {
                     changes.put(event);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new UncheckedInterruptedException(e);
                 }
             }
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException(e);
-        }
+        });
     }
 
     public void reindex() {
-        securityContext.asProcessingUser(() -> indexableMap.forEach((type, indexable) -> {
-            final Set<DocRef> docRefs = indexable.listDocuments();
-            docRefs.forEach(docRef -> onChange(new EntityEvent(docRef, EntityAction.UPDATE)));
-        }));
+        securityContext.asProcessingUser(() ->
+                indexableMap.values()
+                        .stream()
+                        .flatMap(contentIndexable ->
+                                contentIndexable.listDocuments().stream())
+                        .takeWhile(docRef ->
+                                !Thread.currentThread().isInterrupted())
+                        .map(docRef ->
+                                new EntityEvent(docRef, EntityAction.UPDATE))
+                        .forEach(this::onChange));
     }
 
     @Override
@@ -397,55 +425,98 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                 TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
                     final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-                    try (final IndexWriter writer = new IndexWriter(directory,
-                            indexWriterConfig)) {
-                        list.forEach(event -> {
-                            try {
-                                switch (event.getAction()) {
-                                    case CREATE -> {
-                                        taskContext.info(() -> "Adding: " +
-                                                DocRefUtil.createSimpleDocRefString(event.getDocRef()));
-                                        addDoc(writer, event.getDocRef());
+                    try (final IndexWriter writer = new IndexWriter(directory, indexWriterConfig)) {
+                        final int totalCount = list.size();
+                        final AtomicInteger count = new AtomicInteger();
+                        list.stream()
+                                .takeWhile(createTaskTerminatedCheck(taskContext))
+                                .forEach(event -> {
+                                    count.incrementAndGet();
+
+                                    try {
+                                        switch (event.getAction()) {
+                                            case CREATE -> {
+                                                setTaskContextInfo(
+                                                        taskContext, event, "Adding", count, totalCount);
+                                                addDoc(taskContext, writer, event.getDocRef());
+                                            }
+                                            case UPDATE -> {
+                                                setTaskContextInfo(
+                                                        taskContext, event, "Updating", count, totalCount);
+                                                deleteDoc(writer, event.getDocRef());
+                                                addDoc(taskContext, writer, event.getDocRef());
+                                            }
+                                            case DELETE -> {
+                                                setTaskContextInfo(
+                                                        taskContext, event, "Deleting", count, totalCount);
+                                                deleteDoc(writer, event.getDocRef());
+                                            }
+                                        }
+                                    } catch (final Exception e) {
+                                        LOGGER.error(e::getMessage, e);
                                     }
-                                    case UPDATE -> {
-                                        taskContext.info(() -> "Updating: " +
-                                                DocRefUtil.createSimpleDocRefString(event.getDocRef()));
-                                        deleteDoc(writer, event.getDocRef());
-                                        addDoc(writer, event.getDocRef());
-                                    }
-                                    case DELETE -> {
-                                        taskContext.info(() -> "Deleting: " +
-                                                DocRefUtil.createSimpleDocRefString(event.getDocRef()));
-                                        deleteDoc(writer, event.getDocRef());
-                                    }
-                                }
-                            } catch (final Exception e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
-                        });
+                                });
 
                         taskContext.info(() -> "Committing");
-                        writer.commit();
+                        LOGGER.logDurationIfDebugEnabled(
+                                ThrowingRunnable.unchecked(writer::commit),
+                                () -> LogUtil.message("Commit {} event(s)", count));
+
                         taskContext.info(() -> "Flushing");
-                        writer.flush();
+                        LOGGER.logDurationIfDebugEnabled(
+                                ThrowingRunnable.unchecked(writer::flush),
+                                () -> LogUtil.message("Flush {} event(s)", count));
                     } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }
                 }).run());
     }
 
-    private void addDoc(final IndexWriter writer, final DocRef docRef) {
+    private static Predicate<Object> createTaskTerminatedCheck(final TaskContext taskContext) {
+        return obj -> {
+            if (taskContext.isTerminated()) {
+                LOGGER.info("Task is terminated: '{}'", taskContext);
+                return false;
+            } else if (Thread.currentThread().isInterrupted()) {
+                LOGGER.info("Task thread is interrupted: '{}'", taskContext);
+                return false;
+            } else {
+                return true;
+            }
+        };
+    }
+
+    private static void setTaskContextInfo(final TaskContext taskContext,
+                                           final EntityEvent event,
+                                           final String action,
+                                           final AtomicInteger count,
+                                           final int totalCount) {
+        taskContext.info(
+                () -> LogUtil.message("{}: {} ({} of {})",
+                        action,
+                        DocRefUtil.createSimpleDocRefString(event.getDocRef()),
+                        count,
+                        totalCount),
+                LOGGER);
+    }
+
+    private void addDoc(final TaskContext taskContext, final IndexWriter writer, final DocRef docRef) {
         final ContentIndexable contentIndexable = indexableMap.get(docRef.getType());
         if (contentIndexable != null) {
             final Map<String, String> dataMap = contentIndexable.getIndexableData(docRef);
-            if (dataMap != null && !dataMap.isEmpty()) {
-                dataMap.forEach((extension, data) -> {
-                    try {
-                        index(writer, docRef, extension, data);
-                    } catch (final Exception e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-                });
+            if (NullSafe.hasEntries(dataMap)) {
+                dataMap.entrySet()
+                        .stream()
+                        .takeWhile(createTaskTerminatedCheck(taskContext))
+                        .forEach(entry -> {
+                            final String extension = entry.getKey();
+                            final String data = entry.getValue();
+                            try {
+                                index(writer, docRef, extension, data);
+                            } catch (final Exception e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        });
             }
         }
     }
@@ -519,6 +590,10 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         return new Field(name, data, fieldType);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class NGramAnalyzer extends Analyzer {
 
         @Override
@@ -528,6 +603,10 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             return new Analyzer.TokenStreamComponents(tokenizer, tokenStream);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     static class NGramCSAnalyzer extends Analyzer {
 
