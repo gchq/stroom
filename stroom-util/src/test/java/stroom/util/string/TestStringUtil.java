@@ -106,6 +106,32 @@ class TestStringUtil {
                 .build();
     }
 
+
+    @TestFactory
+    Stream<DynamicTest> testTrimLines() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(StringUtil::trimLines)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase("", "")
+                .addCase(" ", "")
+                .addCase(" foo ", "foo")
+                .addCase("""
+                        \sfoo\s
+                        \s bar \s""", """
+                        foo
+                        bar""")
+                .addCase("""
+                        \sfoo\s
+                        """, "foo")
+                .addCase("""
+
+                        \s \s""", "")
+                .build();
+    }
+
+
     @TestFactory
     Stream<DynamicTest> splitToWords() {
         return TestUtil.buildDynamicTestStream()

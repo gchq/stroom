@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,7 +238,7 @@ class ScheduledTaskExecutor {
         // Only run one instance of this method at a time.
         if (running.compareAndSet(false, true)) {
             try {
-                boolean enabled = true;
+                boolean isJobEnabledOnNode = true;
                 SimpleScheduleExec scheduler = null;
                 JobNodeTracker jobNodeTracker;
 
@@ -246,7 +246,7 @@ class ScheduledTaskExecutor {
                 jobNodeTracker = trackers.getTrackerForJobName(scheduledJob.getName());
 
                 if (scheduledJob.isManaged()) {
-                    enabled = false;
+                    isJobEnabledOnNode = false;
                     if (jobNodeTracker == null) {
                         LOGGER.error("No job node tracker found for: " + scheduledJob.getName());
                     } else {
@@ -254,7 +254,7 @@ class ScheduledTaskExecutor {
                         if (jobNode == null) {
                             LOGGER.error("Job node tracker has null job node for: " + scheduledJob.getName());
                         } else {
-                            enabled = jobNode.getJob().isEnabled()
+                            isJobEnabledOnNode = jobNode.getJob().isEnabled()
                                     && jobNode.isEnabled();
                             scheduler = trackers.getScheduleExec(jobNode);
                         }
@@ -263,8 +263,9 @@ class ScheduledTaskExecutor {
                     scheduler = getOrCreateScheduler(scheduledJob);
                 }
 
-                if (enabled && scheduler != null && scheduler.execute()) {
-                    //TODO log trace
+                if (scheduler != null
+                        && (isJobEnabledOnNode || scheduler.isRunIfDisabled())
+                        && scheduler.execute()) {
 //                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
                     final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                     if (jobNodeTracker != null) {
@@ -276,7 +277,7 @@ class ScheduledTaskExecutor {
                 } else {
                     LOGGER.trace("Not returning runnable for method: {} - {} - {}",
                             scheduledJob.getName(),
-                            enabled,
+                            isJobEnabledOnNode,
                             scheduler);
                     running.set(false);
                 }

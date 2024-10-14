@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.statistics.impl.sql.search;
 
 import stroom.query.language.functions.FieldIndex;
@@ -19,6 +35,7 @@ import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -116,15 +133,18 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer) {
         try {
-            List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndex);
-            SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndex);
+            final List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndex);
+            final Optional<SqlBuilder> optSql = buildSql(statisticStoreEntity, criteria, fieldIndex);
 
-            // build a mapper function to convert a resultSet row into a String[] based on the fields
-            // required by all coprocessors
-            Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
+            // If there is nothing to select then there is nothing to pass to the value consumer
+            optSql.ifPresent(sql -> {
+                // build a mapper function to convert a resultSet row into a String[] based on the fields
+                // required by all coprocessors
+                Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
 
-            // the query will not be executed until somebody subscribes to the flowable
-            getFlowableQueryResults(taskContext, sql, resultSetMapper, valuesConsumer);
+                // the query will not be executed until somebody subscribes to the flowable
+                getFlowableQueryResults(taskContext, sql, resultSetMapper, valuesConsumer);
+            });
         } catch (final RuntimeException e) {
             errorConsumer.add(e);
         }
@@ -183,9 +203,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      * <p>
      * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
      */
-    private SqlBuilder buildSql(final StatisticStoreDoc statisticStoreEntity,
-                                final FindEventCriteria criteria,
-                                final FieldIndex fieldIndex) {
+    private Optional<SqlBuilder> buildSql(final StatisticStoreDoc statisticStoreEntity,
+                                          final FindEventCriteria criteria,
+                                          final FieldIndex fieldIndex) {
         final RollUpBitMask rollUpBitMask = buildRollUpBitMaskFromCriteria(criteria, statisticStoreEntity);
 
         final String statNameWithMask = statisticStoreEntity.getName() + rollUpBitMask.asHexString();
@@ -194,41 +214,45 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         sql.append("SELECT ");
 
         String selectColsStr = String.join(", ", getSelectColumns(statisticStoreEntity, fieldIndex));
+        if (NullSafe.isNonBlankString(selectColsStr)) {
+            sql.append(selectColsStr);
 
-        sql.append(selectColsStr);
+            // join to key table
+            sql.append(" FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K");
+            sql.join(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME,
+                    "V",
+                    "K",
+                    SQLStatisticNames.ID,
+                    "V",
+                    SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY);
 
-        // join to key table
-        sql.append(" FROM " + SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME + " K");
-        sql.join(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME,
-                "V",
-                "K",
-                SQLStatisticNames.ID,
-                "V",
-                SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY);
+            // do a like on the name first so we can hit the index before doing the slow regex matches
+            sql.append(" WHERE K." + SQLStatisticNames.NAME + " LIKE ");
+            sql.arg(statNameWithMask + "%");
 
-        // do a like on the name first so we can hit the index before doing the slow regex matches
-        sql.append(" WHERE K." + SQLStatisticNames.NAME + " LIKE ");
-        sql.arg(statNameWithMask + "%");
+            // exact match on the stat name bit of the key
+            sql.append(" AND K." + SQLStatisticNames.NAME + " REGEXP ");
+            sql.arg("^" + statNameWithMask + "(" + SQLStatisticConstants.NAME_SEPARATOR + "|$)");
 
-        // exact match on the stat name bit of the key
-        sql.append(" AND K." + SQLStatisticNames.NAME + " REGEXP ");
-        sql.arg("^" + statNameWithMask + "(" + SQLStatisticConstants.NAME_SEPARATOR + "|$)");
+            // add the time bounds
+            sql.append(" AND V." + SQLStatisticNames.TIME_MS + " >= ");
+            sql.arg(criteria.getPeriod().getFromMs());
+            sql.append(" AND V." + SQLStatisticNames.TIME_MS + " < ");
+            sql.arg(criteria.getPeriod().getToMs());
 
-        // add the time bounds
-        sql.append(" AND V." + SQLStatisticNames.TIME_MS + " >= ");
-        sql.arg(criteria.getPeriod().getFromMs());
-        sql.append(" AND V." + SQLStatisticNames.TIME_MS + " < ");
-        sql.arg(criteria.getPeriod().getToMs());
+            // now add the query terms
+            SQLTagValueWhereClauseConverter.buildTagValueWhereClause(criteria.getFilterTermsTree(), sql);
 
-        // now add the query terms
-        SQLTagValueWhereClauseConverter.buildTagValueWhereClause(criteria.getFilterTermsTree(), sql);
+            final int maxResults = searchConfig.getMaxResults();
+            sql.append(" LIMIT " + maxResults);
 
-        final int maxResults = searchConfig.getMaxResults();
-        sql.append(" LIMIT " + maxResults);
+            LOGGER.debug("Search query: {}", sql);
 
-        LOGGER.debug("Search query: {}", sql);
-
-        return sql;
+            return Optional.of(sql);
+        } else {
+            LOGGER.debug("No fields to select");
+            return Optional.empty();
+        }
     }
 
     private Optional<Integer> getOptFieldIndexPosition(final FieldIndex fieldIndex, final String fieldName) {

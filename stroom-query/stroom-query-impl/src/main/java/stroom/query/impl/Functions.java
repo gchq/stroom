@@ -393,7 +393,10 @@ public class Functions {
         }
     }
 
-    private List<CompletionItem> buildFunctionCompletions() {
+    /**
+     * Pkg private for testing
+     */
+    List<CompletionItem> buildFunctionCompletions() {
         final List<CompletionItem> completionItems = new ArrayList<>();
         for (final FunctionDef functionDef : FunctionFactory.getFunctionDefinitions()) {
             if (functionDef != null) {
@@ -580,7 +583,7 @@ public class Functions {
     }
 
     private StringBuilder appendSpaceIfNeeded(final StringBuilder stringBuilder) {
-        if (stringBuilder.length() > 0) {
+        if (!stringBuilder.isEmpty()) {
             stringBuilder.append(" ");
         }
         return stringBuilder;
@@ -669,7 +672,7 @@ public class Functions {
         return Optional.empty();
     }
 
-    private boolean isSymbolicFunction(final String name) {
+    private static boolean isSymbolicFunction(final String name) {
         final int len = name.length();
         if (len == 1) {
             return !Character.isAlphabetic(name.charAt(0));

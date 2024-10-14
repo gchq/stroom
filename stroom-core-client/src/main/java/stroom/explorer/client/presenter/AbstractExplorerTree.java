@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 //        }
 //        cellTable.setKeyboardSelectedRow(row, true);
         cellTable.setFocus(true);
-//
-//        cellTable.getSesetFocus(true);
     }
 
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();

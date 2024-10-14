@@ -16,6 +16,7 @@
 
 package stroom.dictionary.impl;
 
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
@@ -63,6 +64,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
             DictionaryDoc.DOCUMENT_TYPE,
             DictionaryDoc.DOCUMENT_TYPE,
             DictionaryDoc.ICON);
+    public static final boolean IS_DE_DUP_DEFAULT = false;
     private final Store<DictionaryDoc> store;
 
     @Inject
@@ -287,17 +289,28 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String getCombinedData(final DocRef docRef) {
-        return getCombinedWordList(docRef, null, true).asString();
+        return getCombinedWordList(docRef, null, IS_DE_DUP_DEFAULT).asString();
     }
 
-    public WordList getCombinedWordList(final DocRef docRef,
+    @Override
+    public String[] getWords(final DocRef dictionaryRef) {
+        return getCombinedWordList(dictionaryRef, null, IS_DE_DUP_DEFAULT).asWordArray();
+    }
+
+    @Override
+    public WordList getCombinedWordList(final DocRef dictionaryRef,
+                                        final DocRefDecorator docRefDecorator) {
+        return getCombinedWordList(dictionaryRef, docRefDecorator, IS_DE_DUP_DEFAULT);
+    }
+
+    public WordList getCombinedWordList(final DocRef dictionaryRef,
                                         final DocRefDecorator docRefDecorator,
                                         final boolean deDup) {
         final Builder builder = WordList.builder(deDup);
         final Set<DocRef> visited = new HashSet<>();
         final Stack<DocRef> visitPath = new Stack<>();
-        doGetCombinedWordList(docRefDecorator, builder, docRef, visited, visitPath);
 
+        doGetCombinedWordList(docRefDecorator, builder, dictionaryRef, visited, visitPath);
 
         final WordList wordList = builder.build();
 
@@ -305,17 +318,6 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                 wordList.size(), wordList.sourceCount()));
 
         return wordList;
-    }
-
-    @Override
-    public String[] getWords(final DocRef dictionaryRef) {
-        return getCombinedWordList(dictionaryRef, null, true).asWordArray();
-    }
-
-    @Override
-    public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                        final DocRefDecorator docRefDecorator) {
-        return getCombinedWordList(dictionaryRef, docRefDecorator, true);
     }
 
     private void doGetCombinedWordList(final DocRefDecorator docRefDecorator,

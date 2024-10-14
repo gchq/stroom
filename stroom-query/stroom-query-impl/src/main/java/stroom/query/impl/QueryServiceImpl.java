@@ -97,12 +97,14 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -640,28 +642,37 @@ class QueryServiceImpl implements QueryService {
             // Determine what keywords can come after the last one seen
             final Set<TokenType> keywordsValidAfter = getKeywordsValidAfter(lastKeyword, lastKeywordSequence);
 
-            if (includeDataSources(lastKeywordSequence)) {
-                types.add(QueryHelpType.DATA_SOURCE);
+            if (seenInDictionary(tokens)) {
+                // If we see 'in dictionary ' then the only thing we want after that is a dictionary
+                types.add(QueryHelpType.DICTIONARY);
+                applicableStructureItems = Collections.emptySet();
+            } else {
+                if (includeDataSources(lastKeywordSequence)) {
+                    types.add(QueryHelpType.DATA_SOURCE);
+                }
+
+                applicableStructureItems = keywordsValidAfter.stream()
+                        .filter(tokenType -> TokenType.BY != tokenType)
+                        .map(tokenType -> {
+                            if (TokenType.GROUP == tokenType) {
+                                return Structures.name(TokenType.GROUP, TokenType.BY);
+                            } else if (TokenType.SORT == tokenType) {
+                                return Structures.name(TokenType.SORT, TokenType.BY);
+                            } else if (TokenType.IN == tokenType) {
+                                return Structures.name(TokenType.IN, TokenType.DICTIONARY);
+                            } else {
+                                return Structures.name(tokenType);
+                            }
+                        })
+                        .collect(Collectors.toSet());
+                final boolean includeStructure = !keywordsValidAfter.isEmpty();
+                if (lastKeyword != null
+                        && keywordsSeen.contains(TokenType.FROM)
+                        && tokens.size() >= 4) {
+                    types.addAll(getHelpTypes(lastKeyword, lastKeywordSequence, includeStructure));
+                }
             }
 
-            applicableStructureItems = keywordsValidAfter.stream()
-                    .filter(tokenType -> TokenType.BY != tokenType)
-                    .map(tokenType -> {
-                        if (TokenType.GROUP == tokenType) {
-                            return Structures.name(TokenType.GROUP, TokenType.BY);
-                        } else if (TokenType.SORT == tokenType) {
-                            return Structures.name(TokenType.SORT, TokenType.BY);
-                        } else {
-                            return Structures.name(tokenType);
-                        }
-                    })
-                    .collect(Collectors.toSet());
-            final boolean includeStructure = !keywordsValidAfter.isEmpty();
-            if (lastKeyword != null
-                    && keywordsSeen.contains(TokenType.FROM)
-                    && tokens.size() >= 4) {
-                types.addAll(getHelpTypes(lastKeyword, lastKeywordSequence, includeStructure));
-            }
             LOGGER.debug("returning type: {}, applicableStructureItems: {}", types, applicableStructureItems);
             return new ContextualQueryHelp(types, applicableStructureItems);
         }
@@ -784,6 +795,55 @@ class QueryServiceImpl implements QueryService {
         return tokenTypes != null
                 && tokenTypes.size() > idx
                 && tokenTypes.get(idx) == tokenType;
+    }
+
+    private boolean seenInDictionary(final List<Token> tokens) {
+        if (tokens.isEmpty()) {
+            return false;
+        } else {
+            // Last token may be a string if we are part way through the dict name
+            return containsTailElements(
+                    tokens,
+                    Token::getTokenType,
+                    TokenType.IN,
+                    TokenType.WHITESPACE,
+                    TokenType.DICTIONARY,
+                    TokenType.WHITESPACE)
+                    || containsTailElements(
+                    tokens,
+                    Token::getTokenType,
+                    TokenType.IN,
+                    TokenType.WHITESPACE,
+                    TokenType.DICTIONARY,
+                    TokenType.WHITESPACE,
+                    TokenType.STRING);
+        }
+    }
+
+    private static <T1, T2> boolean containsTailElements(final List<T1> items,
+                                                         final Function<T1, T2> mapper,
+                                                         final T2... requiredTailTypes) {
+        if (NullSafe.isEmptyArray(requiredTailTypes)) {
+            return false;
+        } else if (NullSafe.isEmptyCollection(items)) {
+            return false;
+        } else if (requiredTailTypes.length > items.size()) {
+            return false;
+        } else {
+            int listIdx = items.size() - 1;
+            boolean isMatch = true;
+            Objects.requireNonNull(mapper);
+            for (int arrIdx = requiredTailTypes.length - 1; arrIdx >= 0; arrIdx--) {
+                final T1 item = items.get(listIdx);
+                final T2 mappedItem = mapper.apply(item);
+                if (!Objects.equals(requiredTailTypes[arrIdx], mappedItem)) {
+                    isMatch = false;
+                    break;
+                }
+                listIdx--;
+            }
+            return isMatch;
+        }
     }
 
     @Override

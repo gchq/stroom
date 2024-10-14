@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.20] - 2024-10-07
+
+* Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
+
+* Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.
+
+
 ## [v7.5-beta.19] - 2024-10-07
 
 * Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
@@ -904,7 +911,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.20...HEAD
+[v7.5-beta.20]: https://github.com/gchq/stroom/compare/v7.5-beta.19...v7.5-beta.20
 [v7.5-beta.19]: https://github.com/gchq/stroom/compare/v7.5-beta.18...v7.5-beta.19
 [v7.5-beta.18]: https://github.com/gchq/stroom/compare/v7.5-beta.17...v7.5-beta.18
 [v7.5-beta.17]: https://github.com/gchq/stroom/compare/v7.5-beta.16...v7.5-beta.17

@@ -1,10 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.impl.db;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
-import stroom.util.logging.LogUtil;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
@@ -29,6 +44,80 @@ public class DBPersistence implements Persistence {
 
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
 
+    private static final String SELECT_BY_TYPE_UUID_SQL = """
+            SELECT
+              ext,
+              data
+            FROM doc
+            WHERE type = ?
+            AND uuid = ?""";
+
+    private static final String DELETE_BY_UUID_SQL = """
+            DELETE FROM doc
+            WHERE type = ?
+            AND uuid = ?""";
+
+    private static final String LIST_BY_TYPE_SQL = """
+            SELECT DISTINCT
+              uuid,
+              name
+            FROM doc
+            WHERE type = ?
+            ORDER BY uuid""";
+
+    private static final String SELECT_BY_TYPE_NAME_EQUALS_SQL = """
+            SELECT DISTINCT
+              uuid,
+              name
+            FROM doc
+            WHERE type = ?
+            AND name = ?
+            ORDER BY uuid""";
+
+    private static final String SELECT_BY_TYPE_NAME_WILDCARD_SQL = """
+            SELECT DISTINCT
+              uuid,
+              name
+            FROM doc
+            WHERE type = ?
+            AND name like ?
+            ORDER BY uuid""";
+
+    private static final String SELECT_ID_BY_TYPE_UUID_SQL = """
+            SELECT
+              id
+            FROM doc
+            WHERE type = ?
+            AND uuid = ?
+            LIMIT 1""";
+
+    private static final String UPDATE_SQL = """
+            UPDATE doc
+            SET
+              type = ?,
+              uuid = ?,
+              name = ?,
+              ext = ?,
+              data = ?
+            WHERE id = ?""";
+
+    private static final String INSERT_SQL = """
+            INSERT INTO doc (
+              type,
+              uuid,
+              name,
+              ext,
+              data)
+            VALUES (?, ?, ?, ?, ?)""";
+
+    private static final String SELECT_ID_BY_TYPE_UUID_EXT_SQL = """
+            SELECT
+            id
+            FROM doc
+            WHERE type = ?
+            AND uuid = ?
+            AND ext = ?""";
+
     private final DataSource dataSource;
 
     @Inject
@@ -51,14 +140,7 @@ public class DBPersistence implements Persistence {
     public Map<String, byte[]> read(final DocRef docRef) {
         final Map<String, byte[]> data = new HashMap<>();
         try (final Connection connection = dataSource.getConnection()) {
-            final String sql = "" +
-                    "SELECT " +
-                    "  ext, " +
-                    "  data " +
-                    "FROM doc " +
-                    "WHERE type = ? " +
-                    "AND uuid = ?";
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_BY_TYPE_UUID_SQL)) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
 
@@ -73,7 +155,7 @@ public class DBPersistence implements Persistence {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        if (data.size() == 0) {
+        if (data.isEmpty()) {
             throw new DocumentNotFoundException(docRef);
         }
 
@@ -133,12 +215,8 @@ public class DBPersistence implements Persistence {
 
     @Override
     public void delete(final DocRef docRef) {
-        final String sql = "" +
-                "DELETE FROM doc " +
-                "WHERE type = ? " +
-                "AND uuid = ?";
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(DELETE_BY_UUID_SQL)) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
 
@@ -155,14 +233,7 @@ public class DBPersistence implements Persistence {
         final List<DocRef> list = new ArrayList<>();
 
         try (final Connection connection = dataSource.getConnection()) {
-            final String sql = "" +
-                    "SELECT DISTINCT " +
-                    "  uuid, " +
-                    "  name " +
-                    "FROM doc " +
-                    "WHERE type = ? " +
-                    "ORDER BY uuid";
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(LIST_BY_TYPE_SQL)) {
                 preparedStatement.setString(1, type);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -190,19 +261,11 @@ public class DBPersistence implements Persistence {
         final String nameFilterSqlValue = allowWildCards
                 ? PatternUtil.createSqlLikeStringFromWildCardFilter(nameFilter)
                 : nameFilter;
-        final String condition = allowWildCards
-                ? "like"
-                : "=";
+        final String sql = allowWildCards
+                ? SELECT_BY_TYPE_NAME_WILDCARD_SQL
+                : SELECT_BY_TYPE_NAME_EQUALS_SQL;
 
         try (final Connection connection = dataSource.getConnection()) {
-            final String sql = LogUtil.message("""
-                    SELECT DISTINCT
-                      uuid,
-                      name
-                    FROM doc
-                    WHERE type = ?
-                    AND name {} ?
-                    ORDER BY uuid""", condition);
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
                 preparedStatement.setString(2, nameFilterSqlValue);
@@ -229,14 +292,7 @@ public class DBPersistence implements Persistence {
     }
 
     private Long getId(final Connection connection, final DocRef docRef) {
-        final String sql = "" +
-                "SELECT " +
-                "  id " +
-                "FROM doc " +
-                "WHERE type = ? " +
-                "AND uuid = ? " +
-                "LIMIT 1";
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_SQL)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
 
@@ -254,14 +310,7 @@ public class DBPersistence implements Persistence {
     }
 
     private Long getId(final Connection connection, final DocRef docRef, final String ext) {
-        final String sql = "" +
-                "SELECT " +
-                "id " +
-                "FROM doc " +
-                "WHERE type = ? " +
-                "AND uuid = ? " +
-                "AND ext = ?";
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_EXT_SQL)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, ext);
@@ -280,15 +329,7 @@ public class DBPersistence implements Persistence {
     }
 
     private void save(final Connection connection, final DocRef docRef, final String ext, final byte[] bytes) {
-        final String sql = "" +
-                "INSERT INTO doc (" +
-                "  type, " +
-                "  uuid, " +
-                "  name, " +
-                "  ext, " +
-                "  data) " +
-                "VALUES (?, ?, ?, ?, ?)";
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(INSERT_SQL)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());
@@ -307,16 +348,7 @@ public class DBPersistence implements Persistence {
                         final DocRef docRef,
                         final String ext,
                         final byte[] bytes) {
-        final String sql = "" +
-                "UPDATE doc " +
-                "SET " +
-                "  type = ?, " +
-                "  uuid = ?, " +
-                "  name = ?, " +
-                "  ext = ?, " +
-                "  data = ? " +
-                "WHERE id = ?";
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());
