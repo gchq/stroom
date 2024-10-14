@@ -6,6 +6,7 @@ import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
+import stroom.util.NullSafe;
 
 import com.google.common.base.Predicates;
 
@@ -100,12 +101,15 @@ public class ValFilter {
                 for (final UsedColumn usedColumn : usedColumns) {
                     final Generator generator = usedColumn.generator;
                     generator.set(values, storedValues);
-                    final String value = generator.eval(storedValues, null).toString();
+                    final Val val = generator.eval(storedValues, null);
+                    final String text = NullSafe.getOrElse(val, Val::toString, "");
                     // As soon as we fail a predicate test for a column then return false.
-                    if (!usedColumn.columnIncludeExcludePredicate.test(value)) {
+                    if (!usedColumn.columnIncludeExcludePredicate.test(text)) {
                         return false;
                     }
-                    usedColumn.mapConsumer.accept(columnNameToValueMap, value);
+                    // TODO : Provide a map of Val to the row predicate as opposed to strings.
+                    //  Fix the row expression matcher to deal with Vals.
+                    usedColumn.mapConsumer.accept(columnNameToValueMap, val.toString());
                 }
 
                 // Test the row value map.
