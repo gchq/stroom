@@ -302,14 +302,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> {
-            final boolean show = Boolean.TRUE != getTableSettings().getShowValueFilter();
+            final boolean applyValueFilters = !getTableSettings().isApplyValueFilters();
             setSettings(getTableSettings()
                     .copy()
-                    .showValueFilter(show)
+                    .applyValueFilters(applyValueFilters)
                     .build());
             setDirty(true);
-            updateColumns();
-            setShowValueFilter(show);
+            refresh();
+            setApplyValueFilters(applyValueFilters);
         }));
 
         registerHandler(annotateButton.addClickHandler(event -> {
@@ -325,12 +325,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
     }
 
-    private void setShowValueFilter(final boolean show) {
-        valueFilterButton.setState(show);
-        if (show) {
-            dataGrid.addStyleName("showValueFilter");
+    private void setApplyValueFilters(final boolean applyValueFilters) {
+        valueFilterButton.setState(applyValueFilters);
+        if (applyValueFilters) {
+            dataGrid.addStyleName("applyValueFilters");
         } else {
-            dataGrid.removeStyleName("showValueFilter");
+            dataGrid.removeStyleName("applyValueFilters");
         }
     }
 
@@ -930,7 +930,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Change value filter state.
-        setShowValueFilter(getTableSettings().getShowValueFilter() == Boolean.TRUE);
+        setApplyValueFilters(getTableSettings().isApplyValueFilters());
     }
 
     public TableComponentSettings getTableSettings() {

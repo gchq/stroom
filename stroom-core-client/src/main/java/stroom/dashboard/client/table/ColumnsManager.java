@@ -349,7 +349,7 @@ public class ColumnsManager implements HeadingListener {
 //    public void setValueFilterVisible(final boolean visible) {
 //        final List<Column> columns = new ArrayList<>();
 //        for (final Column column : getColumns()) {
-//                columns.add(column.copy().showValueFilter(visible).build());
+//                columns.add(column.copy().applyValueFilters(visible).build());
 //        }
 //        updateColumns(columns);
 //        tablePresenter.setDirty(true);

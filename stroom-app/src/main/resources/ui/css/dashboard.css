@@ -469,11 +469,16 @@
     display: none;
 }
 
-.TablePresenter.showValueFilter input {
+.TablePresenter .dataGridHeader {
+    min-height: 16px;
+    vertical-align: top;
+}
+
+.TablePresenter.applyValueFilters input {
     display: inline-block;
 }
 
-.TablePresenter.showValueFilter .dataGridHeader {
+.TablePresenter.applyValueFilters .dataGridHeader {
     padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
 }
 

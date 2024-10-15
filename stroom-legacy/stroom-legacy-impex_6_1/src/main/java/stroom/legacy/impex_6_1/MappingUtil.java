@@ -207,7 +207,7 @@ public final class MappingUtil {
                 value.getShowDetail(),
                 mapList(value.getConditionalFormattingRules(), MappingUtil::map),
                 value.getModelVersion(),
-                null);
+                false);
     }
 
     public static ConditionalFormattingRule map(stroom.legacy.model_6_1.ConditionalFormattingRule value) {

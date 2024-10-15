@@ -89,6 +89,7 @@ public class TableResultCreator implements ResultCreator {
                 optionalRowCreator = ConditionalFormattingRowCreator.create(
                         dataStore.getColumns(),
                         columns,
+                        tableSettings.isApplyValueFilters(),
                         columnFormatter,
                         keyFactory,
                         tableSettings.getAggregateFilter(),
@@ -99,6 +100,7 @@ public class TableResultCreator implements ResultCreator {
                     optionalRowCreator = FilteredRowCreator.create(
                             dataStore.getColumns(),
                             columns,
+                            tableSettings.isApplyValueFilters(),
                             columnFormatter,
                             keyFactory,
                             tableSettings.getAggregateFilter(),

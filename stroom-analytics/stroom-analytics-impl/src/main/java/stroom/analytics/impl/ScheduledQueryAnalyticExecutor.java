@@ -457,6 +457,7 @@ public class ScheduledQueryAnalyticExecutor {
                         Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
                                 dataStore.getColumns(),
                                 columns,
+                                false,
                                 fieldFormatter,
                                 keyFactory,
                                 tableSettings.getAggregateFilter(),

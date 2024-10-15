@@ -37,6 +37,7 @@ public class FilteredRowCreator extends SimpleRowCreator {
 
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
                                                    final List<Column> newColumns,
+                                                   final boolean applyValueFilters,
                                                    final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilterExpression,
@@ -44,8 +45,10 @@ public class FilteredRowCreator extends SimpleRowCreator {
                                                    final ErrorConsumer errorConsumer) {
         final Optional<Predicate<RowValueMap>> optionalRowExpressionMatcher =
                 RowFilter.create(newColumns, dateTimeSettings, rowFilterExpression, new HashMap<>());
-        final Optional<Predicate<RowValueMap>> optionalRowValueFilter =
-                RowValueFilter.create(newColumns, dateTimeSettings, new HashMap<>());
+        Optional<Predicate<RowValueMap>> optionalRowValueFilter = Optional.empty();
+        if (applyValueFilters) {
+            optionalRowValueFilter = RowValueFilter.create(newColumns, dateTimeSettings, new HashMap<>());
+        }
 
         Predicate<RowValueMap> rowFilter = Predicates.alwaysTrue();
         if (optionalRowExpressionMatcher.isPresent() && optionalRowValueFilter.isPresent()) {

@@ -46,7 +46,7 @@ import java.util.Objects;
         "showDetail",
         "conditionalFormattingRules",
         "modelVersion",
-        "showValueFilter"})
+        "applyValueFilters"})
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
 
@@ -101,7 +101,7 @@ public class TableComponentSettings implements ComponentSettings {
     @JsonProperty("modelVersion")
     private final String modelVersion;
     @JsonProperty
-    private final Boolean showValueFilter;
+    private final boolean applyValueFilters;
 
     @JsonCreator
     public TableComponentSettings(
@@ -117,7 +117,7 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion,
-            @JsonProperty("showValueFilter") final Boolean showValueFilter) {
+            @JsonProperty("applyValueFilters") final boolean applyValueFilters) {
 
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
@@ -130,7 +130,7 @@ public class TableComponentSettings implements ComponentSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
-        this.showValueFilter = showValueFilter;
+        this.applyValueFilters = applyValueFilters;
     }
 
     public String getQueryId() {
@@ -204,8 +204,8 @@ public class TableComponentSettings implements ComponentSettings {
         return modelVersion;
     }
 
-    public Boolean getShowValueFilter() {
-        return showValueFilter;
+    public boolean isApplyValueFilters() {
+        return applyValueFilters;
     }
 
     @Override
@@ -217,7 +217,8 @@ public class TableComponentSettings implements ComponentSettings {
             return false;
         }
         final TableComponentSettings that = (TableComponentSettings) o;
-        return Objects.equals(queryId, that.queryId) &&
+        return applyValueFilters == that.applyValueFilters &&
+                Objects.equals(queryId, that.queryId) &&
                 Objects.equals(dataSourceRef, that.dataSourceRef) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
@@ -227,8 +228,7 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(pageSize, that.pageSize) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion) &&
-                Objects.equals(showValueFilter, that.showValueFilter);
+                Objects.equals(modelVersion, that.modelVersion);
     }
 
     @Override
@@ -245,7 +245,7 @@ public class TableComponentSettings implements ComponentSettings {
                 showDetail,
                 conditionalFormattingRules,
                 modelVersion,
-                showValueFilter);
+                applyValueFilters);
     }
 
     @Override
@@ -262,7 +262,7 @@ public class TableComponentSettings implements ComponentSettings {
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", modelVersion='" + modelVersion + '\'' +
-                ", showValueFilter='" + showValueFilter + '\'' +
+                ", applyValueFilters='" + applyValueFilters + '\'' +
                 '}';
     }
 
@@ -292,7 +292,7 @@ public class TableComponentSettings implements ComponentSettings {
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
-        private Boolean showValueFilter;
+        private boolean applyValueFilters;
 
         private Builder() {
         }
@@ -315,7 +315,7 @@ public class TableComponentSettings implements ComponentSettings {
                     ? null
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
-            this.showValueFilter = tableSettings.showValueFilter;
+            this.applyValueFilters = tableSettings.applyValueFilters;
         }
 
         /**
@@ -437,8 +437,8 @@ public class TableComponentSettings implements ComponentSettings {
             return self();
         }
 
-        public Builder showValueFilter(final Boolean showValueFilter) {
-            this.showValueFilter = showValueFilter;
+        public Builder applyValueFilters(final boolean applyValueFilters) {
+            this.applyValueFilters = applyValueFilters;
             return self();
         }
 
@@ -461,7 +461,7 @@ public class TableComponentSettings implements ComponentSettings {
                     showDetail,
                     conditionalFormattingRules,
                     modelVersion,
-                    showValueFilter);
+                    applyValueFilters);
         }
 
         public TableSettings buildTableSettings() {
@@ -476,7 +476,8 @@ public class TableComponentSettings implements ComponentSettings {
                     maxResults,
                     showDetail,
                     conditionalFormattingRules,
-                    null);
+                    null,
+                    applyValueFilters);
         }
     }
 }

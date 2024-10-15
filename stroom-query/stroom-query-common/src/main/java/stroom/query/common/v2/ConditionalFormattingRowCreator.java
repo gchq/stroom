@@ -5,6 +5,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.PredicateUtil;
@@ -43,6 +44,7 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
 
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
                                                    final List<Column> newColumns,
+                                                   final boolean applyValueFilters,
                                                    final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilterExpression,
@@ -58,8 +60,10 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
             if (!activeRules.isEmpty()) {
                 final Optional<Predicate<RowValueMap>> optionalRowExpressionMatcher =
                         RowFilter.create(newColumns, dateTimeSettings, rowFilterExpression, new HashMap<>());
-                final Optional<Predicate<RowValueMap>> optionalRowValueFilter =
-                        RowValueFilter.create(newColumns, dateTimeSettings, new HashMap<>());
+                Optional<Predicate<RowValueMap>> optionalRowValueFilter = Optional.empty();
+                if (applyValueFilters) {
+                    optionalRowValueFilter = RowValueFilter.create(newColumns, dateTimeSettings, new HashMap<>());
+                }
 
                 Predicate<RowValueMap> rowFilter = Predicates.alwaysTrue();
                 if (optionalRowExpressionMatcher.isPresent() && optionalRowValueFilter.isPresent()) {

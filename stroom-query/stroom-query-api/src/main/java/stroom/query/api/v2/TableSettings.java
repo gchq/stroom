@@ -42,7 +42,8 @@ import java.util.Objects;
         "showDetail",
         "conditionalFormattingRules",
         "modelVersion",
-        "visSettings"})
+        "visSettings",
+        "applyValueFilters"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
@@ -106,6 +107,8 @@ public final class TableSettings {
 
     @JsonProperty("visSettings")
     private final QLVisSettings visSettings;
+    @JsonProperty
+    private final boolean applyValueFilters;
 
     public TableSettings(
             final String queryId,
@@ -118,7 +121,8 @@ public final class TableSettings {
             final List<Long> maxResults,
             final Boolean showDetail,
             final List<ConditionalFormattingRule> conditionalFormattingRules,
-            final QLVisSettings visSettings) {
+            final QLVisSettings visSettings,
+            final boolean applyValueFilters) {
         this.queryId = queryId;
         this.fields = columns;
         this.window = window;
@@ -130,6 +134,7 @@ public final class TableSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.visSettings = visSettings;
+        this.applyValueFilters = applyValueFilters;
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -144,10 +149,10 @@ public final class TableSettings {
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Long> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules")
-            final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion, // deprecated modelVersion.
-            @JsonProperty("visSettings") final QLVisSettings visSettings) {
+            @JsonProperty("visSettings") final QLVisSettings visSettings,
+            @JsonProperty("applyValueFilters") final Boolean applyValueFilters) {
         this.queryId = queryId;
         this.fields = fields;
         this.window = window;
@@ -160,6 +165,7 @@ public final class TableSettings {
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
         this.visSettings = visSettings;
+        this.applyValueFilters = applyValueFilters;
     }
 
     public String getQueryId() {
@@ -226,6 +232,10 @@ public final class TableSettings {
         return visSettings;
     }
 
+    public boolean isApplyValueFilters() {
+        return applyValueFilters;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -235,30 +245,37 @@ public final class TableSettings {
             return false;
         }
         final TableSettings that = (TableSettings) o;
-        return Objects.equals(queryId, that.queryId) &&
+        return applyValueFilters == that.applyValueFilters &&
+                Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(window, that.window) &&
+                Objects.equals(valueFilter, that.valueFilter) &&
                 Objects.equals(aggregateFilter, that.aggregateFilter) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+                Objects.equals(modelVersion, that.modelVersion) &&
                 Objects.equals(visSettings, that.visSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryId,
+        return Objects.hash(
+                queryId,
                 fields,
                 window,
+                valueFilter,
                 aggregateFilter,
                 extractValues,
                 extractionPipeline,
                 maxResults,
                 showDetail,
                 conditionalFormattingRules,
-                visSettings);
+                modelVersion,
+                visSettings,
+                applyValueFilters);
     }
 
     @Override
@@ -274,6 +291,7 @@ public final class TableSettings {
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", visSettings=" + visSettings +
+                ", applyValueFilters='" + applyValueFilters + '\'' +
                 '}';
     }
 
@@ -301,6 +319,7 @@ public final class TableSettings {
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private QLVisSettings visSettings;
+        private boolean applyValueFilters;
 
         private Builder() {
         }
@@ -323,6 +342,7 @@ public final class TableSettings {
                     ? null
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
             this.visSettings = tableSettings.visSettings;
+            this.applyValueFilters = tableSettings.applyValueFilters;
         }
 
         /**
@@ -462,6 +482,11 @@ public final class TableSettings {
             return this;
         }
 
+        public Builder applyValueFilters(final boolean applyValueFilters) {
+            this.applyValueFilters = applyValueFilters;
+            return this;
+        }
+
         public TableSettings build() {
             return new TableSettings(
                     queryId,
@@ -474,7 +499,8 @@ public final class TableSettings {
                     maxResults,
                     showDetail,
                     conditionalFormattingRules,
-                    visSettings);
+                    visSettings,
+                    applyValueFilters);
         }
     }
 }
