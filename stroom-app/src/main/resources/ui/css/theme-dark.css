@@ -51,6 +51,8 @@
     --row__background-color--selected--hovered: rgb(0,120,199);
     --row__background-color--focussed: rgba(0,120,199,.5);
     --row__background-color--selected--focussed: rgb(0,120,199);
+    --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
+    --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: var(--text-color--selected);
 
     --menu-separator__color: rgb(255 255 255 / 20%);

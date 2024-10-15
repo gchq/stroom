@@ -45,7 +45,8 @@ import java.util.Objects;
         "pageSize",
         "showDetail",
         "conditionalFormattingRules",
-        "modelVersion"})
+        "modelVersion",
+        "showValueFilter"})
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
 
@@ -99,6 +100,8 @@ public class TableComponentSettings implements ComponentSettings {
     @Schema(description = "IGNORE: UI use only", hidden = true)
     @JsonProperty("modelVersion")
     private final String modelVersion;
+    @JsonProperty
+    private final Boolean showValueFilter;
 
     @JsonCreator
     public TableComponentSettings(
@@ -113,7 +116,8 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("showDetail") final Boolean showDetail,
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
-            @JsonProperty("modelVersion") final String modelVersion) {
+            @JsonProperty("modelVersion") final String modelVersion,
+            @JsonProperty("showValueFilter") final Boolean showValueFilter) {
 
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
@@ -126,6 +130,7 @@ public class TableComponentSettings implements ComponentSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
+        this.showValueFilter = showValueFilter;
     }
 
     public String getQueryId() {
@@ -199,6 +204,10 @@ public class TableComponentSettings implements ComponentSettings {
         return modelVersion;
     }
 
+    public Boolean getShowValueFilter() {
+        return showValueFilter;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -218,7 +227,8 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(pageSize, that.pageSize) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion);
+                Objects.equals(modelVersion, that.modelVersion) &&
+                Objects.equals(showValueFilter, that.showValueFilter);
     }
 
     @Override
@@ -234,7 +244,8 @@ public class TableComponentSettings implements ComponentSettings {
                 pageSize,
                 showDetail,
                 conditionalFormattingRules,
-                modelVersion);
+                modelVersion,
+                showValueFilter);
     }
 
     @Override
@@ -251,6 +262,7 @@ public class TableComponentSettings implements ComponentSettings {
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", modelVersion='" + modelVersion + '\'' +
+                ", showValueFilter='" + showValueFilter + '\'' +
                 '}';
     }
 
@@ -280,6 +292,7 @@ public class TableComponentSettings implements ComponentSettings {
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
+        private Boolean showValueFilter;
 
         private Builder() {
         }
@@ -302,6 +315,7 @@ public class TableComponentSettings implements ComponentSettings {
                     ? null
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
+            this.showValueFilter = tableSettings.showValueFilter;
         }
 
         /**
@@ -423,6 +437,11 @@ public class TableComponentSettings implements ComponentSettings {
             return self();
         }
 
+        public Builder showValueFilter(final Boolean showValueFilter) {
+            this.showValueFilter = showValueFilter;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -441,7 +460,8 @@ public class TableComponentSettings implements ComponentSettings {
                     pageSize,
                     showDetail,
                     conditionalFormattingRules,
-                    modelVersion);
+                    modelVersion,
+                    showValueFilter);
         }
 
         public TableSettings buildTableSettings() {

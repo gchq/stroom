@@ -51,8 +51,8 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
         final NativeEvent nativeEvent = event.getNativeEvent();
         if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
-            return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 0, 5) ||
-                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5);
+            return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5) ||
+                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
         }
         return false;
     }
@@ -81,12 +81,12 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
                                   final NativeEvent event,
                                   final ValueUpdater<DocRef> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 0, 5)) {
+        if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
             final String text = getText(value);
             if (text != null) {
                 ClipboardUtil.copy(text);
             }
-        } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5)) {
+        } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
             OpenDocumentEvent.fire(this, value, true);
         }
     }

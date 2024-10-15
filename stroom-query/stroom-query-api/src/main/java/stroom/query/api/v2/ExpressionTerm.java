@@ -201,7 +201,7 @@ public final class ExpressionTerm extends ExpressionItem {
 
 
     public enum Condition implements HasDisplayValue {
-        @Deprecated CONTAINS("contains"), // No longer pick-able in TermEditor
+        CONTAINS("contains"), // No longer pick-able in TermEditor
         EQUALS("="),
         NOT_EQUALS("!="),
         GREATER_THAN(">"),

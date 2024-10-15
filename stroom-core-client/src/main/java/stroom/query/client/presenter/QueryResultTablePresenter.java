@@ -462,7 +462,7 @@ public class QueryResultTablePresenter
                     }
                 };
 
-        final ColumnHeader columnHeader = new ColumnHeader(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column, null);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
     }

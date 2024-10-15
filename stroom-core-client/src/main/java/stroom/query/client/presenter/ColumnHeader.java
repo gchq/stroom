@@ -16,6 +16,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.client.table.ColumnsManager;
 import stroom.query.api.v2.Column;
 
 import com.google.gwt.user.cellview.client.Header;
@@ -24,8 +25,8 @@ public class ColumnHeader extends Header<Column> {
 
     private final Column column;
 
-    public ColumnHeader(final Column column) {
-        super(TableCell.create());
+    public ColumnHeader(final Column column, final ColumnsManager columnsManager) {
+        super(ColumnHeaderCell.create(columnsManager));
         this.column = column;
     }
 

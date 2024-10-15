@@ -79,6 +79,7 @@ import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
@@ -86,6 +87,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
@@ -137,6 +139,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addColumnButton;
     private final ButtonView downloadButton;
+    private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
@@ -189,6 +192,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.addStyleName("TablePresenter");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -201,6 +205,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+
+        // Filter values
+        valueFilterButton = new InlineSvgToggleButton();
+        valueFilterButton.setSvg(SvgImage.FILTER);
+        valueFilterButton.setTitle("Filter Values");
+        pagerView.addButton(valueFilterButton);
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
@@ -291,6 +301,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
+        registerHandler(valueFilterButton.addClickHandler(event -> {
+            final boolean show = Boolean.TRUE != getTableSettings().getShowValueFilter();
+            setSettings(getTableSettings()
+                    .copy()
+                    .showValueFilter(show)
+                    .build());
+            setDirty(true);
+            updateColumns();
+            setShowValueFilter(show);
+        }));
+
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(),
@@ -302,6 +323,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
             setPause(!pause, true);
         }));
+    }
+
+    private void setShowValueFilter(final boolean show) {
+        valueFilterButton.setState(show);
+        if (show) {
+            dataGrid.addStyleName("showValueFilter");
+        } else {
+            dataGrid.removeStyleName("showValueFilter");
+        }
     }
 
     private void setPause(final boolean pause,
@@ -641,7 +671,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 };
 
-        final ColumnHeader columnHeader = new ColumnHeader(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
     }
@@ -898,6 +928,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             });
             setSettings(getTableSettings().copy().columns(columns).build());
         }
+
+        // Change value filter state.
+        setShowValueFilter(getTableSettings().getShowValueFilter() == Boolean.TRUE);
     }
 
     public TableComponentSettings getTableSettings() {
@@ -987,6 +1020,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         }
+    }
+
+    void setFocused(final boolean focused) {
+        dataGrid.setFocused(focused);
     }
 
     void clear() {

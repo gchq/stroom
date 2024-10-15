@@ -62,10 +62,10 @@ public class CopyTextUtil {
         if (BrowserEvents.MOUSEDOWN.equals(e.getType()) && MouseUtil.isPrimary(e)) {
             final Element element = e.getEventTarget().cast();
             final Element copy =
-                    ElementUtil.findMatching(element, CopyTextUtil.COPY_CLASS_NAME, 0, 5);
+                    ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5);
             if (copy != null) {
-                final Element container = ElementUtil.findMatching(
-                        element, "docRefLinkContainer", 0, 5);
+                final Element container = ElementUtil.findParent(
+                        element, "docRefLinkContainer", 5);
 
                 GwtNullSafe.consumeNonBlankString(container, Element::getInnerText, text ->
                         ClipboardUtil.copy(text.trim()));

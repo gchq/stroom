@@ -206,7 +206,8 @@ public final class MappingUtil {
                 100,
                 value.getShowDetail(),
                 mapList(value.getConditionalFormattingRules(), MappingUtil::map),
-                value.getModelVersion());
+                value.getModelVersion(),
+                null);
     }
 
     public static ConditionalFormattingRule map(stroom.legacy.model_6_1.ConditionalFormattingRule value) {
@@ -336,7 +337,8 @@ public final class MappingUtil {
                 value.getGroup(),
                 value.getWidth(),
                 value.isVisible(),
-                value.isSpecial());
+                value.isSpecial(),
+                null);
     }
 
     public static ColumnRef mapColumnRef(stroom.legacy.model_6_1.Field value) {

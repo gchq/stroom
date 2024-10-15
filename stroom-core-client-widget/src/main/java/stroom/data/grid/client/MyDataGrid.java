@@ -76,7 +76,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private boolean allowMove = true;
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
-    private boolean hasBeenResized = false;
 
     private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
@@ -408,7 +407,11 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         // Get parent th.
         while (th != null && !"th".equalsIgnoreCase(th.getTagName())) {
-            th = th.getParentElement();
+            if ("input".equalsIgnoreCase(th.getTagName())) {
+                th = null;
+            } else {
+                th = th.getParentElement();
+            }
         }
 
         if (th != null) {
@@ -549,7 +552,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     public void resizeColumn(final int index, final int width) {
-        hasBeenResized = true;
         if (headingListener != null) {
             headingListener.resizeColumn(index, width);
         }

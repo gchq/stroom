@@ -242,13 +242,11 @@ table .dataGridOddRow.dataGridSelectedRow {
 
 .dataGridOddRow:focus-within,
 .dataGridEvenRow:focus-within {
-    /*background-color: var(--row__background-color--focussed);*/
-    box-shadow: inset 0 0 2px var(--text-color);
+    box-shadow: var(--row__box-shadow--focussed);
 }
 
 .dataGridSelectedRow:focus-within {
-    /*background-color: var(--row__background-color--selected--focussed);*/
-    box-shadow: inset 0 0 2px var(--row__text-color--selected);
+    box-shadow: var(--row__box-shadow--selected--focussed);
 }
 
 .dataGridSelectedRowCell {

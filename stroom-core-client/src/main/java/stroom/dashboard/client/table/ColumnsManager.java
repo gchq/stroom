@@ -31,6 +31,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
@@ -74,7 +75,11 @@ public class ColumnsManager implements HeadingListener {
     public void onMouseDown(NativeEvent event, Heading heading) {
         int colIndex = -1;
         if (heading != null) {
-            colIndex = heading.getColIndex();
+            final Element element = Element.as(event.getEventTarget());
+            final Element columnTop = ElementUtil.findParent(element, "column-top", 3);
+            if (columnTop != null) {
+                colIndex = heading.getColIndex();
+            }
         }
 
         ignoreNext = currentColIndex == colIndex;
@@ -339,6 +344,23 @@ public class ColumnsManager implements HeadingListener {
             }
         }
         updateColumns(columns);
+    }
+
+//    public void setValueFilterVisible(final boolean visible) {
+//        final List<Column> columns = new ArrayList<>();
+//        for (final Column column : getColumns()) {
+//                columns.add(column.copy().showValueFilter(visible).build());
+//        }
+//        updateColumns(columns);
+//        tablePresenter.setDirty(true);
+//        tablePresenter.updateColumns();
+//    }
+
+    public void setValueFilter(final Column column, final String valueFilter) {
+        replaceColumn(column, column.copy().valueFilter(valueFilter).build());
+        tablePresenter.setFocused(false);
+        tablePresenter.setDirty(true);
+        tablePresenter.refresh();
     }
 
     private List<Column> getColumns() {
