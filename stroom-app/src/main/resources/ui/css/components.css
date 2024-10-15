@@ -2088,6 +2088,11 @@ button.main-menu svg {
     white-space: pre;
     color: var(--navigation__text-color);
     user-select: text;
+}
+
+/* findCell-name is used for both Find In Content and Recent Items
+ so only add the margin when used in Find In Content */
+.findCell-sample + .findCell-name {
     margin-left: 6rem;
 }
 
