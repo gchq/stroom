@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
@@ -112,6 +128,7 @@ public class FindInContentPresenter
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         view.setResultView(pagerView);
+        editorPresenter.setReadOnly(true);
         view.setTextView(editorPresenter.getView());
         view.setUiHandlers(this);
 
@@ -148,7 +165,7 @@ public class FindInContentPresenter
                                 dataConsumer.accept(resultPage);
 
                                 if (filterChange) {
-                                    if (resultPage.size() > 0) {
+                                    if (!resultPage.isEmpty()) {
                                         selectionModel.setSelected(resultPage.getValues().get(0));
                                     } else {
                                         selectionModel.clear();
@@ -273,7 +290,7 @@ public class FindInContentPresenter
         if (!showing) {
             showing = true;
 //            focusText = true;
-            final PopupSize popupSize = PopupSize.resizable(800, 600);
+            final PopupSize popupSize = PopupSize.resizable(1200, 800);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.CLOSE_DIALOG)
                     .popupSize(popupSize)
@@ -292,6 +309,10 @@ public class FindInContentPresenter
     public interface FindInContentProxy extends Proxy<FindInContentPresenter> {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface FindInContentView extends View, Focus, HasUiHandlers<FindInContentUiHandlers> {
 
