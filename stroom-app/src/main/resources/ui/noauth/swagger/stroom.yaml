@@ -8400,8 +8400,8 @@ components:
           type: string
         sort:
           $ref: '#/components/schemas/Sort'
-      required:
-      - expression
+        valueFilter:
+          type: string
     ColumnRef:
       type: object
       properties:
@@ -8462,6 +8462,7 @@ components:
             - TITLE
             - STRUCTURE
             - VISUALISATION
+            - DICTIONARY
           uniqueItems: true
         maxCompletions:
           type: integer
@@ -13622,6 +13623,7 @@ components:
             - TITLE
             - STRUCTURE
             - VISUALISATION
+            - DICTIONARY
           uniqueItems: true
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
@@ -13854,6 +13856,7 @@ components:
           - TITLE
           - STRUCTURE
           - VISUALISATION
+          - DICTIONARY
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -15899,6 +15902,8 @@ components:
           type: string
           description: TODO
         showDetail:
+          type: boolean
+        showValueFilter:
           type: boolean
         useDefaultExtractionPipeline:
           type: boolean

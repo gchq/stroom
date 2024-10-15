@@ -12228,9 +12228,11 @@
           },
           "sort" : {
             "$ref" : "#/components/schemas/Sort"
+          },
+          "valueFilter" : {
+            "type" : "string"
           }
-        },
-        "required" : [ "expression" ]
+        }
       },
       "ColumnRef" : {
         "type" : "object",
@@ -12308,7 +12310,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION" ]
+              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
             },
             "uniqueItems" : true
           },
@@ -17922,7 +17924,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION" ]
+              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
             },
             "uniqueItems" : true
           },
@@ -17974,7 +17976,7 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION" ]
+            "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
           }
         }
       },
@@ -20677,6 +20679,9 @@
             "description" : "TODO"
           },
           "showDetail" : {
+            "type" : "boolean"
+          },
+          "showValueFilter" : {
             "type" : "boolean"
           },
           "useDefaultExtractionPipeline" : {
