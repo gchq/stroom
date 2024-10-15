@@ -51,6 +51,7 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.lucene980.analysis.Analyzer;
 import org.apache.lucene980.analysis.LowerCaseFilter;
 import org.apache.lucene980.analysis.TokenStream;
@@ -94,6 +95,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+@Singleton // Only want ctor re-index to happen once on boot
 public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
     private static final int MIN_GRAM = 1;
@@ -117,6 +119,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     private final TaskContextFactory taskContextFactory;
     private final Analyzer analyzer;
     private final ArrayBlockingQueue<EntityEvent> changes = new ArrayBlockingQueue<>(10000);
+    private final Path docIndexDir;
     private final Directory directory;
 
     @Inject
@@ -145,7 +148,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             analyzerMap.put(TEXT, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
             analyzer = new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
 
-            final Path docIndexDir = tempDirProvider.get().resolve("doc-index");
+            docIndexDir = tempDirProvider.get().resolve("doc-index");
             Files.createDirectories(docIndexDir);
 
             final boolean validIndex = isValidIndex(docIndexDir, analyzer);
@@ -220,16 +223,26 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     }
 
     public void reindex() {
-        securityContext.asProcessingUser(() ->
-                indexableMap.values()
-                        .stream()
-                        .flatMap(contentIndexable ->
-                                contentIndexable.listDocuments().stream())
-                        .takeWhile(docRef ->
-                                !Thread.currentThread().isInterrupted())
-                        .map(docRef ->
-                                new EntityEvent(docRef, EntityAction.UPDATE))
-                        .forEach(this::onChange));
+        securityContext.asProcessingUser(() -> {
+            final List<DocRef> docRefs = indexableMap.values()
+                    .stream()
+                    .flatMap(contentIndexable ->
+                            contentIndexable.listDocuments().stream())
+                    .toList();
+
+            LOGGER.logDurationIfInfoEnabled(
+                    () -> {
+                        docRefs.stream()
+                                .takeWhile(docRef ->
+                                        !Thread.currentThread().isInterrupted())
+                                .map(docRef ->
+                                        new EntityEvent(docRef, EntityAction.UPDATE))
+                                .forEach(this::onChange);
+                    },
+                    LogUtil.message("Re-index of {} documents in {}",
+                            docRefs.size(),
+                            docIndexDir.toAbsolutePath().normalize()));
+        });
     }
 
     @Override
