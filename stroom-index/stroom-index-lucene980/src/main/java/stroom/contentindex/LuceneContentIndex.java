@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.contentindex;
 
 import stroom.datasource.api.v2.AnalyzerType;
@@ -25,6 +41,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.PermissionException;
@@ -48,16 +65,17 @@ import org.apache.lucene980.index.IndexOptions;
 import org.apache.lucene980.index.IndexWriter;
 import org.apache.lucene980.index.IndexWriterConfig;
 import org.apache.lucene980.index.StoredFields;
+import org.apache.lucene980.index.Term;
 import org.apache.lucene980.queryparser.classic.ParseException;
 import org.apache.lucene980.queryparser.classic.QueryParser;
+import org.apache.lucene980.queryparser.simple.SimpleQueryParser;
 import org.apache.lucene980.search.IndexSearcher;
-import org.apache.lucene980.search.MatchAllDocsQuery;
-import org.apache.lucene980.search.NGramPhraseQuery;
-import org.apache.lucene980.search.PhraseQuery;
 import org.apache.lucene980.search.Query;
+import org.apache.lucene980.search.RegexpQuery;
 import org.apache.lucene980.search.ScoreDoc;
 import org.apache.lucene980.store.Directory;
 import org.apache.lucene980.store.NIOFSDirectory;
+import org.apache.lucene980.util.automaton.RegExp;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -212,22 +230,28 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
     private ResultPage<DocContentMatch> findInContentUsingIndex(final FindInContentRequest request) {
         try {
-            final PageRequest pageRequest = request.getPageRequest();
+            final StringMatch filter = request.getFilter();
+            final Query query = getQuery(filter);
             final List<DocContentMatch> matches = new ArrayList<>();
-
-            final Query query = getQuery(request.getFilter());
-            final ContentHighlighter highlighter = getHighlighter(request.getFilter());
+            final PageRequest pageRequest = request.getPageRequest();
+            final ContentHighlighter highlighter = getHighlighter(filter);
 
             long total = 0;
             try (final DirectoryReader directoryReader = DirectoryReader.open(directory)) {
                 final IndexSearcher searcher = new IndexSearcher(directoryReader);
-                final ScoreDoc[] hits = searcher.search(query, 1000000).scoreDocs;
+                final ScoreDoc[] hits = searcher.search(query, 1_000_000).scoreDocs;
+                LOGGER.debug(() -> LogUtil.message("{} ({}) query '{}' matched {} documents",
+                        filter.getMatchType(),
+                        (filter.isCaseSensitive()
+                                ? "case-sense"
+                                : "case-insense"),
+                        filter.getPattern(),
+                        hits.length));
                 final StoredFields storedFields = searcher.storedFields();
                 for (final ScoreDoc hit : hits) {
                     final int docId = hit.doc;
                     final Document doc = storedFields.document(docId);
                     final DocRef docRef = new DocRef(doc.get(TYPE), doc.get(UUID), doc.get(NAME));
-                    final String extension = doc.get(EXTENSION);
                     final String text = doc.get(TEXT);
                     final List<StringMatchLocation> highlights = highlighter.getHighlights(text, 1);
                     if (!highlights.isEmpty()) {
@@ -235,6 +259,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                             if (total >= pageRequest.getOffset() &&
                                     total < pageRequest.getOffset() + pageRequest.getLength()) {
                                 try {
+                                    final String extension = doc.get(EXTENSION);
                                     matches.add(DocContentMatch.create(docRef,
                                             extension,
                                             text,
@@ -256,11 +281,15 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                     .total(total)
                     .exact(total == pageRequest.getOffset() + matches.size())
                     .build());
-        } catch (final ParseException | RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
+        } catch (final ParseException e) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Parse error on '{}': {} (TRACE for stack trace)",
+                    request.getFilter().getPattern(),
+                    e.getMessage()));
+            LOGGER.trace(e::getMessage, e);
             return ResultPage.empty();
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();
         }
     }
@@ -306,49 +335,31 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     private Query getQuery(final StringMatch stringMatch) throws ParseException {
         // If we are going to do a regex then we'll just scan all content and do regex.
         if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
-            return new MatchAllDocsQuery();
+            // Lucene matches on the whole line (^ & $ are not supported), so we need
+            // to append .* to each end
+            final String pattern = ".*" + stringMatch.getPattern() + ".*";
+            final Term term = new Term(TEXT, pattern);
+            try {
+                if (stringMatch.isCaseSensitive()) {
+                    return new RegexpQuery(term);
+                } else {
+                    // The 10_000 came from looking at the other overloaded ctors in RegexpQuery
+                    return new RegexpQuery(
+                            term,
+                            RegExp.ALL,
+                            RegExp.ASCII_CASE_INSENSITIVE,
+                            10_000);
+                }
+            } catch (Exception e) {
+                LOGGER.debug(() -> LogUtil.message("Error constructing regex query with pattern '{}': {}",
+                        pattern, LogUtil.exceptionMessage(e)));
+                throw e;
+            }
+        } else {
+            final String nGramField = getNGramField(stringMatch);
+            final SimpleQueryParser simpleQueryParser = new SimpleQueryParser(analyzer, nGramField);
+            return simpleQueryParser.createPhraseQuery(nGramField, stringMatch.getPattern());
         }
-
-        final String field = getNGramField(stringMatch);
-        final String queryText = getQueryText(stringMatch);
-
-        final QueryParser queryParser = new QueryParser(field, analyzer) {
-            @Override
-            protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted)
-                    throws ParseException {
-                // Ensure data is always processed as a phrase.
-                if (isNGram(field) && !quoted && queryText.length() > 1) {
-                    final Query q = super.newFieldQuery(analyzer, field, queryText, true);
-                    if (q instanceof final PhraseQuery phraseQuery) {
-                        return new NGramPhraseQuery(MAX_GRAM, phraseQuery);
-                    }
-                    return q;
-                }
-                return super.newFieldQuery(analyzer, field, queryText, quoted);
-            }
-        };
-
-        queryParser.setAllowLeadingWildcard(true);
-        return queryParser.parse(queryText);
-    }
-
-    private Query getBasicQuery(final StringMatch stringMatch) throws ParseException {
-        final String field = getNGramField(stringMatch);
-        final String queryText = getQueryText(stringMatch);
-        final QueryParser queryParser = new QueryParser(field, analyzer) {
-            @Override
-            protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted)
-                    throws ParseException {
-                // Ensure data is always processed as a phrase.
-                if (isNGram(field) && !quoted && queryText.length() > 1) {
-                    return super.newFieldQuery(analyzer, field, queryText, true);
-                }
-                return super.newFieldQuery(analyzer, field, queryText, quoted);
-            }
-        };
-
-        queryParser.setAllowLeadingWildcard(true);
-        return queryParser.parse(queryText);
     }
 
     private boolean isNGram(final String field) {
@@ -519,6 +530,10 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         return new Field(name, data, fieldType);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class NGramAnalyzer extends Analyzer {
 
         @Override
@@ -528,6 +543,10 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             return new Analyzer.TokenStreamComponents(tokenizer, tokenStream);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     static class NGramCSAnalyzer extends Analyzer {
 
