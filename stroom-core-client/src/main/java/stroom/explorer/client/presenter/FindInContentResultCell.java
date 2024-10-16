@@ -80,8 +80,13 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             sampleHtml.append(template.div(getCellClassName() + "-sample-after",
                     SafeHtmlUtil.from(sampleAfter)));
 
+            String sampleClass = getCellClassName() + "-sample";
+            // Different styling for samples that do not start at beginning of line
+            if (!match.isSampleAtStartOfLine()) {
+                sampleClass = sampleClass + " " + getCellClassName() + "-sample-truncated";
+            }
             main.append(template.divWithTitle(
-                    getCellClassName() + "-sample",
+                    sampleClass,
                     value.getDocContentMatch().getSample(),
                     sampleHtml.toSafeHtml()));
 
