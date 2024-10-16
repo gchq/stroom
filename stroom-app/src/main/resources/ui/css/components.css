@@ -2016,6 +2016,11 @@ button.main-menu svg {
     position: relative;
 }
 
+.find-topBar .gwt-TextArea {
+    /* Single line */
+    height: 2.1rem;
+}
+
 .find-buttons {
     display: flex;
     position: absolute;
@@ -2062,8 +2067,15 @@ button.main-menu svg {
     letter-spacing: -0.6px;
     font-size: 95%;
     /* Fade out the long lines */
-    mask-image: linear-gradient(to right, #000000 0%, #000000 75%, rgb(128 0 52 / 0%) 100%);
+    mask-image: linear-gradient(to right, #000000 0%, #000000 90%, rgb(128 0 52 / 0%) 100%);
     overflow: hidden;
+    /* Padding to make room for the highlight outline */
+    padding: 2px;
+}
+
+/* if the sample does not start at the beginning of the line fade the text out on the left and the right */
+.findCell-sample.findCell-sample-truncated {
+    mask-image: linear-gradient(to right, rgb(128 0 52 / 0%) 0%, #000000 10%, #000000 90%, rgb(128 0 52 / 0%) 100%);
 }
 
 .findCell-sample div {
@@ -2074,8 +2086,19 @@ button.main-menu svg {
 }
 
 .findCell-highlight {
-	background-color: yellow;
-	color: black;
+    background-color: var(--highlight__background-color);
+    border-radius: 2px;
+    color: black;
+    /*
+    outline-color: var(--highlight__background-color);
+    outline-style: solid;
+    outline-width: 2px;
+    border-radius: 2px;
+    */
+}
+
+.cellTableSelectedRowCell .findCell-highlight {
+	background-color: var(--highlight__background-color--selected);
 }
 
 .findCell-sample-after {

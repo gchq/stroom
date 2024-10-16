@@ -44,7 +44,6 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
-import stroom.index.impl.ContentIndexConfig;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
@@ -941,7 +940,6 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
-                @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
@@ -1002,7 +1000,6 @@ class TestConfigMapper {
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
-                    contentIndexConfig,
                     contentPackImportConfig,
                     legacyConfig,
                     dashboardConfig,
