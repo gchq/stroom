@@ -16,12 +16,10 @@
 
 package stroom.dashboard.impl.logging;
 
-import stroom.collection.api.CollectionService;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
-import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -31,6 +29,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
@@ -59,95 +58,47 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     private final StroomEventLoggingService eventLoggingService;
     private final SecurityContext securityContext;
-    private final WordListProvider wordListProvider;
-    private final CollectionService collectionService;
     private final DocRefInfoService docRefInfoService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final SecurityContext securityContext,
-                              final WordListProvider wordListProvider,
-                              final CollectionService collectionService,
                               final DocRefInfoService docRefInfoService) {
         this.eventLoggingService = eventLoggingService;
         this.securityContext = securityContext;
-        this.wordListProvider = wordListProvider;
-        this.collectionService = collectionService;
         this.docRefInfoService = docRefInfoService;
     }
 
     @Override
-    public void search(final DocRef dataSourceRef,
-                       final ExpressionOperator expression,
-                       final String queryInfo,
-                       final List<Param> params) {
-        securityContext.insecure(() -> search("Search",
-                dataSourceRef,
-                expression,
-                queryInfo,
-                params,
-                null));
-    }
-
-    @Override
-    public void search(final DocRef dataSourceRef,
+    public void search(final String type,
+                       final String rawQuery,
+                       final DocRef dataSourceRef,
                        final ExpressionOperator expression,
                        final String queryInfo,
                        final List<Param> params,
                        final Exception e) {
-        securityContext.insecure(() -> search("Search",
-                dataSourceRef,
-                expression,
-                queryInfo,
-                params,
-                e));
-    }
-
-    @Override
-    public void search(final String query,
-                       final String queryInfo,
-                       final List<Param> params,
-                       final Exception ex) {
         securityContext.insecure(() -> {
             try {
-                search("Search",
-                        getDescription("Search", null),
-                        DataSources.builder().addDataSource("Unknown").build(),
-                        Query.builder().withRaw(query).build(),
-                        queryInfo,
-                        params,
-                        ex);
+                final String dataSourceInfo = getDataSourceString(dataSourceRef);
+                final String description = "Searching data source \"" + dataSourceInfo + "\"";
+                final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
+                final Query query = getQuery(expression, params);
+                query.setRaw(rawQuery);
+
+                eventLoggingService.log(
+                        type,
+                        description,
+                        getPurpose(queryInfo),
+                        SearchEventAction.builder()
+                                .withDataSources(dataSources)
+                                .withQuery(query)
+                                .addData(buildDataFromParams(params))
+                                .withOutcome(EventLoggingUtil.createOutcome(e))
+                                .build());
             } catch (final RuntimeException e2) {
-                LOGGER.error(ex.getMessage(), e2);
+                LOGGER.error(e.getMessage(), e2);
             }
         });
-    }
-
-    @Override
-    public void batchSearch(final DocRef dataSourceRef,
-                            final ExpressionOperator expression,
-                            final String queryInfo,
-                            final List<Param> params) {
-        securityContext.insecure(() -> search("Batch search",
-                dataSourceRef,
-                expression,
-                queryInfo,
-                params,
-                null));
-    }
-
-    @Override
-    public void batchSearch(final DocRef dataSourceRef,
-                            final ExpressionOperator expression,
-                            final String queryInfo,
-                            final List<Param> params,
-                            final Exception e) {
-        securityContext.insecure(() -> search("Batch search",
-                dataSourceRef,
-                expression,
-                queryInfo,
-                params,
-                e));
     }
 
     @Override
@@ -161,32 +112,29 @@ public class SearchEventLogImpl implements SearchEventLog {
                         searchRequest,
                         DashboardSearchRequest::getSearch,
                         Search::getDataSourceRef);
-
-                final String dataSourceName = getDataSourceName(dataSourceRef);
                 final Search search = NullSafe.get(searchRequest, DashboardSearchRequest::getSearch);
                 final List<Param> params = NullSafe.get(search, Search::getParams);
+
+                final String dataSourceInfo = getDataSourceString(dataSourceRef);
+                final String description = "Downloading search results - data source \"" + dataSourceInfo + "\"";
+                final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
+                final Query query = getQuery(search.getExpression(), params);
+
                 final String fileType = NullSafe.get(request.getFileType(),
                         DownloadSearchResultFileType::getExtension);
 
-                final ExpressionOperator deReferencedExpression = ExpressionUtil.replaceExpressionParameters(
-                        search.getExpression(),
-                        params);
-
                 eventLoggingService.log(
                         "Download search results",
-                        "Downloading search results - data source \"" + dataSourceRef.toInfoString(),
+                        description,
                         getPurpose(search.getQueryInfo()),
                         ExportEventAction.builder()
                                 .withSource(MultiObject.builder()
                                         .addCriteria(Criteria.builder()
-                                                .withDataSources(DataSources.builder()
-                                                        .addDataSource(dataSourceName)
-                                                        .build())
-                                                .withQuery(StroomEventLoggingUtil.convertExpression(
-                                                        deReferencedExpression))
+                                                .withDataSources(dataSources)
+                                                .withQuery(query)
                                                 .withTotalResults(NullSafe.get(
                                                         resultCount,
-                                                        cnt -> BigInteger.valueOf(cnt)))
+                                                        BigInteger::valueOf))
                                                 .addData(buildDataFromParams(params))
                                                 .build())
                                         .build())
@@ -225,37 +173,40 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final Exception ex) {
         securityContext.insecure(() -> {
             try {
-                final stroom.query.api.v2.Query query = NullSafe.get(
+                final stroom.query.api.v2.Query qry = NullSafe.get(
                         request,
                         SearchRequest::getQuery);
                 final DocRef dataSourceRef = NullSafe.get(
-                        query,
+                        qry,
                         stroom.query.api.v2.Query::getDataSource);
 
-                final String dataSourceName = getDataSourceName(dataSourceRef);
-                final List<Param> params = NullSafe.get(query, stroom.query.api.v2.Query::getParams);
+                final String dataSourceInfo = getDataSourceString(dataSourceRef);
+                final String description = "Downloading StroomQL search results - data source \"" +
+                        dataSourceInfo +
+                        "\"";
+                final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
+                final Query query = getQuery(NullSafe.get(qry, stroom.query.api.v2.Query::getExpression),
+                        NullSafe.get(qry, stroom.query.api.v2.Query::getParams));
+                query.setRaw(NullSafe.get(
+                        req,
+                        DownloadQueryResultsRequest::getSearchRequest,
+                        QuerySearchRequest::getQuery));
+                final List<Param> params = NullSafe.get(qry, stroom.query.api.v2.Query::getParams);
                 final String fileType = NullSafe.get(req.getFileType(),
                         DownloadSearchResultFileType::getExtension);
 
-                final ExpressionOperator deReferencedExpression = ExpressionUtil.replaceExpressionParameters(
-                        request.getQuery().getExpression(),
-                        params);
-
                 eventLoggingService.log(
                         "Download search results",
-                        "Downloading search results - data source \"" + dataSourceRef.toInfoString(),
+                        description,
                         getPurpose(req.getSearchRequest().getQueryContext().getQueryInfo()),
                         ExportEventAction.builder()
                                 .withSource(MultiObject.builder()
                                         .addCriteria(Criteria.builder()
-                                                .withDataSources(DataSources.builder()
-                                                        .addDataSource(dataSourceName)
-                                                        .build())
-                                                .withQuery(StroomEventLoggingUtil.convertExpression(
-                                                        deReferencedExpression))
+                                                .withDataSources(dataSources)
+                                                .withQuery(query)
                                                 .withTotalResults(NullSafe.get(
                                                         resultCount,
-                                                        cnt -> BigInteger.valueOf(cnt)))
+                                                        BigInteger::valueOf))
                                                 .addData(buildDataFromParams(params))
                                                 .build())
                                         .build())
@@ -282,65 +233,37 @@ public class SearchEventLogImpl implements SearchEventLog {
         });
     }
 
-    private void search(final String type,
-                        final DocRef dataSourceRef,
-                        final ExpressionOperator expression,
-                        final String queryInfo,
-                        final List<Param> params,
-                        final Exception e) {
-        securityContext.insecure(() -> {
-            try {
-                search(type,
-                        getDescription(type, dataSourceRef),
-                        getDataSources(dataSourceRef),
-                        getQuery(expression, params),
-                        queryInfo,
-                        params,
-                        e);
-            } catch (final RuntimeException e2) {
-                LOGGER.error(e.getMessage(), e2);
+    private String getDataSourceString(final DocRef dataSourceRef) {
+        final StringBuilder sb = new StringBuilder();
+
+        final String type = NullSafe.get(dataSourceRef, DocRef::getType);
+        if (NullSafe.isNonBlankString(type)) {
+            sb.append(type);
+        }
+
+        final String dataSourceName = getDataSourceName(dataSourceRef);
+        if (NullSafe.isNonBlankString(dataSourceName)) {
+            if (!sb.isEmpty()) {
+                sb.append(" ");
             }
-        });
-    }
-
-    private void search(final String type,
-                        final String description,
-                        final DataSources dataSources,
-                        final Query query,
-                        final String queryInfo,
-                        final List<Param> params,
-                        final Exception e) {
-        try {
-            eventLoggingService.log(
-                    type,
-                    description,
-                    getPurpose(queryInfo),
-                    SearchEventAction.builder()
-                            .withDataSources(dataSources)
-                            .withQuery(query)
-                            .addData(buildDataFromParams(params))
-                            .withOutcome(EventLoggingUtil.createOutcome(e))
-                            .build());
-        } catch (final RuntimeException e2) {
-            LOGGER.error(e.getMessage(), e2);
+            sb.append(dataSourceName);
         }
-    }
 
-    private String getDescription(final String type, final DocRef dataSourceRef) {
-        if (dataSourceRef != null) {
-            return type + "ing data source \"" + dataSourceRef.toInfoString();
+        final String uuid = NullSafe.get(dataSourceRef, DocRef::getUuid);
+        if (NullSafe.isNonBlankString(uuid)) {
+            if (!sb.isEmpty()) {
+                sb.append(" ");
+            }
+            sb.append("{");
+            sb.append(uuid);
+            sb.append("}");
         }
-        return type + "ing data source";
-    }
 
-    private DataSources getDataSources(final DocRef dataSourceRef) {
-        String dataSourceName = getDataSourceName(dataSourceRef);
-        if (dataSourceName == null || dataSourceName.isEmpty()) {
-            dataSourceName = "NULL";
+        if (sb.isEmpty()) {
+            sb.append("Unknown");
         }
-        return DataSources.builder()
-                .addDataSource(dataSourceName)
-                .build();
+
+        return sb.toString();
     }
 
     private Query getQuery(final ExpressionOperator expression,
