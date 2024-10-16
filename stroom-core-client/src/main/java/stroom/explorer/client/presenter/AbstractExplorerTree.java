@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.NodeFlag;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -52,6 +51,7 @@ import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -133,8 +133,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 //        }
 //        cellTable.setKeyboardSelectedRow(row, true);
         cellTable.setFocus(true);
-//
-//        cellTable.getSesetFocus(true);
     }
 
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
@@ -176,7 +174,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         final List<ExplorerNode> items = cellTable.getVisibleItems();
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {
-                if (EqualsUtil.isEquals(items.get(i), item)) {
+                if (Objects.equals(items.get(i), item)) {
                     return i;
                 }
             }

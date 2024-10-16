@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline;
@@ -48,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
@@ -241,7 +239,7 @@ public class PipelineStoreImpl implements PipelineStore {
             List<DocRef> docRefs = filterResultPage.getValues().stream()
                     .filter(ProcessorFilterUtil::shouldExport)
                     .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             processorFilters.addAll(docRefs);
         }

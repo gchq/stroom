@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.index.mock;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexElementModule;
 import stroom.index.impl.IndexFieldCacheImpl;
 import stroom.index.impl.IndexFieldProvidersImpl;
@@ -27,7 +28,6 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexStoreImpl;
-import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
 import stroom.index.impl.LuceneIndexDocCache;

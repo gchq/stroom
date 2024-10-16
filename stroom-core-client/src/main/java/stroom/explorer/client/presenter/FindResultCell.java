@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,8 +59,10 @@ public class FindResultCell extends AbstractCell<FindResult> {
             }
 
             // Add name
-            main.append(template.div(getCellClassName() + "-name",
-                    SafeHtmlUtil.from(docRef.getName())));
+            final String name = docRef.getName();
+            main.append(template.divWithTitle(getCellClassName() + "-name",
+                    value.getPath() + " / " + name,
+                    SafeHtmlUtil.from(name)));
 
             row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
 
@@ -90,5 +92,8 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
+
+        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml divWithTitle(String className, String title, SafeHtml content);
     }
 }

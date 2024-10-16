@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = CountUnique.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
-        commonReturnType = ValLong.class,
+        commonReturnType = ValInteger.class,
         commonReturnDescription = "The number of unique values",
         signatures = {
                 @FunctionSignature(

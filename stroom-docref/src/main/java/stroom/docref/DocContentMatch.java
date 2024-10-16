@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docref;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,6 +29,7 @@ public class DocContentMatch {
 
     private static final int SAMPLE_LENGTH_BEFORE = 40;
     private static final int SAMPLE_LENGTH_AFTER = 200;
+    public static final String TRUNCATED_PREFIX = "……";
 
     @JsonProperty
     private final DocRef docRef;
@@ -45,9 +62,11 @@ public class DocContentMatch {
         final int min = Math.max(0, offset - SAMPLE_LENGTH_BEFORE);
         int sampleStart = offset;
         // Go back to get a sample from the same line.
+        boolean sampleIsAtStartOfLine = sampleStart == 0;
         for (; sampleStart >= min; sampleStart--) {
             char c = chars[sampleStart];
             if (c == '\n') {
+                sampleIsAtStartOfLine = true;
                 break;
             }
         }
@@ -66,6 +85,9 @@ public class DocContentMatch {
 
         // Now remove newlines and adjust offset and length to accordingly.
         final StringBuilder sample = new StringBuilder();
+        if (!sampleIsAtStartOfLine) {
+            sample.append(TRUNCATED_PREFIX);
+        }
         for (int i = sampleStart; i < chars.length; i++) {
             final char c = chars[i];
             if (c == '\r' || c == '\n') {
@@ -91,6 +113,11 @@ public class DocContentMatch {
         // Ensure offset and length are positive.
         offset = Math.max(offset, 0);
         length = Math.max(length, 0);
+
+        // Adjust the highlight location to account fo the truncated prefix
+        if (!sampleIsAtStartOfLine) {
+            offset += TRUNCATED_PREFIX.length();
+        }
 
         final StringMatchLocation match = new StringMatchLocation(offset, length);
         return DocContentMatch

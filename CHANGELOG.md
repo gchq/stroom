@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
+
+* Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.
+
 
 ## [v7.6-beta.2] - 2024-10-07
 

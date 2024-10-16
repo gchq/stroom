@@ -82,7 +82,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        downloadButton = SvgButton.create(SvgPresets.DOWNLOAD);
+        downloadButton = SvgButton.create(SvgPresets.DOWNLOAD.title("Download Dictionary words"));
+
         toolbar.addButton(downloadButton);
 
         addTab(WORDS, new AbstractTabProvider<DictionaryDoc, EditorPresenter>(eventBus) {

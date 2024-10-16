@@ -371,7 +371,7 @@ public class ExplorerTreeModel {
     }
 
     public void expandAll() {
-        explorerTreeFilterBuilder.setNameFilter(null);
+//        explorerTreeFilterBuilder.setNameFilter(null);
         openItems.clear();
         minDepth = 1000;
         ensureVisible = null;
@@ -379,7 +379,7 @@ public class ExplorerTreeModel {
     }
 
     public void collapseAll() {
-        explorerTreeFilterBuilder.setNameFilter(null);
+//        explorerTreeFilterBuilder.setNameFilter(null);
         openItems.clear();
         minDepth = 1;
         ensureVisible = null;

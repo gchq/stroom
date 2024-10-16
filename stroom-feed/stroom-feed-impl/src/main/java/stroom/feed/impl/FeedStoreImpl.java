@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.feed.impl;
 
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -30,12 +30,17 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +48,8 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStoreImpl.class);
 
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.DATA_PROCESSING,
@@ -52,15 +59,20 @@ public class FeedStoreImpl implements FeedStore {
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
+    private final FeedSerialiser serialiser;
+    private final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser,
-                         final SecurityContext securityContext) {
+                         final SecurityContext securityContext,
+                         final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
+        this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
         this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -204,7 +216,33 @@ public class FeedStoreImpl implements FeedStore {
             newDocRef = new DocRef(docRef.getType(), docRef.getUuid(), newName);
         }
 
-        return store.importDocument(newDocRef, dataMap, importState, importSettings);
+        // If the imported feed's vol grp doesn't exist in this env use our default
+        // or null it out
+        Map<String, byte[]> effectiveDataMap = dataMap;
+        try {
+            final FeedDoc feedDoc = serialiser.read(dataMap);
+
+            final String volumeGroup = feedDoc.getVolumeGroup();
+            if (volumeGroup != null) {
+                final FsVolumeGroupService fsVolumeGroupService = fsVolumeGroupServiceProvider.get();
+                final List<String> allVolumeGroups = fsVolumeGroupService.getNames();
+                if (!allVolumeGroups.contains(volumeGroup)) {
+                    LOGGER.debug("Volume group '{}' in imported feed {} is not a valid volume group",
+                            volumeGroup, docRef);
+                    fsVolumeGroupService.getDefaultVolumeGroup()
+                            .ifPresentOrElse(
+                                    feedDoc::setVolumeGroup,
+                                    () -> feedDoc.setVolumeGroup(null));
+
+                    effectiveDataMap = serialiser.write(feedDoc);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
+                    docRef, e.getMessage()), e);
+        }
+
+        return store.importDocument(newDocRef, effectiveDataMap, importState, importSettings);
     }
 
     @Override

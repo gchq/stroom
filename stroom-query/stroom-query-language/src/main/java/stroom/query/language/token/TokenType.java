@@ -237,7 +237,7 @@ public enum TokenType {
         });
         KEYWORDS_VALID_AFTER = Collections.unmodifiableMap(new EnumMap<>(validNextKeywords));
 
-        LOGGER.debug("KEYWORDS:\n{}",
+        LOGGER.trace("KEYWORDS:\n{}",
                 ALL_KEYWORDS.stream()
                         .map(keyword -> {
                             return LogUtil.message("""

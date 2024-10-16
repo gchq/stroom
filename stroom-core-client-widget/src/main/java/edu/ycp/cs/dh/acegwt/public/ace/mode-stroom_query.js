@@ -1,4 +1,8 @@
 // You can use https://ace.c9.io/tool/mode_creator.html to test the highlight rules
+// Copy from === mode_creator START === to === mode_creator END ===
+// and paste into the mode_creator left pane. Paste some example sQL in the right pane
+
+// ([\w]+?|"[\w ]+?")\s*\((\w+)\s*=\s*(\w+)
 
 // When you add a new mode, you need to add a reference to the file in app.html
 
@@ -7,61 +11,108 @@
 define("ace/mode/stroom_query_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
 "use strict";
 
+// === mode_creator START ===
+
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
-
-
 var StroomQueryHighlightRules = function() {
-
-    var keywords = (
-        "from|select|where|filter|in|eval|and|or|not|sort|group|by|order|limit|having|as|when|desc|asc|window|show|" +
-        "dictionary"
-    );
-
-//    var builtinConstants = (
-//        "true|false"
-//    );
-//
-//    // Created from `stroom.dashboard.expression.v1.FunctionFactory`
-//    var builtinFunctions = (
-//        "add|+|annotation|any|average|mean|bottom|ceiling|ceilingday|ceilinghour|ceilingminute|ceilingmonth|ceilingsecond|ceilingyear|concat|count|countgroups|countprevious|countunique|currentuser|dashboard|data|decode|decodeurl|distinct|/|divide|encodeurl|=|equals|err|exclude|extractauthorityfromuri|extractfragmentfromuri|extracthostfromuri|extractpathfromuri|extractportfromuri|extractqueryfromuri|extractschemefromuri|extractschemespecificpartfromuri|extractuserinfofromuri|false|first|floor|floorday|floorhour|floorminute|floormonth|floorsecond|flooryear|formatdate|>|greaterthan|>=|greaterthanorequalto|hash|if|include|indexof|isboolean|isdouble|iserror|isinteger|islong|isnull|isnumber|isstring|isvalue|joining|last|lastindexof|<|lessthan|<=|lessthanorequalto|link|lowercase|match|max|min|%|mod|modulo|*|multiply|negate|not|nth|null|parsedate|^|power|param|params|random|replace|round|roundday|roundhour|roundminute|roundmonth|roundsecond|roundyear|stdev|stepping|stringlength|substring|substringafter|substringbefore|-|subtract|sum|toboolean|todouble|tointeger|tolong|tostring|top|true|typeof|uppercase|variance|" +
-//        "now|second|minute|hour|day|week|month|year"
-//    );
-//
-//    var dataTypes = (
-//        "int|numeric|decimal|date|varchar|char|bigint|float|double|bit|binary|text|set|timestamp|" +
-//        "money|real|number|integer"
-//    );
-
-    var keywordMapper = this.createKeywordMapper({
-//        "support.function": builtinFunctions,
-        "keyword": keywords,
-//        "constant.language": builtinConstants,
-//        "storage.type": dataTypes
-    }, "identifier", true);
 
     this.$rules = {
         "start" : [ {
             token : "comment",
-            regex : "//.*$"
+            regex : "//.*$",
+            caseInsensitive: true // THIS seems to affect ALL rules https://github.com/ajaxorg/ace/issues/4887
         },  {
             token : "comment",
             start : "/\\*",
             end : "\\*/"
         }, {
-            token : "string",           // " string
-            regex : '".*?"'
+            token : "keyword", // From Dual | From "My View"
+            regex : /(from|show)/,
+            next : "doc-rule" // All subsequent matching done with doc-rule set
         }, {
-            token : "string",           // ' string
-            regex : "'.*?'"
-        }, {
-            token : "string",           // ` string (apache drill)
-            regex : "`.*?`"
+            token : "keyword.operator", // in dictionary
+            regex : /dictionary/,
+            next : "doc-rule" // All subsequent matching done with doc-rule set
         }, {
             token : "keyword.operator", // Between
-            regex : "between"
+            regex : /between/,
+            next : "between-rule" // All subsequent matching done with doc-rule set
         }, {
+            include : "numerics-rule"
+        }, {
+            token : ["variable", "variable", "text", "variable" ], // ${xxx}
+            regex : '(\\$)(\\{)(.*?)(})'
+        },  {
+            token : ["keyword"],
+            regex : "(from|select|where|filter|eval|and|or|not|sort|group|order|"
+                    + "limit|having|as|by|when|desc|asc|window|show|advance)\\b"
+        },  {
+            token : ["support.function", "text", "paren.lparen" ], // Un-quoted func, 'foo('
+            regex : /(\w+)(\s*)(\()/
+        }, {
+            token : ["support.function", "text", "paren.lparen" ], // Quoted func, '"foo bar"('
+            regex : /("[\w\s]+")(\s*)(\()/
+        }, {
+            token : "keyword.operator",
+            regex : /in|\+|\-|\/|\/\/|%|\^|~|<|>|<=|=>|==|!=|<>|=/
+        }, {
+            token : "paren.lparen",
+            regex : /[\(]/
+        }, {
+            token : "paren.rparen",
+            regex : /[\)]/
+        }, {
+            include : "identifiers-rule"
+        }, {
+            token : "string.quoted.double",           // " string
+            regex : /"(?:\\"|[^"])*"/
+        }, {
+            token : "string.quoted.single",           // ' string
+            regex : /'(?:\\'|[^'])*'/
+        },  {
+            token : "text",
+            regex : /\s+/
+        }],
+
+        "between-rule" : [ {
+            include : "basic"
+        }, {
+            token : "keyword.operator",
+            regex : /and\b/,
+            next : "start"
+        }, {
+            include : "identifiers-rule"
+        },  {
+            token : "text",
+            regex : /\s+/,
+        },  {
+            include : "numerics-rule"
+        }],
+
+        // For highlighting a Doc name, e.g. show/from/dictionary
+        "doc-rule" : [ {
+            token : "support.type", // e.g. '"My Doc"'
+            regex : /"(?:\\"|[^"])*"/,
+            next : "start"
+        },  {
+            token : "support.type", // e.g. ''My Doc''
+            regex : /'(?:\\'|[^'])*'/,
+            next : "start"
+        },  {
+            token : "support.type", // e.g. MyDoc
+            regex : /\w+\b/,
+            next : "start"
+        },  {
+            token : "text",
+            regex : /\s+/
+        }],
+
+    };
+    // Common regex to include above
+    this.addRules( {
+        "numerics-rule" : [{
             token : "constant.numeric", // date
             regex : "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z?"
         }, {
@@ -74,37 +125,25 @@ var StroomQueryHighlightRules = function() {
             token : "constant.numeric", // float
             regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
         }, {
-            token : "constant.numeric", // Duration
-            regex : "[+-]?\\d+[yMwdhms]"
-        }, {
-            token : ["variable", "variable", "text", "variable" ], // Functions
-            regex : '(\\$)(\\{)(.*?)(})'
-        },  {
-            token : ["support.function", "paren.lparen" ], // Functions
-            regex : "(\\w+)(\\s*\\()"
-        },  {
-            token : keywordMapper,
-            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
-        }, {
-            token : "keyword.operator",
-            regex : "\\+|\\-|\\/|\\/\\/|%|\\^|~|<|>|<=|=>|==|!=|<>|="
-        }, {
-            token : "paren.lparen",
-            regex : "[\\(]"
-        }, {
-            token : "paren.rparen",
-            regex : "[\\)]"
-        }, {
-            token : "text",
-            regex : "\\s+"
-        } ]
-    };
+            token : ["keyword.operator", "constant.numeric"], // Duration
+            regex : /([+-]?)(\d+[yMwdhms])/
+        }],
+
+        "identifiers-rule" : [{
+            token : "identifier",
+            regex : /[a-zA-Z_$][a-zA-Z0-9_$]*\b/
+        }]
+    })
+
     this.normalizeRules();
 };
 
 oop.inherits(StroomQueryHighlightRules, TextHighlightRules);
 
 exports.StroomQueryHighlightRules = StroomQueryHighlightRules;
+
+// === mode_creator END ===
+
 });
 
 

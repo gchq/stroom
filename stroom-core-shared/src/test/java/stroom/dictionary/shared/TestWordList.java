@@ -17,6 +17,7 @@
 package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.NullSafe;
 
 import org.junit.jupiter.api.Test;
 
@@ -64,8 +65,7 @@ class TestWordList {
                         new Word("cat", petsRef.getUuid(), null),
                         new Word("dog", petsRef.getUuid(), null),
                         new Word("hamster", petsRef.getUuid(), null),
-                        new Word("pig", petsRef.getUuid(),
-                                List.of(farmAnimalsRef.getUuid(), wildAnimalsRef.getUuid())),
+                        new Word("pig", petsRef.getUuid(), sources(farmAnimalsRef, wildAnimalsRef)),
                         new Word("cow", farmAnimalsRef.getUuid(), null),
                         new Word("goat", farmAnimalsRef.getUuid(), null)));
         assertThat(wordList.getSortedList())
@@ -75,8 +75,7 @@ class TestWordList {
                         new Word("dog", petsRef.getUuid(), null),
                         new Word("goat", farmAnimalsRef.getUuid(), null),
                         new Word("hamster", petsRef.getUuid(), null),
-                        new Word("pig", petsRef.getUuid(),
-                                List.of(farmAnimalsRef.getUuid(), wildAnimalsRef.getUuid()))));
+                        new Word("pig", petsRef.getUuid(), sources(farmAnimalsRef, wildAnimalsRef))));
 
         assertThat(wordList.getSource(new Word("cat", petsRef.getUuid(), null)))
                 .hasValue(petsRef);
@@ -113,15 +112,15 @@ class TestWordList {
     void testAdd_noDeDup() {
 
         final DocRef petsRef = DictionaryDoc.buildDocRef()
-                .uuid("200")
+                .uuid("pets-uuid")
                 .name("Pets")
                 .build();
         final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("100")
+                .uuid("farm-uuid")
                 .name("Farm Animals")
                 .build();
         final DocRef wildAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("300")
+                .uuid("wild-uuid")
                 .name("Wild Animals")
                 .build();
 
@@ -147,11 +146,11 @@ class TestWordList {
                         new Word("cat", petsRef.getUuid()),
                         new Word("dog", petsRef.getUuid()),
                         new Word("hamster", petsRef.getUuid()),
-                        new Word("pig", petsRef.getUuid()),
+                        new Word("pig", petsRef.getUuid(), sources(farmAnimalsRef, wildAnimalsRef)),
                         new Word("cow", farmAnimalsRef.getUuid()),
                         new Word("goat", farmAnimalsRef.getUuid()),
-                        new Word("pig", farmAnimalsRef.getUuid()),
-                        new Word("pig", wildAnimalsRef.getUuid())));
+                        new Word("pig", farmAnimalsRef.getUuid(), sources(petsRef, wildAnimalsRef)),
+                        new Word("pig", wildAnimalsRef.getUuid(), sources(petsRef, farmAnimalsRef))));
         assertThat(wordList.getSortedList())
                 .containsExactlyElementsOf(List.of(
                         new Word("cat", petsRef.getUuid()),
@@ -159,9 +158,9 @@ class TestWordList {
                         new Word("dog", petsRef.getUuid()),
                         new Word("goat", farmAnimalsRef.getUuid()),
                         new Word("hamster", petsRef.getUuid()),
-                        new Word("pig", farmAnimalsRef.getUuid()),
-                        new Word("pig", petsRef.getUuid()),
-                        new Word("pig", wildAnimalsRef.getUuid())));
+                        new Word("pig", farmAnimalsRef.getUuid(), sources(petsRef, wildAnimalsRef)),
+                        new Word("pig", petsRef.getUuid(), sources(farmAnimalsRef, wildAnimalsRef)),
+                        new Word("pig", wildAnimalsRef.getUuid(), sources(petsRef, farmAnimalsRef))));
 
         assertThat(wordList.getSource(new Word("cat", petsRef.getUuid())))
                 .hasValue(petsRef);
@@ -236,5 +235,11 @@ class TestWordList {
                         "cat");
         assertThat(wordList.size())
                 .isEqualTo(1);
+    }
+
+    private List<String> sources(final DocRef... docRefs) {
+        return NullSafe.stream(docRefs)
+                .map(DocRef::getUuid)
+                .toList();
     }
 }

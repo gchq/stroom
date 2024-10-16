@@ -1219,7 +1219,7 @@ class TestNullSafe {
                 .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
                 })
                 .withTestFunction(testCase ->
-                        NullSafe.unmodifialbeList(testCase.getInput()))
+                        NullSafe.unmodifiableList(testCase.getInput()))
                 .withAssertions(testOutcome -> {
                     final List<String> actual = testOutcome.getActualOutput();
                     assertThat(actual)
@@ -1229,6 +1229,27 @@ class TestNullSafe {
                 })
                 .addCase(null, Collections.emptyList())
                 .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testMutableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.mutableList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isInstanceOf(ArrayList.class);
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo"), List.of("foo"))
                 .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
                 .build();
     }

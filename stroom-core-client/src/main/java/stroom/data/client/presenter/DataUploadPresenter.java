@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,11 @@ import stroom.data.shared.UploadDataRequest;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedResource;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -47,10 +50,12 @@ public class DataUploadPresenter
         extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
+    private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
 
     private DocRef feedRef;
     private MetaPresenter metaPresenter;
     private final DataTypeUiManager dataTypeUiManager;
+    private final RestFactory restFactory;
     private HidePopupRequestEvent currentHideRequest;
 
     @Inject
@@ -60,6 +65,7 @@ public class DataUploadPresenter
                                final DataTypeUiManager dataTypeUiManager) {
         super(eventBus, view);
         this.dataTypeUiManager = dataTypeUiManager;
+        this.restFactory = restFactory;
 
         view.getForm().setAction(ImportUtil.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
@@ -124,7 +130,7 @@ public class DataUploadPresenter
         }
 
         final String fileName = getView().getFileUpload().getFilename();
-        if (fileName.trim().length() == 0) {
+        if (GwtNullSafe.isEmptyString(fileName)) {
             AlertEvent.fireWarn(this, "File not set!", null);
             return false;
         }
@@ -145,12 +151,22 @@ public class DataUploadPresenter
         this.metaPresenter = streamPresenter;
         this.feedRef = feedRef;
 
+        restFactory.create(FEED_RESOURCE)
+                .method(resource -> resource.fetch(feedRef.getUuid()))
+                .onSuccess(this::fireShowPopup)
+                .onFailure(throwable -> error("Error fetching feed: " + throwable.getMessage()))
+                .taskMonitorFactory(DataUploadPresenter.this)
+                .exec();
+    }
+
+    private void fireShowPopup(final FeedDoc feedDoc) {
         final PopupSize popupSize = PopupSize.resizable(430, 480);
+
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Upload")
-                .onShow(e -> onShow())
+                .onShow(e -> onShow(feedDoc))
                 .onHideRequest(e -> {
                     currentHideRequest = e;
                     if (e.isOk()) {
@@ -168,13 +184,18 @@ public class DataUploadPresenter
                 .fire();
     }
 
-    private void onShow() {
+    private void onShow(final FeedDoc feedDoc) {
         dataTypeUiManager.getTypes(list -> {
             getView().getType().clear();
-            if (list != null && !list.isEmpty()) {
+            if (GwtNullSafe.hasItems(list)) {
                 getView().getType().addItems(list);
-                // Default to raw events
-                getView().getType().setValue(StreamTypeNames.RAW_EVENTS);
+                String streamType = feedDoc.getStreamType();
+
+                if (streamType == null || !list.contains(streamType)) {
+                    // Fallback default value
+                    streamType = StreamTypeNames.RAW_EVENTS;
+                }
+                getView().getType().setValue(streamType);
             }
         }, this);
 
@@ -185,9 +206,15 @@ public class DataUploadPresenter
         AlertEvent.fireError(this, message, currentHideRequest::reset);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface DataUploadView extends View, Focus {
 
         FormPanel getForm();
+
+        void setType(final String type);
 
         SelectionBox<String> getType();
 

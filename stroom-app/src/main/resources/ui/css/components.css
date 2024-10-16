@@ -2036,12 +2036,14 @@ button.main-menu svg {
 .findCell-row {
 	display: flex;
 	flex-direction: column;
+	margin-bottom: 0.5em;
 }
 
 .findCell-main {
     display: flex;
     gap: .7rem;
     padding: .2rem;
+    align-items: center;
 }
 
 .findCell-icon {
@@ -2056,11 +2058,26 @@ button.main-menu svg {
     flex-grow: 1;
     overflow: hidden;
     white-space: pre;
+    letter-spacing: -0.6px;
+    font-size: 95%;
+    /* Fade out the long lines */
+    mask-image: linear-gradient(to right, #000000 0%, #000000 75%, rgb(128 0 52 / 0%) 100%);
+    overflow: hidden;
+}
+
+.findCell-sample div {
+    font-family: var(--monospace-font-family);
+}
+
+.findCell-sample-before {
 }
 
 .findCell-highlight {
 	background-color: yellow;
 	color: black;
+}
+
+.findCell-sample-after {
 }
 
 .findCell-name {
@@ -2069,12 +2086,19 @@ button.main-menu svg {
     align-items: end;
     white-space: pre;
     color: var(--navigation__text-color);
+    user-select: text;
+}
+
+/* findCell-name is used for both Find In Content and Recent Items
+ so only add the margin when used in Find In Content */
+.findCell-sample + .findCell-name {
+    margin-left: 6rem;
 }
 
 .findCell-sub {
     display: flex;
-    gap: .7rem;
-    padding: .2rem;
+    gap: 6rem;
+    padding: .1rem;
 }
 
 .findCell-path {
@@ -2082,6 +2106,7 @@ button.main-menu svg {
     font-size: .7rem;
     flex-grow: 1;
     opacity: .5;
+    user-select: text;
 }
 
 .findCell-uuid {
@@ -2090,6 +2115,7 @@ button.main-menu svg {
     font-family: monospace;
     flex-grow: 0;
     opacity: .5;
+    user-select: text;
 }
 
 .pipelineElementChooser-iconCell {

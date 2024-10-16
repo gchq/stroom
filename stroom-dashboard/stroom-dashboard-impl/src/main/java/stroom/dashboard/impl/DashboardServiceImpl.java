@@ -209,9 +209,8 @@ class DashboardServiceImpl implements DashboardService {
 
                 // API users don't want a fixed referenceTime for their queries. They want it null
                 // so the backend sets it for them
-                NullSafe.consume(request.getDateTimeSettings(), dateTimeSettings -> {
-                    builder.dateTimeSettings(dateTimeSettings.withoutReferenceTime());
-                });
+                NullSafe.consume(request.getDateTimeSettings(), dateTimeSettings ->
+                        builder.dateTimeSettings(dateTimeSettings.withoutReferenceTime()));
 
                 // Convert our internal model to the model used by the api
                 SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(builder.build());
@@ -268,7 +267,7 @@ class DashboardServiceImpl implements DashboardService {
                                 req.getComponentId().equals(request.getComponentId()))
                         .toList();
 
-                if (resultRequests.size() == 0) {
+                if (resultRequests.isEmpty()) {
                     throw new EntityServiceException("No tables specified for download");
                 }
 
@@ -443,10 +442,14 @@ class DashboardServiceImpl implements DashboardService {
                     storeSearchHistory(searchRequest);
 
                     // Log this search request for the current user.
-                    searchEventLog.search(search.getDataSourceRef(),
+                    searchEventLog.search(
+                            "Dashboard Search",
+                            null,
+                            search.getDataSourceRef(),
                             search.getExpression(),
                             search.getQueryInfo(),
-                            search.getParams());
+                            search.getParams(),
+                            null);
                 }
 
             } catch (final RuntimeException e) {
@@ -454,7 +457,10 @@ class DashboardServiceImpl implements DashboardService {
                 LOGGER.debug(() -> "Error processing search " + finalSearch, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(search.getDataSourceRef(),
+                    searchEventLog.search(
+                            "Dashboard Search",
+                            null,
+                            search.getDataSourceRef(),
                             search.getExpression(),
                             search.getQueryInfo(),
                             search.getParams(),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,8 @@ public sealed interface Val
      */
     Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
+    // TODO rename of( to arrayOf( to make it a bit more clear you are getting an array back
+    //  Best done on master as it affects a lot of files
     static Val[] of(final Val... values) {
         return values;
     }
@@ -115,7 +117,7 @@ public sealed interface Val
         return Val.of(result);
     }
 
-    static Val[] empty() {
+    static Val[] emptyArray() {
         return EMPTY_VALUES;
     }
 
@@ -150,6 +152,21 @@ public sealed interface Val
                 return Objects.requireNonNull(creator).apply(value2);
             }
         }
+    }
+
+    static Val requireNonNullElse(final Val val, final Val other) {
+        if (val != null && !val.type().isNull()) {
+            return val;
+        } else {
+            return other;
+        }
+    }
+
+    static boolean isNull(final Val val) {
+        return val == null
+                || val == ValNull.INSTANCE
+                || Objects.equals(ValNull.INSTANCE, val)
+                || val.type().isNull();
     }
 
     /**
