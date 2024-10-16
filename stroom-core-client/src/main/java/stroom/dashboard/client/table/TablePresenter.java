@@ -1022,10 +1022,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
-    void setFocused(final boolean focused) {
-        dataGrid.setFocused(focused);
-    }
-
     void clear() {
         setDataInternal(null);
     }

@@ -358,7 +358,6 @@ public class ColumnsManager implements HeadingListener {
 
     public void setValueFilter(final Column column, final String valueFilter) {
         replaceColumn(column, column.copy().valueFilter(valueFilter).build());
-        tablePresenter.setFocused(false);
         tablePresenter.setDirty(true);
         tablePresenter.refresh();
     }

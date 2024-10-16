@@ -788,10 +788,6 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         }
     }
 
-    public void setFocused(final boolean focused) {
-        isFocused = focused;
-    }
-
     /**
      * Redraw the widget using the existing data.
      */
