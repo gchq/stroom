@@ -264,4 +264,12 @@ public class ElementUtil {
             cur = cur.parentNode;
         }
     }-*/;
+
+    public static native int getSelectionStart(Element elem) /*-{
+        return elem.selectionStart;
+    }-*/;
+
+    public static native void setSelectionStart(Element elem, int selectionStart) /*-{
+        elem.selectionStart = selectionStart;
+    }-*/;
 }

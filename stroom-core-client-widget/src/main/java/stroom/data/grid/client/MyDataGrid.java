@@ -33,6 +33,7 @@ import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
@@ -318,6 +319,11 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 }
             }
         }
+    }
+
+    @Override
+    public TableSectionElement getTableHeadElement() {
+        return super.getTableHeadElement();
     }
 
     private double getMinHeaderWidth(final int colNo, final Element tempDiv) {

@@ -100,6 +100,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -1007,6 +1008,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     void refresh() {
+        refresh(() -> {});
+    }
+
+    public TableSectionElement getTableHeadElement() {
+        return dataGrid.getTableHeadElement();
+    }
+
+    public void setFocused(final boolean focused) {
+        dataGrid.setFocused(focused);
+    }
+
+    void refresh(final Runnable afterRefresh) {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
             currentSearchModel.refresh(getComponentConfig().getId(), result -> {
@@ -1016,6 +1029,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
+                } finally {
+                    afterRefresh.run();
                 }
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });

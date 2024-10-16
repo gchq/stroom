@@ -536,6 +536,10 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         return presenter.addCellPreviewHandler(handler);
     }
 
+    public void setFocused(final boolean focused) {
+        isFocused = focused;
+    }
+
     /**
      * Add a {@link LoadingStateChangeEvent.Handler} to be notified of changes in
      * the loading state.

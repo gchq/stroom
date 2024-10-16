@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ColumnsManager;
+import stroom.dashboard.client.table.FilterCell;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Sort;
@@ -27,7 +28,6 @@ import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextInputCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -96,9 +96,9 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
                     }
                 };
 
+        final FilterCell filterCell = new FilterCell();
         final com.google.gwt.user.cellview.client.Column<Column, String> filterInput =
-                new com.google.gwt.user.cellview.client.Column<Column, String>(
-                        new TextInputCell()) {
+                new com.google.gwt.user.cellview.client.Column<Column, String>(filterCell) {
                     @Override
                     public String getValue(final Column column) {
                         return column.getValueFilter();
