@@ -108,7 +108,7 @@ public final class TableSettings {
     @JsonProperty("visSettings")
     private final QLVisSettings visSettings;
     @JsonProperty
-    private final boolean applyValueFilters;
+    private final Boolean applyValueFilters;
 
     public TableSettings(
             final String queryId,
@@ -122,7 +122,7 @@ public final class TableSettings {
             final Boolean showDetail,
             final List<ConditionalFormattingRule> conditionalFormattingRules,
             final QLVisSettings visSettings,
-            final boolean applyValueFilters) {
+            final Boolean applyValueFilters) {
         this.queryId = queryId;
         this.fields = columns;
         this.window = window;
@@ -199,10 +199,7 @@ public final class TableSettings {
     }
 
     public boolean extractValues() {
-        if (extractValues == null) {
-            return true;
-        }
-        return extractValues;
+        return extractValues != Boolean.FALSE;
     }
 
     public DocRef getExtractionPipeline() {
@@ -218,10 +215,7 @@ public final class TableSettings {
     }
 
     public boolean showDetail() {
-        if (showDetail == null) {
-            return false;
-        }
-        return showDetail;
+        return showDetail == Boolean.TRUE;
     }
 
     public List<ConditionalFormattingRule> getConditionalFormattingRules() {
@@ -232,8 +226,12 @@ public final class TableSettings {
         return visSettings;
     }
 
-    public boolean isApplyValueFilters() {
+    public Boolean getApplyValueFilters() {
         return applyValueFilters;
+    }
+
+    public boolean applyValueFilters() {
+        return applyValueFilters == Boolean.TRUE;
     }
 
     @Override
@@ -245,8 +243,7 @@ public final class TableSettings {
             return false;
         }
         final TableSettings that = (TableSettings) o;
-        return applyValueFilters == that.applyValueFilters &&
-                Objects.equals(queryId, that.queryId) &&
+        return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(window, that.window) &&
                 Objects.equals(valueFilter, that.valueFilter) &&
@@ -257,7 +254,8 @@ public final class TableSettings {
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                 Objects.equals(modelVersion, that.modelVersion) &&
-                Objects.equals(visSettings, that.visSettings);
+                Objects.equals(visSettings, that.visSettings) &&
+                Objects.equals(applyValueFilters, that.applyValueFilters);
     }
 
     @Override
@@ -319,7 +317,7 @@ public final class TableSettings {
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private QLVisSettings visSettings;
-        private boolean applyValueFilters;
+        private Boolean applyValueFilters;
 
         private Builder() {
         }
@@ -482,7 +480,7 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder applyValueFilters(final boolean applyValueFilters) {
+        public Builder applyValueFilters(final Boolean applyValueFilters) {
             this.applyValueFilters = applyValueFilters;
             return this;
         }

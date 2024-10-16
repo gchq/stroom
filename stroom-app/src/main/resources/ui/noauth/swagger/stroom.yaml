@@ -15867,6 +15867,8 @@ components:
     TableComponentSettings:
       type: object
       properties:
+        applyValueFilters:
+          type: boolean
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
         extractValues:
@@ -15902,8 +15904,6 @@ components:
           type: string
           description: TODO
         showDetail:
-          type: boolean
-        showValueFilter:
           type: boolean
         useDefaultExtractionPipeline:
           type: boolean
@@ -15972,6 +15972,8 @@ components:
       properties:
         aggregateFilter:
           $ref: '#/components/schemas/ExpressionOperator'
+        applyValueFilters:
+          type: boolean
         extractValues:
           type: boolean
         extractionPipeline:

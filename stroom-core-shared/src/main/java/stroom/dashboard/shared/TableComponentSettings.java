@@ -101,7 +101,7 @@ public class TableComponentSettings implements ComponentSettings {
     @JsonProperty("modelVersion")
     private final String modelVersion;
     @JsonProperty
-    private final boolean applyValueFilters;
+    private final Boolean applyValueFilters;
 
     @JsonCreator
     public TableComponentSettings(
@@ -117,7 +117,7 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion,
-            @JsonProperty("applyValueFilters") final boolean applyValueFilters) {
+            @JsonProperty("applyValueFilters") final Boolean applyValueFilters) {
 
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
@@ -156,10 +156,7 @@ public class TableComponentSettings implements ComponentSettings {
     }
 
     public boolean extractValues() {
-        if (extractValues == null) {
-            return true;
-        }
-        return extractValues;
+        return extractValues != Boolean.FALSE;
     }
 
     public Boolean getUseDefaultExtractionPipeline() {
@@ -167,10 +164,7 @@ public class TableComponentSettings implements ComponentSettings {
     }
 
     public boolean useDefaultExtractionPipeline() {
-        if (useDefaultExtractionPipeline == null) {
-            return false;
-        }
-        return useDefaultExtractionPipeline;
+        return useDefaultExtractionPipeline == Boolean.TRUE;
     }
 
     public DocRef getExtractionPipeline() {
@@ -190,10 +184,7 @@ public class TableComponentSettings implements ComponentSettings {
     }
 
     public boolean showDetail() {
-        if (showDetail == null) {
-            return false;
-        }
-        return showDetail;
+        return showDetail == Boolean.TRUE;
     }
 
     public List<ConditionalFormattingRule> getConditionalFormattingRules() {
@@ -204,8 +195,12 @@ public class TableComponentSettings implements ComponentSettings {
         return modelVersion;
     }
 
-    public boolean isApplyValueFilters() {
+    public Boolean getApplyValueFilters() {
         return applyValueFilters;
+    }
+
+    public boolean applyValueFilters() {
+        return applyValueFilters == Boolean.TRUE;
     }
 
     @Override
@@ -217,8 +212,7 @@ public class TableComponentSettings implements ComponentSettings {
             return false;
         }
         final TableComponentSettings that = (TableComponentSettings) o;
-        return applyValueFilters == that.applyValueFilters &&
-                Objects.equals(queryId, that.queryId) &&
+        return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(dataSourceRef, that.dataSourceRef) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
@@ -228,7 +222,8 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(pageSize, that.pageSize) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion);
+                Objects.equals(modelVersion, that.modelVersion) &&
+                Objects.equals(applyValueFilters, that.applyValueFilters);
     }
 
     @Override
@@ -292,7 +287,7 @@ public class TableComponentSettings implements ComponentSettings {
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
-        private boolean applyValueFilters;
+        private Boolean applyValueFilters;
 
         private Builder() {
         }
@@ -437,7 +432,7 @@ public class TableComponentSettings implements ComponentSettings {
             return self();
         }
 
-        public Builder applyValueFilters(final boolean applyValueFilters) {
+        public Builder applyValueFilters(final Boolean applyValueFilters) {
             this.applyValueFilters = applyValueFilters;
             return self();
         }

@@ -302,7 +302,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> {
-            final boolean applyValueFilters = !getTableSettings().isApplyValueFilters();
+            final boolean applyValueFilters = !getTableSettings().applyValueFilters();
             setSettings(getTableSettings()
                     .copy()
                     .applyValueFilters(applyValueFilters)
@@ -930,7 +930,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Change value filter state.
-        setApplyValueFilters(getTableSettings().isApplyValueFilters());
+        setApplyValueFilters(getTableSettings().applyValueFilters());
     }
 
     public TableComponentSettings getTableSettings() {

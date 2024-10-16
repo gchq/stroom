@@ -20642,6 +20642,9 @@
       "TableComponentSettings" : {
         "type" : "object",
         "properties" : {
+          "applyValueFilters" : {
+            "type" : "boolean"
+          },
           "dataSourceRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -20679,9 +20682,6 @@
             "description" : "TODO"
           },
           "showDetail" : {
-            "type" : "boolean"
-          },
-          "showValueFilter" : {
             "type" : "boolean"
           },
           "useDefaultExtractionPipeline" : {
@@ -20772,6 +20772,9 @@
         "properties" : {
           "aggregateFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "applyValueFilters" : {
+            "type" : "boolean"
           },
           "extractValues" : {
             "type" : "boolean"
