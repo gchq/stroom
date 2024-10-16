@@ -141,7 +141,6 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
-  contentIndex: {}
   contentPackImport:
     enabled: false
     importAsSubjectId: "Administrators"
