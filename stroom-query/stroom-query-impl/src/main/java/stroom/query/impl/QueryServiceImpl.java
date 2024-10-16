@@ -462,17 +462,24 @@ class QueryServiceImpl implements QueryService {
 
                     // Log this search request for the current user.
                     searchEventLog.search(
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
                             mappedRequest.getQuery().getDataSource(),
                             mappedRequest.getQuery().getExpression(),
                             searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams());
+                            searchRequest.getQueryContext().getParams(),
+                            null);
                 }
 
             } catch (final TokenException e) {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(searchRequest.getQuery(),
+                    searchEventLog.search(
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
+                            null,
+                            null,
                             searchRequest.getQueryContext().getQueryInfo(),
                             searchRequest.getQueryContext().getParams(),
                             e);
@@ -491,7 +498,11 @@ class QueryServiceImpl implements QueryService {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(searchRequest.getQuery(),
+                    searchEventLog.search(
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
+                            null,
+                            null,
                             searchRequest.getQueryContext().getQueryInfo(),
                             searchRequest.getQueryContext().getParams(),
                             e);
