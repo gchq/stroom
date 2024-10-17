@@ -23,6 +23,7 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.util.shared.TextRange;
+import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
@@ -42,8 +43,9 @@ public class EditorPresenter
                            final EditorView view,
                            final EditorMenuPresenter contextMenu,
                            final DelegatingAceCompleter delegatingAceCompleter,
-                           final CurrentPreferences currentPreferences) {
-        super(eventBus, view, delegatingAceCompleter, currentPreferences);
+                           final CurrentPreferences currentPreferences,
+                           final GlobalKeyHandler globalKeyHandler) {
+        super(eventBus, view, delegatingAceCompleter, currentPreferences, globalKeyHandler);
         this.contextMenu = contextMenu;
 
         registerHandler(view.addContextMenuHandler(event ->

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 
 package stroom.util.shared;
 
+@Deprecated
 public final class EqualsUtil {
 
     private EqualsUtil() {
     }
 
+    @Deprecated // Use Objets.equals
     public static boolean isEquals(final Object lhs, final Object rhs) {
         if (lhs == rhs) {
             return true;

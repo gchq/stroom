@@ -57,4 +57,11 @@ public interface SteppingResource extends RestResource, DirectRestService {
             summary = "Step a pipeline",
             operationId = "step")
     SteppingResult step(@Parameter(description = "request", required = true) PipelineStepRequest request);
+
+    @POST
+    @Path("/terminateStepping")
+    @Operation(
+            summary = "Terminate pipeline stepping process",
+            operationId = "terminateStepping")
+    Boolean terminateStepping(@Parameter(description = "request", required = true) PipelineStepRequest request);
 }

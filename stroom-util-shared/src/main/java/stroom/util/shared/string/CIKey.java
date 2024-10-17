@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -67,7 +68,7 @@ public class CIKey implements Comparable<CIKey> {
     private final transient String lowerKey;
 
     @JsonCreator
-    private CIKey(final String key) {
+    private CIKey(@JsonProperty("key") final String key) {
         this.key = key;
         this.lowerKey = toLowerCase(key);
     }
@@ -198,11 +199,10 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Create a {@link CIKey} for an upper or mixed case key, e.g. "FOO", or "Foo",
-     * that will be held as a static variable. This has the additional cost of
-     * interning the lower-case form of the key. Only use this for commonly used
-     * static {@link CIKey} instances as if the key is not already held in the map
-     * of common {@link CIKey}s then it will be added.
+     * Create a {@link CIKey} that will be held as a static variable.
+     * Only use this for commonly used static {@link CIKey} instances
+     * as if the key is not already held in the map of common {@link CIKey}s
+     * then it will be added.
      */
     public static CIKey ofStaticKey(final String key) {
         if (key == null) {

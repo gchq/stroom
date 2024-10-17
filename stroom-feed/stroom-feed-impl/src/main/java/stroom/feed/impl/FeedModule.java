@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.feed.impl;
 
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -37,6 +38,9 @@ public class FeedModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        // Needed in FeedStoreImpl
+        requireBinding(FsVolumeGroupService.class);
+
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
         bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);

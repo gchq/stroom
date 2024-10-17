@@ -42,7 +42,7 @@ import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQu
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
 
@@ -109,9 +109,21 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+            return NullSafe.getOrElse(
+                    index,
+                    d -> SolrIndexDataSourceFieldUtil.getDataSourceFields(index),
+                    List::size,
+                    0);
+        });
+    }
+
+    @Override
     public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-        if (index != null && index.getFields() != null) {
+        if (NullSafe.nonNull(index, SolrIndexDoc::getFields)) {
             final Map<String, IndexField> fieldMap = index
                     .getFields()
                     .stream()
@@ -120,7 +132,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
                     .map(solrIndexField -> (IndexField) solrIndexField)
                     .collect(Collectors.toMap(IndexField::getFldName, Function.identity()));
 
-            if (GwtNullSafe.hasEntries(fieldMap)) {
+            if (NullSafe.hasEntries(fieldMap)) {
                 return IndexFieldMap.fromFieldsMap(fieldName, fieldMap);
             } else {
                 return null;

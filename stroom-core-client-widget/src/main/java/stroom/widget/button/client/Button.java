@@ -2,8 +2,8 @@ package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -14,7 +14,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-public class Button extends ButtonBase implements ButtonView, TaskHandlerFactory {
+public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
 
     private final Element rippleContainer;
     private final Element buttonContent;
@@ -176,8 +176,8 @@ public class Button extends ButtonBase implements ButtonView, TaskHandlerFactory
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return new TaskHandler() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
             @Override
             public void onStart(final Task task) {
                 taskCount++;

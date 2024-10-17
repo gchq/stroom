@@ -1,6 +1,5 @@
 package stroom.query.language.functions;
 
-import stroom.query.language.functions.ref.CountIterationReference;
 import stroom.query.language.functions.ref.CountReference;
 import stroom.query.language.functions.ref.DoubleListReference;
 import stroom.query.language.functions.ref.FieldValReference;
@@ -28,19 +27,6 @@ public class TestValueReferenceIndex {
         final CountReference r1 = valueReferenceIndex.addCount("test1");
         final CountReference r2 = valueReferenceIndex.addCount("test2");
         final CountReference r3 = valueReferenceIndex.addCount("test3");
-        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
-        r1.increment(storedValues);
-        r2.add(storedValues, 3);
-        r3.increment(storedValues);
-        testWriteRead(valueReferenceIndex, storedValues);
-    }
-
-    @Test
-    void testCountIterationReference() {
-        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
-        final CountIterationReference r1 = valueReferenceIndex.addCountIteration("test1", 1);
-        final CountIterationReference r2 = valueReferenceIndex.addCountIteration("test2", 2);
-        final CountIterationReference r3 = valueReferenceIndex.addCountIteration("test3", 3);
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
         r1.increment(storedValues);
         r2.add(storedValues, 3);

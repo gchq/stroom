@@ -28,7 +28,7 @@ public class ExplorerClient extends AbstractRestClient {
                 .method(res -> res.changeDocumentPermissions(request))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 }

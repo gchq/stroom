@@ -1,6 +1,6 @@
 package stroom.dashboard.client.query;
 
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -15,13 +15,13 @@ public class QueryInfo {
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
     }
 
-    public void prompt(final Runnable runnable, final TaskHandlerFactory taskHandlerFactory) {
+    public void prompt(final Runnable runnable, final TaskMonitorFactory taskMonitorFactory) {
         queryInfoPresenterProvider.get().show(message, state -> {
             if (state.isOk()) {
                 message = state.getQueryInfo();
                 runnable.run();
             }
-        }, taskHandlerFactory);
+        }, taskMonitorFactory);
     }
 
     public String getMessage() {

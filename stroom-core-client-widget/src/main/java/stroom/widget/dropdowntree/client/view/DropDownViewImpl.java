@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -24,9 +26,10 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,18 +40,26 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
         implements DropDownView {
 
     private final Widget widget;
-    @UiField
-    FlowPanel container;
+    //    @SuppressWarnings("unused")
+//    @UiField
+//    FlowPanel container;
     @UiField
     Label label;
+    @UiField(provided = true)
+    SvgButton warningButton;
     @UiField
-    SimplePanel button;
+    SimplePanel ellipsesBtnPanel;
 
     @Inject
     public DropDownViewImpl(final Binder binder) {
+        warningButton = SvgButton.create(SvgPresets.ALERT.title("Show Warnings"));
+        warningButton.setVisible(false);
+        warningButton.addStyleName("dropDownView-warning");
+
         widget = binder.createAndBindUi(this);
         widget.addDomHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
+//                GWT.log(event.getRelativeElement().toString());
                 showPopup(event.getNativeEvent());
             }
         }, MouseDownEvent.getType());
@@ -59,7 +70,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
         }, KeyDownEvent.getType());
         widget.getElement().setTabIndex(0);
 
-        SvgImageUtil.setSvgAsInnerHtml(button, SvgImage.ELLIPSES_HORIZONTAL);
+        SvgImageUtil.setSvgAsInnerHtml(ellipsesBtnPanel, SvgImage.ELLIPSES_HORIZONTAL);
     }
 
     @Override
@@ -73,9 +84,17 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     }
 
     @Override
-    public void setText(final String text) {
+    public void setText(final String text, boolean hasErrorMsg) {
         label.setText(text);
         label.setTitle(text);
+        warningButton.setVisible(hasErrorMsg);
+    }
+
+    @Override
+    public HandlerRegistration addWarningClickHandler(final MouseDownHandler mouseDownHandler) {
+        return warningButton.addMouseDownHandler(mouseDownHandler);
+//        return warningPanel.asWidget()
+//                .addDomHandler(mouseDownHandler, MouseDownEvent.getType());
     }
 
     private void showPopup(final NativeEvent e) {
@@ -84,6 +103,10 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
             getUiHandlers().showPopup();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, DropDownViewImpl> {
 

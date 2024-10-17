@@ -224,7 +224,7 @@ public class UserListPresenter
                             .method(res -> res.find(builder.build()))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskHandlerFactory(pagerView)
+                            .taskMonitorFactory(pagerView)
                             .exec();
                 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,9 @@ abstract class AbstractManyChildFunction extends AbstractFunction {
         functions = new Function[params.length];
         for (int i = 0; i < params.length; i++) {
             final Param param = params[i];
-            if (param instanceof Function) {
-                final Function func = (Function) param;
-                functions[i] = func;
-            } else {
-                functions[i] = new StaticValueFunction((Val) param);
-            }
+            functions[i] = param instanceof final Function func
+                    ? func
+                    : new StaticValueFunction((Val) param);
         }
     }
 

@@ -74,7 +74,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskHandlerFactory(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
         };

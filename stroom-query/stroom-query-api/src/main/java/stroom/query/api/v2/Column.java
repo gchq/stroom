@@ -107,6 +107,30 @@ public final class Column implements HasDisplayValue {
         this.special = GwtNullSafe.requireNonNullElse(special, false);
     }
 
+    public Column(final CIKey id,
+                  final CIKey name,
+                  final String expression,
+                  final Sort sort,
+                  final Filter filter,
+                  final Format format,
+                  final Integer group,
+                  final Integer width,
+                  final Boolean visible,
+                  final Boolean special) {
+        this.caseInsensitiveId = id;
+        this.id = id.get();
+        this.caseInsensitiveName = name;
+        this.name = name.get();
+        this.expression = expression;
+        this.sort = sort;
+        this.filter = filter;
+        this.format = format;
+        this.group = group;
+        this.width = GwtNullSafe.requireNonNullElse(width, 200);
+        this.visible = GwtNullSafe.requireNonNullElse(visible, true);
+        this.special = GwtNullSafe.requireNonNullElse(special, false);
+    }
+
     public String getId() {
         return id;
     }
@@ -246,8 +270,8 @@ public final class Column implements HasDisplayValue {
      */
     public static final class Builder {
 
-        private String id;
-        private String name;
+        private CIKey id;
+        private CIKey name;
         private String expression;
         private Sort sort;
         private Filter filter;
@@ -274,8 +298,8 @@ public final class Column implements HasDisplayValue {
         }
 
         private Builder(final Column field) {
-            this.id = field.id;
-            this.name = field.name;
+            this.id = field.getIdAsCIKey();
+            this.name = field.getNameAsCIKey();
             this.expression = field.expression;
             this.sort = field.sort;
             this.filter = field.filter;
@@ -291,6 +315,15 @@ public final class Column implements HasDisplayValue {
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder id(final String value) {
+            this.id = GwtNullSafe.get(value, CIKey::of);
+            return this;
+        }
+
+        /**
+         * @param value The internal id of the field for equality purposes
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder id(final CIKey value) {
             this.id = value;
             return this;
         }
@@ -300,6 +333,15 @@ public final class Column implements HasDisplayValue {
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder name(final String value) {
+            this.name = GwtNullSafe.get(value, CIKey::of);
+            return this;
+        }
+
+        /**
+         * @param value The name of the field for display purposes
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder name(final CIKey value) {
             this.name = value;
             return this;
         }

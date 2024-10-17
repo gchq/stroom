@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.impl;
 
 import stroom.docref.DocRef;
@@ -8,20 +24,24 @@ import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
-import stroom.query.shared.QueryHelpDataSource;
 import stroom.query.shared.QueryHelpDetail;
+import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.svg.shared.SvgImage;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
+import stroom.util.string.AceStringMatcher;
+import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +52,8 @@ import java.util.stream.Collectors;
 @Singleton
 public class DataSources {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSources.class);
+
     private static final String DATA_SOURCE_ID = "data_source";
     private static final QueryHelpRow ROOT = QueryHelpRow
             .builder()
@@ -40,6 +62,7 @@ public class DataSources {
             .hasChildren(true)
             .title("Data Sources")
             .build();
+    public static final int INITIAL_SCORE = 500;
 
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final Map<String, SvgImage> icons;
@@ -78,8 +101,9 @@ public class DataSources {
                             .type(QueryHelpType.DATA_SOURCE)
                             .id(DATA_SOURCE_ID + "." + docRef.getUuid())
                             .icon(getIcon(docRef))
+                            .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
-                            .data(new QueryHelpDataSource(docRef))
+                            .data(new QueryHelpDocument(docRef))
                             .build();
                     builder.add(row);
                 }
@@ -93,22 +117,39 @@ public class DataSources {
     }
 
     public void addCompletions(final CompletionsRequest request,
-                               final PageRequest pageRequest,
+                               final int maxCompletions,
                                final List<CompletionItem> resultList) {
-        final DataSourceProviderRegistry dataSourceProviderRegistry =
-                dataSourceProviderRegistryProvider.get();
-        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
-        List<DocRef> sortedList = new ArrayList<>();
-        for (final DocRef docRef : dataSourceProviderRegistry.list()) {
-            if (stringMatcher.match(docRef.getName()).isPresent()) {
-                sortedList.add(docRef);
+
+        try {
+            final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
+            final List<DocRef> docRefs = dataSourceProviderRegistry.list();
+
+            if (docRefs.size() > maxCompletions) {
+                final List<AceMatchResult<DocRef>> matchResults = AceStringMatcher.filterCompletions(
+                        dataSourceProviderRegistry.list(),
+                        request.getPattern(),
+                        INITIAL_SCORE,
+                        DocRef::getName);
+
+                matchResults.sort(AceStringMatcher.SCORE_DESC_THEN_NAME_COMPARATOR);
+
+                LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
+                        matchResults.size(), maxCompletions));
+
+                matchResults.stream()
+                        .limit(maxCompletions)
+                        .map(matchResult -> createCompletionValue(matchResult.item(), matchResult.score()))
+                        .forEach(resultList::add);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
+                        docRefs.size(), maxCompletions));
+                // TODO need to cache the docRefs plus documentation for each one
+                docRefs.stream()
+                        .map(docRef -> createCompletionValue(docRef, INITIAL_SCORE))
+                        .forEach(resultList::add);
             }
-        }
-        sortedList.sort(Comparator.comparing(DocRef::getName));
-        for (int i = pageRequest.getOffset();
-             i < pageRequest.getOffset() + pageRequest.getLength() && i < sortedList.size();
-             i++) {
-            resultList.add(createCompletionValue(sortedList.get(i)));
+        } catch (Exception e) {
+            LOGGER.error("Error adding datasource completions: {}", e.getMessage(), e);
         }
     }
 
@@ -122,7 +163,7 @@ public class DataSources {
 
         } else if (QueryHelpType.DATA_SOURCE.equals(row.getType()) &&
                 row.getId().startsWith(DATA_SOURCE_ID + ".")) {
-            final QueryHelpDataSource dataSource = (QueryHelpDataSource) row.getData();
+            final QueryHelpDocument dataSource = (QueryHelpDocument) row.getData();
             final DocRef docRef = dataSource.getDocRef();
             final InsertType insertType = InsertType.plainText(docRef.getName());
             final String insertText = getInsertText(docRef);
@@ -133,14 +174,14 @@ public class DataSources {
         return Optional.empty();
     }
 
-    private CompletionValue createCompletionValue(final DocRef docRef) {
+    private CompletionValue createCompletionValue(final DocRef docRef, final int score) {
         final String caption = docRef.getName();
         final String insertText = getInsertText(docRef);
         final String tooltip = getDetail(docRef);
         return new CompletionValue(
                 caption,
                 insertText,
-                500,
+                score,
                 "Data Source",
                 tooltip);
     }

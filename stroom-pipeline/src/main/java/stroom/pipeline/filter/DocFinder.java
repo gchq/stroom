@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
@@ -6,6 +22,7 @@ import stroom.docref.HasFindDocsByName;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 
@@ -52,7 +69,7 @@ public class DocFinder<D extends Doc> {
 
 
         // Load the document from a name pattern if one has been specified.
-        if (namePattern != null && namePattern.trim().length() > 0) {
+        if (NullSafe.isNonBlankString(namePattern)) {
             // Resolve replacement variables.
             String resolvedName = namePattern.trim();
             if (feedName != null) {
@@ -83,7 +100,7 @@ public class DocFinder<D extends Doc> {
             }
 
             final List<DocRef> docs = hasFindDocsByName.findByName(resolvedName);
-            if (docs == null || docs.size() == 0) {
+            if (NullSafe.hasItems(docs)) {
                 if (errorConsumer != null && !suppressNotFoundWarnings) {
                     final StringBuilder sb = new StringBuilder()
                             .append("No ")
@@ -109,9 +126,8 @@ public class DocFinder<D extends Doc> {
             } else {
                 doc = docs.get(0);
                 if (errorConsumer != null && docs.size() > 1) {
-                    final String message = "" +
-                            "Found " + docs.size()
-                            + " " + type + "s with name '" +
+                    final String message = "Found " + docs.size() +
+                            " " + type + "s with name '" +
                             resolvedName +
                             "' from pattern '" +
                             namePattern +

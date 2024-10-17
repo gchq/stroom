@@ -99,19 +99,13 @@ public class CompiledColumns {
                 }
             }
 
-            CompiledFilter filter = null;
-            if (column.getFilter() != null) {
-                filter = new CompiledFilter(column.getFilter(), paramMap);
-            }
-
             final CompiledColumn compiledField =
                     new CompiledColumn(
                             column,
                             groupDepth,
                             generator,
                             hasAggregate,
-                            requiresChildData,
-                            filter);
+                            requiresChildData);
 
             // Only include this field if it is used for display, grouping,
             // sorting.

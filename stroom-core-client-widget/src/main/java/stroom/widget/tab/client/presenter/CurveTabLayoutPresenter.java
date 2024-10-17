@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,15 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
 
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
+
         registerHandler(getView().getTabBar().addRequestCloseTabHandler(event ->
                 RequestCloseTabEvent.fire(
                         CurveTabLayoutPresenter.this,
-                        event.getTabData())));
-        registerHandler(getView().getTabBar().addShowMenuHandler(event -> getEventBus().fireEvent(event)));
+                        event.getTabData(),
+                        event.isForce())));
+
+        registerHandler(getView().getTabBar().addShowMenuHandler(event ->
+                getEventBus().fireEvent(event)));
     }
 
     public void add(final TabData tabData, final Layer layer) {

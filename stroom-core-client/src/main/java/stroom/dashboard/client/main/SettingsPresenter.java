@@ -67,7 +67,7 @@ public class SettingsPresenter
 
         if (layer instanceof ComponentDataModifier) {
             final ComponentDataModifier componentDataModifier = (ComponentDataModifier) layer;
-            componentDataModifier.setTaskHandlerFactory(this);
+            componentDataModifier.setTaskMonitorFactory(this);
             modifiers.put(tab, componentDataModifier);
         }
 

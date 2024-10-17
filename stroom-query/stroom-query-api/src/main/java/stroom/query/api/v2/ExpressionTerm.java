@@ -250,6 +250,10 @@ public final class ExpressionTerm extends ExpressionItem {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Builder for constructing a {@link ExpressionTerm}
      */

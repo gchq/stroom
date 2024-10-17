@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
-import stroom.explorer.client.event.ExplorerTaskListener;
+import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
@@ -103,7 +103,7 @@ public class ExplorerNodeRemoveTagsPresenter
                                 t.getMessage(),
                                 null);
                     })
-                    .taskHandlerFactory(new ExplorerTaskListener(this))
+                    .taskMonitorFactory(new ExplorerTaskMonitorFactory(this))
                     .exec();
         }
     }
@@ -154,7 +154,7 @@ public class ExplorerNodeRemoveTagsPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

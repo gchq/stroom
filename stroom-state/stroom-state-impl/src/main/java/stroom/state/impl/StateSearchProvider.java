@@ -116,6 +116,16 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        final StateDoc doc = getStateDoc(docRef);
+        return NullSafe.getOrElse(
+                doc,
+                d -> StateFieldUtil.getQueryableFields(doc.getStateType()),
+                List::size,
+                0);
+    }
+
+    @Override
     public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final StateDoc doc = getStateDoc(docRef);
         final Map<CIKey, QueryField> fieldMap = StateFieldUtil.getFieldMap(doc.getStateType());

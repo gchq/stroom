@@ -55,6 +55,7 @@ import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionState;
@@ -82,6 +83,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.view.shared.ViewDoc;
 
+import com.google.common.base.Predicates;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -100,6 +102,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @Singleton
@@ -353,7 +356,7 @@ public class TableBuilderAnalyticExecutor {
 
             final ExpressionOperator findMetaExpression = filterGroupEntry.getKey();
 
-            if (ExpressionUtil.termCount(findMetaExpression) > 0) {
+            if (ExpressionUtil.hasTerms(findMetaExpression)) {
                 final List<Meta> metaList = analyticHelper.findMeta(findMetaExpression,
                         minStreamId,
                         minCreateTime,
@@ -477,13 +480,16 @@ public class TableBuilderAnalyticExecutor {
         final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
                 .create(searchRequest.getQuery().getDataSource(), fieldIndex);
 
+        // We don't filter table analytics as they are already filtered by the LMDB data store.
+        final Predicate<Val[]> valFilter = Predicates.alwaysTrue();
         return new TableBuilderAnalyticFieldListConsumer(
                 searchRequest,
-                fieldIndex,
+                lmdbDataStore.getCompiledColumns(),
                 fieldValueExtractor,
                 lmdbDataStore,
                 memoryIndex,
-                minEventId);
+                minEventId,
+                valFilter);
     }
 
     private boolean ignoreStream(final TableBuilderAnalytic analytic,

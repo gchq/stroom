@@ -17,7 +17,7 @@
 package stroom.search;
 
 import stroom.annotation.api.AnnotationFields;
-import stroom.dictionary.impl.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;

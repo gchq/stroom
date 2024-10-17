@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,14 @@ public class EntityTreePresenter
     public void setSelectedItem(final ExplorerNode selection) {
         explorerTree.getSelectionModel().setSelected(selection);
     }
+
+    public void setSelectParentIfNotFound(final boolean selectParentIfNotFound) {
+        explorerTree.getTreeModel().setSelectParentIfNotFound(selectParentIfNotFound);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EntityTreeView extends View, Focus, HasUiHandlers<EntityTreeUiHandlers> {
 

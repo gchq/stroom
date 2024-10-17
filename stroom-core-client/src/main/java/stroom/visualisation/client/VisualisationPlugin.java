@@ -26,7 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
@@ -68,13 +68,13 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     public void load(final DocRef docRef,
                      final Consumer<VisualisationDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(VISUALISATION_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -83,13 +83,13 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final VisualisationDoc document,
                      final Consumer<VisualisationDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(VISUALISATION_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

@@ -29,7 +29,7 @@ import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,13 +68,13 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
     public void load(final DocRef docRef,
                      final Consumer<QueryDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(QUERY_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -83,13 +83,13 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
                      final QueryDoc document,
                      final Consumer<QueryDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(QUERY_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

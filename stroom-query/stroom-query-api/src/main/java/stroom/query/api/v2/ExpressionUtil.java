@@ -104,6 +104,10 @@ public class ExpressionUtil {
                 .build();
     }
 
+    public static boolean hasTerms(final ExpressionOperator expressionOperator) {
+        return termCount(expressionOperator) > 0;
+    }
+
     public static int termCount(final ExpressionOperator expressionOperator) {
         return terms(expressionOperator, null).size();
     }
@@ -316,6 +320,75 @@ public class ExpressionUtil {
             }
         }
         return continueWalking;
+    }
+
+    /**
+     * Simplify an expression to improve comprehension and make processing faster.
+     *
+     * @param item The expression to simplify.
+     * @return The simplified expression.
+     */
+    public static ExpressionOperator simplify(final ExpressionOperator item) {
+        final ExpressionItem expressionItem = simplifyExpressionItem(item);
+        if (expressionItem == null) {
+            return null;
+        }
+        if (expressionItem instanceof ExpressionOperator) {
+            return (ExpressionOperator) expressionItem;
+        }
+        return ExpressionOperator.builder().op(Op.AND).children(Collections.singletonList(expressionItem)).build();
+    }
+
+    private static ExpressionItem simplifyExpressionItem(final ExpressionItem item) {
+        // Remove null or disabled.
+        if (item == null || !item.enabled()) {
+            return null;
+        }
+
+        if (item instanceof ExpressionOperator) {
+            final ExpressionOperator operator = (ExpressionOperator) item;
+
+            // Remove empty children.
+            final List<ExpressionItem> children = operator.getChildren();
+            if (children == null || children.isEmpty()) {
+                return null;
+            }
+
+            final List<ExpressionItem> simplifiedChildren = new ArrayList<>(children.size());
+            for (final ExpressionItem child : children) {
+                final ExpressionItem simplifiedChild = simplifyExpressionItem(child);
+                if (simplifiedChild != null) {
+                    if (simplifiedChild instanceof ExpressionOperator) {
+                        final ExpressionOperator childOperator = (ExpressionOperator) simplifiedChild;
+                        if (childOperator.getChildren() != null && !childOperator.getChildren().isEmpty()) {
+                            if (childOperator.getChildren().size() == 1) {
+                                if (!Op.NOT.equals(operator.op()) && !Op.NOT.equals(childOperator.op())) {
+                                    // Simplify AND(AND()) or AND(OR()) or OR(AND()) or OR(OR())
+                                    simplifiedChildren.add(childOperator.getChildren().get(0));
+                                } else if (Op.NOT.equals(operator.op()) && Op.NOT.equals(childOperator.op())) {
+                                    // Simplify NOT(NOT())
+                                    simplifiedChildren.add(childOperator.getChildren().get(0));
+                                } else {
+                                    simplifiedChildren.add(childOperator);
+                                }
+                            } else {
+                                simplifiedChildren.add(childOperator);
+                            }
+                        }
+                    } else {
+                        simplifiedChildren.add(simplifiedChild);
+                    }
+                }
+            }
+
+            if (simplifiedChildren.isEmpty()) {
+                return null;
+            }
+
+            return ExpressionOperator.builder().op(operator.op()).children(simplifiedChildren).build();
+        }
+
+        return item;
     }
 
 

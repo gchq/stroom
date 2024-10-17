@@ -5,10 +5,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.shared.AceEditorTheme;
+import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
-import stroom.ui.config.shared.Themes;
-import stroom.ui.config.shared.Themes.ThemeType;
+import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.datepicker.client.ClientTimeZone;
@@ -17,7 +18,6 @@ import stroom.widget.util.client.ClientStringUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 import java.util.Objects;
@@ -42,44 +42,44 @@ public class UserPreferencesManager {
         this.currentPreferences = currentPreferences;
     }
 
-    public void fetch(final Consumer<UserPreferences> consumer, final TaskHandlerFactory taskHandlerFactory) {
+    public void fetch(final Consumer<UserPreferences> consumer, final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer,
-                       final TaskHandlerFactory taskHandlerFactory) {
+                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer,
-                                          final TaskHandlerFactory taskHandlerFactory) {
+                                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer,
-                                              final TaskHandlerFactory taskHandlerFactory) {
+                                              final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -163,7 +163,7 @@ public class UserPreferencesManager {
     }
 
     public ThemeType geCurrentThemeType() {
-        return Themes.getThemeType(currentPreferences.getTheme());
+        return Theme.getThemeType(currentPreferences.getTheme());
     }
 
     /**
@@ -174,7 +174,7 @@ public class UserPreferencesManager {
     }
 
     public List<String> getThemes() {
-        return Themes.getThemeNames();
+        return Theme.getThemeNames();
     }
 
     public List<String> getFonts() {
@@ -182,11 +182,8 @@ public class UserPreferencesManager {
     }
 
     public List<String> getEditorThemes(final ThemeType themeType) {
-
-        final List<AceEditorTheme> themes = Objects.requireNonNull(themeType).equals(ThemeType.LIGHT)
-                ? AceEditorTheme.getLightThemes()
-                : AceEditorTheme.getDarkThemes();
-        return themes.stream()
+        return AceEditorTheme.getThemesByType(Objects.requireNonNull(themeType))
+                .stream()
                 .map(AceEditorTheme::getName)
                 .collect(Collectors.toList());
     }

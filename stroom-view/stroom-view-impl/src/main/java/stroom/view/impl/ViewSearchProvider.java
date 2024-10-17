@@ -106,6 +106,22 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public int getFieldCount(final DocRef viewDocRef) {
+        return securityContext.useAsReadResult(() -> {
+            final DocRef dataSourceRef = getReferencedDataSource(viewDocRef);
+            if (dataSourceRef != null) {
+                final Optional<DataSourceProvider> optDelegate =
+                        dataSourceProviderRegistry.get()
+                                .getDataSourceProvider(dataSourceRef.getType());
+                return optDelegate.map(dataSourceProvider -> dataSourceProvider.getFieldCount(dataSourceRef))
+                        .orElse(0);
+            } else {
+                return 0;
+            }
+        });
+    }
+
+    @Override
     public IndexFieldMap getIndexFields(final DocRef viewDocRef, final CIKey fieldName) {
         final DocRef docRef = getReferencedDataSource(viewDocRef);
         if (docRef != null) {

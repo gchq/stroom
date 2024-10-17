@@ -4,7 +4,7 @@
              xmlns:l="urn:import:stroom.item.client">
     <g:SimplePanel styleName="max dock-container-horizontal">
         <g:SimplePanel styleName="ListInputView dock-max">
-            <l:SelectionBox ui:field="value" addStyleNames="w-100 allow-focus"/>
+            <l:SelectionBox ui:field="valueSelectionBox" addStyleNames="w-100 allow-focus"/>
         </g:SimplePanel>
     </g:SimplePanel>
 </ui:UiBinder>

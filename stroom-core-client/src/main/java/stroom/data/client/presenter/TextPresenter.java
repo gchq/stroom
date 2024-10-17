@@ -22,6 +22,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
+import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.TextRange;
 
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -33,7 +34,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 

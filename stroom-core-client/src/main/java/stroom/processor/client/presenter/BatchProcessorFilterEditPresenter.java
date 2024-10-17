@@ -27,7 +27,7 @@ import stroom.processor.shared.ProcessorFilterChange;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageResponse;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -146,7 +146,7 @@ public class BatchProcessorFilterEditPresenter
     }
 
     @Override
-    public void apply(final TaskHandlerFactory taskHandlerFactory) {
+    public void apply(final TaskMonitorFactory taskMonitorFactory) {
         int docCount = 0;
         if (currentResultPageResponse != null) {
             docCount = currentResultPageResponse.getLength();
@@ -166,14 +166,14 @@ public class BatchProcessorFilterEditPresenter
                     message,
                     ok -> {
                         if (ok) {
-                            doApply(taskHandlerFactory);
+                            doApply(taskMonitorFactory);
                         }
                     }
             );
         }
     }
 
-    private void doApply(final TaskHandlerFactory taskHandlerFactory) {
+    private void doApply(final TaskMonitorFactory taskMonitorFactory) {
         final BulkProcessorFilterChangeRequest request = createRequest();
         restFactory
                 .create(PROCESSOR_FILTER_RESOURCE)
@@ -191,7 +191,7 @@ public class BatchProcessorFilterEditPresenter
                                 null);
                     }
                 })
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

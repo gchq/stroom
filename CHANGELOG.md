@@ -12,8 +12,102 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
 
-## [v7.5-beta.12] - 2024-09-06
+* Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.
+
+
+## [v7.6-beta.2] - 2024-10-07
+
+* Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
+
+* Issue **#4341** : Allow download from query table.
+
+* Issue **#4507** : Fix index shard permission issue.
+
+* Issue **#4510** : Fix right click in editor pane.
+
+* Issue **#4511** : Fix StreamId, EventId selection in query tables.
+
+* Issue **#4485** : Improve dialog move/resize behaviour.
+
+* Issue **#4492** : Make Lucene behave like SQL for OR(NOT()) queries.
+
+* Issue **#4494** : Allow functions in StroomQL select, e.g. `count()`.
+
+* Issue **#4202** : Fix default destination not being selected when you do _Save As_.
+
+* Issue **#4475** : Add `mask()` function and deprecate `countPrevious()`.
+
+* Issue **#4491** : Fix tab closure when deleting items in the explorer tree.
+
+* Issue **#4502** : Fix inability to step an un-processed stream.
+
+* Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
+
+* Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
+
+* Issue **#4458** : Fix explorer node tags not being copied. Also fix copy/move not selecting the parent folder of the source as the default destination folder.
+
+* Issue **#4478** : Fix boolean expression precedence in StroomQL.
+
+* Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
+
+* Issue **#4455** : Add Goto Document links to the Imports sub-tab of the Dictionary screen. Also add new Effective Words tab to list all the words in the dictionary that include those from its imports (and their imports).
+
+* Issue **#4468** : Improve handling of key sequences and detection of key events from ACE editor.
+
+* Issue **#4472** : Change the User Preferences dialog to cope with redundant stroom/editor theme names.
+
+* Issue **#4479** : Add ability to assume role for S3.
+
+* Issue **#4202** : Fix problems with Dashboard Extraction Pipeline picker incorrectly changing the selected pipeline.
+
+* Change the DocRef picker so that it shows a warning icon if the selected DocRef no longer exists or the user doesn't have permission to view it.
+
+* Change the Extraction Pipeline picker on the Index Settings screen to pre-filter on `tag:extraction`. This is configured using the property `stroom.ui.query.indexPipelineSelectorIncludedTags`.
+
+* Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
+
+* Issue **#4476** : Fix streaming analytic issue where it failed to match after seeing records with missing query fields.
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4463** : Fix NPE with analytic rule email templating.
+
+* Issue **#4146** : Fix audit events for deleting/restoring streams.
+
+* Change the alert dialog message styling to have a max-height of 600px so long messages get a scrollbar.
+
+* Issue **#4468** : Fix selection box keyboard selection behavior when no quick filter is visible.
+
+* Issue **#4471** : Fix NPE with stepping filter.
+
+* Issue **#4451** : Add S3 pipeline appender.
+
+* Issue **#4401** : Improve content search.
+
+* Issue **#4417** : Show stepping progress and allow termination.
+
+* Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
+
+* Issue **#4448** : Fix query refresh tooltip when not refreshing.
+
+* Issue **#4457** : Fix ctrl+enter shortcut for query start.
+
+* Issue **#4441** : Improve sorted column matching.
+
+* Issue **#4449** : Reload Scheduled Query Analytics between executions.
+
+* Issue **#4420** : Make app title dynamic.
+
+* Issue **#4453** : Dictionaries will ignore imports if a user has no permission to read them.
+
+* Issue **#4404** : Change the Query editor completions to be context aware, e.g. it only lists Datasources after a `from `.
+
+* Issue **#4450** : Fix editor completion in Query editor so that it doesn't limit completions to 100. Added the property `stroom.ui.maxEditorCompletionEntries` to control the maximum number of completions items that are shown. In the event that the property is exceeded, Stroom will pre-filter the completions based on the user's input.
+
+* Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
 
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 
@@ -30,8 +124,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Change the hard-coded test credentials to match those in v7.2 so that a test stack with 7.0 proxy and 7.2 stroom can communicate with each other. This change has no bearing on production deployments.
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
-
-* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
 
 * Issue **#4426** : Add INFO message when an index shard is created.
 
@@ -795,7 +887,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.2...HEAD
+[v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
 [v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8

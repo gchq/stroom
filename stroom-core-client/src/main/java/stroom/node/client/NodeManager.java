@@ -6,7 +6,7 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.NodeResource;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 
@@ -30,63 +30,63 @@ public class NodeManager {
     public void fetchNodeStatus(final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final RestErrorHandler errorHandler,
                                 final FindNodeStatusCriteria findNodeStatusCriteria,
-                                final TaskHandlerFactory taskHandlerFactory) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.find(findNodeStatusCriteria))
                 .onSuccess(dataConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void ping(final String nodeName,
                      final Consumer<Long> pingConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.ping(nodeName))
                 .onSuccess(pingConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void info(final String nodeName,
                      final Consumer<ClusterNodeInfo> infoConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.info(nodeName))
                 .onSuccess(infoConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void setPriority(final String nodeName,
                             final int priority,
                             final Consumer<Boolean> resultConsumer,
-                            final TaskHandlerFactory taskHandlerFactory) {
+                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.setPriority(nodeName, priority))
                 .onSuccess(resultConsumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void setEnabled(final String nodeName,
                            final boolean enabled,
                            final Consumer<Boolean> resultConsumer,
-                           final TaskHandlerFactory taskHandlerFactory) {
+                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.setEnabled(nodeName, enabled))
                 .onSuccess(resultConsumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -97,25 +97,25 @@ public class NodeManager {
 
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final RestErrorHandler errorHandler,
-                             final TaskHandlerFactory taskHandlerFactory) {
+                             final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listAllNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
                                  final RestErrorHandler errorHandler,
-                                 final TaskHandlerFactory taskHandlerFactory) {
+                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listEnabledNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 }

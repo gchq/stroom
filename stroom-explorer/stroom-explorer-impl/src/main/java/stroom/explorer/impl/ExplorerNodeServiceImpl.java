@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
@@ -109,10 +125,12 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public void copyNode(final DocRef sourceDocRef,
+    public void copyNode(final ExplorerNode sourceNode,
                          final DocRef destDocRef,
                          final DocRef destinationFolderRef,
                          final PermissionInheritance permissionInheritance) {
+        Objects.requireNonNull(sourceNode);
+        final DocRef sourceDocRef = sourceNode.getDocRef();
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -152,7 +170,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             LOGGER.error(e.getMessage(), e);
         }
 
-        addNode(destinationFolderRef, destDocRef);
+        addNode(destinationFolderRef, destDocRef, sourceNode.getTags());
     }
 
     @Override
@@ -255,7 +273,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         if (roots == null || roots.size() == 0) {
             // Insert System root node.
             final DocRef root = ExplorerConstants.SYSTEM_DOC_REF;
-            addNode(null, root);
+            addNode(root);
         }
     }
 
@@ -342,17 +360,16 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public void deleteAllNodes() {
         explorerTreeDao.removeAll();
-        addNode(null, ExplorerConstants.SYSTEM_DOC_REF);
+        addNode(null, ExplorerConstants.SYSTEM_DOC_REF, null);
     }
 
-    private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
-        addNode(parentFolderRef, docRef, null);
+    private void addNode(final DocRef docRef) {
+        addNode(null, docRef, null);
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef, final Set<String> tags) {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
-        final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
-//        setTags(docNode);
+        final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef, tags);
         explorerTreeDao.addChild(folderNode, docNode);
     }
 
@@ -371,12 +388,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             explorerTreeDao.update(docNode);
         }
     }
-
-//    private void setTags(final ExplorerTreeNode explorerTreeNode) {
-//        if (explorerTreeNode != null) {
-//            explorerTreeNode.setTags(ExplorerFlags.getFlag(explorerTreeNode.getType()));
-//        }
-//    }
 
     private void addDocumentPermissions(final DocRef source,
                                         final DocRef dest,

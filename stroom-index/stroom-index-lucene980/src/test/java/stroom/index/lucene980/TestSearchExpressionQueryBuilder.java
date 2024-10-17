@@ -1,9 +1,27 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.lucene980;
 
 import stroom.datasource.api.v2.AnalyzerType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.ExpressionOperator;
@@ -13,6 +31,7 @@ import stroom.query.common.v2.MockIndexFieldCache;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +58,23 @@ public class TestSearchExpressionQueryBuilder {
 
         final WordListProvider wordListProvider = new WordListProvider() {
             @Override
+            public Set<DocRef> listDocuments() {
+                return null;
+            }
+
+            @Override
+            public List<DocRef> findByNames(final List<String> names,
+                                            final boolean allowWildCards,
+                                            final boolean isCaseSensitive) {
+                return null;
+            }
+
+            @Override
+            public Optional<DocRef> findByUuid(final String uuid) {
+                return Optional.empty();
+            }
+
+            @Override
             public String getCombinedData(final DocRef dictionaryRef) {
                 return null;
             }
@@ -49,15 +85,14 @@ public class TestSearchExpressionQueryBuilder {
             }
 
             @Override
-            public Set<DocRef> listDocuments() {
-                return Set.of(dictionaryRef);
-            }
-
-            @Override
-            public List<DocRef> findByNames(final List<String> names,
-                                            final boolean allowWildCards,
-                                            final boolean isCaseSensitive) {
-                return List.of(dictionaryRef);
+            public WordList getCombinedWordList(final DocRef dictionaryRef,
+                                                final DocRefDecorator docRefDecorator) {
+                return WordList.builder(true)
+                        .addWord("1", dictionaryRef)
+                        .addWord("2", dictionaryRef)
+                        .addWord("3", dictionaryRef)
+                        .addWord("4", dictionaryRef)
+                        .build();
             }
         };
 

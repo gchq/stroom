@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docref;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -180,18 +196,71 @@ public class StringMatch {
 
 
     public enum MatchType {
+        /**
+         * Matches anything, equivalent to no filter.
+         */
         ANY,
+        /**
+         * Is null
+         */
         NULL,
+        /**
+         * Is not null, but could be {@link MatchType#EMPTY} or {@link MatchType#BLANK}
+         */
         NON_NULL,
+        /**
+         * Non-null and contains whitespace only
+         */
         BLANK,
+        /**
+         * Non-null and contains at least one non-whitespace character
+         */
+        NON_BLANK,
+        /**
+         * Non-null and empty
+         */
         EMPTY,
+        /**
+         * Non-null and not empty, may be blank or non-blank
+         */
+        NON_EMPTY,
+        /**
+         * Null OR {@link MatchType#BLANK}
+         */
         NULL_OR_BLANK,
+        /**
+         * Null OR {@link MatchType#EMPTY}
+         */
         NULL_OR_EMPTY,
+        /**
+         * Contains the whole pattern somewhere in the string
+         */
         CONTAINS,
+        /**
+         * String equals the whole pattern
+         */
         EQUALS,
+        /**
+         * String does not equal the whole pattern
+         */
         NOT_EQUALS,
+        /**
+         * String starts with the whole pattern
+         */
         STARTS_WITH,
+        /**
+         * String ends with the whole pattern
+         */
         ENDS_WITH,
-        REGEX
+        /**
+         * String matches the regex
+         */
+        REGEX,
+        /**
+         * All characters in pattern appearing anywhere in the string in the order they appear
+         * in pattern.
+         */
+        CHARS_ANYWHERE,
+        ;
     }
 }

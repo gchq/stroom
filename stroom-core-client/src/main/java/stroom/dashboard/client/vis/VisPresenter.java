@@ -45,7 +45,7 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
-import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.string.CIKey;
@@ -138,7 +138,7 @@ public class VisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
-        visFrame.setTaskHandlerFactory(getView().getRefreshButton());
+        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
 
@@ -215,7 +215,7 @@ public class VisPresenter
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -224,7 +224,7 @@ public class VisPresenter
     }
 
     private String getClassName(final String theme) {
-        return "vis " + Themes.getClassName(theme);
+        return "vis " + Theme.getClassName(theme);
     }
 
     @Override
@@ -484,7 +484,7 @@ public class VisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -495,7 +495,7 @@ public class VisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 

@@ -44,6 +44,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleAware {
 
@@ -62,6 +63,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private ExecutionSchedule executionSchedule;
     private Instant executionTime;
     private Instant effectiveExecutionTime;
+    private Predicate<Val[]> valFilter;
 
     @Inject
     public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -122,6 +124,10 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         this.compiledColumns = compiledColumns;
     }
 
+    public void setValFilter(final Predicate<Val[]> valFilter) {
+        this.valFilter = valFilter;
+    }
+
     @Override
     public void accept(final Val[] values) {
         // Analytics generation search extraction - create records when filters match
@@ -131,16 +137,17 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                     ". No values to extract from ", null);
             return;
         }
-        final CompiledColumnValue[] outputValues = extractValues(values);
-        if (outputValues != null) {
+
+        if (valFilter.test(values)) {
+            final ColumnValue[] outputValues = extractValues(values);
             writeRecord(outputValues);
         }
     }
 
-    private CompiledColumnValue[] extractValues(final Val[] vals) {
+    private ColumnValue[] extractValues(final Val[] vals) {
         final CompiledColumn[] compiledColumnArray = compiledColumns.getCompiledColumns();
         final StoredValues storedValues = compiledColumns.getValueReferenceIndex().createStoredValues();
-        final CompiledColumnValue[] output = new CompiledColumnValue[compiledColumnArray.length];
+        final ColumnValue[] output = new ColumnValue[compiledColumnArray.length];
         int index = 0;
 
         for (final CompiledColumn compiledColumn : compiledColumnArray) {
@@ -149,18 +156,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
             if (generator != null) {
                 generator.set(vals, storedValues);
                 final Val value = generator.eval(storedValues, null);
-                output[index] = new CompiledColumnValue(compiledColumn, value);
-
-                if (compiledColumn.getCompiledFilter() != null) {
-                    // If we are filtering then we need to evaluate this field
-                    // now so that we can filter the resultant value.
-
-                    if (compiledColumn.getCompiledFilter() != null && value != null
-                            && !compiledColumn.getCompiledFilter().match(value.toString())) {
-                        // We want to exclude this item.
-                        return null;
-                    }
-                }
+                output[index] = new ColumnValue(compiledColumn.getColumn(), value);
             }
 
             index++;
@@ -175,7 +171,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 "AlertExtractionReceiver", message, e);
     }
 
-    private void writeRecord(final CompiledColumnValue[] columnValues) {
+    private void writeRecord(final ColumnValue[] columnValues) {
 //        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         if (columnValues == null || columnValues.length == 0) {
             return;
@@ -214,10 +210,9 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         // select them, e.g.
         //   eval compound=field1+field2
         //   select compound
-        for (final CompiledColumnValue columnValue : columnValues) {
-            NullSafe.consume(columnValue, CompiledColumnValue::getVal, val -> {
-                final CompiledColumn compiledColumn = columnValue.getCompiledColumn();
-                final Column column = compiledColumn.getColumn();
+        for (final ColumnValue columnValue : columnValues) {
+            NullSafe.consume(columnValue, ColumnValue::val, val -> {
+                final Column column = columnValue.column();
                 final String columnName = column.getName();
                 if (FieldNames.isStreamIdFieldName(columnName)) {
                     streamId.set(getSafeLong(val));
@@ -272,22 +267,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         return null;
     }
 
-    private static class CompiledColumnValue {
+    private record ColumnValue(Column column, Val val) {
 
-        private final CompiledColumn compiledColumn;
-        private final Val val;
-
-        public CompiledColumnValue(final CompiledColumn compiledColumn, final Val val) {
-            this.compiledColumn = compiledColumn;
-            this.val = val;
-        }
-
-        public CompiledColumn getCompiledColumn() {
-            return compiledColumn;
-        }
-
-        public Val getVal() {
-            return val;
-        }
     }
 }

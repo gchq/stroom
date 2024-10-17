@@ -9,4 +9,6 @@ dependencies {
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_params
+    testImplementation libs.vavr
 }

@@ -1,5 +1,7 @@
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.impl.S3FileExtensions;
+import stroom.aws.s3.impl.S3Manager;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
@@ -108,7 +110,10 @@ class S3Store {
 
     private String getS3Path(final DataVolume dataVolume, final Meta meta) {
         final S3Manager s3Manager = new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
-        return "S3 > " + s3Manager.createBucketName(meta) + " > " + s3Manager.createKey(meta);
+        return "S3 > " +
+                s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
+                " > " +
+                s3Manager.createKey(s3Manager.getKeyNamePattern(), meta);
     }
 
     public void release(final Meta meta, final Path path) {

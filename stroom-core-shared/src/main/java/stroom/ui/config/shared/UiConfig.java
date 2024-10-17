@@ -130,15 +130,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final SourceConfig source;
 
     @JsonProperty
-    @JsonPropertyDescription("The Stroom GWT UI is now wrapped in a new React UI that provides some additional " +
-            "features. To use the React UI the GWT UI must be wrapped in an IFrame which is hosted at the root URL. " +
-            "If a user navigates to the GWT UI directly via `stroom/ui` then the React additions will not function. " +
-            "When this property is set to true that will be prevented as the user will be redirected back to the " +
-            "root URL. This behaviour is configurable as development of the GWT UI still requires direct access via " +
-            "`stroom/ui`")
-    private Boolean requireReactWrapper;
-
-    @JsonProperty
     private final NodeMonitoringConfig nodeMonitoring;
 
     @JsonProperty
@@ -168,6 +159,11 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "This property controls the default value of a selection box, but the user select a different one.")
     private final HashAlgorithm defaultApiKeyHashAlgorithm;
 
+    @JsonProperty
+    @JsonPropertyDescription("The maximum number of code completion entries to show in the popup when using " +
+            "ctrl-space or live autocompletion.")
+    private final int maxEditorCompletionEntries;
+
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -190,13 +186,13 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         splash = new SplashConfig();
         activity = new ActivityConfig();
         source = new SourceConfig();
-        requireReactWrapper = true;
         nodeMonitoring = new NodeMonitoringConfig();
         analyticUiDefaultConfig = new AnalyticUiDefaultConfig();
         nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
         defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
+        maxEditorCompletionEntries = 1_000;
     }
 
     @JsonCreator
@@ -222,12 +218,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("source") final SourceConfig source,
-                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
                     @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
                     @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
-                    @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm) {
+                    @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
+                    @JsonProperty("maxEditorCompletionEntries") final int maxEditorCompletionEntries) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -249,12 +245,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.splash = splash;
         this.activity = activity;
         this.source = source;
-        this.requireReactWrapper = requireReactWrapper;
         this.nodeMonitoring = nodeMonitoring;
         this.analyticUiDefaultConfig = analyticUiDefaultConfig;
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
+        this.maxEditorCompletionEntries = maxEditorCompletionEntries;
     }
 
     public String getWelcomeHtml() {
@@ -401,14 +397,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return source;
     }
 
-    public Boolean getRequireReactWrapper() {
-        return requireReactWrapper;
-    }
-
-    public void setRequireReactWrapper(final Boolean requireReactWrapper) {
-        this.requireReactWrapper = requireReactWrapper;
-    }
-
     public NodeMonitoringConfig getNodeMonitoring() {
         return nodeMonitoring;
     }
@@ -427,6 +415,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
         return defaultApiKeyHashAlgorithm;
+    }
+
+    public int getMaxEditorCompletionEntries() {
+        return maxEditorCompletionEntries;
     }
 
     @Override
@@ -458,12 +450,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(splash, uiConfig.splash)
                 && Objects.equals(activity, uiConfig.activity)
                 && Objects.equals(source, uiConfig.source)
-                && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper)
                 && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
                 && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
                 && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
                 && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
-                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm);
+                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
+                && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
     }
 
     @Override
@@ -487,12 +479,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 splash,
                 activity,
                 source,
-                requireReactWrapper,
                 nodeMonitoring,
                 analyticUiDefaultConfig,
                 nestedIndexFieldsDelimiterPattern,
                 referencePipelineSelectorIncludedTags,
-                defaultApiKeyHashAlgorithm);
+                defaultApiKeyHashAlgorithm,
+                maxEditorCompletionEntries);
     }
 
     @Override
@@ -517,12 +509,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", splash=" + splash +
                 ", activity=" + activity +
                 ", source=" + source +
-                ", requireReactWrapper=" + requireReactWrapper +
                 ", nodeMonitoring=" + nodeMonitoring +
                 ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
                 ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
                 ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
                 ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
+                ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
                 '}';
     }
 }

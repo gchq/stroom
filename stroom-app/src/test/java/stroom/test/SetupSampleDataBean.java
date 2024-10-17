@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.test;
@@ -28,8 +27,8 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
+import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexStore;
-import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.MetaFields;
@@ -362,7 +361,7 @@ public final class SetupSampleDataBean {
                     dataLoader.loadInputStream(
                             feedName,
                             "Gen data",
-                        null,
+                            null,
                             StreamUtil.stringToStream(randomData),
                             false,
                             startTime);
@@ -474,7 +473,7 @@ public final class SetupSampleDataBean {
                 dataLoader.loadInputStream(
                         STATS_COUNT_API_FEED_NAME,
                         "Sample statistics count data for export to API",
-                    null,
+                        null,
                         StreamUtil.stringToStream(sampleData),
                         false,
                         startTime);

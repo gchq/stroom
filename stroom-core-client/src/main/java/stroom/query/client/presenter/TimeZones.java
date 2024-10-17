@@ -16,7 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.QuietTaskListener;
+import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryResource;
 
@@ -61,7 +61,7 @@ public class TimeZones {
                         ids = result;
                         consumer.accept(ids);
                     })
-                    .taskHandlerFactory(new QuietTaskListener())
+                    .taskMonitorFactory(new QuietTaskMonitorFactory())
                     .exec();
         }
     }

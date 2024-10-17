@@ -17,7 +17,6 @@
 package stroom.util.shared;
 
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
@@ -750,26 +749,6 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testTrim() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputType(String.class)
-                .withOutputType(String.class)
-                .withSingleArgTestFunction(NullSafe::trim)
-                .withSimpleEqualityAssertion()
-                .addCase(null, "")
-                .addCase("", "")
-                .addCase(" ", "")
-                .addCase("\n", "")
-                .addCase("\t", "")
-                .addCase("foo", "foo")
-                .addCase(" foo", "foo")
-                .addCase("foo ", "foo")
-                .addCase(" foo ", "foo")
-                .addCase(" \n\tfoo\n\t ", "foo")
-                .build();
-    }
-
-    @TestFactory
     Stream<DynamicTest> testIsBlankString() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -837,6 +816,26 @@ class TestGwtNullSafe {
                 .addCase("\n", other)
                 .addCase("\t", other)
                 .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testTrim() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(GwtNullSafe::trim)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase(" ", "")
+                .addCase("\n", "")
+                .addCase("\t", "")
+                .addCase("foo", "foo")
+                .addCase(" foo", "foo")
+                .addCase("foo ", "foo")
+                .addCase(" foo ", "foo")
+                .addCase(" \n\tfoo\n\t ", "foo")
                 .build();
     }
 

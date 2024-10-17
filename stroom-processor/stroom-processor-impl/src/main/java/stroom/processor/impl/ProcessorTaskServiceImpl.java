@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,13 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.List;
 import java.util.Optional;
 
 @Singleton
@@ -98,8 +100,17 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
             return ResultPage.empty();
         }
         return FieldInfoResultPageBuilder.builder(criteria)
-                .addAll(ProcessorTaskFields.getFields())
+                .addAll(getFields())
                 .build();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
+    }
+
+    private List<QueryField> getFields() {
+        return ProcessorTaskFields.getFields();
     }
 
     @Override

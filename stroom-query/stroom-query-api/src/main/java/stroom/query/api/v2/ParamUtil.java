@@ -39,7 +39,7 @@ public final class ParamUtil {
         }
 
         final String trimmed = string.trim();
-        if (trimmed.length() == 0) {
+        if (trimmed.isEmpty()) {
             return Collections.emptyList();
         }
 

@@ -27,11 +27,12 @@ import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -77,8 +78,9 @@ public class TableResultCreator implements ResultCreator {
             // What is the interaction between the paging and the maxResults? The assumption is that
             // maxResults defines the max number of records to come back and the paging can happen up to
             // that maxResults threshold
-            final TableSettings tableSettings = resultRequest.getMappings().get(0);
-            final List<Column> columns = WindowSupport.modifyColumns(tableSettings);
+            final TableSettings tableSettings = resultRequest.getMappings().getFirst();
+            final List<Column> columns = new ArrayList<>(NullSafe.list(
+                    NullSafe.get(tableSettings, TableSettings::getColumns)));
             resultBuilder.columns(columns);
 
             // Create the row creator.

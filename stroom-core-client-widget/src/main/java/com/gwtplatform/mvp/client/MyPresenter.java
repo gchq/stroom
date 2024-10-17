@@ -16,10 +16,10 @@
 
 package com.gwtplatform.mvp.client;
 
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -31,9 +31,9 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         extends Presenter<T_VIEW, T_PROXY>
-        implements Layer, TaskHandlerFactory, HasTaskHandlerFactory {
+        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory {
 
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
     private boolean firstReveal = true;
 
     public MyPresenter(final EventBus eventBus, final T_VIEW view, final T_PROXY proxy) {
@@ -90,12 +90,12 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return taskHandlerFactory.createTaskHandler();
+    public TaskMonitor createTaskMonitor() {
+        return taskMonitorFactory.createTaskMonitor();
     }
 }

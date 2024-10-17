@@ -61,6 +61,11 @@ public class SearchableDual implements Searchable {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        return FIELDS.size();
+    }
+
+    @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
         return Optional.empty();
     }

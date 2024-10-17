@@ -33,6 +33,14 @@ public class StaticValueFunction implements Function, Appendable {
         this.gen = new StaticValueGen(value);
     }
 
+    public static StaticValueFunction of(final Val value) {
+        return new StaticValueFunction(value);
+    }
+
+    public static StaticValueFunction of(final String value) {
+        return new StaticValueFunction(ValString.create(value));
+    }
+
     @Override
     public void setParams(final Param[] params) {
         // Ignore

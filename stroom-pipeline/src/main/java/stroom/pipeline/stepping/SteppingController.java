@@ -59,6 +59,7 @@ public class SteppingController {
     private String streamInfo;
     private PipelineStepRequest request;
     private StepLocation stepLocation;
+    private StepLocation progressLocation;
     private StepLocation foundLocation;
     private RecordDetector recordDetector;
     private boolean isSegmentedData;
@@ -113,6 +114,10 @@ public class SteppingController {
         this.stepLocation = stepLocation;
     }
 
+    public StepLocation getProgressLocation() {
+        return progressLocation;
+    }
+
     public StepLocation getLastFoundLocation() {
         return foundLocation;
     }
@@ -134,6 +139,10 @@ public class SteppingController {
     public boolean endRecord(final long currentRecordIndex) {
         // Get the current stream number.
         final long currentStreamIndex = metaHolder.getPartIndex();
+        progressLocation = new StepLocation(
+                metaHolder.getMeta().getId(),
+                currentStreamIndex,
+                currentRecordIndex);
 
         if (taskContext.isTerminated()) {
             return true;
@@ -188,10 +197,7 @@ public class SteppingController {
             if (allMatch || filterMatch) {
                 // Create a location for each monitoring filter to store data
                 // against.
-                foundLocation = new StepLocation(
-                        metaHolder.getMeta().getId(),
-                        currentStreamIndex,
-                        currentRecordIndex);
+                foundLocation = progressLocation;
 
                 // Create step data for the current step.
                 final StepData stepData = createStepData(highlight);

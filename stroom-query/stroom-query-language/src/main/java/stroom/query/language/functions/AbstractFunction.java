@@ -40,7 +40,7 @@ abstract class AbstractFunction implements Function, Appendable {
     @Override
     public void setParams(final Param[] params) throws ParseException {
         if (params.length < minParams || params.length > maxParams) {
-            throw new ExpressionException("Invalid number of parameters supplied for '" + name + "' + function");
+            throw new ParseException("Invalid number of parameters supplied for '" + name + "' + function", 0);
         }
 
         this.params = params;

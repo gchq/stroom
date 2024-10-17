@@ -345,7 +345,9 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query negate(final Query query) {
+        // To enable SQL style functionality we have to tell Elastic to match all except the specified term.
         return QueryBuilders.bool()
+                .should(MatchAllQuery.of(q -> q)._toQuery())
                 .mustNot(query)
                 .build()._toQuery();
     }

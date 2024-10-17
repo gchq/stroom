@@ -2511,8 +2511,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
+              $ref: '#/components/schemas/DecorateRequest'
+        description: decorateRequest
         required: true
       responses:
         default:
@@ -3957,8 +3957,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -3977,8 +3977,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
+              $ref: '#/components/schemas/SelectionSummaryRequest'
+        description: request
         required: true
       responses:
         default:
@@ -5711,6 +5711,70 @@ paths:
       summary: Update a rules doc
       tags:
       - Rule Set
+  /s3/v1/download:
+    post:
+      operationId: downloadS3Config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download an S3 config doc
+      tags:
+      - S3
+  /s3/v1/{uuid}:
+    get:
+      operationId: fetchS3Config
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/S3ConfigDoc'
+          description: default response
+      summary: Fetch an S3 config doc by its UUID
+      tags:
+      - S3
+    put:
+      operationId: updateS3Config
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/S3ConfigDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/S3ConfigDoc'
+          description: default response
+      summary: Update an S3 config doc
+      tags:
+      - S3
   /scheduledTime/v1:
     post:
       operationId: getScheduledTimes
@@ -6417,6 +6481,26 @@ paths:
                 $ref: '#/components/schemas/SteppingResult'
           description: default response
       summary: Step a pipeline
+      tags:
+      - Stepping
+  /stepping/v1/terminateStepping:
+    post:
+      operationId: terminateStepping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineStepRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Terminate pipeline stepping process
       tags:
       - Stepping
   /storedQuery/v1/create:
@@ -7162,9 +7246,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/WordList'
           description: default response
       summary: Fetch a list of words from a dictionary by its UUID
       tags:
@@ -7931,6 +8013,62 @@ components:
           type: boolean
         refreshInterval:
           type: string
+    AwsAnonymousCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+    AwsAssumeRole:
+      type: object
+      properties:
+        clientConfig:
+          $ref: '#/components/schemas/AwsAssumeRoleClientConfig'
+        request:
+          $ref: '#/components/schemas/AwsAssumeRoleRequest'
+    AwsAssumeRoleClientConfig:
+      type: object
+      properties:
+        credentials:
+          $ref: '#/components/schemas/AwsCredentials'
+        endpointOverride:
+          type: string
+        region:
+          type: string
+    AwsAssumeRoleRequest:
+      type: object
+      properties:
+        durationSeconds:
+          type: integer
+          format: int32
+        externalId:
+          type: string
+        policy:
+          type: string
+        policyArns:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsPolicyDescriptorType'
+        providedContexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsProvidedContext'
+        roleArn:
+          type: string
+        roleSessionName:
+          type: string
+        serialNumber:
+          type: string
+        sourceIdentity:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsTag'
+        tokenCode:
+          type: string
+        transitiveTagKeys:
+          type: array
+          items:
+            type: string
     AwsBasicCredentials:
       type: object
       allOf:
@@ -7950,6 +8088,14 @@ components:
           type: string
       required:
       - type
+    AwsDefaultCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+    AwsEnvironmentVariableCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
     AwsHttpConfig:
       type: object
       properties:
@@ -7959,6 +8105,11 @@ components:
           $ref: '#/components/schemas/AwsProxyConfig'
         trustAllCertificatesEnabled:
           type: boolean
+    AwsPolicyDescriptorType:
+      type: object
+      properties:
+        arn:
+          type: string
     AwsProfileCredentials:
       type: object
       allOf:
@@ -7969,6 +8120,13 @@ components:
             type: string
           profileName:
             type: string
+    AwsProvidedContext:
+      type: object
+      properties:
+        contextAssertion:
+          type: string
+        providerArn:
+          type: string
     AwsProxyConfig:
       type: object
       properties:
@@ -7997,6 +8155,17 @@ components:
             type: string
           sessionToken:
             type: string
+    AwsSystemPropertyCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+    AwsTag:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
     AwsWebCredentials:
       type: object
       allOf:
@@ -8270,22 +8439,26 @@ components:
           format: int32
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
+        includedTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA_SOURCE
+            - FIELD
+            - FUNCTION
+            - TITLE
+            - STRUCTURE
+            - VISUALISATION
+          uniqueItems: true
+        maxCompletions:
+          type: integer
+          format: int32
+        pattern:
+          type: string
         row:
           type: integer
           format: int32
-        showAll:
-          type: boolean
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-        stringMatch:
-          $ref: '#/components/schemas/StringMatch'
         text:
           type: string
     ComponentConfig:
@@ -8472,6 +8645,13 @@ components:
         expireTimeMs:
           type: integer
           format: int64
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
         name:
           type: string
         owner:
@@ -8840,6 +9020,22 @@ components:
       required:
       - localZoneId
       - referenceTime
+    DecorateRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - OWNER
+            - DELETE
+            - EDIT
+            - VIEW
+            - USE
+          uniqueItems: true
     DefaultLocation:
       type: object
       properties:
@@ -9066,6 +9262,9 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_S3
+          - DOCUMENT_S3V1
+          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -9323,8 +9522,6 @@ components:
     DownloadQueryResultsRequest:
       type: object
       properties:
-        componentId:
-          type: string
         fileType:
           type: string
           enum:
@@ -9767,6 +9964,9 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_S3
+          - DOCUMENT_S3V1
+          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -10678,6 +10878,9 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_S3
+          - DOCUMENT_S3V1
+          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -10952,6 +11155,9 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_S3
+          - DOCUMENT_S3V1
+          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -11438,6 +11644,13 @@ components:
         expireTimeMs:
           type: integer
           format: int64
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
         id:
           type: integer
           format: int32
@@ -11460,6 +11673,8 @@ components:
       - type: object
         properties:
           advanceSize:
+            type: string
+          function:
             type: string
           timeField:
             type: string
@@ -12501,6 +12716,9 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_S3
+          - DOCUMENT_S3V1
+          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -12811,6 +13029,8 @@ components:
           $ref: '#/components/schemas/FindMetaCriteria'
         pipeline:
           $ref: '#/components/schemas/DocRef'
+        sessionUuid:
+          type: string
         stepFilterMap:
           type: object
           additionalProperties:
@@ -12828,6 +13048,9 @@ components:
           - BACKWARD
           - LAST
           - REFRESH
+        timeout:
+          type: integer
+          format: int64
     ProcessConfig:
       type: object
       properties:
@@ -13204,6 +13427,11 @@ components:
           items:
             type: string
           uniqueItems: true
+        indexPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         infoPopup:
           $ref: '#/components/schemas/InfoPopupConfig'
         viewPipelineSelectorIncludedTags:
@@ -13338,14 +13566,6 @@ components:
           type: string
       required:
       - type
-    QueryHelpDataSource:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryHelpData'
-      - type: object
-        properties:
-          docRef:
-            $ref: '#/components/schemas/DocRef'
     QueryHelpDetail:
       type: object
       properties:
@@ -13360,6 +13580,14 @@ components:
           - SNIPPET
           - BLANK
           - NOT_INSERTABLE
+    QueryHelpDocument:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          docRef:
+            $ref: '#/components/schemas/DocRef'
     QueryHelpField:
       type: object
       allOf:
@@ -13417,14 +13645,24 @@ components:
       properties:
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
+        includedTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA_SOURCE
+            - FIELD
+            - FUNCTION
+            - TITLE
+            - STRUCTURE
+            - VISUALISATION
+          uniqueItems: true
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         parentPath:
           type: string
         query:
           type: string
-        showAll:
-          type: boolean
         sort:
           type: string
           writeOnly: true
@@ -13487,6 +13725,9 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_S3
+          - DOCUMENT_S3V1
+          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -13632,6 +13873,8 @@ components:
           - USERS
           - VOLUMES
           - WARNING
+        iconTooltip:
+          type: string
         id:
           type: string
         title:
@@ -13644,6 +13887,7 @@ components:
           - FUNCTION
           - TITLE
           - STRUCTURE
+          - VISUALISATION
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -14339,6 +14583,8 @@ components:
       properties:
         accelerate:
           type: boolean
+        assumeRole:
+          $ref: '#/components/schemas/AwsAssumeRole'
         async:
           type: boolean
         bucketName:
@@ -14349,16 +14595,6 @@ components:
           type: boolean
         credentials:
           $ref: '#/components/schemas/AwsCredentials'
-        credentialsProviderType:
-          type: string
-          enum:
-          - ANONYMOUS
-          - DEFAULT
-          - ENVIRONMENT_VARIABLE
-          - PROFILE
-          - STATIC
-          - SYSTEM_PROPERTY
-          - WEB
         crossRegionAccessEnabled:
           type: boolean
         endpointOverride:
@@ -14391,6 +14627,31 @@ components:
         thresholdInBytes:
           type: integer
           format: int64
+    S3ConfigDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        data:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     SavePipelineXmlRequest:
       type: object
       properties:
@@ -14742,6 +15003,21 @@ components:
       properties:
         ageRange:
           $ref: '#/components/schemas/RangeLong'
+        distinctFeeds:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        distinctStatuses:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        distinctTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         feedCount:
           type: integer
           format: int64
@@ -14760,6 +15036,19 @@ components:
         typeCount:
           type: integer
           format: int64
+    SelectionSummaryRequest:
+      type: object
+      properties:
+        findMetaCriteria:
+          $ref: '#/components/schemas/FindMetaCriteria'
+        requiredPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
     SelectionVolumeUseStatus:
       type: object
       properties:
@@ -15307,9 +15596,13 @@ components:
     SteppingResult:
       type: object
       properties:
+        complete:
+          type: boolean
         currentStreamOffset:
           type: integer
           format: int32
+        foundLocation:
+          $ref: '#/components/schemas/StepLocation'
         foundRecord:
           type: boolean
         generalErrors:
@@ -15317,16 +15610,18 @@ components:
           items:
             type: string
           uniqueItems: true
+        progressLocation:
+          $ref: '#/components/schemas/StepLocation'
         segmentedData:
           type: boolean
+        sessionUuid:
+          type: string
         stepData:
           $ref: '#/components/schemas/SharedStepData'
         stepFilterMap:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/SteppingFilterSettings'
-        stepLocation:
-          $ref: '#/components/schemas/StepLocation'
     StoredError:
       type: object
       properties:
@@ -15460,7 +15755,9 @@ components:
           - "NULL"
           - NON_NULL
           - BLANK
+          - NON_BLANK
           - EMPTY
+          - NON_EMPTY
           - NULL_OR_BLANK
           - NULL_OR_EMPTY
           - CONTAINS
@@ -15469,6 +15766,7 @@ components:
           - STARTS_WITH
           - ENDS_WITH
           - REGEX
+          - CHARS_ANYWHERE
         pattern:
           type: string
     StringMatchLocation:
@@ -16036,6 +16334,13 @@ components:
           $ref: '#/components/schemas/AnalyticUiDefaultConfig'
         authErrorMessage:
           type: string
+        defaultApiKeyHashAlgorithm:
+          type: string
+          enum:
+          - SHA3_256
+          - SHA2_256
+          - BCRYPT
+          - ARGON_2
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:
@@ -16056,6 +16361,9 @@ components:
           type: string
         maintenanceMessage:
           type: string
+        maxEditorCompletionEntries:
+          type: integer
+          format: int32
         namePattern:
           type: string
         nestedIndexFieldsDelimiterPattern:
@@ -16074,8 +16382,6 @@ components:
           items:
             type: string
           uniqueItems: true
-        requireReactWrapper:
-          type: boolean
         source:
           $ref: '#/components/schemas/SourceConfig'
         splash:
@@ -16414,6 +16720,28 @@ components:
           type: string
       required:
       - type
+    Word:
+      type: object
+      properties:
+        additionalSourceUuids:
+          type: array
+          items:
+            type: string
+        sourceUuid:
+          type: string
+        word:
+          type: string
+    WordList:
+      type: object
+      properties:
+        sourceUuidToDocRefMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DocRef'
+        wordList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Word'
     XPathFilter:
       type: object
       properties:

@@ -26,6 +26,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,13 +44,13 @@ public abstract class AppServlet extends HttpServlet {
     private static final String SCRIPT = "@SCRIPT@";
     private static final String ROOT_CLASS = "@ROOT_CLASS@";
 
-    private final UiConfig uiConfig;
-    private final UserPreferencesService userPreferencesService;
+    private final Provider<UiConfig> uiConfigProvider;
+    private final Provider<UserPreferencesService> userPreferencesServiceProvider;
 
-    AppServlet(final UiConfig uiConfig,
-               final UserPreferencesService userPreferencesService) {
-        this.uiConfig = uiConfig;
-        this.userPreferencesService = userPreferencesService;
+    AppServlet(final Provider<UiConfig> uiConfigProvider,
+               final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+        this.uiConfigProvider = uiConfigProvider;
+        this.userPreferencesServiceProvider = userPreferencesServiceProvider;
     }
 
     private String getHtmlTemplate() {
@@ -65,6 +66,9 @@ public abstract class AppServlet extends HttpServlet {
 
         final PrintWriter pw = response.getWriter();
         response.setContentType("text/html");
+
+        final UserPreferencesService userPreferencesService = userPreferencesServiceProvider.get();
+        final UiConfig uiConfig = uiConfigProvider.get();
 
         final UserPreferences userPreferences = userPreferencesService.fetchDefault();
         final String classNames = ThemeCssUtil.getCurrentPreferenceClasses(userPreferences);

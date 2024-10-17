@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client;
@@ -47,7 +46,7 @@ import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
-import stroom.explorer.client.event.ExplorerTaskListener;
+import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -62,6 +61,7 @@ import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DecorateRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
@@ -88,8 +88,8 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -132,7 +132,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final ExplorerFavouriteResource EXPLORER_FAV_RESOURCE = GWT.create(ExplorerFavouriteResource.class);
-    private final TaskHandlerFactory explorerListener = new ExplorerTaskListener(this);
+    private final TaskMonitorFactory explorerListener = new ExplorerTaskMonitorFactory(this);
 
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
@@ -161,7 +161,8 @@ public class DocumentPluginEventManager extends Plugin {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
         });
-        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () -> RequestCloseAllTabsEvent.fire(this));
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () ->
+                RequestCloseAllTabsEvent.fire(this));
 
         KeyBinding.addCommand(Action.ITEM_SAVE, () -> {
             if (isDirty(selectedTab)) {
@@ -243,7 +244,7 @@ public class DocumentPluginEventManager extends Plugin {
                                         explorerNode.getDocRef(),
                                         event.getSelectionType().isDoubleSelect(),
                                         false,
-                                        new DefaultTaskListener(this));
+                                        new DefaultTaskMonitorFactory(this));
                             }
                         }
                     }
@@ -291,9 +292,9 @@ public class DocumentPluginEventManager extends Plugin {
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(tabData.getType());
             if (plugin != null) {
                 // Get the explorer node for the docref.
-                TaskHandlerFactory taskHandlerFactory = null;
-                if (tabData instanceof TaskHandlerFactory) {
-                    taskHandlerFactory = (TaskHandlerFactory) tabData;
+                TaskMonitorFactory taskMonitorFactory = null;
+                if (tabData instanceof TaskMonitorFactory) {
+                    taskMonitorFactory = (TaskMonitorFactory) tabData;
                 }
 
                 restFactory
@@ -303,7 +304,7 @@ public class DocumentPluginEventManager extends Plugin {
                             // Now we have the explorer node proceed with the save as.
                             plugin.saveAs(tabData, explorerNode);
                         })
-                        .taskHandlerFactory(taskHandlerFactory)
+                        .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
         }));
@@ -346,14 +347,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the copy document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (result.getMessage().length() > 0) {
+                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to copy some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (result.getExplorerNodes().size() > 0) {
+                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -365,14 +366,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the move document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (result.getMessage().length() > 0) {
+                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to move some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (result.getExplorerNodes().size() > 0) {
+                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -412,14 +413,14 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
-            if (getSelectedItems().size() > 0) {
+            if (GwtNullSafe.hasItems(getSelectedItems())) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap ->
                         documentTypeCache.fetch(documentTypes -> {
                             final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
                                     documentPermissionMap,
                                     DocumentPermission.DELETE,
                                     false);
-                            if (deletableItems.size() > 0) {
+                            if (!deletableItems.isEmpty()) {
                                 deleteItems(deletableItems, explorerListener);
                             }
                         }, explorerListener), explorerListener);
@@ -546,18 +547,18 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
 
-        if (dirtyList.size() > 0) {
+        if (!dirtyList.isEmpty()) {
             final DocRef docRef = dirtyList.get(0).getDocRef();
             AlertEvent.fireWarn(this, "You must save changes to " + docRef.getType() + " '"
                     + docRef.getDisplayValue()
                     + "' before it can be renamed.", null);
-        } else if (cleanList.size() > 0) {
+        } else if (!cleanList.isEmpty()) {
             ShowRenameDocumentDialogEvent.fire(DocumentPluginEventManager.this, cleanList);
         }
     }
 
-    private void deleteItems(final List<ExplorerNode> explorerNodeList, final TaskHandlerFactory taskHandlerFactory) {
-        if (explorerNodeList != null && explorerNodeList.size() > 0) {
+    private void deleteItems(final List<ExplorerNode> explorerNodeList, final TaskMonitorFactory taskMonitorFactory) {
+        if (GwtNullSafe.hasItems(explorerNodeList)) {
             final List<DocRef> docRefs = explorerNodeList
                     .stream()
                     .map(ExplorerNode::getDocRef)
@@ -566,13 +567,13 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPluginEventManager.this,
                     docRefs,
                     true,
-                    taskHandlerFactory);
+                    taskMonitorFactory);
         }
     }
 
     private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
         boolean success = true;
-        if (result.getMessage().length() > 0) {
+        if (GwtNullSafe.isNonBlankString(result.getMessage())) {
             AlertEvent.fireInfo(DocumentPluginEventManager.this,
                     "Unable to delete some items",
                     result.getMessage(),
@@ -581,7 +582,19 @@ public class DocumentPluginEventManager extends Plugin {
             success = false;
         }
 
-        RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
+        // results contains only the docs that were actually deleted, not the ones that failed
+        // to delete. So we need to close the open tab of any deleted doc.
+        final Map<String, List<DocRef>> typeToDocRefsMap = GwtNullSafe.stream(result.getExplorerNodes())
+                .map(ExplorerNode::getDocRef)
+                .collect(Collectors.groupingBy(DocRef::getType, Collectors.toList()));
+
+        typeToDocRefsMap.forEach((type, docRefs) -> {
+            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(type);
+            final List<DocumentTabData> openTabs = documentPlugin.getOpenDocuments(docRefs);
+            // Close even if dirty as we have already deleted the docs
+            openTabs.forEach(tab ->
+                    RequestCloseTabEvent.fire(DocumentPluginEventManager.this, tab, true));
+        });
 
         // Refresh the tree
         RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
@@ -624,7 +637,7 @@ public class DocumentPluginEventManager extends Plugin {
                        final ExplorerNode destinationFolder,
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer,
-                       final TaskHandlerFactory taskHandlerFactory,
+                       final TaskMonitorFactory taskMonitorFactory,
                        final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -635,7 +648,7 @@ public class DocumentPluginEventManager extends Plugin {
                         permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -645,7 +658,7 @@ public class DocumentPluginEventManager extends Plugin {
                       final String newName,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer,
-                      final TaskHandlerFactory taskHandlerFactory,
+                      final TaskMonitorFactory taskMonitorFactory,
                       final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -657,7 +670,7 @@ public class DocumentPluginEventManager extends Plugin {
                         permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -665,7 +678,7 @@ public class DocumentPluginEventManager extends Plugin {
                       final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer,
-                      final TaskHandlerFactory taskHandlerFactory,
+                      final TaskMonitorFactory taskMonitorFactory,
                       final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -675,51 +688,51 @@ public class DocumentPluginEventManager extends Plugin {
                         permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     private void rename(final ExplorerNode explorerNode,
                         final String docName,
                         final Consumer<ExplorerNode> consumer,
-                        final TaskHandlerFactory taskHandlerFactory,
+                        final TaskMonitorFactory taskMonitorFactory,
                         final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.rename(new ExplorerServiceRenameRequest(explorerNode, docName)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void delete(final List<DocRef> docRefs,
                        final Consumer<BulkActionResult> consumer,
-                       final TaskHandlerFactory taskHandlerFactory) {
+                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.delete(new ExplorerServiceDeleteRequest(docRefs)))
                 .onSuccess(consumer)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     private void setAsFavourite(final DocRef docRef,
                                 final boolean setFavourite,
-                                final TaskHandlerFactory taskHandlerFactory) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         if (setFavourite) {
             restFactory
                     .create(EXPLORER_FAV_RESOURCE)
                     .call(res -> res.createUserFavourite(docRef))
                     .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         } else {
             restFactory
                     .create(EXPLORER_FAV_RESOURCE)
                     .call(res -> res.deleteUserFavourite(docRef))
                     .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }
@@ -727,24 +740,49 @@ public class DocumentPluginEventManager extends Plugin {
     public void open(final DocRef docRef,
                      final boolean forceOpen,
                      final boolean fullScreen,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory
                     .create(EXPLORER_RESOURCE)
-                    .method(res -> res.decorate(docRef))
+                    .method(res ->
+                            res.decorate(DecorateRequest.create(docRef)))
                     .onSuccess(decoratedDocRef -> {
-                        if (decoratedDocRef != null) {
-                            documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
-                                    new DefaultTaskListener(this));
-                            highlight(decoratedDocRef, explorerListener);
-                        }
+                        documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
+                                new DefaultTaskMonitorFactory(this));
+                        highlight(decoratedDocRef, explorerListener);
                     })
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .onFailure(error -> {
+                        AlertEvent.fireError(DocumentPluginEventManager.this,
+                                buildNotFoundMessage(docRef),
+                                null);
+                    })
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+        }
+    }
+
+    public static String buildNotFoundMessage(final DocRef docRef) {
+        if (docRef != null) {
+            final String type = docRef.getType();
+            final String uuid = docRef.getUuid();
+            final String displayName = GwtNullSafe.getOrElse(
+                    docRef.getName(),
+                    name -> "'" + name + "' (" + uuid + ")",
+                    uuid);
+            final String prefix = type != null
+                    ? type
+                    : "Document";
+
+            return prefix +
+                    " " +
+                    displayName +
+                    " doesn't exist or you do not have permission to open it.";
+        } else {
+            return null;
         }
     }
 
@@ -756,13 +794,13 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     public void highlight(final DocRef docRef,
-                          final TaskHandlerFactory taskHandlerFactory) {
+                          final TaskMonitorFactory taskMonitorFactory) {
         // Obtain the Explorer node for the provided DocRef
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(this::highlight)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -844,7 +882,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void fetchPermissions(final List<ExplorerNode> explorerNodes,
                                   final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer,
-                                  final TaskHandlerFactory taskHandlerFactory) {
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.fetchExplorerPermissions(explorerNodes))
@@ -854,7 +892,7 @@ public class DocumentPluginEventManager extends Plugin {
                             Function.identity()));
                     consumer.accept(map);
                 })
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -966,7 +1004,7 @@ public class DocumentPluginEventManager extends Plugin {
             // Open the document in the content pane.
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
             if (plugin != null) {
-                plugin.open(docRef, true, false, new DefaultTaskListener(this));
+                plugin.open(docRef, true, false, new DefaultTaskMonitorFactory(this));
             }
         };
 
@@ -1177,6 +1215,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private DocRef getSelectedDoc(final TabData selectedTab) {
         if (selectedTab instanceof DocumentTabData) {
+            //noinspection PatternVariableCanBeUsed // Not in GWT
             final DocumentTabData documentTabData = (DocumentTabData) selectedTab;
             return documentTabData.getDocRef();
         }
@@ -1186,7 +1225,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,
                                         final int priority,
                                         final boolean enabled,
-                                        final TaskHandlerFactory taskHandlerFactory) {
+                                        final TaskMonitorFactory taskMonitorFactory) {
         final Command command;
         if (enabled && explorerNode != null) {
             command = () -> {
@@ -1201,7 +1240,7 @@ public class DocumentPluginEventManager extends Plugin {
                                     explorerNodeInfo);
                         })
                         .onFailure(this::handleFailure)
-                        .taskHandlerFactory(taskHandlerFactory)
+                        .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             };
         } else {

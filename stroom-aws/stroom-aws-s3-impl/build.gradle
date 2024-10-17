@@ -1,0 +1,50 @@
+ext.moduleName = 'stroom.aws.s3.impl'
+
+dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.aws_crt
+    implementation libs.aws_s3_transfer_manager
+    implementation libs.aws_sts
+    implementation libs.commons_compress
+    implementation libs.guava
+    implementation libs.guice
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_validation_api
+    implementation libs.jakarta_inject
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+//    implementation libs.saxon_he
+    implementation libs.slf4j_api
+//    implementation libs.vavr
+//    //implementation libs.xml_apis
+//
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
+    testImplementation libs.mbknor_jackson_jsonSchema
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

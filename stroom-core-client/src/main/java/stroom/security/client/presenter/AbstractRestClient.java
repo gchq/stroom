@@ -1,7 +1,7 @@
 package stroom.security.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -11,7 +11,7 @@ public abstract class AbstractRestClient implements HasHandlers {
 
     protected final EventBus eventBus;
     protected final RestFactory restFactory;
-    protected TaskHandlerFactory taskHandlerFactory;
+    protected TaskMonitorFactory taskMonitorFactory;
 
     public AbstractRestClient(final EventBus eventBus,
                               final RestFactory restFactory) {
@@ -19,8 +19,8 @@ public abstract class AbstractRestClient implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

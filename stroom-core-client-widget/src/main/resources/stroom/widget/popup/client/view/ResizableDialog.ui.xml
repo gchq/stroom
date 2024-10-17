@@ -15,6 +15,13 @@
             </g:FlowPanel>
             <g:SimplePanel ui:field="content" styleName="dialog-body"/>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="resizeHandle" styleName="resizableDialog-resizeHandle"/>
+        <g:SimplePanel ui:field="resizeN" styleName="resizableDialog-resize resizableDialog-resizeN"/>
+        <g:SimplePanel ui:field="resizeE" styleName="resizableDialog-resize resizableDialog-resizeE"/>
+        <g:SimplePanel ui:field="resizeS" styleName="resizableDialog-resize resizableDialog-resizeS"/>
+        <g:SimplePanel ui:field="resizeW" styleName="resizableDialog-resize resizableDialog-resizeW"/>
+        <g:SimplePanel ui:field="resizeNE" styleName="resizableDialog-resize resizableDialog-resizeNE"/>
+        <g:SimplePanel ui:field="resizeNW" styleName="resizableDialog-resize resizableDialog-resizeNW"/>
+        <g:SimplePanel ui:field="resizeSE" styleName="resizableDialog-resize resizableDialog-resizeSE"/>
+        <g:SimplePanel ui:field="resizeSW" styleName="resizableDialog-resize resizableDialog-resizeSW"/>
     </g:FlowPanel>
 </ui:UiBinder> 

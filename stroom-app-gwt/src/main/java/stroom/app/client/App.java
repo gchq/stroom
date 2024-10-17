@@ -17,7 +17,7 @@
 package stroom.app.client;
 
 import stroom.app.client.gin.AppGinjectorUser;
-import stroom.dispatch.client.QuietTaskListener;
+import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -86,7 +86,7 @@ public class App implements EntryPoint {
                 // Remember how places were used in case we want to use URLs and history
                 // at some point.
                 // ginjector.getPlaceManager().revealCurrentPlace();
-            }, new QuietTaskListener());
+            }, new QuietTaskMonitorFactory());
         }
     }
 

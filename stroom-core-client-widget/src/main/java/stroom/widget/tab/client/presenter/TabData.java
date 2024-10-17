@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import java.util.Objects;
+import java.util.Optional;
+
 public interface TabData {
 
     SvgImage getIcon();
@@ -29,6 +32,10 @@ public interface TabData {
     }
 
     String getLabel();
+
+    default Optional<String> getTooltip() {
+        return Optional.empty();
+    }
 
     boolean isCloseable();
 
@@ -42,5 +49,10 @@ public interface TabData {
     default boolean handleKeyAction(final Action action) {
         // override as required
         return false;
+    }
+
+    static String createDocumentationTooltip(final String documentType) {
+        Objects.requireNonNull(documentType);
+        return "Documentation to describe the content/purpose of this " + documentType + ".";
     }
 }

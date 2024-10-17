@@ -17,7 +17,7 @@
 package stroom.entity.client.presenter;
 
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.ui.config.shared.Themes.ThemeType;
+import stroom.ui.config.shared.ThemeType;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;

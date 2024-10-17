@@ -117,7 +117,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
                             resetFocus();
                         })
                         .onFailure(errorHandler)
-                        .taskHandlerFactory(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
         };

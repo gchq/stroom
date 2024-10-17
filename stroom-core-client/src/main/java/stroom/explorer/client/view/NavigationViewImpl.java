@@ -19,7 +19,7 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MouseUtil;
@@ -126,7 +126,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     }
 
     @Override
-    public TaskHandlerFactory getTaskListener() {
+    public TaskMonitorFactory getTaskListener() {
         return spinner;
     }
 

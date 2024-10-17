@@ -506,6 +506,28 @@
     cursor: pointer;
 }
 
+.dropDownView-warning {
+    position: absolute;
+    display: flex;
+    bottom: 8px;
+    right: 3px;
+	width: 17px;
+	width: 17px;
+    cursor: pointer;
+}
+
+.dropDownView-warning svg {
+    width: 17px;
+    height: 17px;
+}
+
+.dropDownView-warning > .background {
+    /* Because the icon is inside the drop down text box, we need to alter its hover background
+       so it doesn't spill over the border of the text box. */
+    height: 88%;
+    margin-top: 2px;
+}
+
 .dropDownView-button svg {
 	width: 15px;
 	height: 15px;
@@ -1374,6 +1396,10 @@
     padding: 6px 8px;
 }
 
+.stepToolbar {
+    align-items: center;
+}
+
 .steppingFilterViewImpl {
 }
 
@@ -2010,12 +2036,14 @@ button.main-menu svg {
 .findCell-row {
 	display: flex;
 	flex-direction: column;
+	margin-bottom: 0.5em;
 }
 
 .findCell-main {
     display: flex;
     gap: .7rem;
     padding: .2rem;
+    align-items: center;
 }
 
 .findCell-icon {
@@ -2030,11 +2058,26 @@ button.main-menu svg {
     flex-grow: 1;
     overflow: hidden;
     white-space: pre;
+    letter-spacing: -0.6px;
+    font-size: 95%;
+    /* Fade out the long lines */
+    mask-image: linear-gradient(to right, #000000 0%, #000000 75%, rgb(128 0 52 / 0%) 100%);
+    overflow: hidden;
+}
+
+.findCell-sample div {
+    font-family: var(--monospace-font-family);
+}
+
+.findCell-sample-before {
 }
 
 .findCell-highlight {
 	background-color: yellow;
 	color: black;
+}
+
+.findCell-sample-after {
 }
 
 .findCell-name {
@@ -2043,12 +2086,19 @@ button.main-menu svg {
     align-items: end;
     white-space: pre;
     color: var(--navigation__text-color);
+    user-select: text;
+}
+
+/* findCell-name is used for both Find In Content and Recent Items
+ so only add the margin when used in Find In Content */
+.findCell-sample + .findCell-name {
+    margin-left: 6rem;
 }
 
 .findCell-sub {
     display: flex;
-    gap: .7rem;
-    padding: .2rem;
+    gap: 6rem;
+    padding: .1rem;
 }
 
 .findCell-path {
@@ -2056,6 +2106,7 @@ button.main-menu svg {
     font-size: .7rem;
     flex-grow: 1;
     opacity: .5;
+    user-select: text;
 }
 
 .findCell-uuid {
@@ -2064,6 +2115,7 @@ button.main-menu svg {
     font-family: monospace;
     flex-grow: 0;
     opacity: .5;
+    user-select: text;
 }
 
 .pipelineElementChooser-iconCell {
@@ -2088,7 +2140,7 @@ button.main-menu svg {
 
 .SelectionPopup .listContainer {
     min-width: 200px;
-    max-width: 300px;
+    max-width: 400px;
     max-height: 400px;
 }
 
@@ -2264,4 +2316,9 @@ button.main-menu svg {
 
 .bold {
     font-weight: 600;
+}
+
+/* Add a smidge of a gap between the split and the next form group */
+.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+    margin-top: 0.5em;
 }

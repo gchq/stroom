@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
                 };
 
                 ((CloseContentEvent.Handler) presenter)
-                        .onCloseRequest(new CloseContentEvent(event.isIgnoreIfDirty(), callback));
+                        .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
                 // Give the content manager the ok to close the tab.
             } else {
                 event.getCallback().closeTab(true);

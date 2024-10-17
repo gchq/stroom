@@ -94,6 +94,11 @@ public class SearchableRows implements Searchable {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        return 1;
+    }
+
+    @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
         return Optional.empty();
     }

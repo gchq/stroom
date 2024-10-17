@@ -42,6 +42,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
 
@@ -101,7 +102,18 @@ class SearchableTaskProgress implements Searchable {
         if (!TASK_MANAGER_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(TaskManagerFields.getFields()).build();
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(getFields())
+                .build();
+    }
+
+    private List<QueryField> getFields() {
+        return TaskManagerFields.getFields();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
     }
 
     @Override

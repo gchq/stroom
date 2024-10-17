@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.structure.client.presenter;
@@ -41,6 +40,7 @@ import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.Pip
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -70,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -153,7 +154,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         Collections.sort(types);
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
 
         setAdvancedMode(true);
@@ -169,16 +170,20 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null && event.getSelectedItem().compareTo(NULL_SELECTION) != 0) {
-                final DocRef docRef = event.getSelectedItem();
-                if (EqualsUtil.isEquals(docRef.getUuid(), pipelineDoc.getUuid())) {
-                    AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
+            final DocRef selectedDocRef = event.getSelectedItem();
+            if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
+                if (Objects.equals(selectedDocRef.getUuid(), pipelineDoc.getUuid())) {
+                    AlertEvent.fireWarn(
+                            PipelineStructurePresenter.this,
+                            "A pipeline cannot inherit from itself",
                             () -> {
                                 // Reset selection.
-                                pipelinePresenter.setSelectedEntityReference(getParentPipeline());
+                                pipelinePresenter.setSelectedEntityReference(
+                                        getParentPipeline(),
+                                        true);
                             });
                 } else {
-                    changeParentPipeline(docRef);
+                    changeParentPipeline(selectedDocRef);
                 }
             } else {
                 changeParentPipeline(null);
@@ -202,7 +207,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
-                if (menuItems != null && menuItems.size() > 0) {
+                if (GwtNullSafe.hasItems(menuItems)) {
                     showMenu(menuItems, event.getPopupPosition());
                 }
             }
@@ -231,7 +236,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             if (document.getParentPipeline() != null) {
                 this.parentPipeline = document.getParentPipeline();
             }
-            pipelinePresenter.setSelectedEntityReference(document.getParentPipeline());
+            pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
 
             restFactory
                     .create(PIPELINE_RESOURCE)
@@ -260,7 +265,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -530,7 +535,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -558,7 +563,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -616,7 +621,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                     null);
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
 
@@ -681,7 +686,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 };
 
                 // We need to suggest a unique id for the element, else the user will get an
-                // error if they click ok with a dup id.
+                // error if they click OK with a dup id.
                 final Set<String> existingIds = pipelineTreePresenter.getIds();
                 final String suggestedIdBase = ModelStringUtil.toCamelCase(elementType.getType());
                 String suggestedId = suggestedIdBase;

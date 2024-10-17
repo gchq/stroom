@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,6 +176,7 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
             sb.append(name);
         }
         if (uuid != null) {
+            //noinspection SizeReplaceableByIsEmpty // Not in GWT
             if (sb.length() > 0) {
                 sb.append(" ");
             }
@@ -184,6 +185,7 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
             sb.append("}");
         }
 
+        //noinspection SizeReplaceableByIsEmpty // Not in GWT
         if (sb.length() > 0) {
             return sb.toString();
         }
@@ -199,6 +201,7 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         if (!(o instanceof DocRef)) {
             return false;
         }
+        //noinspection PatternVariableCanBeUsed // Not in GWT
         final DocRef docRef = (DocRef) o;
         return Objects.equals(uuid, docRef.uuid);
     }
@@ -206,6 +209,13 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
     @Override
     public int hashCode() {
         return uuid.hashCode();
+    }
+
+    /**
+     * @return The {@link DocRef} in the form '{@code {type:uuid:name}}'
+     */
+    public String toShortString() {
+        return "{" + type + ":" + uuid + ":" + name + "}";
     }
 
     @Override
@@ -218,6 +228,34 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
                 ", uuid='" + uuid + '\'' +
                 ", name='" + name + '\'' +
                 '}';
+    }
+
+    /**
+     * Compare this to other on type, uuid and name, unlike the {@link DocRef#equals(Object)}
+     * which only compares on type and uuid. This method is useful for determining if the name has changed
+     * as well as the key parts.
+     */
+    public boolean equalsIncludingName(final DocRef other) {
+        return Objects.equals(this, other);
+    }
+
+    /**
+     * Compare two {@link DocRef} objects on type, uuid and name, unlike the {@link DocRef#equals(Object)}
+     * which only compares on type and uuid. This method is useful for determining if the name has changed
+     * as well as the key parts.
+     */
+    public static boolean equalsIncludingName(final DocRef docRef1, final DocRef docRef2) {
+        if (docRef1 == docRef2) {
+            return true;
+        } else if (docRef1 == null) {
+            return false;
+        } else if (docRef2 == null) {
+            return false;
+        } else {
+            return Objects.equals(docRef1.type, docRef2.type) &&
+                    Objects.equals(docRef1.uuid, docRef2.uuid) &&
+                    Objects.equals(docRef1.name, docRef2.name);
+        }
     }
 
     public static Builder builder() {

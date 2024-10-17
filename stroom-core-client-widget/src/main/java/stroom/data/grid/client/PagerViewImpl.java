@@ -20,7 +20,7 @@ import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
@@ -95,8 +95,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return new TaskHandler() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
             @Override
             public void onStart(final Task task) {
                 taskCount++;

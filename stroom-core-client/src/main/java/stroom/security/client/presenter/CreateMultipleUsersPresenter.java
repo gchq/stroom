@@ -23,7 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -53,7 +53,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
 
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
-                       final TaskHandlerFactory taskHandlerFactory) {
+                       final TaskMonitorFactory taskMonitorFactory) {
         final String usersCsvData = getView().getUsersCsvData();
         if (usersCsvData != null && !usersCsvData.isEmpty()) {
             restFactory
@@ -72,7 +72,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                                                 "would you like to restore them?",
                                         ok -> {
                                             if (ok) {
-                                                enable(disabled, consumer, event, nextSelection, taskHandlerFactory);
+                                                enable(disabled, consumer, event, nextSelection, taskMonitorFactory);
                                             } else {
                                                 nextSelection.ifPresent(consumer);
                                                 event.hide();
@@ -87,7 +87,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                         }
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         } else {
             event.hide();
@@ -98,7 +98,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                         final Consumer<User> consumer,
                         final HidePopupRequestEvent event,
                         final Optional<User> nextSelection,
-                        final TaskHandlerFactory taskHandlerFactory) {
+                        final TaskMonitorFactory taskMonitorFactory) {
         if (disabled.size() == 0) {
             nextSelection.ifPresent(consumer);
             event.hide();
@@ -109,9 +109,9 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                     .create(USER_RESOURCE)
                     .method(res -> res.update(user))
                     .onSuccess(result -> {
-                        enable(disabled, consumer, event, nextSelection, taskHandlerFactory);
+                        enable(disabled, consumer, event, nextSelection, taskMonitorFactory);
                     })
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }

@@ -193,7 +193,7 @@ public class ExportConfigPresenter
                         event.hide();
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

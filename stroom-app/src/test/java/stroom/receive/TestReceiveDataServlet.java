@@ -71,7 +71,7 @@ class TestReceiveDataServlet {
         response.resetMock();
         store.clear();
 
-        if (feedStore.list().size() == 0) {
+        if (feedStore.list().isEmpty()) {
             feedStore.createDocument("TEST-FEED");
         }
     }

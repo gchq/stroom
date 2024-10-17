@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dictionary.client.presenter;
@@ -21,33 +20,46 @@ import stroom.dictionary.client.presenter.DictionarySettingsPresenter.Dictionary
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
+
 public class DictionarySettingsPresenter extends DocumentEditPresenter<DictionarySettingsView, DictionaryDoc> {
 
     private final DictionaryListPresenter dictionaryListPresenter;
+    private final WordListPresenter wordListPresenter;
 
     @Inject
     public DictionarySettingsPresenter(final EventBus eventBus,
                                        final DictionarySettingsView view,
-                                       final DictionaryListPresenter dictionaryListPresenter) {
+                                       final DictionaryListPresenter dictionaryListPresenter,
+                                       final WordListPresenter wordListPresenter) {
         super(eventBus, view);
         this.dictionaryListPresenter = dictionaryListPresenter;
+        this.wordListPresenter = wordListPresenter;
         getView().setImportList(dictionaryListPresenter.getView());
+        getView().setWordList(wordListPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(dictionaryListPresenter.addDirtyHandler(event -> setDirty(true)));
+
+        dictionaryListPresenter.registerDictionarySelectionHandler(wordListPresenter::setDocRef);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final DictionaryDoc doc, final boolean readOnly) {
         dictionaryListPresenter.read(docRef, doc, readOnly);
+        final List<DocRef> imports = doc.getImports();
+        if (GwtNullSafe.hasItems(imports)) {
+            wordListPresenter.setDocRef(imports.get(0));
+        }
     }
 
     @Override
@@ -56,8 +68,14 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
         return doc;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface DictionarySettingsView extends View {
 
         void setImportList(View view);
+
+        void setWordList(View view);
     }
 }

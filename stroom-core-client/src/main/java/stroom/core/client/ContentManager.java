@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
+import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
@@ -28,6 +29,7 @@ import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -36,7 +38,6 @@ import com.gwtplatform.mvp.client.Layer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ContentManager implements HasHandlers {
 
@@ -49,32 +50,38 @@ public class ContentManager implements HasHandlers {
 
         eventBus.addHandler(RequestCloseTabEvent.getType(), event -> {
             final TabData tabData = event.getTabData();
-            close(false, false, tabData);
+            final DirtyMode dirtyMode = event.isForce()
+                    ? DirtyMode.FORCE
+                    : DirtyMode.CONFIRM_DIRTY;
+            close(dirtyMode, false, tabData);
         });
+
         eventBus.addHandler(RequestCloseOtherTabsEvent.getType(), event -> {
             final TabData tabData = event.getTabData();
             final TabData[] arr = handlerMap
                     .keySet()
                     .stream()
                     .filter(td -> !td.equals(tabData))
-                    .collect(Collectors.toList())
-                    .toArray(new TabData[0]);
-            closeAll(false, false, arr);
+                    .toArray(TabData[]::new);
+            closeAll(DirtyMode.CONFIRM_DIRTY, false, arr);
         });
+
         eventBus.addHandler(
                 RequestCloseAllTabsEvent.getType(),
-                event -> closeAll(false, false));
+                event -> closeAll(DirtyMode.CONFIRM_DIRTY, false));
+
         eventBus.addHandler(
                 RequestCloseSavedTabsEvent.getType(),
-                event -> closeAll(true, false));
+                event -> closeAll(DirtyMode.SKIP_DIRTY, false));
+
         eventBus.addHandler(
                 RequestLogoutEvent.getType(),
-                event -> closeAll(false, true));
+                event -> closeAll(DirtyMode.CONFIRM_DIRTY, true));
     }
 
-    private void closeAll(final boolean ignoreIfDirty,
+    private void closeAll(final DirtyMode dirtyMode,
                           final boolean logoffAfterClose) {
-        if (handlerMap.size() == 0) {
+        if (handlerMap.isEmpty()) {
             // If there aren't any tabs then just try and
             // logout.
             if (logoffAfterClose) {
@@ -83,38 +90,42 @@ public class ContentManager implements HasHandlers {
         } else {
             // Stick the keys in an array to prevent comod exception.
             final TabData[] arr = handlerMap.keySet().toArray(new TabData[0]);
-            closeAll(ignoreIfDirty, logoffAfterClose, arr);
+            closeAll(dirtyMode, logoffAfterClose, arr);
         }
     }
 
-    private void closeAll(final boolean ignoreIfDirty,
+    private void closeAll(final DirtyMode dirtyMode,
                           final boolean logoffAfterClose,
                           final TabData[] arr) {
         // If there are tabs then iterate around them trying
         // to close each one.
         for (final TabData tabData : arr) {
-            close(ignoreIfDirty, logoffAfterClose, tabData);
+            close(dirtyMode, logoffAfterClose, tabData);
         }
     }
 
-    private void close(final boolean ignoreIfDirty,
+    private void close(final DirtyMode dirtyMode,
                        final boolean logoffAfterClose,
                        final TabData tabData) {
         final CloseContentEvent.Handler closeHandler = handlerMap.get(tabData);
-        Callback callback = ok -> {
-            if (ok) {
-                forceClose(tabData);
+        if (closeHandler != null) {
+            Callback callback = ok -> {
+                if (ok) {
+                    forceClose(tabData);
 
-                // Logoff if there are no more open tabs and we have been
-                // asked
-                // to logoff after close.
-                if (logoffAfterClose && handlerMap.size() == 0) {
-                    LogoutEvent.fire(ContentManager.this);
+                    // Logoff if there are no more open tabs and we have been
+                    // asked
+                    // to logoff after close.
+                    if (logoffAfterClose && handlerMap.isEmpty()) {
+                        LogoutEvent.fire(ContentManager.this);
+                    }
                 }
-            }
-        };
-        final CloseContentEvent event = new CloseContentEvent(ignoreIfDirty, callback);
-        closeHandler.onCloseRequest(event);
+            };
+            final CloseContentEvent event = new CloseContentEvent(dirtyMode, callback);
+            closeHandler.onCloseRequest(event);
+        } else {
+            GWT.log("No close handler for " + tabData.getType() + " - " + tabData.getLabel());
+        }
     }
 
     public void forceClose(final TabData tabData) {

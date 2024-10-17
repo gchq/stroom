@@ -5,6 +5,7 @@ import java.util.Arrays;
 public class StoredValues {
 
     private final Object[] values;
+    private int period;
 
     public StoredValues(final Object[] values) {
         this.values = values;
@@ -16,6 +17,14 @@ public class StoredValues {
 
     public void set(final int index, final Object val) {
         this.values[index] = val;
+    }
+
+    public int getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(final int period) {
+        this.period = period;
     }
 
     @Override

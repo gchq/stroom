@@ -237,7 +237,7 @@ public class AppPermissionsEditPresenter
                         updateAllPermissions();
                         updateDetails();
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -299,7 +299,7 @@ public class AppPermissionsEditPresenter
                         .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeAppPermission(request))
                         .onSuccess(result -> refresh())
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             });
         }

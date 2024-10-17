@@ -79,7 +79,7 @@ public class ChangeStatusPresenter
                             changeStatus(values.get(0));
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
 
@@ -100,7 +100,7 @@ public class ChangeStatusPresenter
                                     e.hide();
                                 })
                                 .onFailure(RestErrorHandler.forPopup(this, e))
-                                .taskHandlerFactory(this)
+                                .taskMonitorFactory(this)
                                 .exec();
                     } else {
                         e.hide();
@@ -125,7 +125,7 @@ public class ChangeStatusPresenter
                     .create(annotationResource)
                     .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         });
         statusPresenter.clearFilter();

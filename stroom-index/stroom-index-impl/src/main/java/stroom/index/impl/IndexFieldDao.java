@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,4 +29,6 @@ public interface IndexFieldDao {
     void addFields(DocRef docRef, Collection<IndexField> fields);
 
     ResultPage<IndexField> findFields(FindFieldCriteria criteria);
+
+    int getFieldCount(DocRef docRef);
 }

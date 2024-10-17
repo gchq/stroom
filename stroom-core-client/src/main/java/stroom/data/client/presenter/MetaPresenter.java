@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummaryRequest;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -43,6 +45,7 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -64,6 +67,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class MetaPresenter
         extends MyPresenterWidget<MetaView>
@@ -76,6 +80,7 @@ public class MetaPresenter
     public static final String STREAM_LIST = "STREAM_LIST";
 
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
@@ -87,6 +92,7 @@ public class MetaPresenter
     private final Provider<ExpressionPresenter> streamListFilterPresenter;
     private final ButtonView streamListFilter;
     private final ButtonView streamListInfo;
+    private final ClientSecurityContext securityContext;
 
     private DocRef feedRef;
     private ButtonView streamListUpload;
@@ -122,6 +128,7 @@ public class MetaPresenter
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.expressionValidator = expressionValidator;
+        this.securityContext = securityContext;
 
         setInSlot(STREAM_LIST, metaListPresenter);
         setInSlot(STREAM_RELATION_LIST, metaRelationListPresenter);
@@ -352,7 +359,7 @@ public class MetaPresenter
         }
 
         final Set<String> statusPeriod = getTerms(expression, MetaFields.STATUS_TIME);
-        return statusPeriod.size() > 0;
+        return !statusPeriod.isEmpty();
     }
 
     private static Status getSingleStatus(final FindMetaCriteria criteria) {
@@ -421,7 +428,7 @@ public class MetaPresenter
     }
 
     public void refresh() {
-        GWT.log("Refresh");
+//        GWT.log("Refresh");
         // Get a new list of streams.
         metaListPresenter.refresh();
         metaRelationListPresenter.refresh();
@@ -525,7 +532,7 @@ public class MetaPresenter
 
     public boolean isSomeSelected(final AbstractMetaListPresenter streamListPresenter,
                                   final Selection<Long> selectedIdSet) {
-        if (streamListPresenter.getResultPage() == null || streamListPresenter.getResultPage().size() == 0) {
+        if (streamListPresenter.getResultPage() == null || streamListPresenter.getResultPage().isEmpty()) {
             return false;
         }
         return selectedIdSet != null && !selectedIdSet.isMatchNothing();
@@ -534,99 +541,136 @@ public class MetaPresenter
     public void setStreamListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
 
-        if (streamListInfo != null) {
-            streamListInfo.setEnabled(someSelected);
-        }
-        if (streamListDownload != null) {
-            streamListDownload.setEnabled(someSelected);
-        }
+        ButtonView.setEnabled(streamListInfo, someSelected);
+        ButtonView.setEnabled(streamListDownload, someSelected);
+        ButtonView.setEnabled(streamListProcess, someSelected);
         if (streamListDelete != null) {
-            final boolean enabled = shouldEnableDelete(metaListPresenter, streamIdSet);
-            streamListDelete.setEnabled(enabled);
-        }
-        if (streamListProcess != null) {
-            streamListProcess.setEnabled(someSelected);
+            shouldEnableDelete(metaListPresenter, streamIdSet, streamListDelete::setEnabled);
         }
         if (streamListRestore != null) {
-            final boolean enabled = shouldEnableRestore(metaListPresenter, streamIdSet);
-            streamListRestore.setEnabled(enabled);
+            shouldEnableRestore(metaListPresenter, streamIdSet, streamListRestore::setEnabled);
         }
     }
 
     private void setStreamRelationListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaRelationListPresenter, streamIdSet);
 
-        if (streamRelationListDownload != null) {
-            streamRelationListDownload.setEnabled(someSelected);
-        }
+        ButtonView.setEnabled(streamRelationListDownload, someSelected);
+        ButtonView.setEnabled(streamRelationListProcess, someSelected);
         if (streamRelationListDelete != null) {
-            final boolean enabled = shouldEnableDelete(metaRelationListPresenter, streamIdSet);
-            streamRelationListDelete.setEnabled(enabled);
+            shouldEnableDelete(metaListPresenter, streamIdSet, streamRelationListDelete::setEnabled);
         }
         if (streamRelationListRestore != null) {
-            final boolean enabled = shouldEnableRestore(metaRelationListPresenter, streamIdSet);
-            streamRelationListRestore.setEnabled(enabled);
-        }
-        if (streamRelationListProcess != null) {
-            streamRelationListProcess.setEnabled(someSelected);
+            shouldEnableRestore(metaRelationListPresenter, streamIdSet, streamRelationListRestore::setEnabled);
         }
     }
 
-    private boolean shouldEnableDelete(final AbstractMetaListPresenter metaListPresenter,
-                                       final Selection<Long> streamIdSet) {
+    private void shouldEnableDelete(final AbstractMetaListPresenter metaListPresenter,
+                                    final Selection<Long> streamIdSet,
+                                    final Consumer<Boolean> isEnabledConsumer) {
+//        if (streamIdSet != null) {
+//            GWT.log("streamIdSet (" + streamIdSet.size() + ") - " + streamIdSet);
+//        }
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
         if (someSelected) {
             final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
-            final boolean allowDelete = statusSet.size() == 0 ||
+            final boolean allowDelete = statusSet.isEmpty() ||
                     statusSet.contains(Status.LOCKED) ||
                     statusSet.contains(Status.UNLOCKED);
 
+            boolean isDeleteEnabled = false;
             if (allowDelete) {
                 if (streamIdSet != null) {
                     if (streamIdSet.isMatchAll()) {
-                        return true;
+//                        return true;
+                        isDeleteEnabled = true;
                     } else {
                         for (final Long id : streamIdSet.getSet()) {
                             final Meta meta = getMeta(metaListPresenter, id);
-                            if (meta != null && !Status.DELETED.equals(meta.getStatus())) {
-                                return true;
+                            if (meta != null
+                                    && !Status.DELETED.equals(meta.getStatus())) {
+//                                return true;
+                                isDeleteEnabled = true;
+                                break;
                             }
                         }
                     }
                 }
+                if (isDeleteEnabled) {
+                    // Check how many of the selected items the user actually has DELETE perms on.
+                    // If none, don't enable, if >0 do enable
+                    final FindMetaCriteria selectedCriteria = metaListPresenter.getSelectedCriteria();
+                    restFactory
+                            .create(META_RESOURCE)
+                            .method(res ->
+                                    res.getSelectionSummary(new SelectionSummaryRequest(
+                                            selectedCriteria,
+                                            DocumentPermission.DELETE)))
+                            .onSuccess(selectionSummary -> {
+                                isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
+                            })
+                            .taskMonitorFactory(this)
+                            .exec();
+                } else {
+                    isEnabledConsumer.accept(false);
+                }
             }
         }
-        return false;
+        isEnabledConsumer.accept(false);
     }
 
-    private boolean shouldEnableRestore(final AbstractMetaListPresenter metaListPresenter,
-                                        final Selection<Long> streamIdSet) {
+    private void shouldEnableRestore(final AbstractMetaListPresenter metaListPresenter,
+                                     final Selection<Long> streamIdSet,
+                                     final Consumer<Boolean> isEnabledConsumer) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
         if (someSelected) {
             final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
-            final boolean allowRestore = statusSet.size() == 0 ||
+            final boolean allowRestore = statusSet.isEmpty() ||
                     statusSet.contains(Status.DELETED);
 
+            boolean isRestoreEnabled = false;
             if (allowRestore) {
                 if (streamIdSet != null) {
                     if (streamIdSet.isMatchAll()) {
-                        return true;
+                        isRestoreEnabled = true;
                     } else {
                         for (final Long id : streamIdSet.getSet()) {
                             final Meta meta = getMeta(metaListPresenter, id);
                             if (meta != null && Status.DELETED.equals(meta.getStatus())) {
-                                return true;
+                                isRestoreEnabled = true;
+                                break;
                             }
                         }
                     }
                 }
+
+                if (isRestoreEnabled) {
+                    // Check how many of the selected items the user actually has UPDATE perms on.
+                    // If none, don't enable, if >0 do enable
+                    final FindMetaCriteria selectedCriteria = metaListPresenter.getSelectedCriteria();
+                    restFactory
+                            .create(META_RESOURCE)
+                            .method(res ->
+                                    res.getSelectionSummary(new SelectionSummaryRequest(
+                                            selectedCriteria,
+                                            DocumentPermission.EDIT)))
+                            .onSuccess(selectionSummary -> {
+                                isEnabledConsumer.accept(selectionSummary.getItemCount() > 0);
+                            })
+                            .taskMonitorFactory(this)
+                            .exec();
+                } else {
+                    isEnabledConsumer.accept(false);
+                }
             }
         }
-        return false;
+        isEnabledConsumer.accept(false);
     }
 
     @Override
-    public void beginStepping(final StepType stepType, final StepLocation stepLocation, final String childStreamType) {
+    public void beginStepping(final StepType stepType,
+                              final StepLocation stepLocation,
+                              final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
         DocRef pipelineRef = null;
@@ -655,6 +699,10 @@ public class MetaPresenter
                 stepLocation,
                 pipelineRef);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface MetaView extends View {
 

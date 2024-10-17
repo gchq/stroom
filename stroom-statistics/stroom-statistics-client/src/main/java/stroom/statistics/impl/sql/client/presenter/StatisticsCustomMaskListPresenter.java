@@ -196,7 +196,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                                     updateState(new HashSet<>(res));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
-                                .taskHandlerFactory(getView())
+                                .taskMonitorFactory(getView())
                                 .exec();
                     }
                 });
@@ -291,7 +291,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
 
                     updateState(result.getCustomRollUpMasks());
                 })
-                .taskHandlerFactory(getView())
+                .taskMonitorFactory(getView())
                 .exec();
     }
 

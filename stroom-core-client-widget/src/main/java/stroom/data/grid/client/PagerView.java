@@ -18,14 +18,14 @@ package stroom.data.grid.client;
 
 import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.gwtplatform.mvp.client.View;
 
-public interface PagerView extends View, TaskHandlerFactory {
+public interface PagerView extends View, TaskMonitorFactory {
 
     ButtonView addButton(Preset preset);
 

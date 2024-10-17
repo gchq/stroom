@@ -67,13 +67,15 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        if (criteria.getDataSourceRef() != null
-                && !loadedIndexes.contains(criteria.getDataSourceRef())) {
-            transferFieldsToDB(criteria.getDataSourceRef());
-            loadedIndexes.add(criteria.getDataSourceRef());
-        }
-
+        ensureLoaded(criteria.getDataSourceRef());
         return indexFieldDao.findFields(criteria);
+    }
+
+    private void ensureLoaded(final DocRef dataSourceRef) {
+        if (dataSourceRef != null && !loadedIndexes.contains(dataSourceRef)) {
+            transferFieldsToDB(dataSourceRef);
+            loadedIndexes.add(dataSourceRef);
+        }
     }
 
     @Override
@@ -105,6 +107,12 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        ensureLoaded(docRef);
+        return indexFieldDao.getFieldCount(docRef);
+    }
+
+    @Override
     public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         return securityContext.useAsReadResult(() -> {
 
@@ -124,7 +132,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
             // Get all fields regardless of case
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
 
-            if (resultPage.size() > 0) {
+            if (!resultPage.isEmpty()) {
                 return IndexFieldMap.fromFieldList(fieldName, resultPage.getValues());
             } else {
                 return null;

@@ -177,6 +177,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+            return NullSafe.get(
+                    index,
+                    this::getDataSourceFields,
+                    List::size);
+        });
+    }
+
+    @Override
     public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {

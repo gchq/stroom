@@ -20,15 +20,29 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.query.common.v2.IndexFieldMapImpl.EmptyIndexFieldMap;
 import stroom.query.common.v2.IndexFieldMapImpl.SingleIndexField;
 import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.string.CIKey;
 import stroom.util.string.MultiCaseMap.MultipleMatchException;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+/**
+ * Holds one or more {@link IndexField}s that ALL share the same name when ignoring case.
+ * Provides a common means to get a field for a given field name, initially ignoring case,
+ * but taking case into account if the map contains multiple fields (with the same
+ * case-insensitive name).
+ * <p>
+ * E.g. it may hold fields 'foo' and 'FOO'. Calling {@link IndexFieldMap#getClosestMatchingField(String)}
+ * with 'foo' would return field 'foo', but calling that with 'Foo' would throw an exception as there
+ * is no exact match.
+ * </p>
+ */
 public interface IndexFieldMap {
 
     /**
@@ -80,6 +94,33 @@ public interface IndexFieldMap {
         }
     }
 
+    static IndexFieldMap empty(final CIKey fieldName) {
+        return new EmptyIndexFieldMap(fieldName);
+    }
+
+    static IndexFieldMap merge(final IndexFieldMap map1, final IndexFieldMap map2) {
+        if (map1 == null && map2 == null) {
+            return null;
+        } else if (map1 == null) {
+            return map2;
+        } else if (map2 == null) {
+            return map1;
+        } else {
+            if (!Objects.equals(map1.getFieldName(), map2.getFieldName())) {
+                throw new IllegalArgumentException(LogUtil.message(
+                        "Names do not match. map1: '{}', map2: '{}'",
+                        map1.getFieldName(), map2.getFieldName()));
+            }
+
+            final Map<String, IndexField> combinedMap = Stream.of(map1, map2)
+                    .map(IndexFieldMap::getFields)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toMap(
+                            IndexField::getFldName, Function.identity()));
+            return IndexFieldMap.fromFieldsMap(map1.getFieldName(), combinedMap);
+        }
+    }
+
     /**
      * @return The case-insensitive field name.
      */
@@ -97,5 +138,10 @@ public interface IndexFieldMap {
      * it will throw a {@link MultipleMatchException}.
      * @throws MultipleMatchException if multiple values are associated with ciKey
      */
-    IndexField getMatchingField(final CIKey ciKey);
+    IndexField getClosestMatchingField(final String caseSensitiveFieldName);
+
+    /**
+     * @return The {@link IndexField} with a name exactly matching caseSensitiveFieldName, else null.
+     */
+    IndexField getExactMatchingField(final String caseSensitiveFieldName);
 }

@@ -700,7 +700,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (!ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(ReferenceDataFields.FIELDS).build();
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(getFields())
+                .build();
+    }
+
+    private List<QueryField> getFields() {
+        return ReferenceDataFields.FIELDS;
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
     }
 
     @Override

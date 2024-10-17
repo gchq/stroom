@@ -77,8 +77,8 @@ public class IndexFieldMapImpl implements IndexFieldMap {
      * @throws MultipleMatchException if multiple values are associated with ciKey
      */
     @Override
-    public IndexField getMatchingField(final CIKey ciKey) {
-        if (caseInsenseFieldName.equals(ciKey)) {
+    public IndexField getClosestMatchingField(final String caseSensitiveFieldName) {
+        if (caseInsenseFieldName.equalsIgnoreCase(caseSensitiveFieldName)) {
             if (NullSafe.isEmptyMap(caseSenseFieldNameToFieldMap)) {
                 return null;
             } else {
@@ -89,18 +89,23 @@ public class IndexFieldMapImpl implements IndexFieldMap {
                     // There is only one, so we don't need to check for an exact match
                     return caseSenseFieldNameToFieldMap.values().iterator().next();
                 } else {
-                    final IndexField exactMatch = caseSenseFieldNameToFieldMap.get(ciKey.get());
+                    final IndexField exactMatch = caseSenseFieldNameToFieldMap.get(caseSensitiveFieldName);
                     if (exactMatch != null) {
                         return exactMatch;
                     } else {
                         throw new MultipleMatchException("Multiple values (" + caseSenseFieldNameToFieldMap.size()
-                                + ") exist for case-insensitive field '" + ciKey.get() + "'");
+                                + ") exist for case-insensitive field '" + caseSensitiveFieldName + "'");
                     }
                 }
             }
         } else {
             return null;
         }
+    }
+
+    @Override
+    public IndexField getExactMatchingField(final String caseSensitiveFieldName) {
+        return caseSenseFieldNameToFieldMap.get(caseSensitiveFieldName);
     }
 
 
@@ -135,8 +140,17 @@ public class IndexFieldMapImpl implements IndexFieldMap {
         }
 
         @Override
-        public IndexField getMatchingField(final CIKey ciKey) {
-            if (fieldName.equals(ciKey)) {
+        public IndexField getClosestMatchingField(final String caseSensitiveFieldName) {
+            if (fieldName.equalsIgnoreCase(caseSensitiveFieldName)) {
+                return indexField;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public IndexField getExactMatchingField(final String caseSensitiveFieldName) {
+            if (Objects.equals(indexField.getFldName(), caseSensitiveFieldName)) {
                 return indexField;
             } else {
                 return null;
@@ -167,7 +181,12 @@ public class IndexFieldMapImpl implements IndexFieldMap {
         }
 
         @Override
-        public IndexField getMatchingField(final CIKey ciKey) {
+        public IndexField getClosestMatchingField(final String caseSensitiveFieldName) {
+            return null;
+        }
+
+        @Override
+        public IndexField getExactMatchingField(final String caseSensitiveFieldName) {
             return null;
         }
     }
