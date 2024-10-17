@@ -6,9 +6,12 @@ import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
+import stroom.docref.StringMatch;
+import stroom.docref.StringMatch.MatchType;
 import stroom.index.impl.IndexFieldDao;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.test.common.TestUtil;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.LambdaLogger;
@@ -18,21 +21,30 @@ import stroom.util.shared.ResultPage;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.TypeLiteral;
 import jakarta.inject.Inject;
 import org.jooq.Record1;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.db.util.JooqUtil.count;
@@ -225,6 +237,79 @@ class TestIndexFieldDaoImpl {
                 .isEqualTo(1);
     }
 
+    @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
+    Stream<DynamicTest> testCaseSensitivity() {
+        final AtomicBoolean hasSetupRun = new AtomicBoolean(false);
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(StringMatch.class)
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final StringMatch stringMatch = testCase.getInput();
+                    return getFields(DOC_REF_1, stringMatch)
+                            .stream()
+                            .map(IndexField::getFldName)
+                            .collect(Collectors.toSet());
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> {
+                    if (!hasSetupRun.get()) {
+
+                        assertThat(getFields(DOC_REF_1))
+                                .isEmpty();
+                        final IndexField foo = idField("foo");
+                        final IndexField bar = idField("bar");
+
+                        // Fields are not changed between tests
+                        indexFieldDao.addFields(DOC_REF_1, List.of(
+                                foo,
+                                bar));
+
+                        assertThat(getFields(DOC_REF_1))
+                                .hasSize(2);
+
+                        hasSetupRun.set(true);
+                    }
+                })
+                .addCase(StringMatch.any(), Set.of("foo", "bar"))
+                .addCase(StringMatch.nonNull(), Set.of("foo", "bar"))
+
+                .addCase(StringMatch.equals("foo"), Set.of("foo"))
+                .addCase(StringMatch.equals("FOO"), Collections.emptySet())
+                .addCase(StringMatch.equalsIgnoreCase("foo"), Set.of("foo"))
+                .addCase(StringMatch.equalsIgnoreCase("FOO"), Set.of("foo"))
+
+                .addCase(StringMatch.notEquals("foo"), Set.of("bar"))
+                .addCase(StringMatch.notEquals("FOO"), Set.of("foo", "bar"))
+                .addCase(StringMatch.notEqualsIgnoreCase("foo"), Set.of("bar"))
+                .addCase(StringMatch.notEqualsIgnoreCase("FOO"), Set.of("bar"))
+
+                .addCase(StringMatch.contains("oo"), Set.of("foo"))
+                .addCase(StringMatch.contains("OO"), Collections.emptySet())
+                .addCase(StringMatch.containsIgnoreCase("oo"), Set.of("foo"))
+                .addCase(StringMatch.containsIgnoreCase("OO"), Set.of("foo"))
+
+                .addCase(StringMatch.regex("^fo"), Set.of("foo"))
+                .addCase(StringMatch.regex("^FO"), Collections.emptySet())
+                .addCase(StringMatch.regexIgnoreCase("^fo"), Set.of("foo"))
+                .addCase(StringMatch.regexIgnoreCase("^FO"), Set.of("foo"))
+
+                .addCase(new StringMatch(MatchType.STARTS_WITH, true, "fo"), Set.of("foo"))
+                .addCase(new StringMatch(MatchType.STARTS_WITH, true, "FO"), Collections.emptySet())
+                .addCase(new StringMatch(MatchType.STARTS_WITH, false, "fo"), Set.of("foo"))
+                .addCase(new StringMatch(MatchType.STARTS_WITH, false, "FO"), Set.of("foo"))
+
+                .addCase(new StringMatch(MatchType.ENDS_WITH, true, "oo"), Set.of("foo"))
+                .addCase(new StringMatch(MatchType.ENDS_WITH, true, "OO"), Collections.emptySet())
+                .addCase(new StringMatch(MatchType.ENDS_WITH, false, "oo"), Set.of("foo"))
+                .addCase(new StringMatch(MatchType.ENDS_WITH, false, "OO"), Set.of("foo"))
+
+                .build();
+    }
+
+
     private List<IndexField> getFields(final DocRef docRef) {
         final ResultPage<IndexField> resultPage = indexFieldDao.findFields(
                 new FindFieldCriteria(
@@ -232,5 +317,24 @@ class TestIndexFieldDaoImpl {
                         Collections.emptyList(),
                         docRef));
         return resultPage.getValues();
+    }
+
+    private List<IndexField> getFields(final DocRef docRef, final StringMatch stringMatch) {
+        final ResultPage<IndexField> resultPage = indexFieldDao.findFields(
+                new FindFieldCriteria(
+                        new PageRequest(),
+                        Collections.emptyList(),
+                        docRef,
+                        stringMatch,
+                        null));
+        return resultPage.getValues();
+    }
+
+    private static IndexField idField(final String fieldName) {
+        return IndexFieldImpl.builder()
+                .fldName(fieldName)
+                .fldType(FieldType.ID)
+                .analyzerType(AnalyzerType.NUMERIC)
+                .build();
     }
 }

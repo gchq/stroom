@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+// TODO This would seem to be redundant or at least very out of date code.
+//  It is currently not functional as the meat of it is commented out and out of date
+//  with respect to the DB schema.
 public class StreamRestoreTool extends DatabaseTool {
 
     private static final int KEY_PAD = 30;
@@ -332,8 +335,8 @@ public class StreamRestoreTool extends DatabaseTool {
         });
     }
 
-    private Map<String, String> readAttributes(final String line, final String streamType, final String feedId) {
-        final HashMap<String, String> rtnMap = new HashMap<>();
+    private AttributeMap readAttributes(final String line, final String streamType, final String feedId) {
+        final AttributeMap rtnMap = new AttributeMap();
 
         final StringTokenizer stringTokenizer = new StringTokenizer(line, "/");
         final StringBuilder volumePath = new StringBuilder();
@@ -394,8 +397,8 @@ public class StreamRestoreTool extends DatabaseTool {
         return time;
     }
 
-    private Map<String, String> readManifestAttributes(final String rootFile) {
-        final Map<String, String> rtnMap = new HashMap<>();
+    private AttributeMap readManifestAttributes(final String rootFile) {
+        final AttributeMap rtnMap = new AttributeMap();
         final Path manifest = Paths.get(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
         if (Files.isRegularFile(manifest)) {
             final AttributeMap attributeMap = new AttributeMap();
@@ -421,7 +424,7 @@ public class StreamRestoreTool extends DatabaseTool {
             long nextLog = System.currentTimeMillis() + 10000;
 
             while ((line = reader.readLine()) != null) {
-                final Map<String, String> streamAttributes = readAttributes(line, processStreamType, processFeedId);
+                final AttributeMap streamAttributes = readAttributes(line, processStreamType, processFeedId);
 
                 lineCount++;
                 if (System.currentTimeMillis() > nextLog) {

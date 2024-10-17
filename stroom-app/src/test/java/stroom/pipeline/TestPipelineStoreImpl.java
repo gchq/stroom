@@ -37,7 +37,7 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
     }
 
     @TestFactory
-    Stream<DynamicTest> findByName() {
+    Stream<DynamicTest> findByName_caseSense() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withWrappedOutputType(new TypeLiteral<List<DocRef>>() {
@@ -45,7 +45,7 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
                 .withTestFunction(testCase -> {
                     final String nameFilter = testCase.getInput();
                     // Need to sort to ensure predictable order for tests
-                    return pipelineStore.findByName(nameFilter, true)
+                    return pipelineStore.findByName(nameFilter, true, true)
                             .stream()
                             .sorted(Comparator.naturalOrder())
                             .collect(Collectors.toList());
@@ -63,6 +63,33 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
     }
 
     @TestFactory
+    Stream<DynamicTest> findByName_caseInSense() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withWrappedOutputType(new TypeLiteral<List<DocRef>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final String nameFilter = testCase.getInput();
+                    // Need to sort to ensure predictable order for tests
+                    return pipelineStore.findByName(nameFilter, true, false)
+                            .stream()
+                            .sorted(Comparator.naturalOrder())
+                            .collect(Collectors.toList());
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase("Pipe", Collections.emptyList())
+                .addCase(PIPE_1_NAME.toLowerCase(), List.of(pipe1))
+                .addCase(PIPE_1_NAME.toUpperCase(), List.of(pipe1))
+                .addCase(PIPE_1_NAME, List.of(pipe1))
+                .addCase("Pipe*", List.of(pipe1, pipe2, pipe3))
+                .addCase("*a", List.of(pipe1, pipe2, pipe3))
+                .addCase("*2*", List.of(pipe2))
+                .addCase("* *aa*", List.of(pipe2, pipe3))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> findByName_no_wild_cards() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -71,7 +98,7 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
                 .withTestFunction(testCase -> {
                     final String nameFilter = testCase.getInput();
                     // Need to sort to ensure predictable order for tests
-                    return pipelineStore.findByName(nameFilter, false)
+                    return pipelineStore.findByName(nameFilter, false, true)
                             .stream()
                             .sorted(Comparator.naturalOrder())
                             .collect(Collectors.toList());

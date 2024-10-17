@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.shared.query.FieldNames;
+import stroom.util.shared.string.CIKey;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -28,8 +30,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class EventCoprocessor implements Coprocessor, HasCompletionState {
 
-    private static final String STREAM_ID = "StreamId";
-    private static final String EVENT_ID = "EventId";
+    private static final CIKey STREAM_ID = FieldNames.FALLBACK_STREAM_ID_FIELD_KEY;
+    private static final CIKey EVENT_ID = FieldNames.FALLBACK_EVENT_ID_FIELD_KEY;
 
     private final ErrorConsumer errorConsumer;
     private final EventRef minEvent;
@@ -54,11 +56,8 @@ public class EventCoprocessor implements Coprocessor, HasCompletionState {
         this.maxEventsPerStream = settings.getMaxEventsPerStream();
 
         // Add required fields.
-        fieldIndex.create(STREAM_ID);
-        fieldIndex.create(EVENT_ID);
-
-        streamIdIndex = fieldIndex.getPos(STREAM_ID);
-        eventIdIndex = fieldIndex.getPos(EVENT_ID);
+        streamIdIndex = fieldIndex.create(STREAM_ID);
+        eventIdIndex = fieldIndex.create(EVENT_ID);
     }
 
     @Override

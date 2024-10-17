@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -29,6 +28,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
 import stroom.util.NullSafe;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,14 +44,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
+public class RowExpressionMatcher implements Predicate<Map<CIKey, Object>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RowExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
+    public static final Predicate<Map<CIKey, Object>> ALWAYS_TRUE_PREDICATE = var -> true;
+
     private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
-    private final Map<String, Column> columnNameToColumnMap;
+    private final Map<CIKey, Column> columnNameToColumnMap;
     private final DateTimeSettings dateTimeSettings;
     private final ExpressionItem item;
 
@@ -62,17 +64,17 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
             return Optional.empty();
         }
 
-        final Map<String, Column> columnNameToColumnMap = new HashMap<>();
+        final Map<CIKey, Column> columnNameToColumnMap = new HashMap<>();
         for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            columnNameToColumnMap.putIfAbsent(column.getId(), column);
-            columnNameToColumnMap.putIfAbsent(column.getName(), column);
+            columnNameToColumnMap.putIfAbsent(column.getIdAsCIKey(), column);
+            columnNameToColumnMap.putIfAbsent(column.getNameAsCIKey(), column);
         }
 
         return Optional.of(new RowExpressionMatcher(columnNameToColumnMap, dateTimeSettings, expression));
     }
 
-    private RowExpressionMatcher(final Map<String, Column> columnNameToColumnMap,
+    private RowExpressionMatcher(final Map<CIKey, Column> columnNameToColumnMap,
                                  final DateTimeSettings dateTimeSettings,
                                  final ExpressionItem item) {
         this.columnNameToColumnMap = columnNameToColumnMap;
@@ -80,34 +82,32 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
         this.item = item;
     }
 
-    public boolean isRequiredColumn(final String name) {
+    public boolean isRequiredColumn(final CIKey name) {
         return columnNameToColumnMap.containsKey(name);
     }
 
     @Override
-    public boolean test(final Map<String, Object> attributeMap) {
+    public boolean test(final Map<CIKey, Object> attributeMap) {
         return matchItem(attributeMap, item);
     }
 
-    private boolean matchItem(final Map<String, Object> attributeMap, final ExpressionItem item) {
+    private boolean matchItem(final Map<CIKey, Object> attributeMap, final ExpressionItem item) {
         if (!item.enabled()) {
             // If the child item is not enabled then return and keep trying to match with other parts
             // of the expression.
             return true;
         }
 
-        if (item instanceof ExpressionOperator) {
-            return matchOperator(attributeMap, (ExpressionOperator) item);
-        } else if (item instanceof ExpressionTerm) {
-            return matchTerm(attributeMap, (ExpressionTerm) item);
-        } else {
-            throw new MatchException("Unexpected item type");
-        }
+        return switch (item) {
+            case ExpressionOperator operator -> matchOperator(attributeMap, operator);
+            case ExpressionTerm term -> matchTerm(attributeMap, term);
+            case null, default -> throw new MatchException("Unexpected item type");
+        };
     }
 
-    private boolean matchOperator(final Map<String, Object> attributeMap,
+    private boolean matchOperator(final Map<CIKey, Object> attributeMap,
                                   final ExpressionOperator operator) {
-        if (operator.getChildren() == null || operator.getChildren().isEmpty()) {
+        if (NullSafe.isEmptyCollection(operator.getChildren())) {
             return true;
         }
 
@@ -133,23 +133,23 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
         };
     }
 
-    private boolean matchTerm(final Map<String, Object> attributeMap, final ExpressionTerm term) {
+    private boolean matchTerm(final Map<CIKey, Object> attributeMap, final ExpressionTerm term) {
         // The term field is the column name, NOT the index field name
         final Condition condition = term.getCondition();
 
         // Try and find the referenced field.
-        String termField = term.getField();
-        if (NullSafe.isBlankString(termField)) {
+        if (NullSafe.isBlankString(term.getField())) {
             throw new MatchException("Field not set");
         }
-        termField = termField.trim();
-        final Column column = columnNameToColumnMap.get(termField);
+        final String termField = term.getField().trim();
+        final CIKey caseInsensitiveTermField = CIKey.of(termField);
+        final Column column = columnNameToColumnMap.get(caseInsensitiveTermField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
         }
         final String columnName = column.getName();
 
-        final Object attribute = attributeMap.get(termField);
+        final Object attribute = attributeMap.get(caseInsensitiveTermField);
         if (Condition.IS_NULL.equals(condition)) {
             return attribute == null;
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
@@ -159,14 +159,13 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
         }
 
         // Try and resolve the term value.
-        String termValue = term.getValue();
-        if (NullSafe.isBlankString(termValue)) {
+        String termValue = NullSafe.trim(term.getValue());
+        if (termValue.isEmpty()) {
             throw new MatchException("Value not set");
         }
-        termValue = termValue.trim();
 
         // Substitute with row value if a row value exists.
-        final Object rowValue = attributeMap.get(termValue);
+        final Object rowValue = attributeMap.get(CIKey.of(termValue));
         if (rowValue != null) {
             termValue = rowValue.toString();
         }
@@ -364,7 +363,7 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
             return true;
         } else if (attribute == null) {
             return false;
-        } else if (termValue == null || termValue.isEmpty()) {
+        } else if (NullSafe.isEmptyString(termValue)) {
             return true;
         } else {
             return isStringMatch(termValue, attribute) || attribute.toString().contains(termValue);
@@ -376,12 +375,11 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
             return null;
         } else {
             try {
-                if (value instanceof Long) {
-                    return BigDecimal.valueOf((long) value);
-                } else if (value instanceof Double) {
-                    return BigDecimal.valueOf((Double) value);
-                }
-                return new BigDecimal(value.toString());
+                return switch (value) {
+                    case Long aLong -> BigDecimal.valueOf(aLong);
+                    case Double aDouble -> BigDecimal.valueOf(aDouble);
+                    default -> new BigDecimal(value.toString());
+                };
             } catch (final NumberFormatException e) {
                 throw new MatchException(
                         "Expected a numeric value for field \"" + columnName +
@@ -459,6 +457,10 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
             return dates;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MatchException extends RuntimeException {
 

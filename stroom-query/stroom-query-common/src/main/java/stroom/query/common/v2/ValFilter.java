@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.expression.api.DateTimeSettings;
@@ -7,8 +23,8 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.NullSafe;
-
-import com.google.common.base.Predicates;
+import stroom.util.PredicateUtil;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,18 +39,20 @@ import java.util.function.Supplier;
 
 public class ValFilter {
 
+    private static final Predicate<Val[]> ALWAYS_TRUE_VAL_PREDICATE = valArr -> true;
+
     public static Predicate<Val[]> create(final ExpressionOperator rowExpression,
                                           final CompiledColumns compiledColumns,
                                           final DateTimeSettings dateTimeSettings,
-                                          final Map<String, String> paramMap,
+                                          final Map<CIKey, String> paramMap,
                                           final Consumer<Throwable> throwableConsumer) {
-        final Optional<RowExpressionMatcher> optionalRowExpressionMatcher =
+        final Optional<RowExpressionMatcher> optRowExpressionMatcher =
                 RowExpressionMatcher.create(compiledColumns.getColumns(), dateTimeSettings, rowExpression);
 
         // See if any of the columns need mapping for the row filter.
-        final boolean needObjectMap = optionalRowExpressionMatcher.map(rowExpressionMatcher -> {
+        final boolean needObjectMap = optRowExpressionMatcher.map(rowExpressionMatcher -> {
             for (final CompiledColumn compiledColumn : compiledColumns.getCompiledColumns()) {
-                if (rowExpressionMatcher.isRequiredColumn(compiledColumn.getColumn().getName())) {
+                if (rowExpressionMatcher.isRequiredColumn(compiledColumn.getColumn().getNameAsCIKey())) {
                     return true;
                 }
             }
@@ -43,23 +61,24 @@ public class ValFilter {
 
         final List<UsedColumn> usedColumns = new ArrayList<>();
         for (final CompiledColumn compiledColumn : compiledColumns.getCompiledColumns()) {
-            final boolean needsMapping = optionalRowExpressionMatcher
-                    .map(matcher -> matcher.isRequiredColumn(compiledColumn.getColumn().getName()))
+            final boolean needsMapping = optRowExpressionMatcher
+                    .map(matcher -> matcher.isRequiredColumn(compiledColumn.getColumn().getNameAsCIKey()))
                     .orElse(false);
-            final Optional<Predicate<String>> optionalColumnIncludeExcludePredicate =
+            final Optional<Predicate<String>> optColumnIncludeExcludePredicate =
                     CompiledIncludeExcludeFilter.create(
                             compiledColumn.getColumn().getFilter(),
                             paramMap);
 
-            if (optionalColumnIncludeExcludePredicate.isPresent() || needsMapping) {
+            if (optColumnIncludeExcludePredicate.isPresent() || needsMapping) {
                 final Generator generator = compiledColumn.getGenerator();
                 if (generator != null) {
-                    final Predicate<String> columnIncludeExcludePredicate =
-                            optionalColumnIncludeExcludePredicate.orElse(Predicates.alwaysTrue());
-                    final BiConsumer<Map<String, Object>, String> mapConsumer;
+                    final Predicate<String> columnIncludeExcludePredicate = optColumnIncludeExcludePredicate
+                            .orElse(PredicateUtil.ALWAYS_TRUE_STRING_PREDICATE);
+
+                    final BiConsumer<Map<CIKey, Object>, String> mapConsumer;
                     if (needsMapping) {
                         mapConsumer = (columnNameToValueMap, s) ->
-                                columnNameToValueMap.put(compiledColumn.getColumn().getName(), s);
+                                columnNameToValueMap.put(compiledColumn.getColumn().getNameAsCIKey(), s);
                     } else {
                         mapConsumer = (columnNameToValueMap, s) -> {
                         };
@@ -71,8 +90,8 @@ public class ValFilter {
         }
 
         // Create a predicate to test the row values.
-        final Predicate<Map<String, Object>> rowPredicate = optionalRowExpressionMatcher
-                .map(rowExpressionMatcher -> (Predicate<Map<String, Object>>) columnNameToValueMap -> {
+        final Predicate<Map<CIKey, Object>> rowPredicate = optRowExpressionMatcher
+                .map(rowExpressionMatcher -> (Predicate<Map<CIKey, Object>>) columnNameToValueMap -> {
                     try {
                         // Test the row value map.
                         return rowExpressionMatcher.test(columnNameToValueMap);
@@ -81,22 +100,19 @@ public class ValFilter {
                         return false;
                     }
                 })
-                .orElse(Predicates.alwaysTrue());
+                .orElse(RowExpressionMatcher.ALWAYS_TRUE_PREDICATE);
 
         // If we need mappings then we need a map to receive them.
-        final Supplier<Map<String, Object>> mapSupplier;
-        if (needObjectMap) {
-            mapSupplier = HashMap::new;
-        } else {
-            mapSupplier = Collections::emptyMap;
-        }
+        final Supplier<Map<CIKey, Object>> mapSupplier = needObjectMap
+                ? HashMap::new
+                : Collections::emptyMap;
 
         // If we need column mappings then create a predicate that will use them.
         if (!usedColumns.isEmpty()) {
             final ValueReferenceIndex valueReferenceIndex = compiledColumns.getValueReferenceIndex();
             return values -> {
                 final StoredValues storedValues = valueReferenceIndex.createStoredValues();
-                final Map<String, Object> columnNameToValueMap = mapSupplier.get();
+                final Map<CIKey, Object> columnNameToValueMap = mapSupplier.get();
 
                 for (final UsedColumn usedColumn : usedColumns) {
                     final Generator generator = usedColumn.generator;
@@ -115,19 +131,23 @@ public class ValFilter {
                 // Test the row value map.
                 return rowPredicate.test(columnNameToValueMap);
             };
-        } else if (optionalRowExpressionMatcher.isPresent()) {
+        } else if (optRowExpressionMatcher.isPresent()) {
             return values -> {
                 // Test the row value map.
                 return rowPredicate.test(Collections.emptyMap());
             };
         } else {
-            return Predicates.alwaysTrue();
+            return ALWAYS_TRUE_VAL_PREDICATE;
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private record UsedColumn(Generator generator,
                               Predicate<String> columnIncludeExcludePredicate,
-                              BiConsumer<Map<String, Object>, String> mapConsumer) {
+                              BiConsumer<Map<CIKey, Object>, String> mapConsumer) {
 
     }
 }

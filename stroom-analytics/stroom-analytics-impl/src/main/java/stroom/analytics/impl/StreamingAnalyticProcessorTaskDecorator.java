@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.impl;
@@ -41,6 +40,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -116,7 +116,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         final ExpressionContext expressionContext = expressionContextFactory
                 .createContext(searchRequest);
         final TableSettings tableSettings = searchRequest.getResultRequests().getFirst().getMappings().getFirst();
-        final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
+        final Map<CIKey, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
         final CompiledColumns compiledColumns = CompiledColumns.create(expressionContext,
                 tableSettings.getColumns(),
                 paramMap);
@@ -135,6 +135,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         try {
             final Provider<DetectionConsumer> detectionConsumerProvider =
                     detectionConsumerFactory.create(analytic.analyticRuleDoc());
+
             detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
             detectionConsumerProxy.setCompiledColumns(compiledColumns);
             detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
@@ -161,6 +162,10 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
             throw e;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class NullFieldListConsumer implements AnalyticFieldListConsumer {
 

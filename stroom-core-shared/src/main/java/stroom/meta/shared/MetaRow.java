@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ public class MetaRow {
     private final Meta meta;
     @JsonProperty
     private final String pipelineName;
+
+    // Can't use a CIKey keyed map due to GWT
     @JsonProperty
     private final Map<String, String> attributes;
 
@@ -40,6 +42,7 @@ public class MetaRow {
         this.meta = meta;
         this.pipelineName = pipelineName;
         this.attributes = attributes;
+
     }
 
     public Meta getMeta() {
@@ -67,8 +70,8 @@ public class MetaRow {
             return false;
         }
 
+        //noinspection PatternVariableCanBeUsed // Not in GWT land
         final MetaRow that = (MetaRow) o;
-
         return meta.equals(that.meta);
     }
 
@@ -79,6 +82,7 @@ public class MetaRow {
 
     @Override
     public String toString() {
-        return meta.toString();
+        return "meta: " + meta +
+                " - pipeline: '" + pipelineName + '\'';
     }
 }
