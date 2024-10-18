@@ -104,7 +104,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                     STROOM_SNIPPETS_FILE,
                     """
 
-                            All [Expression Functions]({{< relref "docs/user-guide/dashboards/expressions" >}}) are available as snippets.
+                            All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
                             They do not currently have `tab` triggers.
                             """,
                     "text")
@@ -115,7 +115,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
 
             ## Dashboard Table Expression Editor Snippets
 
-            All [Expression Functions]({{< relref "docs/user-guide/dashboards/expressions" >}}) are available as snippets.
+            All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
             They do not currently have `tab` triggers.
 
 
