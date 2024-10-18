@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.6-beta.3] - 2024-10-18
+
 * Issue **#4501** : Fix Query editor syntax highlighting.
 
 * Add query help and editor completions for Dictionary Docs for use with `in dictionary`.
@@ -920,7 +922,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.3...HEAD
+[v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
 [v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
 [v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
