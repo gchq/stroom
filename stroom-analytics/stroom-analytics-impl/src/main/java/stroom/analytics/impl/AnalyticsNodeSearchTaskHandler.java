@@ -39,7 +39,6 @@ import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.FieldIndex;
@@ -246,9 +245,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                     final TableResultConsumer tableResultConsumer = new TableResultConsumer(
                             doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
-                    final ColumnFormatter fieldFormatter =
-                            new ColumnFormatter(new FormatterFactory(null));
-                    final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+                    final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
+                    final TableResultCreator resultCreator = new TableResultCreator(formatterFactory) {
                         @Override
                         public TableResultBuilder createTableResultBuilder() {
                             return tableResultConsumer;

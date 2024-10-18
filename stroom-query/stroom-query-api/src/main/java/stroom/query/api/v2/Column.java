@@ -29,7 +29,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
+@JsonPropertyOrder({
+        "id",
+        "name",
+        "expression",
+        "sort",
+        "filter",
+        "format",
+        "group",
+        "width",
+        "visible",
+        "special",
+        "columnFilter"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
@@ -52,7 +63,7 @@ public final class Column implements HasDisplayValue {
     private final Sort sort;
 
     @JsonProperty
-    private final Filter filter;
+    private final IncludeExcludeFilter filter;
 
     @JsonProperty
     private final Format format;
@@ -76,20 +87,20 @@ public final class Column implements HasDisplayValue {
     @JsonProperty
     private final Boolean special;
     @JsonProperty
-    private final String valueFilter;
+    private final ColumnFilter columnFilter;
 
     @JsonCreator
     public Column(@JsonProperty("id") final String id,
                   @JsonProperty("name") final String name,
                   @JsonProperty("expression") final String expression,
                   @JsonProperty("sort") final Sort sort,
-                  @JsonProperty("filter") final Filter filter,
+                  @JsonProperty("filter") final IncludeExcludeFilter filter,
                   @JsonProperty("format") final Format format,
                   @JsonProperty("group") final Integer group,
                   @JsonProperty("width") final Integer width,
                   @JsonProperty("visible") final Boolean visible,
                   @JsonProperty("special") final Boolean special,
-                  @JsonProperty("valueFilter") final String valueFilter) {
+                  @JsonProperty("columnFilter") final ColumnFilter columnFilter) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -112,7 +123,7 @@ public final class Column implements HasDisplayValue {
         } else {
             this.special = false;
         }
-        this.valueFilter = valueFilter;
+        this.columnFilter = columnFilter;
     }
 
     public String getId() {
@@ -131,7 +142,7 @@ public final class Column implements HasDisplayValue {
         return sort;
     }
 
-    public Filter getFilter() {
+    public IncludeExcludeFilter getFilter() {
         return filter;
     }
 
@@ -155,8 +166,8 @@ public final class Column implements HasDisplayValue {
         return special;
     }
 
-    public String getValueFilter() {
-        return valueFilter;
+    public ColumnFilter getColumnFilter() {
+        return columnFilter;
     }
 
     @JsonIgnore
@@ -184,7 +195,7 @@ public final class Column implements HasDisplayValue {
                 Objects.equals(width, column.width) &&
                 Objects.equals(visible, column.visible) &&
                 Objects.equals(special, column.special) &&
-                Objects.equals(valueFilter, column.valueFilter);
+                Objects.equals(columnFilter, column.columnFilter);
     }
 
     @Override
@@ -199,7 +210,7 @@ public final class Column implements HasDisplayValue {
                 width,
                 visible,
                 special,
-                valueFilter);
+                columnFilter);
     }
 
     public static Builder builder() {
@@ -219,13 +230,13 @@ public final class Column implements HasDisplayValue {
         private String name;
         private String expression;
         private Sort sort;
-        private Filter filter;
+        private IncludeExcludeFilter filter;
         private Format format;
         private Integer group;
         private Integer width;
         private Boolean visible;
         private Boolean special;
-        private String valueFilter;
+        private ColumnFilter columnFilter;
 
 //        /**
 //         * @param name       The name of the field for display purposes
@@ -254,7 +265,7 @@ public final class Column implements HasDisplayValue {
             this.width = column.width;
             this.visible = column.visible;
             this.special = column.special;
-            this.valueFilter = column.valueFilter;
+            this.columnFilter = column.columnFilter;
         }
 
         /**
@@ -297,7 +308,7 @@ public final class Column implements HasDisplayValue {
          * @param value Any regex filtering to apply to the values
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder filter(final Filter value) {
+        public Builder filter(final IncludeExcludeFilter value) {
             this.filter = value;
             return this;
         }
@@ -337,8 +348,8 @@ public final class Column implements HasDisplayValue {
             return this;
         }
 
-        public Builder valueFilter(final String valueFilter) {
-            this.valueFilter = valueFilter;
+        public Builder columnFilter(final ColumnFilter columnFilter) {
+            this.columnFilter = columnFilter;
             return this;
         }
 
@@ -354,7 +365,7 @@ public final class Column implements HasDisplayValue {
                     width,
                     visible,
                     special,
-                    valueFilter);
+                    columnFilter);
         }
     }
 }

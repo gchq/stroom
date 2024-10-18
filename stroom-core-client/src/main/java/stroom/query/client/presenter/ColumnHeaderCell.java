@@ -19,9 +19,11 @@ package stroom.query.client.presenter;
 import stroom.dashboard.client.table.ColumnsManager;
 import stroom.dashboard.client.table.FilterCell;
 import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.ColumnFilter;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.query.api.v2.Sort;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.CompositeCell;
@@ -82,7 +84,7 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
                         }
 
                         // Add filter icon.
-                        final Filter filter = column.getFilter();
+                        final IncludeExcludeFilter filter = column.getFilter();
                         if (filter != null) {
                             if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
                                     (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
@@ -101,7 +103,7 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
                 new com.google.gwt.user.cellview.client.Column<Column, String>(filterCell) {
                     @Override
                     public String getValue(final Column column) {
-                        return column.getValueFilter();
+                        return GwtNullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
                     }
                 };
         filterInput.setFieldUpdater(new FieldUpdater<Column, String>() {

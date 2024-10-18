@@ -34,7 +34,6 @@ import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
@@ -419,10 +418,9 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final SearchRequest searchRequest = analyticDataStore.searchRequest;
                 final LmdbDataStore lmdbDataStore = analyticDataStore.lmdbDataStore;
 
-                final ColumnFormatter fieldFormatter =
-                        new ColumnFormatter(
-                                new FormatterFactory(searchRequest.getDateTimeSettings()));
-                final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
+                final FormatterFactory formatterFactory =
+                        new FormatterFactory(searchRequest.getDateTimeSettings());
+                final TableResultCreator resultCreator = new TableResultCreator(formatterFactory);
                 ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
                 TableSettings tableSettings = resultRequest.getMappings().getFirst();
                 tableSettings = tableSettings

@@ -28,7 +28,7 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
         "Either or both can be supplied")
-public final class Filter {
+public final class IncludeExcludeFilter {
 
     @Schema(description = "Only results matching this filter will be included",
             example = "^[0-9]{3}$")
@@ -41,8 +41,8 @@ public final class Filter {
     private final String excludes;
 
     @JsonCreator
-    public Filter(@JsonProperty("includes") final String includes,
-                  @JsonProperty("excludes") final String excludes) {
+    public IncludeExcludeFilter(@JsonProperty("includes") final String includes,
+                                @JsonProperty("excludes") final String excludes) {
         this.includes = includes;
         this.excludes = excludes;
     }
@@ -63,7 +63,7 @@ public final class Filter {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final Filter filter = (Filter) o;
+        final IncludeExcludeFilter filter = (IncludeExcludeFilter) o;
         return Objects.equals(includes, filter.includes) &&
                 Objects.equals(excludes, filter.excludes);
     }
@@ -90,7 +90,7 @@ public final class Filter {
     }
 
     /**
-     * Builder for constructing a {@link Filter}
+     * Builder for constructing a {@link IncludeExcludeFilter}
      */
     public static final class Builder {
 
@@ -100,7 +100,7 @@ public final class Filter {
         private Builder() {
         }
 
-        private Builder(final Filter filter) {
+        private Builder(final IncludeExcludeFilter filter) {
             this.includes = filter.includes;
             this.excludes = filter.excludes;
         }
@@ -127,8 +127,8 @@ public final class Filter {
             return this;
         }
 
-        public Filter build() {
-            return new Filter(includes, excludes);
+        public IncludeExcludeFilter build() {
+            return new IncludeExcludeFilter(includes, excludes);
         }
     }
 }

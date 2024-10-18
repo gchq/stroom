@@ -17,50 +17,24 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.util.NullSafe;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 public class RowValueFilter {
 
-    public static Optional<Predicate<RowValueMap>> create(final List<Column> columns,
-                                                          final DateTimeSettings dateTimeSettings,
-                                                          final Map<String, Column> columnNameToColumnMap) {
+    public static Optional<ExpressionOperator> create(final List<Column> columns) {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         columns.forEach(column -> {
-            final String valueFilter = column.getValueFilter();
-            if (NullSafe.isNonBlankString(valueFilter)) {
-                Condition condition = Condition.CONTAINS;
-                String term = valueFilter;
-                if (valueFilter.length() > 2 && valueFilter.startsWith("/") && valueFilter.endsWith("/")) {
-                    condition = Condition.MATCHES_REGEX;
-                    term = valueFilter.substring(1, valueFilter.length() - 1);
-                } else if (valueFilter.startsWith(">=")) {
-                    condition = Condition.GREATER_THAN_OR_EQUAL_TO;
-                    term = valueFilter.substring(2).trim();
-                } else if (valueFilter.startsWith("<=")) {
-                    condition = Condition.LESS_THAN_OR_EQUAL_TO;
-                    term = valueFilter.substring(2).trim();
-                } else if (valueFilter.startsWith(">")) {
-                    condition = Condition.GREATER_THAN;
-                    term = valueFilter.substring(1).trim();
-                } else if (valueFilter.startsWith("<")) {
-                    condition = Condition.LESS_THAN;
-                    term = valueFilter.substring(1).trim();
-                } else if (valueFilter.startsWith("=")) {
-                    condition = Condition.EQUALS;
-                    term = valueFilter.substring(1);
-                }
-
-                valueFilterBuilder.addTerm(column.getName(), condition, term);
+            if (column.getColumnFilter() != null) {
+                final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
+                        column.getId(),
+                        column.getColumnFilter().getFilter(),
+                        column.getColumnFilter().isCaseSensitive());
+                operator.ifPresent(valueFilterBuilder::addOperator);
             }
         });
         final ExpressionOperator valueFilter = valueFilterBuilder.build();
@@ -68,14 +42,6 @@ public class RowValueFilter {
             return Optional.empty();
         }
 
-        for (final Column column : NullSafe.list(columns)) {
-            // Allow match by id and name.
-            columnNameToColumnMap.putIfAbsent(column.getId(), column);
-            columnNameToColumnMap.putIfAbsent(column.getName(), column);
-        }
-
-        final RowExpressionMatcher rowValueFilter =
-                new RowExpressionMatcher(columnNameToColumnMap, dateTimeSettings, valueFilter);
-        return Optional.of(rowValueFilter::test);
+        return Optional.of(valueFilter);
     }
 }

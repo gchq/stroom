@@ -50,7 +50,6 @@ import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -233,9 +232,7 @@ class QueryServiceImpl implements QueryService {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final ColumnFormatter fieldFormatter =
-                        new ColumnFormatter(
-                                new FormatterFactory(dateTimeSettings));
+                final FormatterFactory formatterFactory = new FormatterFactory(dateTimeSettings);
 
                 // Start target
                 try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
@@ -267,7 +264,7 @@ class QueryServiceImpl implements QueryService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(fieldFormatter) {
+                                        new TableResultCreator(formatterFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;

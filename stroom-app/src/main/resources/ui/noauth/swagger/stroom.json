@@ -12205,13 +12205,16 @@
         "type" : "object",
         "description" : "Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping",
         "properties" : {
+          "columnFilter" : {
+            "$ref" : "#/components/schemas/ColumnFilter"
+          },
           "expression" : {
             "type" : "string",
             "description" : "The expression to use to generate the value for this field",
             "example" : "SUM(${count})"
           },
           "filter" : {
-            "$ref" : "#/components/schemas/Filter"
+            "$ref" : "#/components/schemas/IncludeExcludeFilter"
           },
           "format" : {
             "$ref" : "#/components/schemas/Format"
@@ -12228,8 +12231,16 @@
           },
           "sort" : {
             "$ref" : "#/components/schemas/Sort"
+          }
+        }
+      },
+      "ColumnFilter" : {
+        "type" : "object",
+        "properties" : {
+          "caseSensitive" : {
+            "type" : "boolean"
           },
-          "valueFilter" : {
+          "filter" : {
             "type" : "string"
           }
         }
@@ -14296,10 +14307,13 @@
         }, {
           "type" : "object",
           "properties" : {
+            "caseSensitive" : {
+              "type" : "boolean"
+            },
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -14632,22 +14646,6 @@
           }
         },
         "required" : [ "dataSource", "field" ]
-      },
-      "Filter" : {
-        "type" : "object",
-        "description" : "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied",
-        "properties" : {
-          "excludes" : {
-            "type" : "string",
-            "description" : "Only results NOT matching this filter will be included",
-            "example" : "^[0-9]{3}$"
-          },
-          "includes" : {
-            "type" : "string",
-            "description" : "Only results matching this filter will be included",
-            "example" : "^[0-9]{3}$"
-          }
-        }
       },
       "FilterFieldDefinition" : {
         "type" : "object",
@@ -15668,6 +15666,22 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "IncludeExcludeFilter" : {
+        "type" : "object",
+        "description" : "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied",
+        "properties" : {
+          "excludes" : {
+            "type" : "string",
+            "description" : "Only results NOT matching this filter will be included",
+            "example" : "^[0-9]{3}$"
+          },
+          "includes" : {
+            "type" : "string",
+            "description" : "Only results matching this filter will be included",
+            "example" : "^[0-9]{3}$"
           }
         }
       },
@@ -21027,7 +21041,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
           },
           "from" : {
             "type" : "string"

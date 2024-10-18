@@ -21,6 +21,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -33,9 +34,9 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-@JsonPropertyOrder({"field", "condition", "value", "docRef"})
+@JsonPropertyOrder({"field", "condition", "value", "docRef", "caseSensitive"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef"})
+@XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef", "caseSensitive"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionTerm",
         description = "A predicate term in a query expression tree")
@@ -45,7 +46,7 @@ public final class ExpressionTerm extends ExpressionItem {
     @Schema(description = "The name of the field that is being evaluated in this predicate term",
             required = true)
     @JsonProperty
-    private String field; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private String field; // TODO : XML serialisation still requires no-arg constructor and mutable fields
 
     @XmlElement
     @Schema(description = "The condition of the predicate term",
@@ -67,6 +68,9 @@ public final class ExpressionTerm extends ExpressionItem {
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private DocRef docRef;
+
+    @JsonProperty
+    private Boolean caseSensitive;
 
     public ExpressionTerm() {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
@@ -109,12 +113,14 @@ public final class ExpressionTerm extends ExpressionItem {
                           @JsonProperty("field") final String field,
                           @JsonProperty("condition") final Condition condition,
                           @JsonProperty("value") final String value,
-                          @JsonProperty("docRef") final DocRef docRef) {
+                          @JsonProperty("docRef") final DocRef docRef,
+                          @JsonProperty("caseSensitive") Boolean caseSensitive) {
         super(enabled);
         this.field = field;
         this.condition = condition;
         this.value = value;
         this.docRef = docRef;
+        this.caseSensitive = caseSensitive;
     }
 
     public String getField() {
@@ -133,6 +139,15 @@ public final class ExpressionTerm extends ExpressionItem {
         return docRef;
     }
 
+    public Boolean getCaseSensitive() {
+        return caseSensitive;
+    }
+
+    @JsonIgnore
+    public boolean isCaseSensitive() {
+        return caseSensitive == Boolean.TRUE;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -148,12 +163,13 @@ public final class ExpressionTerm extends ExpressionItem {
         return Objects.equals(field, that.field) &&
                 condition == that.condition &&
                 Objects.equals(value, that.value) &&
-                Objects.equals(docRef, that.docRef);
+                Objects.equals(docRef, that.docRef) &&
+                Objects.equals(caseSensitive, that.caseSensitive);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), field, condition, value, docRef);
+        return Objects.hash(super.hashCode(), field, condition, value, docRef, caseSensitive);
     }
 
     @Override
@@ -203,6 +219,8 @@ public final class ExpressionTerm extends ExpressionItem {
     public enum Condition implements HasDisplayValue {
         CONTAINS("contains"), // No longer pick-able in TermEditor
         EQUALS("="),
+        STARTS_WITH("starts with"),
+        ENDS_WITH("ends with"),
         NOT_EQUALS("!="),
         GREATER_THAN(">"),
         GREATER_THAN_OR_EQUAL_TO(">="),
@@ -216,14 +234,6 @@ public final class ExpressionTerm extends ExpressionItem {
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
         MATCHES_REGEX("matches regex");
-
-//        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
-//                EQUALS,
-//                GREATER_THAN,
-//                GREATER_THAN_OR_EQUAL_TO,
-//                LESS_THAN,
-//                LESS_THAN_OR_EQUAL_TO,
-//                BETWEEN);
 
         public static final String IN_CONDITION_DELIMITER = ",";
 
@@ -260,6 +270,7 @@ public final class ExpressionTerm extends ExpressionItem {
         private Condition condition;
         private String value;
         private DocRef docRef;
+        private Boolean caseSensitive;
 
         private Builder() {
         }
@@ -270,6 +281,7 @@ public final class ExpressionTerm extends ExpressionItem {
             this.condition = expressionTerm.condition;
             this.value = expressionTerm.value;
             this.docRef = expressionTerm.docRef;
+            this.caseSensitive = expressionTerm.caseSensitive;
         }
 
         /**
@@ -330,14 +342,23 @@ public final class ExpressionTerm extends ExpressionItem {
                             .build());
         }
 
+        public Builder caseSensitive(final Boolean caseSensitive) {
+            this.caseSensitive = caseSensitive;
+            return this;
+        }
+
         @Override
         public ExpressionTerm build() {
             Boolean enabled = this.enabled;
             if (Boolean.TRUE.equals(enabled)) {
                 enabled = null;
             }
+            Boolean caseSensitive = this.caseSensitive;
+            if (Boolean.TRUE.equals(caseSensitive)) {
+                caseSensitive = null;
+            }
 
-            return new ExpressionTerm(enabled, field, condition, value, docRef);
+            return new ExpressionTerm(enabled, field, condition, value, docRef, caseSensitive);
         }
 
         @Override

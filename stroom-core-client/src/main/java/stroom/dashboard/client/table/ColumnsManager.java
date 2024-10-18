@@ -21,9 +21,11 @@ import stroom.dashboard.client.main.UniqueUtil;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnFilter;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -271,8 +273,8 @@ public class ColumnsManager implements HeadingListener {
     public void addColumn(final int index, final Column templateColumn) {
         final String columnName = makeUniqueColumnName(templateColumn.getName());
         final Column newColumn = templateColumn.copy()
-                .name(columnName)
                 .id(createRandomColumnId())
+                .name(columnName)
                 .build();
 
         final List<Column> columns = getColumns();
@@ -367,10 +369,17 @@ public class ColumnsManager implements HeadingListener {
             selectionStart = 0;
         }
 
-        replaceColumn(column, column.copy().valueFilter(valueFilter).build());
+        ColumnFilter columnFilter = null;
+        if (GwtNullSafe.isNonBlankString(valueFilter)) {
+            // TODO : Add case sensitive option.
+            columnFilter = new ColumnFilter(valueFilter, false);
+        }
+
+        replaceColumn(column, column.copy().columnFilter(columnFilter).build());
         tablePresenter.setDirty(true);
         tablePresenter.refresh(() -> focusHeader(index, selectionStart));
     }
+
 
     private void focusHeader(final int colNo, final int selectionStart) {
         Scheduler.get().scheduleDeferred(() -> {

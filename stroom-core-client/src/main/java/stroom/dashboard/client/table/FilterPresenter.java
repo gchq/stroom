@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -70,7 +70,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final Filter filter = getFilter();
+                        final IncludeExcludeFilter filter = getFilter();
                         if ((filter == null && column.getFilter() != null)
                                 || (filter != null && !filter.equals(column.getFilter()))) {
                             columnChangeConsumer.accept(column, column.copy().filter(filter).build());
@@ -81,7 +81,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
                 .fire();
     }
 
-    private Filter getFilter() {
+    private IncludeExcludeFilter getFilter() {
         String includes = null;
         String excludes = null;
         if (getView().getIncludes() != null && getView().getIncludes().trim().length() > 0) {
@@ -91,9 +91,9 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
             excludes = getView().getExcludes().trim();
         }
 
-        Filter filter = null;
+        IncludeExcludeFilter filter = null;
         if (includes != null || excludes != null) {
-            filter = new Filter(includes, excludes);
+            filter = new IncludeExcludeFilter(includes, excludes);
         }
         return filter;
     }

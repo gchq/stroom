@@ -7,6 +7,7 @@ import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
@@ -368,12 +369,12 @@ public final class MappingUtil {
         return stroom.query.api.v2.Sort.SortDirection.valueOf(value.name());
     }
 
-    public static stroom.query.api.v2.Filter map(stroom.legacy.model_6_1.Filter value) {
+    public static IncludeExcludeFilter map(stroom.legacy.model_6_1.Filter value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Filter(value.getIncludes(), value.getExcludes());
+        return new IncludeExcludeFilter(value.getIncludes(), value.getExcludes());
     }
 
     public static stroom.query.api.v2.Format map(stroom.legacy.model_6_1.Format value) {

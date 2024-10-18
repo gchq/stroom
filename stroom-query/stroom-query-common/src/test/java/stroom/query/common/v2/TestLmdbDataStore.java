@@ -33,7 +33,6 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
@@ -128,7 +127,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void testBigValues() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final ColumnFormatter columnFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
@@ -172,7 +170,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -199,7 +197,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     void testMultiThread() {
         final int threadCount = 100;
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final ColumnFormatter columnFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
@@ -255,7 +252,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                             .addMappings(tableSettings)
                             .requestedRange(new OffsetRange(0, 3000))
                             .build();
-                    final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
+                    final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
                     final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                             dataStore,
                             tableResultRequest);
@@ -276,7 +273,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 //                        LOGGER.info("Open groups: " + openGroups.size());
 //                    }
 
-                    final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(columnFormatter);
+                    final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(formatterFactory);
                     final TableResult searchResult2 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest2);
@@ -299,7 +296,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 //                        LOGGER.info("Open groups: " + openGroups.size());
 //                    }
 
-                    final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(columnFormatter);
+                    final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(formatterFactory);
                     final TableResult searchResult3 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest3);
@@ -337,7 +334,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -348,7 +345,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void testReload() throws Exception {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final ColumnFormatter columnFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
@@ -408,7 +404,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);

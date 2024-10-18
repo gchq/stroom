@@ -24,8 +24,8 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.HoppingWindow;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
@@ -724,7 +724,7 @@ public class SearchRequestFactory {
                                       final Query.Builder queryBuilder) {
             final Map<String, Sort> sortMap = new HashMap<>();
             final Map<String, Integer> groupMap = new HashMap<>();
-            final Map<String, Filter> filterMap = new HashMap<>();
+            final Map<String, IncludeExcludeFilter> filterMap = new HashMap<>();
             int groupDepth = 0;
 
             final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
@@ -1032,7 +1032,7 @@ public class SearchRequestFactory {
         private void processSelect(final KeywordGroup keywordGroup,
                                    final Map<String, Sort> sortMap,
                                    final Map<String, Integer> groupMap,
-                                   final Map<String, Filter> filterMap,
+                                   final Map<String, IncludeExcludeFilter> filterMap,
                                    final TableSettings.Builder tableSettingsBuilder) {
             final List<AbstractToken> children = keywordGroup.getChildren();
             AbstractToken fieldToken = null;
@@ -1170,7 +1170,7 @@ public class SearchRequestFactory {
                                     final boolean special,
                                     final Map<String, Sort> sortMap,
                                     final Map<String, Integer> groupMap,
-                                    final Map<String, Filter> filterMap) {
+                                    final Map<String, IncludeExcludeFilter> filterMap) {
             addedFields.add(fieldName);
             Expression expression = expressionMap.get(fieldName);
             if (expression == null) {
@@ -1203,7 +1203,7 @@ public class SearchRequestFactory {
                                     final String columnName,
                                     final Map<String, Sort> sortMap,
                                     final Map<String, Integer> groupMap,
-                                    final Map<String, Filter> filterMap) {
+                                    final Map<String, IncludeExcludeFilter> filterMap) {
             addedFields.add(columnName);
             final String expressionString = expression.toString();
             return Column.builder()

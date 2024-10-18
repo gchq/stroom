@@ -507,22 +507,26 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final boolean extractValues) {
         final Column streamIdColumn = Column.builder()
+                .id("1")
                 .name("Stream Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
+                .id("2")
                 .name("Event Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
+                .id("3")
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
+                .id("4")
                 .name("Status")
                 .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
                 .build();

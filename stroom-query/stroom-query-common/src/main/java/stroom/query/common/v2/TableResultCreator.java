@@ -25,7 +25,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -42,19 +42,19 @@ public class TableResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultCreator.class);
 
-    private final ColumnFormatter columnFormatter;
+    private final FormatterFactory formatterFactory;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private TableResult lastResult;
 
-    public TableResultCreator(final ColumnFormatter columnFormatter) {
-        this(columnFormatter, false);
+    public TableResultCreator(final FormatterFactory formatterFactory) {
+        this(formatterFactory, false);
     }
 
-    public TableResultCreator(final ColumnFormatter columnFormatter,
+    public TableResultCreator(final FormatterFactory formatterFactory,
                               final boolean cacheLastResult) {
-        this.columnFormatter = columnFormatter;
+        this.formatterFactory = formatterFactory;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -90,7 +90,7 @@ public class TableResultCreator implements ResultCreator {
                         dataStore.getColumns(),
                         columns,
                         tableSettings.applyValueFilters(),
-                        columnFormatter,
+                        formatterFactory,
                         keyFactory,
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
@@ -101,7 +101,7 @@ public class TableResultCreator implements ResultCreator {
                             dataStore.getColumns(),
                             columns,
                             tableSettings.applyValueFilters(),
-                            columnFormatter,
+                            formatterFactory,
                             keyFactory,
                             tableSettings.getAggregateFilter(),
                             dataStore.getDateTimeSettings(),
@@ -113,7 +113,7 @@ public class TableResultCreator implements ResultCreator {
                 optionalRowCreator = SimpleRowCreator.create(
                         dataStore.getColumns(),
                         columns,
-                        columnFormatter,
+                        formatterFactory,
                         keyFactory,
                         errorConsumer);
             }

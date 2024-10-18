@@ -8383,12 +8383,14 @@ components:
         \ expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting\
         \ and grouping"
       properties:
+        columnFilter:
+          $ref: '#/components/schemas/ColumnFilter'
         expression:
           type: string
           description: The expression to use to generate the value for this field
           example: "SUM(${count})"
         filter:
-          $ref: '#/components/schemas/Filter'
+          $ref: '#/components/schemas/IncludeExcludeFilter'
         format:
           $ref: '#/components/schemas/Format'
         group:
@@ -8400,7 +8402,12 @@ components:
           type: string
         sort:
           $ref: '#/components/schemas/Sort'
-        valueFilter:
+    ColumnFilter:
+      type: object
+      properties:
+        caseSensitive:
+          type: boolean
+        filter:
           type: string
     ColumnRef:
       type: object
@@ -10319,12 +10326,16 @@ components:
       - $ref: '#/components/schemas/ExpressionItem'
       - type: object
         properties:
+          caseSensitive:
+            type: boolean
           condition:
             type: string
             description: The condition of the predicate term
             enum:
             - CONTAINS
             - EQUALS
+            - STARTS_WITH
+            - ENDS_WITH
             - NOT_EQUALS
             - GREATER_THAN
             - GREATER_THAN_OR_EQUAL_TO
@@ -10578,19 +10589,6 @@ components:
       required:
       - dataSource
       - field
-    Filter:
-      type: object
-      description: A pair of regular expression filters (inclusion and exclusion)
-        to apply to the field.  Either or both can be supplied
-      properties:
-        excludes:
-          type: string
-          description: Only results NOT matching this filter will be included
-          example: "^[0-9]{3}$"
-        includes:
-          type: string
-          description: Only results matching this filter will be included
-          example: "^[0-9]{3}$"
     FilterFieldDefinition:
       type: object
       properties:
@@ -11702,6 +11700,19 @@ components:
           type: array
           items:
             type: string
+    IncludeExcludeFilter:
+      type: object
+      description: A pair of regular expression filters (inclusion and exclusion)
+        to apply to the field.  Either or both can be supplied
+      properties:
+        excludes:
+          type: string
+          description: Only results NOT matching this filter will be included
+          example: "^[0-9]{3}$"
+        includes:
+          type: string
+          description: Only results matching this filter will be included
+          example: "^[0-9]{3}$"
     IndexShard:
       type: object
       properties:
@@ -16161,6 +16172,8 @@ components:
           enum:
           - CONTAINS
           - EQUALS
+          - STARTS_WITH
+          - ENDS_WITH
           - NOT_EQUALS
           - GREATER_THAN
           - GREATER_THAN_OR_EQUAL_TO

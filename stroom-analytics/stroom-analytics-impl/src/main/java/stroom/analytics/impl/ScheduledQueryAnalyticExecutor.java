@@ -52,7 +52,6 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
 import stroom.query.common.v2.ValFilter;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -449,16 +448,15 @@ public class ScheduledQueryAnalyticExecutor {
                         };
 
                         final KeyFactory keyFactory = dataStore.getKeyFactory();
-                        final ColumnFormatter fieldFormatter =
-                                new ColumnFormatter(
-                                        new FormatterFactory(sampleRequest.getDateTimeSettings()));
+                        final FormatterFactory formatterFactory =
+                                new FormatterFactory(sampleRequest.getDateTimeSettings());
 
                         // Create the row creator.
                         Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
                                 dataStore.getColumns(),
                                 columns,
                                 false,
-                                fieldFormatter,
+                                formatterFactory,
                                 keyFactory,
                                 tableSettings.getAggregateFilter(),
                                 expressionContext.getDateTimeSettings(),
@@ -468,7 +466,7 @@ public class ScheduledQueryAnalyticExecutor {
                             optionalRowCreator = SimpleRowCreator.create(
                                     dataStore.getColumns(),
                                     columns,
-                                    fieldFormatter,
+                                    formatterFactory,
                                     keyFactory,
                                     errorConsumer);
                         }

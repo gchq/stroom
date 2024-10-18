@@ -36,7 +36,6 @@ import stroom.query.common.v2.DeleteCommand;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -637,9 +636,8 @@ public class TableBuilderAnalyticExecutor {
             final TableResultConsumer tableResultConsumer =
                     new TableResultConsumer(analytic.analyticRuleDoc(), detectionConsumer);
 
-            final ColumnFormatter columnFormatter =
-                    new ColumnFormatter(new FormatterFactory(null));
-            final TableResultCreator resultCreator = new TableResultCreator(columnFormatter) {
+            final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
+            final TableResultCreator resultCreator = new TableResultCreator(formatterFactory) {
                 @Override
                 public TableResultBuilder createTableResultBuilder() {
                     return tableResultConsumer;

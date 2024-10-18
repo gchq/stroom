@@ -1,5 +1,6 @@
 package stroom.query.client.presenter;
 
+import stroom.dashboard.client.main.UniqueUtil;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -151,18 +152,21 @@ public class DynamicColumnSelectionListModel
                                                       final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         final Column count = Column.builder()
+                .id(UniqueUtil.generateUUID())
                 .name("Count")
                 .format(Format.NUMBER)
                 .expression("count()")
                 .build();
         add(filter, ColumnSelectionItem.create(count), builder);
         final Column countGroups = Column.builder()
+                .id(UniqueUtil.generateUUID())
                 .name("Count Groups")
                 .format(Format.NUMBER)
                 .expression("countGroups()")
                 .build();
         add(filter, ColumnSelectionItem.create(countGroups), builder);
         final Column custom = Column.builder()
+                .id(UniqueUtil.generateUUID())
                 .name("Custom")
                 .build();
         add(filter, ColumnSelectionItem.create(custom), builder);
@@ -306,6 +310,7 @@ public class DynamicColumnSelectionListModel
         private static Column convertFieldInfo(final QueryField fieldInfo) {
             final String indexFieldName = fieldInfo.getFldName();
             final Builder columnBuilder = Column.builder();
+            columnBuilder.id(UniqueUtil.generateUUID());
             columnBuilder.name(indexFieldName);
 
             final FieldType fieldType = fieldInfo.getFldType();

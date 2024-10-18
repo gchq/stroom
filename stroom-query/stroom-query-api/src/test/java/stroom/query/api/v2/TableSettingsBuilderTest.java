@@ -58,7 +58,7 @@ class TableSettingsBuilderTest {
                                 .direction(field1SortDirection)
                                 .build())
                         .expression(field1Expression)
-                        .filter(Filter
+                        .filter(IncludeExcludeFilter
                                 .builder()
                                 .includes(field1FilterIncludes)
                                 .excludes(field1FilterExcludes)
@@ -84,7 +84,7 @@ class TableSettingsBuilderTest {
                                 .direction(field2SortDirection)
                                 .build())
                         .expression(field2Expression)
-                        .filter(Filter
+                        .filter(IncludeExcludeFilter
                                 .builder()
                                 .includes(field2FilterIncludes)
                                 .excludes(field2FilterExcludes)

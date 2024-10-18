@@ -30,7 +30,8 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.format.Formatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -47,12 +48,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class FlatResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlatResultCreator.class);
 
-    private final ColumnFormatter columnFormatter;
+    private final FormatterFactory formatterFactory;
     private final List<Mapper> mappers;
     private final List<Column> columns;
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
@@ -65,10 +67,10 @@ public class FlatResultCreator implements ResultCreator {
                              final ExpressionContext expressionContext,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
-                             final ColumnFormatter columnFormatter,
+                             final FormatterFactory formatterFactory,
                              final Sizes defaultMaxResultsSizes,
                              final boolean cacheLastResult) {
-        this.columnFormatter = columnFormatter;
+        this.formatterFactory = formatterFactory;
         this.cacheLastResult = cacheLastResult;
 
         // User may have added a vis pane but not defined the vis
@@ -84,7 +86,7 @@ public class FlatResultCreator implements ResultCreator {
                 final TableSettings child = tableSettings.get(i + 1);
 
                 final Sizes maxResults;
-                if (child != null && child.getMaxResults() != null && child.getMaxResults().size() > 0) {
+                if (child != null && child.getMaxResults() != null && !child.getMaxResults().isEmpty()) {
                     maxResults = Sizes.create(child.getMaxResults());
                 } else {
                     maxResults = defaultMaxResultsSizes;
@@ -152,7 +154,7 @@ public class FlatResultCreator implements ResultCreator {
 
                     final List<Column> columns = groupColumns.get(depth);
                     if (columns != null) {
-                        column = columns.get(0);
+                        column = columns.getFirst();
                     }
 
                     result.add(convert(column, val));
@@ -203,6 +205,26 @@ public class FlatResultCreator implements ResultCreator {
                 }
 
                 // Get top level items.
+                final Function<Val, Object>[] converters = new Function[mappedDataStore.getColumns().size()];
+                if (formatterFactory != null) {
+                    final Formatter[] formatters = RowUtil.createFormatters(mappedDataStore.getColumns(),
+                            formatterFactory);
+                    for (int i = 0; i < converters.length; i++) {
+                        final Column column = mappedDataStore.getColumns().get(i);
+                        if (column.getFormat() == null) {
+                            converters[i] = val -> convert(column, val);
+                        } else {
+                            final Formatter formatter = formatters[i];
+                            converters[i] = formatter::format;
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < converters.length; i++) {
+                        final Column column = mappedDataStore.getColumns().get(i);
+                        converters[i] = val -> convert(column, val);
+                    }
+                }
+
                 mappedDataStore.fetch(
                         mappedDataStore.getColumns(),
                         resultRequest.getRequestedRange(),
@@ -248,11 +270,7 @@ public class FlatResultCreator implements ResultCreator {
 
                                     // Convert all list into fully resolved
                                     // objects evaluating functions where necessary.
-                                    if (columnFormatter != null) {
-                                        result = columnFormatter.format(column, val);
-                                    } else {
-                                        result = convert(column, val);
-                                    }
+                                    result = converters[i].apply(val);
                                 }
 
                                 resultList.add(result);
@@ -265,9 +283,9 @@ public class FlatResultCreator implements ResultCreator {
                         resultBuilder::totalResults);
 
                 final List<Column> structure = new ArrayList<>();
-                structure.add(Column.builder().name(":ParentKey").build());
-                structure.add(Column.builder().name(":Key").build());
-                structure.add(Column.builder().name(":Depth").build());
+                structure.add(Column.builder().id(":ParentKey").name(":ParentKey").build());
+                structure.add(Column.builder().id(":Key").name(":Key").build());
+                structure.add(Column.builder().id(":Depth").name(":Depth").build());
                 structure.addAll(this.columns);
 
                 resultBuilder

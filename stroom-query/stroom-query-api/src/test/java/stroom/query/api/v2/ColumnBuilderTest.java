@@ -29,7 +29,7 @@ class ColumnBuilderTest {
                         .order(sortOrder)
                         .direction(sortDirection)
                         .build())
-                .filter(Filter
+                .filter(IncludeExcludeFilter
                         .builder()
                         .includes(filterIncludes)
                         .excludes(filterExcludes)
