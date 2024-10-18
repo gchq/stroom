@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,16 @@ public interface JobManager {
      * @throws RuntimeException Could be thrown.
      */
     Boolean isJobEnabled(String jobName);
+
+    /**
+     * Gets the enabled job status for a named job on the named node.
+     *
+     * @param jobName  The name of the job to check the enabled state for.
+     * @param nodeName The name of the node.
+     * @return True if both the parent job is enabled and the job is enabled on the named node.
+     * @throws RuntimeException Could be thrown.
+     */
+    Boolean isJobEnabled(String jobName, final String nodeName);
 
     /**
      * Sets the enabled flag for a job with this name on all nodes in the

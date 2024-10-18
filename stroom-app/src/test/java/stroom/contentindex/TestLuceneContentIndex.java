@@ -33,11 +33,14 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     @SuppressWarnings("checkstyle:linelength")
@@ -76,7 +79,6 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     private XsltDoc xsltDoc;
     private DocRef docRef;
-
 
     @BeforeEach
     void setup() {

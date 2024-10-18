@@ -12,6 +12,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#4501** : Fix Query editor syntax highlighting.
+
+* Add query help and editor completions for Dictionary Docs for use with `in dictionary`.
+
+* Issue **#4487** : Fix nasty error when running a stats query with no columns.
+
+* Issue **#4498** : Make the explorer tree Expand/Collapse All buttons respect the current Quick Filter input text.
+
+* Issue **#4518** : Change the Stream Upload dialog to default the stream type to that of the feed.
+
+* Issue **#4470** : On import of Feed or Index docs, replace unknown volume groups with the respective configured default volume group (or null if not configured).
+
+* Issue **#4460** : Change the way we display functions with lots of arguments in query help and code completion popup.
+
+* Issue **#4526** : Change Dictionary to not de-duplicate words as this is breaking JSON when used for holding SSL config in JSON form.
+
+* Issue **#4528** : Make the Reindex Content job respond to stroom shutdown.
+
+* Issue **#4532** : Fix Run Job Now so that it works when the job or jobNode is disabled.
+
+* Issue **#4444** : Change the `hash()` expression function to allow the `algorithm` and `salt` arguments to be the result of functions, e.g. `hash(${field1}, concat('SHA-', ${algoLen}), ${salt})`.
+
+* Issue **#4534** : Fix NPE in include/exclude filter.
+
+* Issue **#4527** : Change the non-regex search syntax of _Find in Content_ to not use Lucene field based syntax so that `:` works correctly. Also change the regex search to use Lucene and improve the styling of the screen.
+
+* Issue **#4536** : Fix NPE.
+
+* Issue **#4539** : Improve search query logging.
+
+* Improve the process of (re-)indexing content. It is now triggered by a user doing a content search. Users will get an error message if the index is still being initialised. The `stroom.contentIndex.enabled` property has been removed.
+
 * Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
 
 * Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.

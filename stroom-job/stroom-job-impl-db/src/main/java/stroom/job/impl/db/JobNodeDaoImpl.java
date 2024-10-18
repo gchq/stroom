@@ -187,6 +187,22 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return JobNodeListResponse.createUnboundedJobNodeResponse(list);
     }
 
+    @Override
+    public boolean isEnabled(final String jobName, final String nodeName) {
+        final int count = JooqUtil.contextResult(jobDbConnProvider, context -> context
+                .selectCount()
+                .from(JOB_NODE)
+                .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
+                .where(JOB_NODE.NODE_NAME.eq(nodeName))
+                .and(JOB.NAME.eq(jobName))
+                .and(JOB.ENABLED.eq(true))
+                .and(JOB_NODE.ENABLED.eq(true))
+                .fetchOne(0, int.class));
+        final boolean isEnabled = count > 0;
+        LOGGER.debug("jobName: '{}', nodeName: '{}', isEnabled: {}", jobName, nodeName, isEnabled);
+        return isEnabled;
+    }
+
     public void updateSchedule(final BatchScheduleRequest batchScheduleRequest) {
         final Schedule schedule = batchScheduleRequest.getSchedule();
         final String expression = schedule.getExpression();

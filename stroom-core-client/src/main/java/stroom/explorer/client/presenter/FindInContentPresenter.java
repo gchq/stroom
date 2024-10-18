@@ -71,7 +71,7 @@ public class FindInContentPresenter
         implements FindInContentUiHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private static final int TIMER_DELAY_MS = 500;
+    private static final int TIMER_DELAY_MS = 750;
 
     private final CellTable<FindInContentResult> cellTable;
     private final RestDataProvider<FindInContentResult, ResultPage<FindInContentResult>> dataProvider;
