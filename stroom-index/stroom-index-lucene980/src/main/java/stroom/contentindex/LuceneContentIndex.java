@@ -39,6 +39,7 @@ import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.exception.ThrowingRunnable;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
@@ -86,24 +87,40 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-@Singleton // Only want ctor re-index to happen once on boot
+/**
+ * Creation of the content index (or re-indexing it) is triggered by a user doing a content
+ * search. This ensures that only UI nodes create the index.
+ * The index is also updated on a doc basis by this class handling {@link EntityEvent}s however
+ * they will be ignored if the index is not initialised.
+ * There is also a managed job that will trigger a full re-index
+ */
+@Singleton
+@EntityEventHandler(
+        action = {EntityAction.CREATE, EntityAction.UPDATE, EntityAction.DELETE})
 public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneContentIndex.class);
+    private static final long JOB_ENABLED_STATE_CHECK_INTERVAL = 10_000;
+    private static final int LATCH_TIMEOUT_MS = 1_500;
     private static final int MIN_GRAM = 1;
     private static final int MAX_GRAM = 2;
     private static final int MAX_HIGHLIGHTS = 100;
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneContentIndex.class);
+    static final String RE_INDEX_JOB_NAME = "Reindex Content";
 
     private static final String TYPE = "type";
     private static final String UUID = "uuid";
@@ -115,84 +132,161 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     private static final String DATA_CS_NGRAM = "data_cs_ngram";
     private static final String TEXT = "text";
 
-    private final Map<String, ContentIndexable> indexableMap;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
-    private final Analyzer analyzer;
-    private final ArrayBlockingQueue<EntityEvent> changes = new ArrayBlockingQueue<>(10000);
+    private final Set<ContentIndexable> indexables;
     private final Path docIndexDir;
-    private final Directory directory;
+    private final CountDownLatch indexInitialisedLatch = new CountDownLatch(1);
+    private final AtomicBoolean isInitialising = new AtomicBoolean(false);
+    private volatile Throwable initialisationError = null;
+    private final AtomicInteger updateProgress = new AtomicInteger();
+    private final AtomicInteger updateTotal = new AtomicInteger();
+
+    private ArrayBlockingQueue<EntityEvent> changes = null;
+    private Map<String, ContentIndexable> indexableMap = null;
+    private Analyzer analyzer = null;
+    private Directory directory = null;
 
     @Inject
     public LuceneContentIndex(final TempDirProvider tempDirProvider,
                               final Set<ContentIndexable> indexables,
                               final SecurityContext securityContext,
                               final TaskContextFactory taskContextFactory) {
-        try {
-            final Map<String, ContentIndexable> indexableMap = new HashMap<>();
-            for (final ContentIndexable indexable : indexables) {
-                indexableMap.put(indexable.getType(), indexable);
+        this.securityContext = securityContext;
+        this.taskContextFactory = taskContextFactory;
+        this.indexables = indexables;
+        this.docIndexDir = tempDirProvider.get().resolve("doc-index");
+    }
+
+    private boolean isIndexInitialised() {
+        return indexInitialisedLatch.getCount() == 0;
+    }
+
+    private boolean ensureIndexAsync() {
+        if (!isIndexInitialised() && !isInitialising.get()) {
+            synchronized (this) {
+                if (!isIndexInitialised() && !isInitialising.get()) {
+                    LOGGER.info("{} - Executing async initialisation of the content index", RE_INDEX_JOB_NAME);
+                    CompletableFuture.runAsync(this::initIndex);
+                }
             }
-            this.indexableMap = indexableMap;
-            this.securityContext = securityContext;
-            this.taskContextFactory = taskContextFactory;
+        }
+        // If async this will almost certainly be true
+        final boolean isInitialised = isIndexInitialised();
+        if (!isInitialised && initialisationError != null) {
+            throw new RuntimeException("Content index failed initialisation due to: "
+                    + initialisationError.getMessage());
+        }
+        return isInitialised;
+    }
 
-            final Map<String, Analyzer> analyzerMap = new HashMap<>();
-            analyzerMap.put(TYPE, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-            analyzerMap.put(UUID, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-            analyzerMap.put(NAME, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-            analyzerMap.put(EXTENSION, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-//            analyzerMap.put(DATA, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-//            analyzerMap.put(DATA_CS, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
-            analyzerMap.put(DATA_NGRAM, new NGramAnalyzer());
-            analyzerMap.put(DATA_CS_NGRAM, new NGramCSAnalyzer());
-            analyzerMap.put(TEXT, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
-            analyzer = new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
+    private synchronized void initIndex() {
+        if (!isInitialising.get()) {
+            isInitialising.set(true);
+            try {
+                LOGGER.info("{} - Initialising content index in {}",
+                        RE_INDEX_JOB_NAME,
+                        docIndexDir.toAbsolutePath().normalize());
+                this.indexableMap = indexables.stream()
+                        .collect(Collectors.toMap(ContentIndexable::getType, Function.identity()));
 
-            docIndexDir = tempDirProvider.get().resolve("doc-index");
-            Files.createDirectories(docIndexDir);
+                final Map<String, Analyzer> analyzerMap = Map.of(
+                        TYPE, AnalyzerFactory.create(AnalyzerType.KEYWORD, false),
+                        UUID, AnalyzerFactory.create(AnalyzerType.KEYWORD, false),
+                        NAME, AnalyzerFactory.create(AnalyzerType.KEYWORD, false),
+                        EXTENSION, AnalyzerFactory.create(AnalyzerType.KEYWORD, false),
+//            DATA, AnalyzerFactory.create(AnalyzerType.KEYWORD, false),
+//            DATA_CS, AnalyzerFactory.create(AnalyzerType.KEYWORD, true),
+                        DATA_NGRAM, new NGramAnalyzer(),
+                        DATA_CS_NGRAM, new NGramCSAnalyzer(),
+                        TEXT, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
 
-            final boolean validIndex = isValidIndex(docIndexDir, analyzer);
-            if (!validIndex) {
-                FileUtil.deleteContents(docIndexDir);
+                analyzer = new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
+
+                Files.createDirectories(docIndexDir);
+
+                final boolean validIndex = isValidIndex(docIndexDir, analyzer);
+                if (!validIndex) {
+                    FileUtil.deleteContents(docIndexDir);
+                }
+
+                changes = new ArrayBlockingQueue<>(10_000);
+
+                // Create lucene directory object.
+                directory = new NIOFSDirectory(docIndexDir, Lucene980LockFactory.get());
+
+            } catch (final IOException e) {
+                initialisationError = e;
+                LOGGER.error(e::getMessage, e);
+                throw new UncheckedIOException(e);
             }
 
-            // Create lucene directory object.
-            directory = new NIOFSDirectory(docIndexDir, Lucene980LockFactory.get());
+            // Make sure all docs are up-to-date
+            final Runnable runnable = securityContext.asProcessingUserResult(() ->
+                    taskContextFactory.context(
+                            RE_INDEX_JOB_NAME + " (Initialisation)",
+                            TerminateHandlerFactory.NOOP_FACTORY,
+                            taskContext -> {
+                                doReindex();
+                            }));
+            runnable.run();
 
-            CompletableFuture
-                    .runAsync(() -> {
-                        try {
-                            while (!Thread.currentThread().isInterrupted()) {
-                                final EntityEvent event = changes.take();
-                                final List<EntityEvent> list = new ArrayList<>();
-                                list.add(event);
-                                changes.drainTo(list);
-                                if (!list.isEmpty()) {
-                                    updateIndex(list);
-                                }
-                            }
-                        } catch (final InterruptedException e) {
-                            LOGGER.error(e::getMessage, e);
-                            Thread.currentThread().interrupt();
-                            throw new UncheckedInterruptedException(e);
-                        }
-                    });
+            // Let other threads know it is all good to use now
+            isInitialising.set(false);
+            indexInitialisedLatch.countDown();
 
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
+            // Not the index is good to use start up the thread that will handle EntityEvents
+            initQueueProcessorThread();
+            LOGGER.info("{} - Initialisation of content index complete", RE_INDEX_JOB_NAME);
+        } else {
+            LOGGER.debug("Another thread is initialising the index");
         }
     }
 
-    public void flush() {
-        final List<EntityEvent> list = new ArrayList<>();
-        final EntityEvent event = changes.poll();
-        if (event != null) {
-            list.add(event);
+    private void initQueueProcessorThread() {
+        CompletableFuture
+                .runAsync(() -> {
+                    Thread.currentThread().setName("Content index queue monitor");
+                    LOGGER.info("{} - Starting background thread to monitor change queue", RE_INDEX_JOB_NAME);
+                    // This runnable is executed at the end of initIndex, so we don't
+                    // have to worry about checking if the index is ready
+                    try {
+                        while (!Thread.currentThread().isInterrupted()) {
+                            final List<EntityEvent> list = new ArrayList<>();
+                            // This one will block if empty
+                            list.add(changes.take());
+                            // Now get everything else on the queue without blocking
+                            changes.drainTo(list);
+                            if (!list.isEmpty()) {
+                                securityContext.asProcessingUser(() -> taskContextFactory.context(
+                                        "Indexing Content Changes",
+                                        TerminateHandlerFactory.NOOP_FACTORY,
+                                        taskContext -> {
+                                            updateIndex(list);
+                                        }).run());
+                            }
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.error(e::getMessage, e);
+                        Thread.currentThread().interrupt();
+                        throw new UncheckedInterruptedException(e);
+                    }
+                });
+    }
+
+    /**
+     * for testing
+     */
+    void flush() {
+        if (isIndexInitialised()) {
+            final List<EntityEvent> list = new ArrayList<>();
+            changes.drainTo(list);
+            if (!list.isEmpty()) {
+                updateIndex(list);
+            }
+        } else {
+            LOGGER.debug("Index is not initialised, doing nothing");
         }
-        changes.drainTo(list);
-        updateIndex(list);
     }
 
     private boolean isValidIndex(final Path dir, final Analyzer analyzer) {
@@ -211,44 +305,64 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        NullSafe.consume(event, EntityEvent::getDocRef, DocRef::getType, type -> {
-            if (indexableMap.containsKey(type)) {
-                try {
-                    changes.put(event);
-                } catch (final InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new UncheckedInterruptedException(e);
+        // This will be called on nodes that are not UI nodes and thus do no content indexing.
+        // If the index is not initialised there is no point doing anything with the events.
+        // If the index is subsequently initialised then the init will index all docs anyway.
+        if (isIndexInitialised()) {
+            NullSafe.consume(event, EntityEvent::getDocRef, DocRef::getType, type -> {
+                if (indexableMap.containsKey(type)) {
+                    try {
+                        changes.put(event);
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new UncheckedInterruptedException(e);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
+    /**
+     * Re-index all indexable items on the system
+     */
     public void reindex() {
+        // Called by the stroom managed job scheduled execution
+        // No point re-indexing if the index is not set up, e.g. admin as enabled Re-Index job
+        // on a non-UI node.
+        if (isIndexInitialised()) {
+            doReindex();
+        } else {
+            LOGGER.info("{} - Index not yet initialised, nothing to re-index", RE_INDEX_JOB_NAME);
+        }
+    }
+
+    private synchronized void doReindex() {
+        taskContextFactory.current().info(() -> "Gathering indexable items");
+        LOGGER.info("{} - Re-indexing all content", RE_INDEX_JOB_NAME);
         securityContext.asProcessingUser(() -> {
-            final List<DocRef> docRefs = indexableMap.values()
+            final List<EntityEvent> events = indexableMap.values()
                     .stream()
+                    .takeWhile(docRef ->
+                            !Thread.currentThread().isInterrupted())
                     .flatMap(contentIndexable ->
                             contentIndexable.listDocuments().stream())
+                    .map(docRef ->
+                            new EntityEvent(docRef, EntityAction.UPDATE))
                     .toList();
 
             LOGGER.logDurationIfInfoEnabled(
-                    () -> {
-                        docRefs.stream()
-                                .takeWhile(docRef ->
-                                        !Thread.currentThread().isInterrupted())
-                                .map(docRef ->
-                                        new EntityEvent(docRef, EntityAction.UPDATE))
-                                .forEach(this::onChange);
-                    },
-                    LogUtil.message("Re-index of {} documents in {}",
-                            docRefs.size(),
-                            docIndexDir.toAbsolutePath().normalize()));
+                    () ->
+                            updateIndex(events),
+                    LogUtil.message("Re-index {} items", events.size()));
         });
     }
 
     @Override
     public ResultPage<DocContentMatch> findInContent(final FindInContentRequest request) {
-        return LOGGER.logDurationIfInfoEnabled(() ->
+        // Trigger async initialisation, wait for a bit, then throw if it is not ready
+        ensureIndexAndWait();
+
+        return LOGGER.logDurationIfDebugEnabled(() ->
                 findInContentUsingIndex(request), "findInContentUsingIndex");
     }
 
@@ -397,6 +511,9 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                     "You do not have read permission on " + request.getDocRef());
         }
 
+        // Trigger async initialisation, wait for a bit, then throw if it is not ready
+        ensureIndexAndWait();
+
         try (final DirectoryReader directoryReader = DirectoryReader.open(directory)) {
             final Query docQuery = createDocQuery(request.getDocRef(), request.getExtension());
             final IndexSearcher indexSearcher = new IndexSearcher(directoryReader);
@@ -427,65 +544,86 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         return null;
     }
 
-    private synchronized void updateIndex(final List<EntityEvent> list) {
-        securityContext.asProcessingUser(() -> taskContextFactory.context("Indexing Content Changes",
-                TerminateHandlerFactory.NOOP_FACTORY,
-                taskContext -> {
-                    final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-                    try (final IndexWriter writer = new IndexWriter(directory, indexWriterConfig)) {
-                        final int totalCount = list.size();
-                        final AtomicInteger count = new AtomicInteger();
-                        list.stream()
-                                .takeWhile(createTaskTerminatedCheck(taskContext))
-                                .forEach(event -> {
-                                    count.incrementAndGet();
+    private synchronized void updateIndex(final List<EntityEvent> events) {
+        if (NullSafe.hasItems(events)) {
+            final Map<EntityAction, Long> countsByAction = events.stream()
+                    .collect(Collectors.groupingBy(EntityEvent::getAction, Collectors.counting()));
 
-                                    try {
-                                        switch (event.getAction()) {
-                                            case CREATE -> {
-                                                setTaskContextInfo(
-                                                        taskContext, event, "Adding", count, totalCount);
-                                                addDoc(taskContext, writer, event.getDocRef());
-                                            }
-                                            case UPDATE -> {
-                                                setTaskContextInfo(
-                                                        taskContext, event, "Updating", count, totalCount);
-                                                deleteDoc(writer, event.getDocRef());
-                                                addDoc(taskContext, writer, event.getDocRef());
-                                            }
-                                            case DELETE -> {
-                                                setTaskContextInfo(
-                                                        taskContext, event, "Deleting", count, totalCount);
-                                                deleteDoc(writer, event.getDocRef());
-                                            }
-                                        }
-                                    } catch (final Exception e) {
-                                        LOGGER.error(e::getMessage, e);
-                                    }
-                                });
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> {
+                        securityContext.asProcessingUser(() -> {
+                            updateIndex(events, taskContextFactory.current());
+                        });
+                    },
+                    () -> LogUtil.message("Process {} content index events, counts by event type: ({})",
+                            events.size(),
+                            countsByAction.entrySet()
+                                    .stream()
+                                    .map(entry -> entry.getKey() + "=" + entry.getValue())
+                                    .collect(Collectors.joining(", "))));
+        }
+    }
 
-                        taskContext.info(() -> "Committing");
-                        LOGGER.logDurationIfDebugEnabled(
-                                ThrowingRunnable.unchecked(writer::commit),
-                                () -> LogUtil.message("Commit {} event(s)", count));
+    private synchronized void updateIndex(final List<EntityEvent> list, final TaskContext taskContext) {
+        final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        try (final IndexWriter writer = new IndexWriter(directory, indexWriterConfig)) {
+            updateProgress.set(0);
+            updateTotal.set(list.size());
+            list.stream()
+                    .takeWhile(createTaskTerminatedCheck(taskContext))
+                    .forEach(event -> {
+                        updateDocInIndex(taskContext, event, writer);
+                    });
 
-                        taskContext.info(() -> "Flushing");
-                        LOGGER.logDurationIfDebugEnabled(
-                                ThrowingRunnable.unchecked(writer::flush),
-                                () -> LogUtil.message("Flush {} event(s)", count));
-                    } catch (final Exception e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-                }).run());
+            taskContext.info(() -> LogUtil.message("Committing {} changes to the content index", list.size()));
+            LOGGER.logDurationIfDebugEnabled(
+                    ThrowingRunnable.unchecked(writer::commit),
+                    () -> LogUtil.message("Commit {} event(s)", updateProgress));
+
+            taskContext.info(() -> LogUtil.message("Flushing {} changes to the content index", list.size()));
+            LOGGER.logDurationIfDebugEnabled(
+                    ThrowingRunnable.unchecked(writer::flush),
+                    () -> LogUtil.message("Flush {} event(s)", updateProgress));
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private void updateDocInIndex(final TaskContext taskContext,
+                                  final EntityEvent event,
+                                  final IndexWriter writer) {
+        updateProgress.incrementAndGet();
+        try {
+            switch (event.getAction()) {
+                case CREATE -> {
+                    setTaskContextInfo(
+                            taskContext, event, "Adding", updateProgress, updateTotal);
+                    addDoc(taskContext, writer, event.getDocRef());
+                }
+                case UPDATE -> {
+                    setTaskContextInfo(
+                            taskContext, event, "Updating", updateProgress, updateTotal);
+                    deleteDoc(writer, event.getDocRef());
+                    addDoc(taskContext, writer, event.getDocRef());
+                }
+                case DELETE -> {
+                    setTaskContextInfo(
+                            taskContext, event, "Deleting", updateProgress, updateTotal);
+                    deleteDoc(writer, event.getDocRef());
+                }
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     private static Predicate<Object> createTaskTerminatedCheck(final TaskContext taskContext) {
         return obj -> {
             if (taskContext.isTerminated()) {
-                LOGGER.info("Task is terminated: '{}'", taskContext);
+                LOGGER.info("{} - Task is terminated: '{}'", RE_INDEX_JOB_NAME, taskContext);
                 return false;
             } else if (Thread.currentThread().isInterrupted()) {
-                LOGGER.info("Task thread is interrupted: '{}'", taskContext);
+                LOGGER.info("{} - Task thread is interrupted: '{}'", RE_INDEX_JOB_NAME, taskContext);
                 return false;
             } else {
                 return true;
@@ -497,7 +635,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                                            final EntityEvent event,
                                            final String action,
                                            final AtomicInteger count,
-                                           final int totalCount) {
+                                           final AtomicInteger totalCount) {
         taskContext.info(
                 () -> LogUtil.message("{}: {} ({} of {})",
                         action,
@@ -597,8 +735,35 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         return new Field(name, data, fieldType);
     }
 
+    private void ensureIndexAndWait() {
+        boolean isInitialised = ensureIndexAsync();
+        if (!isInitialised) {
+            try {
+                // Make the user wait a wee bit if it is not initialised as this gives it a chance
+                // to return a non-zero % so the user gets the impression that it is underway.
+                isInitialised = indexInitialisedLatch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
 
-    // --------------------------------------------------------------------------------
+        if (!isInitialised) {
+            final int updateCount = this.updateProgress.get();
+            final int updateTotal = this.updateTotal.get();
+            final String completionText;
+            if (updateCount != 0 && updateTotal != 0) {
+                final int pctComplete = (int) (updateCount / (double) updateTotal * 100);
+                completionText = " (" + pctComplete + "% complete)";
+            } else {
+                completionText = "";
+            }
+            throw new RuntimeException("The content is currently being indexed"
+                    + completionText + ".\n" +
+                    "Please try again in a minute by clicking the Refresh button.");
+        }
+    }
+
+// --------------------------------------------------------------------------------
 
 
     static class NGramAnalyzer extends Analyzer {
@@ -612,7 +777,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     }
 
 
-    // --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
 
 
     static class NGramCSAnalyzer extends Analyzer {

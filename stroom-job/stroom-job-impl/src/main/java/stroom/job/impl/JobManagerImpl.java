@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.job.impl;
@@ -26,6 +25,8 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+
+import java.util.Objects;
 
 /**
  * The job manager is used to update the database with the status of all job
@@ -64,6 +65,13 @@ public class JobManagerImpl implements JobManager {
         }
         // No such job !
         return false;
+    }
+
+    @Override
+    public Boolean isJobEnabled(final String jobName, final String nodeName) {
+        Objects.requireNonNull(jobName);
+        Objects.requireNonNull(nodeName);
+        return jobNodeDao.isEnabled(jobName, nodeName);
     }
 
     /**

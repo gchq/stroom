@@ -29,7 +29,6 @@ public class DocContentMatch {
 
     private static final int SAMPLE_LENGTH_BEFORE = 40;
     private static final int SAMPLE_LENGTH_AFTER = 200;
-    public static final String TRUNCATED_PREFIX = "……";
 
     @JsonProperty
     private final DocRef docRef;
@@ -39,16 +38,20 @@ public class DocContentMatch {
     private final StringMatchLocation location;
     @JsonProperty
     private final String sample;
+    @JsonProperty
+    private final boolean sampleAtStartOfLine;
 
     @JsonCreator
     public DocContentMatch(@JsonProperty("docRef") final DocRef docRef,
                            @JsonProperty("extension") final String extension,
                            @JsonProperty("location") final StringMatchLocation location,
-                           @JsonProperty("sample") final String sample) {
+                           @JsonProperty("sample") final String sample,
+                           @JsonProperty("sampleAtStartOfLine") final boolean sampleAtStartOfLine) {
         this.docRef = docRef;
         this.extension = extension;
         this.location = location;
         this.sample = sample;
+        this.sampleAtStartOfLine = sampleAtStartOfLine;
     }
 
     @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
@@ -62,11 +65,11 @@ public class DocContentMatch {
         final int min = Math.max(0, offset - SAMPLE_LENGTH_BEFORE);
         int sampleStart = offset;
         // Go back to get a sample from the same line.
-        boolean sampleIsAtStartOfLine = sampleStart == 0;
+        boolean sampleAtStartOfLine = sampleStart == 0;
         for (; sampleStart >= min; sampleStart--) {
             char c = chars[sampleStart];
             if (c == '\n') {
-                sampleIsAtStartOfLine = true;
+                sampleAtStartOfLine = true;
                 break;
             }
         }
@@ -85,9 +88,6 @@ public class DocContentMatch {
 
         // Now remove newlines and adjust offset and length to accordingly.
         final StringBuilder sample = new StringBuilder();
-        if (!sampleIsAtStartOfLine) {
-            sample.append(TRUNCATED_PREFIX);
-        }
         for (int i = sampleStart; i < chars.length; i++) {
             final char c = chars[i];
             if (c == '\r' || c == '\n') {
@@ -114,11 +114,6 @@ public class DocContentMatch {
         offset = Math.max(offset, 0);
         length = Math.max(length, 0);
 
-        // Adjust the highlight location to account fo the truncated prefix
-        if (!sampleIsAtStartOfLine) {
-            offset += TRUNCATED_PREFIX.length();
-        }
-
         final StringMatchLocation match = new StringMatchLocation(offset, length);
         return DocContentMatch
                 .builder()
@@ -126,6 +121,7 @@ public class DocContentMatch {
                 .extension(extension)
                 .location(match)
                 .sample(sample.toString())
+                .sampleAtStartOfLine(sampleAtStartOfLine)
                 .build();
     }
 
@@ -143,6 +139,10 @@ public class DocContentMatch {
 
     public String getSample() {
         return sample;
+    }
+
+    public boolean isSampleAtStartOfLine() {
+        return sampleAtStartOfLine;
     }
 
     @Override
@@ -178,12 +178,17 @@ public class DocContentMatch {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private DocRef docRef;
         private String extension;
         private StringMatchLocation location;
         private String sample;
+        private boolean sampleAtStartOfLine = true;
 
         private Builder() {
         }
@@ -193,6 +198,7 @@ public class DocContentMatch {
             this.extension = docContentMatch.extension;
             this.location = docContentMatch.location;
             this.sample = docContentMatch.sample;
+            this.sampleAtStartOfLine = docContentMatch.sampleAtStartOfLine;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -215,8 +221,13 @@ public class DocContentMatch {
             return this;
         }
 
+        public Builder sampleAtStartOfLine(final boolean sampleAtStartOfLine) {
+            this.sampleAtStartOfLine = sampleAtStartOfLine;
+            return this;
+        }
+
         public DocContentMatch build() {
-            return new DocContentMatch(docRef, extension, location, sample);
+            return new DocContentMatch(docRef, extension, location, sample, sampleAtStartOfLine);
         }
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
@@ -168,6 +184,22 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                     return jobNode;
                 });
         return JobNodeListResponse.createUnboundedJobNodeResponse(list);
+    }
+
+    @Override
+    public boolean isEnabled(final String jobName, final String nodeName) {
+        final int count = JooqUtil.contextResult(jobDbConnProvider, context -> context
+                .selectCount()
+                .from(JOB_NODE)
+                .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
+                .where(JOB_NODE.NODE_NAME.eq(nodeName))
+                .and(JOB.NAME.eq(jobName))
+                .and(JOB.ENABLED.eq(true))
+                .and(JOB_NODE.ENABLED.eq(true))
+                .fetchOne(0, int.class));
+        final boolean isEnabled = count > 0;
+        LOGGER.debug("jobName: '{}', nodeName: '{}', isEnabled: {}", jobName, nodeName, isEnabled);
+        return isEnabled;
     }
 
     public void updateSchedule(final BatchScheduleRequest batchScheduleRequest) {

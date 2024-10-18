@@ -34,7 +34,6 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
-import stroom.index.impl.ContentIndexConfig;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
@@ -86,7 +85,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
-    public static final String PROP_NAME_CONTENT_INDEX = "contentIndex";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
     public static final String PROP_NAME_CORE = "core";
     public static final String PROP_NAME_DASHBOARD = "dashboard";
@@ -135,7 +133,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ClusterConfig clusterConfig;
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
-    private final ContentIndexConfig contentIndexConfig;
     private final ContentPackImportConfig contentPackImportConfig;
     private final LegacyConfig legacyConfig;
     private final DashboardConfig dashboardConfig;
@@ -186,7 +183,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ClusterConfig(),
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
-                new ContentIndexConfig(),
                 new ContentPackImportConfig(),
                 new LegacyConfig(),
                 new DashboardConfig(),
@@ -236,7 +232,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
-                     @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                      @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
@@ -282,7 +277,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
-        this.contentIndexConfig = contentIndexConfig;
         this.contentPackImportConfig = contentPackImportConfig;
         this.legacyConfig = legacyConfig;
         this.dashboardConfig = dashboardConfig;
@@ -373,11 +367,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
             "areas running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
-    }
-
-    @JsonProperty(PROP_NAME_CONTENT_INDEX)
-    public ContentIndexConfig getContentIndexConfig() {
-        return contentIndexConfig;
     }
 
     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
