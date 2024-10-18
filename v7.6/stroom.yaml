@@ -8450,6 +8450,7 @@ components:
             - TITLE
             - STRUCTURE
             - VISUALISATION
+            - DICTIONARY
           uniqueItems: true
         maxCompletions:
           type: integer
@@ -9140,6 +9141,8 @@ components:
           $ref: '#/components/schemas/StringMatchLocation'
         sample:
           type: string
+        sampleAtStartOfLine:
+          type: boolean
     DocRef:
       type: object
       description: A class for describing a unique reference to a 'document' in stroom.  A
@@ -13656,6 +13659,7 @@ components:
             - TITLE
             - STRUCTURE
             - VISUALISATION
+            - DICTIONARY
           uniqueItems: true
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
@@ -13888,6 +13892,7 @@ components:
           - TITLE
           - STRUCTURE
           - VISUALISATION
+          - DICTIONARY
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
