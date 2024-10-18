@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.util.shared.string.CIKey;
+
 import com.gwtplatform.mvp.client.UiHandlers;
 
 import java.util.List;
@@ -23,5 +25,5 @@ import java.util.Map;
 
 public interface SelectionUiHandlers extends UiHandlers {
 
-    void onSelection(List<Map<String, String>> values);
+    void onSelection(List<Map<CIKey, String>> values);
 }

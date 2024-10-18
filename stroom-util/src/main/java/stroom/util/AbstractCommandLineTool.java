@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.util;
 
+
+import stroom.util.shared.string.CIKey;
 
 import com.google.common.base.Strings;
 
@@ -36,7 +38,7 @@ import java.util.Map;
  */
 public abstract class AbstractCommandLineTool {
 
-    private Map<String, String> map;
+    private Map<CIKey, String> map;
     private List<String> validArguments;
     private int maxPropLength = 0;
 
@@ -66,7 +68,7 @@ public abstract class AbstractCommandLineTool {
                     if (field.getName().length() > maxPropLength) {
                         maxPropLength = field.getName().length();
                     }
-                    if (map.containsKey(field.getName())) {
+                    if (map.containsKey(CIKey.of(field.getName()))) {
                         validArguments.add(field.getName());
                         field.getWriteMethod().invoke(this, getAsType(field));
                     }
@@ -82,16 +84,16 @@ public abstract class AbstractCommandLineTool {
     private Object getAsType(final PropertyDescriptor descriptor) {
         final Class<?> propertyClass = descriptor.getPropertyType();
         if (propertyClass.equals(String.class)) {
-            return map.get(descriptor.getName());
+            return map.get(CIKey.of(descriptor.getName()));
         }
         if (propertyClass.equals(Boolean.class) || propertyClass.equals(Boolean.TYPE)) {
-            return Boolean.parseBoolean(map.get(descriptor.getName()));
+            return Boolean.parseBoolean(map.get(CIKey.of(descriptor.getName())));
         }
         if (propertyClass.equals(Integer.class) || propertyClass.equals(Integer.TYPE)) {
-            return Integer.parseInt(map.get(descriptor.getName()));
+            return Integer.parseInt(map.get(CIKey.of(descriptor.getName())));
         }
         if (propertyClass.equals(Long.class) || propertyClass.equals(Long.TYPE)) {
-            return Long.parseLong(map.get(descriptor.getName()));
+            return Long.parseLong(map.get(CIKey.of(descriptor.getName())));
         }
         throw new RuntimeException("AbstractCommandLineTool does not know about properties of type " + propertyClass);
     }
@@ -117,7 +119,7 @@ public abstract class AbstractCommandLineTool {
                 if (pd.getWriteMethod() != null) {
                     // Simple getter ?
                     String suffix = " (default)";
-                    if (map.containsKey(pd.getName())) {
+                    if (map.containsKey(CIKey.of(pd.getName()))) {
                         suffix = " (arg)";
                     }
                     String value = "";

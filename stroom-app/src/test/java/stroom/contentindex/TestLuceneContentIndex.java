@@ -90,7 +90,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     @Test
     void testBasic() {
-        test(StringMatch.contains("LOCATION"), 4, "Location");
+        test(StringMatch.containsIgnoreCase("LOCATION"), 4, "Location");
     }
 
     @Test
@@ -100,7 +100,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     @Test
     void testPartial() {
-        test(StringMatch.contains("TION"), 4, "tion");
+        test(StringMatch.containsIgnoreCase("TION"), 4, "tion");
     }
 
     @Test
@@ -110,7 +110,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     @Test
     void testRegex() {
-        test(StringMatch.regex("XML\\w*"), 6, "xml");
+        test(StringMatch.regexIgnoreCase("XML\\w*"), 6, "xml");
     }
 
     @Test

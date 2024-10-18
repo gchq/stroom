@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
+import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.index.shared.IndexConstants;
@@ -26,6 +27,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
@@ -37,6 +39,8 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CIHashSet;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 
@@ -55,29 +59,35 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
 
-    private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
-            nullSafeEntry(AnnotationFields.ID, Annotation::getId),
-            nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
-            nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
-            nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
-            nullSafeEntry(AnnotationFields.ASSIGNED_TO, annotation ->
+    private static final Map<CIKey, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
+            nullSafeEntry(AnnotationFields.ID_FIELD, Annotation::getId),
+//            nullSafeEntry(AnnotationFields.CREATED_ON_FIELD, Annotation::getCreateTime, createTimeEpochMs ->
+//                    Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
+//            nullSafeEntry(AnnotationFields.CREATED_BY_FIELD, Annotation::getCreateUser),
+//            nullSafeEntry(AnnotationFields.UPDATED_ON_FIELD, Annotation::getUpdateTime, updateTimeEpochMs ->
+//                    Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
+//            nullSafeEntry(AnnotationFields.UPDATED_BY_FIELD, Annotation::getUpdateUser),
+            nullSafeEntry(AnnotationFields.TITLE_FIELD, Annotation::getTitle),
+            nullSafeEntry(AnnotationFields.SUBJECT_FIELD, Annotation::getSubject),
+            nullSafeEntry(AnnotationFields.STATUS_FIELD, Annotation::getStatus),
+            nullSafeEntry(AnnotationFields.ASSIGNED_TO_FIELD, annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
-            nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
-            nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
+            nullSafeEntry(AnnotationFields.COMMENT_FIELD, Annotation::getComment),
+            nullSafeEntry(AnnotationFields.HISTORY_FIELD, Annotation::getHistory));
 
-    private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
-            Map.entry(AnnotationFields.ID, Annotation::getId),
-            Map.entry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
-            Map.entry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            Map.entry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            Map.entry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
-            Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
-            Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
-            Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
-            Map.entry(AnnotationFields.ASSIGNED_TO, annotation ->
+    private static final Map<CIKey, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
+            Map.entry(AnnotationFields.ID_FIELD.getFldNameAsCIKey(), Annotation::getId),
+            Map.entry(AnnotationFields.CREATED_ON_FIELD.getFldNameAsCIKey(), Annotation::getCreateTime),
+            Map.entry(AnnotationFields.CREATED_BY_FIELD.getFldNameAsCIKey(), Annotation::getCreateUser),
+            Map.entry(AnnotationFields.UPDATED_ON_FIELD.getFldNameAsCIKey(), Annotation::getUpdateTime),
+            Map.entry(AnnotationFields.UPDATED_BY_FIELD.getFldNameAsCIKey(), Annotation::getUpdateUser),
+            Map.entry(AnnotationFields.TITLE_FIELD.getFldNameAsCIKey(), Annotation::getTitle),
+            Map.entry(AnnotationFields.SUBJECT_FIELD.getFldNameAsCIKey(), Annotation::getSubject),
+            Map.entry(AnnotationFields.STATUS_FIELD.getFldNameAsCIKey(), Annotation::getStatus),
+            Map.entry(AnnotationFields.ASSIGNED_TO_FIELD.getFldNameAsCIKey(), annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
-            Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
-            Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
+            Map.entry(AnnotationFields.COMMENT_FIELD.getFldNameAsCIKey(), Annotation::getComment),
+            Map.entry(AnnotationFields.HISTORY_FIELD.getFldNameAsCIKey(), Annotation::getHistory));
 
     private final AnnotationDao annotationDao;
     private final ExpressionMatcherFactory expressionMatcherFactory;
@@ -99,7 +109,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     public ValuesConsumer create(final ValuesConsumer valuesConsumer,
                                  final FieldIndex fieldIndex,
                                  final Query query) {
-        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
+        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID_FIELD.getFldNameAsCIKey());
         final Integer streamIdIndex = fieldIndex.getPos(IndexConstants.STREAM_ID);
         final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
 
@@ -110,10 +120,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         // Do we need to filter based on annotation attributes?
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
-        final Set<String> usedFields = new HashSet<>(Set.of(fieldIndex.getFields()));
+        final Set<CIKey> usedFields = new HashSet<>(fieldIndex.getFieldsAsCIKeys());
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
-        if (filter == null && usedFields.size() == 0) {
+        if (filter == null && usedFields.isEmpty()) {
             return valuesConsumer;
         }
 
@@ -132,7 +142,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 }
             }
 
-            if (annotations.size() == 0) {
+            if (annotations.isEmpty()) {
                 final Long streamId = getLong(values, streamIdIndex);
                 final Long eventId = getLong(values, eventIdIndex);
                 if (streamId != null && eventId != null) {
@@ -141,7 +151,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 }
             }
 
-            if (annotations.size() == 0) {
+            if (annotations.isEmpty()) {
                 annotations.add(defaultAnnotation);
             }
 
@@ -155,7 +165,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                             copy = Arrays.copyOf(values, fieldIndex.size());
                         }
 
-                        for (final String field : usedFields) {
+                        for (final CIKey field : usedFields) {
                             setValue(copy, fieldIndex, field, annotation);
                         }
 
@@ -185,18 +195,18 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final ExpressionOperator filteredExpression = expressionFilter.copy(expression);
 
         final List<String> expressionValues = ExpressionUtil.values(filteredExpression);
-        if (expressionValues == null || expressionValues.size() == 0) {
+        if (NullSafe.isEmptyCollection(expressionValues)) {
             return null;
         }
-        final Set<String> usedFields = new HashSet<>(ExpressionUtil.fields(filteredExpression));
-        if (usedFields.size() == 0) {
+        final Set<CIKey> usedFields = new CIHashSet(ExpressionUtil.fields(filteredExpression));
+        if (usedFields.isEmpty()) {
             return null;
         }
 
         final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationFields.FIELD_MAP);
         return annotation -> {
-            final Map<String, Object> attributeMap = new HashMap<>();
-            for (final String field : usedFields) {
+            final Map<CIKey, Object> attributeMap = new HashMap<>();
+            for (final CIKey field : usedFields) {
                 final Object value = OBJECT_MAPPING.get(field)
                         .apply(annotation);
                 attributeMap.put(field, value);
@@ -218,7 +228,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private void setValue(final Val[] values,
                           final FieldIndex fieldIndex,
-                          final String field,
+                          final CIKey field,
                           final Annotation annotation) {
         final Integer index = fieldIndex.getPos(field);
         if (index != null && values.length > index) {
@@ -226,7 +236,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             if (values[index] == null) {
                 final Val val;
                 try {
-                    val = VALUE_MAPPING.get(field).apply(annotation);
+                    val = VALUE_MAPPING.get(field)
+                            .apply(annotation);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -235,22 +246,23 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         }
     }
 
-    private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
-            final String fieldName,
+    private static <T> Entry<CIKey, Function<Annotation, Val>> nullSafeEntry(
+            final QueryField field,
             final Function<Annotation, T> getter) {
-        return nullSafeEntry(fieldName, getter, null);
+        return nullSafeEntry(field, getter, null);
     }
 
     /**
      * @param creator An explicit creator function to use rather than inferring it from the type.
      */
-    private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
-            final String fieldName,
+    private static <T> Entry<CIKey, Function<Annotation, Val>> nullSafeEntry(
+            final QueryField field,
             final Function<Annotation, T> getter,
             final Function<T, Val> creator) {
 
-        Objects.requireNonNull(fieldName);
+        Objects.requireNonNull(field);
         Objects.requireNonNull(getter);
+        final CIKey fieldName = field.getFldNameAsCIKey();
         return Map.entry(fieldName, annotation -> {
             T value = getter.apply(annotation);
 
@@ -259,10 +271,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             } else {
                 if (creator != null) {
                     return creator.apply(value);
-                } else if (value instanceof String) {
-                    return ValString.create((String) value);
-                } else if (value instanceof Long) {
-                    return ValLong.create((Long) value);
+                } else if (value instanceof String str) {
+                    return ValString.create(str);
+                } else if (value instanceof Long aLong) {
+                    return ValLong.create(aLong);
                 } else if (value instanceof final UserRef userRef) {
                     return ValString.create(userRef.toDisplayString());
                 } else {

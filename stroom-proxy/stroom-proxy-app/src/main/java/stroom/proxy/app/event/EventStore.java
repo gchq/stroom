@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
@@ -13,6 +29,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
+import stroom.util.shared.string.CIKeys;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -213,8 +230,8 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
                         final String requestUuid,
                         final String data) {
         try {
-            final String feed = attributeMap.get("Feed");
-            final String type = attributeMap.get("type");
+            final String feed = attributeMap.get(CIKeys.FEED);
+            final String type = attributeMap.get(CIKeys.TYPE);
             final FeedKey feedKey = new FeedKey(feed, type);
 
             final String string = eventSerialiser.serialise(

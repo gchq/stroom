@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public final class CompareUtil {
         return l1.compareTo(l2);
     }
 
-    public static int compareString(final String l1, final String l2) {
+    public static int compareStringIgnoreCase(final String l1, final String l2) {
         if (l1 == null && l2 == null) {
             return 0;
         }
@@ -156,9 +156,15 @@ public final class CompareUtil {
         return comparator;
     }
 
+    /**
+     * Case in-sensitive comparator that places any null values first.
+     * Copes with null values for T and for the String extracted from T.
+     */
     public static <T> Comparator<T> getNullSafeCaseInsensitiveComparator(final Function<T, String> extractor) {
         return Comparator.nullsFirst(
-                Comparator.comparing(extractor, String.CASE_INSENSITIVE_ORDER));
+                Comparator.comparing(
+                        extractor,
+                        Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
     }
 
     /**
@@ -235,5 +241,20 @@ public final class CompareUtil {
      */
     public static <T> Comparator<T> name(final String name, final Comparator<T> comparator) {
         return new NamedComparator<>(name, comparator);
+    }
+
+
+    /**
+     * Normalises an {@link Comparable#compareTo(Object)} result into -1, 0, or 1.
+     * Useful for doing equality assertions on comparators.
+     */
+    public static int normalise(final int compareResult) {
+        if (compareResult < 0) {
+            return -1;
+        } else if (compareResult > 0) {
+            return 1;
+        } else {
+            return compareResult;
+        }
     }
 }

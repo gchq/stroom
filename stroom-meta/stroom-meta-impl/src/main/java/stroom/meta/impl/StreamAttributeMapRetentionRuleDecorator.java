@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.meta.impl;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -57,20 +59,21 @@ class StreamAttributeMapRetentionRuleDecorator {
                 .orElse(Collections.emptyList());
     }
 
-    void addMatchingRetentionRuleInfo(final Meta meta, final Map<String, String> attributeMap) {
+    void addMatchingRetentionRuleInfo(final Meta meta,
+                                      final Map<String, String> attributeMap) {
         try {
             int index = -1;
 
             // If there are no active rules then we aren't going to process anything.
-            if (rules != null && rules.size() > 0) {
+            if (NullSafe.hasItems(rules)) {
                 // Create an attribute map we can match on.
-                final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(meta, attributeMap);
+                final Map<CIKey, Object> map = StreamAttributeMapUtil.createAttributeMap(meta, attributeMap);
                 index = findMatchingRuleIndex(map);
             }
 
             if (index != -1) {
                 final DataRetentionRule rule = rules.get(index);
-                attributeMap.put(DataRetentionFields.RETENTION_AGE, rule.getAgeString());
+                putAttr(attributeMap, DataRetentionFields.RETENTION_AGE_FIELD, rule.getAgeString());
 
                 String keepUntil = DataRetentionRule.FOREVER;
                 if (meta != null) {
@@ -84,21 +87,27 @@ class StreamAttributeMapRetentionRuleDecorator {
                     }
                 }
 
-                attributeMap.put(DataRetentionFields.RETENTION_UNTIL, keepUntil);
-                attributeMap.put(DataRetentionFields.RETENTION_RULE, rule.toString());
+                putAttr(attributeMap, DataRetentionFields.RETENTION_UNTIL_FIELD, keepUntil);
+                putAttr(attributeMap, DataRetentionFields.RETENTION_RULE_FIELD, rule.toString());
             } else {
-                attributeMap.put(DataRetentionFields.RETENTION_AGE, DataRetentionRule.FOREVER);
-                attributeMap.put(DataRetentionFields.RETENTION_UNTIL, DataRetentionRule.FOREVER);
-                attributeMap.put(DataRetentionFields.RETENTION_RULE, "None");
+                putAttr(attributeMap, DataRetentionFields.RETENTION_AGE_FIELD, DataRetentionRule.FOREVER);
+                putAttr(attributeMap, DataRetentionFields.RETENTION_UNTIL_FIELD, DataRetentionRule.FOREVER);
+                putAttr(attributeMap, DataRetentionFields.RETENTION_RULE_FIELD, "None");
             }
         } catch (final RuntimeException e) {
-            attributeMap.put(DataRetentionFields.RETENTION_AGE, DataRetentionRule.FOREVER);
-            attributeMap.put(DataRetentionFields.RETENTION_UNTIL, DataRetentionRule.FOREVER);
-            attributeMap.put(DataRetentionFields.RETENTION_RULE, "Error - " + e.getMessage());
+            putAttr(attributeMap, DataRetentionFields.RETENTION_AGE_FIELD, DataRetentionRule.FOREVER);
+            putAttr(attributeMap, DataRetentionFields.RETENTION_UNTIL_FIELD, DataRetentionRule.FOREVER);
+            putAttr(attributeMap, DataRetentionFields.RETENTION_RULE_FIELD, "Error - " + e.getMessage());
         }
     }
 
-    private int findMatchingRuleIndex(final Map<String, Object> attributeMap) {
+    private void putAttr(final Map<String, String> attributeMap,
+                         final QueryField queryField,
+                         final String value) {
+        attributeMap.put(queryField.getFldName(), value);
+    }
+
+    private int findMatchingRuleIndex(final Map<CIKey, Object> attributeMap) {
         RuntimeException lastException = null;
 
         for (int i = 0; i < rules.size(); i++) {

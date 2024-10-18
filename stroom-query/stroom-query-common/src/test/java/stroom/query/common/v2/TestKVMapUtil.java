@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.query.common.v2;
 
+import stroom.util.shared.string.CIKey;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -26,9 +28,9 @@ class TestKVMapUtil {
 
     @Test
     void testSimpleParse() {
-        final Map<String, String> map = KVMapUtil.parse("param1=value1");
-        assertThat(map.keySet().iterator().next()).isEqualTo("param1");
-        assertThat(map.get("param1")).isEqualTo("value1");
+        final Map<CIKey, String> map = KVMapUtil.parse("param1=value1");
+        assertThat(map.keySet().iterator().next()).isEqualTo(CIKey.of("param1"));
+        assertThat(map.get(CIKey.of("param1"))).isEqualTo("value1");
     }
 
     @Test
@@ -73,7 +75,7 @@ class TestKVMapUtil {
 
     @Test
     void testReplacement() {
-        Map<String, String> map = KVMapUtil.parse("key1=value1");
+        Map<CIKey, String> map = KVMapUtil.parse("key1=value1");
         String result = KVMapUtil.replaceParameters("this is ${key1}", map);
         assertThat(result).isEqualTo("this is value1");
 
@@ -99,16 +101,18 @@ class TestKVMapUtil {
     }
 
     private void testKV(String text, String... expectedParams) {
-        final Map<String, String> map = KVMapUtil.parse(text);
+        final Map<CIKey, String> map = KVMapUtil.parse(text);
 
         assertThat(expectedParams.length > 0).isTrue();
         assertThat(expectedParams.length % 2 == 0).isTrue();
-        assertThat(map).hasSize(expectedParams.length / 2);
+        assertThat(map)
+                .hasSize(expectedParams.length / 2);
 
         for (int i = 0; i < expectedParams.length; i += 2) {
             String key = expectedParams[i];
             String value = expectedParams[i + 1];
-            assertThat(map.get(key)).isEqualTo(value);
+            assertThat(map.get(CIKey.of(key)))
+                    .isEqualTo(value);
         }
     }
 }

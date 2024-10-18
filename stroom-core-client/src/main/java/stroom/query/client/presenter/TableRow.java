@@ -1,7 +1,24 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -17,14 +34,14 @@ public class TableRow {
 
     private final Expander expander;
     private final String groupKey;
-    private final Map<String, Cell> cells;
+    private final Map<String, Cell> columnIdToCellMap;
 
     public TableRow(final Expander expander,
                     final String groupKey,
-                    final Map<String, Cell> cells) {
+                    final Map<String, Cell> columnIdToCellMap) {
         this.expander = expander;
         this.groupKey = groupKey;
-        this.cells = cells;
+        this.columnIdToCellMap = columnIdToCellMap;
     }
 
     public Expander getExpander() {
@@ -35,9 +52,9 @@ public class TableRow {
         return groupKey;
     }
 
-    public SafeHtml getValue(final String fieldId) {
+    public SafeHtml getValue(final String columnId) {
         // Turn the raw value into html on demand
-        final Cell cell = cells.get(fieldId);
+        final Cell cell = columnIdToCellMap.get(columnId);
         if (cell != null) {
             return decorateValue(cell);
         } else {
@@ -65,8 +82,8 @@ public class TableRow {
         return safeHtmlBuilder.toSafeHtml();
     }
 
-    public String getText(final String fieldId) {
-        final Cell cell = cells.get(fieldId);
+    public String getText(final String columnId) {
+        final Cell cell = columnIdToCellMap.get(columnId);
         if (cell != null) {
             final String rawValue = cell.getRawValue();
             if (rawValue != null) {
@@ -90,14 +107,15 @@ public class TableRow {
 
     private void appendValue(final String value, final SafeHtmlBuilder sb) {
         final List<Object> parts = getParts(value);
-        if (parts.size() == 0) {
+        if (parts.isEmpty()) {
             appendText(value, sb);
 
         } else {
             parts.forEach(p -> {
                 if (p instanceof Hyperlink) {
+                    //noinspection PatternVariableCanBeUsed // GWT
                     final Hyperlink hyperlink = (Hyperlink) p;
-                    if (!hyperlink.getText().trim().isEmpty()) {
+                    if (GwtNullSafe.isNonBlankString(hyperlink.getText())) {
                         sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
                         appendText(hyperlink.getText(), sb);
                         sb.appendHtmlConstant("</u>");
@@ -110,7 +128,7 @@ public class TableRow {
     }
 
     private void appendText(final String text, final SafeHtmlBuilder sb) {
-        if (text == null || text.trim().length() == 0) {
+        if (GwtNullSafe.isBlankString(text)) {
             sb.append(SafeHtmlUtil.NBSP);
         } else {
             sb.appendEscaped(text);
@@ -128,6 +146,7 @@ public class TableRow {
             if (c == '[') {
                 final Hyperlink hyperlink = Hyperlink.create(value, i);
                 if (hyperlink != null) {
+                    //noinspection SizeReplaceableByIsEmpty // GWT
                     if (sb.length() > 0) {
                         parts.add(sb.toString());
                         sb.setLength(0);
@@ -143,6 +162,7 @@ public class TableRow {
             }
         }
 
+        //noinspection SizeReplaceableByIsEmpty // GWT
         if (sb.length() > 0) {
             parts.add(sb.toString());
         }
@@ -155,7 +175,7 @@ public class TableRow {
         return "TableRow{" +
                 "expander=" + expander +
                 ", groupKey='" + groupKey + '\'' +
-                ", cells=" + cells +
+                ", cells=" + columnIdToCellMap +
                 '}';
     }
 
@@ -175,6 +195,10 @@ public class TableRow {
     public int hashCode() {
         return Objects.hash(groupKey);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Cell {
 

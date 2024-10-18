@@ -16,10 +16,12 @@
 
 package stroom.docstore.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
+import stroom.util.logging.LogUtil;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
@@ -65,22 +67,13 @@ public class DBPersistence implements Persistence {
             WHERE type = ?
             ORDER BY uuid""";
 
-    private static final String SELECT_BY_TYPE_NAME_EQUALS_SQL = """
+    private static final String SELECT_BY_TYPE_NAME_SQL = """
             SELECT DISTINCT
               uuid,
               name
             FROM doc
             WHERE type = ?
-            AND name = ?
-            ORDER BY uuid""";
-
-    private static final String SELECT_BY_TYPE_NAME_WILDCARD_SQL = """
-            SELECT DISTINCT
-              uuid,
-              name
-            FROM doc
-            WHERE type = ?
-            AND name like ?
+            AND name {} ?
             ORDER BY uuid""";
 
     private static final String SELECT_ID_BY_TYPE_UUID_SQL = """
@@ -255,15 +248,21 @@ public class DBPersistence implements Persistence {
     @Override
     public List<DocRef> find(final String type,
                              final String nameFilter,
-                             final boolean allowWildCards) {
+                             final boolean allowWildCards,
+                             final boolean isCaseSensitive) {
         final List<DocRef> list = new ArrayList<>();
 
         final String nameFilterSqlValue = allowWildCards
                 ? PatternUtil.createSqlLikeStringFromWildCardFilter(nameFilter)
                 : nameFilter;
-        final String sql = allowWildCards
-                ? SELECT_BY_TYPE_NAME_WILDCARD_SQL
-                : SELECT_BY_TYPE_NAME_EQUALS_SQL;
+        // By default, the collation in mysql is case-insensitive
+        String condition = isCaseSensitive
+                ? "collate " + JooqUtil.CASE_SENSITIVE_COLLATION_NAME + " "
+                : "";
+        condition = allowWildCards
+                ? condition + "like"
+                : condition + "=";
+        final String sql = LogUtil.message(SELECT_BY_TYPE_NAME_SQL, condition);
 
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {

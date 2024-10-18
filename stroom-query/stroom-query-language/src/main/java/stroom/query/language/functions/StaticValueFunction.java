@@ -18,6 +18,7 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.query.language.token.Param;
+import stroom.util.shared.string.CIKey;
 
 import java.util.Map;
 
@@ -46,7 +47,7 @@ public class StaticValueFunction implements Function, Appendable {
     }
 
     @Override
-    public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
+    public void setStaticMappedValues(final Map<CIKey, String> staticMappedValues) {
         // Ignore
     }
 

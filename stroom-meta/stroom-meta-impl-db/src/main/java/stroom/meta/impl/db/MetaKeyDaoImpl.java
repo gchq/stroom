@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.shared.MetaFields;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -70,7 +71,7 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
 
     private final MetaDbConnProvider metaDbConnProvider;
     private final Map<Integer, String> idToNameCache = new HashMap<>();
-    private final Map<String, Integer> nameToIdCache = new HashMap<>();
+    private final Map<CIKey, Integer> nameToIdCache = new HashMap<>();
 
     @Inject
     MetaKeyDaoImpl(final MetaDbConnProvider metaDbConnProvider) {
@@ -84,7 +85,7 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     }
 
     @Override
-    public Optional<Integer> getIdForName(final String name) {
+    public Optional<Integer> getIdForName(final CIKey name) {
         return Optional.ofNullable(nameToIdCache.get(name));
     }
 
@@ -135,7 +136,7 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
                     final Integer id = r.get(META_KEY.ID);
                     final String name = r.get(META_KEY.NAME);
                     idToNameCache.put(id, name);
-                    nameToIdCache.put(name, id);
+                    nameToIdCache.put(CIKey.of(name), id);
                 });
     }
 

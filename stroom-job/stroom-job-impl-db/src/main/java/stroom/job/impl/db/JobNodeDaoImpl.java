@@ -31,6 +31,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
@@ -56,7 +57,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeDaoImpl.class);
 
-    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+    private static final Map<CIKey, Field<?>> FIELD_MAP = CIKey.mapOf(
             FindJobNodeCriteria.FIELD_ID_ID, JOB_NODE.ID,
             FindJobNodeCriteria.FIELD_JOB_NAME, JOB.NAME,
             FindJobNodeCriteria.FIELD_ID_NODE, JOB_NODE.NODE_NAME,

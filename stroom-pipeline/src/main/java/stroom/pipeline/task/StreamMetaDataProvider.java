@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.task;
@@ -28,6 +27,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     @Override
     public String get(final String key) {
-        if (key == null || key.length() == 0) {
+        if (NullSafe.isEmptyString(key)) {
             return null;
         }
 

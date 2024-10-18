@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.core.receive;
@@ -21,6 +20,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.pipeline.writer.CSVFormatter;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapValidator;
@@ -45,7 +45,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -140,23 +139,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
     private void debug(final String message, final AttributeMap attributeMap) {
         if (LOGGER.isDebugEnabled()) {
-            final List<String> keys = attributeMap
-                    .keySet()
-                    .stream()
-                    .sorted()
-                    .toList();
-            final StringBuilder sb = new StringBuilder();
-            keys.forEach(key -> {
-                sb.append(key);
-                sb.append("=");
-                sb.append(attributeMap.get(key));
-                sb.append(",");
-            });
-            if (!sb.isEmpty()) {
-                sb.setLength(sb.length() - 1);
-            }
-
-            LOGGER.debug(message + " (" + sb + ")");
+            final String attrs = CSVFormatter.format(attributeMap);
+            LOGGER.debug(message + " (" + attrs + ")");
         }
     }
 }

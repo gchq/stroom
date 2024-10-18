@@ -4,6 +4,8 @@ import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,60 +23,60 @@ public class DocumentPermissionFields {
             .build();
 
     private static final List<QueryField> FIELDS = new ArrayList<>();
-    private static final Map<String, QueryField> ALL_FIELD_MAP;
+    private static final Map<CIKey, QueryField> ALL_FIELD_MAP;
 
     public static final QueryField DOCUMENT = QueryField
             .builder()
-            .fldName("Document")
+            .fldName(CIKey.ofStaticKey("Document"))
             .fldType(FieldType.DOC_REF)
             .conditionSet(ConditionSet.DOC_DOC_IS)
             .queryable(true)
             .build();
     public static final QueryField CHILDREN = QueryField
             .builder()
-            .fldName("Children")
+            .fldName(CIKey.ofStaticKey("Children"))
             .fldType(FieldType.DOC_REF)
             .conditionSet(ConditionSet.DOC_DOC_OF)
             .queryable(true)
             .build();
     public static final QueryField DESCENDANTS = QueryField
             .builder()
-            .fldName("Descendants")
+            .fldName(CIKey.ofStaticKey("Descendants"))
             .fldType(FieldType.DOC_REF)
             .conditionSet(ConditionSet.DOC_DOC_OF)
             .queryable(true)
             .build();
     public static final QueryField USER = QueryField
             .builder()
-            .fldName("User")
+            .fldName(CIKeys.USER)
             .fldType(FieldType.USER_REF)
             .conditionSet(ConditionSet.DOC_USER_IS)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_TYPE = QueryField
             .builder()
-            .fldName("DocumentType")
+            .fldName(CIKey.ofStaticKey("DocumentType"))
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_NAME = QueryField
             .builder()
-            .fldName("DocumentName")
+            .fldName(CIKey.ofStaticKey("DocumentName"))
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_UUID = QueryField
             .builder()
-            .fldName("DocumentUUID")
+            .fldName(CIKey.ofStaticKey("DocumentUUID"))
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_TAG = QueryField
             .builder()
-            .fldName("DocumentTag")
+            .fldName(CIKey.ofStaticKey("DocumentTag"))
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
@@ -90,14 +92,15 @@ public class DocumentPermissionFields {
         FIELDS.add(DOCUMENT_TAG);
         FIELDS.add(USER);
 
-        ALL_FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+        ALL_FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(QueryField::getFldNameAsCIKey, Function.identity()));
     }
 
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, QueryField> getAllFieldMap() {
+    public static Map<CIKey, QueryField> getAllFieldMap() {
         return ALL_FIELD_MAP;
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
@@ -6,6 +22,8 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -40,15 +58,11 @@ public class StateDao extends AbstractStateDao<State> {
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final CqlIdentifier COLUMN_INSERT_TIME = CqlIdentifier.fromCql("insert_time");
 
-    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
-            StateFields.KEY,
-            new ScyllaDbColumn(StateFields.KEY, DataTypes.TEXT, COLUMN_KEY),
-            StateFields.VALUE_TYPE,
-            new ScyllaDbColumn(StateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
-            StateFields.VALUE,
-            new ScyllaDbColumn(StateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE),
-            StateFields.INSERT_TIME,
-            new ScyllaDbColumn(StateFields.INSERT_TIME, DataTypes.TIMESTAMP, COLUMN_INSERT_TIME));
+    private static final Map<CIKey, ScyllaDbColumn> FIELD_NAME_TO_COLUMN_MAP = Map.ofEntries(
+            StateFieldUtil.createNameToColumnEntry(CIKeys.KEY, DataTypes.TEXT, COLUMN_KEY),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.VALUE, DataTypes.BLOB, COLUMN_VALUE),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.INSERT_TIME, DataTypes.TIMESTAMP, COLUMN_INSERT_TIME));
 
     public StateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -128,9 +142,9 @@ public class StateDao extends AbstractStateDao<State> {
         final SearchHelper searchHelper = new SearchHelper(
                 sessionProvider,
                 table,
-                COLUMN_MAP,
-                StateFields.VALUE_TYPE,
-                StateFields.VALUE);
+                FIELD_NAME_TO_COLUMN_MAP,
+                CIKeys.VALUE_TYPE,
+                CIKeys.VALUE);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 

@@ -18,12 +18,12 @@ package stroom.dictionary.api;
 
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
+import stroom.docref.HasFindDocsByName;
 import stroom.docrefinfo.api.DocRefDecorator;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface WordListProvider {
+public interface WordListProvider extends HasFindDocsByName {
 
     /**
      * @return The complete wordList as a single string with words delimited by {@code \n}.
@@ -50,8 +50,6 @@ public interface WordListProvider {
      * @return
      */
     WordList getCombinedWordList(DocRef dictionaryRef, DocRefDecorator docRefDecorator);
-
-    List<DocRef> findByName(String name);
 
     Optional<DocRef> findByUuid(String uuid);
 }
