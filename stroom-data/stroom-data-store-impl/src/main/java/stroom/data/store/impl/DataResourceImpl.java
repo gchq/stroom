@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.string.CIKey;
 
 import event.logging.ComplexLoggedOutcome;
 import event.logging.ExportEventAction;
@@ -118,9 +119,9 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
 
     @Override
     public Map<String, String> metaAttributes(final long id) {
-        final Map<String, String> result;
         try {
-            return dataServiceProvider.get().metaAttributes(id);
+            final Map<CIKey, String> map = dataServiceProvider.get().metaAttributes(id);
+            return CIKey.convertToStringMap(map);
         } catch (final RuntimeException e) {
             throw EntityServiceExceptionUtil.create(e);
         }

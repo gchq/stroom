@@ -24,8 +24,10 @@ import stroom.docrefinfo.api.DocRefDecorator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class MockWordListProviderModule extends AbstractModule {
 
@@ -34,14 +36,28 @@ public class MockWordListProviderModule extends AbstractModule {
         return new WordListProvider() {
 
             @Override
-            public List<DocRef> findByName(final String name) {
-                return List.of();
+            public Set<DocRef> listDocuments() {
+                return Collections.emptySet();
             }
 
             @Override
             public Optional<DocRef> findByUuid(final String uuid) {
                 return Optional.empty();
             }
+
+            @Override
+            public List<DocRef> findByNames(final List<String> names,
+                                            final boolean allowWildCards,
+                                            final boolean isCaseSensitive) {
+                return Collections.emptyList();
+            }
+
+            //            @Override
+//            public List<DocRef> findByNames(final List<String> names,
+//                                            final boolean allowWildCards,
+//                                            final boolean isCaseSensitive) {
+//                return Collections.emptyList();
+//            }
 
             @Override
             public String getCombinedData(final DocRef dictionaryRef) {

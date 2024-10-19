@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -50,8 +51,9 @@ public class DocResolver {
             return optionalDocRef.get().getDocRef();
         }
 
-        // Try by name.
-        final List<DocRef> docRefs = docRefInfoService.findByName(type, name, false);
+        // Try by name (case-insensitive).
+        final List<DocRef> docRefs = docRefInfoService.findByName(
+                type, name, false, false);
         if (docRefs.isEmpty()) {
             throw new RuntimeException(type + " \"" + name + "\" not found");
         } else if (docRefs.size() > 1) {
@@ -88,7 +90,8 @@ public class DocResolver {
         final List<DocRef> docRefs = dataSourceProviderRegistry
                 .list()
                 .stream()
-                .filter(docRef -> docRef != null && docRef.getName() != null && docRef.getName().equals(name))
+                .filter(docRef ->
+                        NullSafe.equalsIgnoreCase(docRef, DocRef::getName, name))
                 .toList();
         if (docRefs.isEmpty()) {
             throw new RuntimeException("Data source \"" +

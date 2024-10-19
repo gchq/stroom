@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.string.CIKey;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public interface DataService {
 
     ResourceKey upload(UploadDataRequest request);
 
-    Map<String, String> metaAttributes(long id);
+    Map<CIKey, String> metaAttributes(long id);
 
     List<DataInfoSection> info(long id);
 

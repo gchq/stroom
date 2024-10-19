@@ -223,7 +223,7 @@ public class SteppingService {
             return securityContext.asProcessingUserResult(() -> {
                 final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
                 final List<Meta> streamList = metaService.find(criteria).getValues();
-                return NullSafe.first(streamList);
+                return NullSafe.first(streamList).orElse(null);
             });
         }
     }

@@ -4,13 +4,15 @@ import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.filter.FilterFieldDefinition;
+import stroom.util.shared.string.CIKey;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UserFields {
 
@@ -19,20 +21,23 @@ public class UserFields {
     public static final String FIELD_DISPLAY_NAME = "display";
     public static final String FIELD_FULL_NAME = "full";
 
-    public static final QueryField IS_GROUP = QueryField.createBoolean(FIELD_IS_GROUP);
-    public static final QueryField NAME = QueryField.createText(FIELD_NAME);
-    public static final QueryField DISPLAY_NAME = QueryField.createText(FIELD_DISPLAY_NAME);
-    public static final QueryField FULL_NAME = QueryField.createText(FIELD_FULL_NAME);
+    public static final QueryField IS_GROUP = QueryField.createBoolean(
+            CIKey.ofStaticKey(FIELD_IS_GROUP), true);
+    public static final QueryField NAME = QueryField.createText(CIKey.ofStaticKey(FIELD_NAME), true);
+    public static final QueryField DISPLAY_NAME = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_DISPLAY_NAME), true);
+    public static final QueryField FULL_NAME = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_FULL_NAME), true);
     public static final QueryField GROUP_CONTAINS = QueryField
             .builder()
-            .fldName("GroupContains")
+            .fldName(CIKey.ofStaticKey("GroupContains"))
             .fldType(FieldType.USER_REF)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField PARENT_GROUP = QueryField
             .builder()
-            .fldName("ParentGroup")
+            .fldName(CIKey.ofStaticKey("ParentGroup"))
             .fldType(FieldType.USER_REF)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
@@ -45,25 +50,24 @@ public class UserFields {
     public static final FilterFieldDefinition FIELD_DEF_FULL_NAME = FilterFieldDefinition.qualifiedField(
             FIELD_FULL_NAME);
 
-    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Arrays.asList(
+    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = List.of(
             FIELD_DEF_IS_GROUP,
             FIELD_DEF_NAME,
             FIELD_DEF_DISPLAY_NAME,
             FIELD_DEF_FULL_NAME);
 
+    public static final Set<QueryField> DEFAULT_FIELDS = new HashSet<>(List.of(
+            DISPLAY_NAME,
+            NAME));
 
-    public static final Set<QueryField> DEFAULT_FIELDS = new HashSet<>();
-    public static final Map<String, QueryField> ALL_FIELD_MAP = new HashMap<>();
-
-    static {
-        DEFAULT_FIELDS.add(DISPLAY_NAME);
-        DEFAULT_FIELDS.add(NAME);
-
-        ALL_FIELD_MAP.put(IS_GROUP.getFldName(), IS_GROUP);
-        ALL_FIELD_MAP.put(NAME.getFldName(), NAME);
-        ALL_FIELD_MAP.put(DISPLAY_NAME.getFldName(), DISPLAY_NAME);
-        ALL_FIELD_MAP.put(FULL_NAME.getFldName(), FULL_NAME);
-        ALL_FIELD_MAP.put(GROUP_CONTAINS.getFldName(), GROUP_CONTAINS);
-        ALL_FIELD_MAP.put(PARENT_GROUP.getFldName(), PARENT_GROUP);
-    }
+    public static final Map<CIKey, QueryField> ALL_FIELD_MAP = Stream.of(
+                    IS_GROUP,
+                    NAME,
+                    DISPLAY_NAME,
+                    FULL_NAME,
+                    GROUP_CONTAINS,
+                    PARENT_GROUP)
+            .collect(Collectors.toMap(
+                    QueryField::getFldNameAsCIKey,
+                    Function.identity()));
 }

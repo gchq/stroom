@@ -1,8 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.extraction;
 
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
@@ -30,6 +45,7 @@ import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.query.FieldNames;
 
 import jakarta.inject.Provider;
 
@@ -118,8 +134,8 @@ public class ExtractionDecorator {
         this.dataSource = query.getDataSource();
 
         // We are going to do extraction or at least filter streams so add fields to the field index to do this.
-        coprocessors.getFieldIndex().create(IndexConstants.STREAM_ID);
-        coprocessors.getFieldIndex().create(IndexConstants.EVENT_ID);
+        coprocessors.getFieldIndex().create(FieldNames.FALLBACK_STREAM_ID_FIELD_KEY);
+        coprocessors.getFieldIndex().create(FieldNames.FALLBACK_EVENT_ID_FIELD_KEY);
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // We assume all coprocessors for the same extraction use the same field index map.
             // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.

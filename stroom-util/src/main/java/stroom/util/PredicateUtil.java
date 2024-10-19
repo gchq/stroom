@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util;
 
 import stroom.util.string.PatternUtil;
@@ -13,6 +29,7 @@ public class PredicateUtil {
 
     private static final String LIST_DELIMITER = ",";
     private static final Pattern LIST_DELIMITER_PATTERN = Pattern.compile(LIST_DELIMITER);
+    public static final Predicate<String> ALWAYS_TRUE_STRING_PREDICATE = val -> true;
 
     private PredicateUtil() {
         // Static utils only
@@ -73,6 +90,7 @@ public class PredicateUtil {
     /**
      * Create a predicate ORing all the filter terms in inListStr together. Supports standard stroom
      * wild carding with '*'.  Matches are complete matches.
+     *
      * @param inListStr List of filter terms delimited by LIST_DELIMITER
      */
     public static Predicate<String> createWildCardedInPredicate(final String inListStr,

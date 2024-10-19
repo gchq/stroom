@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2019-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,8 +214,10 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     }
 
     @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
+    public List<DocRef> findByNames(final List<String> names,
+                                    final boolean allowWildCards,
+                                    final boolean isCaseSensitive) {
+        return store.findByNames(names, allowWildCards, isCaseSensitive);
     }
 
     @Override

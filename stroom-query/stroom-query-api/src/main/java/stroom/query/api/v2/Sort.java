@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@
 package stroom.query.api.v2;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonPropertyOrder({"order", "direction"})
 @JsonInclude(Include.NON_NULL)
@@ -86,22 +88,6 @@ public final class Sort {
                 '}';
     }
 
-    public enum SortDirection implements HasDisplayValue {
-        ASCENDING("Ascending"),
-        DESCENDING("Descending");
-
-        private final String displayValue;
-
-        SortDirection(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -109,6 +95,80 @@ public final class Sort {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum SortDirection implements HasDisplayValue {
+        ASCENDING("Ascending", "asc"),
+        DESCENDING("Descending", "desc"),
+        ;
+
+        private final String longForm;
+        private final String shortForm;
+
+        SortDirection(final String longForm, String shortForm) {
+            this.longForm = longForm;
+            this.shortForm = shortForm;
+        }
+
+        /**
+         * 'Ascending' or 'Descending'
+         * Equivalent to calling {@link SortDirection#getLongForm()}
+         */
+        @Override
+        public String getDisplayValue() {
+            return longForm;
+        }
+
+        /**
+         * 'Ascending' or 'Descending'
+         */
+        public String getLongForm() {
+            return longForm;
+        }
+
+        /**
+         * 'asc' or 'desc'
+         */
+        public String getShortForm() {
+            return shortForm;
+        }
+
+        /**
+         * Parse a {@link SortDirection} from a short form string ('asc' or 'desc') ignoring case.
+         */
+        public static Optional<SortDirection> fromString(final String str) {
+            if (!GwtNullSafe.isBlankString(str)) {
+                for (final SortDirection sortDirection : SortDirection.values()) {
+                    if (sortDirection.shortForm.equalsIgnoreCase(str)
+                            || sortDirection.longForm.equalsIgnoreCase(str)) {
+                        return Optional.of(sortDirection);
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+
+        /**
+         * Parse a {@link SortDirection} from a short form string ('asc' or 'desc') ignoring case.
+         */
+        public static Optional<SortDirection> fromShortForm(final String str) {
+            if (!GwtNullSafe.isBlankString(str)) {
+                for (final SortDirection sortDirection : SortDirection.values()) {
+                    if (sortDirection.shortForm.equalsIgnoreCase(str)) {
+                        return Optional.of(sortDirection);
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link Sort sort}

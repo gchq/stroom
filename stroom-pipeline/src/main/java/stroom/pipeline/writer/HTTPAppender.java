@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.writer;
 
 import stroom.meta.api.AttributeMap;
@@ -20,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -102,7 +119,7 @@ public class HTTPAppender extends AbstractAppender {
     private Long connectionTimeout;
     private Long readTimeout;
     private Long forwardChunkSize;
-    private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
+    private Set<CIKey> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
 
     private HttpURLConnection connection;
     private final OutputFactory outputStreamSupport;
@@ -118,7 +135,7 @@ public class HTTPAppender extends AbstractAppender {
     private String httpHeadersUserDefinedHeader1;
     private String httpHeadersUserDefinedHeader2;
     private String httpHeadersUserDefinedHeader3;
-    private final Map<String, Set<String>> requestProperties = new HashMap<>();
+    private final Map<CIKey, Set<String>> requestProperties = new HashMap<>();
     // Comma delimited meta keys
     private String httpHeadersStreamMetaDataAllowList;
     // Comma delimited meta keys
@@ -193,7 +210,7 @@ public class HTTPAppender extends AbstractAppender {
 
             setCompressionProperties(outputStreamSupport, connection);
 
-            for (Entry<String, String> entry : effectiveAttributeMap.entrySet()) {
+            for (Entry<CIKey, String> entry : effectiveAttributeMap.entrySet()) {
                 addRequestProperty(connection, entry.getKey(), entry.getValue());
             }
 
@@ -304,16 +321,16 @@ public class HTTPAppender extends AbstractAppender {
         // Allow trumps deny
         if (NullSafe.isNonBlankString(httpHeadersStreamMetaDataAllowList)) {
             effectiveAttributeMap = new AttributeMap();
-            final Set<String> allowSet = keysToSet(httpHeadersStreamMetaDataAllowList);
+            final Set<CIKey> allowSet = keysToSet(httpHeadersStreamMetaDataAllowList);
             clonedAttributeMap.forEach((key, value) -> {
-                if (allowSet.contains(key.toLowerCase())) {
+                if (allowSet.contains(key)) {
                     effectiveAttributeMap.put(key, value);
                 }
             });
         } else {
             effectiveAttributeMap = clonedAttributeMap;
             if (NullSafe.isNonBlankString(httpHeadersStreamMetaDataDenyList)) {
-                final Set<String> denySet = keysToSet(httpHeadersStreamMetaDataDenyList);
+                final Set<CIKey> denySet = keysToSet(httpHeadersStreamMetaDataDenyList);
                 effectiveAttributeMap.removeAll(denySet);
             }
         }
@@ -324,7 +341,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private String attributeMapToLines(final AttributeMap attributeMap, final String indent) {
-        if (NullSafe.isEmptyMap(attributeMap)) {
+        if (NullSafe.isTrue(attributeMap, AttributeMap::isEmpty)) {
             return "";
         } else {
             return attributeMap.entrySet()
@@ -336,7 +353,7 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
-    private Set<String> keysToSet(final String keys) {
+    private Set<CIKey> keysToSet(final String keys) {
         if (NullSafe.isBlankString(keys)) {
             return Collections.emptySet();
         } else {
@@ -344,7 +361,7 @@ public class HTTPAppender extends AbstractAppender {
                     .filter(Objects::nonNull)
                     .filter(Predicate.not(String::isBlank))
                     .map(String::trim)
-                    .map(String::toLowerCase)
+                    .map(CIKey::of)
                     .collect(Collectors.toSet());
         }
     }
@@ -425,14 +442,14 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private void addRequestProperty(final HttpURLConnection connection,
-                                    final String key,
+                                    final CIKey key,
                                     final String value) {
-        connection.addRequestProperty(key, value);
+        connection.addRequestProperty(key.get(), value);
 
         // It's not possible to inspect the connection to see what req props have been set
         // as that implicitly opens the connection, so store them in our own map for logging later
         if (LOGGER.isDebugEnabled()) {
-            if (key != null) {
+            if (!CIKey.isNull(key)) {
                 requestProperties.computeIfAbsent(key, k -> new HashSet<>())
                         .add(value);
             } else {
@@ -515,9 +532,7 @@ public class HTTPAppender extends AbstractAppender {
                      final long bytes,
                      final long duration) {
         if (logger.isInfoEnabled() && !metaKeySet.isEmpty()) {
-            final Map<String, String> filteredMap = attributeMap.entrySet().stream()
-                    .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))
-                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+            final AttributeMap filteredMap = attributeMap.filterIncluding(metaKeySet);
             final String kvPairs = CSVFormatter.format(filteredMap);
             final String message = CSVFormatter.escape(type) +
                     "," +
@@ -534,12 +549,14 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
-    private Set<String> getMetaKeySet(final String csv) {
+    private Set<CIKey> getMetaKeySet(final String csv) {
         if (NullSafe.isEmptyString(csv)) {
             return Collections.emptySet();
         }
 
-        return Arrays.stream(csv.toLowerCase().split(","))
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .map(CIKey::ofIgnoringCase)
                 .collect(Collectors.toSet());
     }
 

@@ -277,14 +277,6 @@ public class GwtNullSafe {
         return str != null && !str.isEmpty();
     }
 
-    public static Optional<String> nonBlank(final String str) {
-        if (isBlankString(str)) {
-            return Optional.empty();
-        } else {
-            return Optional.of(str);
-        }
-    }
-
     /**
      * @return str trimmed or an empty string if str is null
      */
@@ -292,6 +284,14 @@ public class GwtNullSafe {
         return str != null
                 ? str.trim()
                 : "";
+    }
+
+    public static Optional<String> nonBlank(final String str) {
+        if (isBlankString(str)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(str);
+        }
     }
 
     public static String join(final CharSequence delimiter, final CharSequence... elements) {

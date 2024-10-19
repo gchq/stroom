@@ -460,7 +460,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
 
         final Column statusColumn = Column.builder()
                 .name("Status")
-                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
+                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS_FIELD.getFldName()))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

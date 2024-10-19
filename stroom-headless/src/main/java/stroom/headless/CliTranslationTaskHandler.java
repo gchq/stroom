@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.headless;
@@ -132,7 +131,7 @@ class CliTranslationTaskHandler {
 
                     // Set the pipeline so it can be used by a filter if needed.
                     final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-                    if (pipelines == null || pipelines.size() == 0) {
+                    if (pipelines == null || pipelines.isEmpty()) {
                         throw ProcessException.create("No pipeline found for feed name '" + feedName + "'");
                     }
                     if (pipelines.size() > 1) {

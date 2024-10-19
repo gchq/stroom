@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.state.impl;
+package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
-import stroom.state.impl.dao.State;
-import stroom.state.impl.dao.StateDao;
-import stroom.state.impl.dao.StateFields;
-import stroom.state.impl.dao.StateRequest;
+import stroom.state.impl.ScyllaDbUtil;
+import stroom.util.shared.string.CIKeys;
 
 import org.junit.jupiter.api.Test;
 
@@ -37,27 +34,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestStateDao {
+class TestRangedStateDao {
 
     @Test
     void testDao() {
         ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final StateDao stateDao = new StateDao(sessionProvider, tableName);
+            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider, tableName);
 
-            insertData(stateDao, 100);
+            insertData(rangedStateDao, 100);
 
-            final StateRequest stateRequest = new StateRequest("TEST_MAP", "TEST_KEY");
-            final Optional<State> optional = stateDao.getState(stateRequest);
+            final RangedStateRequest stateRequest =
+                    new RangedStateRequest("TEST_MAP", 11);
+            final Optional<State> optional = rangedStateDao.getState(stateRequest);
             assertThat(optional).isNotEmpty();
             final State res = optional.get();
-            assertThat(res.key()).isEqualTo("TEST_KEY");
+            assertThat(res.key()).isEqualTo("11");
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(res.getValueAsString()).isEqualTo("test99");
 
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(StateFields.KEY);
+            fieldIndex.create(CIKeys.KEY_START);
             final AtomicInteger count = new AtomicInteger();
-            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
+            rangedStateDao.search(
+                    new ExpressionCriteria(ExpressionOperator.builder().build()),
+                    fieldIndex,
+                    null,
                     v -> count.incrementAndGet());
             assertThat(count.get()).isEqualTo(1);
         });
@@ -66,7 +67,7 @@ class TestStateDao {
     @Test
     void testRemoveOldData() {
         ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final StateDao stateDao = new StateDao(sessionProvider, tableName);
+            final RangedStateDao stateDao = new RangedStateDao(sessionProvider, tableName);
 
             insertData(stateDao, 100);
             insertData(stateDao, 10);
@@ -81,15 +82,16 @@ class TestStateDao {
         });
     }
 
-    private void insertData(final StateDao stateDao,
+    private void insertData(final RangedStateDao rangedStateDao,
                             final int rows) {
         for (int i = 0; i < rows; i++) {
             final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            final State state = new State(
-                    "TEST_KEY",
+            final RangedState state = new RangedState(
+                    10,
+                    30,
                     StringValue.TYPE_ID,
                     byteBuffer);
-            stateDao.insert(Collections.singletonList(state));
+            rangedStateDao.insert(Collections.singletonList(state));
         }
     }
 }
