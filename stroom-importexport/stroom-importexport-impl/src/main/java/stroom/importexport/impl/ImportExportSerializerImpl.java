@@ -32,7 +32,7 @@ import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.logging.LogUtil;
@@ -342,9 +342,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
         if (docExists) {
             // This is a pre-existing item so make sure we are allowed to update it.
-            if (!securityContext.hasDocumentPermission(docRef.getUuid(),
-                    DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            if (!securityContext.hasDocumentPermission(docRef,
+                    DocumentPermission.EDIT)) {
+                throw new PermissionException(securityContext.getUserRef(),
                         "You do not have permission to update '" + docRef + "'");
             }
 
@@ -378,9 +378,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             // Check permissions on the parent folder.
             folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
-            if (!securityContext.hasDocumentPermission(folderRef.getUuid(),
-                    DocumentPermissionNames.getDocumentCreatePermission(docRef.getType()))) {
-                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            if (!securityContext.hasDocumentCreatePermission(folderRef, docRef.getType())) {
+                throw new PermissionException(securityContext.getUserRef(),
                         "You do not have permission to create '" + docRef + "' in '" + folderRef);
             }
         }
@@ -524,9 +523,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 if (nodes.size() == 0) {
                     // No parent node can be found for this element so create one if possible.
                     final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
-                    if (!securityContext.hasDocumentPermission(folderRef.getUuid(),
-                            DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-                        throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                    if (!securityContext.hasDocumentCreatePermission(folderRef, FOLDER)) {
+                        throw new PermissionException(securityContext.getUserRef(),
                                 "You do not have permission to create a folder in '" + folderRef);
                     }
 
@@ -577,7 +575,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(
                     docRef.getType());
             if (importExportActionHandler != null) {
-                if (securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+                if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                     docRefs.add(docRef);
 
                     final Set<DocRef> associatedNonExplorerDocRefs =

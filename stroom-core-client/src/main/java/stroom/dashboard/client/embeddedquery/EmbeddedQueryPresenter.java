@@ -519,7 +519,7 @@ public class EmbeddedQueryPresenter
                     .onSuccess(result -> {
                         if (result != null) {
                             // Read expression.
-                            queryModel.init(result.getUuid());
+                            queryModel.init(result.asDocRef());
                             query = result.getQuery();
                             initialised = true;
                             if (queryOnOpen) {

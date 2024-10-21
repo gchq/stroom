@@ -22,7 +22,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -68,8 +68,8 @@ public class S3ClientConfigCache implements Clearable, EntityEvent.Handler {
     }
 
     public Optional<S3ClientConfig> get(final DocRef s3ConfigDocRef) {
-        if (!securityContext.hasDocumentPermission(s3ConfigDocRef, DocumentPermissionNames.USE)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(s3ConfigDocRef, DocumentPermission.USE)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to use " + s3ConfigDocRef);
         }
 

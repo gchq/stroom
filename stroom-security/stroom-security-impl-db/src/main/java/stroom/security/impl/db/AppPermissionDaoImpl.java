@@ -2,91 +2,163 @@ package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.AppPermissionDao;
-import stroom.security.impl.db.jooq.tables.StroomUser;
-import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
+import stroom.security.impl.AppPermissionIdDao;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.FetchAppUserPermissionsRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.jooq.Condition;
+import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.types.UByte;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
-import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;
+import static stroom.security.impl.db.jooq.tables.PermissionApp.PERMISSION_APP;
 import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class AppPermissionDaoImpl implements AppPermissionDao {
 
     private final SecurityDbConnProvider securityDbConnProvider;
+    private final AppPermissionIdDao appPermissionIdDao;
+    private final Provider<UserDaoImpl> userDaoProvider;
 
     @Inject
-    public AppPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider) {
+    public AppPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
+                                final AppPermissionIdDao appPermissionIdDao,
+                                final Provider<UserDaoImpl> userDaoProvider) {
         this.securityDbConnProvider = securityDbConnProvider;
+        this.appPermissionIdDao = appPermissionIdDao;
+        this.userDaoProvider = userDaoProvider;
     }
 
     @Override
-    public Set<String> getPermissionsForUser(final String userUuid) {
-        return JooqUtil.contextResult(securityDbConnProvider, context ->
-                context.select()
-                        .from(APP_PERMISSION)
-                        .where(APP_PERMISSION.USER_UUID.eq(userUuid))
-                        .fetchSet(APP_PERMISSION.PERMISSION));
+    public Set<AppPermission> getPermissionsForUser(final String userUuid) {
+        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select()
+                        .from(PERMISSION_APP)
+                        .where(PERMISSION_APP.USER_UUID.eq(userUuid))
+                        .fetch())
+                .stream()
+                .map(r -> {
+                    final int permissionId = r.get(PERMISSION_APP.PERMISSION_ID).intValue();
+                    final String permissionName = appPermissionIdDao.get(permissionId);
+                    return AppPermission.getPermissionForName(permissionName);
+                })
+                .collect(Collectors.toSet());
     }
 
     @Override
-    public Set<String> getPermissionsForUserName(String userName) {
-        Set<String> permissions = new HashSet<>();
-        // Get all permissions for this user
-        permissions.addAll(JooqUtil.contextResult(securityDbConnProvider, context ->
-                context.select()
-                        .from(APP_PERMISSION)
-                        .join(STROOM_USER)
-                        .on(STROOM_USER.UUID.eq(APP_PERMISSION.USER_UUID))
-                        .where(STROOM_USER.NAME.eq(userName))
-                        .fetchSet(APP_PERMISSION.PERMISSION)));
-
-
-        // Get all permissions for this user's groups
-        StroomUser userUser = STROOM_USER.as("userUser");
-        StroomUser groupUser = STROOM_USER.as("groupUser");
-        permissions.addAll(JooqUtil.contextResult(securityDbConnProvider, context ->
-                context.select()
-                        .from(APP_PERMISSION)
-                        // app_permission -> group user
-                        .join(groupUser)
-                        .on(APP_PERMISSION.USER_UUID.eq(groupUser.UUID))
-                        // group user -> stroom user group
-                        .join(STROOM_USER_GROUP)
-                        .on(groupUser.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
-                        // stroom user group -> user
-                        .join(userUser)
-                        .on(userUser.UUID.eq(STROOM_USER_GROUP.USER_UUID))
-                        .where(userUser.NAME.eq(userName))
-                        .fetchSet(APP_PERMISSION.PERMISSION)));
-
-        return permissions;
+    public void addPermission(final String userUuid, final AppPermission permission) {
+        final UByte permissionId = UByte.valueOf(appPermissionIdDao.getOrCreateId(permission.getDisplayValue()));
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .insertInto(PERMISSION_APP)
+                .columns(PERMISSION_APP.USER_UUID, PERMISSION_APP.PERMISSION_ID)
+                .values(userUuid, permissionId)
+                .execute());
     }
 
     @Override
-    public void addPermission(final String userUuid, final String permission) {
-        JooqUtil.context(securityDbConnProvider, context -> {
-            final Record user = context.fetchOne(STROOM_USER, STROOM_USER.UUID.eq(userUuid));
-            if (null == user) {
-                throw new SecurityException(String.format("Could not find user: %s", userUuid));
-            }
-
-            final AppPermissionRecord r = context.newRecord(APP_PERMISSION);
-            r.setUserUuid(userUuid);
-            r.setPermission(permission);
-            r.store();
-        });
+    public void removePermission(final String userUuid, AppPermission permission) {
+        final UByte permissionId = UByte.valueOf(appPermissionIdDao.getOrCreateId(permission.getDisplayValue()));
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .deleteFrom(PERMISSION_APP)
+                .where(PERMISSION_APP.USER_UUID.eq(userUuid))
+                .and(PERMISSION_APP.PERMISSION_ID.eq(permissionId)).execute());
     }
 
     @Override
-    public void removePermission(final String userUuid, String permission) {
-        JooqUtil.context(securityDbConnProvider, context ->
-                context.deleteFrom(APP_PERMISSION)
-                        .where(APP_PERMISSION.USER_UUID.eq(userUuid))
-                        .and(APP_PERMISSION.PERMISSION.eq(permission)).execute());
+    public ResultPage<AppUserPermissions> fetchAppUserPermissions(final FetchAppUserPermissionsRequest request) {
+        Objects.requireNonNull(request, "Null request");
+        final UserDaoImpl userDao = userDaoProvider.get();
+
+        final int offset = JooqUtil.getOffset(request.getPageRequest());
+        final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
+
+        final List<Condition> conditions = new ArrayList<>();
+        conditions.add(userDao.getUserCondition(request.getExpression()));
+        conditions.add(STROOM_USER.ENABLED.eq(true));
+
+        final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
+
+        List<AppUserPermissions> list = null;
+        if (request.isAllUsers()) {
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .select(
+                                    STROOM_USER.UUID,
+                                    STROOM_USER.NAME,
+                                    STROOM_USER.DISPLAY_NAME,
+                                    STROOM_USER.FULL_NAME,
+                                    STROOM_USER.IS_GROUP)
+                            .from(STROOM_USER)
+                            .where(conditions)
+                            .orderBy(orderFields)
+                            .offset(offset)
+                            .limit(limit)
+                            .fetch())
+                    .map(this::getAppUserPermissions);
+
+        } else {
+            // If we are only delivering users with specific permissions then join and select distinct.}
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .selectDistinct(
+                                    STROOM_USER.UUID,
+                                    STROOM_USER.NAME,
+                                    STROOM_USER.DISPLAY_NAME,
+                                    STROOM_USER.FULL_NAME,
+                                    STROOM_USER.IS_GROUP)
+                            .from(STROOM_USER)
+                            .join(PERMISSION_APP).on(PERMISSION_APP.USER_UUID.eq(STROOM_USER.UUID))
+                            .where(conditions)
+                            .orderBy(orderFields)
+                            .offset(offset)
+                            .limit(limit)
+                            .fetch())
+                    .map(this::getAppUserPermissions);
+        }
+        return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    private AppUserPermissions getAppUserPermissions(final Record r) {
+        final UserRef userRef = recordToUserRef(r);
+        return getAppUserPermissions(userRef);
+    }
+
+    private UserRef recordToUserRef(final Record r) {
+        return UserRef
+                .builder()
+                .uuid(r.get(STROOM_USER.UUID))
+                .subjectId(r.get(STROOM_USER.NAME))
+                .displayName(r.get(STROOM_USER.DISPLAY_NAME))
+                .fullName(r.get(STROOM_USER.FULL_NAME))
+                .group(r.get(STROOM_USER.IS_GROUP))
+                .build();
+    }
+
+    private AppUserPermissions getAppUserPermissions(final UserRef userRef) {
+        final Set<AppPermission> permissions = JooqUtil
+                .contextResult(securityDbConnProvider, context -> context
+                        .select(
+                                PERMISSION_APP.PERMISSION_ID)
+                        .from(PERMISSION_APP)
+                        .where(PERMISSION_APP.USER_UUID.eq(userRef.getUuid()))
+                        .fetch())
+                .map(r2 -> {
+                    final int permissionId = r2.get(PERMISSION_APP.PERMISSION_ID).intValue();
+                    final String permissionName = appPermissionIdDao.get(permissionId);
+                    return AppPermission.getPermissionForName(permissionName);
+                })
+                .stream()
+                .collect(Collectors.toSet());
+        return new AppUserPermissions(userRef, permissions);
     }
 }

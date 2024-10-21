@@ -13,11 +13,17 @@ import stroom.analytics.shared.ScheduleBounds;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.StringMatchConditionUtil;
 import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.security.user.api.UserRefLookup;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.jooq.Condition;
 import org.jooq.OrderField;
 import org.jooq.Record;
@@ -27,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static stroom.analytics.impl.db.jooq.tables.ExecutionHistory.EXECUTION_HISTORY;
@@ -36,10 +43,16 @@ import static stroom.analytics.impl.db.jooq.tables.ExecutionTracker.EXECUTION_TR
 public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
+    private final Provider<UserRefLookup> userRefLookupProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider) {
+    public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider,
+                                    final Provider<UserRefLookup> userRefLookupProvider,
+                                    final SecurityContext securityContext) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
+        this.userRefLookupProvider = userRefLookupProvider;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -70,7 +83,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.START_TIME_MS,
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID)
+                                EXECUTION_SCHEDULE.DOC_UUID,
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_SCHEDULE)
                         .where(conditions)
                         .orderBy(orderFields)
@@ -95,7 +109,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.START_TIME_MS,
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID)
+                                EXECUTION_SCHEDULE.DOC_UUID,
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_SCHEDULE)
                         .where(conditions)
                         .fetchOptional())
@@ -104,6 +119,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     @Override
     public ExecutionSchedule createExecutionSchedule(final ExecutionSchedule executionSchedule) {
+        final UserRef runAsUser = checkRunAs(executionSchedule);
+
         final Optional<Integer> optionalId = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
                         .insertInto(EXECUTION_SCHEDULE,
                                 EXECUTION_SCHEDULE.NAME,
@@ -115,7 +132,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.START_TIME_MS,
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID)
+                                EXECUTION_SCHEDULE.DOC_UUID,
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .values(executionSchedule.getName(),
                                 executionSchedule.isEnabled(),
                                 executionSchedule.getNodeName(),
@@ -131,15 +149,35 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                         :
                                                 executionSchedule.getScheduleBounds().getEndTimeMs(),
                                 executionSchedule.getOwningDoc().getType(),
-                                executionSchedule.getOwningDoc().getUuid())
+                                executionSchedule.getOwningDoc().getUuid(),
+                                runAsUser.getUuid())
                         .returning(EXECUTION_SCHEDULE.ID)
                         .fetchOptional())
                 .map(ExecutionScheduleRecord::getId);
         return optionalId.flatMap(this::fetchScheduleById).orElse(null);
     }
 
+    private UserRef checkRunAs(final ExecutionSchedule executionSchedule) {
+        final UserRef currentUser = securityContext.getUserRef();
+        if (executionSchedule.getRunAsUser() == null) {
+            // By default the creator of the filter becomes the run as user for the filter
+            // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
+            return currentUser;
+        } else if (!Objects.equals(executionSchedule.getRunAsUser(), currentUser) &&
+                !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to set the run as user to '" +
+                            executionSchedule.getRunAsUser().toDisplayString() +
+                            "'. You can only run a filter as " +
+                            "yourself unless you have manage users permission");
+        }
+        return executionSchedule.getRunAsUser();
+    }
+
     @Override
     public ExecutionSchedule updateExecutionSchedule(final ExecutionSchedule executionSchedule) {
+        final UserRef runAsUser = checkRunAs(executionSchedule);
+
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .update(EXECUTION_SCHEDULE)
                 .set(EXECUTION_SCHEDULE.NAME, executionSchedule.getName())
@@ -160,6 +198,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                         executionSchedule.getScheduleBounds().getEndTimeMs())
                 .set(EXECUTION_SCHEDULE.DOC_TYPE, executionSchedule.getOwningDoc().getType())
                 .set(EXECUTION_SCHEDULE.DOC_UUID, executionSchedule.getOwningDoc().getUuid())
+                .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
                 .where(EXECUTION_SCHEDULE.ID.eq(executionSchedule.getId()))
                 .execute());
         return fetchScheduleById(executionSchedule.getId()).orElse(null);
@@ -257,7 +296,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.START_TIME_MS,
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID)
+                                EXECUTION_SCHEDULE.DOC_UUID,
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_HISTORY)
                         .join(EXECUTION_SCHEDULE)
                         .on(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(EXECUTION_SCHEDULE.ID))
@@ -310,6 +350,10 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .contiguous(record.get(EXECUTION_SCHEDULE.CONTIGUOUS))
                 .scheduleBounds(scheduleBounds)
                 .owningDoc(docRef)
+                .runAsUser(userRefLookupProvider
+                        .get()
+                        .getByUuid(record.get(EXECUTION_SCHEDULE.RUN_AS_USER_UUID))
+                        .orElse(null))
                 .build();
     }
 

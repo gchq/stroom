@@ -29,7 +29,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
@@ -67,7 +67,7 @@ public class AnalyticProcessingPresenter
         view.setUiHandlers(this);
 
         errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        errorFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 

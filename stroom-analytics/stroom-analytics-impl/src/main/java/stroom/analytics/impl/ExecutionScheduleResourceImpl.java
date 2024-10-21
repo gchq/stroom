@@ -24,29 +24,38 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Objects;
 
 @AutoLogged(OperationType.UNLOGGED)
 class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
 
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider) {
+    ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
+                                  final Provider<SecurityContext> securityContextProvider) {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
-    public ExecutionSchedule createExecutionSchedule(final ExecutionSchedule executionSchedule) {
-        return executionScheduleDaoProvider.get().createExecutionSchedule(executionSchedule);
+    public ExecutionSchedule createExecutionSchedule(ExecutionSchedule executionSchedule) {
+        return executionScheduleDaoProvider.get().createExecutionSchedule(checkRunAs(executionSchedule));
     }
 
     @Override
     public ExecutionSchedule updateExecutionSchedule(final ExecutionSchedule executionSchedule) {
-        return executionScheduleDaoProvider.get().updateExecutionSchedule(executionSchedule);
+        return executionScheduleDaoProvider.get().updateExecutionSchedule(checkRunAs(executionSchedule));
     }
 
     @Override
@@ -67,5 +76,21 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     @Override
     public ExecutionTracker fetchTracker(final ExecutionSchedule schedule) {
         return executionScheduleDaoProvider.get().fetchTracker(schedule);
+    }
+
+    private ExecutionSchedule checkRunAs(final ExecutionSchedule executionSchedule) {
+        final SecurityContext securityContext = securityContextProvider.get();
+        final UserRef currentUser = securityContext.getUserRef();
+        if (executionSchedule.getRunAsUser() == null) {
+            return executionSchedule
+                    .copy()
+                    .runAsUser(currentUser)
+                    .build();
+        } else if (!Objects.equals(executionSchedule.getRunAsUser(), currentUser) && !securityContext.hasAppPermission(
+                AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(currentUser, "You do not have permission to execute as " +
+                    executionSchedule.getRunAsUser().toDisplayString());
+        }
+        return executionSchedule;
     }
 }

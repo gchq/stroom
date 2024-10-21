@@ -21,7 +21,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
@@ -81,9 +81,9 @@ public class ScyllaDbDocCacheImpl implements ScyllaDbDocCache, Clearable, Entity
     public ScyllaDbDoc get(final DocRef docRef) {
         Objects.requireNonNull(docRef, "Null DocRef supplied");
 
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
         return cache.get(docRef);

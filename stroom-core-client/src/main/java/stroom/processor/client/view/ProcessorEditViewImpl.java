@@ -39,6 +39,8 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     MyDateBox minMetaCreateTimeMs;
     @UiField
     MyDateBox maxMetaCreateTimeMs;
+    @UiField
+    SimplePanel runAsUser;
 
     @Inject
     public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder,
@@ -76,6 +78,11 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
         this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+    }
+
+    @Override
+    public void setRunAsUserView(final View view) {
+        this.runAsUser.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {

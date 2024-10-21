@@ -158,20 +158,8 @@ public class ResultPage<T> implements Serializable {
      */
     public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
                                                              final BaseCriteria baseCriteria) {
-        return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest()));
-    }
-
-    /**
-     * Used for filter queries (maybe bounded).
-     */
-    public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
-                                                             final BaseCriteria baseCriteria,
-                                                             final long totalSize) {
-        return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest(), totalSize));
-    }
-
-    protected static <T> PageResponse createPageResponse(final List<T> realList,
-                                                         final PageRequest pageRequest) {
+        List<T> results = realList;
+        final PageRequest pageRequest = baseCriteria.getPageRequest();
         boolean moreToFollow = false;
         Long totalSize = null;
         final long offset = pageRequest != null && pageRequest.getOffset() != null
@@ -181,7 +169,7 @@ public class ResultPage<T> implements Serializable {
         if (pageRequest != null && pageRequest.getLength() != null) {
             // All our queries are + 1 on the limit so that we know there is
             // more to come
-            final int overflow = realList.size() - pageRequest.getLength();
+            final int overflow = results.size() - pageRequest.getLength();
             moreToFollow = overflow > 0;
 
             if (moreToFollow) {
@@ -197,33 +185,35 @@ public class ResultPage<T> implements Serializable {
                 }
 
                 // All our queries are + 1 to we need to remove the last element
-                realList.remove(realList.size() - 1);
+                results = results.subList(0, results.size() - 1);
 
             } else {
                 // If we have not been given the total size see if we can work it out
                 // based on hitting the end
-                totalSize = offset + realList.size();
+                totalSize = offset + results.size();
             }
         }
 
-        return new PageResponse(
+        final PageResponse pageResponse = new PageResponse(
                 offset,
-                realList.size(),
+                results.size(),
                 totalSize,
                 !moreToFollow);
+        return new ResultPage<>(results, pageResponse);
     }
 
-    protected static <T> PageResponse createPageResponse(final List<T> realList,
-                                                         final PageRequest pageRequest,
-                                                         final long totalSize) {
+    /**
+     * Used for filter queries (maybe bounded).
+     */
+    public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
+                                                             final BaseCriteria baseCriteria,
+                                                             final long totalSize) {
+        final PageRequest pageRequest = baseCriteria.getPageRequest();
         final long offset = pageRequest != null && pageRequest.getOffset() != null
                 ? pageRequest.getOffset()
                 : 0;
-        return new PageResponse(
-                offset,
-                realList.size(),
-                totalSize,
-                true);
+        final PageResponse pageResponse = new PageResponse(offset, realList.size(), totalSize, true);
+        return new ResultPage<>(realList, pageResponse);
     }
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(

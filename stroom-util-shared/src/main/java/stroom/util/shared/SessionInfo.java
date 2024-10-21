@@ -11,23 +11,23 @@ import java.util.Objects;
 public class SessionInfo {
 
     @JsonProperty
-    private final UserName userName;
+    private final UserRef userRef;
     @JsonProperty
     private final String nodeName;
     @JsonProperty
     private final BuildInfo buildInfo;
 
     @JsonCreator
-    public SessionInfo(@JsonProperty("userName") final UserName userName,
+    public SessionInfo(@JsonProperty("userRef") final UserRef userRef,
                        @JsonProperty("nodeName") final String nodeName,
                        @JsonProperty("buildInfo") final BuildInfo buildInfo) {
-        this.userName = userName;
+        this.userRef = userRef;
         this.nodeName = nodeName;
         this.buildInfo = buildInfo;
     }
 
-    public UserName getUserName() {
-        return userName;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public String getNodeName() {
@@ -47,20 +47,20 @@ public class SessionInfo {
             return false;
         }
         final SessionInfo that = (SessionInfo) o;
-        return Objects.equals(userName, that.userName) &&
+        return Objects.equals(userRef, that.userRef) &&
                 Objects.equals(nodeName, that.nodeName) &&
                 Objects.equals(buildInfo, that.buildInfo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userName, nodeName, buildInfo);
+        return Objects.hash(userRef, nodeName, buildInfo);
     }
 
     @Override
     public String toString() {
         return "SessionInfo{" +
-                "userName='" + userName + '\'' +
+                "userRef='" + userRef + '\'' +
                 ", nodeName='" + nodeName + '\'' +
                 ", buildInfo=" + buildInfo +
                 '}';

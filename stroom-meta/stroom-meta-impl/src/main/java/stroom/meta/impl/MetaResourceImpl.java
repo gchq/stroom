@@ -32,7 +32,7 @@ import stroom.meta.shared.UpdateStatusRequest;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -91,9 +91,9 @@ class MetaResourceImpl implements MetaResource {
 
         final ExpressionOperator expression = Objects.requireNonNull(request.getCriteria().getExpression());
         final boolean isDelete = request.getNewStatus() == Status.DELETED;
-        final String permission = isDelete
-                ? DocumentPermissionNames.DELETE
-                : DocumentPermissionNames.UPDATE;
+        final DocumentPermission permission = isDelete
+                ? DocumentPermission.DELETE
+                : DocumentPermission.EDIT;
         String currentStatus = NullSafe.getOrElse(
                 request.getCurrentStatus(), Status::getDisplayValue, "unspecified/unknown");
         final String newStatus = NullSafe.getOrElse(
@@ -105,7 +105,7 @@ class MetaResourceImpl implements MetaResource {
         final List<Data> dataItems = new ArrayList<>();
 
         if (expression.getChildren().size() == 1
-                && expression.getChildren().get(0) instanceof final ExpressionTerm term
+                && expression.getChildren().getFirst() instanceof final ExpressionTerm term
                 && term.hasCondition(Condition.EQUALS)) {
             final String metaIdStr = term.getValue();
 
@@ -139,7 +139,7 @@ class MetaResourceImpl implements MetaResource {
                     : "Update the status of stream with ID " + metaIdStr
                             + " from " + currentStatus + " to " + newStatus;
         } else if (expression.getChildren().size() == 1
-                && expression.getChildren().get(0) instanceof final ExpressionTerm term
+                && expression.getChildren().getFirst() instanceof final ExpressionTerm term
                 && term.hasCondition(Condition.IN)) {
             final String streamIdsStr = term.getValue();
             final String[] idArr = NullSafe.getOrElse(
@@ -205,7 +205,7 @@ class MetaResourceImpl implements MetaResource {
     private void addSelectionSummaryDataItems(
             final List<Data> dataItems,
             final FindMetaCriteria criteria,
-            final String permission) {
+            final DocumentPermission permission) {
         try {
             final SelectionSummary selectionSummary = metaServiceProvider.get()
                     .getSelectionSummary(criteria, permission);
@@ -305,7 +305,7 @@ class MetaResourceImpl implements MetaResource {
         Objects.requireNonNull(request);
         return metaServiceProvider.get().getSelectionSummary(
                 request.getFindMetaCriteria(),
-                Objects.requireNonNullElse(request.getRequiredPermission(), DocumentPermissionNames.READ));
+                Objects.requireNonNullElse(request.getRequiredPermission(), DocumentPermission.VIEW));
     }
 
     @AutoLogged(OperationType.SEARCH)
@@ -314,7 +314,7 @@ class MetaResourceImpl implements MetaResource {
         Objects.requireNonNull(request);
         return metaServiceProvider.get().getReprocessSelectionSummary(
                 request.getFindMetaCriteria(),
-                Objects.requireNonNullElse(request.getRequiredPermission(), DocumentPermissionNames.READ));
+                Objects.requireNonNullElse(request.getRequiredPermission(), DocumentPermission.VIEW));
     }
 
     @Override

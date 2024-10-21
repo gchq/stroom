@@ -3503,6 +3503,96 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/advancedFind" : {
+      "post" : {
+        "operationId" : "advancedFind",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AdvancedDocumentFindRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFindResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find documents with names and types matching the supplied request",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/advancedFindWithPermissions" : {
+      "post" : {
+        "operationId" : "advancedFindWithPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AdvancedDocumentFindWithPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFindResultWithPermissions"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find documents with names and types matching the supplied request and the accociated permissions for a given user",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/changeDocumentPermissions" : {
+      "post" : {
+        "operationId" : "changeDocumentPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkDocumentPermissionChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Change document permissions",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/copy" : {
       "post" : {
         "operationId" : "copyExplorerItems",
@@ -3842,7 +3932,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindRequest"
+                "$ref" : "#/components/schemas/DocumentFindRequest"
               }
             }
           },
@@ -6140,13 +6230,13 @@
     },
     "/permission/app/v1" : {
       "get" : {
-        "operationId" : "getUserAndPermissions",
+        "operationId" : "getEffectiveAppPermissions",
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserAndPermissions"
+                  "$ref" : "#/components/schemas/AppUserPermissions"
                 }
               }
             },
@@ -6157,14 +6247,14 @@
         "tags" : [ "Application Permissions" ]
       }
     },
-    "/permission/app/v1/changeUser" : {
+    "/permission/app/v1/changeAppPermission" : {
       "post" : {
-        "operationId" : "changeUserPermissions",
+        "operationId" : "changeAppPermission",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChangeUserRequest"
+                "$ref" : "#/components/schemas/AbstractAppPermissionChange"
               }
             }
           },
@@ -6187,36 +6277,44 @@
         "tags" : [ "Application Permissions" ]
       }
     },
-    "/permission/app/v1/fetchAllPermissions" : {
-      "get" : {
-        "operationId" : "fetchAllPermissions",
+    "/permission/app/v1/fetchAppUserPermissions" : {
+      "post" : {
+        "operationId" : "fetchAppUserPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchAppUserPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
+                  "$ref" : "#/components/schemas/ResultPageAppUserPermissions"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Get all possible permissions",
+        "summary" : "Fetch app user permissions",
         "tags" : [ "Application Permissions" ]
       }
     },
-    "/permission/app/v1/fetchUserAppPermissions" : {
+    "/permission/app/v1/getAppUserPermissionsReport" : {
       "post" : {
-        "operationId" : "fetchUserAppPermissions",
+        "operationId" : "getAppUserPermissionsReport",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/User"
+                "$ref" : "#/components/schemas/UserRef"
               }
             }
           },
@@ -6228,14 +6326,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserAndPermissions"
+                  "$ref" : "#/components/schemas/AppUserPermissionsReport"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "User and app permissions for the specified user",
+        "summary" : "Get a detailed report of app permissions for the specified user",
         "tags" : [ "Application Permissions" ]
       }
     },
@@ -6254,11 +6352,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PermissionChangeRequest"
+                "$ref" : "#/components/schemas/PermissionChangeEvent"
               }
             }
           },
-          "description" : "request",
+          "description" : "event",
           "required" : true
         },
         "responses" : {
@@ -6275,36 +6373,6 @@
         },
         "summary" : "Fires a permission change event",
         "tags" : [ "Application Permissions" ]
-      }
-    },
-    "/permission/doc/v1/changeDocumentPermissions" : {
-      "post" : {
-        "operationId" : "changeDocumentPermissions",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Change document permissions",
-        "tags" : [ "Doc Permissions" ]
       }
     },
     "/permission/doc/v1/checkDocumentPermission" : {
@@ -6337,14 +6405,14 @@
         "tags" : [ "Doc Permissions" ]
       }
     },
-    "/permission/doc/v1/copyPermissionsFromParent" : {
+    "/permission/doc/v1/fetchDocumentUserPermissions" : {
       "post" : {
-        "operationId" : "copyPermissionFromParent",
+        "operationId" : "fetchDocumentUserPermissions",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CopyPermissionsFromParentRequest"
+                "$ref" : "#/components/schemas/FetchDocumentUserPermissionsRequest"
               }
             }
           },
@@ -6356,25 +6424,25 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocumentPermissions"
+                  "$ref" : "#/components/schemas/ResultPageDocumentUserPermissions"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Copy permissions from parent",
+        "summary" : "Fetch document user permissions",
         "tags" : [ "Doc Permissions" ]
       }
     },
-    "/permission/doc/v1/fetchAllDocumentPermissions" : {
+    "/permission/doc/v1/getDocUserPermissionsReport" : {
       "post" : {
-        "operationId" : "fetchAllDocumentPermissions",
+        "operationId" : "getDocUserPermissionsReport",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FetchAllDocumentPermissionsRequest"
+                "$ref" : "#/components/schemas/DocumentUserPermissionsRequest"
               }
             }
           },
@@ -6386,138 +6454,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocumentPermissions"
+                  "$ref" : "#/components/schemas/DocumentUserPermissionsReport"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Fetch document permissions",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/fetchPermissionChangeImpact" : {
-      "post" : {
-        "operationId" : "fetchPermissionChangeImpact",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PermissionChangeImpactSummary"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch impact summary for a change of document permissions",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/filterUsers" : {
-      "post" : {
-        "operationId" : "filterUsers",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FilterUsersRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/UserName"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get all permissions for a given document type",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/getDocumentOwners" : {
-      "post" : {
-        "operationId" : "getDocumentOwners",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string"
-              }
-            }
-          },
-          "description" : "documentUuid",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/UserName"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get the owners of the specified document",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/getPermissionForDocType/${docType}" : {
-      "get" : {
-        "operationId" : "getPermissionForDocType",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "docType",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get all permissions for a given document type",
+        "summary" : "Get a detailed report of doc permissions for the specified user",
         "tags" : [ "Doc Permissions" ]
       }
     },
@@ -6911,6 +6855,36 @@
           }
         },
         "summary" : "Creates a filter",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
+    "/processorFilter/v1/bulkChange" : {
+      "post" : {
+        "operationId" : "bulkChange",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkProcessorFilterChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Bulk change processors",
         "tags" : [ "Processor Filters" ]
       }
     },
@@ -10173,14 +10147,14 @@
         "tags" : [ "Text Converters" ]
       }
     },
-    "/userNames/v1/find" : {
+    "/userRef/v1/find" : {
       "post" : {
-        "operationId" : "findUserNames",
+        "operationId" : "findUserRefs",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindUserNameCriteria"
+                "$ref" : "#/components/schemas/FindUserCriteria"
               }
             }
           },
@@ -10192,195 +10166,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageUserName"
+                  "$ref" : "#/components/schemas/ResultPageUserRef"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Find the user names matching the supplied criteria",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/findAssociates" : {
-      "post" : {
-        "operationId" : "findAssociateUserNames",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FindUserNameCriteria"
-              }
-            }
-          },
-          "description" : "criteria",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageUserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/getByDisplayName/{displayName}" : {
-      "get" : {
-        "operationId" : "getByDisplayName",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "displayName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user name matching the supplied displayName",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/getByUuid/{userUuid}" : {
-      "get" : {
-        "operationId" : "getByUuid",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "userUuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user name matching the supplied unique Stroom user UUID",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/{subjectId}" : {
-      "get" : {
-        "operationId" : "getByUserId",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "subjectId",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user name matching the supplied unique user subject ID",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1" : {
-      "get" : {
-        "operationId" : "findUsers",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "name",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "isGroup",
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "in" : "query",
-          "name" : "uuid",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/User"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the users matching the supplied criteria",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1/associates" : {
-      "get" : {
-        "operationId" : "getAssociatedUsers",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "filter",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/UserName"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets a list of associated users",
+        "summary" : "Find the users and groups matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10421,7 +10214,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/UserName"
+                "$ref" : "#/components/schemas/UserDesc"
               }
             }
           },
@@ -10503,21 +10296,24 @@
             "description" : "default response"
           }
         },
-        "summary" : "Find the users matching the supplied criteria",
+        "summary" : "Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
         "tags" : [ "Authorisation" ]
       }
     },
-    "/users/v1/{userUuid}" : {
-      "get" : {
-        "operationId" : "fetchUser",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "userUuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+    "/users/v1/updateUser" : {
+      "post" : {
+        "operationId" : "updateUser",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/User"
+              }
+            }
+          },
+          "description" : "user",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
@@ -10530,7 +10326,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetches the user with the supplied UUID",
+        "summary" : "Updates a user",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10597,33 +10393,6 @@
           }
         },
         "summary" : "Adds user with UUID userUuid to the group with UUID groupUuid",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1/{uuid}" : {
-      "delete" : {
-        "operationId" : "deleteUser",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Deletes the user with the supplied UUID",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10950,6 +10719,37 @@
   },
   "components" : {
     "schemas" : {
+      "AbstractAppPermissionChange" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "permission" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "AbstractDocumentPermissionsChange" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
@@ -11121,9 +10921,6 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "json" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -11131,8 +10928,8 @@
           "updateUser" : {
             "type" : "string"
           },
-          "userId" : {
-            "type" : "string"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "version" : {
             "type" : "integer",
@@ -11182,21 +10979,50 @@
           }
         }
       },
-      "AddPermissionEvent" : {
+      "AddAllDocumentCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
-            "documentUuid" : {
-              "type" : "string"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "AddAllPermissionsFrom" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "sourceDocRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
+      "AddAppPermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAppPermissionChange"
+        } ]
+      },
+      "AddDocumentCreatePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "documentType" : {
+              "$ref" : "#/components/schemas/DocumentType"
             },
-            "permission" : {
-              "type" : "string"
-            },
-            "userUuid" : {
-              "type" : "string"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
             }
           }
         } ]
@@ -11216,6 +11042,70 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          }
+        }
+      },
+      "AdvancedDocumentFindRequest" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "uniqueItems" : true
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "AdvancedDocumentFindWithPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "explicitPermission" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "uniqueItems" : true
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -11378,7 +11268,7 @@
         "type" : "object",
         "properties" : {
           "assignedTo" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           },
           "comment" : {
             "type" : "string"
@@ -11436,15 +11326,15 @@
       "AnnotationEntry" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
+          "entryTime" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "createUser" : {
-            "type" : "string"
-          },
           "entryType" : {
             "type" : "string"
+          },
+          "entryUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "entryValue" : {
             "$ref" : "#/components/schemas/EntryValue"
@@ -11452,17 +11342,6 @@
           "id" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "integer",
-            "format" : "int32"
           }
         }
       },
@@ -11528,6 +11407,52 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HashedApiKey"
+            }
+          }
+        }
+      },
+      "AppUserPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "inherited" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "permissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "AppUserPermissionsReport" : {
+        "type" : "object",
+        "properties" : {
+          "explicitPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "inheritedPermissions" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
             }
           }
         }
@@ -11924,6 +11849,32 @@
           }
         }
       },
+      "BulkDocumentPermissionChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          }
+        }
+      },
+      "BulkProcessorFilterChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "type" : "string",
+            "enum" : [ "ENABLE", "DISABLE", "DELETE", "SET_RUN_AS_USER" ]
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
       "CacheIdentity" : {
         "type" : "object",
         "properties" : {
@@ -11983,21 +11934,6 @@
           }
         }
       },
-      "ChangeDocumentPermissionsRequest" : {
-        "type" : "object",
-        "properties" : {
-          "cascade" : {
-            "type" : "string",
-            "enum" : [ "NO", "CHANGES_ONLY", "ALL" ]
-          },
-          "changes" : {
-            "$ref" : "#/components/schemas/Changes"
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          }
-        }
-      },
       "ChangePasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -12029,106 +11965,17 @@
           }
         }
       },
-      "ChangeSetString" : {
-        "type" : "object",
-        "properties" : {
-          "addSet" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          },
-          "removeSet" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "ChangeSetUser" : {
-        "type" : "object",
-        "properties" : {
-          "addSet" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/User"
-            },
-            "uniqueItems" : true
-          },
-          "removeSet" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/User"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "ChangeUserRequest" : {
-        "type" : "object",
-        "properties" : {
-          "changedAppPermissions" : {
-            "$ref" : "#/components/schemas/ChangeSetString"
-          },
-          "changedLinkedUsers" : {
-            "$ref" : "#/components/schemas/ChangeSetUser"
-          },
-          "user" : {
-            "$ref" : "#/components/schemas/User"
-          }
-        }
-      },
-      "Changes" : {
-        "type" : "object",
-        "properties" : {
-          "add" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string"
-              },
-              "uniqueItems" : true
-            }
-          },
-          "remove" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string"
-              },
-              "uniqueItems" : true
-            }
-          }
-        }
-      },
       "CheckDocumentPermissionRequest" : {
         "type" : "object",
         "properties" : {
-          "documentUuid" : {
-            "type" : "string"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "permission" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
           }
         }
-      },
-      "ClearDocumentPermissionsEvent" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "documentUuid" : {
-              "type" : "string"
-            }
-          }
-        } ]
       },
       "ClientCredentials" : {
         "type" : "object",
@@ -12499,14 +12346,6 @@
         },
         "required" : [ "type" ]
       },
-      "CopyPermissionsFromParentRequest" : {
-        "type" : "object",
-        "properties" : {
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          }
-        }
-      },
       "CountLong" : {
         "type" : "object",
         "properties" : {
@@ -12615,7 +12454,7 @@
             "type" : "string"
           },
           "owner" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -12667,6 +12506,9 @@
           },
           "reprocess" : {
             "type" : "boolean"
+          },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -13111,7 +12953,8 @@
           "requiredPermissions" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
           }
@@ -13265,6 +13108,9 @@
           },
           "sample" : {
             "type" : "string"
+          },
+          "sampleAtStartOfLine" : {
+            "type" : "boolean"
           }
         }
       },
@@ -13288,7 +13134,7 @@
             "example" : "9f6184b4-bd78-48bc-b0cd-6e51a357f6a6"
           }
         },
-        "required" : [ "name", "type", "uuid" ],
+        "required" : [ "uuid" ],
         "xml" : {
           "name" : "doc"
         }
@@ -13330,32 +13176,23 @@
           }
         }
       },
-      "DocumentPermissions" : {
+      "DocumentFindRequest" : {
         "type" : "object",
         "properties" : {
-          "docUuid" : {
-            "type" : "string"
+          "filter" : {
+            "$ref" : "#/components/schemas/ExplorerTreeFilter"
           },
-          "groups" : {
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/User"
-            }
-          },
-          "permissions" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string"
-              },
-              "uniqueItems" : true
-            }
-          },
-          "users" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/User"
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
           }
         }
@@ -13372,7 +13209,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_S3V1", "DOCUMENT_S3V2", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -13393,6 +13230,81 @@
             "items" : {
               "$ref" : "#/components/schemas/DocumentType"
             }
+          }
+        }
+      },
+      "DocumentUserPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "documentCreatePermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "inheritedDocumentCreatePermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "inheritedPermission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "permission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "DocumentUserPermissionsReport" : {
+        "type" : "object",
+        "properties" : {
+          "explicitCreatePermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "explicitPermission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "inheritedCreatePermissionPaths" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          },
+          "inheritedPermissionPaths" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        }
+      },
+      "DocumentUserPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -13679,14 +13591,14 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "fldName" : {
             "type" : "string"
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -13921,6 +13833,9 @@
           "owningDoc" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
+          },
           "schedule" : {
             "$ref" : "#/components/schemas/Schedule"
           },
@@ -14003,7 +13918,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_S3V1", "DOCUMENT_S3V2", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "name" : {
             "type" : "string"
@@ -14051,13 +13966,6 @@
           },
           "explorerNode" : {
             "$ref" : "#/components/schemas/ExplorerNode"
-          },
-          "owners" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/UserName"
-            },
-            "uniqueItems" : true
           }
         }
       },
@@ -14091,7 +13999,8 @@
           "documentPermissions" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
           },
@@ -14222,7 +14131,8 @@
           "requiredPermissions" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
           },
@@ -14313,7 +14223,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -14409,11 +14319,27 @@
           }
         }
       },
-      "FetchAllDocumentPermissionsRequest" : {
+      "FetchAppUserPermissionsRequest" : {
         "type" : "object",
         "properties" : {
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "allUsers" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
           }
         }
       },
@@ -14469,6 +14395,33 @@
             }
           }
         } ]
+      },
+      "FetchDocumentUserPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "allUsers" : {
+            "type" : "boolean"
+          },
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
       },
       "FetchExplorerNodeResult" : {
         "type" : "object",
@@ -14661,20 +14614,6 @@
           }
         }
       },
-      "FilterUsersRequest" : {
-        "type" : "object",
-        "properties" : {
-          "quickFilterInput" : {
-            "type" : "string"
-          },
-          "users" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/UserName"
-            }
-          }
-        }
-      },
       "FindAccountRequest" : {
         "type" : "object",
         "properties" : {
@@ -14724,7 +14663,7 @@
         "type" : "object",
         "properties" : {
           "owner" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -14907,7 +14846,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_S3V1", "DOCUMENT_S3V2", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "isFavourite" : {
             "type" : "boolean"
@@ -15028,27 +14967,6 @@
           }
         }
       },
-      "FindRequest" : {
-        "type" : "object",
-        "properties" : {
-          "filter" : {
-            "$ref" : "#/components/schemas/ExplorerTreeFilter"
-          },
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          }
-        }
-      },
       "FindResult" : {
         "type" : "object",
         "properties" : {
@@ -15057,7 +14975,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_S3V1", "DOCUMENT_S3V2", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "path" : {
             "type" : "string"
@@ -15085,6 +15003,17 @@
           }
         }
       },
+      "FindResultWithPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "findResult" : {
+            "$ref" : "#/components/schemas/FindResult"
+          },
+          "permissions" : {
+            "$ref" : "#/components/schemas/DocumentUserPermissions"
+          }
+        }
+      },
       "FindStoredQueryCriteria" : {
         "type" : "object",
         "properties" : {
@@ -15100,8 +15029,8 @@
           "name" : {
             "$ref" : "#/components/schemas/StringCriteria"
           },
-          "ownerUuid" : {
-            "type" : "string"
+          "owner" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -15185,38 +15114,11 @@
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
-          "group" : {
-            "type" : "boolean"
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilterInput" : {
-            "type" : "string"
-          },
-          "relatedUser" : {
-            "$ref" : "#/components/schemas/User"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          }
-        }
-      },
-      "FindUserNameCriteria" : {
-        "type" : "object",
-        "properties" : {
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilterInput" : {
-            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -15543,7 +15445,7 @@
             "type" : "string"
           },
           "owner" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -16333,7 +16235,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -16804,32 +16706,12 @@
       },
       "PermissionChangeEvent" : {
         "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
         "properties" : {
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "type" ]
-      },
-      "PermissionChangeImpactSummary" : {
-        "type" : "object",
-        "properties" : {
-          "impactDetail" : {
-            "type" : "string"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
-          "impactSummary" : {
-            "type" : "string"
-          }
-        }
-      },
-      "PermissionChangeRequest" : {
-        "type" : "object",
-        "properties" : {
-          "event" : {
-            "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -16923,7 +16805,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_S3V1", "DOCUMENT_S3V2", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -17286,9 +17168,6 @@
           "createUser" : {
             "type" : "string"
           },
-          "data" : {
-            "type" : "string"
-          },
           "deleted" : {
             "type" : "boolean"
           },
@@ -17340,6 +17219,9 @@
           "reprocess" : {
             "type" : "boolean"
           },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
+          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -17363,9 +17245,6 @@
         }, {
           "type" : "object",
           "properties" : {
-            "ownerDisplayName" : {
-              "type" : "string"
-            },
             "processorFilter" : {
               "$ref" : "#/components/schemas/ProcessorFilter"
             }
@@ -17804,7 +17683,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -17814,7 +17693,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "name" : {
             "type" : "string"
@@ -17977,7 +17856,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_S3V1", "DOCUMENT_S3V2", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "iconTooltip" : {
             "type" : "string"
@@ -18263,21 +18142,50 @@
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
       },
-      "RemovePermissionEvent" : {
+      "RemoveAllDocumentCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
-            "documentUuid" : {
-              "type" : "string"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "RemoveAllPermissions" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "ignore" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
+      },
+      "RemoveAppPermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAppPermissionChange"
+        } ]
+      },
+      "RemoveDocumentCreatePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "documentType" : {
+              "$ref" : "#/components/schemas/DocumentType"
             },
-            "permission" : {
-              "type" : "string"
-            },
-            "userUuid" : {
-              "type" : "string"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
             }
           }
         } ]
@@ -18377,6 +18285,21 @@
           }
         }
       },
+      "ResultPageAppUserPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppUserPermissions"
+            }
+          }
+        }
+      },
       "ResultPageCompletionItem" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -18452,6 +18375,21 @@
           }
         }
       },
+      "ResultPageDocumentUserPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocumentUserPermissions"
+            }
+          }
+        }
+      },
       "ResultPageDuplicateCheckRow" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -18523,6 +18461,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/FindResult"
+            }
+          }
+        }
+      },
+      "ResultPageFindResultWithPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FindResultWithPermissions"
             }
           }
         }
@@ -18722,7 +18675,7 @@
           }
         }
       },
-      "ResultPageUserName" : {
+      "ResultPageUserRef" : {
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
@@ -18732,7 +18685,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/UserName"
+              "$ref" : "#/components/schemas/UserRef"
             }
           }
         }
@@ -18784,15 +18737,15 @@
           "complete" : {
             "type" : "boolean"
           },
-          "createUser" : {
-            "type" : "string"
-          },
           "creationTime" : {
             "type" : "integer",
             "format" : "int64"
           },
           "nodeName" : {
             "type" : "string"
+          },
+          "owner" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
@@ -19293,8 +19246,8 @@
           "componentId" : {
             "type" : "string"
           },
-          "ownerDocUuid" : {
-            "type" : "string"
+          "ownerDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "sourceType" : {
             "type" : "string",
@@ -19486,7 +19439,8 @@
             "$ref" : "#/components/schemas/FindMetaCriteria"
           },
           "requiredPermission" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
           }
         }
       },
@@ -19523,8 +19477,8 @@
           "nodeName" : {
             "type" : "string"
           },
-          "userName" : {
-            "$ref" : "#/components/schemas/UserName"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -19537,8 +19491,8 @@
           "nodeName" : {
             "type" : "string"
           },
-          "userName" : {
-            "$ref" : "#/components/schemas/UserName"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -19556,6 +19510,19 @@
           }
         }
       },
+      "SetAllPermissionsFrom" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "sourceDocRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
       "SetAssignedToRequest" : {
         "type" : "object",
         "properties" : {
@@ -19567,9 +19534,26 @@
             }
           },
           "assignedTo" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
+      },
+      "SetPermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "permission" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
       },
       "SetStatusRequest" : {
         "type" : "object",
@@ -19778,7 +19762,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -20227,9 +20211,6 @@
           "dashboardUuid" : {
             "type" : "string"
           },
-          "data" : {
-            "type" : "string"
-          },
           "favourite" : {
             "type" : "boolean"
           },
@@ -20240,8 +20221,8 @@
           "name" : {
             "type" : "string"
           },
-          "ownerUuid" : {
-            "type" : "string"
+          "owner" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "query" : {
             "$ref" : "#/components/schemas/Query"
@@ -20600,6 +20581,9 @@
             },
             "node" : {
               "type" : "string"
+            },
+            "runAsUser" : {
+              "$ref" : "#/components/schemas/UserRef"
             },
             "timeToWaitForData" : {
               "$ref" : "#/components/schemas/SimpleDuration"
@@ -21041,7 +21025,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
           },
           "from" : {
             "type" : "string"
@@ -21279,6 +21263,9 @@
           "displayName" : {
             "type" : "string"
           },
+          "enabled" : {
+            "type" : "boolean"
+          },
           "fullName" : {
             "type" : "string"
           },
@@ -21299,9 +21286,6 @@
           "updateUser" : {
             "type" : "string"
           },
-          "userIdentityForAudit" : {
-            "type" : "string"
-          },
           "uuid" : {
             "type" : "string"
           },
@@ -21311,22 +21295,7 @@
           }
         }
       },
-      "UserAndPermissions" : {
-        "type" : "object",
-        "properties" : {
-          "permissions" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          },
-          "userName" : {
-            "$ref" : "#/components/schemas/UserName"
-          }
-        }
-      },
-      "UserName" : {
+      "UserDesc" : {
         "type" : "object",
         "properties" : {
           "displayName" : {
@@ -21337,27 +21306,8 @@
           },
           "subjectId" : {
             "type" : "string"
-          },
-          "userIdentityForAudit" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
           }
         }
-      },
-      "UserNameEntryValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/EntryValue"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "userName" : {
-              "$ref" : "#/components/schemas/UserName"
-            }
-          }
-        } ]
       },
       "UserPreferences" : {
         "type" : "object",
@@ -21396,6 +21346,39 @@
             "$ref" : "#/components/schemas/UserTimeZone"
           }
         }
+      },
+      "UserRef" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "group" : {
+            "type" : "boolean"
+          },
+          "subjectId" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UserRefEntryValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/EntryValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
       },
       "UserTimeZone" : {
         "type" : "object",

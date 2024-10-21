@@ -17,6 +17,7 @@
 package stroom.docrefinfo.api;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 
 import java.util.List;
 import java.util.Set;
@@ -67,5 +68,5 @@ public interface DocRefDecorator {
      */
     DocRef decorate(final DocRef docRef,
                     final boolean force,
-                    final Set<String> requiredPermissions);
+                    final Set<DocumentPermission> requiredPermissions);
 }

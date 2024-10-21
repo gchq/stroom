@@ -1,6 +1,9 @@
 package stroom.security.impl;
 
 import stroom.cache.impl.CacheModule;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.impl.db.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
@@ -28,7 +31,11 @@ public class TestModule extends AbstractModule {
         install(new MockUserIdentityFactoryModule());
         install(new MockTaskModule());
 
-        bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
+        install(new MockCollectionModule());
+        install(new MockDocRefInfoModule());
+        install(new MockWordListProviderModule());
+
+        bind(AppPermissionService.class).to(AppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
         bind(ExplorerService.class).toInstance(mock(ExplorerService.class));
         bind(EntityEventBus.class).toInstance(mock(EntityEventBus.class));

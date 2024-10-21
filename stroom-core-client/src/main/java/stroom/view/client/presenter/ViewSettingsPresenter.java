@@ -27,7 +27,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -64,10 +64,10 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         view.setExpressionView(expressionPresenter.getView());
 
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
-        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelineSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        pipelineSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {

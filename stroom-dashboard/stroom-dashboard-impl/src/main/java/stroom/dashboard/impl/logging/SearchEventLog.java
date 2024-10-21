@@ -27,32 +27,13 @@ import java.util.List;
 
 public interface SearchEventLog {
 
-    void search(DocRef dataSourceRef,
-                ExpressionOperator expression,
-                String queryInfo,
-                final List<Param> params);
-
-    void search(DocRef dataSourceRef,
+    void search(String type,
+                String rawQuery,
+                DocRef dataSourceRef,
                 ExpressionOperator expression,
                 String queryInfo,
                 List<Param> params,
                 Exception ex);
-
-    void search(String query,
-                String queryInfo,
-                List<Param> params,
-                Exception ex);
-
-    void batchSearch(DocRef dataSourceRef,
-                     ExpressionOperator expression,
-                     String queryInfo,
-                     List<Param> params);
-
-    void batchSearch(DocRef dataSourceRef,
-                     ExpressionOperator expression,
-                     String queryInfo,
-                     List<Param> params,
-                     Exception ex);
 
     default void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
                                  Long resultCount) {

@@ -60,7 +60,7 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
     }
 
     public static PageRequest unlimited() {
-        return new PageRequest(0, Integer.MAX_VALUE);
+        return new PageRequest(0, 10_000_000);
     }
 
     public Integer getOffset() {

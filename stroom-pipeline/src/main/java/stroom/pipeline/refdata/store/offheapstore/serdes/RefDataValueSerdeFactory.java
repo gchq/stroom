@@ -22,10 +22,7 @@ import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 
-import com.google.common.collect.ImmutableMap;
-
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 public class RefDataValueSerdeFactory {
 

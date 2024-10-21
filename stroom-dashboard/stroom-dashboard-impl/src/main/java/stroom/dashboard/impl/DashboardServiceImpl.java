@@ -57,7 +57,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -208,9 +208,8 @@ class DashboardServiceImpl implements DashboardService {
 
                 // API users don't want a fixed referenceTime for their queries. They want it null
                 // so the backend sets it for them
-                NullSafe.consume(request.getDateTimeSettings(), dateTimeSettings -> {
-                    builder.dateTimeSettings(dateTimeSettings.withoutReferenceTime());
-                });
+                NullSafe.consume(request.getDateTimeSettings(), dateTimeSettings ->
+                        builder.dateTimeSettings(dateTimeSettings.withoutReferenceTime()));
 
                 // Convert our internal model to the model used by the api
                 SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(builder.build());
@@ -236,7 +235,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -267,7 +266,7 @@ class DashboardServiceImpl implements DashboardService {
                                 req.getComponentId().equals(request.getComponentId()))
                         .toList();
 
-                if (resultRequests.size() == 0) {
+                if (resultRequests.isEmpty()) {
                     throw new EntityServiceException("No tables specified for download");
                 }
 
@@ -356,12 +355,12 @@ class DashboardServiceImpl implements DashboardService {
 
     private String getQueryFileName(final DashboardSearchRequest request) {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
-        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocUuid());
+        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
         final String dashboardName = NullSafe.getOrElse(
                 dashDocRefInfo,
                 DocRefInfo::getDocRef,
                 DocRef::getName,
-                searchRequestSource.getOwnerDocUuid());
+                searchRequestSource.getOwnerDocRef().getName());
         final String basename = dashboardName + "__" + searchRequestSource.getComponentId();
         return getFileName(basename, "json");
     }
@@ -441,10 +440,14 @@ class DashboardServiceImpl implements DashboardService {
                     storeSearchHistory(searchRequest);
 
                     // Log this search request for the current user.
-                    searchEventLog.search(search.getDataSourceRef(),
+                    searchEventLog.search(
+                            "Dashboard Search",
+                            null,
+                            search.getDataSourceRef(),
                             search.getExpression(),
                             search.getQueryInfo(),
-                            search.getParams());
+                            search.getParams(),
+                            null);
                 }
 
             } catch (final RuntimeException e) {
@@ -452,7 +455,10 @@ class DashboardServiceImpl implements DashboardService {
                 LOGGER.debug(() -> "Error processing search " + finalSearch, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(search.getDataSourceRef(),
+                    searchEventLog.search(
+                            "Dashboard Search",
+                            null,
+                            search.getDataSourceRef(),
                             search.getExpression(),
                             search.getQueryInfo(),
                             search.getParams(),
@@ -488,7 +494,7 @@ class DashboardServiceImpl implements DashboardService {
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");
-                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocUuid());
+                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocRef().getUuid());
                 storedQuery.setComponentId(searchRequestSource.getComponentId());
                 storedQuery.setQuery(query);
                 queryService.create(storedQuery);

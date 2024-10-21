@@ -87,7 +87,7 @@ public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
         return callback;
     }
 
-    public TaskMonitorFactory getTaskHandlerFactory() {
+    public TaskMonitorFactory getTaskMonitorFactory() {
         return taskMonitorFactory;
     }
 

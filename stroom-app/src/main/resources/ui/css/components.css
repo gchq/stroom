@@ -1714,7 +1714,6 @@ button.main-menu svg {
 }
 
 .form-padding {
-    overflow: auto;
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }
 
@@ -2029,6 +2028,11 @@ button.main-menu svg {
     position: relative;
 }
 
+.find-topBar .gwt-TextArea {
+    /* Single line */
+    height: 2.1rem;
+}
+
 .find-buttons {
     display: flex;
     position: absolute;
@@ -2075,8 +2079,15 @@ button.main-menu svg {
     letter-spacing: -0.6px;
     font-size: 95%;
     /* Fade out the long lines */
-    mask-image: linear-gradient(to right, #000000 0%, #000000 75%, rgb(128 0 52 / 0%) 100%);
+    mask-image: linear-gradient(to right, #000000 0%, #000000 90%, rgb(128 0 52 / 0%) 100%);
     overflow: hidden;
+    /* Padding to make room for the highlight outline */
+    padding: 2px;
+}
+
+/* if the sample does not start at the beginning of the line fade the text out on the left and the right */
+.findCell-sample.findCell-sample-truncated {
+    mask-image: linear-gradient(to right, rgb(128 0 52 / 0%) 0%, #000000 10%, #000000 90%, rgb(128 0 52 / 0%) 100%);
 }
 
 .findCell-sample div {
@@ -2087,8 +2098,19 @@ button.main-menu svg {
 }
 
 .findCell-highlight {
-	background-color: yellow;
-	color: black;
+    background-color: var(--highlight__background-color);
+    border-radius: 2px;
+    color: black;
+    /*
+    outline-color: var(--highlight__background-color);
+    outline-style: solid;
+    outline-width: 2px;
+    border-radius: 2px;
+    */
+}
+
+.cellTableSelectedRowCell .findCell-highlight {
+	background-color: var(--highlight__background-color--selected);
 }
 
 .findCell-sample-after {
@@ -2117,7 +2139,7 @@ button.main-menu svg {
 
 .findCell-path {
     display: flex;
-    font-size: 0.7rem;
+    font-size: .7rem;
     flex-grow: 1;
     opacity: .5;
     user-select: text;
@@ -2125,7 +2147,8 @@ button.main-menu svg {
 
 .findCell-uuid {
     display: flex;
-    font-size: .7rem;
+    font-size: .6rem;
+    font-family: monospace;
     flex-grow: 0;
     opacity: .5;
     user-select: text;
@@ -2244,69 +2267,6 @@ button.main-menu svg {
     display: flex;
 }
 
-.folderPermissionsUsers {
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.folderPermissionsCreatePermissions > div {
-    /* 0 height to prevent the create perms box taking the size of its contents.
-       We want it to take a height based on the flex layout of its parent */
-    height: 0px;
-}
-
-.folderPermissionsPermissionsContainer {
-    gap: var(--control__padding--vertical);
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.documentPermissionType-noPermission {
-    color: var(--text-color--disabled);
-}
-
-.documentPermissionType-destructive {
-}
-
-.documentPermissionType-destructive.documentPermissionType-inferred {
-    /* color: hsl(from var(--text-color--red) h s calc(l - 20%)); */
-    opacity: 90%;
-}
-
-.documentPermissionType-destructive.documentPermissionType-direct {
-    font-weight: 500;
-}
-
-.documentPermissionType-nonDestructive {
-}
-
-.documentPermissionType-nonDestructive.documentPermissionType-inferred {
-    /* color: hsl(from var(--text-color--green) h s calc(l - 20%)); */
-    opacity: 90%;
-}
-
-.documentPermissionType-nonDestructive.documentPermissionType-direct {
-    font-weight: 500;
-}
-
-.documentPermissionsUsers {
-    gap: var(--control__padding--vertical);
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.documentPermissionsPermissionsFormGrp > div {
-    flex-shrink: 0;
-    flex-grow: 0;
-}
-
-.documentPermissionsPermissions {
-    gap: var(--control__padding--vertical);
-    flex-basis: 11rem;
-    flex-shrink: 0;
-    flex-grow: 0;
-}
-
 .editNodeTagsAllTagsFrmGrp,
 .editNodeTagsNodeTagsFrmGrp {
     flex-basis: 200px;
@@ -2378,6 +2338,20 @@ button.main-menu svg {
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
+}
+
+.documentPermissionChangeControls {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+.inherited {
+    opacity: 0.4;
+}
+
+.bold {
+    font-weight: 600;
 }
 
 /* Add a smidge of a gap between the split and the next form group */

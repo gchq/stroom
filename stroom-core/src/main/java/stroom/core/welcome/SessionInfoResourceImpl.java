@@ -6,7 +6,7 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -29,10 +29,9 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
 
     @Override
     public SessionInfo get() {
-        // TODO: 26/07/2023 Would be nice to include the groups the user is a member of
-        final UserName userName = securityContextProvider.get().getUserName();
+        final UserRef userRef = securityContextProvider.get().getUserRef();
         return new SessionInfo(
-                userName,
+                userRef,
                 nodeInfoProvider.get().getThisNodeName(),
                 buildInfoProvider.get());
     }

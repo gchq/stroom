@@ -23,7 +23,7 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -55,8 +55,8 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_POLICIES_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_POLICIES_PERMISSION;
     }
 
     @Override

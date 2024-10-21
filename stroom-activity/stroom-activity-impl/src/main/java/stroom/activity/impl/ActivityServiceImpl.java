@@ -30,6 +30,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
@@ -60,10 +61,10 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity create() {
         return securityContext.secureResult(() -> {
-            final String userId = securityContext.getSubjectId();
+            final UserRef userRef = securityContext.getUserRef();
 
             final Activity activity = Activity.create();
-            activity.setUserId(userId);
+            activity.setUserRef(userRef);
 
             AuditUtil.stamp(securityContext, activity);
 
@@ -76,7 +77,7 @@ public class ActivityServiceImpl implements ActivityService {
         return securityContext.secureResult(() -> {
             final Activity result = dao.fetch(id).orElseThrow(() ->
                     new EntityServiceException("Activity not found with id=" + id));
-            if (!securityContext.isProcessingUser() && !result.getUserId().equals(securityContext.getSubjectId())) {
+            if (!securityContext.isProcessingUser() && !result.getUserRef().equals(securityContext.getUserRef())) {
                 throw new EntityServiceException("Attempt to read another persons activity");
             }
 
@@ -88,7 +89,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity update(final Activity activity) {
         return securityContext.secureResult(() -> {
-            if (!securityContext.getSubjectId().equals(activity.getUserId())) {
+            if (!securityContext.getUserRef().equals(activity.getUserRef())) {
                 throw new EntityServiceException("Attempt to update another persons activity");
             }
 
@@ -100,17 +101,19 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(() -> {
-            if (!securityContext.isLoggedIn()) {
-                throw new EntityServiceException("No user is logged in");
+            final Activity activity = fetch(id);
+            if (activity != null) {
+                if (!securityContext.getUserRef().equals(activity.getUserRef())) {
+                    throw new EntityServiceException("Attempt to update another persons activity");
+                }
+                return dao.delete(id);
             }
-
-            return dao.delete(id);
+            return false;
         });
     }
 
     @Override
     public QuickFilterResultPage<Activity> find(final String filter) {
-
         return securityContext.secureResult(() -> {
             // We have to deser all the activities to be able to search them but hopefully
             // there are not that many to worry about
@@ -125,7 +128,7 @@ public class ActivityServiceImpl implements ActivityService {
                 final FilterFieldMappers<Activity> fieldMappers = buildFieldMappers(fieldDefinitions);
 
                 filteredActivities = QuickFilterPredicateFactory.filterStream(
-                        filter, fieldMappers, allActivities.stream())
+                                filter, fieldMappers, allActivities.stream())
                         .collect(Collectors.toList());
 
                 fullyQualifiedInput = QuickFilterPredicateFactory.fullyQualifyInput(filter, fieldMappers);
@@ -173,17 +176,11 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private List<Activity> getAllUserActivities() {
-        if (!securityContext.isLoggedIn()) {
-            throw new EntityServiceException("No user is logged in");
-        }
-
-        FindActivityCriteria criteria = new FindActivityCriteria();
-
         // Only find activities for this user
-        criteria.setUserId(securityContext.getSubjectId());
-
-        LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserId()));
-
+        final UserRef userRef = securityContext.getUserRef();
+        FindActivityCriteria criteria = new FindActivityCriteria();
+        criteria.setUserRef(userRef);
+        LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserRef()));
         return dao.find(criteria);
     }
 

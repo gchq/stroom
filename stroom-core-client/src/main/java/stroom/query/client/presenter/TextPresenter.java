@@ -104,7 +104,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //            // Determine if we should show tha play button.
 //            playButtonVisible = !isHtml
 //                    && getTextSettings().isShowStepping()
-//                    && securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+//                    && securityContext.hasAppPermission(AppPermissionEnum.STEPPING_PERMISSION);
 //
 //            // Show the play button if we have fetched input data.
 //            getView().setSteppingVisible(playButtonVisible);
@@ -552,8 +552,8 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     }
 
 //    private String checkPermissions() {
-//        if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
-//            if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
+//        if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_PERMISSION)) {
+//            if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
 //                return "You do not have permission to display this item";
 //            } else if (getTextSettings().getPipeline() == null) {
 //                return "You must choose a pipeline to display this item";

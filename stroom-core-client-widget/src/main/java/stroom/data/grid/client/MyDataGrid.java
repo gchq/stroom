@@ -17,7 +17,6 @@
 package stroom.data.grid.client;
 
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.ElementUtil;
@@ -43,6 +42,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -50,9 +50,7 @@ import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
@@ -66,8 +64,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
-    // col index => min width
-    private final Map<Integer, Integer> minimumWidths = new HashMap<>();
 
     private HeadingListener headingListener;
     private HandlerRegistration handlerRegistration;
@@ -444,21 +440,21 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     public void addColumn(final Column<R, ?> column, final Header<?> header, final int width) {
+        colSettings.add(new ColSettings(false, false));
         super.addColumn(column, header);
         setColumnWidth(column, width, Unit.PX);
-        colSettings.add(new ColSettings(false, false));
     }
 
     public void addColumn(final Column<R, ?> column, final String name, final int width) {
+        colSettings.add(new ColSettings(false, false));
         super.addColumn(column, SafeHtmlUtils.fromSafeConstant(name));
         setColumnWidth(column, width, Unit.PX);
-        colSettings.add(new ColSettings(false, false));
     }
 
     public void addResizableColumn(final Column<R, ?> column, final String name, final int width) {
+        colSettings.add(new ColSettings(true, true));
         super.addColumn(column, SafeHtmlUtils.fromSafeConstant(name));
         setColumnWidth(column, width, Unit.PX);
-        colSettings.add(new ColSettings(true, true));
     }
 
     /**
@@ -472,14 +468,11 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
      */
     public void addAutoResizableColumn(final Column<R, ?> column,
                                        final String name,
-                                       final int pct,
+                                       final int fillWeight,
                                        final int initialMinimumWidth) {
+        colSettings.add(new ColSettings(true, true, true, fillWeight, initialMinimumWidth));
         super.addColumn(column, SafeHtmlUtils.fromSafeConstant(name));
-        if (pct < 0 || pct > 100) {
-            throw new RuntimeException("Invalid pct: " + pct);
-        }
-        setAutoColumnWidth(column, pct, initialMinimumWidth);
-        colSettings.add(new ColSettings(true, true));
+        setColumnWidth(column, initialMinimumWidth, Unit.PX);
     }
 
     /**
@@ -492,9 +485,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     public void addAutoResizableColumn(final Column<R, ?> column,
                                        final String name,
                                        final int initialMinimumWidth) {
+        colSettings.add(new ColSettings(true, true, true, 100, initialMinimumWidth));
         super.addColumn(column, SafeHtmlUtils.fromSafeConstant(name));
-        setAutoColumnWidth(column, 100, initialMinimumWidth);
-        colSettings.add(new ColSettings(true, true));
+        setColumnWidth(column, initialMinimumWidth, Unit.PX);
     }
 
     /**
@@ -507,17 +500,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     public void addAutoResizableColumn(final Column<R, ?> column,
                                        final Header<?> header,
                                        final int initialMinimumWidth) {
+        colSettings.add(new ColSettings(true, true, true, 100, initialMinimumWidth));
         super.addColumn(column, header);
-        setAutoColumnWidth(column, 100, initialMinimumWidth);
-        colSettings.add(new ColSettings(true, true));
+        setColumnWidth(column, initialMinimumWidth, Unit.PX);
     }
 
     public void addResizableColumn(final Column<R, ?> column,
                                    final Header<?> header,
                                    final int width) {
+        colSettings.add(new ColSettings(true, true));
         super.addColumn(column, header);
         setColumnWidth(column, width, Unit.PX);
-        colSettings.add(new ColSettings(true, true));
     }
 
     public void addEndColumn(final EndColumn<R> column) {
@@ -528,7 +521,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         final int index = super.getColumnIndex(column);
         if (index != -1) {
             colSettings.remove(index);
-            minimumWidths.remove(index);
             super.removeColumn(column);
         }
     }
@@ -543,7 +535,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         super.removeColumn(fromIndex);
         final ColSettings settings = colSettings.remove(fromIndex);
-        final Integer minWidth = minimumWidths.remove(fromIndex);
 
         int newIndex = toIndex;
         if (fromIndex < toIndex) {
@@ -552,9 +543,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         super.insertColumn(newIndex, col, header);
         colSettings.add(newIndex, settings);
-        if (minWidth != null) {
-            minimumWidths.put(newIndex, minWidth);
-        }
     }
 
     public void resizeColumn(final int index, final int width) {
@@ -568,14 +556,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     public void setColumnWidth(final Column<R, ?> column, final int width, final Unit unit) {
         super.setColumnWidth(column, width, unit);
-        resizeTableToFitColumns();
-    }
-
-    public void setAutoColumnWidth(final Column<R, ?> column,
-                                   final int pct,
-                                   final int initialMinimumWidth) {
-        super.setColumnWidth(column, pct, Unit.PCT);
-        minimumWidths.put(super.getColumnIndex(column), initialMinimumWidth);
         resizeTableToFitColumns();
     }
 
@@ -594,60 +574,111 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         return super.addHandler(handler, HyperlinkEvent.getType());
     }
 
+    @Override
+    protected void doAttachChildren() {
+        super.doAttachChildren();
+        FocusUtil.forceFocus(() -> resizeTableToFitColumns(true));
+    }
+
     public void resizeTableToFitColumns() {
+        resizeTableToFitColumns(false);
+    }
+
+    public void resizeTableToFitColumns(final boolean redistribute) {
         int totalWidth = 0;
-        boolean foundPctBasedColumn = false;
+        final int outerWidth = getElement().getClientWidth();
+        final int tableWidth = getTableBodyElement().getClientWidth();
 
-        for (int i = 0; i < super.getColumnCount(); i++) {
-            final Column<R, ?> col = super.getColumn(i);
-            String stringWidth = super.getColumnWidth(col);
-            int w = 0;
-            if (stringWidth != null) {
-                if (stringWidth.toLowerCase().contains("%")) {
-                    // Col is set to expand to fit space but if all cols are bigger than available
-                    // space then we need an absolute size for it so the table can be wider than
-                    // the space and scroll
-//                    GWT.log("minWidth: " + minimumWidths.get(i) + " minimumWidths map: " + minimumWidths);
-                    w = GwtNullSafe.requireNonNullElse(
-                            minimumWidths.get(i),
-                            DEFAULT_INITIAL_MINIMUM_WIDTH);
-                    foundPctBasedColumn = true;
-                } else {
-                    final int index = stringWidth.toLowerCase().indexOf("px");
-                    if (index != -1) {
-                        stringWidth = stringWidth.substring(0, index);
-
-                        try {
-                            w = Integer.parseInt(stringWidth);
-                        } catch (final NumberFormatException e) {
-                            // Ignore.
-                        }
+        // If the outer width is greater than the table with then see if we can expand the columns and table to fit the
+        // space.
+        if (redistribute && outerWidth > 0 && outerWidth > tableWidth) {
+            int totalWeight = 0;
+            int totalColWidth = 0;
+            for (int i = 0; i < super.getColumnCount() && i < colSettings.size(); i++) {
+                final Column<R, ?> col = super.getColumn(i);
+                final ColSettings settings = colSettings.get(i);
+                if (settings != null) {
+                    final String stringWidth = getColumnWidth(col);
+                    int w = getPx(stringWidth);
+                    totalColWidth += w;
+                    if (settings.isFill()) {
+                        totalWeight += settings.getFillWeight();
                     }
                 }
             }
+
+            final int remaining = outerWidth - totalColWidth;
+            if (remaining > 0 && totalWeight > 0) {
+                totalWidth = resizeColumnsAndFill(remaining, totalWeight);
+            } else {
+                totalWidth = resizeColumns();
+            }
+        } else {
+            totalWidth = resizeColumns();
+        }
+
+        super.setTableWidth(totalWidth, Unit.PX);
+        emptyTableWidget.getElement().getStyle().setWidth(totalWidth, Unit.PX);
+        emptyTableWidget.getElement().getStyle().setHeight(20, Unit.PX);
+        loadingTableWidget.getElement().getStyle().setWidth(totalWidth, Unit.PX);
+        loadingTableWidget.getElement().getStyle().setHeight(20, Unit.PX);
+    }
+
+    private int resizeColumns() {
+        int totalWidth = 0;
+        for (int i = 0; i < super.getColumnCount(); i++) {
+            final Column<R, ?> col = super.getColumn(i);
+            final String stringWidth = super.getColumnWidth(col);
+            int w = getPx(stringWidth);
 
             if (w == 0) {
                 w = 1;
                 super.setColumnWidth(col, w + "px");
             }
+
             totalWidth += w;
         }
+        return totalWidth;
+    }
 
-        if (foundPctBasedColumn) {
-            // We have at least one col with a % based width, hso make the table 100% of space with a min width.
-            // This should ensure we expand % cols up to fill space but don't squash any cols
-            // below their min.
-            super.setMinimumTableWidth(totalWidth, Unit.PX);
-            super.setTableWidth(100, Unit.PCT);
-        } else {
-            // No % based cols in the table so fix the table width
-            super.setTableWidth(totalWidth, Unit.PX);
+    private int resizeColumnsAndFill(final double remaining, final double totalWeight) {
+        int totalWidth = 0;
+        final double delta = (double) remaining / (double) totalWeight;
+        for (int i = 0; i < super.getColumnCount(); i++) {
+            final Column<R, ?> col = super.getColumn(i);
+            final String stringWidth = super.getColumnWidth(col);
+            int w = getPx(stringWidth);
+
+            final ColSettings settings = colSettings.get(i);
+            if (settings != null && settings.isFill()) {
+                w = w + (int) (delta * settings.getFillWeight());
+                if (w <= 0) {
+                    w = 1;
+                }
+                super.setColumnWidth(col, w, Unit.PX);
+
+            } else {
+                if (w <= 0) {
+                    w = 1;
+                    super.setColumnWidth(col, w + "px");
+                }
+            }
+
+            totalWidth += w;
         }
+        return totalWidth;
+    }
 
-        emptyTableWidget.getElement().getStyle().setWidth(totalWidth, Unit.PX);
-        emptyTableWidget.getElement().getStyle().setHeight(20, Unit.PX);
-        loadingTableWidget.getElement().getStyle().setWidth(totalWidth, Unit.PX);
-        loadingTableWidget.getElement().getStyle().setHeight(20, Unit.PX);
+    private int getPx(final String pxString) {
+        final int index = pxString.toLowerCase().indexOf("px");
+        if (index != -1) {
+            try {
+                return Integer.parseInt(pxString.substring(0, index));
+            } catch (final NumberFormatException e) {
+                // Ignore.
+            }
+        }
+        return 0;
     }
 
     @Override

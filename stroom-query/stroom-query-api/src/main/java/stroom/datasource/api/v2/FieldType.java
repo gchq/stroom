@@ -112,6 +112,14 @@ public enum FieldType implements HasDisplayValue {
                     "\n" +
                     "This is a reference to a Stroom object such as a Dictionary.\n" +
                     "Click in the selection box to select the desired object.",
+            false),
+    USER_REF(11,
+            "UserRef",
+            "userRef",
+            "User reference field type\n" +
+                    "\n" +
+                    "This is a reference to a Stroom user.\n" +
+                    "Click in the selection box to select the desired user.",
             false);
 
     public static final List<FieldType> TYPES = new ArrayList<>(Arrays.asList(

@@ -323,7 +323,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 15);
 
-        dictionaryStore.deleteDocument(dic.getUuid());
+        dictionaryStore.deleteDocument(docRef);
     }
 
     /**
@@ -347,8 +347,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(dic1.getUuid());
-        dictionaryStore.deleteDocument(dic2.getUuid());
+        dictionaryStore.deleteDocument(docRef1);
+        dictionaryStore.deleteDocument(docRef2);
     }
 
     /**
@@ -372,8 +372,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(dic1.getUuid());
-        dictionaryStore.deleteDocument(dic2.getUuid());
+        dictionaryStore.deleteDocument(docRef1);
+        dictionaryStore.deleteDocument(docRef2);
     }
 
     /**

@@ -1,0 +1,28 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="documentPermissions form max dock-container-vertical overflow-hidden">
+
+        <form:FormGroup identity="action" label="Change">
+            <i:SelectionBox ui:field="documentPermissionChange" width="350px"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="docTypeLabel" label="Document Type">
+            <i:SelectionBox ui:field="docType"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userRefLabel" label="For User">
+            <g:SimplePanel ui:field="userRef"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="docRefLabel" label="From Document">
+            <g:SimplePanel ui:field="docRef"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="permissionLabel" label="To">
+            <i:SelectionBox ui:field="permission"/>
+        </form:FormGroup>
+
+        <b:Button ui:field="apply" addStyleNames="allow-focus Button--contained-primary" text="Apply"/>
+
+    </g:FlowPanel>
+</ui:UiBinder>

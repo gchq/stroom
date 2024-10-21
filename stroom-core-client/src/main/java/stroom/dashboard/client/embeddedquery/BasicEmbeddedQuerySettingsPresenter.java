@@ -25,7 +25,7 @@ import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.query.shared.QueryDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -52,7 +52,7 @@ public class BasicEmbeddedQuerySettingsPresenter
 
         view.setQuerySelectionView(querySelectionPresenter.getView());
         querySelectionPresenter.setIncludedTypes(QueryDoc.DOCUMENT_TYPE);
-        querySelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        querySelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
     }
 
     @Override

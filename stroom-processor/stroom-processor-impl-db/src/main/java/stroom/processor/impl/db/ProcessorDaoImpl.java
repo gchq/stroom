@@ -2,13 +2,12 @@ package stroom.processor.impl.db;
 
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorDao;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
+import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -36,11 +34,8 @@ class ProcessorDaoImpl implements ProcessorDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorDaoImpl.class);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
-    private static final BiFunction<Processor, ProcessorRecord, ProcessorRecord> PROCESSOR_TO_RECORD_MAPPER =
-            new ProcessorToRecordMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
     private final ProcessorFilterDaoImpl processorFilterDao;
 
@@ -49,12 +44,6 @@ class ProcessorDaoImpl implements ProcessorDao {
                             final ExpressionMapperFactory expressionMapperFactory,
                             final ProcessorFilterDaoImpl processorFilterDao) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.genericDao = new GenericDao<>(
-                processorDbConnProvider,
-                PROCESSOR,
-                PROCESSOR.ID,
-                PROCESSOR_TO_RECORD_MAPPER,
-                RECORD_TO_PROCESSOR_MAPPER);
         this.processorFilterDao = processorFilterDao;
 
         expressionMapper = expressionMapperFactory.create();
@@ -69,15 +58,13 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public Processor create(final Processor processor) {
-        // We don't use the delegate DAO here as we want to handle potential duplicates carefully so this
-        // behaves as a getOrCreate method.
-        // TODO This should be replaced with JooqUtil.tryCreate as ANY error in the sql will be
-        //  ignored, not just key duplicates.
+        processor.setVersion(1);
         return JooqUtil.contextResult(
                         processorDbConnProvider,
                         context -> {
-                            final Optional<ProcessorRecord> optional = context
+                            final Optional<Integer> optional = context
                                     .insertInto(PROCESSOR,
+                                            PROCESSOR.VERSION,
                                             PROCESSOR.CREATE_TIME_MS,
                                             PROCESSOR.CREATE_USER,
                                             PROCESSOR.UPDATE_TIME_MS,
@@ -87,7 +74,9 @@ class ProcessorDaoImpl implements ProcessorDao {
                                             PROCESSOR.PIPELINE_UUID,
                                             PROCESSOR.ENABLED,
                                             PROCESSOR.DELETED)
-                                    .values(processor.getCreateTimeMs(),
+                                    .values(
+                                            processor.getVersion(),
+                                            processor.getCreateTimeMs(),
                                             processor.getCreateUser(),
                                             processor.getUpdateTimeMs(),
                                             processor.getUpdateUser(),
@@ -96,12 +85,13 @@ class ProcessorDaoImpl implements ProcessorDao {
                                             processor.getPipelineUuid(),
                                             processor.isEnabled(),
                                             processor.isDeleted())
-                                    .onDuplicateKeyIgnore()
+                                    .onDuplicateKeyUpdate()
+                                    .set(PROCESSOR.TASK_TYPE, processor.getProcessorType().getDisplayValue())
                                     .returning(PROCESSOR.ID)
-                                    .fetchOptional();
+                                    .fetchOptional(PROCESSOR.ID);
 
                             if (optional.isPresent()) {
-                                final Integer id = optional.get().getId();
+                                final Integer id = optional.get();
                                 return context
                                         .select()
                                         .from(PROCESSOR)
@@ -122,7 +112,28 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public Processor update(final Processor processor) {
-        return genericDao.update(processor);
+        return JooqUtil.contextResult(
+                processorDbConnProvider,
+                context -> {
+                    final int count = context
+                            .update(PROCESSOR)
+                            .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
+                            .set(PROCESSOR.UPDATE_TIME_MS, processor.getUpdateTimeMs())
+                            .set(PROCESSOR.UPDATE_USER, processor.getUpdateUser())
+                            .set(PROCESSOR.ENABLED, processor.isEnabled())
+                            .set(PROCESSOR.DELETED, processor.isDeleted())
+                            .where(PROCESSOR.ID.eq(processor.getId()))
+                            .and(PROCESSOR.VERSION.eq(processor.getVersion()))
+                            .execute();
+
+                    if (count == 0) {
+                        throw new DataChangedException("Failed to update processor, " +
+                                "it may have been updated by another user or deleted");
+                    }
+
+                    return fetch(processor.getId()).orElseThrow(() ->
+                            new RuntimeException("Error fetching updated processor"));
+                });
     }
 
     @Override
@@ -197,7 +208,12 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public Optional<Processor> fetch(final int id) {
-        return genericDao.fetch(id);
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select()
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.ID.eq(id))
+                        .fetchOptional())
+                .map(RECORD_TO_PROCESSOR_MAPPER);
     }
 
     @Override

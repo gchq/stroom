@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
@@ -84,7 +84,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
         indexVolumeGroup.setName(name);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
         return result;
@@ -97,7 +97,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         var newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
         return result;
@@ -107,7 +107,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public FsVolumeGroup update(final FsVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
         AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.update(indexVolumeGroup));
         fireChange(EntityAction.UPDATE);
         return result;
@@ -128,7 +128,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
 
     @Override
     public void delete(int id) {
-        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
 //                    //TODO Transaction?
 //                    var indexVolumesInGroup = volumeDao.getAll().stream()

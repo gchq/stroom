@@ -23,6 +23,7 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SelectionSummaryRequest;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.shared.DocumentPermission;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -56,7 +57,7 @@ public class SelectionSummaryPresenter
     }
 
     public void show(final FindMetaCriteria criteria,
-                     final String permission,
+                     final DocumentPermission permission,
                      final String postAction,
                      final String action,
                      final String caption,

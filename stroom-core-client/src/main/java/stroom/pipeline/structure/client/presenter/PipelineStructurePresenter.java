@@ -37,7 +37,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -123,7 +123,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         getView().setPipelineReferences(pipelineReferenceListPresenter.getView());
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Get a map of all available elements and properties.
         restFactory

@@ -380,7 +380,7 @@ public class QueryEditPresenter
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
         this.readOnly = readOnly;
 
-        queryModel.init(docRef.getUuid());
+        queryModel.init(docRef);
         if (query != null) {
             reading = true;
             if (GwtNullSafe.isBlankString(editorPresenter.getText())

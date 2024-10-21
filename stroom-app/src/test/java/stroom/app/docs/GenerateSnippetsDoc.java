@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.docs;
 
 import stroom.test.common.docs.StroomDocsUtil;
@@ -52,7 +68,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
             .normalize();
 
     private static final Path SNIPPETS_REFERENCE_FILE_SUB_PATH = Paths.get(
-            "content/en/docs/user-guide/content/editing-text/snippet-reference.md");
+            "content/en/docs/reference-section/snippet-reference.md");
 
     private static final Path XML_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("xml.js");
     private static final Path DATA_SPLITTER_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("stroom_data_splitter.js");
@@ -88,7 +104,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                     STROOM_SNIPPETS_FILE,
                     """
 
-                            All [Expression Functions]({{< relref "docs/user-guide/dashboards/expressions" >}}) are available as snippets.
+                            All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
                             They do not currently have `tab` triggers.
                             """,
                     "text")
@@ -99,7 +115,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
 
             ## Dashboard Table Expression Editor Snippets
 
-            All [Expression Functions]({{< relref "docs/user-guide/dashboards/expressions" >}}) are available as snippets.
+            All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
             They do not currently have `tab` triggers.
 
 

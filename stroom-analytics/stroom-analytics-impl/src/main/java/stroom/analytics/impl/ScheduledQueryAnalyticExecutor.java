@@ -58,7 +58,6 @@ import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -160,9 +159,7 @@ public class ScheduledQueryAnalyticExecutor {
             info(() -> "Processing " + LogUtil.namedCount("scheduled analytic rule", NullSafe.size(analytics)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final AnalyticRuleDoc analytic : analytics) {
-                final Runnable runnable = () -> execAnalytic(
-                        analytic,
-                        taskContext);
+                final Runnable runnable = createRunnable(analytic, taskContext);
                 try {
                     workQueue.exec(runnable);
                 } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -188,26 +185,23 @@ public class ScheduledQueryAnalyticExecutor {
         }
     }
 
-    private void execAnalytic(final AnalyticRuleDoc analytic,
-                              final TaskContext parentTaskContext) {
-        if (!parentTaskContext.isTerminated()) {
-            try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.asDocRef());
-                final UserIdentity userIdentity = securityContext.getIdentityByUserUuid(ownerUuid);
-                securityContext.asUser(userIdentity, () ->
-                        execAnalyticAsUser(
-                                analytic,
-                                userIdentity,
-                                parentTaskContext));
-            } catch (final RuntimeException e) {
-                LOGGER.error(() -> "Error executing rule: " + AnalyticUtil.getAnalyticRuleIdentity(analytic), e);
+    private Runnable createRunnable(final AnalyticRuleDoc analytic,
+                                    final TaskContext parentTaskContext) {
+        return () -> {
+            if (!parentTaskContext.isTerminated()) {
+                try {
+                    execAnalytic(
+                            analytic,
+                            parentTaskContext);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(() -> "Error executing rule: " + AnalyticUtil.getAnalyticRuleIdentity(analytic), e);
+                }
             }
-        }
+        };
     }
 
-    private void execAnalyticAsUser(final AnalyticRuleDoc analytic,
-                                    final UserIdentity userIdentity,
-                                    final TaskContext parentTaskContext) {
+    private void execAnalytic(final AnalyticRuleDoc analytic,
+                              final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
                 .builder()
@@ -223,7 +217,7 @@ public class ScheduledQueryAnalyticExecutor {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
                     // running within a new thread.
-                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
+                    securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
                         boolean success = true;
                         while (success && !parentTaskContext.isTerminated()) {
                             success = executeIfScheduled(analytic, parentTaskContext, executionSchedule);

@@ -43,10 +43,8 @@ public class QuickFilterResultPage<T> extends ResultPage<T> {
     public static <T> QuickFilterResultPage<T> createCriterialBasedList(final List<T> realList,
                                                                         final BaseCriteria baseCriteria,
                                                                         final String qualifiedFilterInput) {
-        return new QuickFilterResultPage<>(
-                realList,
-                createPageResponse(realList, baseCriteria.getPageRequest()),
-                qualifiedFilterInput);
+        final ResultPage<T> resultPage = ResultPage.createCriterialBasedList(realList, baseCriteria);
+        return new QuickFilterResultPage<>(resultPage.getValues(), resultPage.getPageResponse(), qualifiedFilterInput);
     }
 
     /**
@@ -56,10 +54,7 @@ public class QuickFilterResultPage<T> extends ResultPage<T> {
                                                                         final BaseCriteria baseCriteria,
                                                                         final long totalSize,
                                                                         final String qualifiedFilterInput) {
-        return new QuickFilterResultPage<>(
-                realList,
-                createPageResponse(realList, baseCriteria.getPageRequest(), totalSize),
-                qualifiedFilterInput);
+        final ResultPage<T> resultPage = ResultPage.createCriterialBasedList(realList, baseCriteria, totalSize);
+        return new QuickFilterResultPage<>(resultPage.getValues(), resultPage.getPageResponse(), qualifiedFilterInput);
     }
-
 }

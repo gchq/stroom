@@ -18,7 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.InlineSvgButton;
 
@@ -135,12 +135,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setAssignedTo(final UserName assignedTo) {
+    public void setAssignedTo(final UserRef assignedTo) {
         if (assignedTo == null) {
             this.assignedTo.setText("Nobody");
             this.assignedTo.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.assignedTo.setText(assignedTo.getUserIdentityForAudit());
+            this.assignedTo.setText(assignedTo.toDisplayString());
             this.assignedTo.getElement().getStyle().setOpacity(1);
         }
     }

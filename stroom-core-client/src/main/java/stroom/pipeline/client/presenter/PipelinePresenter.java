@@ -30,7 +30,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -66,7 +66,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         TabData selectedTab = null;
 
-        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA, new AbstractTabProvider<PipelineDoc, MetaPresenter>(eventBus) {
                 @Override
                 protected MetaPresenter createPresenter() {
@@ -86,8 +86,9 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         addTab(STRUCTURE, new DocumentEditTabProvider<>(structurePresenterProvider::get));
 
-        hasManageProcessorsPermission = securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION);
-        isAdmin = securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR);
+        hasManageProcessorsPermission = securityContext
+                .hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION);
+        isAdmin = securityContext.hasAppPermission(AppPermission.ADMINISTRATOR);
 
         if (hasManageProcessorsPermission) {
             addTab(PROCESSORS, new AbstractTabProvider<PipelineDoc, ProcessorPresenter>(eventBus) {

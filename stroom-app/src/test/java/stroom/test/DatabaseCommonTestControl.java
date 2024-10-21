@@ -24,10 +24,8 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskQueueManager;
-import stroom.security.user.api.UserNameService;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -66,8 +64,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final VolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
     private final PathCreator pathCreator;
-    private final IndexVolumeService indexVolumeService;
-    private final UserNameService userNameService;
     private final ExplorerNodeService explorerNodeService;
     private final S3ExampleVolumes s3ExampleVolumes;
 
@@ -86,8 +82,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final FsVolumeConfig fsVolumeConfig,
                               final FsVolumeService fsVolumeService,
                               final PathCreator pathCreator,
-                              final IndexVolumeService indexVolumeService,
-                              final UserNameService userNameService,
                               final ExplorerNodeService explorerNodeService,
                               final S3ExampleVolumes s3ExampleVolumes) {
         this.contentImportService = contentImportService;
@@ -100,8 +94,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.fsVolumeConfig = fsVolumeConfig;
         this.fsVolumeService = fsVolumeService;
         this.pathCreator = pathCreator;
-        this.indexVolumeService = indexVolumeService;
-        this.userNameService = userNameService;
         this.explorerNodeService = explorerNodeService;
         this.s3ExampleVolumes = s3ExampleVolumes;
     }
@@ -176,7 +168,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Override
     public void clear() {
         final Instant startTime = Instant.now();
-        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting teardown of thread '{}' ({})",
+        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting tear down of thread '{}' ({})",
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId()));
         // Make sure we are no longer creating tasks.
@@ -197,7 +189,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("Cleared the following clearables [{}]", clearedList);
 
         LOGGER.info(() -> LogUtil.inSeparatorLine(
-                "Test environment teardown completed in {}", Duration.between(startTime, Instant.now())));
+                "Test environment tear down completed in {}", Duration.between(startTime, Instant.now())));
 
         // Make sure the db has its root node
         explorerNodeService.ensureRootNodeExists();

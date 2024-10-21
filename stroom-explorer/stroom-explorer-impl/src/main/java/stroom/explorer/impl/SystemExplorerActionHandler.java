@@ -8,7 +8,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
@@ -42,7 +42,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocRef createDocument(final String name) {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot create the System node");
+        throw new PermissionException(securityContext.getUserRef(), "You cannot create the System node");
     }
 
     @Override
@@ -55,13 +55,13 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
-        if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
         String folderName = name;
-        if (folderName == null || folderName.trim().length() == 0) {
+        if (folderName == null || folderName.trim().isEmpty()) {
             folderName = explorerTreeNode.getName();
         }
 
@@ -70,24 +70,24 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot move the System node");
+    public DocRef moveDocument(final DocRef docRef) {
+        throw new PermissionException(securityContext.getUserRef(), "You cannot move the System node");
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot rename the System node");
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        throw new PermissionException(securityContext.getUserRef(), "You cannot rename the System node");
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot delete the System node");
+    public void deleteDocument(final DocRef docRef) {
+        throw new PermissionException(securityContext.getUserRef(), "You cannot delete the System node");
     }
 
     @Override
-    public DocRefInfo info(final String uuid) {
+    public DocRefInfo info(final DocRef docRef) {
         throw new PermissionException(
-                securityContext.getUserIdentityForAudit(),
+                securityContext.getUserRef(),
                 "You cannot get info about the System node");
     }
 
@@ -121,13 +121,13 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        throw new PermissionException(securityContext.getUserRef(),
                 "You cannot perform findByNames on the System node handler");
     }
 
     @Override
     public Set<DocRef> listDocuments() {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        throw new PermissionException(securityContext.getUserRef(),
                 "You cannot perform listDocuments on the System node handler");
     }
 }

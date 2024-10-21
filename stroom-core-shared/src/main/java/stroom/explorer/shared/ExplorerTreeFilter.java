@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -51,7 +53,7 @@ public class ExplorerTreeFilter {
     @JsonProperty
     private final Set<NodeFlag> nodeFlags;
     @JsonProperty
-    private final Set<String> requiredPermissions;
+    private final Set<DocumentPermission> requiredPermissions;
     @JsonProperty
     private final String nameFilter;
     @JsonProperty
@@ -64,7 +66,7 @@ public class ExplorerTreeFilter {
                               @JsonProperty("includedRootTypes") final Set<String> includedRootTypes,
                               @JsonProperty("tags") final Set<String> tags,
                               @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags,
-                              @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
+                              @JsonProperty("requiredPermissions") final Set<DocumentPermission> requiredPermissions,
                               @JsonProperty("nameFilter") final String nameFilter,
                               @JsonProperty("nameFilterChange") final boolean nameFilterChange,
                               @JsonProperty("recentItems") final List<DocRef> recentItems) {
@@ -94,7 +96,7 @@ public class ExplorerTreeFilter {
         return nodeFlags;
     }
 
-    public Set<String> getRequiredPermissions() {
+    public Set<DocumentPermission> getRequiredPermissions() {
         return requiredPermissions;
     }
 
@@ -173,6 +175,7 @@ public class ExplorerTreeFilter {
 
     /**
      * Turns 'cat dog' into 'tag:cat tag:dog '
+     *
      * @return A qualified quick filter input string or null if tags is empty/null
      */
     public static String createTagQuickFilterInput(final Set<String> tags) {
@@ -187,5 +190,147 @@ public class ExplorerTreeFilter {
             quickFilterInput = null;
         }
         return quickFilterInput;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Set<String> includedTypes;
+        private Set<String> includedRootTypes;
+        private Set<String> tags;
+        private Set<NodeFlag> nodeFlags;
+        private Set<DocumentPermission> requiredPermissions;
+        private String nameFilter;
+        private boolean nameFilterChange;
+        private List<DocRef> recentItems;
+
+        private Builder() {
+        }
+
+        /**
+         * Set the document types to include. If null/empty return all root notes.
+         */
+        public Builder includedTypeSet(final Set<String> types) {
+            includedTypes = types;
+            return this;
+        }
+
+        /**
+         * Set the document types to include. If null/empty return all root notes.
+         */
+        public Builder includedTypes(final String... types) {
+            this.includedTypes = SetUtil.toSet(types);
+            return this;
+        }
+
+        /**
+         * Set the document types of root nodes to include. If null/empty return all root notes.
+         */
+        public Builder includedRootTypeSet(final Set<String> types) {
+            includedRootTypes = types;
+            return this;
+        }
+
+        /**
+         * Set the document types of root nodes to include. If null/empty return all root notes.
+         */
+        public Builder includedRootTypes(final String... types) {
+            this.includedRootTypes = SetUtil.toSet(types);
+            return this;
+        }
+
+        public Builder tags(final String... tags) {
+            this.tags = SetUtil.toSet(tags);
+            return this;
+        }
+
+        public Builder nodeFlags(final Set<NodeFlag> nodeFlags) {
+            this.nodeFlags = nodeFlags;
+            return this;
+        }
+
+        public Builder requiredPermissions(final Set<DocumentPermission> requiredPermissions) {
+            if (requiredPermissions == null) {
+                this.requiredPermissions = null;
+            } else {
+                this.requiredPermissions = new HashSet<>(requiredPermissions);
+            }
+            return this;
+        }
+
+        public Builder requiredPermissions(final DocumentPermission... requiredPermissions) {
+            this.requiredPermissions = SetUtil.toSet(requiredPermissions);
+            return this;
+        }
+
+        /**
+         * This sets the name filter to be used when fetching items. This method
+         * returns false is the filter is set to the same value that is already set.
+         */
+        public Builder nameFilter(final String nameFilter) {
+            final String filter = GwtNullSafe.get(
+                    nameFilter,
+                    String::trim,
+                    str -> str.length() == 0
+                            ? null
+                            : str);
+            this.nameFilter = filter;
+            this.nameFilterChange = true;
+            return this;
+        }
+
+        /**
+         * This sets the name filter to be used when fetching items. This method
+         * returns false is the filter is set to the same value that is already set.
+         */
+        public boolean setNameFilter(final String nameFilter) {
+            return setNameFilter(nameFilter, false);
+        }
+
+        /**
+         * This sets the name filter to be used when fetching items. This method
+         * returns false is the filter is set to the same value that is already set.
+         */
+        public boolean setNameFilter(final String nameFilter, final boolean forceChange) {
+            final String filter = GwtNullSafe.get(
+                    nameFilter,
+                    String::trim,
+                    str -> str.length() == 0
+                            ? null
+                            : str);
+
+            if (!forceChange && ((GwtNullSafe.allNull(filter, this.nameFilter))
+                    || (filter != null && filter.equals(this.nameFilter)))) {
+                return false;
+            } else {
+                this.nameFilter = filter;
+                this.nameFilterChange = true;
+
+                return true;
+            }
+        }
+
+        public Builder recentItems(final List<DocRef> recentItems) {
+            this.recentItems = recentItems;
+            return this;
+        }
+
+        public ExplorerTreeFilter build() {
+            final boolean nameFilterChange = this.nameFilterChange;
+            this.nameFilterChange = false;
+
+            return new ExplorerTreeFilter(
+                    SetUtil.copySet(includedTypes),
+                    SetUtil.copySet(includedRootTypes),
+                    SetUtil.copySet(tags),
+                    nodeFlags,
+                    SetUtil.copySet(requiredPermissions),
+                    nameFilter,
+                    nameFilterChange,
+                    recentItems);
+        }
     }
 }

@@ -43,7 +43,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.ColumnRef;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
@@ -127,7 +127,7 @@ public class TextPresenter
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
                     && getTextSettings().isShowStepping()
-                    && securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+                    && securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
             getView().setSteppingVisible(playButtonVisible);
@@ -560,8 +560,8 @@ public class TextPresenter
     }
 
     private String checkPermissions() {
-        if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
-            if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
+        if (!securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
+            if (!securityContext.hasAppPermission(AppPermission.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
                 return "You do not have permission to display this item";
             } else if (getTextSettings().getPipeline() == null) {
                 return "You must choose a pipeline to display this item";

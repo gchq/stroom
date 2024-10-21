@@ -18,6 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
@@ -58,7 +59,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private String queryUuid;
+    private DocRef queryDocRef;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
@@ -91,8 +92,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         resultComponents.put(componentId, resultComponent);
     }
 
-    public void init(final String queryUuid) {
-        this.queryUuid = queryUuid;
+    public void init(final DocRef queryDocRef) {
+        this.queryDocRef = queryDocRef;
     }
 
     /**
@@ -174,7 +175,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                         SearchRequestSource
                                 .builder()
                                 .sourceType(sourceType)
-                                .ownerDocUuid(queryUuid)
+                                .ownerDocRef(queryDocRef)
                                 .build())
                 .query(query)
                 .queryContext(currentQueryContext)

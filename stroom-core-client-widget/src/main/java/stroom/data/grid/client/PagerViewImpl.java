@@ -24,7 +24,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
-import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -39,11 +38,6 @@ import javax.inject.Inject;
 
 public class PagerViewImpl extends ViewImpl implements PagerView {
 
-    /**
-     * The pager used to change the range of data.
-     */
-    @UiField
-    FormGroup pagerFormGroup;
     @UiField
     FlowPanel pagerContainer;
     @UiField
@@ -72,11 +66,6 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void setHeading(final String string) {
-        pagerFormGroup.setLabel(string);
     }
 
     @Override

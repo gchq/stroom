@@ -3,12 +3,14 @@ package stroom.security.impl.db;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,9 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestAppPermissionDaoImpl {
-
-    private static final String PERMISSION_NAME_1 = "REBOOT_THE_MATRIX";
-    private static final String PERMISSION_NAME_2 = "USE_THE_FANCY_TOWELS";
 
     @Inject
     private UserDao userDao;
@@ -52,8 +51,8 @@ class TestAppPermissionDaoImpl {
         final String userUuid = UUID.randomUUID().toString();
 
         // When
-        assertThrows(SecurityException.class, () ->
-                appPermissionDao.addPermission(userUuid, PERMISSION_NAME_1));
+        assertThrows(IntegrityConstraintViolationException.class, () ->
+                appPermissionDao.addPermission(userUuid, AppPermission.STEPPING_PERMISSION));
     }
 
     @Test
@@ -61,15 +60,16 @@ class TestAppPermissionDaoImpl {
         final String userName = String.format("SomePerson_%s", UUID.randomUUID());
 
         final User user = createUser(userName);
-        appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_1);
-        appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_2);
+        appPermissionDao.addPermission(user.getUuid(), AppPermission.STEPPING_PERMISSION);
+        appPermissionDao.addPermission(user.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
 
-        final Set<String> permissionsFound1 = appPermissionDao.getPermissionsForUser(user.getUuid());
-        assertThat(permissionsFound1).isEqualTo(Set.of(PERMISSION_NAME_1, PERMISSION_NAME_2));
+        final Set<AppPermission> permissionsFound1 = appPermissionDao.getPermissionsForUser(user.getUuid());
+        assertThat(permissionsFound1).isEqualTo(Set.of(AppPermission.STEPPING_PERMISSION,
+                AppPermission.CHANGE_OWNER_PERMISSION));
 
-        appPermissionDao.removePermission(user.getUuid(), PERMISSION_NAME_1);
-        final Set<String> permissionsFound2 = appPermissionDao.getPermissionsForUser(user.getUuid());
-        assertThat(permissionsFound2).isEqualTo(Set.of(PERMISSION_NAME_2));
+        appPermissionDao.removePermission(user.getUuid(), AppPermission.STEPPING_PERMISSION);
+        final Set<AppPermission> permissionsFound2 = appPermissionDao.getPermissionsForUser(user.getUuid());
+        assertThat(permissionsFound2).isEqualTo(Set.of(AppPermission.CHANGE_OWNER_PERMISSION));
     }
 
     private User createUser(final String name) {

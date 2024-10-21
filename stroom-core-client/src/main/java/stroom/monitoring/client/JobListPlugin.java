@@ -24,7 +24,7 @@ import stroom.job.client.presenter.JobPresenter;
 import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -49,8 +49,9 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
         registerHandler(getEventBus().addHandler(
                 OpenJobNodeEvent.getType(), openJobNodeEvent -> {
                     final JobNode jobNode = openJobNodeEvent.getJobNode();
-                    final JobPresenter jobPresenter = open();
-                    jobPresenter.setSelected(jobNode);
+                    open(jobPresenter -> {
+                        jobPresenter.setSelected(jobNode);
+                    });
                 }));
     }
 
@@ -70,8 +71,8 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_JOBS_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_JOBS_PERMISSION;
     }
 
     @Override

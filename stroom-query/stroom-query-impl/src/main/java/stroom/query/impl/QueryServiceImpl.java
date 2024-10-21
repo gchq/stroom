@@ -64,7 +64,7 @@ import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -201,7 +201,7 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final QuerySearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -236,20 +236,13 @@ class QueryServiceImpl implements QueryService {
 
                 // Start target
                 try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-                    SearchResultWriter.Target target = null;
+                    final SearchResultWriter.Target target = switch (request.getFileType()) {
+                        case CSV -> new DelimitedTarget(outputStream, ",");
+                        case TSV -> new DelimitedTarget(outputStream, "\t");
+                        case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+                    };
 
                     // Write delimited file.
-                    switch (request.getFileType()) {
-                        case CSV:
-                            target = new DelimitedTarget(outputStream, ",");
-                            break;
-                        case TSV:
-                            target = new DelimitedTarget(outputStream, "\t");
-                            break;
-                        case EXCEL:
-                            target = new ExcelTarget(outputStream, dateTimeSettings);
-                            break;
-                    }
 
                     try {
                         target.start();
@@ -475,17 +468,24 @@ class QueryServiceImpl implements QueryService {
 
                     // Log this search request for the current user.
                     searchEventLog.search(
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
                             mappedRequest.getQuery().getDataSource(),
                             mappedRequest.getQuery().getExpression(),
                             searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams());
+                            searchRequest.getQueryContext().getParams(),
+                            null);
                 }
 
             } catch (final TokenException e) {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(searchRequest.getQuery(),
+                    searchEventLog.search(
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
+                            null,
+                            null,
                             searchRequest.getQueryContext().getQueryInfo(),
                             searchRequest.getQueryContext().getParams(),
                             e);
@@ -504,7 +504,11 @@ class QueryServiceImpl implements QueryService {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
                 if (queryKey == null) {
-                    searchEventLog.search(searchRequest.getQuery(),
+                    searchEventLog.search(
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
+                            null,
+                            null,
                             searchRequest.getQueryContext().getQueryInfo(),
                             searchRequest.getQueryContext().getParams(),
                             e);
