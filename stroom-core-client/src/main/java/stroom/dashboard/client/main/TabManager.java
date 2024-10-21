@@ -181,11 +181,15 @@ public class TabManager {
 
         // Create duplicate menus.
         menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
-        menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
+        if (tabLayoutConfig.getAllTabCount() > 1) {
+            menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
+        }
 
         // Create remove menus.
         menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
-        menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+        if (tabLayoutConfig.getAllTabCount() > 1) {
+            menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+        }
 
         return menuItems;
     }
