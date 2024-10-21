@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldPosition;
 import stroom.query.common.v2.ExpressionPredicateBuilder.Values;
 import stroom.query.language.functions.DateUtil;
@@ -9,17 +8,10 @@ import java.math.BigDecimal;
 
 public class StringValues implements Values {
 
-    private final DateTimeSettings dateTimeSettings;
     private final String[] values;
 
-    public StringValues(final DateTimeSettings dateTimeSettings, final String[] values) {
-        this.dateTimeSettings = dateTimeSettings;
+    public StringValues(final String[] values) {
         this.values = values;
-    }
-
-    @Override
-    public DateTimeSettings getDateTimeSettings() {
-        return dateTimeSettings;
     }
 
     @Override

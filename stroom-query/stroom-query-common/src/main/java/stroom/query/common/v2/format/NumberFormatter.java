@@ -28,11 +28,9 @@ import java.util.Objects;
 
 public class NumberFormatter implements Formatter {
 
-    private final NumberFormatSettings formatSettings;
     private final NumberFormat numberFormat;
 
     private NumberFormatter(final NumberFormatSettings formatSettings) {
-        this.formatSettings = formatSettings;
         this.numberFormat = NullSafe.get(formatSettings, NumberFormatter::getNumberFormat);
     }
 

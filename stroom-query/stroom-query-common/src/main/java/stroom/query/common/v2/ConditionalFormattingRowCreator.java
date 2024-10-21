@@ -25,7 +25,6 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
     private final int[] columnIndexMapping;
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
-    private final DateTimeSettings dateTimeSettings;
     private final Formatter[] columnFormatters;
     private final ValuesPredicate rowFilter;
     private final List<RuleAndMatcher> rules;
@@ -33,14 +32,12 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
     private ConditionalFormattingRowCreator(final int[] columnIndexMapping,
                                             final KeyFactory keyFactory,
                                             final ErrorConsumer errorConsumer,
-                                            final DateTimeSettings dateTimeSettings,
                                             final Formatter[] columnFormatters,
                                             final ValuesPredicate rowFilter,
                                             final List<RuleAndMatcher> rules) {
         this.columnIndexMapping = columnIndexMapping;
         this.keyFactory = keyFactory;
         this.errorConsumer = errorConsumer;
-        this.dateTimeSettings = dateTimeSettings;
         this.columnFormatters = columnFormatters;
         this.rowFilter = rowFilter;
         this.rules = rules;
@@ -84,7 +81,6 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                             columnIndexMapping,
                             keyFactory,
                             errorConsumer,
-                            dateTimeSettings,
                             formatters,
                             rowFilter.orElse(values -> true),
                             ruleAndMatchers));
@@ -101,7 +97,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
 
         // Create values array.
         final Val[] values = RowUtil.createValuesArray(item, columnIndexMapping);
-        final ValValues valValues = new ValValues(dateTimeSettings, values);
+        final ValValues valValues = new ValValues(values);
         if (rowFilter.test(valValues)) {
             // Find a matching rule.
             ConditionalFormattingRule matchingRule = null;

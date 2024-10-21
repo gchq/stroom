@@ -307,8 +307,6 @@ public class ExpressionPredicateBuilder {
 
     public interface Values {
 
-        DateTimeSettings getDateTimeSettings();
-
         String getString(QueryFieldPosition queryFieldPosition);
 
         BigDecimal getNumber(QueryFieldPosition queryFieldPosition);

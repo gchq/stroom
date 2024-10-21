@@ -168,14 +168,6 @@ public class CompiledWindow {
         return columns;
     }
 
-    public String getTimeField() {
-        return timeField;
-    }
-
-    public List<SimpleDuration> getOffsets() {
-        return offsets;
-    }
-
     public WindowProcessor createWindowProcessor(final FieldIndex fieldIndex) {
         if (offsets == null || offsets.isEmpty()) {
             return new NoOpWindowProcessor();

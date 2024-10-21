@@ -210,8 +210,7 @@ public class LmdbDataStore implements DataStore {
                 tableSettings.getValueFilter(),
                 compiledColumns,
                 dateTimeSettings,
-                paramMap,
-                this::error);
+                paramMap);
 
         // Filter puts to the store if we need to. This filter has the effect of preventing addition of items if we have
         // reached the max result size if specified and aren't grouping or sorting.
@@ -759,10 +758,6 @@ public class LmdbDataStore implements DataStore {
 
     public void delete(final DeleteCommand deleteCommand) {
         put(deleteCommand);
-    }
-
-    public QueryKey getQueryKey() {
-        return queryKey;
     }
 
     @Override

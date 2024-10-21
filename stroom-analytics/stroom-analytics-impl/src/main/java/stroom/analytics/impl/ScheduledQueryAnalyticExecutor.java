@@ -381,8 +381,7 @@ public class ScheduledQueryAnalyticExecutor {
                             tableSettings.getValueFilter(),
                             compiledColumns,
                             modifiedRequest.getDateTimeSettings(),
-                            paramMap,
-                            errorConsumer::add);
+                            paramMap);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
                             detectionConsumerFactory.create(analytic);

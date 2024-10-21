@@ -16,15 +16,13 @@ public class ColumnMap {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ColumnMap.class);
 
-    // Map new columns to original columns as close as we can.
-    private final Map<Column, Column> newColumnToOriginalColumnMap;
-
     // Create inverse map.
     private final Map<Column, Column> originalColumnToNewColumnMap;
 
     public ColumnMap(final List<Column> originalColumns,
                      final List<Column> newColumns) {
-        newColumnToOriginalColumnMap = new HashMap<>();
+        // Map new columns to original columns as close as we can.
+        final Map<Column, Column> newColumnToOriginalColumnMap = new HashMap<>();
         List<Column> remaining = newColumns;
 
         // Try equality.
@@ -161,10 +159,6 @@ public class ColumnMap {
                         !column.getFilter().getIncludes().isBlank()) ||
                         (column.getFilter().getExcludes() != null &&
                                 !column.getFilter().getExcludes().isBlank()));
-    }
-
-    public Column getOrignalColumnFromNewColumn(final Column newColumn) {
-        return newColumnToOriginalColumnMap.get(newColumn);
     }
 
     public Column getNewColumnFromOriginalColumn(final Column originalColumn) {

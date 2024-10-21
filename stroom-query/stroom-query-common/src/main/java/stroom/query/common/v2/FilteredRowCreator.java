@@ -23,20 +23,17 @@ public class FilteredRowCreator implements ItemMapper<Row> {
     private final int[] columnIndexMapping;
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
-    private final DateTimeSettings dateTimeSettings;
     private final Formatter[] columnFormatters;
     private final ValuesPredicate rowFilter;
 
     private FilteredRowCreator(final int[] columnIndexMapping,
-                              final KeyFactory keyFactory,
-                              final ErrorConsumer errorConsumer,
-                              final DateTimeSettings dateTimeSettings,
-                              final Formatter[] columnFormatters,
-                              final ValuesPredicate rowFilter) {
+                               final KeyFactory keyFactory,
+                               final ErrorConsumer errorConsumer,
+                               final Formatter[] columnFormatters,
+                               final ValuesPredicate rowFilter) {
         this.columnIndexMapping = columnIndexMapping;
         this.keyFactory = keyFactory;
         this.errorConsumer = errorConsumer;
-        this.dateTimeSettings = dateTimeSettings;
         this.columnFormatters = columnFormatters;
         this.rowFilter = rowFilter;
     }
@@ -67,15 +64,14 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                 columnIndexMapping,
                 keyFactory,
                 errorConsumer,
-                dateTimeSettings,
                 formatters,
                 optionalCombinedPredicate.get()));
     }
 
     public static Optional<ValuesPredicate> createValuesPredicate(final List<Column> newColumns,
-                                                                   final boolean applyValueFilters,
-                                                                   final ExpressionOperator rowFilterExpression,
-                                                                   final DateTimeSettings dateTimeSettings) {
+                                                                  final boolean applyValueFilters,
+                                                                  final ExpressionOperator rowFilterExpression,
+                                                                  final DateTimeSettings dateTimeSettings) {
         Optional<ValuesPredicate> valuesPredicate = Optional.empty();
 
         // Apply value filters.
@@ -108,7 +104,7 @@ public class FilteredRowCreator implements ItemMapper<Row> {
 
         // Create values array.
         final Val[] values = RowUtil.createValuesArray(item, columnIndexMapping);
-        if (rowFilter.test(new ValValues(dateTimeSettings, values))) {
+        if (rowFilter.test(new ValValues(values))) {
             // Now apply formatting choices.
             final List<String> stringValues = RowUtil.convertValues(values, columnFormatters);
 

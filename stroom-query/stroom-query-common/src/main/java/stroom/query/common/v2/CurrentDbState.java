@@ -38,10 +38,6 @@ public class CurrentDbState {
         return eventId;
     }
 
-    public boolean hasEventId() {
-        return eventId != null;
-    }
-
     public Long getLastEventTime() {
         return lastEventTime;
     }

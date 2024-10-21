@@ -4,6 +4,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.NullSafe;
 import stroom.util.shared.GwtNullSafe;
 
 import java.util.Collections;
@@ -37,13 +38,13 @@ public class SimpleStringExpressionParser {
     private static Optional<ExpressionTerm> createTerm(final String field,
                                                        final String string,
                                                        final boolean caseSensitive) {
-        if (GwtNullSafe.isBlankString(string)) {
+        if (NullSafe.isEmptyString(string)) {
             return Optional.empty();
         }
 
         Condition condition;
         String value = string;
-        if (string.length() > 1 && string.startsWith("?")) {
+        if (string.startsWith("?")) {
             // Word boundary matching
             condition = Condition.MATCHES_REGEX;
             value = string.substring(1);
@@ -64,7 +65,7 @@ public class SimpleStringExpressionParser {
                 value = sb.toString();
             }
 
-        } else if (string.length() > 1 && string.startsWith("/")) {
+        } else if (string.startsWith("/")) {
             // Regex matching.
             condition = Condition.MATCHES_REGEX;
             value = string.substring(1);
@@ -74,10 +75,10 @@ public class SimpleStringExpressionParser {
             condition = Condition.STARTS_WITH;
             value = string.substring(1);
 
-        } else if (string.endsWith("$")) {
+        } else if (string.startsWith("$")) {
             // Ends with.
             condition = Condition.ENDS_WITH;
-            value = string.substring(0, string.length() - 1);
+            value = string.substring(1);
 
         } else if (string.startsWith(">=")) {
             // Greater than or equal to numeric matching.
@@ -121,6 +122,18 @@ public class SimpleStringExpressionParser {
             } else {
                 condition = Condition.MATCHES_REGEX;
                 value = "^" + possibleRegex + "$";
+            }
+
+        } else if (string.startsWith("\\")) {
+            // Escaped contains.
+            value = string.substring(1);
+            final String possibleRegex = replaceWildcards(value);
+            if (possibleRegex.equals(value)) {
+                condition = Condition.CONTAINS;
+                value = possibleRegex;
+            } else {
+                condition = Condition.MATCHES_REGEX;
+                value = possibleRegex;
             }
 
         } else {
