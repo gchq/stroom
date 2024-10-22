@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.NullSafe;
+import stroom.util.filter.StringPredicateFactory;
 import stroom.util.shared.CompareUtil;
 
 import java.math.BigDecimal;
@@ -178,6 +179,7 @@ public class ExpressionPredicateBuilder {
                     case STARTS_WITH -> StringStartsWith.create(term, queryFieldPosition);
                     case ENDS_WITH -> StringEndsWith.create(term, queryFieldPosition);
                     case MATCHES_REGEX -> StringRegex.create(term, queryFieldPosition);
+                    case WORD_BOUNDARY -> StringWordBoundary.create(term, queryFieldPosition);
                     case IN -> StringIn.create(term, queryFieldPosition);
                     default -> throw e2;
                 };
@@ -1094,6 +1096,37 @@ public class ExpressionPredicateBuilder {
                 return false;
             }
             return pattern.matcher(valString).find();
+        }
+    }
+
+    private static class StringWordBoundary extends ExpressionTermPredicate {
+
+        private final Predicate<String> predicate;
+
+        private StringWordBoundary(final ExpressionTerm term,
+                                   final QueryFieldPosition queryFieldPosition,
+                                   final Predicate<String> predicate) {
+            super(term, queryFieldPosition);
+            this.predicate = predicate;
+        }
+
+        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
+                                                        final QueryFieldPosition queryFieldPosition) {
+            // If the term value is null or empty then always match.
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            final Predicate<String> predicate = StringPredicateFactory.createWordBoundaryPredicate(term.getValue());
+            return Optional.of(new StringWordBoundary(term, queryFieldPosition, predicate));
+        }
+
+        @Override
+        public boolean test(final Values values) {
+            final String valString = values.getString(queryFieldPosition);
+            if (valString == null) {
+                return false;
+            }
+            return predicate.test(valString);
         }
     }
 

@@ -9,10 +9,9 @@ import stroom.util.shared.GwtNullSafe;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class SimpleStringExpressionParser {
-
-    private static final String WORD_BOUNDARY = ".*?[ _\\-\\(\\)\\[\\]]";
 
     public static Optional<ExpressionOperator> create(final String field,
                                                       final String string,
@@ -46,24 +45,8 @@ public class SimpleStringExpressionParser {
         String value = string;
         if (string.startsWith("?")) {
             // Word boundary matching
-            condition = Condition.MATCHES_REGEX;
+            condition = Condition.WORD_BOUNDARY;
             value = string.substring(1);
-            char[] chars = value.toCharArray();
-            final StringBuilder sb = new StringBuilder();
-            boolean foundBoundary = false;
-            for (final char c : chars) {
-                if (Character.isUpperCase(c) && !sb.isEmpty()) {
-                    sb.append(WORD_BOUNDARY);
-                    foundBoundary = true;
-                }
-                sb.append(c);
-            }
-            // If we didn't find a boundary then just do contains.
-            if (!foundBoundary) {
-                condition = Condition.CONTAINS;
-            } else {
-                value = sb.toString();
-            }
 
         } else if (string.startsWith("/")) {
             // Regex matching.
@@ -107,8 +90,17 @@ public class SimpleStringExpressionParser {
             char[] chars = value.toCharArray();
             final StringBuilder sb = new StringBuilder();
             for (final char c : chars) {
-                sb.append(".*");
-                sb.append(c);
+                sb.append(".*?");
+
+                if (c == '*') {
+                    // TODO @AT Why is this * block here
+                    sb.append(".*?");
+                } else if (Character.isLetterOrDigit(c)) {
+                    sb.append(c);
+                } else {
+                    // Might be a special char so escape it
+                    sb.append(Pattern.quote(String.valueOf(c)));
+                }
             }
             value = sb.toString();
 
