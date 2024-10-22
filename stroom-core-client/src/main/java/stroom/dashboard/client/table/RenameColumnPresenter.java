@@ -92,7 +92,7 @@ public class RenameColumnPresenter
                 // are renamed too.
                 tablePresenter.handleFieldRename(column.getName(), newFieldName);
 
-                final boolean isNameInUse = tablePresenter.getTableSettings()
+                final boolean isNameInUse = tablePresenter.getTableComponentSettings()
                         .getColumns()
                         .stream()
                         .map(Column::getName)

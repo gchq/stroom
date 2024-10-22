@@ -68,13 +68,10 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             hasPerm = securityContextProvider.get().hasDocumentPermission(
                     request.getDocRef(),
                     request.getPermission());
-            if (!hasPerm) {
-                // Only want to log a failure
-                logPermCheckFailure(request, null);
-            }
-        } catch (Exception e) {
+            logPermCheck(request, hasPerm, null);
+        } catch (final Exception e) {
             try {
-                logPermCheckFailure(request, e);
+                logPermCheck(request, false, e);
             } catch (Exception ex) {
                 LOGGER.error("Error logging event: {}", e.getMessage(), e);
             }
@@ -84,12 +81,37 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         return hasPerm;
     }
 
-    private void logPermCheckFailure(final CheckDocumentPermissionRequest request,
-                                     final Throwable e) {
+    private void logPermCheck(final CheckDocumentPermissionRequest request,
+                              final boolean hasPerm,
+                              final Throwable e) {
         final DocRef docRef = request.getDocRef();
-        final String msg = LogUtil.message("User failed permissions check for permission {} document {}",
-                request.getPermission(),
-                docRef);
+
+        final String msg;
+        final Outcome outcome;
+        if (e == null) {
+            if (hasPerm) {
+                msg = LogUtil.message("User has permission {} on document {}",
+                        request.getPermission(),
+                        docRef);
+                outcome = null;
+            } else {
+                msg = LogUtil.message("User does not have permission {} on document {}",
+                        request.getPermission(),
+                        docRef);
+                outcome = Outcome.builder()
+                        .withSuccess(false)
+                        .withDescription(msg)
+                        .build();
+            }
+        } else {
+            msg = LogUtil.message("User failed permissions check for permission {} on document {}",
+                    request.getPermission(),
+                    docRef);
+            outcome = Outcome.builder()
+                    .withSuccess(false)
+                    .withDescription(NullSafe.getOrElse(e, Throwable::getMessage, msg))
+                    .build();
+        }
 
         stroomEventLoggingServiceProvider.get().log(
                 StroomEventLoggingUtil.buildTypeId(this, "checkDocumentPermission"),
@@ -97,10 +119,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 AuthoriseEventAction.builder()
                         .withAction(AuthorisationActionType.REQUEST)
                         .addObject(StroomEventLoggingUtil.createOtherObject(docRef))
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(false)
-                                .withDescription(NullSafe.getOrElse(e, Throwable::getMessage, msg))
-                                .build())
+                        .withOutcome(outcome)
                         .build());
     }
 }

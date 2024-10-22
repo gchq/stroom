@@ -16062,6 +16062,10 @@ components:
         queryId:
           type: string
           description: TODO
+        selectionHandlers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentSelectionHandler'
         showDetail:
           type: boolean
         useDefaultExtractionPipeline:

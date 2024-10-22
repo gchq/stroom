@@ -25,10 +25,12 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -59,6 +61,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
@@ -159,6 +162,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
+    private ExpressionOperator currentSelectionExpression;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -305,8 +309,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> {
-            final boolean applyValueFilters = !getTableSettings().applyValueFilters();
-            setSettings(getTableSettings()
+            final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
+            setSettings(getTableComponentSettings()
                     .copy()
                     .applyValueFilters(applyValueFilters)
                     .build());
@@ -318,13 +322,30 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        getTableSettings(),
+                        getTableComponentSettings(),
                         selectionModel.getSelectedItems());
             }
         }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
             setPause(!pause, true);
+        }));
+    }
+
+    @Override
+    public void setComponents(final Components components) {
+        super.setComponents(components);
+
+        registerHandler(components.addComponentChangeHandler(event -> {
+            final Component component = event.getComponent();
+            final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
+                    .create(component, getTableComponentSettings().getSelectionHandlers());
+            optional.ifPresent(selectionExpression -> {
+                if (!Objects.equals(currentSelectionExpression, selectionExpression)) {
+                    currentSelectionExpression = selectionExpression;
+                    refresh();
+                }
+            });
         }));
     }
 
@@ -414,8 +435,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 .componentId(tableSettings.getKey())
                                                 .requestedRange(OffsetRange.UNBOUNDED)
                                                 .tableName(getTableName(tableSettings.getKey()))
-                                                .tableSettings(((TableComponentSettings) tableSettings.getValue())
-                                                        .copy().buildTableSettings())
+                                                .tableSettings(getTableSettings())
                                                 .fetch(Fetch.ALL)
                                                 .build()));
 
@@ -482,9 +502,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableSettings(),
+        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableComponentSettings(),
                 selectionModel.getSelectedItems());
-        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableSettings(),
+        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
                 selectionModel.getSelectedItems());
         final boolean enabled = eventIdList.size() > 0 || annotationIdList.size() > 0;
         annotateButton.setEnabled(enabled);
@@ -492,12 +512,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void startSearch() {
-        final TableSettings tableSettings = getTableSettings()
-                .copy()
-                .buildTableSettings();
         tableResultRequest = tableResultRequest
                 .copy()
-                .tableSettings(tableSettings)
+                .tableSettings(getTableSettings())
                 .build();
 
         setPause(false, false);
@@ -586,7 +603,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
-        final boolean showDetail = getTableSettings().showDetail();
+        final boolean showDetail = getTableComponentSettings().showDetail();
         for (final Column column : columns) {
             if (column.getGroup() != null) {
                 maxGroup = Math.max(maxGroup, column.getGroup());
@@ -682,9 +699,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void handleFieldRename(final String oldName,
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
-            if (getTableSettings() != null && getTableSettings().getConditionalFormattingRules() != null) {
+            if (getTableComponentSettings() != null &&
+                    getTableComponentSettings().getConditionalFormattingRules() != null) {
                 final AtomicBoolean wasModified = new AtomicBoolean(false);
-                getTableSettings().getConditionalFormattingRules().stream()
+                getTableComponentSettings().getConditionalFormattingRules().stream()
                         .map(ConditionalFormattingRule::getExpression)
                         .forEach(expressionOperator -> {
                             boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
@@ -764,25 +782,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void updateFields() {
-        if (getTableSettings().getColumns() == null) {
-            setSettings(getTableSettings().copy().columns(new ArrayList<>()).build());
+        if (getTableComponentSettings().getColumns() == null) {
+            setSettings(getTableComponentSettings().copy().columns(new ArrayList<>()).build());
         }
 
         if (currentSearchModel != null) {
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
 
             // See if the datasource changed.
-            final DocRef currentDataSource = getTableSettings().getDataSourceRef();
+            final DocRef currentDataSource = getTableComponentSettings().getDataSourceRef();
             final DocRef loadedDataSource = indexLoader.getLoadedDataSourceRef();
             if (!Objects.equals(currentDataSource, loadedDataSource)) {
                 dataSourceClient.fetchDefaultExtractionPipeline(loadedDataSource, extractionPipeline -> {
-                    final TableComponentSettings.Builder builder = getTableSettings().copy();
+                    final TableComponentSettings.Builder builder = getTableComponentSettings().copy();
 
                     // Update data source ref so the table has an idea where it will be receiving data from.
                     builder.dataSourceRef(loadedDataSource);
 
                     // Update the extraction pipeline.
-                    if (extractionPipeline != null && getTableSettings().useDefaultExtractionPipeline()) {
+                    if (extractionPipeline != null && getTableComponentSettings().useDefaultExtractionPipeline()) {
                         builder.extractionPipeline(extractionPipeline).extractValues(true);
                     }
                     setSettings(builder.build());
@@ -796,15 +814,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void ensureSpecialFields(final String... indexFieldNames) {
         // Remove all special fields as we will re-add them.
-        getTableSettings().getColumns().removeIf(Column::isSpecial);
+        getTableComponentSettings().getColumns().removeIf(Column::isSpecial);
 
-        final Optional<Integer> maxGroup = getTableSettings()
+        final Optional<Integer> maxGroup = getTableComponentSettings()
                 .getColumns()
                 .stream()
                 .map(Column::getGroup)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo);
-        if (getTableSettings().showDetail() || maxGroup.isEmpty()) {
+        if (getTableComponentSettings().showDetail() || maxGroup.isEmpty()) {
             final List<Column> requiredSpecialColumns = new ArrayList<>();
             for (final String indexFieldName : indexFieldNames) {
                 final Column specialColumn = buildSpecialColumn(indexFieldName);
@@ -817,13 +835,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
-                final Version version = Version.parse(getTableSettings().getModelVersion());
+                final Version version = Version.parse(getTableComponentSettings().getModelVersion());
                 final boolean old = version.lt(CURRENT_MODEL_VERSION);
                 if (old) {
                     requiredSpecialColumns.forEach(requiredSpecialDsColumn ->
-                            getTableSettings().getColumns().removeIf(column ->
+                            getTableComponentSettings().getColumns().removeIf(column ->
                                     !column.isVisible() && column.getName().equals(requiredSpecialDsColumn.getName())));
-                    setSettings(getTableSettings()
+                    setSettings(getTableComponentSettings()
                             .copy()
                             .modelVersion(CURRENT_MODEL_VERSION.toString())
                             .build());
@@ -831,7 +849,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 // Add special fields.
                 requiredSpecialColumns.forEach(column ->
-                        getTableSettings().getColumns().add(column));
+                        getTableComponentSettings().getColumns().add(column));
             }
         }
 
@@ -868,7 +886,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
         existingColumns.clear();
 
-        final List<Column> columns = getTableSettings().getColumns();
+        final List<Column> columns = getTableComponentSettings().getColumns();
         addExpanderColumn();
         columnsManager.setColumnsStartIndex(1);
 
@@ -912,12 +930,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
-        if (getTableSettings().getColumns() != null) {
+        if (getTableComponentSettings().getColumns() != null) {
             final String reservedStreamId = IndexConstants.RESERVED_STREAM_ID_FIELD_NAME;
             final String reservedEventId = IndexConstants.RESERVED_EVENT_ID_FIELD_NAME;
 
             final List<Column> columns = new ArrayList<>();
-            getTableSettings().getColumns().forEach(column -> {
+            getTableComponentSettings().getColumns().forEach(column -> {
                 Column col = column;
                 if (reservedStreamId.equals(col.getName())) {
                     col = buildSpecialColumn(IndexConstants.STREAM_ID);
@@ -929,35 +947,35 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 usedFieldIds.add(column.getId());
                 columns.add(col);
             });
-            setSettings(getTableSettings().copy().columns(columns).build());
+            setSettings(getTableComponentSettings().copy().columns(columns).build());
         }
 
         // Change value filter state.
-        setApplyValueFilters(getTableSettings().applyValueFilters());
+        setApplyValueFilters(getTableComponentSettings().applyValueFilters());
     }
 
-    public TableComponentSettings getTableSettings() {
+    public TableComponentSettings getTableComponentSettings() {
         return (TableComponentSettings) getSettings();
     }
 
     @Override
     public void link() {
-        String queryId = getTableSettings().getQueryId();
+        String queryId = getTableComponentSettings().getQueryId();
         queryId = getComponents().validateOrGetLastComponentId(queryId, QueryPresenter.TYPE.getId());
-        setSettings(getTableSettings().copy().queryId(queryId).build());
+        setSettings(getTableComponentSettings().copy().queryId(queryId).build());
         setQueryId(queryId);
     }
 
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        final TableComponentSettings tableComponentSettings = getTableSettings();
+        final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         setQueryId(tableComponentSettings.getQueryId());
         updatePageSize();
     }
 
     private void updatePageSize() {
-        final TableComponentSettings tableComponentSettings = getTableSettings();
+        final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         final int start = dataGrid.getVisibleRange().getStart();
         dataGrid.setVisibleRange(new Range(
                 start,
@@ -973,21 +991,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
-        final TableSettings tableSettings = getTableSettings()
+        return tableResultRequest.copy().tableSettings(getTableSettings()).fetch(fetch).build();
+    }
+
+    private TableSettings getTableSettings() {
+        TableSettings tableSettings = getTableComponentSettings()
                 .copy()
                 .buildTableSettings();
-        return tableResultRequest.copy().tableSettings(tableSettings).fetch(fetch).build();
+        return tableSettings.copy().aggregateFilter(currentSelectionExpression).build();
     }
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
-        final TableSettings tableSettings = getTableSettings()
-                .copy()
-                .buildTableSettings();
         return tableResultRequest
                 .copy()
                 .requestedRange(OffsetRange.UNBOUNDED)
-                .tableSettings(tableSettings)
+                .tableSettings(getTableSettings())
                 .fetch(Fetch.ALL)
                 .build();
     }
@@ -1010,7 +1029,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     void refresh() {
-        refresh(() -> {});
+        refresh(() -> {
+        });
     }
 
     public TableSectionElement getTableHeadElement() {
@@ -1045,7 +1065,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public List<ColumnRef> getColumns() {
-        return GwtNullSafe.list(getTableSettings().getColumns())
+        return GwtNullSafe.list(getTableComponentSettings().getColumns())
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
                 .collect(Collectors.toList());
