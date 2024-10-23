@@ -1,11 +1,9 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldIndex;
-import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldPosition;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValuesPredicate;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactory;
 import stroom.util.filter.StringPredicateFactory;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -13,12 +11,14 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -348,18 +348,41 @@ class TestStringPredicateFactory {
 
     private Predicate<String> createPredicate(final String userInput) {
         final Optional<ExpressionOperator> simpleStringExpressionParser = SimpleStringExpressionParser
-                .create("test", userInput, false);
+                .create(new SingleFieldProvider("test"), userInput, false);
         if (simpleStringExpressionParser.isEmpty()) {
             return string -> true;
         }
 
-        final QueryField queryField = QueryField.builder().fldName("test").fldType(FieldType.TEXT).build();
-        final QueryFieldIndex queryFieldIndex = fieldName -> new QueryFieldPosition(queryField, 0);
-        final Optional<ValuesPredicate> optionalValuesPredicate = ExpressionPredicateBuilder
-                .create(simpleStringExpressionParser.orElseThrow(), queryFieldIndex, null);
+        final ValueFunctionFactories<String> queryFieldIndex = fieldName -> new ValueFunctionFactory<>() {
+            @Override
+            public Function<String, Boolean> createNullCheck() {
+                return null;
+            }
 
-        return string -> optionalValuesPredicate
-                .orElseThrow().test(new StringValues(new String[]{string}));
+            @Override
+            public Function<String, String> createStringExtractor() {
+                return string -> string;
+            }
+
+            @Override
+            public Function<String, Long> createDateExtractor() {
+                return null;
+            }
+
+            @Override
+            public Function<String, BigDecimal> createNumberExtractor() {
+                return null;
+            }
+
+            @Override
+            public FieldType getFieldType() {
+                return FieldType.TEXT;
+            }
+        };
+
+        final Optional<Predicate<String>> optionalValuesPredicate = ExpressionPredicateBuilder
+                .create(simpleStringExpressionParser.orElseThrow(), queryFieldIndex, null);
+        return string -> optionalValuesPredicate.orElseThrow().test(string);
     }
 
     private void doComparatorTest(final String userInput,
