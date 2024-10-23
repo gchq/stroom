@@ -54,10 +54,10 @@ public abstract class ExpressionItem implements Serializable {
     @Schema(description = "Whether this item in the expression tree is enabled or not",
             example = "true")
     @JsonProperty(value = "enabled")
-    private Boolean enabled; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private Boolean enabled; // TODO : XML serialisation still requires no-arg constructor and mutable fields
 
     public ExpressionItem() {
-        // TODO : XML serilisation still requires no-arg constructor and mutable fields
+        // TODO : XML serialisation still requires no-arg constructor and mutable fields
     }
 
     @JsonCreator
@@ -70,7 +70,7 @@ public abstract class ExpressionItem implements Serializable {
     }
 
     public boolean enabled() {
-        return enabled == null || enabled;
+        return enabled != Boolean.FALSE;
     }
 
     /**

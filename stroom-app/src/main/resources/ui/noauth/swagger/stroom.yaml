@@ -10433,6 +10433,7 @@ components:
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
+            - WORD_BOUNDARY
             - OF_DOC_REF
             - USER_HAS_PERM
             - USER_HAS_OWNER
@@ -16340,6 +16341,7 @@ components:
           - IS_NULL
           - IS_NOT_NULL
           - MATCHES_REGEX
+          - WORD_BOUNDARY
           - OF_DOC_REF
           - USER_HAS_PERM
           - USER_HAS_OWNER

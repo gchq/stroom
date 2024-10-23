@@ -4,9 +4,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldIndex;
-import stroom.query.common.v2.ExpressionPredicateBuilder.Values;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValuesPredicate;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
@@ -28,8 +26,9 @@ public class ValFilter {
                                           final CompiledColumns compiledColumns,
                                           final DateTimeSettings dateTimeSettings,
                                           final Map<String, String> paramMap) {
-        final QueryFieldIndex queryFieldIndex = RowUtil.createColumnNameQueryFieldIndex(compiledColumns.getColumns());
-        final Optional<ValuesPredicate> optionalRowExpressionMatcher =
+        final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil
+                .createColumnNameValExtractor(compiledColumns.getColumns());
+        final Optional<Predicate<Val[]>> optionalRowExpressionMatcher =
                 ExpressionPredicateBuilder.create(rowExpression, queryFieldIndex, dateTimeSettings);
 
         final Set<String> fieldsUsed = new HashSet<>(ExpressionUtil.fields(rowExpression));
@@ -63,7 +62,7 @@ public class ValFilter {
         // If we need column mappings then create a predicate that will use them.
         if (!usedColumns.isEmpty()) {
             final ValueReferenceIndex valueReferenceIndex = compiledColumns.getValueReferenceIndex();
-            final ValuesPredicate rowPredicate = optionalRowExpressionMatcher.orElse(values -> true);
+            final Predicate<Val[]> rowPredicate = optionalRowExpressionMatcher.orElse(values -> true);
 
             return values -> {
                 final StoredValues storedValues = valueReferenceIndex.createStoredValues();
@@ -85,8 +84,7 @@ public class ValFilter {
                 }
 
                 // Test the row value map.
-                final Values v = new ValValues(vals);
-                return rowPredicate.test(v);
+                return rowPredicate.test(vals);
 
             };
         } else if (optionalRowExpressionMatcher.isPresent()) {

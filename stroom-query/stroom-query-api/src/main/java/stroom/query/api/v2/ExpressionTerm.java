@@ -236,6 +236,7 @@ public final class ExpressionTerm extends ExpressionItem {
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
         MATCHES_REGEX("matches regex"),
+        WORD_BOUNDARY("word boundary"),
 
         // Permission related conditions.
         OF_DOC_REF("of"),
@@ -370,7 +371,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 enabled = null;
             }
             Boolean caseSensitive = this.caseSensitive;
-            if (Boolean.TRUE.equals(caseSensitive)) {
+            if (Boolean.FALSE.equals(caseSensitive)) {
                 caseSensitive = null;
             }
 
