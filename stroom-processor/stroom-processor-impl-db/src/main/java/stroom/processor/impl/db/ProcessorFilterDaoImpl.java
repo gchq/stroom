@@ -117,7 +117,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
         tracker.setVersion(1);
         tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
-        final int id = context
+        final Integer id = context
                 .insertInto(PROCESSOR_FILTER_TRACKER)
                 .columns(
                         PROCESSOR_FILTER_TRACKER.VERSION,
@@ -147,6 +147,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         NullSafe.get(tracker.getStatus(), ProcessorFilterTrackerStatus::getPrimitiveValue))
                 .returning(PROCESSOR_FILTER_TRACKER.ID)
                 .fetchOne(PROCESSOR_FILTER_TRACKER.ID);
+        Objects.requireNonNull(id);
         tracker.setId(id);
         return tracker;
     }
@@ -154,7 +155,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private ProcessorFilter createFilter(final DSLContext context, final ProcessorFilter filter) {
         filter.setVersion(1);
         final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
-        final int id = context
+        final Integer id = context
                 .insertInto(PROCESSOR_FILTER)
                 .columns(PROCESSOR_FILTER.VERSION,
                         PROCESSOR_FILTER.CREATE_TIME_MS,
@@ -192,6 +193,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .returning(PROCESSOR_FILTER.ID)
                 .fetchOne(PROCESSOR_FILTER.ID);
+        Objects.requireNonNull(id);
         filter.setId(id);
         return filter;
     }
@@ -221,7 +223,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     "it may have been updated by another user or deleted");
         }
 
-        return fetch(filter.getId()).orElseThrow(() ->
+        return fetch(context, filter.getId()).map(this::mapRecord).orElseThrow(() ->
                 new RuntimeException("Error fetching updated processor filter"));
     }
 
@@ -379,17 +381,19 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public Optional<ProcessorFilter> fetch(final int id) {
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
-                        context
-                                .select()
-                                .from(PROCESSOR_FILTER)
-                                .join(PROCESSOR_FILTER_TRACKER)
-                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
-                                .join(PROCESSOR)
-                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                                .where(PROCESSOR_FILTER.ID.eq(id))
-                                .fetchOptional())
-                .map(this::mapRecord);
+        return JooqUtil.contextResult(processorDbConnProvider, context -> fetch(context, id)).map(this::mapRecord);
+    }
+
+    private Optional<Record> fetch(final DSLContext context, final int id) {
+        return context
+                .select()
+                .from(PROCESSOR_FILTER)
+                .join(PROCESSOR_FILTER_TRACKER)
+                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                .join(PROCESSOR)
+                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                .where(PROCESSOR_FILTER.ID.eq(id))
+                .fetchOptional();
     }
 
     @Override

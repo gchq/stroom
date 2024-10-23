@@ -28,6 +28,7 @@ import org.jooq.exception.IntegrityConstraintViolationException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -90,7 +91,7 @@ public class UserDaoImpl implements UserDao {
     private User create(final DSLContext context, final User user) {
         user.setVersion(1);
         user.setUuid(UUID.randomUUID().toString());
-        final int id = context
+        final Integer id = context
                 .insertInto(STROOM_USER)
                 .columns(STROOM_USER.VERSION,
                         STROOM_USER.CREATE_TIME_MS,
@@ -116,6 +117,7 @@ public class UserDaoImpl implements UserDao {
                         user.getFullName())
                 .returning(STROOM_USER.ID)
                 .fetchOne(STROOM_USER.ID);
+        Objects.requireNonNull(id);
         user.setId(id);
         return user;
     }
