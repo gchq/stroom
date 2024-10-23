@@ -144,7 +144,7 @@ public class ColumnsManager implements HeadingListener {
     public void moveColumn(final int fromIndex, final int toIndex) {
         final Column column = getColumn(fromIndex);
         if (column != null) {
-            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
             columns.remove(column);
 
             final int destIndex = toIndex - columnsStartIndex;
@@ -170,7 +170,7 @@ public class ColumnsManager implements HeadingListener {
     }
 
     private void changeSort(final Column column, final SortDirection direction) {
-        final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+        final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
         boolean change = false;
 
         if (direction == null) {
@@ -408,15 +408,15 @@ public class ColumnsManager implements HeadingListener {
     }
 
     private List<Column> getColumns() {
-        if (tablePresenter.getSettings() != null && tablePresenter.getTableSettings().getColumns() != null) {
-            return new ArrayList<>(tablePresenter.getTableSettings().getColumns());
+        if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
+            return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
         }
         return new ArrayList<>();
     }
 
     private void updateColumns(final List<Column> columns) {
         tablePresenter.setSettings(
-                tablePresenter.getTableSettings()
+                tablePresenter.getTableComponentSettings()
                         .copy()
                         .columns(columns)
                         .build());

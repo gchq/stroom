@@ -46,7 +46,8 @@ import java.util.Objects;
         "showDetail",
         "conditionalFormattingRules",
         "modelVersion",
-        "applyValueFilters"})
+        "applyValueFilters",
+        "selectionHandlers"})
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
 
@@ -102,6 +103,8 @@ public class TableComponentSettings implements ComponentSettings {
     private final String modelVersion;
     @JsonProperty
     private final Boolean applyValueFilters;
+    @JsonProperty
+    private final List<ComponentSelectionHandler> selectionHandlers;
 
     @JsonCreator
     public TableComponentSettings(
@@ -117,7 +120,8 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion,
-            @JsonProperty("applyValueFilters") final Boolean applyValueFilters) {
+            @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
+            @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
 
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
@@ -131,6 +135,7 @@ public class TableComponentSettings implements ComponentSettings {
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
         this.applyValueFilters = applyValueFilters;
+        this.selectionHandlers = selectionHandlers;
     }
 
     public String getQueryId() {
@@ -203,6 +208,10 @@ public class TableComponentSettings implements ComponentSettings {
         return applyValueFilters == Boolean.TRUE;
     }
 
+    public List<ComponentSelectionHandler> getSelectionHandlers() {
+        return selectionHandlers;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -223,7 +232,8 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                 Objects.equals(modelVersion, that.modelVersion) &&
-                Objects.equals(applyValueFilters, that.applyValueFilters);
+                Objects.equals(applyValueFilters, that.applyValueFilters) &&
+                Objects.equals(selectionHandlers, that.selectionHandlers);
     }
 
     @Override
@@ -240,7 +250,8 @@ public class TableComponentSettings implements ComponentSettings {
                 showDetail,
                 conditionalFormattingRules,
                 modelVersion,
-                applyValueFilters);
+                applyValueFilters,
+                selectionHandlers);
     }
 
     @Override
@@ -258,6 +269,7 @@ public class TableComponentSettings implements ComponentSettings {
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", modelVersion='" + modelVersion + '\'' +
                 ", applyValueFilters='" + applyValueFilters + '\'' +
+                ", selectionHandlers='" + selectionHandlers + '\'' +
                 '}';
     }
 
@@ -288,6 +300,7 @@ public class TableComponentSettings implements ComponentSettings {
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
         private Boolean applyValueFilters;
+        private List<ComponentSelectionHandler> selectionHandlers;
 
         private Builder() {
         }
@@ -311,6 +324,7 @@ public class TableComponentSettings implements ComponentSettings {
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
             this.applyValueFilters = tableSettings.applyValueFilters;
+            this.selectionHandlers = tableSettings.selectionHandlers;
         }
 
         /**
@@ -437,6 +451,11 @@ public class TableComponentSettings implements ComponentSettings {
             return self();
         }
 
+        public Builder selectionHandlers(final List<ComponentSelectionHandler> selectionHandlers) {
+            this.selectionHandlers = selectionHandlers;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -456,7 +475,8 @@ public class TableComponentSettings implements ComponentSettings {
                     showDetail,
                     conditionalFormattingRules,
                     modelVersion,
-                    applyValueFilters);
+                    applyValueFilters,
+                    selectionHandlers);
         }
 
         public TableSettings buildTableSettings() {

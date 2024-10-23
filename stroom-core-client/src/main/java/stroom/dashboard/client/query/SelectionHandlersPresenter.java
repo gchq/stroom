@@ -27,10 +27,16 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ComponentSettings.AbstractBuilder;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
+import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
@@ -57,6 +63,7 @@ public class SelectionHandlersPresenter
 
     private final SelectionHandlerListPresenter listPresenter;
     private final Provider<SelectionHandlerPresenter> editRulePresenterProvider;
+    private final DynamicFieldSelectionListModel dynamicFieldSelectionListModel;
     private List<ComponentSelectionHandler> selectionHandlers = new ArrayList<>();
 
     private final ButtonView addButton;
@@ -69,14 +76,16 @@ public class SelectionHandlersPresenter
 
     private boolean dirty;
     private List<Component> componentList;
-    private Consumer<Consumer<DocRef>> dataSourceRefConsumer;
+    private FieldSelectionListModel fieldSelectionListModel;
 
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
                                       final SelectionHandlersView view,
                                       final SelectionHandlerListPresenter listPresenter,
-                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider) {
+                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider,
+                                      final DynamicFieldSelectionListModel dynamicFieldSelectionListModel) {
         super(eventBus, view);
+        this.dynamicFieldSelectionListModel = dynamicFieldSelectionListModel;
         this.listPresenter = listPresenter;
 //        this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
@@ -106,7 +115,7 @@ public class SelectionHandlersPresenter
     }
 
     public void setDataSourceRefConsumer(final Consumer<Consumer<DocRef>> dataSourceRefConsumer) {
-        this.dataSourceRefConsumer = dataSourceRefConsumer;
+        dynamicFieldSelectionListModel.setDataSourceRefConsumer(dataSourceRefConsumer);
     }
 
     @Override
@@ -210,7 +219,7 @@ public class SelectionHandlersPresenter
                 .enabled(true)
                 .build();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.read(newRule, componentList, dataSourceRefConsumer);
+        editSelectionHandlerPresenter.read(newRule, componentList, fieldSelectionListModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -233,8 +242,7 @@ public class SelectionHandlersPresenter
 
     private void edit(final ComponentSelectionHandler existingRule) {
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-
-        editSelectionHandlerPresenter.read(existingRule, componentList, dataSourceRefConsumer);
+        editSelectionHandlerPresenter.read(existingRule, componentList, fieldSelectionListModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -264,11 +272,32 @@ public class SelectionHandlersPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        final AbstractQueryComponentSettings settings = (AbstractQueryComponentSettings) componentConfig.getSettings();
-        if (settings.getSelectionHandlers() != null) {
-            this.selectionHandlers = settings.getSelectionHandlers();
-        } else {
-            this.selectionHandlers.clear();
+        if (componentConfig.getSettings() instanceof AbstractQueryComponentSettings) {
+            fieldSelectionListModel = dynamicFieldSelectionListModel;
+            final AbstractQueryComponentSettings settings =
+                    (AbstractQueryComponentSettings) componentConfig.getSettings();
+            if (settings.getSelectionHandlers() != null) {
+                this.selectionHandlers = settings.getSelectionHandlers();
+            } else {
+                this.selectionHandlers.clear();
+            }
+
+        } else if (componentConfig.getSettings() instanceof TableComponentSettings) {
+            final TableComponentSettings settings =
+                    (TableComponentSettings) componentConfig.getSettings();
+            final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
+            final List<QueryField> fields = settings
+                    .getColumns()
+                    .stream()
+                    .map(column -> QueryField
+                            .builder()
+                            .fldName(column.getName())
+                            .fldType(FieldType.TEXT)
+                            .queryable(true)
+                            .build())
+                    .collect(Collectors.toList());
+            simpleFieldSelectionListModel.addItems(fields);
+            fieldSelectionListModel = simpleFieldSelectionListModel;
         }
 
         componentList = getComponents()
@@ -284,16 +313,28 @@ public class SelectionHandlersPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        final AbstractQueryComponentSettings oldSettings =
-                (AbstractQueryComponentSettings) componentConfig.getSettings();
-        final AbstractBuilder<?, ?> builder = oldSettings.copy();
-        if (builder instanceof AbstractQueryComponentSettings.AbstractBuilder<?, ?>) {
-            final AbstractQueryComponentSettings.AbstractBuilder<?, ?> abstractBuilder =
-                    (AbstractQueryComponentSettings.AbstractBuilder<?, ?>) builder;
-            abstractBuilder.selectionHandlers(selectionHandlers);
+        if (componentConfig.getSettings() instanceof AbstractQueryComponentSettings) {
+            final AbstractQueryComponentSettings oldSettings =
+                    (AbstractQueryComponentSettings) componentConfig.getSettings();
+            final AbstractBuilder<?, ?> builder = oldSettings.copy();
+            if (builder instanceof AbstractQueryComponentSettings.AbstractBuilder<?, ?>) {
+                final AbstractQueryComponentSettings.AbstractBuilder<?, ?> abstractBuilder =
+                        (AbstractQueryComponentSettings.AbstractBuilder<?, ?>) builder;
+                abstractBuilder.selectionHandlers(selectionHandlers);
+            }
+            final ComponentSettings newSettings = builder.build();
+            return componentConfig.copy().settings(newSettings).build();
+
+        } else if (componentConfig.getSettings() instanceof TableComponentSettings) {
+            final TableComponentSettings oldSettings =
+                    (TableComponentSettings) componentConfig.getSettings();
+            final TableComponentSettings.Builder builder = oldSettings.copy();
+            builder.selectionHandlers(selectionHandlers);
+            final ComponentSettings newSettings = builder.build();
+            return componentConfig.copy().settings(newSettings).build();
         }
-        final ComponentSettings newSettings = builder.build();
-        return componentConfig.copy().settings(newSettings).build();
+
+        return componentConfig;
     }
 
     @Override

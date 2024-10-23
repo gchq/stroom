@@ -106,7 +106,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         fieldNames = new ArrayList<>();
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
             if (columns != null && columns.size() > 0) {
                 for (final Column column : columns) {
                     if (!fieldNames.contains(column.getName())) {

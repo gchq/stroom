@@ -248,7 +248,7 @@ public class VisPresenter
             final TablePresenter tablePresenter = (TablePresenter) component;
             linkedTablePresenter = tablePresenter;
 
-            final TableComponentSettings tableSettings = tablePresenter.getTableSettings();
+            final TableComponentSettings tableSettings = tablePresenter.getTableComponentSettings();
             builder.tableSettings(tableSettings);
             final String queryId = tableSettings.getQueryId();
             setQueryId(queryId);
@@ -660,7 +660,7 @@ public class VisPresenter
         // Update table settings.
         TableComponentSettings tableComponentSettings = null;
         if (linkedTablePresenter != null) {
-            tableComponentSettings = linkedTablePresenter.getTableSettings();
+            tableComponentSettings = linkedTablePresenter.getTableComponentSettings();
         }
         setSettings(getVisSettings()
                 .copy()
