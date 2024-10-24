@@ -36,6 +36,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
@@ -310,6 +311,31 @@ public class EmbeddedQueryPresenter
 //        }
 //    }
 
+    public boolean isShowingVis() {
+        return getQuerySettings().getShowTable() != Boolean.TRUE && currentVisPresenter != null;
+    }
+
+    public boolean canShowVis() {
+        return currentVisPresenter != null;
+    }
+
+    public void showTable(boolean show) {
+        if (show) {
+            setSettings(getQuerySettings().copy().showTable(Boolean.TRUE).build());
+            setDirty(true);
+            updateVisibleResult();
+        } else {
+            setSettings(getQuerySettings().copy().showTable(null).build());
+            setDirty(true);
+            updateVisibleResult();
+        }
+    }
+
+    public void editQuery() {
+        if (getQuerySettings().getQueryRef() != null) {
+            OpenDocumentEvent.fire(this, getQuerySettings().getQueryRef(), true);
+        }
+    }
 
     @Override
     public void setComponents(final Components components) {
@@ -363,7 +389,7 @@ public class EmbeddedQueryPresenter
     }
 
     private void updateVisibleResult() {
-        if (currentVisPresenter != null) {
+        if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
             getView().setResultView(currentVisPresenter.getView());
         } else if (currentTablePresenter != null) {
             getView().setResultView(currentTablePresenter.getView());

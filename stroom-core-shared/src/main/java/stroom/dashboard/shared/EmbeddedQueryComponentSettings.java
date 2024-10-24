@@ -34,13 +34,16 @@ import java.util.Objects;
         "automate",
         "selectionHandlers",
         "lastQueryKey",
-        "lastQueryNode"
+        "lastQueryNode",
+        "showTable"
 })
 @JsonInclude(Include.NON_NULL)
 public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettings {
 
     @JsonProperty
     private final DocRef queryRef;
+    @JsonProperty
+    private final Boolean showTable;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
@@ -48,13 +51,19 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
                                           @JsonProperty("automate") final Automate automate,
                                           @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
                                           @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
-                                          @JsonProperty("lastQueryNode") final String lastQueryNode) {
+                                          @JsonProperty("lastQueryNode") final String lastQueryNode,
+                                          @JsonProperty("showTable") final Boolean showTable) {
         super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
         this.queryRef = queryRef;
+        this.showTable = showTable;
     }
 
     public DocRef getQueryRef() {
         return queryRef;
+    }
+
+    public Boolean getShowTable() {
+        return showTable;
     }
 
     @Override
@@ -69,12 +78,13 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
             return false;
         }
         final EmbeddedQueryComponentSettings that = (EmbeddedQueryComponentSettings) o;
-        return Objects.equals(queryRef, that.queryRef);
+        return Objects.equals(queryRef, that.queryRef) &&
+                Objects.equals(showTable, that.showTable);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), queryRef);
+        return Objects.hash(super.hashCode(), queryRef, showTable);
     }
 
     public static Builder builder() {
@@ -93,6 +103,7 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
             extends AbstractBuilder<EmbeddedQueryComponentSettings, EmbeddedQueryComponentSettings.Builder> {
 
         private DocRef queryRef;
+        private Boolean showTable;
 
         private Builder() {
             super();
@@ -101,10 +112,16 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
         private Builder(final EmbeddedQueryComponentSettings settings) {
             super(settings);
             this.queryRef = settings.queryRef;
+            this.showTable = settings.showTable;
         }
 
         public Builder queryRef(final DocRef queryRef) {
             this.queryRef = queryRef;
+            return self();
+        }
+
+        public Builder showTable(final Boolean showTable) {
+            this.showTable = showTable;
             return self();
         }
 
@@ -120,7 +137,8 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
                     automate,
                     selectionHandlers,
                     lastQueryKey,
-                    lastQueryNode);
+                    lastQueryNode,
+                    showTable);
         }
     }
 }
