@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class MetaKeys extends StroomExtensionFunctionCall {
 
         try {
             try {
-                result = metaDataHolder.getMetaData().keySet();
+                result = metaDataHolder.getMetaData().keySetAsStrings();
             } catch (final RuntimeException e) {
                 outputWarning(context, new StringBuilder("Error fetching meta keys"), e);
             }

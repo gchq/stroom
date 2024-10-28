@@ -288,7 +288,7 @@ class TestReceiveDataServlet {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
-        request.addHeader(StandardHeaderArguments.CONTENT_LENGTH, "0");
+        request.addHeader(StandardHeaderArguments.CONTENT_LENGTH.get(), "0");
         request.addHeader("compression", "GZIP");
         request.setInputStream("".getBytes());
 

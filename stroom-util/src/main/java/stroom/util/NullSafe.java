@@ -50,16 +50,35 @@ public class NullSafe {
     /**
      * Allows you to safely compare a child property of val1 to other.
      *
-     * @return False if val1 is null else whether the child property of val1 is equal to other
+     * @return Whether the child property of val1 is equal to other or
+     * if both val1 and other are null.
      */
     public static <T1, T2> boolean equals(final T1 val1,
                                           final Function<T1, T2> getter,
                                           final Object other) {
         if (val1 == null) {
-            return false;
+            return other == null;
         } else {
             final T2 val2 = getter.apply(val1);
             return Objects.equals(val2, other);
+        }
+    }
+
+    /**
+     * Allows you to safely compare a child property of val1 to other.
+     *
+     * @return Whether the child property of val1 is equal to other or
+     * if both val1 and other are null.
+     */
+    public static <T> boolean equalsIgnoreCase(final T val1,
+                                               final Function<T, String> getter,
+                                               final String other) {
+        if (val1 == null) {
+            return other == null;
+        } else {
+            final String val2 = getter.apply(val1);
+            return val2 != null
+                    && val2.equalsIgnoreCase(other);
         }
     }
 
@@ -163,16 +182,16 @@ public class NullSafe {
     }
 
 
-    /**
-     * @return The first item in the list or null if list is null or empty.
-     */
-    public static <T> T first(final List<T> list) {
-        if (list == null || list.isEmpty()) {
-            return null;
-        } else {
-            return list.getFirst();
-        }
-    }
+//    /**
+//     * @return The first item in the list or null if list is null or empty.
+//     */
+//    public static <T> T first(final List<T> list) {
+//        if (list == null || list.isEmpty()) {
+//            return null;
+//        } else {
+//            return list.getFirst();
+//        }
+//    }
 
     /**
      * @return The first item in the list or null if list is null or empty.
@@ -182,6 +201,18 @@ public class NullSafe {
             return null;
         } else {
             return list.getLast();
+        }
+    }
+
+    /**
+     * Return first value in the list or an empty {@link Optional} if the list
+     * is null, empty or the first item is null.
+     */
+    public static <T> Optional<T> first(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(list.getFirst());
         }
     }
 

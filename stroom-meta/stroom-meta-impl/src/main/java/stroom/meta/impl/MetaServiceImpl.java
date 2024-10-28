@@ -59,6 +59,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CIKey;
 import stroom.util.time.TimePeriod;
 
 import jakarta.inject.Inject;
@@ -153,10 +154,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(PageRequest.oneRow());
         final List<Meta> list = find(findMetaCriteria).getValues();
-        if (list == null || list.size() == 0) {
-            return null;
-        }
-        return list.get(0);
+        return NullSafe.first(list)
+                .orElse(null);
     }
 
     @Override
@@ -506,7 +505,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     () -> {
                         final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
                         list.getValues().forEach(metaRow ->
-                                decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+                                decorator.addMatchingRetentionRuleInfo(
+                                        metaRow.getMeta(),
+                                        metaRow.getAttributes()));
                     },
                     "Adding data retention rules");
 
@@ -556,13 +557,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     }
 
                     LOGGER.debug("Loading attribute map from DB");
-                    final Map<Long, Map<String, String>> attributeMap = metaValueDao.getAttributes(metaList);
+                    final Map<Long, Map<CIKey, String>> attributeMaps = metaValueDao.getAttributes(metaList);
                     final List<MetaRow> metaRowList = new ArrayList<>(metaList.size());
                     for (final Meta meta : metaList) {
-                        final Map<String, String> attributes = attributeMap.getOrDefault(
+                        final Map<CIKey, String> attributes = attributeMaps.getOrDefault(
                                 meta.getId(),
                                 new HashMap<>());
-                        metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
+                        metaRowList.add(new MetaRow(
+                                meta,
+                                getPipelineName(meta),
+                                CIKey.convertToStringMap(attributes)));
                     }
                     return metaRowList;
                 },
@@ -622,7 +626,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         if (child.getParentMetaId() != null) {
             final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(),
                     anyStatus))).getValues();
-            if (GwtNullSafe.hasItems(parents)) {
+            if (NullSafe.hasItems(parents)) {
                 parents.forEach(parent -> {
                     result.add(parent);
                     addParents(parent, anyStatus, result);

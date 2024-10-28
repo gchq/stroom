@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs;
@@ -28,9 +27,11 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -193,11 +194,12 @@ class FsStore implements Store, AttributeMapFactory {
     }
 
     @Override
-    public Map<String, String> getAttributes(final long metaId) {
+    public Map<CIKey, String> getAttributes(final long metaId) {
         try (final Source source = openSource(metaId, true)) {
-            return source != null
-                    ? source.getAttributes()
-                    : Collections.emptyMap();
+            return NullSafe.getOrElseGet(
+                    source,
+                    Source::getAttributes,
+                    Collections::emptyMap);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

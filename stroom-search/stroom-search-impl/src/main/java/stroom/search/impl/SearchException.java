@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package stroom.search.impl;
+
+import stroom.util.NullSafe;
 
 public class SearchException extends RuntimeException {
 
@@ -33,7 +35,7 @@ public class SearchException extends RuntimeException {
             return (SearchException) t;
         }
         String message = t.getMessage();
-        if (message == null || message.length() == 0) {
+        if (NullSafe.isEmptyString(message)) {
             message = t.toString();
         }
         return new SearchException(message, t);

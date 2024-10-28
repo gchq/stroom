@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.meta.api;
 import stroom.util.NullSafe;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -141,7 +142,7 @@ public class AttributeMapUtil {
                     if (splitPos != -1) {
                         final String key = line.substring(0, splitPos);
                         String value = line.substring(splitPos + 1);
-                        attributeMap.put(key.trim(), value.trim());
+                        attributeMap.put(key, value);
                     } else {
                         attributeMap.put(line, null);
                     }
@@ -158,7 +159,7 @@ public class AttributeMapUtil {
 
     public static void appendAttributes(final AttributeMap attributeMap,
                                         final StringBuilder builder,
-                                        final String... attributeKeys) {
+                                        final CIKey... attributeKeys) {
 
         if (builder != null && attributeMap != null && attributeKeys != null) {
 
@@ -190,7 +191,7 @@ public class AttributeMapUtil {
         }
     }
 
-    private static String getAttributeStr(final AttributeMap attributeMap, final String attributeKey) {
+    private static String getAttributeStr(final AttributeMap attributeMap, final CIKey attributeKey) {
         final String attributeValue = attributeMap.get(attributeKey);
         final String str;
         if (attributeValue != null && !attributeValue.isBlank()) {
@@ -203,11 +204,12 @@ public class AttributeMapUtil {
 
     public static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {
         try {
-            attributeMap.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
+            attributeMap.entrySet()
+                    .stream()
+                    .sorted(Map.Entry.comparingByKey())
                     .forEachOrdered(e -> {
                         try {
-                            writer.write(e.getKey());
+                            writer.write(e.getKey().get());
                             final String value = e.getValue();
                             if (value != null) {
                                 writer.write(HEADER_DELIMITER);

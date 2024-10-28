@@ -1,10 +1,11 @@
 package stroom.processor.shared;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +23,18 @@ public class ProcessorFields {
             .build();
 
     private static final List<QueryField> FIELDS = new ArrayList<>();
-    private static final Map<String, QueryField> ALL_FIELD_MAP;
+    private static final Map<CIKey, QueryField> ALL_FIELD_MAP;
 
 
-    public static final QueryField ID = QueryField.createId("Processor Id");
-    public static final QueryField PROCESSOR_TYPE = QueryField.createText("Processor Type");
+    public static final QueryField ID = QueryField.createId(CIKeys.PROCESSOR__ID, true);
+    public static final QueryField PROCESSOR_TYPE = QueryField.createText(CIKeys.PROCESSOR__TYPE, true);
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
-            PipelineDoc.DOCUMENT_TYPE, "Processor Pipeline");
+            PipelineDoc.DOCUMENT_TYPE, CIKeys.PROCESSOR__PIPELINE);
     public static final QueryField ANALYTIC_RULE = QueryField.createDocRefByUuid(
-            AnalyticRuleDoc.DOCUMENT_TYPE, "Analytic Rule");
-    public static final QueryField ENABLED = QueryField.createBoolean("Processor Enabled");
-    public static final QueryField DELETED = QueryField.createBoolean("Processor Deleted");
-    public static final QueryField UUID = QueryField.createText("Processor UUID");
+            AnalyticRuleDoc.DOCUMENT_TYPE, CIKeys.ANALYTIC__RULE);
+    public static final QueryField ENABLED = QueryField.createBoolean(CIKeys.PROCESSOR__ENABLED, true);
+    public static final QueryField DELETED = QueryField.createBoolean(CIKeys.PROCESSOR__DELETED, true);
+    public static final QueryField UUID = QueryField.createText(CIKeys.PROCESSOR__UUID, true);
 
     static {
         FIELDS.add(ID);
@@ -44,14 +45,15 @@ public class ProcessorFields {
         FIELDS.add(DELETED);
         FIELDS.add(UUID);
 
-        ALL_FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+        ALL_FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(QueryField::getFldNameAsCIKey, Function.identity()));
     }
 
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, QueryField> getAllFieldMap() {
+    public static Map<CIKey, QueryField> getAllFieldMap() {
         return ALL_FIELD_MAP;
     }
 }

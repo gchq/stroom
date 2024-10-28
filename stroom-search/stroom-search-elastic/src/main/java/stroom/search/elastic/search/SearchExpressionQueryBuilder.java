@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.search;
@@ -30,6 +29,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.util.NullSafe;
 import stroom.util.functions.TriFunction;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
@@ -118,21 +118,14 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getTermQuery(final ExpressionTerm expressionTerm) {
-        String field = expressionTerm.getField();
+        // Clean strings to remove unwanted whitespace that the user may have added accidentally
+        final String field = NullSafe.trim(expressionTerm.getField());
         final Condition condition = expressionTerm.getCondition();
-        String value = expressionTerm.getValue();
+        final String value = NullSafe.trim(expressionTerm.getValue());
         final DocRef docRef = expressionTerm.getDocRef();
 
-        // Clean strings to remove unwanted whitespace that the user may have added accidentally
-        if (field != null) {
-            field = field.trim();
-        }
-        if (value != null) {
-            value = value.trim();
-        }
-
         // Validate the field
-        if (field == null || field.isEmpty()) {
+        if (field.isEmpty()) {
             throw new IllegalArgumentException("Field not set");
         }
         final IndexField indexField = indexFieldCache.get(indexDocRef, field);
@@ -142,7 +135,7 @@ public class SearchExpressionQueryBuilder {
         final String fieldName = elasticIndexField.getFldName();
 
         // Validate the expression
-        if (value == null || value.isEmpty()) {
+        if (value.isEmpty()) {
             return null;
         }
         if (Condition.IN_DICTIONARY.equals(condition)) {
@@ -182,10 +175,10 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query buildStringQuery(final Condition condition,
-                                          final String expression,
-                                          final DocRef docRef,
-                                          final ElasticIndexField indexField,
-                                          final String fieldName) {
+                                   final String expression,
+                                   final DocRef docRef,
+                                   final ElasticIndexField indexField,
+                                   final String fieldName) {
         final List<String> terms = tokenizeExpression(expression).filter(term -> !term.isEmpty()).toList();
         if (terms.isEmpty()) {
             return null;

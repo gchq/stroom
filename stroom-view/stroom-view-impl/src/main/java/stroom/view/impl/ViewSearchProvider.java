@@ -18,7 +18,6 @@ package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -27,6 +26,7 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.query.common.v2.ResultStore;
@@ -36,6 +36,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
@@ -121,10 +122,10 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef viewDocRef, final String fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef viewDocRef, final CIKey fieldName) {
         final DocRef docRef = getReferencedDataSource(viewDocRef);
         if (docRef != null) {
-            return indexFieldProviders.getIndexField(docRef, fieldName);
+            return indexFieldProviders.getIndexFields(docRef, fieldName);
         }
         return null;
     }

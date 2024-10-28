@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.state.impl;
+package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValDate;
-import stroom.state.impl.dao.Session;
-import stroom.state.impl.dao.SessionDao;
-import stroom.state.impl.dao.SessionFields;
-import stroom.state.impl.dao.TemporalStateRequest;
+import stroom.state.impl.InstantRange;
+import stroom.state.impl.ScyllaDbUtil;
+import stroom.util.shared.string.CIKeys;
 
 import org.junit.jupiter.api.Test;
 
@@ -56,10 +54,10 @@ class TestSessionDao {
 
             final AtomicInteger count = new AtomicInteger();
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(SessionFields.KEY);
-            fieldIndex.create(SessionFields.START);
-            fieldIndex.create(SessionFields.END);
-            fieldIndex.create(SessionFields.TERMINAL);
+            fieldIndex.create(CIKeys.KEY);
+            fieldIndex.create(CIKeys.START);
+            fieldIndex.create(CIKeys.END);
+            fieldIndex.create(CIKeys.TERMINAL);
 
             final ValDate minTime = ValDate.create(outerRange.min());
             final ValDate maxTime = ValDate.create(outerRange.max());

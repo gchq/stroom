@@ -67,7 +67,7 @@ public class DynamicColumnSelectionListModel
                               final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
         final String parentPath = getParentPath(parent);
         if (dataSourceRef != null) {
-            final StringMatch stringMatch = StringMatch.contains(filter);
+            final StringMatch stringMatch = StringMatch.containsIgnoreCase(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
                     null,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.node.impl.NodeDao;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -37,7 +38,7 @@ import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
 
-    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+    private static final Map<CIKey, Field<?>> FIELD_MAP = CIKey.mapOf(
             FindNodeCriteria.FIELD_ID, NODE.ID,
             FindNodeCriteria.FIELD_LAST_BOOT_MS, NODE.LAST_BOOT_MS,
             FindNodeCriteria.FIELD_BUILD_VERSION, NODE.BUILD_VERSION,

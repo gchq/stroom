@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 
 package stroom.meta.api;
 
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
+
 import java.util.Set;
 
 public interface StandardHeaderArguments {
 
-    String GUID = "GUID";
-    String COMPRESSION = "Compression";
+    CIKey GUID = CIKeys.GUID;
+    CIKey COMPRESSION = CIKeys.COMPRESSION;
     String COMPRESSION_ZIP = "ZIP";
     String COMPRESSION_GZIP = "GZIP";
     String COMPRESSION_NONE = "NONE";
@@ -31,58 +34,58 @@ public interface StandardHeaderArguments {
             COMPRESSION_ZIP,
             COMPRESSION_NONE);
 
-    String CONTENT_LENGTH = "content-length";
+    CIKey CONTENT_LENGTH = CIKeys.CONTENT___LENGTH;
 
-    String CONTENT_ENCODING = "content-encoding";
+    CIKey CONTENT_ENCODING = CIKeys.CONTENT___ENCODING;
     String CONTENT_ENCODING_GZIP = "gzip";
     String CONTENT_ENCODING_DEFLATE = "deflate";
     String CONTENT_ENCODING_BROTLI = "br";
     String CONTENT_ENCODING_ZSTD = "zstd";
 
-    String USER_AGENT = "user-agent";
+    CIKey USER_AGENT = CIKeys.USER___AGENT;
 
-    String REMOTE_ADDRESS = "RemoteAddress";
-    String REMOTE_HOST = "RemoteHost";
-    String RECEIVED_TIME = "ReceivedTime";
+    CIKey REMOTE_ADDRESS = CIKeys.REMOTE_ADDRESS;
+    CIKey REMOTE_HOST = CIKeys.REMOTE_HOST;
+    CIKey RECEIVED_TIME = CIKeys.RECEIVED_TIME;
     /**
      * A comma delimited list of ReceivedTime values, oldest first that includes the
      * ReceivedTime value as its last item.
      */
-    String RECEIVED_TIME_HISTORY = "ReceivedTimeHistory";
-    String RECEIVED_PATH = "ReceivedPath";
-    String EFFECTIVE_TIME = "EffectiveTime";
-    String REMOTE_DN = "RemoteDN";
-    String REMOTE_CERT_EXPIRY = "RemoteCertExpiry";
-    String REMOTE_FILE = "RemoteFile";
+    CIKey RECEIVED_TIME_HISTORY = CIKeys.RECEIVED_TIME_HISTORY;
+    CIKey RECEIVED_PATH = CIKeys.RECEIVED_PATH;
+    CIKey EFFECTIVE_TIME = CIKeys.EFFECTIVE_TIME;
+    CIKey REMOTE_DN = CIKeys.REMOTE_DN;
+    CIKey REMOTE_CERT_EXPIRY = CIKeys.REMOTE_CERT_EXPIRY;
+    CIKey REMOTE_FILE = CIKeys.REMOTE_FILE;
 
     // The unique identifier of the user on the IDP
-    String UPLOAD_USER_ID = "UploadUserId";
+    CIKey UPLOAD_USER_ID = CIKeys.UPLOAD_USER_ID;
     // Username of the user on the IDP, may not be unique
-    String UPLOAD_USERNAME = "UploadUsername";
+    CIKey UPLOAD_USERNAME = CIKeys.UPLOAD_USERNAME;
 
-    String STREAM_SIZE = "StreamSize";
+    CIKey STREAM_SIZE = CIKeys.STREAM_SIZE;
 
     String STROOM_STATUS = "Stroom-Status";
     String STROOM_ERROR = "Stroom-Error";
 
-    String FEED = "Feed";
-    String TYPE = "Type";
+    CIKey FEED = CIKeys.FEED;
+    CIKey TYPE = CIKeys.TYPE;
 
     // Typically added in by nginx
-    String X_FORWARDED_FOR = "X-Forwarded-For";
+    CIKey X_FORWARDED_FOR = CIKeys.X___FORWARDED___FOR;
 
-    Set<String> HEADER_CLONE_EXCLUDE_SET = Set.of(
-            "accept",
-            "connection",
-            "content-length",
-            "transfer-encoding",
-            "expect",
-            COMPRESSION);
+    Set<CIKey> HEADER_CLONE_EXCLUDE_SET = Set.of(
+            CIKeys.ACCEPT,
+            CIKeys.CONNECTION,
+            CIKeys.CONTENT___LENGTH,
+            CIKeys.TRANSFER___ENCODING,
+            CIKeys.EXPECT,
+            CIKeys.COMPRESSION);
 
     /**
      * Header keys for values that are date/time strings
      */
-    Set<String> DATE_HEADER_KEYS = Set.of(
-            EFFECTIVE_TIME,
-            RECEIVED_TIME);
+    Set<CIKey> DATE_HEADER_KEYS = Set.of(
+            CIKeys.EFFECTIVE_TIME,
+            CIKeys.RECEIVED_TIME);
 }

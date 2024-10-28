@@ -55,7 +55,9 @@ public interface ExplorerTreeDao {
 
     ExplorerTreeNode findByUUID(final String uuid);
 
-    List<ExplorerTreeNode> findByNames(final List<String> names, final boolean allowWildCards);
+    List<ExplorerTreeNode> findByNames(final List<String> names,
+                                       final boolean allowWildCards,
+                                       final boolean isCaseSensitive);
 
     List<ExplorerTreeNode> findByType(final String type);
 }

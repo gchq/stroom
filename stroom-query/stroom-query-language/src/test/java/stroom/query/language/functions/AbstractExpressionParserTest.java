@@ -20,6 +20,7 @@ import stroom.query.language.functions.ref.KryoDataReader;
 import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
+import stroom.util.shared.string.CIKey;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
@@ -266,8 +267,8 @@ public abstract class AbstractExpressionParserTest {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        final Map<String, String> mappedValues = new HashMap<>();
-        mappedValues.put("testkey", "testvalue");
+        final Map<CIKey, String> mappedValues = new HashMap<>();
+        mappedValues.put(CIKey.of("testkey"), "testvalue");
         exp.setStaticMappedValues(mappedValues);
 
         final String actual = exp.toString();

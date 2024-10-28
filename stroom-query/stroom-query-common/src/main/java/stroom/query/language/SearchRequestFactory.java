@@ -56,6 +56,7 @@ import stroom.query.language.token.Tokeniser;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.query.FieldNames;
 
 import jakarta.inject.Inject;
 
@@ -66,7 +67,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -82,9 +82,15 @@ public class SearchRequestFactory {
     public static final String TABLE_COMPONENT_ID = "table";
     public static final String VIS_COMPONENT_ID = "vis";
 
+    private static final String COLUMN_ID_PREFIX = "column-";
+    // Cache cols 0-9
+//    private static final CIKey[] COLUMN_ID_CACHE = IntStream.range(0, 10)
+//            .mapToObj(SearchRequestFactory::createColumnId)
+//            .map(CIKey::ofStaticKey)
+//            .toArray(CIKey[]::new);
+
     private final VisualisationTokenConsumer visualisationTokenConsumer;
     private final DocResolver docResolver;
-
 
     @Inject
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
@@ -132,7 +138,6 @@ public class SearchRequestFactory {
         void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
             // Get a list of tokens.
             final List<Token> tokens = Tokeniser.parse(string);
-
 
             if (tokens.isEmpty()) {
                 throw new TokenException(null, "No tokens");
@@ -806,19 +811,24 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+                if (!addedFields.contains(FieldNames.FALLBACK_STREAM_ID_FIELD_KEY.get())) {
+                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldNames.FALLBACK_STREAM_ID_FIELD_KEY.get()));
                 }
-                if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+                if (!addedFields.contains(FieldNames.FALLBACK_EVENT_ID_FIELD_KEY.get())) {
+                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldNames.FALLBACK_EVENT_ID_FIELD_KEY.get()));
                 }
             }
 
             // Add missing fields if needed.
             for (final AbstractToken token : additionalFields) {
+//                final CIKey fieldName = CIKey.of(token.getUnescapedText());
                 final String fieldName = token.getUnescapedText();
                 if (!addedFields.contains(fieldName)) {
+//                    final CIKey id = CIKey.of("__"
+//                            + fieldName.get().replaceAll("\\s", "_")
+//                            + "__");
                     final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
+
                     tableSettingsBuilder.addColumns(createColumn(token,
                             id,
                             fieldName,
@@ -861,6 +871,7 @@ public class SearchRequestFactory {
 
         public Column buildSpecialColumn(final String name) {
             addedFields.add(name);
+//            final String name = caseInsensitiveName.get();
             return Column.builder()
                     .id(name)
                     .name(name)
@@ -893,8 +904,8 @@ public class SearchRequestFactory {
             final int byIndex = getTokenIndex(children, token -> TokenType.BY.equals(token.getTokenType()));
             if (byIndex == -1) {
                 throw new TokenException(keywordGroup, "Syntax exception, expected by");
-            } else if (children.size() > byIndex  + 1) {
-                final AbstractToken token = children.get(byIndex  + 1);
+            } else if (children.size() > byIndex + 1) {
+                final AbstractToken token = children.get(byIndex + 1);
                 if (!TokenType.DURATION.equals(token.getTokenType())) {
                     throw new TokenException(token, "Syntax exception, expected valid window duration");
                 }
@@ -903,7 +914,7 @@ public class SearchRequestFactory {
                 hoppingWindowBuilder.advanceSize(durationString);
 
                 // We found the duration so remove the tokens.
-                children.remove(byIndex  + 1);
+                children.remove(byIndex + 1);
                 children.remove(byIndex);
             } else {
                 throw new TokenException(children.get(byIndex), "Syntax exception, expected window duration");
@@ -1065,7 +1076,8 @@ public class SearchRequestFactory {
                 } else if (TokenType.COMMA.equals(token.getTokenType())) {
                     if (fieldToken != null) {
                         columnCount++;
-                        final String columnId = "column-" + columnCount;
+//                        final CIKey columnId = getColumnId(columnCount);
+                        final String columnId = createColumnId(columnCount);
                         columns.add(createColumn(
                                 fieldToken,
                                 columnId,
@@ -1079,7 +1091,8 @@ public class SearchRequestFactory {
 
                     } else if (fieldExpression != null) {
                         columnCount++;
-                        final String columnId = "column-" + columnCount;
+//                        final CIKey columnId = getColumnId(columnCount);
+                        final String columnId = createColumnId(columnCount);
                         columns.add(createColumn(
                                 columnId,
                                 fieldExpression,
@@ -1102,7 +1115,8 @@ public class SearchRequestFactory {
             // Add final field if we have one.
             if (fieldToken != null) {
                 columnCount++;
-                final String columnId = "column-" + columnCount;
+//                final CIKey columnId = getColumnId(columnCount);
+                final String columnId = createColumnId(columnCount);
                 columns.add(createColumn(
                         fieldToken,
                         columnId,
@@ -1116,7 +1130,8 @@ public class SearchRequestFactory {
 
             } else if (fieldExpression != null) {
                 columnCount++;
-                final String columnId = "column-" + columnCount;
+//                final CIKey columnId = getColumnId(columnCount);
+                final String columnId = createColumnId(columnCount);
                 columns.add(createColumn(
                         columnId,
                         fieldExpression,
@@ -1218,18 +1233,10 @@ public class SearchRequestFactory {
                         if (fieldName == null) {
                             fieldName = t.getUnescapedText();
                         } else if (direction == null) {
-                            try {
-                                if (t.getUnescapedText().toLowerCase(Locale.ROOT).equalsIgnoreCase("asc")) {
-                                    direction = SortDirection.ASCENDING;
-                                } else if (t.getUnescapedText().toLowerCase(Locale.ROOT).equalsIgnoreCase("desc")) {
-                                    direction = SortDirection.DESCENDING;
-                                } else {
-                                    direction = SortDirection.valueOf(t.getUnescapedText());
-                                }
-                            } catch (final IllegalArgumentException e) {
-                                throw new TokenException(t,
-                                        "Syntax exception, expected sort direction 'asc' or 'desc'");
-                            }
+                            direction = SortDirection.fromShortForm(t.getUnescapedText())
+                                    .orElseThrow(() ->
+                                            new TokenException(t,
+                                                    "Syntax exception, expected sort direction 'asc' or 'desc'"));
                         }
                     } else if (TokenType.COMMA.equals(t.getTokenType())) {
                         if (fieldName == null) {
@@ -1350,4 +1357,18 @@ public class SearchRequestFactory {
         }
         return -1;
     }
+
+    private static String createColumnId(final int colIdx) {
+        return COLUMN_ID_PREFIX + colIdx;
+    }
+
+//    private static CIKey getColumnId(final int colIdx) {
+//        if (colIdx < 0) {
+//            throw new IllegalArgumentException("Sub-zero column ID index");
+//        } else if (colIdx < COLUMN_ID_CACHE.length) {
+//            return COLUMN_ID_CACHE[colIdx];
+//        } else {
+//            return CIKey.of(createColumnId(colIdx));
+//        }
+//    }
 }

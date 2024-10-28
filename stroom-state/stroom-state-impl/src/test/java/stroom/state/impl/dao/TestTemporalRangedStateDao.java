@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.state.impl;
+package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
-import stroom.state.impl.dao.RangedStateFields;
-import stroom.state.impl.dao.TemporalRangedState;
-import stroom.state.impl.dao.TemporalRangedStateDao;
-import stroom.state.impl.dao.TemporalRangedStateRequest;
-import stroom.state.impl.dao.TemporalState;
+import stroom.state.impl.ScyllaDbUtil;
+import stroom.util.shared.string.CIKeys;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,7 +55,7 @@ class TestTemporalRangedStateDao {
             assertThat(res.getValueAsString()).isEqualTo("test");
 
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(RangedStateFields.KEY_START);
+            fieldIndex.create(CIKeys.KEY_START);
             final AtomicInteger count = new AtomicInteger();
             stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
                     v -> count.incrementAndGet());

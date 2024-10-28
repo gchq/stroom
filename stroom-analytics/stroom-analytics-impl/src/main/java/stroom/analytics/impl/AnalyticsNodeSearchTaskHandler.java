@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.impl;
@@ -62,6 +61,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 
@@ -148,10 +148,10 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             try {
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Map<String, QueryField> fieldMap = AnalyticFields.getFieldMap();
+                final Map<CIKey, QueryField> fieldMap = AnalyticFields.getFieldMap();
                 final QueryField[] fieldArray = new QueryField[fieldIndex.size()];
                 for (int i = 0; i < fieldArray.length; i++) {
-                    final String fieldName = fieldIndex.getField(i);
+                    final CIKey fieldName = fieldIndex.getFieldAsCIKey(i);
                     final QueryField field = fieldMap.get(fieldName);
                     if (field == null) {
                         throw new RuntimeException("Field '" + fieldName + "' is not valid for this datasource");
@@ -331,7 +331,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         public TableResultConsumer columns(final List<Column> columns) {
             this.columns = columns;
             fieldIndex = new FieldIndex();
-            columns.forEach(column -> fieldIndex.create(column.getName()));
+            columns.forEach(column -> fieldIndex.create(column.getNameAsCIKey()));
             return this;
         }
 
@@ -357,11 +357,11 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 }
                 final String value = sb.toString();
 
-                final Map<String, Object> attributeMap = new HashMap<>();
-                attributeMap.put(AnalyticFields.NAME_FIELD.getFldName(), analyticRuleDoc.getName());
-                attributeMap.put(AnalyticFields.UUID_FIELD.getFldName(), analyticRuleDoc.getUuid());
-                attributeMap.put(AnalyticFields.TIME_FIELD.getFldName(), time);
-                attributeMap.put(AnalyticFields.VALUE_FIELD.getFldName(), value);
+                final Map<CIKey, Object> attributeMap = new HashMap<>();
+                attributeMap.put(AnalyticFields.NAME_FIELD.getFldNameAsCIKey(), analyticRuleDoc.getName());
+                attributeMap.put(AnalyticFields.UUID_FIELD.getFldNameAsCIKey(), analyticRuleDoc.getUuid());
+                attributeMap.put(AnalyticFields.TIME_FIELD.getFldNameAsCIKey(), time);
+                attributeMap.put(AnalyticFields.VALUE_FIELD.getFldNameAsCIKey(), value);
 
                 if (expressionMatcher.match(attributeMap, expression)) {
                     hitCount.increment();

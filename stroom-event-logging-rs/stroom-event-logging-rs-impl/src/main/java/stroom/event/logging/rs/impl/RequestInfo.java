@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2020-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class RequestInfo {
     }
 
     public static boolean objectIsLoggable(Object obj) {
-        return obj != null  && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
+        return obj != null && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
     }
 
     public RequestInfo(final SecurityContext securityContext,
@@ -160,10 +160,10 @@ class RequestInfo {
 
                     Optional<Method> fetchMethodOptional =
                             Arrays.stream(templateReadSupportingResource.getClass().getMethods())
-                            .filter(m -> m.getName().equals("fetch")
-                                    && m.getParameterCount() == 1
-                                    && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
-                            .findFirst();
+                                    .filter(m -> m.getName().equals("fetch")
+                                            && m.getParameterCount() == 1
+                                            && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
+                                    .findFirst();
 
                     if (fetchMethodOptional.isPresent()) {
                         result = templateReadSupportingResource.fetch(template);
@@ -172,7 +172,7 @@ class RequestInfo {
                                 "Unable to find appropriate fetch method for type " +
                                         template.getClass().getSimpleName());
                     }
-                }  else if (resource instanceof FindWithCriteria<?, ?>) {
+                } else if (resource instanceof FindWithCriteria<?, ?>) {
                     FindWithCriteria<Object, Object> findWithCriteriaSupportingResource =
                             (FindWithCriteria<Object, Object>) resource;
 
@@ -240,7 +240,7 @@ class RequestInfo {
                 paramMap = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false);
             }
             String paramName = paramMap.keySet().stream().findFirst().get();
-            String paramValue = paramMap.get(paramName).stream().collect(Collectors.joining(", "));
+            String paramValue = String.join(", ", paramMap.get(paramName));
             if ("id".equals(paramName)) {
                 return new ObjectId(paramValue);
             } else if ("uuid".equals(paramName)) {

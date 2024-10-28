@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,9 @@ public class RollingStreamDestination extends RollingDestination {
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         try {
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), recordCount.toString());
+            streamTarget.getAttributes().put(
+                    MetaFields.REC_WRITE.getFldNameAsCIKey(),
+                    recordCount.toString());
             streamTarget.close();
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProcessStatisticsFactory {
+
     public static ProcessStatistics create(final RecordCount recordCount,
                                            final ErrorReceiverProxy errorReceiverProxy) {
         ErrorStatistics errorStatistics = null;
@@ -68,11 +69,16 @@ public class ProcessStatisticsFactory {
         return count;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class ProcessStatistics {
+
         private final Map<QueryField, Long> map = new HashMap<>();
 
         public void write(final AttributeMap attributeMap) {
-            map.forEach((k, v) -> attributeMap.put(k.getFldName(), String.valueOf(v)));
+            map.forEach((k, v) -> attributeMap.put(k.getFldNameAsCIKey(), String.valueOf(v)));
         }
 
         public ProcessStatistics add(final ProcessStatistics stats) {

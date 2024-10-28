@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.date.DateUtil;
 
 import jakarta.ws.rs.BadRequestException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -326,6 +327,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
+        Assertions.setMaxStackTraceElementsDisplayed(20);
+
         assertThatThrownBy(() -> {
             final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
@@ -343,7 +346,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             dataSource.setName("MyDataSource");
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
-        }).isInstanceOf(BadRequestException.class);
+        })
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

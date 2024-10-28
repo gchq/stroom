@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.state.impl;
 
 import stroom.expression.api.DateTimeSettings;
@@ -8,6 +24,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.state.impl.dao.ScyllaDbColumn;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.Literal;
@@ -25,7 +42,7 @@ public class ScyllaDbExpressionUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScyllaDbExpressionUtil.class);
 
-    public static void getRelations(final Map<String, ScyllaDbColumn> columnMap,
+    public static void getRelations(final Map<CIKey, ScyllaDbColumn> columnMap,
                                     final ExpressionOperator expressionOperator,
                                     final List<Relation> relations,
                                     final DateTimeSettings dateTimeSettings) {
@@ -55,14 +72,14 @@ public class ScyllaDbExpressionUtil {
         }
     }
 
-    private static Relation convertTerm(final Map<String, ScyllaDbColumn> columnMap,
+    private static Relation convertTerm(final Map<CIKey, ScyllaDbColumn> columnMap,
                                         final ExpressionTerm term,
                                         final DateTimeSettings dateTimeSettings) {
-        String field = term.getField();
-        Condition condition = term.getCondition();
+        final String field = term.getField();
+        final Condition condition = term.getCondition();
         String value = term.getValue();
 
-        final ScyllaDbColumn column = columnMap.get(field);
+        final ScyllaDbColumn column = columnMap.get(CIKey.of(field));
         if (column == null) {
             throw new RuntimeException("Unexpected column " + field);
         }

@@ -65,7 +65,6 @@ import jakarta.json.JsonValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -217,8 +216,8 @@ public class ElasticSearchTaskHandler {
 
             // Limit the returned fields to what the values consumers require
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            final String[] fieldNames = coprocessors.getFieldIndex().getFields();
-            searchRequestBuilder.fields(Arrays.stream(fieldNames)
+            final List<String> fieldNames = coprocessors.getFieldIndex().getFields();
+            searchRequestBuilder.fields(fieldNames.stream()
                     .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
                     .toList()
             );

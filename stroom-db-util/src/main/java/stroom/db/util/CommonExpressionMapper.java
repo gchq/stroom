@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.db.util;
 
 import stroom.datasource.api.v2.FieldType;
@@ -9,6 +25,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -28,9 +45,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonExpressionMapper.class);
 
-    private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
-    private final Map<String, QueryField> fieldMap = new HashMap<>();
-    private final Set<String> ignoredFields = new HashSet<>();
+    private final Map<CIKey, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
+    private final Map<CIKey, QueryField> fieldMap = new HashMap<>();
+    private final Set<CIKey> ignoredFields = new HashSet<>();
     private final Function<ExpressionItem, Condition> delegateItemHandler;
 
     public CommonExpressionMapper() {
@@ -43,17 +60,17 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     public void addHandler(final QueryField dataSourceField,
                            final Function<ExpressionTerm, Condition> handler) {
-        final String fieldName = dataSourceField.getFldName();
+        final CIKey fieldName = dataSourceField.getFldNameAsCIKey();
         termHandlers.put(fieldName, handler);
         fieldMap.put(fieldName, dataSourceField);
     }
 
     public void ignoreField(final QueryField dataSourceField) {
-        ignoredFields.add(dataSourceField.getFldName());
+        ignoredFields.add(dataSourceField.getFldNameAsCIKey());
     }
 
     /**
-     * Converts the passed {@link ExpressionItem} into a Jooq {@link Condition}. By default it
+     * Converts the passed {@link ExpressionItem} into a Jooq {@link Condition}. By default, it
      * will simplify expressions that can be simplified, e.g. NOT {NOT{}} becomes true, an OR
      * with one child that is true becomes true, etc. It will always return a value.
      */
@@ -72,8 +89,8 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
         if (item != null && item.enabled()) {
             if (item instanceof final ExpressionTerm term) {
-                final String fieldName = term.getField();
-                if (fieldName == null) {
+                final CIKey fieldName = CIKey.of(term.getField());
+                if (CIKey.isNull(fieldName)) {
                     throw new NullPointerException("Term has a null field '" + term + "'");
                 }
                 if (term.getCondition() == null) {
@@ -103,7 +120,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     result = Optional.of(termHandler.apply(term));
                 } else if (delegateItemHandler != null) {
                     result = Optional.of(delegateItemHandler.apply(term));
-                } else if (!ignoredFields.contains(term.getField())) {
+                } else if (!ignoredFields.contains(fieldName)) {
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 

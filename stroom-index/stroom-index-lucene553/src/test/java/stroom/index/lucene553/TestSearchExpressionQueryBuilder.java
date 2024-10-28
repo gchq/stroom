@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,7 +58,14 @@ public class TestSearchExpressionQueryBuilder {
 
         final WordListProvider wordListProvider = new WordListProvider() {
             @Override
-            public List<DocRef> findByName(final String name) {
+            public Set<DocRef> listDocuments() {
+                return Set.of(dictionaryRef);
+            }
+
+            @Override
+            public List<DocRef> findByNames(final List<String> names,
+                                            final boolean allowWildCards,
+                                            final boolean isCaseSensitive) {
                 return List.of(dictionaryRef);
             }
 

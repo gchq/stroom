@@ -31,6 +31,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -83,7 +84,7 @@ public class MapDataStore implements DataStore {
                         final TableSettings tableSettings,
                         final ExpressionContext expressionContext,
                         final FieldIndex fieldIndex,
-                        final Map<String, String> paramMap,
+                        final Map<CIKey, String> paramMap,
                         final DataStoreSettings dataStoreSettings,
                         final ErrorConsumer errorConsumer,
                         final ResultStoreMapConfig resultStoreMapConfig) {

@@ -1,5 +1,6 @@
 package stroom.widget.menu.client.presenter;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -42,7 +43,7 @@ public class Menu {
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
-                    .onShow(e -> menuPresenter.focus())
+                    .onShow(e -> GwtNullSafe.consume(menuPresenter, MenuPresenter::focus))
                     .onHide(e -> {
                         if (event.getHideHandler() != null) {
                             event.getHideHandler().onHide(e);

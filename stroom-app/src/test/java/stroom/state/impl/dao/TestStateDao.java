@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.state;
+package stroom.state.impl.dao;
 
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.dao.TemporalState;
-import stroom.state.impl.dao.TemporalStateDao;
-import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;

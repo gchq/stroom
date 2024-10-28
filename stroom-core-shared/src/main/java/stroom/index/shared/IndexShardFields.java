@@ -2,6 +2,7 @@ package stroom.index.shared;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,18 +27,26 @@ public class IndexShardFields {
     public static final String FIELD_NAME_STATUS = "Status";
     public static final String FIELD_NAME_LAST_COMMIT = "Last Commit";
 
-    public static final QueryField FIELD_NODE = QueryField.createText(FIELD_NAME_NODE);
+    public static final QueryField FIELD_NODE = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_NAME_NODE), true);
     public static final QueryField FIELD_INDEX = QueryField
-            .createDocRefByUuid(LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
+            .createDocRefByUuid(LuceneIndexDoc.DOCUMENT_TYPE, CIKey.ofStaticKey(FIELD_NAME_INDEX));
     public static final QueryField FIELD_INDEX_NAME = QueryField.createDocRefByNonUniqueName(
-            LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX_NAME);
-    public static final QueryField FIELD_VOLUME_PATH = QueryField.createText(FIELD_NAME_VOLUME_PATH);
-    public static final QueryField FIELD_VOLUME_GROUP = QueryField.createText(FIELD_NAME_VOLUME_GROUP);
-    public static final QueryField FIELD_PARTITION = QueryField.createText(FIELD_NAME_PARTITION);
-    public static final QueryField FIELD_DOC_COUNT = QueryField.createInteger(FIELD_NAME_DOC_COUNT);
-    public static final QueryField FIELD_FILE_SIZE = QueryField.createLong(FIELD_NAME_FILE_SIZE);
-    public static final QueryField FIELD_STATUS = QueryField.createText(FIELD_NAME_STATUS);
-    public static final QueryField FIELD_LAST_COMMIT = QueryField.createDate(FIELD_NAME_LAST_COMMIT);
+            LuceneIndexDoc.DOCUMENT_TYPE, CIKey.ofStaticKey(FIELD_NAME_INDEX_NAME));
+    public static final QueryField FIELD_VOLUME_PATH = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_NAME_VOLUME_PATH), true);
+    public static final QueryField FIELD_VOLUME_GROUP = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_NAME_VOLUME_GROUP), true);
+    public static final QueryField FIELD_PARTITION = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_NAME_PARTITION), true);
+    public static final QueryField FIELD_DOC_COUNT = QueryField.createInteger(
+            CIKey.ofStaticKey(FIELD_NAME_DOC_COUNT), true);
+    public static final QueryField FIELD_FILE_SIZE = QueryField.createLong(
+            CIKey.ofStaticKey(FIELD_NAME_FILE_SIZE), true);
+    public static final QueryField FIELD_STATUS = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_NAME_STATUS), true);
+    public static final QueryField FIELD_LAST_COMMIT = QueryField.createDate(
+            CIKey.ofStaticKey(FIELD_NAME_LAST_COMMIT), true);
 
     // GWT so no List.of
     private static final List<QueryField> FIELDS = Arrays.asList(

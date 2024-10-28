@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.util.client;
 
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
+import stroom.util.shared.string.CIKey;
 
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,7 @@ class TestParamUtil {
 
     @Test
     void testReplacement() {
-        Map<String, String> map = getMap("key1=value1");
+        Map<CIKey, String> map = getMap("key1=value1");
         String result = ParamUtil.replaceParameters("this is ${key1}", map);
         assertThat(result).isEqualTo("this is value1");
 
@@ -91,13 +92,13 @@ class TestParamUtil {
         assertThat(result).isEqualTo("user1 user2");
     }
 
-    private Map<String, String> getMap(final String input) {
+    private Map<CIKey, String> getMap(final String input) {
         final List<Param> list = ParamUtil.parse(input);
         return ParamUtil.createParamMap(list);
     }
 
     private void testKV(String text, String... expectedParams) {
-        final Map<String, String> map = getMap(text);
+        final Map<CIKey, String> map = getMap(text);
 
         assertThat(expectedParams.length > 0).isTrue();
         assertThat(expectedParams.length % 2 == 0).isTrue();
@@ -106,7 +107,7 @@ class TestParamUtil {
         for (int i = 0; i < expectedParams.length; i += 2) {
             String key = expectedParams[i];
             String value = expectedParams[i + 1];
-            assertThat(map.get(key)).isEqualTo(value);
+            assertThat(map.get(CIKey.of(key))).isEqualTo(value);
         }
     }
 }

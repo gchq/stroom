@@ -26,7 +26,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +41,11 @@ public class SearchableDual implements Searchable {
             "Dual",
             "Dual");
 
-    private static final QueryField DUMMY_FIELD = QueryField.createText(
-            "Dummy", true);
+    private static final QueryField DUMMY_FIELD = QueryField.createText(CIKey.ofStaticKey("Dummy"), true);
 
     private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
+
+    private static final ValString DUMMY_VALUE = ValString.create("X");
 
     @Override
     public DocRef getDocRef() {
@@ -76,11 +79,10 @@ public class SearchableDual implements Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final String[] fields = fieldIndex.getFields();
-        final Val[] valArr = new Val[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            valArr[i] = ValString.create("X");
-        }
+        final List<CIKey> fields = fieldIndex.getFieldsAsCIKeys();
+        final Val[] valArr = NullSafe.stream(fields)
+                .map(fieldName -> DUMMY_VALUE)
+                .toArray(Val[]::new);
         consumer.accept(Val.of(valArr));
     }
 }

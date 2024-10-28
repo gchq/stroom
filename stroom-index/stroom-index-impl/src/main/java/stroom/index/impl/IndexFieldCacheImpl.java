@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.impl;
@@ -22,12 +21,14 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -41,7 +42,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
     private static final String CACHE_NAME = "Index Field Cache";
 
     private final IndexFieldProviders indexFieldProviders;
-    private final LoadingStroomCache<Key, IndexField> cache;
+    private final LoadingStroomCache<Key, IndexFieldMap> cache;
     private final SecurityContext securityContext;
 
     @Inject
@@ -57,9 +58,9 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
                 this::create);
     }
 
-    private IndexField create(final Key key) {
+    private IndexFieldMap create(final Key key) {
         return securityContext.asProcessingUserResult(() ->
-                indexFieldProviders.getIndexField(key.docRef, key.fieldName));
+                indexFieldProviders.getIndexFields(key.docRef, key.fieldName));
     }
 
     @Override
@@ -74,7 +75,15 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
         final Key key = new Key(docRef, fieldName);
-        return cache.get(key);
+        final IndexFieldMap indexFieldMap = cache.get(key);
+
+        // Attempt to get an IndexField matching the user's input. This may throw if there are multiple
+        // fields with the same name (ignoring case) and none match exactly with fieldName.
+        if (indexFieldMap != null) {
+            return indexFieldMap.getClosestMatchingField(fieldName);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -82,31 +91,69 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
         cache.clear();
     }
 
-    private static class Key {
+
+    // --------------------------------------------------------------------------------
+
+
+    // Pkg private for testing
+    static class Key {
 
         private final DocRef docRef;
-        private final String fieldName;
+        // field names are case-insensitive in stroom but may not be in the index provider
+        private final CIKey fieldName;
+
+        private int hash = 0;
+        /**
+         * Set to true if the hash has been calculated and found to be zero,
+         * to distinguish from the default value for hash.
+         */
+        private boolean hashIsZero = false;
 
         public Key(final DocRef docRef, final String fieldName) {
             this.docRef = docRef;
-            this.fieldName = fieldName;
+            this.fieldName = CIKey.of(fieldName);
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+
+        public String getFieldName() {
+            return fieldName.get();
         }
 
         @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
+        public boolean equals(final Object object) {
+            if (this == object) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (object == null || getClass() != object.getClass()) {
                 return false;
             }
-            final Key key = (Key) o;
-            return Objects.equals(docRef, key.docRef) && Objects.equals(fieldName, key.fieldName);
+            final Key key = (Key) object;
+            return Objects.equals(docRef, key.docRef)
+                    && Objects.equals(fieldName, key.fieldName);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(docRef, fieldName);
+            int hash = this.hash;
+            // Lazily cache the hash
+            if (hash == 0 && !hashIsZero) {
+                // Case-insensitive hash
+                hash = Objects.hash(docRef, fieldName);
+                if (hash == 0) {
+                    hashIsZero = true;
+                } else {
+                    this.hash = hash;
+                }
+            }
+            return hash;
+        }
+
+        @Override
+        public String toString() {
+            return "'" + fieldName + "' - " + docRef;
         }
     }
 }

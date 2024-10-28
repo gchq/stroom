@@ -9,12 +9,15 @@ dependencies {
     implementation libs.swagger_annotations
 
     testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-util')
 
     testImplementation libs.assertj_core
     testImplementation libs.commons_lang
     testImplementation libs.guice
     testImplementation libs.jackson_core
     testImplementation libs.jackson_databind
+    testImplementation libs.jmh_core
+    testImplementation libs.jmh_generator_annprocess
     testImplementation libs.junit_jupiter_api
     testImplementation libs.junit_jupiter_params
     testImplementation libs.slf4j_api

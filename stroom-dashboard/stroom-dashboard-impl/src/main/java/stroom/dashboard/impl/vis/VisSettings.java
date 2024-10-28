@@ -37,6 +37,10 @@ public class VisSettings {
         return tabs;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Limit {
 
         private String enabled;
@@ -56,6 +60,10 @@ public class VisSettings {
             return size;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Sort {
 
@@ -82,6 +90,10 @@ public class VisSettings {
             return direction;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Field {
 
@@ -112,6 +124,10 @@ public class VisSettings {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Values {
 
         private Field[] fields;
@@ -136,6 +152,10 @@ public class VisSettings {
             return limit;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Nest {
 
@@ -180,6 +200,10 @@ public class VisSettings {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Structure {
 
         private Nest nest;
@@ -205,6 +229,10 @@ public class VisSettings {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Data {
 
         private Structure structure;
@@ -222,6 +250,10 @@ public class VisSettings {
             return structure;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Control {
 
@@ -260,6 +292,10 @@ public class VisSettings {
             return defaultValue;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Tab {
 

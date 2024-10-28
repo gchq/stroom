@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import stroom.query.language.functions.Null;
 import stroom.query.language.functions.ParamFactory;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.text.ParseException;
 import java.util.Collections;
@@ -52,17 +53,21 @@ public class CompiledColumns {
 
     public static CompiledColumns create(final ExpressionContext expressionContext,
                                          final List<Column> columns,
-                                         final Map<String, String> paramMap) {
+                                         final Map<CIKey, String> paramMap) {
         return create(expressionContext, columns, new FieldIndex(), paramMap);
     }
 
     public static CompiledColumns create(final ExpressionContext expressionContext,
                                          final List<Column> columns,
                                          final FieldIndex fieldIndex,
-                                         final Map<String, String> paramMap) {
+                                         final Map<CIKey, String> paramMap) {
         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
         if (columns == null) {
-            return new CompiledColumns(Collections.emptyList(), new CompiledColumn[0], fieldIndex, valueReferenceIndex);
+            return new CompiledColumns(
+                    Collections.emptyList(),
+                    new CompiledColumn[0],
+                    fieldIndex,
+                    valueReferenceIndex);
         }
 
         final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(new HashMap<>()));

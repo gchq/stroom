@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,31 +34,21 @@ public class ParamFactory {
                         final Token token) {
         try {
             // Token should be string or number or field.
-            switch (token.getTokenType()) {
-                case DOUBLE_QUOTED_STRING, SINGLE_QUOTED_STRING:
-                    return ValString.create(token.getUnescapedText());
-
-                case STRING, PARAM:
-                    return createRef(token.getUnescapedText(), fieldIndex);
-
-                case DATE_TIME:
-                    return ValDate.create(DateUtil.parseNormalDateTimeString(token.getText()));
-
-                case DURATION:
-                    return ValDuration.create(ValDurationUtil.parseToMilliseconds(token.getText()));
-
-                case NUMBER:
-                    return ValDouble.create(Double.parseDouble(token.getText()));
-
-                default:
-                    throw new TokenException(token, "Unexpected token type '" + token.getTokenType() + "'");
-            }
+            return switch (token.getTokenType()) {
+                case DOUBLE_QUOTED_STRING, SINGLE_QUOTED_STRING -> ValString.create(token.getUnescapedText());
+                case STRING, PARAM -> createRef(token.getUnescapedText(), fieldIndex);
+                case DATE_TIME -> ValDate.create(DateUtil.parseNormalDateTimeString(token.getText()));
+                case DURATION -> ValDuration.create(ValDurationUtil.parseToMilliseconds(token.getText()));
+                case NUMBER -> ValDouble.create(Double.parseDouble(token.getText()));
+                default -> throw new TokenException(token, "Unexpected token type '" + token.getTokenType() + "'");
+            };
         } catch (final RuntimeException e) {
             throw new TokenException(token, e.getMessage());
         }
     }
 
     private Param createRef(final String name, final FieldIndex fieldIndex) {
+//        final CIKey caseInsensitiveFieldName = CIKey.of(name);
         final Expression expression = expressionReference.get(name);
         if (expression != null) {
             return expression;

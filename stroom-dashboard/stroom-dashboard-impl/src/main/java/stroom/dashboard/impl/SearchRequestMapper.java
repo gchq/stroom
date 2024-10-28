@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.impl;
@@ -41,6 +40,7 @@ import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -92,7 +92,7 @@ public class SearchRequestMapper {
 
         Param searchExpressionParam = null;
         List<Param> params = null;
-        if (searchRequest.getSearch().getParams() != null && searchRequest.getSearch().getParams().size() > 0) {
+        if (!NullSafe.isEmptyCollection(searchRequest.getSearch().getParams())) {
             params = new ArrayList<>(searchRequest.getSearch().getParams().size());
             for (final Param param : searchRequest.getSearch().getParams()) {
                 if (EXPRESSION_JSON_PARAM_KEY.equals(param.getKey())) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.Column;
@@ -55,6 +71,7 @@ public class CompiledWindow {
     public static CompiledWindow create(final Window window) {
         SimpleDuration windowSize = SimpleDuration.ZERO;
         List<SimpleDuration> offsets = Collections.emptyList();
+//        CIKey timeField = CIKeys.EVENT_TIME;
         String timeField = "EventTime";
         String function = "count()";
 
@@ -185,11 +202,19 @@ public class CompiledWindow {
         return new OffsetWindowProcessor(windowSize, offsets, windowTimeFieldPos);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface WindowProcessor {
 
         void process(Val[] values,
                      BiConsumer<Val[], Integer> consumer);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class NoOpWindowProcessor implements WindowProcessor {
 
@@ -199,6 +224,10 @@ public class CompiledWindow {
             consumer.accept(values, -1);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class OffsetWindowProcessor implements WindowProcessor {
 

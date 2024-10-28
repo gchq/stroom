@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docref;
 
 import java.util.Collections;
@@ -17,7 +33,7 @@ public interface HasFindDocsByName {
     default List<DocRef> findByName(final String name) {
         // GWT so no List.of()
         return name != null
-                ? findByNames(Collections.singletonList(name), false)
+                ? findByNames(Collections.singletonList(name), false, true)
                 : Collections.emptyList();
     }
 
@@ -25,10 +41,12 @@ public interface HasFindDocsByName {
      * Find by case-sensitive match on the name.
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      */
-    default List<DocRef> findByName(final String name, final boolean allowWildCards) {
+    default List<DocRef> findByName(final String name,
+                                    final boolean allowWildCards,
+                                    final boolean isCaseSensitive) {
         // GWT so no List.of()
         return name != null
-                ? findByNames(Collections.singletonList(name), allowWildCards)
+                ? findByNames(Collections.singletonList(name), allowWildCards, isCaseSensitive)
                 : Collections.emptyList();
     }
 
@@ -37,5 +55,7 @@ public interface HasFindDocsByName {
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Finds all docRefs associated with any of the names, i.e. an OR.
      */
-    List<DocRef> findByNames(List<String> names, boolean allowWildCards);
+    List<DocRef> findByNames(List<String> names,
+                             boolean allowWildCards,
+                             final boolean isCaseSensitive);
 }

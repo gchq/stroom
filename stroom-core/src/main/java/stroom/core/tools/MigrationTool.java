@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.core.tools;
 
 import stroom.util.ArgsUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.string.CIKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,15 +42,15 @@ public class MigrationTool {
     public static void main(final String[] args)
             throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException,
             IllegalAccessException, ClassNotFoundException, IOException {
-        final Map<String, String> map = ArgsUtil.parse(args);
+        final Map<CIKey, String> map = ArgsUtil.parse(args);
 
-        final String url = map.get("jdbcDriverUrl");
-        String clazz = map.get("jdbcDriverClassName");
-        final String username = map.get("username");
-        final String password = map.get("password");
-        final String script = map.get("script");
-        ignoreError = Boolean.TRUE.toString().equalsIgnoreCase(map.get("ignoreError"));
-        update = !Boolean.FALSE.toString().equalsIgnoreCase(map.get("update"));
+        final String url = map.get(CIKey.of("jdbcDriverUrl"));
+        String clazz = map.get(CIKey.of("jdbcDriverClassName"));
+        final String username = map.get(CIKey.of("username"));
+        final String password = map.get(CIKey.of("password"));
+        final String script = map.get(CIKey.of("script"));
+        ignoreError = Boolean.TRUE.toString().equalsIgnoreCase(map.get(CIKey.of("ignoreError")));
+        update = !Boolean.FALSE.toString().equalsIgnoreCase(map.get(CIKey.of("update")));
 
         if (clazz == null) {
             clazz = "com.mysql.cj.jdbc.Driver";

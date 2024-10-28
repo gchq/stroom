@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.job.impl.db.jooq.tables.records.JobRecord;
 import stroom.job.shared.Job;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
@@ -55,7 +56,7 @@ import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JobDao.class);
 
-    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+    private static final Map<CIKey, Field<?>> FIELD_MAP = CIKey.mapOf(
             FindJobCriteria.FIELD_ID, JOB.ID,
             FindJobCriteria.FIELD_NAME, JOB.NAME);
 

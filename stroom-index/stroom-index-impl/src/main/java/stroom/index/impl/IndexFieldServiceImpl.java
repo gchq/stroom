@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
@@ -28,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -83,8 +85,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
             final IndexStore indexStore = indexStoreProvider.get();
             final LuceneIndexDoc index = indexStore.readDocument(docRef);
             if (index != null) {
-                final List<IndexField> fields = NullSafe.list(index.getFields())
-                        .stream()
+                final List<IndexField> fields = NullSafe.stream(index.getFields())
                         .map(field -> (IndexField) field)
                         .toList();
                 addFields(docRef, fields);
@@ -112,7 +113,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         return securityContext.useAsReadResult(() -> {
 
             // Check for read permission.
@@ -125,13 +126,17 @@ public class IndexFieldServiceImpl implements IndexFieldService {
                     PageRequest.oneRow(),
                     null,
                     docRef,
-                    StringMatch.equals(fieldName, true),
+                    StringMatch.equalsIgnoreCase(fieldName.get()),
                     null);
+
+            // Get all fields regardless of case
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
-            if (resultPage.size() > 0) {
-                return resultPage.getFirst();
+
+            if (!resultPage.isEmpty()) {
+                return IndexFieldMap.fromFieldList(fieldName, resultPage.getValues());
+            } else {
+                return null;
             }
-            return null;
         });
     }
 

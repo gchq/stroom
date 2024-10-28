@@ -655,9 +655,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> findByNames(final List<String> names,
-                                              final boolean allowWildCards) {
+                                              final boolean allowWildCards,
+                                              final boolean isCaseSensitive) {
         final Condition nameConditions = JooqUtil.createWildCardedStringsCondition(
-                n.UUID, names, allowWildCards, BooleanOperator.OR);
+                n.NAME, names, allowWildCards, BooleanOperator.OR);
 
         return JooqUtil.contextResult(explorerDbConnProvider, context ->
                         context
