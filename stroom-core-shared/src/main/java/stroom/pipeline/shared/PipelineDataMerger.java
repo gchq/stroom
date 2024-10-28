@@ -22,6 +22,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.shared.GwtNullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,7 +70,7 @@ public class PipelineDataMerger {
     }
 
     public PipelineDataMerger merge(final List<PipelineData> configStack) throws PipelineModelException {
-        if (configStack != null && configStack.size() > 0) {
+        if (GwtNullSafe.hasItems(configStack)) {
             final Map<String, PipelineElement> allElementMap = new HashMap<>();
             boolean sourceProvided = false;
 
@@ -147,7 +148,7 @@ public class PipelineDataMerger {
                     propertyMap.compute(property.getElement(), (elementId, map) -> {
                         if (map != null) {
                             map.remove(property.getName());
-                            if (map.size() == 0) {
+                            if (map.isEmpty()) {
                                 return null;
                             }
                         }
@@ -185,13 +186,13 @@ public class PipelineDataMerger {
                             map.compute(reference.getName(), (name, list) -> {
                                 if (list != null) {
                                     list.remove(reference);
-                                    if (list.size() == 0) {
+                                    if (list.isEmpty()) {
                                         return null;
                                     }
                                 }
                                 return list;
                             });
-                            if (map.size() == 0) {
+                            if (map.isEmpty()) {
                                 return null;
                             }
                         }

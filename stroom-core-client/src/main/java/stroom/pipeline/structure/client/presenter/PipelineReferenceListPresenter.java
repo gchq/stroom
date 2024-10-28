@@ -60,7 +60,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -155,18 +154,19 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
     private void addPipelineColumn() {
         // Pipeline.
-        final Column<PipelineReference, DocRefProvider<PipelineReference>> pipelineCol = DataGridUtil.docRefColumnBuilder(
-                        (PipelineReference pipelineReference) -> {
-                            if (pipelineReference.getPipeline() == null) {
-                                return null;
-                            } else {
-                                return new DocRefProvider<>(pipelineReference, PipelineReference::getPipeline);
-                            }
-                        },
-                        getEventBus(),
-                        false,
-                        this::getStateCssClass)
-                .build();
+        final Column<PipelineReference, DocRefProvider<PipelineReference>> pipelineCol =
+                DataGridUtil.docRefColumnBuilder(
+                                (PipelineReference pipelineReference) -> {
+                                    if (pipelineReference.getPipeline() == null) {
+                                        return null;
+                                    } else {
+                                        return new DocRefProvider<>(pipelineReference, PipelineReference::getPipeline);
+                                    }
+                                },
+                                getEventBus(),
+                                false,
+                                this::getStateCssClass)
+                        .build();
         dataGrid.addResizableColumn(pipelineCol, "Pipeline", 200);
     }
 
@@ -402,6 +402,18 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
+    private void addReference(final PipelineReference reference, State state) {
+        // It is important that the pipe references are displayed in the order in which
+        // they appear in the pipe doc (with inherited ones first)
+        // Order is important as the ref lookup will try each loader in this o
+        if (reference != null) {
+            referenceStateMap.put(reference, state);
+            // The most recent one trumps existing ones
+            references.remove(reference);
+            references.add(reference);
+        }
+    }
+
     private void refresh() {
         referenceStateMap.clear();
         references.clear();
@@ -415,31 +427,28 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                 if (baseReferences != null) {
                     for (final List<PipelineReference> list : baseReferences.values()) {
                         for (final PipelineReference reference : list) {
-                            referenceStateMap.put(reference, State.INHERITED);
+                            addReference(reference, State.INHERITED);
                         }
                     }
                 }
                 for (final PipelineReference reference : pipelineModel.getPipelineData().getAddedPipelineReferences()) {
                     if (id.equals(reference.getElement())) {
-                        referenceStateMap.put(reference, State.ADDED);
+                        addReference(reference, State.ADDED);
                     }
                 }
                 for (final PipelineReference reference : pipelineModel.getPipelineData()
                         .getRemovedPipelineReferences()) {
                     if (id.equals(reference.getElement())) {
-                        referenceStateMap.put(reference, State.REMOVED);
+                        addReference(reference, State.REMOVED);
                     }
                 }
-
-                references.addAll(referenceStateMap.keySet());
-                Collections.sort(this.references);
             }
         }
 
         // See if we need to load accurate doc refs (we do this to get correct entity names for display)
         final Set<DocRef> docRefs = new HashSet<>();
         references.forEach(ref -> addPipelineReference(docRefs, ref));
-        if (docRefs.size() > 0) {
+        if (!docRefs.isEmpty()) {
             // Load entities.
             restFactory
                     .create(EXPLORER_RESOURCE)

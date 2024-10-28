@@ -545,8 +545,7 @@ public class DataGridUtil {
      * @param <T_ROW>       The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>>
-    docRefColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> cellExtractor,
             final EventBus eventBus,
             final boolean allowLinkByName) {
@@ -567,8 +566,7 @@ public class DataGridUtil {
      * @param <T_ROW>       The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>>
-    docRefColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
             final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
             final EventBus eventBus,
             final boolean allowLinkByName,
@@ -588,8 +586,7 @@ public class DataGridUtil {
      * @param <T_ROW>       The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>>
-    docRefColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
             final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
             final EventBus eventBus,
             final boolean allowLinkByName,
