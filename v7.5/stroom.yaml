@@ -9258,8 +9258,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -9890,8 +9888,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -10769,8 +10765,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -11060,8 +11054,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -12645,8 +12637,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -13651,8 +13641,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
