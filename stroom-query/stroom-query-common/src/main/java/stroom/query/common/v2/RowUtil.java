@@ -1,11 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format.Type;
-import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldIndex;
-import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldPosition;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactory;
 import stroom.query.common.v2.format.Formatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;
@@ -97,55 +94,23 @@ public class RowUtil {
         return formatters;
     }
 
-    static QueryFieldIndex createColumnIdQueryFieldIndex(final List<Column> newColumns) {
+    static ValueFunctionFactories<Val[]> createColumnIdValExtractors(final List<Column> newColumns) {
         // Create the field position map for the new columns.
-        final Map<String, QueryFieldPosition> fieldPositionMap = new HashMap<>();
+        final Map<String, ValueFunctionFactory<Val[]>> fieldPositionMap = new HashMap<>();
         for (int i = 0; i < newColumns.size(); i++) {
             final Column column = newColumns.get(i);
-
-            FieldType fieldType = FieldType.TEXT;
-            if (column.getFormat() != null) {
-                if (Type.NUMBER.equals(column.getFormat().getType())) {
-                    fieldType = FieldType.LONG;
-                } else if (Type.DATE_TIME.equals(column.getFormat().getType())) {
-                    fieldType = FieldType.DATE;
-                }
-            }
-
-            final QueryField queryField = QueryField
-                    .builder()
-                    .fldType(fieldType)
-                    .fldName(column.getId())
-                    .build();
-            fieldPositionMap.put(column.getId(), new QueryFieldPosition(queryField, i));
+            fieldPositionMap.put(column.getId(), new ValFunctionFactory(column, i));
         }
-
         return fieldPositionMap::get;
     }
 
-    static QueryFieldIndex createColumnNameQueryFieldIndex(final List<Column> newColumns) {
+    static ValueFunctionFactories<Val[]> createColumnNameValExtractor(final List<Column> newColumns) {
         // Create the field position map for the new columns.
-        final Map<String, QueryFieldPosition> fieldPositionMap = new HashMap<>();
+        final Map<String, ValueFunctionFactory<Val[]>> fieldPositionMap = new HashMap<>();
         for (int i = 0; i < newColumns.size(); i++) {
             final Column column = newColumns.get(i);
-
-            FieldType fieldType = FieldType.TEXT;
-            if (column.getFormat() != null) {
-                if (Type.NUMBER.equals(column.getFormat().getType())) {
-                    fieldType = FieldType.LONG;
-                } else if (Type.DATE_TIME.equals(column.getFormat().getType())) {
-                    fieldType = FieldType.DATE;
-                }
-            }
-
-            final QueryField queryField = QueryField
-                    .builder()
-                    .fldType(fieldType)
-                    .fldName(column.getName())
-                    .build();
-            fieldPositionMap.put(column.getName(), new QueryFieldPosition(queryField, i));
+            fieldPositionMap.put(column.getName(), new ValFunctionFactory(column, i));
         }
-
         return fieldPositionMap::get;
     }
 

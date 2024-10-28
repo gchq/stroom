@@ -18,13 +18,13 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.NullSafe;
+import stroom.util.filter.StringPredicateFactory;
 import stroom.util.shared.CompareUtil;
 
 import java.math.BigDecimal;
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -41,9 +42,9 @@ public class ExpressionPredicateBuilder {
 
     private static final String DELIMITER = ",";
 
-    public static Optional<ValuesPredicate> create(final ExpressionOperator operator,
-                                                   final QueryFieldIndex queryFieldIndex,
-                                                   final DateTimeSettings dateTimeSettings) {
+    public static <T> Optional<Predicate<T>> create(final ExpressionOperator operator,
+                                                    final ValueFunctionFactories<T> queryFieldIndex,
+                                                    final DateTimeSettings dateTimeSettings) {
         if (operator == null) {
             return Optional.empty();
         }
@@ -51,9 +52,9 @@ public class ExpressionPredicateBuilder {
         return createPredicate(operator, queryFieldIndex, dateTimeSettings);
     }
 
-    private static Optional<ValuesPredicate> createPredicate(final ExpressionItem item,
-                                                             final QueryFieldIndex queryFieldIndex,
-                                                             final DateTimeSettings dateTimeSettings) {
+    private static <T> Optional<Predicate<T>> createPredicate(final ExpressionItem item,
+                                                              final ValueFunctionFactories<T> queryFieldIndex,
+                                                              final DateTimeSettings dateTimeSettings) {
         if (!item.enabled()) {
             return Optional.empty();
         }
@@ -67,18 +68,18 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static Optional<ValuesPredicate> createOperatorPredicate(final ExpressionOperator operator,
-                                                                     final QueryFieldIndex queryFieldIndex,
-                                                                     final DateTimeSettings dateTimeSettings) {
+    private static <T> Optional<Predicate<T>> createOperatorPredicate(final ExpressionOperator operator,
+                                                                      final ValueFunctionFactories<T> queryFieldIndex,
+                                                                      final DateTimeSettings dateTimeSettings) {
         if (!operator.enabled() || operator.getChildren() == null || operator.getChildren().isEmpty()) {
             return Optional.empty();
         }
 
         return switch (operator.op()) {
             case AND -> {
-                final List<ValuesPredicate> predicates = new ArrayList<>(operator.getChildren().size());
+                final List<Predicate<T>> predicates = new ArrayList<>(operator.getChildren().size());
                 for (final ExpressionItem child : operator.getChildren()) {
-                    Optional<ValuesPredicate> optional = createPredicate(child, queryFieldIndex, dateTimeSettings);
+                    Optional<Predicate<T>> optional = createPredicate(child, queryFieldIndex, dateTimeSettings);
                     optional.ifPresent(predicates::add);
                 }
                 if (predicates.isEmpty()) {
@@ -90,9 +91,9 @@ public class ExpressionPredicateBuilder {
                 yield AndPredicate.create(predicates);
             }
             case OR -> {
-                final List<ValuesPredicate> predicates = new ArrayList<>(operator.getChildren().size());
+                final List<Predicate<T>> predicates = new ArrayList<>(operator.getChildren().size());
                 for (final ExpressionItem child : operator.getChildren()) {
-                    Optional<ValuesPredicate> optional = createPredicate(child, queryFieldIndex, dateTimeSettings);
+                    Optional<Predicate<T>> optional = createPredicate(child, queryFieldIndex, dateTimeSettings);
                     optional.ifPresent(predicates::add);
                 }
                 if (predicates.isEmpty()) {
@@ -107,7 +108,7 @@ public class ExpressionPredicateBuilder {
                 if (operator.getChildren().size() > 1) {
                     throw new MatchException("Unexpected number of child terms in NOT");
                 }
-                final Optional<ValuesPredicate> optionalChildPredicate =
+                final Optional<Predicate<T>> optionalChildPredicate =
                         createPredicate(operator.getChildren().getFirst(), queryFieldIndex, dateTimeSettings);
                 if (optionalChildPredicate.isEmpty()) {
                     yield Optional.empty();
@@ -117,9 +118,10 @@ public class ExpressionPredicateBuilder {
         };
     }
 
-    private static Optional<ValuesPredicate> createTermPredicate(final ExpressionTerm term,
-                                                                 final QueryFieldIndex queryFieldIndex,
-                                                                 final DateTimeSettings dateTimeSettings) {
+    @SuppressWarnings("checkstyle:LineLength")
+    private static <T> Optional<Predicate<T>> createTermPredicate(final ExpressionTerm term,
+                                                                  final ValueFunctionFactories<T> valueFunctionFactories,
+                                                                  final DateTimeSettings dateTimeSettings) {
         if (!term.enabled()) {
             return Optional.empty();
         }
@@ -133,15 +135,15 @@ public class ExpressionPredicateBuilder {
             throw new MatchException("Field not set");
         }
         termField = termField.trim();
-        final QueryFieldPosition queryFieldPosition = queryFieldIndex.get(termField);
-        if (queryFieldPosition == null) {
+        final ValueFunctionFactory<T> valueFunctionFactory = valueFunctionFactories.get(termField);
+        if (valueFunctionFactory == null) {
             throw new MatchException("QueryField not found: " + termField);
         }
 
         if (Condition.IS_NULL.equals(condition)) {
-            return IsNullPredicate.create(term, queryFieldPosition);
+            return IsNullPredicate.create(term, valueFunctionFactory.createNullCheck());
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
-            return IsNotNullPredicate.create(term, queryFieldPosition);
+            return IsNotNullPredicate.create(term, valueFunctionFactory.createNullCheck());
         }
 
         // Try and resolve the term value.
@@ -151,93 +153,98 @@ public class ExpressionPredicateBuilder {
         }
 
         // Create a query based on the field type and condition.
-        final QueryField queryField = queryFieldPosition.queryField();
-        final FieldType fieldType = queryField.getFldType();
-        if (FieldType.DATE.equals(fieldType)) {
-            return createDateTermPredicate(term, queryFieldPosition, dateTimeSettings);
-        } else if (fieldType.isNumeric()) {
-            return createNumericTermPredicate(term, queryFieldPosition);
-        } else {
-            return createGeneralTermPredicate(term, queryFieldPosition, dateTimeSettings);
-        }
+//        final FieldType fieldType = valueFunctionFactory.getFieldType();
+//        if (FieldType.DATE.equals(fieldType)) {
+//            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+//        } else if (fieldType.isNumeric()) {
+//            return createNumericTermPredicate(term, valueFunctionFactory);
+//        } else {
+        return createGeneralTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+//        }
     }
 
-    private static Optional<ValuesPredicate> createGeneralTermPredicate(final ExpressionTerm term,
-                                                                        final QueryFieldPosition queryFieldPosition,
-                                                                        final DateTimeSettings dateTimeSettings) {
+    @SuppressWarnings("checkstyle:LineLength")
+    private static <T> Optional<Predicate<T>> createGeneralTermPredicate(final ExpressionTerm term,
+                                                                         final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                         final DateTimeSettings dateTimeSettings) {
         try {
-            return createDateTermPredicate(term, queryFieldPosition, dateTimeSettings);
+            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
         } catch (final RuntimeException e) {
             try {
-                return createNumericTermPredicate(term, queryFieldPosition);
+                return createNumericTermPredicate(term, valueFunctionFactory);
             } catch (final RuntimeException e2) {
+                final Function<T, String> stringExtractor = valueFunctionFactory.createStringExtractor();
                 return switch (term.getCondition()) {
-                    case EQUALS -> StringEquals.create(term, queryFieldPosition);
-                    case NOT_EQUALS -> StringNotEquals.create(term, queryFieldPosition);
-                    case CONTAINS -> StringContains.create(term, queryFieldPosition);
-                    case STARTS_WITH -> StringStartsWith.create(term, queryFieldPosition);
-                    case ENDS_WITH -> StringEndsWith.create(term, queryFieldPosition);
-                    case MATCHES_REGEX -> StringRegex.create(term, queryFieldPosition);
-                    case IN -> StringIn.create(term, queryFieldPosition);
+                    case EQUALS -> StringEquals.create(term, stringExtractor);
+                    case NOT_EQUALS -> StringNotEquals.create(term, stringExtractor);
+                    case CONTAINS -> StringContains.create(term, stringExtractor);
+                    case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
+                    case ENDS_WITH -> StringEndsWith.create(term, stringExtractor);
+                    case MATCHES_REGEX -> StringRegex.create(term, stringExtractor);
+                    case WORD_BOUNDARY -> StringWordBoundary.create(term, stringExtractor);
+                    case IN -> StringIn.create(term, stringExtractor);
                     default -> throw e2;
                 };
             }
         }
     }
 
-    private static Optional<ValuesPredicate> createDateTermPredicate(final ExpressionTerm term,
-                                                                     final QueryFieldPosition queryFieldPosition,
-                                                                     final DateTimeSettings dateTimeSettings) {
+    @SuppressWarnings("checkstyle:LineLength")
+    private static <T> Optional<Predicate<T>> createDateTermPredicate(final ExpressionTerm term,
+                                                                      final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                      final DateTimeSettings dateTimeSettings) {
+        final Function<T, Long> dateExtractor = valueFunctionFactory.createDateExtractor();
         return switch (term.getCondition()) {
-            case EQUALS -> DateEquals.create(term, queryFieldPosition, dateTimeSettings);
-            case NOT_EQUALS -> DateNotEquals.create(term, queryFieldPosition, dateTimeSettings);
-            case GREATER_THAN -> DateGreaterThan.create(term, queryFieldPosition, dateTimeSettings);
-            case GREATER_THAN_OR_EQUAL_TO ->
-                    DateGreaterThanOrEqualTo.create(term, queryFieldPosition, dateTimeSettings);
-            case LESS_THAN -> DateLessThan.create(term, queryFieldPosition, dateTimeSettings);
-            case LESS_THAN_OR_EQUAL_TO -> DateLessThanOrEqualTo.create(term, queryFieldPosition, dateTimeSettings);
-            case BETWEEN -> DateBetween.create(term, queryFieldPosition, dateTimeSettings);
-            case IN -> DateIn.create(term, queryFieldPosition, dateTimeSettings);
+            case EQUALS -> DateEquals.create(term, dateExtractor, dateTimeSettings);
+            case NOT_EQUALS -> DateNotEquals.create(term, dateExtractor, dateTimeSettings);
+            case GREATER_THAN -> DateGreaterThan.create(term, dateExtractor, dateTimeSettings);
+            case GREATER_THAN_OR_EQUAL_TO -> DateGreaterThanOrEqualTo.create(term, dateExtractor, dateTimeSettings);
+            case LESS_THAN -> DateLessThan.create(term, dateExtractor, dateTimeSettings);
+            case LESS_THAN_OR_EQUAL_TO -> DateLessThanOrEqualTo.create(term, dateExtractor, dateTimeSettings);
+            case BETWEEN -> DateBetween.create(term, dateExtractor, dateTimeSettings);
+            case IN -> DateIn.create(term, dateExtractor, dateTimeSettings);
             default -> throw new MatchException("Unexpected condition '" +
                     term.getCondition().getDisplayValue() +
                     "' for " +
-                    queryFieldPosition +
+                    valueFunctionFactory.getFieldType() +
                     " field type");
         };
     }
 
-    private static Optional<ValuesPredicate> createNumericTermPredicate(final ExpressionTerm term,
-                                                                        final QueryFieldPosition queryFieldPosition) {
+    @SuppressWarnings("checkstyle:LineLength")
+    private static <T> Optional<Predicate<T>> createNumericTermPredicate(final ExpressionTerm term,
+                                                                         final ValueFunctionFactory<T> valueFunctionFactory) {
+        final Function<T, BigDecimal> numExtractor = valueFunctionFactory.createNumberExtractor();
         return switch (term.getCondition()) {
-            case EQUALS -> NumericEquals.create(term, queryFieldPosition);
-            case NOT_EQUALS -> NumericNotEquals.create(term, queryFieldPosition);
-            case GREATER_THAN -> NumericGreaterThan.create(term, queryFieldPosition);
-            case GREATER_THAN_OR_EQUAL_TO -> NumericGreaterThanOrEqualTo.create(term, queryFieldPosition);
-            case LESS_THAN -> NumericLessThan.create(term, queryFieldPosition);
-            case LESS_THAN_OR_EQUAL_TO -> NumericLessThanOrEqualTo.create(term, queryFieldPosition);
-            case BETWEEN -> NumericBetween.create(term, queryFieldPosition);
-            case IN -> NumericIn.create(term, queryFieldPosition);
+            case EQUALS -> NumericEquals.create(term, numExtractor);
+            case NOT_EQUALS -> NumericNotEquals.create(term, numExtractor);
+            case GREATER_THAN -> NumericGreaterThan.create(term, numExtractor);
+            case GREATER_THAN_OR_EQUAL_TO -> NumericGreaterThanOrEqualTo.create(term, numExtractor);
+            case LESS_THAN -> NumericLessThan.create(term, numExtractor);
+            case LESS_THAN_OR_EQUAL_TO -> NumericLessThanOrEqualTo.create(term, numExtractor);
+            case BETWEEN -> NumericBetween.create(term, numExtractor);
+            case IN -> NumericIn.create(term, numExtractor);
             default -> throw new MatchException("Unexpected condition '" +
                     term.getCondition().getDisplayValue() +
                     "' for " +
-                    queryFieldPosition +
+                    valueFunctionFactory.getFieldType() +
                     " field type");
         };
     }
 
 
-    private static BigDecimal getTermNumber(final QueryFieldPosition queryFieldPosition,
+    private static BigDecimal getTermNumber(final ExpressionTerm term,
                                             final String value) {
         try {
             return new BigDecimal(value);
         } catch (final NumberFormatException e) {
             throw new MatchException(
-                    "Expected a numeric value for field \"" + queryFieldPosition +
+                    "Expected a numeric value for field \"" + term.getField() +
                             "\" but was given string \"" + value + "\"");
         }
     }
 
-    private static long getTermDate(final QueryFieldPosition queryFieldPosition,
+    private static long getTermDate(final ExpressionTerm term,
                                     final Object value,
                                     final DateTimeSettings dateTimeSettings) {
         if (value instanceof final String valueStr) {
@@ -250,7 +257,7 @@ public class ExpressionPredicateBuilder {
             } catch (final NumberFormatException e) {
                 throw new MatchException(
                         "Unable to parse a date/time from value for field \"" +
-                                queryFieldPosition +
+                                term.getField() +
                                 "\" but was given string \"" +
                                 value +
                                 "\"");
@@ -258,7 +265,7 @@ public class ExpressionPredicateBuilder {
         } else {
             throw new MatchException(
                     "Expected a string value for field \"" +
-                            queryFieldPosition +
+                            term.getField() +
                             "\" but was given \"" +
                             value +
                             "\" of type " +
@@ -266,24 +273,24 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static BigDecimal[] getTermNumbers(final QueryFieldPosition queryFieldPosition,
+    private static BigDecimal[] getTermNumbers(final ExpressionTerm term,
                                                final Object value) {
         final String[] values = value.toString().split(DELIMITER);
         final BigDecimal[] numbers = new BigDecimal[values.length];
         for (int i = 0; i < values.length; i++) {
-            numbers[i] = getTermNumber(queryFieldPosition, values[i].trim());
+            numbers[i] = getTermNumber(term, values[i].trim());
         }
 
         return numbers;
     }
 
-    private static long[] getTermDates(final QueryFieldPosition queryFieldPosition,
+    private static long[] getTermDates(final ExpressionTerm term,
                                        final Object value,
                                        final DateTimeSettings dateTimeSettings) {
         final String[] values = value.toString().split(DELIMITER);
         final long[] dates = new long[values.length];
         for (int i = 0; i < values.length; i++) {
-            dates[i] = getTermDate(queryFieldPosition, values[i].trim(), dateTimeSettings);
+            dates[i] = getTermDate(term, values[i].trim(), dateTimeSettings);
         }
 
         return dates;
@@ -296,45 +303,39 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    public interface QueryFieldIndex {
+    public interface ValueFunctionFactories<T> {
 
-        QueryFieldPosition get(String fieldName);
+        ValueFunctionFactory<T> get(String fieldName);
     }
 
-    public record QueryFieldPosition(QueryField queryField, int index) {
+    public interface ValueFunctionFactory<T> {
 
+        Function<T, Boolean> createNullCheck();
+
+        Function<T, String> createStringExtractor();
+
+        Function<T, Long> createDateExtractor();
+
+        Function<T, BigDecimal> createNumberExtractor();
+
+        FieldType getFieldType();
     }
 
-    public interface Values {
+    private static class AndPredicate<T> implements Predicate<T> {
 
-        String getString(QueryFieldPosition queryFieldPosition);
+        private final List<Predicate<T>> subPredicates;
 
-        BigDecimal getNumber(QueryFieldPosition queryFieldPosition);
-
-        Long getDate(QueryFieldPosition queryFieldPosition);
-
-        boolean isNull(QueryFieldPosition queryFieldPosition);
-    }
-
-    public interface ValuesPredicate extends Predicate<Values> {
-
-    }
-
-    private static class AndPredicate implements ValuesPredicate {
-
-        private final List<ValuesPredicate> subPredicates;
-
-        public AndPredicate(final List<ValuesPredicate> subPredicates) {
+        public AndPredicate(final List<Predicate<T>> subPredicates) {
             this.subPredicates = subPredicates;
         }
 
-        private static Optional<ValuesPredicate> create(final List<ValuesPredicate> subPredicates) {
-            return Optional.of(new AndPredicate(subPredicates));
+        private static <T> Optional<Predicate<T>> create(final List<Predicate<T>> subPredicates) {
+            return Optional.of(new AndPredicate<>(subPredicates));
         }
 
         @Override
-        public boolean test(final Values values) {
-            for (final ValuesPredicate valuesPredicate : subPredicates) {
+        public boolean test(final T values) {
+            for (final Predicate<T> valuesPredicate : subPredicates) {
                 if (!valuesPredicate.test(values)) {
                     return false;
                 }
@@ -343,21 +344,21 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class OrPredicate implements ValuesPredicate {
+    private static class OrPredicate<T> implements Predicate<T> {
 
-        private final List<ValuesPredicate> subPredicates;
+        private final List<Predicate<T>> subPredicates;
 
-        public OrPredicate(final List<ValuesPredicate> subPredicates) {
+        public OrPredicate(final List<Predicate<T>> subPredicates) {
             this.subPredicates = subPredicates;
         }
 
-        private static Optional<ValuesPredicate> create(final List<ValuesPredicate> subPredicates) {
-            return Optional.of(new OrPredicate(subPredicates));
+        private static <T> Optional<Predicate<T>> create(final List<Predicate<T>> subPredicates) {
+            return Optional.of(new OrPredicate<>(subPredicates));
         }
 
         @Override
-        public boolean test(final Values values) {
-            for (final ValuesPredicate valuesPredicate : subPredicates) {
+        public boolean test(final T values) {
+            for (final Predicate<T> valuesPredicate : subPredicates) {
                 if (valuesPredicate.test(values)) {
                     return true;
                 }
@@ -366,33 +367,30 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class NotPredicate implements ValuesPredicate {
+    private static class NotPredicate<T> implements Predicate<T> {
 
-        private final ValuesPredicate subPredicate;
+        private final Predicate<T> subPredicate;
 
-        public NotPredicate(final ValuesPredicate subPredicate) {
+        public NotPredicate(final Predicate<T> subPredicate) {
             this.subPredicate = subPredicate;
         }
 
-        private static Optional<ValuesPredicate> create(final ValuesPredicate subPredicate) {
-            return Optional.of(new NotPredicate(subPredicate));
+        private static <T> Optional<Predicate<T>> create(final Predicate<T> subPredicate) {
+            return Optional.of(new NotPredicate<>(subPredicate));
         }
 
         @Override
-        public boolean test(final Values values) {
+        public boolean test(final T values) {
             return !subPredicate.test(values);
         }
     }
 
-    private abstract static class ExpressionTermPredicate implements ValuesPredicate {
+    private abstract static class ExpressionTermPredicate<T> implements Predicate<T> {
 
         final ExpressionTerm term;
-        final QueryFieldPosition queryFieldPosition;
 
-        private ExpressionTermPredicate(final ExpressionTerm term,
-                                        final QueryFieldPosition queryFieldPosition) {
+        private ExpressionTermPredicate(final ExpressionTerm term) {
             this.term = term;
-            this.queryFieldPosition = queryFieldPosition;
         }
 
         @Override
@@ -401,228 +399,240 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class IsNullPredicate extends ExpressionTermPredicate {
+    private static class IsNullPredicate<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, Boolean> nullCheckFunction;
 
         private IsNullPredicate(final ExpressionTerm term,
-                                final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                final Function<T, Boolean> nullCheckFunction) {
+            super(term);
+            this.nullCheckFunction = nullCheckFunction;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new IsNullPredicate(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Boolean> nullCheckFunction) {
+            return Optional.of(new IsNullPredicate<>(term, nullCheckFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            return values.isNull(queryFieldPosition);
+        public boolean test(final T values) {
+            return nullCheckFunction.apply(values);
         }
     }
 
-    private static class IsNotNullPredicate extends ExpressionTermPredicate {
+    private static class IsNotNullPredicate<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, Boolean> nullCheckFunction;
 
         private IsNotNullPredicate(final ExpressionTerm term,
-                                   final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                   final Function<T, Boolean> nullCheckFunction) {
+            super(term);
+            this.nullCheckFunction = nullCheckFunction;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new IsNotNullPredicate(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Boolean> nullCheckFunction) {
+            return Optional.of(new IsNotNullPredicate<>(term, nullCheckFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            return !values.isNull(queryFieldPosition);
+        public boolean test(final T values) {
+            return !nullCheckFunction.apply(values);
         }
     }
 
-    private abstract static class NumericExpressionTermPredicate extends ExpressionTermPredicate {
+    private abstract static class NumericExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
         final BigDecimal termNum;
+        final Function<T, BigDecimal> extractionFunction;
 
         private NumericExpressionTermPredicate(final ExpressionTerm term,
-                                               final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
-            termNum = getTermNumber(queryFieldPosition, term.getValue());
+                                               final Function<T, BigDecimal> extractionFunction) {
+            super(term);
+            termNum = getTermNumber(term, term.getValue());
+            this.extractionFunction = extractionFunction;
         }
     }
 
-    private static class NumericEquals extends NumericExpressionTermPredicate {
+    private static class NumericEquals<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericEquals(final ExpressionTerm term,
-                              final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                              final Function<T, BigDecimal> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new NumericEquals(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            return Optional.of(new NumericEquals<>(term, extractionFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            return Objects.equals(num, termNum);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            return Objects.equals(val, termNum);
         }
     }
 
-    private static class NumericNotEquals extends NumericExpressionTermPredicate {
+    private static class NumericNotEquals<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericNotEquals(final ExpressionTerm term,
-                                 final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                 final Function<T, BigDecimal> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new NumericNotEquals(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            return Optional.of(new NumericNotEquals<>(term, extractionFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            return !Objects.equals(num, termNum);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            return !Objects.equals(val, termNum);
         }
     }
 
-    private static class NumericGreaterThan extends NumericExpressionTermPredicate {
+    private static class NumericGreaterThan<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericGreaterThan(final ExpressionTerm term,
-                                   final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                   final Function<T, BigDecimal> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new NumericGreaterThan(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            return Optional.of(new NumericGreaterThan<>(term, extractionFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            int compVal = CompareUtil.compareBigDecimal(num, termNum);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareBigDecimal(val, termNum);
             return compVal > 0;
         }
     }
 
-    private static class NumericGreaterThanOrEqualTo extends NumericExpressionTermPredicate {
+    private static class NumericGreaterThanOrEqualTo<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericGreaterThanOrEqualTo(final ExpressionTerm term,
-                                            final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                            final Function<T, BigDecimal> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new NumericGreaterThanOrEqualTo(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            return Optional.of(new NumericGreaterThanOrEqualTo<>(term, extractionFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            int compVal = CompareUtil.compareBigDecimal(num, termNum);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareBigDecimal(val, termNum);
             return compVal >= 0;
         }
     }
 
-    private static class NumericLessThan extends NumericExpressionTermPredicate {
+    private static class NumericLessThan<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericLessThan(final ExpressionTerm term,
-                                final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                final Function<T, BigDecimal> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new NumericLessThan(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            return Optional.of(new NumericLessThan<>(term, extractionFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            int compVal = CompareUtil.compareBigDecimal(num, termNum);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareBigDecimal(val, termNum);
             return compVal < 0;
         }
     }
 
-    private static class NumericLessThanOrEqualTo extends NumericExpressionTermPredicate {
+    private static class NumericLessThanOrEqualTo<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericLessThanOrEqualTo(final ExpressionTerm term,
-                                         final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                         final Function<T, BigDecimal> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            return Optional.of(new NumericLessThanOrEqualTo(term, queryFieldPosition));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            return Optional.of(new NumericLessThanOrEqualTo<>(term, extractionFunction));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            int compVal = CompareUtil.compareBigDecimal(num, termNum);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareBigDecimal(val, termNum);
             return compVal <= 0;
         }
     }
 
-    private static class NumericBetween extends ExpressionTermPredicate {
+    private static class NumericBetween<T> extends ExpressionTermPredicate<T> {
 
         private final BigDecimal[] between;
+        private final Function<T, BigDecimal> extractionFunction;
 
         private NumericBetween(final ExpressionTerm term,
-                               final QueryFieldPosition queryFieldPosition,
+                               final Function<T, BigDecimal> extractionFunction,
                                final BigDecimal[] between) {
-            super(term, queryFieldPosition);
+            super(term);
             this.between = between;
+            this.extractionFunction = extractionFunction;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            final BigDecimal[] between = getTermNumbers(queryFieldPosition, term.getValue());
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            final BigDecimal[] between = getTermNumbers(term, term.getValue());
             if (between.length != 2) {
                 throw new MatchException("2 numbers needed for between query");
             }
             if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
                 throw new MatchException("From number must be lower than to number");
             }
-            return Optional.of(new NumericBetween(term, queryFieldPosition, between));
+            return Optional.of(new NumericBetween<>(term, extractionFunction, between));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
-            return CompareUtil.compareBigDecimal(num, between[0]) >= 0
-                    && CompareUtil.compareBigDecimal(num, between[1]) <= 0;
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            return CompareUtil.compareBigDecimal(val, between[0]) >= 0
+                    && CompareUtil.compareBigDecimal(val, between[1]) <= 0;
         }
     }
 
-    private static class NumericIn extends ExpressionTermPredicate {
+    private static class NumericIn<T> extends ExpressionTermPredicate<T> {
 
         private final BigDecimal[] in;
+        private final Function<T, BigDecimal> extractionFunction;
 
         private NumericIn(final ExpressionTerm term,
-                          final QueryFieldPosition queryFieldPosition,
+                          final Function<T, BigDecimal> extractionFunction,
                           final BigDecimal[] in) {
-            super(term, queryFieldPosition);
+            super(term);
             this.in = in;
+            this.extractionFunction = extractionFunction;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            final BigDecimal[] in = getTermNumbers(queryFieldPosition, term.getValue());
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction) {
+            final BigDecimal[] in = getTermNumbers(term, term.getValue());
             // If there are no terms then always a false match.
             if (in.length == 0) {
                 return Optional.of(values -> false);
             }
-            return Optional.of(new NumericIn(term, queryFieldPosition, in));
+            return Optional.of(new NumericIn<>(term, extractionFunction, in));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final BigDecimal num = values.getNumber(queryFieldPosition);
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
             for (final BigDecimal n : in) {
-                if (Objects.equals(n, num)) {
+                if (Objects.equals(n, val)) {
                     return true;
                 }
             }
@@ -631,203 +641,209 @@ public class ExpressionPredicateBuilder {
     }
 
 
-    private abstract static class DateExpressionTermPredicate extends ExpressionTermPredicate {
+    private abstract static class DateExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
         final Long termNum;
+        final Function<T, Long> extractionFunction;
 
         private DateExpressionTermPredicate(final ExpressionTerm term,
-                                            final QueryFieldPosition queryFieldPosition,
+                                            final Function<T, Long> extractionFunction,
                                             final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition);
-            termNum = getTermDate(queryFieldPosition, term.getValue(), dateTimeSettings);
+            super(term);
+            termNum = getTermDate(term, term.getValue(), dateTimeSettings);
+            this.extractionFunction = extractionFunction;
         }
     }
 
-    private static class DateEquals extends DateExpressionTermPredicate {
+    private static class DateEquals<T> extends DateExpressionTermPredicate<T> {
 
         private DateEquals(final ExpressionTerm term,
-                           final QueryFieldPosition queryFieldPosition,
+                           final Function<T, Long> extractionFunction,
                            final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition, dateTimeSettings);
+            super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateEquals(term, queryFieldPosition, dateTimeSettings));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            return Optional.of(new DateEquals<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return Objects.equals(num, termNum);
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return Objects.equals(val, termNum);
         }
     }
 
-    private static class DateNotEquals extends DateExpressionTermPredicate {
+    private static class DateNotEquals<T> extends DateExpressionTermPredicate<T> {
 
         private DateNotEquals(final ExpressionTerm term,
-                              final QueryFieldPosition queryFieldPosition,
+                              final Function<T, Long> extractionFunction,
                               final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition, dateTimeSettings);
+            super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateNotEquals(term, queryFieldPosition, dateTimeSettings));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            return Optional.of(new DateNotEquals<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return !Objects.equals(num, termNum);
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return !Objects.equals(val, termNum);
         }
     }
 
-    private static class DateGreaterThan extends DateExpressionTermPredicate {
+    private static class DateGreaterThan<T> extends DateExpressionTermPredicate<T> {
 
         private DateGreaterThan(final ExpressionTerm term,
-                                final QueryFieldPosition queryFieldPosition,
+                                final Function<T, Long> extractionFunction,
                                 final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition, dateTimeSettings);
+            super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateGreaterThan(term, queryFieldPosition, dateTimeSettings));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            return Optional.of(new DateGreaterThan<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return CompareUtil.compareLong(num, termNum) > 0;
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return CompareUtil.compareLong(val, termNum) > 0;
         }
     }
 
-    private static class DateGreaterThanOrEqualTo extends DateExpressionTermPredicate {
+    private static class DateGreaterThanOrEqualTo<T> extends DateExpressionTermPredicate<T> {
 
         private DateGreaterThanOrEqualTo(final ExpressionTerm term,
-                                         final QueryFieldPosition queryFieldPosition,
+                                         final Function<T, Long> extractionFunction,
                                          final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition, dateTimeSettings);
+            super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateGreaterThanOrEqualTo(term, queryFieldPosition, dateTimeSettings));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            return Optional.of(new DateGreaterThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return CompareUtil.compareLong(num, termNum) >= 0;
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return CompareUtil.compareLong(val, termNum) >= 0;
         }
     }
 
-    private static class DateLessThan extends DateExpressionTermPredicate {
+    private static class DateLessThan<T> extends DateExpressionTermPredicate<T> {
 
         private DateLessThan(final ExpressionTerm term,
-                             final QueryFieldPosition queryFieldPosition,
+                             final Function<T, Long> extractionFunction,
                              final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition, dateTimeSettings);
+            super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateLessThan(term, queryFieldPosition, dateTimeSettings));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            return Optional.of(new DateLessThan<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return CompareUtil.compareLong(num, termNum) < 0;
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return CompareUtil.compareLong(val, termNum) < 0;
         }
     }
 
-    private static class DateLessThanOrEqualTo extends DateExpressionTermPredicate {
+    private static class DateLessThanOrEqualTo<T> extends DateExpressionTermPredicate<T> {
 
         private DateLessThanOrEqualTo(final ExpressionTerm term,
-                                      final QueryFieldPosition queryFieldPosition,
+                                      final Function<T, Long> extractionFunction,
                                       final DateTimeSettings dateTimeSettings) {
-            super(term, queryFieldPosition, dateTimeSettings);
+            super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateLessThanOrEqualTo(term, queryFieldPosition, dateTimeSettings));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            return Optional.of(new DateLessThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return CompareUtil.compareLong(num, termNum) <= 0;
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return CompareUtil.compareLong(val, termNum) <= 0;
         }
     }
 
-    private static class DateBetween extends ExpressionTermPredicate {
+    private static class DateBetween<T> extends ExpressionTermPredicate<T> {
 
+        private final Function<T, Long> extractionFunction;
         private final long[] between;
 
         private DateBetween(final ExpressionTerm term,
-                            final QueryFieldPosition queryFieldPosition,
+                            final Function<T, Long> extractionFunction,
                             final long[] between) {
-            super(term, queryFieldPosition);
+            super(term);
+            this.extractionFunction = extractionFunction;
             this.between = between;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            final long[] between = getTermDates(queryFieldPosition, term.getValue(), dateTimeSettings);
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            final long[] between = getTermDates(term, term.getValue(), dateTimeSettings);
             if (between.length != 2) {
                 throw new MatchException("2 numbers needed for between query");
             }
             if (CompareUtil.compareLong(between[0], between[1]) >= 0) {
                 throw new MatchException("From number must be lower than to number");
             }
-            return Optional.of(new DateBetween(term, queryFieldPosition, between));
+            return Optional.of(new DateBetween<>(term, extractionFunction, between));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
-            return CompareUtil.compareLong(num, between[0]) >= 0
-                    && CompareUtil.compareLong(num, between[1]) <= 0;
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return CompareUtil.compareLong(val, between[0]) >= 0
+                    && CompareUtil.compareLong(val, between[1]) <= 0;
         }
     }
 
-    private static class DateIn extends ExpressionTermPredicate {
+    private static class DateIn<T> extends ExpressionTermPredicate<T> {
 
+        private final Function<T, Long> extractionFunction;
         private final long[] in;
 
         private DateIn(final ExpressionTerm term,
-                       final QueryFieldPosition queryFieldPosition,
+                       final Function<T, Long> extractionFunction,
                        final long[] in) {
-            super(term, queryFieldPosition);
+            super(term);
+            this.extractionFunction = extractionFunction;
             this.in = in;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition,
-                                                        final DateTimeSettings dateTimeSettings) {
-            final long[] in = getTermDates(queryFieldPosition, term.getValue(), dateTimeSettings);
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings) {
+            final long[] in = getTermDates(term, term.getValue(), dateTimeSettings);
             // If there are no terms then always a false match.
             if (in.length == 0) {
                 return Optional.of(values -> false);
             }
-            return Optional.of(new DateIn(term, queryFieldPosition, in));
+            return Optional.of(new DateIn<>(term, extractionFunction, in));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final Long num = values.getDate(queryFieldPosition);
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
             for (final long n : in) {
-                if (Objects.equals(n, num)) {
+                if (Objects.equals(n, val)) {
                     return true;
                 }
             }
@@ -836,245 +852,255 @@ public class ExpressionPredicateBuilder {
     }
 
 
-    private abstract static class StringExpressionTermPredicate extends ExpressionTermPredicate {
+    private abstract static class StringExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
         final String string;
+        final Function<T, String> extractionFunction;
 
         private StringExpressionTermPredicate(final ExpressionTerm term,
-                                              final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                              final Function<T, String> extractionFunction) {
+            super(term);
             string = term.getValue();
+            this.extractionFunction = extractionFunction;
         }
     }
 
-    private static class StringEquals extends StringExpressionTermPredicate {
+    private static class StringEquals<T> extends StringExpressionTermPredicate<T> {
 
         private StringEquals(final ExpressionTerm term,
-                             final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                             final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
 
             if (term.isCaseSensitive()) {
-                return Optional.of(new StringEquals(term, queryFieldPosition));
+                return Optional.of(new StringEquals<>(term, extractionFunction));
             } else {
-                return Optional.of(new StringEqualsIgnoreCase(term, queryFieldPosition));
+                return Optional.of(new StringEqualsIgnoreCase<>(term, extractionFunction));
             }
         }
 
         @Override
-        public boolean test(final Values values) {
-            return string.equals(values.getString(queryFieldPosition));
+        public boolean test(final T values) {
+            return string.equals(extractionFunction.apply(values));
         }
     }
 
-    private static class StringEqualsIgnoreCase extends StringExpressionTermPredicate {
+    private static class StringEqualsIgnoreCase<T> extends StringExpressionTermPredicate<T> {
 
         private StringEqualsIgnoreCase(final ExpressionTerm term,
-                                       final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                       final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
         }
 
         @Override
-        public boolean test(final Values values) {
-            return string.equalsIgnoreCase(values.getString(queryFieldPosition));
+        public boolean test(final T values) {
+            return string.equalsIgnoreCase(extractionFunction.apply(values));
         }
     }
 
-    private static class StringNotEquals extends StringExpressionTermPredicate {
+    private static class StringNotEquals<T> extends StringExpressionTermPredicate<T> {
 
-        private final ValuesPredicate predicate;
+        private final Predicate<T> predicate;
 
         private StringNotEquals(final ExpressionTerm term,
-                                final QueryFieldPosition queryFieldPosition,
-                                final ValuesPredicate predicate) {
-            super(term, queryFieldPosition);
+                                final Function<T, String> extractionFunction,
+                                final Predicate<T> predicate) {
+            super(term, extractionFunction);
             this.predicate = predicate;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
-            final Optional<ValuesPredicate> predicate = StringEquals.create(term, queryFieldPosition);
-            return predicate.map(valuesPredicate -> new StringNotEquals(term, queryFieldPosition, valuesPredicate));
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            final Optional<Predicate<T>> predicate = StringEquals.create(term, extractionFunction);
+            return predicate.map(valuesPredicate -> new StringNotEquals<>(term, extractionFunction, valuesPredicate));
         }
 
         @Override
-        public boolean test(final Values values) {
+        public boolean test(final T values) {
             return !predicate.test(values);
         }
     }
 
-    private static class StringContains extends StringExpressionTermPredicate {
+    private static class StringContains<T> extends StringExpressionTermPredicate<T> {
 
         private StringContains(final ExpressionTerm term,
-                               final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                               final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
             // If the term value is null or empty then always match.
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
 
             if (term.isCaseSensitive()) {
-                return Optional.of(new StringContains(term, queryFieldPosition));
+                return Optional.of(new StringContains<>(term, extractionFunction));
             } else {
-                return Optional.of(new StringContainsIgnoreCase(term, queryFieldPosition));
+                return Optional.of(new StringContainsIgnoreCase<>(term, extractionFunction));
             }
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return valString.contains(string);
+            return val.contains(string);
         }
     }
 
-    private static class StringContainsIgnoreCase extends ExpressionTermPredicate {
+    private static class StringContainsIgnoreCase<T> extends ExpressionTermPredicate<T> {
 
+        private final Function<T, String> extractionFunction;
         private final String string;
 
         private StringContainsIgnoreCase(final ExpressionTerm term,
-                                         final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                         final Function<T, String> extractionFunction) {
+            super(term);
+            this.extractionFunction = extractionFunction;
             string = term.getValue().toLowerCase();
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return valString.toLowerCase(Locale.ROOT).contains(string);
+            return val.toLowerCase(Locale.ROOT).contains(string);
         }
     }
 
-    private static class StringStartsWith extends StringExpressionTermPredicate {
+    private static class StringStartsWith<T> extends StringExpressionTermPredicate<T> {
 
         private StringStartsWith(final ExpressionTerm term,
-                                 final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                 final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
             // If the term value is null or empty then always match.
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
 
             if (term.isCaseSensitive()) {
-                return Optional.of(new StringStartsWith(term, queryFieldPosition));
+                return Optional.of(new StringStartsWith<>(term, extractionFunction));
             } else {
-                return Optional.of(new StringStartsWithIgnoreCase(term, queryFieldPosition));
+                return Optional.of(new StringStartsWithIgnoreCase<>(term, extractionFunction));
             }
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return valString.startsWith(string);
+            return val.startsWith(string);
         }
     }
 
-    private static class StringStartsWithIgnoreCase extends ExpressionTermPredicate {
+    private static class StringStartsWithIgnoreCase<T> extends ExpressionTermPredicate<T> {
 
+        private final Function<T, String> extractionFunction;
         private final String string;
 
         private StringStartsWithIgnoreCase(final ExpressionTerm term,
-                                           final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                           final Function<T, String> extractionFunction) {
+            super(term);
+            this.extractionFunction = extractionFunction;
             string = term.getValue().toLowerCase();
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return valString.toLowerCase(Locale.ROOT).startsWith(string);
+            return val.toLowerCase(Locale.ROOT).startsWith(string);
         }
     }
 
-    private static class StringEndsWith extends StringExpressionTermPredicate {
+    private static class StringEndsWith<T> extends StringExpressionTermPredicate<T> {
 
         private StringEndsWith(final ExpressionTerm term,
-                               final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                               final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
             // If the term value is null or empty then always match.
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
 
             if (term.isCaseSensitive()) {
-                return Optional.of(new StringEndsWith(term, queryFieldPosition));
+                return Optional.of(new StringEndsWith<>(term, extractionFunction));
             } else {
-                return Optional.of(new StringEndsWithIgnoreCase(term, queryFieldPosition));
+                return Optional.of(new StringEndsWithIgnoreCase<>(term, extractionFunction));
             }
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return valString.endsWith(string);
+            return val.endsWith(string);
         }
     }
 
-    private static class StringEndsWithIgnoreCase extends ExpressionTermPredicate {
+    private static class StringEndsWithIgnoreCase<T> extends ExpressionTermPredicate<T> {
 
+        private final Function<T, String> extractionFunction;
         private final String string;
 
         private StringEndsWithIgnoreCase(final ExpressionTerm term,
-                                         final QueryFieldPosition queryFieldPosition) {
-            super(term, queryFieldPosition);
+                                         final Function<T, String> extractionFunction) {
+            super(term);
+            this.extractionFunction = extractionFunction;
             string = term.getValue().toLowerCase();
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return valString.toLowerCase(Locale.ROOT).endsWith(string);
+            return val.toLowerCase(Locale.ROOT).endsWith(string);
         }
     }
 
-    private static class StringRegex extends ExpressionTermPredicate {
+    private static class StringRegex<T> extends ExpressionTermPredicate<T> {
 
+        private final Function<T, String> extractionFunction;
         private final Pattern pattern;
 
         private StringRegex(final ExpressionTerm term,
-                            final QueryFieldPosition queryFieldPosition,
+                            final Function<T, String> extractionFunction,
                             final Pattern pattern) {
-            super(term, queryFieldPosition);
+            super(term);
+            this.extractionFunction = extractionFunction;
             this.pattern = pattern;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
             // If the term value is null or empty then always match.
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
@@ -1084,34 +1110,66 @@ public class ExpressionPredicateBuilder {
                 flags = Pattern.CASE_INSENSITIVE;
             }
             final Pattern pattern = Pattern.compile(term.getValue(), flags);
-            return Optional.of(new StringRegex(term, queryFieldPosition, pattern));
+            return Optional.of(new StringRegex<>(term, extractionFunction, pattern));
         }
 
         @Override
-        public boolean test(final Values values) {
-            final String valString = values.getString(queryFieldPosition);
-            if (valString == null) {
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
                 return false;
             }
-            return pattern.matcher(valString).find();
+            return pattern.matcher(val).find();
         }
     }
 
-    private static class StringIn extends ExpressionTermPredicate {
+    private static class StringWordBoundary<T> extends ExpressionTermPredicate<T> {
 
-        private final List<ValuesPredicate> subPredicates;
+        private final Function<T, String> extractionFunction;
+        private final Predicate<String> predicate;
+
+        private StringWordBoundary(final ExpressionTerm term,
+                                   final Function<T, String> extractionFunction,
+                                   final Predicate<String> predicate) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            this.predicate = predicate;
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            // If the term value is null or empty then always match.
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            final Predicate<String> predicate = StringPredicateFactory.createWordBoundaryPredicate(term.getValue());
+            return Optional.of(new StringWordBoundary<>(term, extractionFunction, predicate));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
+                return false;
+            }
+            return predicate.test(val);
+        }
+    }
+
+    private static class StringIn<T> extends ExpressionTermPredicate<T> {
+
+        private final List<Predicate<T>> subPredicates;
 
         private StringIn(final ExpressionTerm term,
-                         final QueryFieldPosition queryFieldPosition,
-                         final List<ValuesPredicate> subPredicates) {
-            super(term, queryFieldPosition);
+                         final List<Predicate<T>> subPredicates) {
+            super(term);
             this.subPredicates = subPredicates;
         }
 
-        private static Optional<ValuesPredicate> create(final ExpressionTerm term,
-                                                        final QueryFieldPosition queryFieldPosition) {
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
             final String[] in = term.getValue().split(" ");
-            final List<ValuesPredicate> subPredicates = new ArrayList<>(in.length);
+            final List<Predicate<T>> subPredicates = new ArrayList<>(in.length);
             for (final String str : in) {
                 final ExpressionTerm subTerm = ExpressionTerm
                         .builder()
@@ -1120,18 +1178,18 @@ public class ExpressionPredicateBuilder {
                         .value(str)
                         .caseSensitive(term.getCaseSensitive())
                         .build();
-                final Optional<ValuesPredicate> subPredicate = StringEquals.create(subTerm, queryFieldPosition);
+                final Optional<Predicate<T>> subPredicate = StringEquals.create(subTerm, extractionFunction);
                 subPredicate.ifPresent(subPredicates::add);
             }
             if (subPredicates.isEmpty()) {
                 return Optional.empty();
             }
-            return Optional.of(new StringIn(term, queryFieldPosition, subPredicates));
+            return Optional.of(new StringIn<>(term, subPredicates));
         }
 
         @Override
-        public boolean test(final Values values) {
-            for (final ValuesPredicate predicate : subPredicates) {
+        public boolean test(final T values) {
+            for (final Predicate<T> predicate : subPredicates) {
                 if (predicate.test(values)) {
                     return true;
                 }

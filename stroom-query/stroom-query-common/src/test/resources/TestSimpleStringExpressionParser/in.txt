@@ -1,0 +1,97 @@
+?TEST
+-----
+/"This (is|or) that"
+-----
+^test
+-----
+$test
+-----
+>=3
+-----
+>3
+-----
+<=3
+-----
+<3
+-----
+~test
+-----
+=test
+-----
+test
+-----
+\^test
+----- Multi field boolean logic1
+~test or field1:test
+----- Multi field boolean logic2
+~test and (field1:test  or field2:test)
+----- Contains
+map
+----- Starts with
+^this_
+----- Starts with (caret)
+^^this_
+----- Ends with
+$feed
+----- Ends with (dollar)
+$feed$
+----- Exact match
+=this_is_my_feed
+----- Exact match (caret, dollar)
+=^this_is_my_feed$
+----- Chars anywhere 1
+~timf
+----- Chars anywhere 1 (upper case)
+~TIMF
+----- Chars anywhere 2
+~t_i_m_f
+----- Chars anywhere 2 (upper case)
+~T_I_M_F
+----- Chars anywhere (numbers)
+~99
+----- Chars anywhere (special chars)
+~(xml)
+----- Wild-carded 1
+XML*EVENTS
+----- Wild-carded 2
+XML*
+----- Wild-carded 3
+XML*EVENTS*
+----- Word boundary match 1
+?TIMF
+----- Word boundary match 2
+?ThIsMF
+----- Word boundary match 3
+?OTheiMa
+----- Word boundary match 4
+?OTheiMa
+----- Word boundary match 5
+?CPSP
+----- Word boundary match 6 (camel + delimited)
+?JDCN
+----- Word boundary match 7 (camel + delimited)
+?SJDCJDCN
+----- Word boundary match 8
+?MFN
+----- Word boundary match 9 (one word)
+?A
+----- Word boundary (brackets)
+?Xml
+----- Word boundary match (numbers)
+?A99
+----- Single letter (lower case)
+b
+----- Single letter (upper case)
+B
+----- Regex partial match
+/(wo)?man$
+----- Regex full match
+/^(wo)?man$
+----- Invalid Regex, nothing will match
+/(wo?man$
+----- Regex with null values
+/^man
+----- No user input
+
+----- Null/empty items
+a
