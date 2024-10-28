@@ -18,6 +18,7 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -36,6 +37,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.state.shared.StateDoc;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -45,7 +47,6 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -154,28 +155,36 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
     private void addPipelineColumn() {
         // Pipeline.
-        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineReference pipelineReference) {
-                if (pipelineReference.getPipeline() == null) {
-                    return null;
-                }
-                return getSafeHtmlWithState(pipelineReference, pipelineReference.getPipeline().getName());
-            }
-        }, "Pipeline", 200);
+        final Column<PipelineReference, DocRefProvider<PipelineReference>> pipelineCol = DataGridUtil.docRefColumnBuilder(
+                        (PipelineReference pipelineReference) -> {
+                            if (pipelineReference.getPipeline() == null) {
+                                return null;
+                            } else {
+                                return new DocRefProvider<>(pipelineReference, PipelineReference::getPipeline);
+                            }
+                        },
+                        getEventBus(),
+                        false,
+                        this::getStateCssClass)
+                .build();
+        dataGrid.addResizableColumn(pipelineCol, "Pipeline", 200);
     }
 
     private void addFeedColumn() {
         // Feed.
-        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineReference pipelineReference) {
-                if (pipelineReference.getFeed() == null) {
-                    return null;
-                }
-                return getSafeHtmlWithState(pipelineReference, pipelineReference.getFeed().getName());
-            }
-        }, "Feed", 200);
+        final Column<PipelineReference, DocRefProvider<PipelineReference>> feedCol = DataGridUtil.docRefColumnBuilder(
+                        (PipelineReference pipelineReference) -> {
+                            if (pipelineReference.getPipeline() == null) {
+                                return null;
+                            } else {
+                                return new DocRefProvider<>(pipelineReference, PipelineReference::getFeed);
+                            }
+                        },
+                        getEventBus(),
+                        false,
+                        this::getStateCssClass)
+                .build();
+        dataGrid.addResizableColumn(feedCol, "Feed", 350);
     }
 
     private void addStreamTypeColumn() {
@@ -193,16 +202,20 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
     private void addInheritedFromColumn() {
         // Default Value.
-        dataGrid.addResizableColumn(new Column<PipelineReference, String>(new TextCell()) {
-            @Override
-            public String getValue(final PipelineReference pipelineReference) {
-                if (pipelineReference.getSourcePipeline() == null
-                        || pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
-                    return null;
-                }
-                return pipelineReference.getSourcePipeline().getName();
-            }
-        }, "Inherited From", 100);
+        @SuppressWarnings("checkstyle:LineLength") // cos GWT
+        final Column<PipelineReference, DocRefProvider<DocRef>> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
+                        (PipelineReference pipelineReference) -> {
+                            if (pipelineReference.getSourcePipeline() == null
+                                    || pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
+                                return null;
+                            } else {
+                                return pipelineReference.getSourcePipeline();
+                            }
+                        },
+                        getEventBus(),
+                        false)
+                .build();
+        dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);
     }
 
     private void addEndColumn() {
@@ -233,6 +246,23 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         builder.appendEscaped(string);
         builder.append(SafeHtmlUtils.fromTrustedString("</div>"));
         return builder.toSafeHtml();
+    }
+
+    private String getStateCssClass(final PipelineReference pipelineReference) {
+        String className = null;
+        final State state = referenceStateMap.get(pipelineReference);
+        switch (state) {
+            case ADDED:
+                className = ADDED;
+                break;
+            case REMOVED:
+                className = REMOVED;
+                break;
+            case INHERITED:
+                className = INHERITED;
+                break;
+        }
+        return className;
     }
 
     public void setReadOnly(final boolean readOnly) {

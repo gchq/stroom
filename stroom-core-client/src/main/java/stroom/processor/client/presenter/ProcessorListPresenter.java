@@ -30,6 +30,7 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -298,11 +299,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addPipelineColumn() {
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, DocRef>(new DocRefCell(getEventBus(), false)) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, DocRefProvider<DocRef>>(new DocRefCell<>(
+                getEventBus(), false)) {
             @Override
-            public DocRef getValue(final ProcessorListRow row) {
+            public DocRefProvider<DocRef> getValue(final ProcessorListRow row) {
                 DocRef docRef = null;
                 if (row instanceof ProcessorFilterRow) {
+                    //noinspection PatternVariableCanBeUsed Not in GWT
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
 
@@ -325,6 +328,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         }
                     }
                 } else if (row instanceof ProcessorRow) {
+                    //noinspection PatternVariableCanBeUsed Not in GWT
                     final ProcessorRow processorRow = (ProcessorRow) row;
                     final Processor processor = processorRow.getProcessor();
                     if (processor != null) {
@@ -337,7 +341,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                     }
                 }
 
-                return docRef;
+                return DocRefProvider.forDocRef(docRef);
             }
         }, "Pipeline", 300);
     }
