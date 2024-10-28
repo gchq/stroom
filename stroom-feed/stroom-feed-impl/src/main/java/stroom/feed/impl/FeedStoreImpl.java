@@ -27,6 +27,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -61,18 +62,21 @@ public class FeedStoreImpl implements FeedStore {
     private final SecurityContext securityContext;
     private final FeedSerialiser serialiser;
     private final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider;
+    private final ImportConverter importConverter;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser,
                          final SecurityContext securityContext,
-                         final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
+                         final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider,
+                         final ImportConverter importConverter) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
         this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
+        this.importConverter = importConverter;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -218,9 +222,14 @@ public class FeedStoreImpl implements FeedStore {
 
         // If the imported feed's vol grp doesn't exist in this env use our default
         // or null it out
-        Map<String, byte[]> effectiveDataMap = dataMap;
+        Map<String, byte[]> effectiveDataMap = importConverter.convert(
+                docRef,
+                dataMap,
+                importState,
+                importSettings,
+                securityContext.getUserIdentityForAudit());
         try {
-            final FeedDoc feedDoc = serialiser.read(dataMap);
+            final FeedDoc feedDoc = serialiser.read(effectiveDataMap);
 
             final String volumeGroup = feedDoc.getVolumeGroup();
             if (volumeGroup != null) {
