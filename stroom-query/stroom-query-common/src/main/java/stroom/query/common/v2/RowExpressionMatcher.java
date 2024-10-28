@@ -23,7 +23,6 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
@@ -58,7 +57,7 @@ public class RowExpressionMatcher implements Predicate<Map<String, Object>> {
     public static Optional<RowExpressionMatcher> create(final List<Column> columns,
                                                         final DateTimeSettings dateTimeSettings,
                                                         final ExpressionOperator expression) {
-        if (!ExpressionUtil.hasTerms(expression)) {
+        if (expression == null) {
             return Optional.empty();
         }
 
