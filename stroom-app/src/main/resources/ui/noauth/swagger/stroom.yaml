@@ -8437,6 +8437,7 @@ components:
             - TITLE
             - STRUCTURE
             - VISUALISATION
+            - DICTIONARY
           uniqueItems: true
         maxCompletions:
           type: integer
@@ -9124,6 +9125,8 @@ components:
           $ref: '#/components/schemas/StringMatchLocation'
         sample:
           type: string
+        sampleAtStartOfLine:
+          type: boolean
     DocRef:
       type: object
       description: A class for describing a unique reference to a 'document' in stroom.  A
@@ -9255,8 +9258,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -9448,8 +9449,6 @@ components:
     DownloadQueryResultsRequest:
       type: object
       properties:
-        componentId:
-          type: string
         fileType:
           type: string
           enum:
@@ -9889,8 +9888,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -10768,8 +10765,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -11059,8 +11054,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -12644,8 +12637,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -13579,6 +13570,7 @@ components:
             - TITLE
             - STRUCTURE
             - VISUALISATION
+            - DICTIONARY
           uniqueItems: true
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
@@ -13649,8 +13641,6 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_S3
-          - DOCUMENT_S3V1
-          - DOCUMENT_S3V2
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
@@ -13811,6 +13801,7 @@ components:
           - TITLE
           - STRUCTURE
           - VISUALISATION
+          - DICTIONARY
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
