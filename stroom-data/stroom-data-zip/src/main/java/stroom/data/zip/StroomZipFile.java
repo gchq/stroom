@@ -20,13 +20,11 @@ public class StroomZipFile implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipFile.class);
 
-    private final Path file;
     private final ZipFile zipFile;
     private final StroomZipEntries stroomZipEntries;
 
     public StroomZipFile(final Path path) throws IOException {
-        this.file = path;
-        this.zipFile = new ZipFile(Files.newByteChannel(file));
+        this.zipFile = ZipFile.builder().setSeekableByteChannel(Files.newByteChannel(path)).get();
         stroomZipEntries = new StroomZipEntries();
         final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
 
