@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5.1] - 2024-10-28
+
+* Issue **#4562** : Use Zip64 compatibility mode.
+
+* Issue **#4564** : Use expression as column name.
+
+* Issue **#4558** : Fix query pause behaviour.
+
+* Issue **#4549** : Fix conditional formatting fall through behaviour.
+
+* In the Pipeline Properties pane, add copy/goto hover icons to any properties that are Documents. Add copy/goto hover links to the Pipeline, Feed and Inherited From columns in the Pipeline References pane.
+
+* Issue **#4560** : Don't sort the list of Pipeline References (reference loaders).  Instead display them in the order they will get used in the lookup.
+
+* Issue **#4570** : Fix error when clearing then filtering in a doc ref picker.
+
+
 ## [v7.5.0] - 2024-10-16
 
 * Issue **#4501** : Fix Query editor syntax highlighting.
@@ -946,7 +963,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.1...HEAD
+[v7.5.1]: https://github.com/gchq/stroom/compare/v7.5.0...v7.5.1
 [v7.5.0]: https://github.com/gchq/stroom/compare/v7.5-beta.20...v7.5.0
 [v7.5-beta.20]: https://github.com/gchq/stroom/compare/v7.5-beta.19...v7.5-beta.20
 [v7.5-beta.19]: https://github.com/gchq/stroom/compare/v7.5-beta.18...v7.5-beta.19
