@@ -8545,6 +8545,21 @@ components:
           type: string
       required:
       - type
+    ConditionalFormattingRule:
+      type: object
+      properties:
+        backgroundColor:
+          type: string
+        enabled:
+          type: boolean
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        hide:
+          type: boolean
+        id:
+          type: string
+        textColor:
+          type: string
     ConfigProperty:
       type: object
       properties:
@@ -9778,6 +9793,8 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ComponentSelectionHandler'
+          showTable:
+            type: boolean
     EntityEvent:
       type: object
       properties:
@@ -13533,6 +13550,8 @@ components:
           type: string
         query:
           type: string
+        queryTablePreferences:
+          $ref: '#/components/schemas/QueryTablePreferences'
         timeRange:
           $ref: '#/components/schemas/TimeRange'
         type:
@@ -13966,6 +13985,8 @@ components:
           $ref: '#/components/schemas/QueryContext'
         queryKey:
           $ref: '#/components/schemas/QueryKey'
+        queryTablePreferences:
+          $ref: '#/components/schemas/QueryTablePreferences'
         requestedRange:
           $ref: '#/components/schemas/OffsetRange'
         searchRequestSource:
@@ -13975,6 +13996,26 @@ components:
         timeout:
           type: integer
           format: int64
+    QueryTablePreferences:
+      type: object
+      properties:
+        applyValueFilters:
+          type: boolean
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionalFormattingRule'
+        pageSize:
+          type: integer
+          format: int32
+        selectionHandlers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentSelectionHandler'
     RangeInteger:
       type: object
       properties:
