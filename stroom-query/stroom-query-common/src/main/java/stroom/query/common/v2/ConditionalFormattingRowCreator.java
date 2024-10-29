@@ -5,8 +5,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.ExpressionPredicateBuilder.QueryFieldIndex;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValuesPredicate;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
 import stroom.query.common.v2.format.Formatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;
@@ -17,6 +16,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
 
@@ -26,14 +26,14 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
     private final Formatter[] columnFormatters;
-    private final ValuesPredicate rowFilter;
+    private final Predicate<Val[]> rowFilter;
     private final List<RuleAndMatcher> rules;
 
     private ConditionalFormattingRowCreator(final int[] columnIndexMapping,
                                             final KeyFactory keyFactory,
                                             final ErrorConsumer errorConsumer,
                                             final Formatter[] columnFormatters,
-                                            final ValuesPredicate rowFilter,
+                                            final Predicate<Val[]> rowFilter,
                                             final List<RuleAndMatcher> rules) {
         this.columnIndexMapping = columnIndexMapping;
         this.keyFactory = keyFactory;
@@ -60,9 +60,9 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                     .toList();
             if (!activeRules.isEmpty()) {
                 final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
-                final QueryFieldIndex queryFieldIndex = RowUtil.createColumnNameQueryFieldIndex(newColumns);
+                final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);
                 for (final ConditionalFormattingRule rule : activeRules) {
-                    final Optional<ValuesPredicate> optionalValuesPredicate =
+                    final Optional<Predicate<Val[]>> optionalValuesPredicate =
                             ExpressionPredicateBuilder.create(rule.getExpression(), queryFieldIndex, dateTimeSettings);
                     optionalValuesPredicate.ifPresent(columnExpressionMatcher ->
                             ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
@@ -71,7 +71,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                 if (!ruleAndMatchers.isEmpty()) {
                     final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
                     final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
-                    final Optional<ValuesPredicate> rowFilter = FilteredRowCreator
+                    final Optional<Predicate<Val[]>> rowFilter = FilteredRowCreator
                             .createValuesPredicate(newColumns,
                                     applyValueFilters,
                                     rowFilterExpression,
@@ -97,13 +97,12 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
 
         // Create values array.
         final Val[] values = RowUtil.createValuesArray(item, columnIndexMapping);
-        final ValValues valValues = new ValValues(values);
-        if (rowFilter.test(valValues)) {
+        if (rowFilter.test(values)) {
             // Find a matching rule.
             ConditionalFormattingRule matchingRule = null;
             for (final RuleAndMatcher ruleAndMatcher : rules) {
                 try {
-                    final boolean match = ruleAndMatcher.matcher.test(valValues);
+                    final boolean match = ruleAndMatcher.matcher.test(values);
                     if (match) {
                         matchingRule = ruleAndMatcher.rule;
                         break;
@@ -163,7 +162,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
         return true;
     }
 
-    private record RuleAndMatcher(ConditionalFormattingRule rule, ValuesPredicate matcher) {
+    private record RuleAndMatcher(ConditionalFormattingRule rule, Predicate<Val[]> matcher) {
 
     }
 }

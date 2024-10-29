@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
@@ -130,20 +131,23 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, DocRef>(
-                new DocRefCell(getEventBus(), false)) {
+        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, DocRefProvider<DocRef>>(
+                new DocRefCell<>(getEventBus(), false)) {
             @Override
-            public DocRef getValue(final ProcessorTaskSummary row) {
-                return row.getPipeline();
+            public DocRefProvider<DocRef> getValue(final ProcessorTaskSummary row) {
+                return DocRefProvider.forDocRef(row.getPipeline());
             }
         }, "Pipeline", ColumnSizeConstants.BIG_COL);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, DocRef>(
-                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
+                new OrderByColumn<ProcessorTaskSummary, DocRefProvider<DocRef>>(
+                        new DocRefCell<>(getEventBus(), true),
+                        ProcessorTaskFields.FIELD_FEED,
+                        true) {
                     @Override
-                    public DocRef getValue(final ProcessorTaskSummary row) {
-                        return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
+                    public DocRefProvider<DocRef> getValue(final ProcessorTaskSummary row) {
+                        final DocRef docRef = new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
+                        return DocRefProvider.forDocRef(docRef);
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
 

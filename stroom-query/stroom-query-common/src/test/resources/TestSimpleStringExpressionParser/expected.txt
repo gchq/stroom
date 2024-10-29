@@ -1,0 +1,188 @@
+?TEST
+=====
+AND {defaultField word boundary TEST}
+-----
+/"This (is|or) that"
+=====
+AND {defaultField matches regex This (is|or) that}
+-----
+^test
+=====
+AND {defaultField starts with test}
+-----
+$test
+=====
+AND {defaultField ends with test}
+-----
+>=3
+=====
+AND {defaultField >= 3}
+-----
+>3
+=====
+AND {defaultField > 3}
+-----
+<=3
+=====
+AND {defaultField <= 3}
+-----
+<3
+=====
+AND {defaultField < 3}
+-----
+~test
+=====
+AND {defaultField matches regex .*?t.*?e.*?s.*?t}
+-----
+=test
+=====
+AND {defaultField = test}
+-----
+test
+=====
+AND {defaultField contains test}
+-----
+\^test
+=====
+AND {defaultField contains ^test}
+-----
+~test or field1:test
+=====
+OR {defaultField matches regex .*?t.*?e.*?s.*?t, field1 contains test}
+-----
+~test and (field1:test  or field2:test)
+=====
+AND {defaultField matches regex .*?t.*?e.*?s.*?t, OR {field1 contains test, field2 contains test}}
+-----
+map
+=====
+AND {defaultField contains map}
+-----
+^this_
+=====
+AND {defaultField starts with this_}
+-----
+^^this_
+=====
+AND {defaultField starts with ^this_}
+-----
+$feed
+=====
+AND {defaultField ends with feed}
+-----
+$feed$
+=====
+AND {defaultField ends with feed$}
+-----
+=this_is_my_feed
+=====
+AND {defaultField = this_is_my_feed}
+-----
+=^this_is_my_feed$
+=====
+AND {defaultField = ^this_is_my_feed$}
+-----
+~timf
+=====
+AND {defaultField matches regex .*?t.*?i.*?m.*?f}
+-----
+~TIMF
+=====
+AND {defaultField matches regex .*?T.*?I.*?M.*?F}
+-----
+~t_i_m_f
+=====
+AND {defaultField matches regex .*?t.*?\Q_\E.*?i.*?\Q_\E.*?m.*?\Q_\E.*?f}
+-----
+~T_I_M_F
+=====
+AND {defaultField matches regex .*?T.*?\Q_\E.*?I.*?\Q_\E.*?M.*?\Q_\E.*?F}
+-----
+~99
+=====
+AND {defaultField matches regex .*?9.*?9}
+-----
+~(xml)
+=====
+AND {defaultField matches regex .*?\Q(\E.*?x.*?m.*?l.*?\Q)\E}
+-----
+XML*EVENTS
+=====
+AND {defaultField matches regex XML.*EVENTS}
+-----
+XML*
+=====
+AND {defaultField matches regex XML.*}
+-----
+XML*EVENTS*
+=====
+AND {defaultField matches regex XML.*EVENTS.*}
+-----
+?TIMF
+=====
+AND {defaultField word boundary TIMF}
+-----
+?ThIsMF
+=====
+AND {defaultField word boundary ThIsMF}
+-----
+?OTheiMa
+=====
+AND {defaultField word boundary OTheiMa}
+-----
+?OTheiMa
+=====
+AND {defaultField word boundary OTheiMa}
+-----
+?CPSP
+=====
+AND {defaultField word boundary CPSP}
+-----
+?JDCN
+=====
+AND {defaultField word boundary JDCN}
+-----
+?SJDCJDCN
+=====
+AND {defaultField word boundary SJDCJDCN}
+-----
+?MFN
+=====
+AND {defaultField word boundary MFN}
+-----
+?A
+=====
+AND {defaultField word boundary A}
+-----
+?Xml
+=====
+AND {defaultField word boundary Xml}
+-----
+?A99
+=====
+AND {defaultField word boundary A99}
+-----
+b
+=====
+AND {defaultField contains b}
+-----
+B
+=====
+AND {defaultField contains B}
+-----
+/(wo)?man$
+=====
+AND {defaultField matches regex (wo)?man$}
+-----
+/^(wo)?man$
+=====
+AND {defaultField matches regex ^(wo)?man$}
+-----
+/(wo?man$
+=====
+AND {defaultField matches regex (wo?man$}
+-----
+/^man
+=====
+AND {defaultField matches regex ^man}
+-----

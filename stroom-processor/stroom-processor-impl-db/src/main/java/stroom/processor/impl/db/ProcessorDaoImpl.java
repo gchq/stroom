@@ -113,27 +113,27 @@ class ProcessorDaoImpl implements ProcessorDao {
     @Override
     public Processor update(final Processor processor) {
         return JooqUtil.contextResult(
-                processorDbConnProvider,
-                context -> {
-                    final int count = context
-                            .update(PROCESSOR)
-                            .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
-                            .set(PROCESSOR.UPDATE_TIME_MS, processor.getUpdateTimeMs())
-                            .set(PROCESSOR.UPDATE_USER, processor.getUpdateUser())
-                            .set(PROCESSOR.ENABLED, processor.isEnabled())
-                            .set(PROCESSOR.DELETED, processor.isDeleted())
-                            .where(PROCESSOR.ID.eq(processor.getId()))
-                            .and(PROCESSOR.VERSION.eq(processor.getVersion()))
-                            .execute();
+                        processorDbConnProvider,
+                        context -> {
+                            final int count = context
+                                    .update(PROCESSOR)
+                                    .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
+                                    .set(PROCESSOR.UPDATE_TIME_MS, processor.getUpdateTimeMs())
+                                    .set(PROCESSOR.UPDATE_USER, processor.getUpdateUser())
+                                    .set(PROCESSOR.ENABLED, processor.isEnabled())
+                                    .set(PROCESSOR.DELETED, processor.isDeleted())
+                                    .where(PROCESSOR.ID.eq(processor.getId()))
+                                    .and(PROCESSOR.VERSION.eq(processor.getVersion()))
+                                    .execute();
 
-                    if (count == 0) {
-                        throw new DataChangedException("Failed to update processor, " +
-                                "it may have been updated by another user or deleted");
-                    }
+                            if (count == 0) {
+                                throw new DataChangedException("Failed to update processor, " +
+                                        "it may have been updated by another user or deleted");
+                            }
 
-                    return fetch(processor.getId()).orElseThrow(() ->
-                            new RuntimeException("Error fetching updated processor"));
-                });
+                            return fetch(context, processor.getId());
+                        }).map(RECORD_TO_PROCESSOR_MAPPER)
+                .orElseThrow(() -> new RuntimeException("Error fetching updated processor"));
     }
 
     @Override
@@ -149,8 +149,7 @@ class ProcessorDaoImpl implements ProcessorDao {
             return JooqUtil.transactionResult(processorDbConnProvider, context -> {
                 // Logically delete all the child filters first
                 processorFilterDao.logicalDeleteByProcessorId(processorId, context);
-                final int count = logicalDeleteByProcessorId(processorId, context);
-                return count;
+                return logicalDeleteByProcessorId(processorId, context);
             });
         } catch (final Exception e) {
             throw new RuntimeException("Error deleting filters and processor for processor id " + processorId, e);
@@ -196,7 +195,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                 totalCount.addAndGet(count);
             } catch (final DataAccessException e) {
                 if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
-                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                    LOGGER.debug(() -> "Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 } else {
                     throw e;
                 }
@@ -208,12 +207,16 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public Optional<Processor> fetch(final int id) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select()
-                        .from(PROCESSOR)
-                        .where(PROCESSOR.ID.eq(id))
-                        .fetchOptional())
+        return JooqUtil.contextResult(processorDbConnProvider, context -> fetch(context, id))
                 .map(RECORD_TO_PROCESSOR_MAPPER);
+    }
+
+    private Optional<Record> fetch(final DSLContext context, final int id) {
+        return context
+                .select()
+                .from(PROCESSOR)
+                .where(PROCESSOR.ID.eq(id))
+                .fetchOptional();
     }
 
     @Override

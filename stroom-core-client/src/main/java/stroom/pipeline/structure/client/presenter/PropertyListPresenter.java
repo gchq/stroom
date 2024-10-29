@@ -17,6 +17,8 @@
 
 package stroom.pipeline.structure.client.presenter;
 
+import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -35,6 +37,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -140,18 +143,42 @@ public class PropertyListPresenter
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtmlWithState(property, property.getName(), false);
             }
-        }, "Property Name", 250);
+        }, "Property Name", 300);
     }
 
     private void addValueColumn() {
         // Value.
-        dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                final String value = getVal(property);
-                return getSafeHtmlWithState(property, value, true);
-            }
-        }, "Value", 30, 200);
+        // Value could be a docRef, in which case it gets a hover link to open it) or a simple string
+        final Column<PipelineProperty, DocRefProvider<PipelineProperty>> valueCol = DataGridUtil.docRefColumnBuilder(
+                        (PipelineProperty property) -> {
+                            return new DocRefProvider<>(property, property2 -> {
+                                final PipelinePropertyValue value = property.getValue();
+                                if (value == null) {
+                                    return null;
+                                } else {
+                                    return value.getEntity();
+                                }
+                            });
+                        },
+                        getEventBus(),
+                        false,
+                        property1 -> getStateCssClass(property1, true),
+                        docRefProvider -> {
+                            if (docRefProvider == null) {
+                                return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                            } else {
+                                final PipelineProperty property = docRefProvider.getRow();
+                                final PipelinePropertyValue value = property.getValue();
+                                if (value.getEntity() != null) {
+                                    return SafeHtmlUtils.fromString(DocRefCell.getTextFromDocRef(value.getEntity()));
+                                } else {
+                                    return SafeHtmlUtils.fromString(getVal(property));
+                                }
+                            }
+                        })
+                .build();
+
+        dataGrid.addAutoResizableColumn(valueCol, "Value", 30, 200);
     }
 
     private Source getSource(final PipelineProperty property) {
@@ -236,6 +263,28 @@ public class PropertyListPresenter
         builder.append(SafeHtmlUtils.fromTrustedString("</div>"));
 
         return builder.toSafeHtml();
+    }
+
+    private String getStateCssClass(final PipelineProperty property,
+                                    final boolean showRemovedAsDefault) {
+        String className = null;
+        if (pipelineModel.getPipelineData().getAddedProperties().contains(property)) {
+            className = ADDED;
+        } else if (pipelineModel.getPipelineData().getRemovedProperties().contains(property)) {
+            if (showRemovedAsDefault) {
+                className = DEFAULT;
+            } else {
+                className = REMOVED;
+            }
+        } else {
+            final PipelineProperty inheritedProperty = getInheritedProperty(property);
+            if (inheritedProperty != null) {
+                className = INHERITED;
+            } else {
+                className = DEFAULT;
+            }
+        }
+        return className;
     }
 
     private SafeHtml getSafeHtml(final String string) {

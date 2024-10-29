@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -533,13 +534,23 @@ public class NullSafe {
     }
 
     /**
-     * Returns a new {@link ArrayList}. If list is not null, the new {@link ArrayList} will
+     * Returns a new {@link ArrayList} instance. If list is not null, the new {@link ArrayList} will
      * contain the contents of list, else it will be empty.
      */
     public static <L extends List<T>, T> List<T> mutableList(final L list) {
         return list != null
                 ? new ArrayList<>(list)
                 : new ArrayList<>();
+    }
+
+    /**
+     * Returns a new {@link java.util.HashSet} instance. If set is not null, the new {@link java.util.HashSet} will
+     * contain the contents of set, else it will be empty.
+     */
+    public static <C extends Collection<T>, T> Set<T> mutableSet(final C set) {
+        return set != null
+                ? new HashSet<>(set)
+                : new HashSet<>();
     }
 
     /**

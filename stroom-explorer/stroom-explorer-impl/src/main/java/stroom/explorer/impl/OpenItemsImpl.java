@@ -35,8 +35,11 @@ public class OpenItemsImpl implements OpenItems {
 
     private OpenItemsImpl(final Set<ExplorerNodeKey> openItemSet,
                           final Set<ExplorerNodeKey> forcedOpenItemSet) {
-        this.openItemSet = openItemSet;
-        this.forcedOpenItemSet = forcedOpenItemSet;
+        // Ensure we have our own mutable set for openItemSet
+        this.openItemSet = NullSafe.mutableSet(openItemSet);
+        this.forcedOpenItemSet = NullSafe.isEmptyCollection(forcedOpenItemSet)
+                ? Collections.emptySet()
+                : new HashSet<>(forcedOpenItemSet);
     }
 
     @Override
@@ -70,11 +73,7 @@ public class OpenItemsImpl implements OpenItems {
     }
 
     public static OpenItems create(final Collection<ExplorerNodeKey> openItems) {
-        return new OpenItemsImpl(
-                NullSafe.isEmptyCollection(openItems)
-                        ? Collections.emptySet()
-                        : new HashSet<>(openItems),
-                Collections.emptySet());
+        return new OpenItemsImpl(new HashSet<>(openItems), Collections.emptySet());
     }
 
     public static OpenItems createWithForced(final Collection<ExplorerNodeKey> openItems,
