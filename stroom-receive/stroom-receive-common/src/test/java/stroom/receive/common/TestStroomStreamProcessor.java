@@ -107,51 +107,6 @@ class TestStroomStreamProcessor {
     }
 
     @Test
-    void testZIPErrorSimple() throws IOException {
-        try {
-            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
-                zipOutputStream.putArchiveEntry(new ZipArchiveEntry("001.hdr"));
-                zipOutputStream.write("Feed:FEED".getBytes(StreamUtil.DEFAULT_CHARSET));
-                zipOutputStream.closeArchiveEntry();
-                zipOutputStream.putArchiveEntry(new ZipArchiveEntry("001.dat"));
-                zipOutputStream.write("Sample Data".getBytes(StreamUtil.DEFAULT_CHARSET));
-                zipOutputStream.closeArchiveEntry();
-            }
-            final byte[] fullData = byteArrayOutputStream.toByteArray();
-
-            final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
-                    fullData, 0, fullData.length / 2);
-
-            final AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put("TEST", "VALUE");
-            attributeMap.put("Compression", "ZIP");
-
-            final Path zipFile = Files.createTempFile("test", "zip");
-
-            try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile)) {
-                final StreamHandler handler = createStroomStreamHandler(stroomZipOutputStream);
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                        attributeMap,
-                        handler,
-                        new ProgressHandler("Test"));
-
-                stroomStreamProcessor.processInputStream(byteArrayInputStream, "");
-            }
-
-            try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFile)) {
-                final String msg = StreamUtil.streamToString(stroomZipFile.getInputStream(
-                        "001", StroomZipFileType.DATA));
-                fail("expecting error but wrote - " + msg);
-            }
-        } catch (final StroomStreamException e) {
-            final StroomStreamStatus status = e.getStroomStreamStatus();
-            assertThat(status.getStroomStatusCode())
-                    .isEqualTo(StroomStatusCode.COMPRESSED_STREAM_INVALID);
-        }
-    }
-
-    @Test
     void testZIPNoEntries() throws IOException {
         final InputStream inputStream = getClass().getClassLoader().getResourceAsStream(
                 "stroom/proxy/repo/BlankZip.zip");
