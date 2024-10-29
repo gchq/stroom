@@ -27,6 +27,7 @@ import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.api.ThreadLocalLogState;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.io.ByteSize;
@@ -137,6 +138,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     @Override
     public void log(final Event event) {
         try {
+            ThreadLocalLogState.setLogged(true);
             super.log(event);
         } catch (Exception e) {
             // Swallow the exception so failure to log does not prevent the action being logged

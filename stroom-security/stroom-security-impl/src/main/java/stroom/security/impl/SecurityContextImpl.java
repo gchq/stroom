@@ -1,27 +1,27 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.HasStroomUserIdentity;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.HasUserRef;
 import stroom.security.shared.User;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.DocumentOwnerException;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -33,47 +33,26 @@ class SecurityContextImpl implements SecurityContext {
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
-    private final DocumentOwnerPermissionsCache documentOwnerPermissionsCache;
+    private final UserDocumentCreatePermissionsCache userDocumentCreatePermissionsCache;
     private final UserGroupsCache userGroupsCache;
+    private final UserCache userCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final Provider<UserCache> userCacheProvider;
     private final UserIdentityFactory userIdentityFactory;
-    private final DocRefInfoService docRefInfoService;
 
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
-            final DocumentOwnerPermissionsCache documentOwnerPermissionsCache,
+            final UserDocumentCreatePermissionsCache userDocumentCreatePermissionsCache,
             final UserGroupsCache userGroupsCache,
+            final UserCache userCache,
             final UserAppPermissionsCache userAppPermissionsCache,
-            final Provider<UserCache> userCacheProvider,
-            final UserIdentityFactory userIdentityFactory,
-            final DocRefInfoService docRefInfoService) {
+            final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
-        this.documentOwnerPermissionsCache = documentOwnerPermissionsCache;
+        this.userDocumentCreatePermissionsCache = userDocumentCreatePermissionsCache;
         this.userGroupsCache = userGroupsCache;
+        this.userCache = userCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.userCacheProvider = userCacheProvider;
         this.userIdentityFactory = userIdentityFactory;
-        this.docRefInfoService = docRefInfoService;
-    }
-
-    @Override
-    public String getSubjectId() {
-        final UserIdentity userIdentity = getUserIdentity();
-        if (userIdentity == null) {
-            return null;
-        }
-        return userIdentity.getSubjectId();
-    }
-
-    @Override
-    public String getUserUuid() {
-        final UserIdentity userIdentity = getUserIdentity();
-        if (userIdentity == null) {
-            return null;
-        }
-        return getUserUuid(userIdentity);
     }
 
     @Override
@@ -81,84 +60,61 @@ class SecurityContextImpl implements SecurityContext {
         return CurrentUserState.current();
     }
 
-    @Override
-    public UserIdentity getOrCreateUserIdentity(final String subjectId) {
-        Objects.requireNonNull(subjectId, "Null subjectId provided");
-        // Inject as provider to avoid circular dep issues
-        return userCacheProvider.get().getOrCreate(subjectId)
-                .map(BasicUserIdentity::new)
-                .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + subjectId));
-    }
-
-    @Override
-    public UserIdentity getIdentityBySubjectId(final String subjectId, final boolean isGroup) {
-        // TODO this method can probably go when we make subject fully unique
-        //  Added temporarily to enable content import to run as groups or users.
-        Objects.requireNonNull(subjectId, "Null user uuid provided");
-        // Inject as provider to avoid circular dep issues
-        return userCacheProvider.get().get(subjectId, isGroup)
-                .map(BasicUserIdentity::new)
-                .orElseThrow(() -> new AuthenticationException(LogUtil.message(
-                        "Unable to find {} with uuid: {}",
-                        (isGroup
-                                ? "group"
-                                : "user"),
-                        subjectId)));
-    }
-
-    @Override
-    public UserIdentity getIdentityByUserUuid(final String userUuid) {
-        Objects.requireNonNull(userUuid, "Null user uuid provided");
-        // Inject as provider to avoid circular dep issues
-        return userCacheProvider.get().getByUuid(userUuid)
-                .map(BasicUserIdentity::new)
-                .orElseThrow(() -> new AuthenticationException("Unable to find user with uuid=" + userUuid));
-    }
-
-    @Override
-    public boolean isLoggedIn() {
-        return getUserIdentity() != null;
-    }
-
-    @Override
-    public boolean isAdmin() {
-        return hasAppPermission(PermissionNames.ADMINISTRATOR);
-    }
-
-    @Override
-    public boolean isProcessingUser() {
+    private UserIdentity assertUserIdentity() {
         // Get the current user.
-        final UserIdentity userIdentity = getUserIdentity();
+        final UserIdentity userIdentity = CurrentUserState.current();
 
         // If there is no logged in user then throw an exception.
         if (userIdentity == null) {
             throw new AuthenticationException("No user is currently logged in");
         }
 
+        return userIdentity;
+    }
+
+    @Override
+    public UserRef getUserRef() {
+        // Get the current user.
+        final UserIdentity userIdentity = assertUserIdentity();
+        return getUserRef(userIdentity);
+    }
+
+    private UserRef getUserRef(final UserIdentity userIdentity) {
+        if (userIdentity instanceof final HasUserRef hasUserRef) {
+            return hasUserRef.getUserRef();
+        } else {
+            throw new AuthenticationException(LogUtil.message(
+                    "Expecting a stroom user identity (i.e. {}), but got {}",
+                    HasUserRef.class.getSimpleName(),
+                    userIdentity.getClass().getSimpleName()));
+        }
+    }
+
+    @Override
+    public boolean isAdmin() {
+        return hasAppPermission(AppPermission.ADMINISTRATOR);
+    }
+
+    private boolean isAdmin(final UserIdentity userIdentity) {
+        return hasAppPermission(userIdentity, AppPermission.ADMINISTRATOR);
+    }
+
+    @Override
+    public boolean isProcessingUser() {
+        // Get the current user.
+        final UserIdentity userIdentity = assertUserIdentity();
+
         // If the user is the internal processing user then they automatically have permission.
+        return isProcessingUser(userIdentity);
+    }
+
+    private boolean isProcessingUser(final UserIdentity userIdentity) {
         return userIdentityFactory.isServiceUser(userIdentity);
     }
 
     @Override
     public boolean isUseAsRead() {
         return CurrentUserState.isElevatePermissions();
-    }
-
-    private String getUserUuid(final UserIdentity userIdentity) {
-        if (userIdentity instanceof final HasStroomUserIdentity hasStroomUserIdentity) {
-            final String userUuid = hasStroomUserIdentity.getUuid();
-
-            if (NullSafe.isBlankString(userUuid)) {
-                throw new AuthenticationException("Missing user UUID value");
-            }
-
-            return userUuid;
-        } else {
-            throw new AuthenticationException(LogUtil.message(
-                    "Expecting a stroom user identity (i.e. {}), but got {}",
-                    HasStroomUserIdentity.class.getSimpleName(),
-                    userIdentity.getClass().getSimpleName()));
-        }
     }
 
     private void pushUser(final UserIdentity userIdentity) {
@@ -181,147 +137,192 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public boolean hasAppPermission(final String permission) {
+    public boolean hasAppPermission(final AppPermission permission) {
         // Get the current user.
-        final UserIdentity userIdentity = getUserIdentity();
+        final UserIdentity userIdentity = assertUserIdentity();
+        return hasAppPermission(userIdentity, permission);
+    }
 
-        // If there is no logged in user then throw an exception.
-        if (userIdentity == null) {
-            throw new AuthenticationException("No user is currently logged in");
-        }
-
+    private boolean hasAppPermission(final UserIdentity userIdentity, final AppPermission permission) {
         // If the user is the internal processing user then they automatically have permission.
-        if (userIdentityFactory.isServiceUser(userIdentity)) {
+        if (isProcessingUser(userIdentity)) {
             return true;
         }
 
         // See if the user has permission.
-        final String userUuid = getUserUuid(userIdentity);
-        boolean result = hasAppPermission(userUuid, permission);
-
-        // If the user doesn't have the requested permission see if they are an admin.
-        if (!result && !PermissionNames.ADMINISTRATOR.equals(permission)) {
-            result = hasAppPermission(userUuid, PermissionNames.ADMINISTRATOR);
-        }
-
-        return result;
+        final UserRef userRef = getUserRef(userIdentity);
+        return hasAppPermission(userRef, permission);
     }
 
-    private boolean hasAppPermission(final String userUuid, final String permission) {
+    private boolean hasAppPermission(final UserRef userRef, final AppPermission permission) {
         // See if the user has an explicit permission.
-        if (hasUserAppPermission(userUuid, permission)) {
+        if (hasUserAppPermission(userRef, permission)) {
             return true;
         }
 
         // See if the user belongs to a group that has permission.
-        final Set<String> userGroupUuids = userGroupsCache.get(userUuid);
-        if (userGroupUuids != null) {
-            for (final String userGroupUuid : userGroupUuids) {
-                if (hasUserAppPermission(userGroupUuid, permission)) {
+        return hasGroupAppPermission(userRef, permission, new HashSet<>());
+    }
+
+    private boolean hasGroupAppPermission(final UserRef userRef,
+                                          final AppPermission permission,
+                                          final Set<UserRef> examined) {
+        final Set<UserRef> userGroups = userGroupsCache.getGroups(userRef);
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                if (hasUserAppPermission(userGroup, permission)) {
                     return true;
+                }
+
+                // Recurse into parent groups.
+                if (!examined.contains(userGroup)) {
+                    examined.add(userGroup);
+                    if (hasGroupAppPermission(userGroup, permission, examined)) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    private boolean hasUserAppPermission(final String userUuid, final String permission) {
-        final Set<String> userAppPermissions = userAppPermissionsCache.get(userUuid);
+    private boolean hasUserAppPermission(final UserRef userRef, final AppPermission permission) {
+        final Set<AppPermission> userAppPermissions = userAppPermissionsCache.get(userRef);
         if (userAppPermissions != null) {
-            return userAppPermissions.contains(permission);
+            return userAppPermissions.contains(permission) ||
+                    userAppPermissions.contains(AppPermission.ADMINISTRATOR);
         }
         return false;
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
-        // Let administrators do anything.
-        if (isAdmin()) {
-            return true;
-        }
-
+    public boolean hasDocumentPermission(final DocRef docRef, final DocumentPermission permission) {
         // Get the current user.
-        final UserIdentity userIdentity = getUserIdentity();
+        final UserIdentity userIdentity = assertUserIdentity();
 
-        // If there is no logged in user then throw an exception.
-        if (userIdentity == null) {
-            throw new AuthenticationException("No user is currently logged in");
+        // Let administrators do anything.
+        if (isAdmin(userIdentity)) {
+            return true;
         }
 
         // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then
         // test for `Use` instead of `Read`.
-        final String perm = DocumentPermissionNames.READ.equals(permission) && CurrentUserState.isElevatePermissions()
-                ? DocumentPermissionNames.USE
+        final DocumentPermission perm = DocumentPermission.VIEW.equals(permission) &&
+                CurrentUserState.isElevatePermissions()
+                ? DocumentPermission.USE
                 : permission;
 
-        final String userUuid = getUserUuid(userIdentity);
-        return hasDocumentPermission(userUuid, documentUuid, perm);
+        final UserRef userRef = getUserRef(userIdentity);
+        return hasDocumentPermission(userRef, docRef, perm);
     }
 
-    private boolean hasDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
+    private boolean hasDocumentPermission(final UserRef userUuid,
+                                          final DocRef docRef,
+                                          final DocumentPermission permission) {
         // See if the user has an explicit permission.
-        if (hasUserDocumentPermission(userUuid, documentUuid, permission)) {
+        if (hasUserDocumentPermission(userUuid, docRef, permission)) {
             return true;
         }
 
         // See if the user belongs to a group that has permission.
-        final Set<String> userGroupUuids = userGroupsCache.get(userUuid);
-        if (userGroupUuids != null) {
-            for (final String userGroupUuid : userGroupUuids) {
-                if (hasUserDocumentPermission(userGroupUuid, documentUuid, permission)) {
+        return hasGroupDocumentPermission(userUuid, docRef, permission, new HashSet<>());
+    }
+
+    private boolean hasGroupDocumentPermission(final UserRef userRef,
+                                               final DocRef docRef,
+                                               final DocumentPermission permission,
+                                               final Set<UserRef> examined) {
+        final Set<UserRef> userGroups = userGroupsCache.getGroups(userRef);
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                if (hasUserDocumentPermission(userGroup, docRef, permission)) {
                     return true;
+                }
+
+                // Recurse into parent groups.
+                if (!examined.contains(userGroup)) {
+                    examined.add(userGroup);
+                    if (hasGroupDocumentPermission(userGroup, docRef, permission, examined)) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    private boolean hasUserDocumentPermission(final String userUuid,
-                                              final String documentUuid,
-                                              final String permission) {
-        final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
-        if (userDocumentPermissions != null) {
-            return userDocumentPermissions.hasDocumentPermission(documentUuid, permission);
+    private boolean hasUserDocumentPermission(final UserRef userRef,
+                                              final DocRef docRef,
+                                              final DocumentPermission permission) {
+        return userDocumentPermissionsCache.hasDocumentPermission(userRef, docRef, permission);
+    }
+
+    @Override
+    public boolean hasDocumentCreatePermission(final DocRef folderRef, final String documentType) {
+        // Get the current user.
+        final UserIdentity userIdentity = assertUserIdentity();
+
+        // Let administrators do anything.
+        if (isAdmin(userIdentity)) {
+            return true;
+        }
+
+        final UserRef userRef = getUserRef(userIdentity);
+        return hasDocumentCreatePermission(userRef, folderRef, documentType);
+    }
+
+    private boolean hasDocumentCreatePermission(final UserRef userUuid,
+                                                final DocRef folderRef,
+                                                final String documentType) {
+        // See if the user has an explicit permission.
+        if (hasUserDocumentCreatePermission(userUuid, folderRef, documentType)) {
+            return true;
+        }
+
+        // See if the user belongs to a group that has permission.
+        return hasGroupDocumentCreatePermission(userUuid, folderRef, documentType, new HashSet<>());
+    }
+
+    private boolean hasGroupDocumentCreatePermission(final UserRef userRef,
+                                                     final DocRef folderRef,
+                                                     final String documentType,
+                                                     final Set<UserRef> examined) {
+        final Set<UserRef> userGroups = userGroupsCache.getGroups(userRef);
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                if (hasUserDocumentCreatePermission(userGroup, folderRef, documentType)) {
+                    return true;
+                }
+
+                // Recurse into parent groups.
+                if (!examined.contains(userGroup)) {
+                    examined.add(userGroup);
+                    if (hasGroupDocumentCreatePermission(userGroup, folderRef, documentType, examined)) {
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
 
-    @Override
-    public String getDocumentOwnerUuid(final DocRef docRef) {
-        Objects.requireNonNull(docRef, "docRef not provided");
-        final String documentUuid = docRef.getUuid();
-        final Set<String> ownerStroomUserUuids = documentOwnerPermissionsCache.get(documentUuid);
-        if (NullSafe.isEmptyCollection(ownerStroomUserUuids)) {
-            throw new DocumentOwnerException(
-                    documentUuid,
-                    LogUtil.message("Document {} has no owners. Either assign an Owner to it or " +
-                                    "if there is one, then try clearing cache '{}'",
-                            decorateDocRefForLogging(docRef),
-                            DocumentOwnerPermissionsCache.CACHE_NAME));
-        } else if (ownerStroomUserUuids.size() > 1) {
-            throw new DocumentOwnerException(
-                    documentUuid,
-                    LogUtil.message("Document {} has multiple ({}) owners. There can be only one. " +
-                                    "Owner user uuids: [{}]. ",
-                            decorateDocRefForLogging(docRef),
-                            ownerStroomUserUuids.size(),
-                            String.join(", ", ownerStroomUserUuids)));
-        }
-        return ownerStroomUserUuids.iterator().next();
-    }
+    private boolean hasUserDocumentCreatePermission(final UserRef userUuid,
+                                                    final DocRef folderRef,
+                                                    final String documentType) {
+        boolean result = userDocumentCreatePermissionsCache.hasDocumentCreatePermission(
+                userUuid,
+                folderRef,
+                documentType);
 
-    private DocRef decorateDocRefForLogging(final DocRef docRef) {
-        if (docRef == null) {
-            return null;
-        } else {
-            try {
-                return docRefInfoService.decorate(docRef);
-            } catch (Exception e) {
-                // Failure should not be re-thrown
-                LOGGER.debug("Error decorating docRef {}", docRef, e);
-                return docRef;
-            }
+        // See if we need to check if the user has `all` create permissions.
+        if (!result && !ExplorerConstants.ALL_CREATE_PERMISSIONS.equals(documentType)) {
+            result = userDocumentCreatePermissionsCache.hasDocumentCreatePermission(
+                    userUuid,
+                    folderRef,
+                    ExplorerConstants.ALL_CREATE_PERMISSIONS);
         }
+
+        return result;
     }
 
     /**
@@ -343,6 +344,13 @@ class SecurityContextImpl implements SecurityContext {
         return result;
     }
 
+    @Override
+    public <T> T asUserResult(final UserRef userRef, final Supplier<T> supplier) {
+        ensureValidUser(userRef);
+        final UserIdentity userIdentity = new BasicUserIdentity(userRef);
+        return asUserResult(userIdentity, supplier);
+    }
+
     /**
      * Run the supplied code as the specified user.
      */
@@ -360,6 +368,31 @@ class SecurityContextImpl implements SecurityContext {
         }
     }
 
+    @Override
+    public void asUser(final UserRef userRef, final Runnable runnable) {
+        ensureValidUser(userRef);
+        final UserIdentity userIdentity = new BasicUserIdentity(userRef);
+        asUser(userIdentity, runnable);
+    }
+
+    private void ensureValidUser(final UserRef userRef) {
+        final Optional<User> optional = userCache.getByRef(userRef);
+        if (optional.isEmpty()) {
+            throwPermissionException(userRef, "User '" + userRef.toDisplayString() + "' not found");
+        } else if (!optional.get().isEnabled()) {
+            throwPermissionException(userRef, "User '" + userRef.toDisplayString() + "' is not enabled");
+        }
+    }
+
+    private void throwPermissionException(final UserRef userRef, final String message) {
+        try {
+            throw new PermissionException(userRef, message);
+        } catch (final PermissionException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
+    }
+
     /**
      * Run the supplied code as the internal processing user.
      */
@@ -374,22 +407,6 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void asProcessingUser(final Runnable runnable) {
         asUser(userIdentityFactory.getServiceUserIdentity(), runnable);
-    }
-
-    /**
-     * Run the supplied code as an admin user.
-     */
-    @Override
-    public <T> T asAdminUserResult(final Supplier<T> supplier) {
-        return asUserResult(getOrCreateUserIdentity(User.ADMIN_USER_SUBJECT_ID), supplier);
-    }
-
-    /**
-     * Run the supplied code as an admin user.
-     */
-    @Override
-    public void asAdminUser(final Runnable runnable) {
-        asUser(getOrCreateUserIdentity(User.ADMIN_USER_SUBJECT_ID), runnable);
     }
 
     /**
@@ -432,7 +449,7 @@ class SecurityContextImpl implements SecurityContext {
      * Secure the supplied code with the supplied application permission.
      */
     @Override
-    public void secure(final String permission, final Runnable runnable) {
+    public void secure(final AppPermission permission, final Runnable runnable) {
         // Initiate current check type.
         final Boolean currentCheckType = checkTypeThreadLocal.get();
 
@@ -464,7 +481,7 @@ class SecurityContextImpl implements SecurityContext {
      * Secure the supplied code with the supplied application permission.
      */
     @Override
-    public <T> T secureResult(final String permission, final Supplier<T> supplier) {
+    public <T> T secureResult(final AppPermission permission, final Supplier<T> supplier) {
         T result;
 
         // Initiate current check type.
@@ -580,14 +597,14 @@ class SecurityContextImpl implements SecurityContext {
         return secureResult(null, supplier);
     }
 
-    private void checkAppPermission(final String permission) {
+    private void checkAppPermission(final AppPermission permission) {
         final Boolean currentCheckType = checkTypeThreadLocal.get();
         try {
             // Don't check any further permissions.
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!hasAppPermission(permission)) {
                 throw new PermissionException(
-                        getUserIdentityForAudit(),
+                        getUserRef(),
                         "User does not have the required permission (" + permission + ")");
             }
         } finally {
@@ -600,9 +617,9 @@ class SecurityContextImpl implements SecurityContext {
         try {
             // Don't check any further permissions.
             checkTypeThreadLocal.set(Boolean.FALSE);
-            if (!isLoggedIn()) {
+            if (getUserIdentity() == null) {
                 throw new PermissionException(
-                        getUserIdentityForAudit(),
+                        getUserRef(),
                         "A user must be logged in to call service");
             }
         } finally {

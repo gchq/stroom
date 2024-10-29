@@ -1,6 +1,6 @@
 package stroom.annotation.shared;
 
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,12 +55,12 @@ public class CreateEntryRequest {
 
     public static CreateEntryRequest assignmentRequest(
             final Annotation annotation,
-            final UserName assignedTo) {
+            final UserRef assignedTo) {
 
         return new CreateEntryRequest(
                 annotation,
                 Annotation.ASSIGNED_TO,
-                UserNameEntryValue.of(assignedTo),
+                UserRefEntryValue.of(assignedTo),
                 Collections.emptyList());
     }
 

@@ -37,7 +37,7 @@ import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
@@ -135,7 +135,7 @@ public class QueryResultTablePresenter
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
-        downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
     }
 
     private void toggleOpenGroup(final String group) {

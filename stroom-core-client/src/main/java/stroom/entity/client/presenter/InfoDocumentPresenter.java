@@ -25,7 +25,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -43,7 +42,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class InfoDocumentPresenter
         extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
@@ -108,20 +106,6 @@ public class InfoDocumentPresenter
         appendLine("Type", docRef.getType(), sb);
         appendLine("Name", docRef.getName(), sb);
 
-        if (GwtNullSafe.hasItems(explorerNodeInfo.getOwners())) {
-            final Set<UserName> owners = explorerNodeInfo.getOwners();
-            if (owners.size() > 1) {
-                appendLine("Owners", explorerNodeInfo.getOwners()
-                        .stream()
-                        .map(UserName::getUserIdentityForAudit)
-                        .collect(Collectors.joining(", ")), sb);
-            } else {
-                appendLine("Owner", explorerNodeInfo.getOwners()
-                        .stream()
-                        .map(UserName::getUserIdentityForAudit)
-                        .collect(Collectors.joining(", ")), sb);
-            }
-        }
         if (info.getCreateUser() != null) {
             appendLine("Created By", info.getCreateUser(), sb);
         }

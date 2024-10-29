@@ -34,25 +34,13 @@ public class HelpManager {
 
         final PopupPosition popupPosition = showHelpEvent.getPopupPosition();
 
-        final String uniqueId = elementToUniqueId(showHelpEvent.getElement());
-
         PopupUtil.showPopup(
-                uniqueId,
                 popup,
                 false,
                 popupPosition,
                 null,
                 PopupType.POPUP,
                 null);
-    }
-
-    private static String elementToUniqueId(final Element element) {
-        // Convert the position of the element in to a sort of unique position reference
-        final long absoluteLeft = element.getAbsoluteLeft();
-        final long absoluteTop = element.getAbsoluteTop();
-        final String id = absoluteLeft + "_" + absoluteTop;
-//        GWT.log("absoluteLeft: " + absoluteLeft + ", absoluteTop: " + absoluteTop + ", id: " + id);
-        return id;
     }
 
 

@@ -20,8 +20,8 @@ import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.shared.HasUserRef;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
@@ -31,7 +31,7 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -149,12 +149,12 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private SessionListResponse listSessionsOnThisNode() {
         return sessionMap.values().stream()
                 .map(httpSession -> {
-                    // Don't really care about userUuids for this
-                    final UserName userName = UserIdentitySessionUtil.get(httpSession)
-                            .map(UserIdentity::asUserName)
+                    final UserRef userRef = UserIdentitySessionUtil.get(httpSession)
+                            .filter(uid -> uid instanceof HasUserRef)
+                            .map(uid -> ((HasUserRef) uid).getUserRef())
                             .orElse(null);
                     return new SessionDetails(
-                            userName,
+                            userRef,
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),

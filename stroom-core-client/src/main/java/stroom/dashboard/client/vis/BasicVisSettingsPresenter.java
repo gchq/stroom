@@ -28,7 +28,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -78,7 +78,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
-        visualisationPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        visualisationPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());
     }

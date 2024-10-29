@@ -5,7 +5,7 @@ import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import event.logging.BaseObject;
 import event.logging.OtherObject;
@@ -33,7 +33,7 @@ public class ApiKeyObjectInfoProvider implements ObjectInfoProvider {
         try {
             builder
                     .addData(EventLoggingUtil.createData("Owner",
-                            NullSafe.get(apiKey.getOwner(), UserName::getUserIdentityForAudit)))
+                            NullSafe.get(apiKey.getOwner(), UserRef::toInfoString)))
                     .addData(EventLoggingUtil.createData("Expiry",
                             DateUtil.createNormalDateTimeString(apiKey.getExpireTimeMs())))
                     .addData(EventLoggingUtil.createData("Prefix", apiKey.getApiKeyPrefix()));

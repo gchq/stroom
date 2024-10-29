@@ -100,7 +100,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
                 // Only send the event to remote nodes and not this one.
                 targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
                     // Send the entity event.
-                    permissionChangeResource.fireChange(targetNode, new PermissionChangeRequest(event));
+                    permissionChangeResource.fireChange(targetNode, event);
                 });
             } catch (final NullClusterStateException | NodeNotFoundException e) {
                 LOGGER.warn(e.getMessage());

@@ -16,6 +16,8 @@
 
 package stroom.security.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,22 +29,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class CheckDocumentPermissionRequest {
 
     @JsonProperty
-    private final String documentUuid;
+    private final DocRef docRef;
     @JsonProperty
-    private final String permission;
+    private final DocumentPermission permission;
 
     @JsonCreator
-    public CheckDocumentPermissionRequest(@JsonProperty("documentUuid") final String documentUuid,
-                                          @JsonProperty("permission") final String permission) {
-        this.documentUuid = documentUuid;
+    public CheckDocumentPermissionRequest(@JsonProperty("docRef") final DocRef docRef,
+                                          @JsonProperty("permission") final DocumentPermission permission) {
+        this.docRef = docRef;
         this.permission = permission;
     }
 
-    public String getDocumentUuid() {
-        return documentUuid;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
-    public String getPermission() {
+    public DocumentPermission getPermission() {
         return permission;
     }
 }

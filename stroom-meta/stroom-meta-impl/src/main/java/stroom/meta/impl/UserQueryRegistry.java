@@ -2,6 +2,7 @@ package stroom.meta.impl;
 
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -19,20 +20,20 @@ class UserQueryRegistry {
 
     private final ConcurrentMap<Key, TaskId> userQueryToTaskMap = new ConcurrentHashMap<>();
 
-    boolean terminateQuery(final String userId, final String queryId, final TaskManager taskManager) {
-        Objects.requireNonNull(userId);
+    boolean terminateQuery(final UserRef userRef, final String queryId, final TaskManager taskManager) {
+        Objects.requireNonNull(userRef);
         Objects.requireNonNull(queryId);
-        final Key key = new Key(userId, queryId);
+        final Key key = new Key(userRef, queryId);
 
         return Optional.ofNullable(userQueryToTaskMap.get(key))
                 .map(taskId -> {
-                    LOGGER.debug("Cancelling query {} for user {}", queryId, userId);
+                    LOGGER.debug("Cancelling query {} for user {}", queryId, userRef);
                     taskManager.terminate(taskId);
                     userQueryToTaskMap.remove(key);
                     return true;
                 })
                 .orElseGet(() -> {
-                    LOGGER.debug("Future not found for queryId {}, userId {}", queryId, userId);
+                    LOGGER.debug("Future not found for queryId {}, userId {}", queryId, userRef);
                     return false;
                 });
     }
@@ -40,40 +41,40 @@ class UserQueryRegistry {
     /**
      * Marks a query as having been completed
      */
-    void deRegisterQuery(final String userId, final String queryId) {
-        Objects.requireNonNull(userId);
+    void deRegisterQuery(final UserRef userRef, final String queryId) {
+        Objects.requireNonNull(userRef);
         Objects.requireNonNull(queryId);
-        userQueryToTaskMap.remove(new Key(userId, queryId));
+        userQueryToTaskMap.remove(new Key(userRef, queryId));
     }
 
     /**
      * Registers a query as in progress and holds its taskid
      */
-    void registerQuery(final String userId,
+    void registerQuery(final UserRef userRef,
                        final String queryId,
                        final TaskId taskId) {
 
-        Objects.requireNonNull(userId);
+        Objects.requireNonNull(userRef);
         Objects.requireNonNull(queryId);
         Objects.requireNonNull(taskId);
 
-        TaskId previousTaskId = userQueryToTaskMap.putIfAbsent(new Key(userId, queryId), taskId);
+        TaskId previousTaskId = userQueryToTaskMap.putIfAbsent(new Key(userRef, queryId), taskId);
 
         if (previousTaskId != null) {
-            LOGGER.debug("Query {} already registered for user {}", queryId, userId);
+            LOGGER.debug("Query {} already registered for user {}", queryId, userRef);
         } else {
             // In case the query finishes very quickly
-            LOGGER.debug("Registering taskId {}, queryId {}, userId {}", taskId, queryId, userId);
+            LOGGER.debug("Registering taskId {}, queryId {}, userId {}", taskId, queryId, userRef);
         }
     }
 
     private static class Key {
 
-        private final String userId;
+        private final UserRef userRef;
         private final String queryId;
 
-        public Key(final String userId, final String queryId) {
-            this.userId = userId;
+        public Key(final UserRef userRef, final String queryId) {
+            this.userRef = userRef;
             this.queryId = queryId;
         }
 
@@ -86,19 +87,19 @@ class UserQueryRegistry {
                 return false;
             }
             final Key key = (Key) o;
-            return Objects.equals(userId, key.userId) &&
+            return Objects.equals(userRef, key.userRef) &&
                     Objects.equals(queryId, key.queryId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(userId, queryId);
+            return Objects.hash(userRef, queryId);
         }
 
         @Override
         public String toString() {
             return "Key{" +
-                    "userId='" + userId + '\'' +
+                    "userRef='" + userRef + '\'' +
                     ", queryId='" + queryId + '\'' +
                     '}';
         }

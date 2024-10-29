@@ -18,12 +18,14 @@
 package stroom.processor.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.docref.DocRef;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.DocumentPermissionService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -42,6 +44,7 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Singleton
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
@@ -166,7 +169,11 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
             // Now delete any perms for the deleted filters
             LOGGER.debug(() -> LogUtil.message("Deleting doc_permission records for {} doc UUIDs",
                     procFilterUuids.size()));
-            documentPermissionService.deleteDocumentPermissions(procFilterUuids);
+            final Set<DocRef> docRefs = procFilterUuids
+                    .stream()
+                    .map(uuid -> new DocRef(ProcessorFilter.ENTITY_TYPE, uuid))
+                    .collect(Collectors.toSet());
+            documentPermissionService.removeAllDocumentPermissions(docRefs);
         }
 
         return procFilterUuids.size();

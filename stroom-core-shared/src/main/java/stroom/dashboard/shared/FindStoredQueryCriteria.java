@@ -20,6 +20,7 @@ import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.StringCriteria;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,7 +36,7 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_TIME = "Time";
 
     @JsonProperty
-    private String ownerUuid;
+    private UserRef owner;
     @JsonProperty
     private String dashboardUuid;
     @JsonProperty
@@ -55,23 +56,23 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
                                    @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                    @JsonProperty("name") final StringCriteria name,
                                    @JsonProperty("requiredPermission") final String requiredPermission,
-                                   @JsonProperty("ownerUuid") final String ownerUuid,
+                                   @JsonProperty("owner") final UserRef owner,
                                    @JsonProperty("dashboardUuid") final String dashboardUuid,
                                    @JsonProperty("componentId") final String componentId,
                                    @JsonProperty("favourite") final Boolean favourite) {
         super(pageRequest, sortList, name, requiredPermission);
-        this.ownerUuid = ownerUuid;
+        this.owner = owner;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
         this.favourite = favourite;
     }
 
-    public String getOwnerUuid() {
-        return ownerUuid;
+    public UserRef getOwner() {
+        return owner;
     }
 
-    public void setOwnerUuid(final String ownerUuid) {
-        this.ownerUuid = ownerUuid;
+    public void setOwner(final UserRef owner) {
+        this.owner = owner;
     }
 
     public String getDashboardUuid() {
@@ -101,7 +102,7 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
     @Override
     public String toString() {
         return "FindStoredQueryCriteria{" +
-                "userUuid='" + ownerUuid + '\'' +
+                "owner='" + owner + '\'' +
                 ", dashboardUuid='" + dashboardUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 ", favourite=" + favourite +

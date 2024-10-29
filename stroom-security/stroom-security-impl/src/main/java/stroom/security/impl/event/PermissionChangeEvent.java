@@ -16,22 +16,44 @@
 
 package stroom.security.impl.event;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        property = "type"
-)
-@JsonSubTypes({
-        @Type(value = RemovePermissionEvent.class, name = "removePermissionEvent"),
-        @Type(value = AddPermissionEvent.class, name = "addPermissionEvent"),
-        @Type(value = ClearDocumentPermissionsEvent.class, name = "clearDocumentPermissionsEvent")
-})
-public interface PermissionChangeEvent {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    interface Handler {
+@JsonInclude(Include.NON_NULL)
+public class PermissionChangeEvent {
+
+    @JsonProperty
+    private final UserRef userRef;
+    @JsonProperty
+    private final DocRef docRef;
+
+    @JsonCreator
+    public PermissionChangeEvent(@JsonProperty("userRef") final UserRef userRef,
+                                 @JsonProperty("docRef") final DocRef docRef) {
+        this.userRef = userRef;
+        this.docRef = docRef;
+    }
+
+    public UserRef getUserRef() {
+        return userRef;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    public static void fire(final PermissionChangeEventBus eventBus,
+                            final UserRef userRef,
+                            final DocRef docRef) {
+        eventBus.fire(new PermissionChangeEvent(userRef, docRef));
+    }
+
+    public interface Handler {
 
         void onChange(PermissionChangeEvent event);
     }

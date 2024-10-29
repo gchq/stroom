@@ -25,6 +25,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.impl.db.QueryDataXMLSerialiser;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
@@ -129,7 +130,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testFeedIncludeExclude() {
+    void testFeedIncludeExclude() throws Exception {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
@@ -165,11 +166,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                         .build());
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
+        final QueryDataXMLSerialiser serialiser = new QueryDataXMLSerialiser();
         final ResultPage<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
         ProcessorFilter filter = filters.getFirst();
         String xml = buildXML(new String[]{feedName1, feedName2}, null);
-        assertThat(filter.getData()).isEqualTo(xml);
+        assertThat(serialiser.serialise(filter.getQueryData())).isEqualTo(xml);
 
         // TODO DocRefId - Need to rewrite the build XML to handle expression operators
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);

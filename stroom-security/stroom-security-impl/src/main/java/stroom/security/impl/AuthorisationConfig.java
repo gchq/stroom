@@ -18,15 +18,26 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class AuthorisationConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
+    private final CacheConfig appPermissionIdCache;
+    private final CacheConfig docTypeIdCache;
+
     private final CacheConfig userGroupsCache;
     private final CacheConfig userAppPermissionsCache;
     private final CacheConfig userCache;
-    private final CacheConfig userByDisplayNameCache;
     private final CacheConfig userByUuidCache;
     private final CacheConfig userDocumentPermissionsCache;
     private final AuthorisationDbConfig dbConfig;
 
     public AuthorisationConfig() {
+        appPermissionIdCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(30))
+                .build();
+        docTypeIdCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(30))
+                .build();
+
         userGroupsCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
@@ -39,10 +50,6 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
         // this, triggers an entity event to evict the item from the cache, so expireAfterAccess
         // is ok.
         userCache = CacheConfig.builder()
-                .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(30))
-                .build();
-        userByDisplayNameCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
                 .build();
@@ -59,21 +66,30 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
 
     @JsonCreator
     public AuthorisationConfig(
+            @JsonProperty("appPermissionIdCache") final CacheConfig appPermissionIdCache,
+            @JsonProperty("docTypeIdCache") final CacheConfig docTypeIdCache,
             @JsonProperty("userGroupsCache") final CacheConfig userGroupsCache,
             @JsonProperty("userAppPermissionsCache") final CacheConfig userAppPermissionsCache,
             @JsonProperty("userCache") final CacheConfig userCache,
-            @JsonProperty("userByDisplayNameCache") final CacheConfig userByDisplayNameCache,
             @JsonProperty("userByUuidCache") final CacheConfig userByUuidCache,
             @JsonProperty("userDocumentPermissionsCache") final CacheConfig userDocumentPermissionsCache,
             @JsonProperty("db") final AuthorisationDbConfig dbConfig) {
-
+        this.appPermissionIdCache = appPermissionIdCache;
+        this.docTypeIdCache = docTypeIdCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
-        this.userByDisplayNameCache = userByDisplayNameCache;
         this.userByUuidCache = userByUuidCache;
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.dbConfig = dbConfig;
+    }
+
+    public CacheConfig getAppPermissionIdCache() {
+        return appPermissionIdCache;
+    }
+
+    public CacheConfig getDocTypeIdCache() {
+        return docTypeIdCache;
     }
 
     public CacheConfig getUserGroupsCache() {
@@ -86,10 +102,6 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
 
     public CacheConfig getUserCache() {
         return userCache;
-    }
-
-    public CacheConfig getUserByDisplayNameCache() {
-        return userByDisplayNameCache;
     }
 
     public CacheConfig getUserByUuidCache() {
@@ -109,18 +121,18 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
     @Override
     public String toString() {
         return "AuthorisationConfig{" +
-                "userGroupsCache=" + userGroupsCache +
+                "appPermissionIdCache=" + appPermissionIdCache +
+                ", docTypeIdCache=" + docTypeIdCache +
+                ", userGroupsCache=" + userGroupsCache +
                 ", userAppPermissionsCache=" + userAppPermissionsCache +
                 ", userCache=" + userCache +
-                ", userByDisplayNameCache=" + userByDisplayNameCache +
                 ", userByUuidCache=" + userByUuidCache +
                 ", userDocumentPermissionsCache=" + userDocumentPermissionsCache +
                 ", dbConfig=" + dbConfig +
                 '}';
     }
 
-
-    // --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
 
 
     @BootStrapConfig

@@ -65,6 +65,9 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        if (!getType().equals(criteria.getDataSourceRef().getType())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria)
                 .addAll(AnalyticFields.getFields())
                 .build();

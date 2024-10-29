@@ -17,10 +17,15 @@
 package stroom.security.impl;
 
 
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
+import stroom.security.shared.UserFields;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,7 +34,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -102,18 +106,18 @@ class TestUserServiceImpl {
     }
 
     private void checkGroupsForUser(final User user, final User... groups) {
-        final List<User> list = userService.findGroupsForUser(user.getUuid());
-        assertThat(list.size()).isEqualTo(groups.length);
+        final ResultPage<User> result = userService.findGroupsForUser(user.getUuid(), new FindUserCriteria());
+        assertThat(result.size()).isEqualTo(groups.length);
         for (final User group : groups) {
-            assertThat(list.contains(group)).isTrue();
+            assertThat(result.getValues().contains(group)).isTrue();
         }
     }
 
     private void checkUsersInGroup(final User group, final User... users) {
-        final List<User> list = userService.findUsersInGroup(group.getUuid());
-        assertThat(list.size()).isEqualTo(users.length);
+        final ResultPage<User> result = userService.findUsersInGroup(group.getUuid(), new FindUserCriteria());
+        assertThat(result.size()).isEqualTo(users.length);
         for (final User user : users) {
-            assertThat(list.contains(user)).isTrue();
+            assertThat(result.getValues().contains(user)).isTrue();
         }
     }
 
@@ -124,21 +128,19 @@ class TestUserServiceImpl {
         final User userGroup1 = createUserGroup("findGroup1");
         final User userGroup2 = createUserGroup("findGroup2");
 
-        assertThat(userService.find(new FindUserCriteria(user1.getSubjectId(), false)).size()).isEqualTo(1);
-        assertThat(userService.find(new FindUserCriteria(user2.getSubjectId(), false)).size()).isEqualTo(1);
-        assertThat(userService.find(new FindUserCriteria(userGroup1.getSubjectId(), true)).size()).isEqualTo(1);
-        assertThat(userService.find(new FindUserCriteria(userGroup2.getSubjectId(), true)).size()).isEqualTo(1);
+        final ExpressionOperator expression = QuickFilterExpressionParser
+                .parse(user1.getSubjectId(), UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
 
-        assertThat(userService.find(new FindUserCriteria(user1.getSubjectId(), true)).size()).isEqualTo(0);
-        assertThat(userService.find(new FindUserCriteria(user2.getSubjectId(), true)).size()).isEqualTo(0);
-        assertThat(userService.find(new FindUserCriteria(userGroup1.getSubjectId(), false)).size()).isEqualTo(0);
-        assertThat(userService.find(new FindUserCriteria(userGroup2.getSubjectId(), false)).size()).isEqualTo(0);
+        assertThat(userService.find(createCriteria(user1.getSubjectId())).size()).isEqualTo(1);
+        assertThat(userService.find(createCriteria(user2.getSubjectId())).size()).isEqualTo(1);
+        assertThat(userService.find(createCriteria(userGroup1.getSubjectId())).size()).isEqualTo(1);
+        assertThat(userService.find(createCriteria(userGroup2.getSubjectId())).size()).isEqualTo(1);
 
-        final Set<String> findUsers = userService.find(new FindUserCriteria(false))
+        final Set<String> findUsers = userService.find(createCriteria("group:false"))
                 .stream()
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
-        final Set<String> findGroups = userService.find(new FindUserCriteria(true))
+        final Set<String> findGroups = userService.find(createCriteria("group:true"))
                 .stream()
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
@@ -147,8 +149,13 @@ class TestUserServiceImpl {
         assertThat(findUsers).doesNotContain(userGroup1.getUuid(), userGroup2.getUuid());
         assertThat(findGroups).contains(userGroup1.getUuid(), userGroup2.getUuid());
         assertThat(findGroups).doesNotContain(user1.getUuid(), user2.getUuid());
+    }
 
-
+    private FindUserCriteria createCriteria(final String filter) {
+        final PageRequest pageRequest = new PageRequest(0, 100);
+        final ExpressionOperator expression = QuickFilterExpressionParser
+                .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+        return new FindUserCriteria(pageRequest, null, expression);
     }
 
     private User createUser(final String baseName) {

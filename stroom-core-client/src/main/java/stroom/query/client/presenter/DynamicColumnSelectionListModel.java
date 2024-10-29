@@ -15,7 +15,7 @@ import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
@@ -174,7 +174,7 @@ public class DynamicColumnSelectionListModel
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         if (dataSourceRef != null &&
                 dataSourceRef.getType() != null &&
-                clientSecurityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
+                clientSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             if ("Index".equals(dataSourceRef.getType()) ||
                     "SolrIndex".equals(dataSourceRef.getType()) ||
                     "ElasticIndex".equals(dataSourceRef.getType())) {

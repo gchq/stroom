@@ -731,7 +731,10 @@ public class DbTestUtil {
             try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString(1);
-                    tables.add(name);
+                    // `permission_doc_id` is a table of static reference values so leave it alone.
+                    if (!"permission_doc_id".equalsIgnoreCase(name)) {
+                        tables.add(name);
+                    }
                 }
             }
         } catch (final SQLException e) {

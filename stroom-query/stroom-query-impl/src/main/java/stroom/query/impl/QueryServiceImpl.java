@@ -63,7 +63,7 @@ import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -200,7 +200,7 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final QuerySearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -237,20 +237,13 @@ class QueryServiceImpl implements QueryService {
 
                 // Start target
                 try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-                    SearchResultWriter.Target target = null;
+                    final SearchResultWriter.Target target = switch (request.getFileType()) {
+                        case CSV -> new DelimitedTarget(outputStream, ",");
+                        case TSV -> new DelimitedTarget(outputStream, "\t");
+                        case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+                    };
 
                     // Write delimited file.
-                    switch (request.getFileType()) {
-                        case CSV:
-                            target = new DelimitedTarget(outputStream, ",");
-                            break;
-                        case TSV:
-                            target = new DelimitedTarget(outputStream, "\t");
-                            break;
-                        case EXCEL:
-                            target = new ExcelTarget(outputStream, dateTimeSettings);
-                            break;
-                    }
 
                     try {
                         target.start();

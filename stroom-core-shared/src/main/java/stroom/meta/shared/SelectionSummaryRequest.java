@@ -16,6 +16,8 @@
 
 package stroom.meta.shared;
 
+import stroom.security.shared.DocumentPermission;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -29,11 +31,11 @@ public class SelectionSummaryRequest {
     @JsonProperty
     private final FindMetaCriteria findMetaCriteria;
     @JsonProperty
-    private final String requiredPermission;
+    private final DocumentPermission requiredPermission;
 
     @JsonCreator
     public SelectionSummaryRequest(@JsonProperty("findMetaCriteria") final FindMetaCriteria findMetaCriteria,
-                                   @JsonProperty("requiredPermission") final String requiredPermission) {
+                                   @JsonProperty("requiredPermission") final DocumentPermission requiredPermission) {
         this.findMetaCriteria = findMetaCriteria;
         this.requiredPermission = requiredPermission;
     }
@@ -42,7 +44,7 @@ public class SelectionSummaryRequest {
         return findMetaCriteria;
     }
 
-    public String getRequiredPermission() {
+    public DocumentPermission getRequiredPermission() {
         return requiredPermission;
     }
 

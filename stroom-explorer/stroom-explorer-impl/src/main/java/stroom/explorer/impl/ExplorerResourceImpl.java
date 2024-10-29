@@ -23,16 +23,21 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.api.ThreadLocalLogState;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AddRemoveTagsRequest;
+import stroom.explorer.shared.AdvancedDocumentFindRequest;
+import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.explorer.shared.ExplorerNodePermissions;
@@ -48,31 +53,52 @@ import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
-import stroom.explorer.shared.FindRequest;
 import stroom.explorer.shared.FindResult;
+import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.security.api.DocumentPermissionService;
-import stroom.security.user.api.UserNameService;
+import stroom.security.shared.AbstractDocumentPermissionsChange;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.google.common.base.Strings;
+import event.logging.AddGroups;
+import event.logging.AdvancedQuery;
+import event.logging.AuthorisationActionType;
+import event.logging.AuthoriseEventAction;
 import event.logging.ComplexLoggedOutcome;
+import event.logging.Group;
+import event.logging.Permission;
+import event.logging.PermissionAttribute;
+import event.logging.Permissions;
 import event.logging.Query;
+import event.logging.RemoveGroups;
 import event.logging.SearchEventAction;
+import event.logging.Term;
+import event.logging.TermCondition;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
@@ -85,7 +111,6 @@ class ExplorerResourceImpl implements ExplorerResource {
     private final Provider<ExplorerNodePermissionsService> explorerNodePermissionsServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
-    private final Provider<UserNameService> userNameServiceProvider;
 
     @Inject
     ExplorerResourceImpl(final Provider<ExplorerService> explorerServiceProvider,
@@ -93,15 +118,13 @@ class ExplorerResourceImpl implements ExplorerResource {
                          final Provider<DocRefInfoService> docRefInfoServiceProvider,
                          final Provider<ExplorerNodePermissionsService> explorerNodePermissionsServiceProvider,
                          final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
-                         final Provider<DocumentPermissionService> documentPermissionServiceProvider,
-                         final Provider<UserNameService> userNameServiceProvider) {
+                         final Provider<DocumentPermissionService> documentPermissionServiceProvider) {
         this.explorerServiceProvider = explorerServiceProvider;
         this.explorerNodeServiceProvider = explorerNodeServiceProvider;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.explorerNodePermissionsServiceProvider = explorerNodePermissionsServiceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
-        this.userNameServiceProvider = userNameServiceProvider;
     }
 
     @Override
@@ -176,16 +199,7 @@ class ExplorerResourceImpl implements ExplorerResource {
         } else {
             final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
                     .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
-            final UserNameService userNameService = userNameServiceProvider.get();
-
-            final Set<UserName> owners = NullSafe.stream(documentPermissionServiceProvider.get()
-                            .getDocumentOwnerUuids(explorerNode.getUuid()))
-                    .map(userNameService::getByUuid)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
-
-            return new ExplorerNodeInfo(explorerNode, docRefInfo, owners);
+            return new ExplorerNodeInfo(explorerNode, docRefInfo);
         }
     }
 
@@ -232,6 +246,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public DocumentTypes fetchDocumentTypes() {
         final ExplorerService explorerService = explorerServiceProvider.get();
         final List<DocumentType> types = explorerService.getTypes();
@@ -240,16 +255,19 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public Set<String> fetchExplorerNodeTags() {
         return explorerServiceProvider.get().getTags();
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public Set<String> fetchExplorerNodeTags(final List<DocRef> docRefs) {
         return explorerServiceProvider.get().getTags(docRefs, TagFetchMode.OR);
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public Set<ExplorerNodePermissions> fetchExplorerPermissions(final List<ExplorerNode> explorerNodes) {
         return explorerNodePermissionsServiceProvider.get().fetchExplorerPermissions(explorerNodes);
     }
@@ -257,6 +275,8 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     public FetchExplorerNodeResult fetchExplorerNodes(final FetchExplorerNodesRequest request) {
+        final boolean loggingRequired = !Strings.isNullOrEmpty(request.getFilter().getNameFilter());
+        ThreadLocalLogState.setLogged(!loggingRequired);
 
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetchExplorerNodes"))
@@ -279,7 +299,7 @@ class ExplorerResourceImpl implements ExplorerResource {
 
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 })
-                .withLoggingRequiredWhen(!Strings.isNullOrEmpty(request.getFilter().getNameFilter()))
+                .withLoggingRequiredWhen(loggingRequired)
                 .getResultAndLog();
     }
 
@@ -295,17 +315,415 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public ResultPage<FindResult> find(final FindRequest request) {
-        return explorerServiceProvider.get().find(request);
+    @AutoLogged(value = OperationType.MANUALLY_LOGGED)
+    public ResultPage<FindResult> find(final DocumentFindRequest request) {
+        final boolean loggingRequired = !Strings.isNullOrEmpty(request.getFilter().getNameFilter());
+        ThreadLocalLogState.setLogged(!loggingRequired);
+
+        final Query query = buildRawQuery(request.getFilter());
+        final SearchEventAction action = SearchEventAction.builder().withQuery(query).build();
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "find"))
+                .withDescription("Find documents using filter")
+                .withDefaultEventAction(SearchEventAction.builder().withQuery(query).build())
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final ResultPage<FindResult> result = explorerServiceProvider.get().find(request);
+
+                    return ComplexLoggedOutcome.success(result, action);
+                })
+                .withLoggingRequiredWhen(loggingRequired)
+                .getResultAndLog();
+    }
+
+    @Override
+    public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
+        final Query query = StroomEventLoggingUtil.convertExpression(request.getExpression());
+        final SearchEventAction action = SearchEventAction.builder().withQuery(query).build();
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "advancedFind"))
+                .withDescription("Advanced find documents using filter")
+                .withDefaultEventAction(action)
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final ResultPage<FindResult> result = explorerServiceProvider.get().advancedFind(request);
+                    return ComplexLoggedOutcome.success(result, action);
+                })
+                .getResultAndLog();
+
+//        final Query query = StroomEventLoggingUtil.convertExpression(request.getExpression());
+//        final SearchEventAction action = SearchEventAction.builder().withQuery(query).build();
+//        final Consumer<ComplexLoggedOutcome> consumer = complexLoggedOutcome -> {
+//            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+//                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "advancedFind"))
+//                    .withDescription("Advanced find documents using filter")
+//                    .withDefaultEventAction(action)
+//                    .withComplexLoggedResult(searchEventAction -> {
+//                        return complexLoggedOutcome;
+//                    })
+//                    .getResultAndLog();
+//        };
+//
+//        try {
+//            final ResultPage<FindResult> result = explorerServiceProvider.get().advancedFind(request);
+//            consumer.accept(ComplexLoggedOutcome.success(result, action));
+//            return result;
+//        } catch (final RuntimeException e) {
+//            consumer.accept(ComplexLoggedOutcome.failure(action, e.getMessage()));
+//            throw e;
+//        }
+    }
+
+    @Override
+    public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            final AdvancedDocumentFindWithPermissionsRequest request) {
+        final Query query = StroomEventLoggingUtil.convertExpression(request.getExpression());
+        final SearchEventAction action = SearchEventAction.builder().withQuery(query).build();
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "advancedFindWithPermissions"))
+                .withDescription("Advanced find documents plus permissions using filter")
+                .withDefaultEventAction(action)
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final ResultPage<FindResultWithPermissions> result =
+                            explorerServiceProvider.get().advancedFindWithPermissions(request);
+
+                    return ComplexLoggedOutcome.success(result, action);
+                })
+                .getResultAndLog();
     }
 
     @Override
     public ResultPage<FindInContentResult> findInContent(final FindInContentRequest request) {
-        return explorerServiceProvider.get().findInContent(request);
+        final Query query = Query.builder().withRaw(request.getFilter().getPattern()).build();
+        final SearchEventAction action = SearchEventAction.builder().withQuery(query).build();
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "findInContent"))
+                .withDescription("Find documents with requested content")
+                .withDefaultEventAction(action)
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final ResultPage<FindInContentResult> result =
+                            explorerServiceProvider.get().findInContent(request);
+
+                    return ComplexLoggedOutcome.success(result, action);
+                })
+                .getResultAndLog();
     }
 
     @Override
     public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
-        return explorerServiceProvider.get().fetchHighlights(request);
+        final Query query = Query.builder().withAdvanced(AdvancedQuery.builder()
+                        .addTerm(Term
+                                .builder()
+                                .withName("docType")
+                                .withCondition(TermCondition.EQUALS)
+                                .withValue(request.getDocRef().getType())
+                                .build())
+                        .addTerm(Term
+                                .builder()
+                                .withName("docUuid")
+                                .withCondition(TermCondition.EQUALS)
+                                .withValue(request.getDocRef().getUuid())
+                                .build())
+                        .addTerm(Term
+                                .builder()
+                                .withName("docName")
+                                .withCondition(TermCondition.EQUALS)
+                                .withValue(request.getDocRef().getName())
+                                .build())
+                        .addTerm(Term
+                                .builder()
+                                .withName("text")
+                                .withCondition(TermCondition.CONTAINS)
+                                .withValue(request.getFilter().getPattern())
+                                .build())
+                        .build())
+                .build();
+
+        final SearchEventAction action = SearchEventAction.builder().withQuery(query).build();
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetchHighlights"))
+                .withDescription("Fetch highlights in content")
+                .withDefaultEventAction(action)
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final DocContentHighlights result =
+                            explorerServiceProvider.get().fetchHighlights(request);
+
+                    return ComplexLoggedOutcome.success(result, action);
+                })
+                .getResultAndLog();
+    }
+
+    @Override
+    public Boolean changeDocumentPermissions(final BulkDocumentPermissionChangeRequest request) {
+        final AdvancedDocumentFindRequest advancedDocumentFindRequest = new AdvancedDocumentFindRequest.Builder()
+                .requiredPermissions(Set.of(DocumentPermission.OWNER))
+                .expression(request.getExpression())
+                .pageRequest(PageRequest.unlimited())
+                .build();
+        final ResultPage<FindResult> resultPage =
+                explorerServiceProvider.get().advancedFind(advancedDocumentFindRequest);
+        for (final FindResult findResult : resultPage.getValues()) {
+            final SingleDocumentPermissionChangeRequest singleDocumentPermissionChangeRequest =
+                    new SingleDocumentPermissionChangeRequest(findResult.getDocRef(), request.getChange());
+            changeDocumentPermissions(singleDocumentPermissionChangeRequest);
+        }
+        return true;
+    }
+
+    private PermissionAttribute getPermissionAttribute(final DocumentPermission permission) {
+        if (permission == null) {
+            return null;
+        }
+        return switch (permission) {
+            case USE -> PermissionAttribute.READ;
+            case VIEW -> PermissionAttribute.READ;
+            case EDIT -> PermissionAttribute.WRITE;
+            case DELETE -> PermissionAttribute.WRITE;
+            case OWNER -> PermissionAttribute.OWNER;
+        };
+    }
+
+    private Group createGroup(final UserRef userRef,
+                              final DocumentPermission documentPermission) {
+        final PermissionAttribute permissionAttribute = getPermissionAttribute(documentPermission);
+        final Permission permission = Permission
+                .builder()
+                .withAllowAttributes(permissionAttribute)
+                .withUser(StroomEventLoggingUtil.createUser(userRef))
+                .build();
+        return Group
+                .builder()
+                .withPermissions(Permissions.builder().addPermissions(permission).build())
+                .build();
+    }
+
+    private void changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+        final AbstractDocumentPermissionsChange change = request.getChange();
+        if (change instanceof final SetPermission setPermission) {
+            final Group group = createGroup(setPermission.getUserRef(), setPermission.getPermission());
+            final AuthoriseEventAction action;
+            if (setPermission.getPermission() == null) {
+                action = AuthoriseEventAction
+                        .builder()
+                        .withAction(AuthorisationActionType.MODIFY)
+                        .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                        .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
+                        .build();
+            } else {
+                action = AuthoriseEventAction
+                        .builder()
+                        .withAction(AuthorisationActionType.MODIFY)
+                        .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                        .withAddGroups(AddGroups.builder().addGroups(group).build())
+                        .build();
+            }
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Set document permission")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final AddDocumentCreatePermission addDocumentCreatePermission) {
+            final Permission permission = Permission
+                    .builder()
+                    .withAllowAttributes(PermissionAttribute.AUTHOR)
+                    .withUser(StroomEventLoggingUtil.createUser(addDocumentCreatePermission.getUserRef()))
+                    .withGroup(Group
+                            .builder()
+                            .withType(addDocumentCreatePermission.getDocumentType().getDisplayType())
+                            .build())
+                    .build();
+            final Group group = Group
+                    .builder()
+                    .withPermissions(Permissions.builder().addPermissions(permission).build())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withAddGroups(AddGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Add document create permission for folder")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final RemoveDocumentCreatePermission removeDocumentCreatePermission) {
+            final Permission permission = Permission
+                    .builder()
+                    .withAllowAttributes(PermissionAttribute.AUTHOR)
+                    .withUser(StroomEventLoggingUtil.createUser(removeDocumentCreatePermission.getUserRef()))
+                    .withGroup(Group
+                            .builder()
+                            .withType(removeDocumentCreatePermission.getDocumentType().getDisplayType())
+                            .build())
+                    .build();
+            final Group group = Group
+                    .builder()
+                    .withPermissions(Permissions.builder().addPermissions(permission).build())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Remove document create permission for folder")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final AddAllDocumentCreatePermissions addAllDocumentCreatePermissions) {
+            final Permission permission = Permission
+                    .builder()
+                    .withAllowAttributes(PermissionAttribute.AUTHOR)
+                    .withUser(StroomEventLoggingUtil.createUser(addAllDocumentCreatePermissions.getUserRef()))
+                    .withGroup(Group.builder().withType(ExplorerConstants.ALL_CREATE_PERMISSIONS).build())
+                    .build();
+            final Group group = Group
+                    .builder()
+                    .withPermissions(Permissions.builder().addPermissions(permission).build())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withAddGroups(AddGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Add all document create permissions for folder")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final RemoveAllDocumentCreatePermissions removeAllDocumentCreatePermissions) {
+            final Permission permission = Permission
+                    .builder()
+                    .withAllowAttributes(PermissionAttribute.AUTHOR)
+                    .withUser(StroomEventLoggingUtil.createUser(removeAllDocumentCreatePermissions.getUserRef()))
+                    .withGroup(Group.builder().withType(ExplorerConstants.ALL_CREATE_PERMISSIONS).build())
+                    .build();
+            final Group group = Group
+                    .builder()
+                    .withPermissions(Permissions.builder().addPermissions(permission).build())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Remove all document create permissions for folder")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final AddAllPermissionsFrom addAllPermissionsFrom) {
+            final Group group = Group
+                    .builder()
+                    .withType(addAllPermissionsFrom.getSourceDocRef().getType())
+                    .withId(addAllPermissionsFrom.getSourceDocRef().getUuid())
+                    .withName(addAllPermissionsFrom.getSourceDocRef().getName())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withAddGroups(AddGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Copy all document permissions from other document")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final SetAllPermissionsFrom setAllPermissionsFrom) {
+            final Group group = Group
+                    .builder()
+                    .withType(setAllPermissionsFrom.getSourceDocRef().getType())
+                    .withId(setAllPermissionsFrom.getSourceDocRef().getUuid())
+                    .withName(setAllPermissionsFrom.getSourceDocRef().getName())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withAddGroups(AddGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Set all document permissions from other document")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof RemoveAllPermissions) {
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Remove all permissions from document")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else {
+            throw new RuntimeException("Unexpected change " + change.getClass().getName());
+        }
     }
 }

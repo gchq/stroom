@@ -2,21 +2,17 @@ package stroom.security.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.UserName;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
-
-import java.util.List;
 
 @Tag(name = "Doc Permissions")
 @Path("/permission/doc" + ResourcePaths.V1)
@@ -25,38 +21,28 @@ import java.util.List;
 public interface DocPermissionResource extends RestResource, DirectRestService {
 
     @POST
-    @Path("/changeDocumentPermissions")
+    @Path("/fetchDocumentUserPermissions")
     @Operation(
-            summary = "Change document permissions",
-            operationId = "changeDocumentPermissions")
-    Boolean changeDocumentPermissions(
-            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
+            summary = "Fetch document user permissions",
+            operationId = "fetchDocumentUserPermissions")
+    ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
+            @Parameter(description = "request", required = true) FetchDocumentUserPermissionsRequest request);
 
     @POST
-    @Path("/fetchPermissionChangeImpact")
+    @Path("/getDocUserPermissionsReport")
     @Operation(
-            summary = "Fetch impact summary for a change of document permissions",
-            operationId = "fetchPermissionChangeImpact")
-    PermissionChangeImpactSummary fetchPermissionChangeImpact(
-            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
+            summary = "Get a detailed report of doc permissions for the specified user",
+            operationId = "getDocUserPermissionsReport")
+    DocumentUserPermissionsReport getDocUserPermissionsReport(@Parameter(description = "request", required = true)
+                                                              DocumentUserPermissionsRequest request);
 
-    @POST
-    @Path("/copyPermissionsFromParent")
-    @Operation(
-            summary = "Copy permissions from parent",
-            operationId = "copyPermissionFromParent")
-    DocumentPermissions copyPermissionFromParent(
-            @Parameter(description = "request", required = true) CopyPermissionsFromParentRequest request);
-
-
-    @POST
-    @Path("/fetchAllDocumentPermissions")
-    @Operation(
-            summary = "Fetch document permissions",
-            operationId = "fetchAllDocumentPermissions")
-    DocumentPermissions fetchAllDocumentPermissions(
-            @Parameter(description = "request", required = true) FetchAllDocumentPermissionsRequest request);
-
+    /**
+     * Check that the current user has the requested document permission.
+     * This allows the UI to make some decisions but is not used for security purposes.
+     *
+     * @param request The request to find out if the current user has a certain document permission.
+     * @return True if the permission is held.
+     */
     @POST
     @Path("/checkDocumentPermission")
     @Operation(
@@ -64,25 +50,4 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
             operationId = "checkDocumentPermission")
     Boolean checkDocumentPermission(
             @Parameter(description = "request", required = true) CheckDocumentPermissionRequest request);
-
-    @GET
-    @Path("/getPermissionForDocType/${docType}")
-    @Operation(
-            summary = "Get all permissions for a given document type",
-            operationId = "getPermissionForDocType")
-    List<String> getPermissionForDocType(@PathParam("docType") String docType);
-
-    @POST
-    @Path("/filterUsers")
-    @Operation(
-            summary = "Get all permissions for a given document type",
-            operationId = "filterUsers")
-    List<UserName> filterUsers(FilterUsersRequest filterUsersRequest);
-
-    @POST
-    @Path("/getDocumentOwners")
-    @Operation(
-            summary = "Get the owners of the specified document",
-            operationId = "getDocumentOwners")
-    List<UserName> getDocumentOwners(@Parameter(description = "documentUuid", required = true) String documentUuid);
 }

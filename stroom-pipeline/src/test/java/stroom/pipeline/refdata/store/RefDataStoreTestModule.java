@@ -110,7 +110,7 @@ public class RefDataStoreTestModule extends AbstractModule {
         Mockito.doAnswer(invocation -> {
             final String uuid = invocation.getArgument(0, String.class);
             return uuidToDocRefInfoMap.get(uuid);
-        }).when(mockFeedStore).info(Mockito.anyString());
+        }).when(mockFeedStore).info(Mockito.any());
 
         Mockito.doAnswer(invocation -> {
             final String feedName = invocation.getArgument(0, String.class);

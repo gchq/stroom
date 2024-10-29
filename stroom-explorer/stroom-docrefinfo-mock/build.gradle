@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.docrefinfo.mock'
 
 dependencies {
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     

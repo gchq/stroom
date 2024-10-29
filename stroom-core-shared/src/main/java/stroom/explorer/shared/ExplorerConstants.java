@@ -8,6 +8,7 @@ import java.util.Objects;
 
 public final class ExplorerConstants {
 
+    public static final String ALL_CREATE_PERMISSIONS = "[ all ]";
     public static final String SYSTEM = "System";
     public static final String FAVOURITES = "Favourites";
     public static final String FOLDER = "Folder";
@@ -76,5 +77,12 @@ public final class ExplorerConstants {
      */
     public static boolean isFolder(final DocRef docRef) {
         return docRef != null && FOLDER.equals(docRef.getType());
+    }
+
+    /**
+     * Tests whether a {@link DocRef} is a folder or the system node
+     */
+    public static boolean isFolderOrSystem(final DocRef docRef) {
+        return docRef != null && (FOLDER.equals(docRef.getType()) || Objects.equals(SYSTEM_DOC_REF, docRef));
     }
 }

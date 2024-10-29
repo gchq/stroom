@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
@@ -31,15 +32,13 @@ public final class ResultStoreFactory {
 
     public ResultStore create(final SearchRequestSource searchRequestSource,
                               final CoprocessorsImpl coprocessors) {
-        final String userUuid = securityContext.getUserUuid();
-        final String createUser = securityContext.getUserIdentityForAudit();
-        Objects.requireNonNull(userUuid, "No user is logged in");
+        final UserRef userRef = securityContext.getUserRef();
+        Objects.requireNonNull(userRef, "No user is logged in");
 
         return new ResultStore(
                 searchRequestSource,
                 sizesProvider,
-                userUuid,
-                createUser,
+                userRef,
                 coprocessors,
                 nodeInfo.getThisNodeName(),
                 resultStoreSettingsFactory.get(),

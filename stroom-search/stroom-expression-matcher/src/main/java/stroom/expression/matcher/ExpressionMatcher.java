@@ -29,6 +29,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -145,7 +146,8 @@ public class ExpressionMatcher {
         // Ensure an appropriate termValue has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition) ||
                 Condition.IN_FOLDER.equals(condition) ||
-                Condition.IS_DOC_REF.equals(condition)) {
+                Condition.IS_DOC_REF.equals(condition) ||
+                Condition.OF_DOC_REF.equals(condition)) {
             if (docRef == null || docRef.getUuid() == null) {
                 throw new MatchException("DocRef not set for field: " + termField);
             }
@@ -289,9 +291,13 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 case IS_DOC_REF:
                     return isDocRef(fieldName, docRef, field, attribute);
-                default:
+                default: {
+                    if (attribute instanceof final TermMatcher termMatcher) {
+                        return termMatcher.match(field, condition, termValue, docRef);
+                    }
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getFldType() + " field type");
+                }
             }
         }
     }
@@ -337,14 +343,20 @@ public class ExpressionMatcher {
     }
 
     private boolean isStringMatch(final String termValue, final Object attribute) {
-        final Pattern pattern = patternMap.computeIfAbsent(termValue, t -> Pattern.compile(t.replaceAll("\\*", ".*")));
+        final Pattern pattern = patternMap.computeIfAbsent(termValue, t ->
+                Pattern.compile(t.replaceAll("\\*", ".*"), Pattern.CASE_INSENSITIVE));
 
-        if (attribute instanceof DocRef) {
-            final DocRef docRef = (DocRef) attribute;
+        if (attribute instanceof final DocRef docRef) {
             if (pattern.matcher(docRef.getUuid()).matches()) {
                 return true;
             }
             return pattern.matcher(docRef.getName()).matches();
+        } else if (attribute instanceof final Collection<?> collection) {
+            for (final Object o : collection) {
+                if (isStringMatch(termValue, o)) {
+                    return true;
+                }
+            }
         }
         return pattern.matcher(attribute.toString()).matches();
     }

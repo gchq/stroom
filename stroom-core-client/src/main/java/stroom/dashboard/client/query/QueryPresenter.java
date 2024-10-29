@@ -65,8 +65,8 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -200,7 +200,7 @@ public class QueryPresenter
         favouriteButton = view.addButtonLeft(SvgPresets.FAVOURITES.enabled(true));
         downloadQueryButton = view.addButtonLeft(SvgPresets.DOWNLOAD);
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
@@ -524,7 +524,7 @@ public class QueryPresenter
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        chooser.setRequiredPermissions(DocumentPermissionNames.USE);
+        chooser.setRequiredPermissions(DocumentPermission.USE);
         chooser.show(pipeline -> {
             if (pipeline != null) {
                 setProcessorLimits(queryData, pipeline);
@@ -714,7 +714,7 @@ public class QueryPresenter
 
         // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
         final DashboardDoc dashboard = getComponents().getDashboard();
-        searchModel.init(dashboard.getUuid(), componentConfig.getId());
+        searchModel.init(dashboard.asDocRef(), componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());

@@ -28,7 +28,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -53,7 +53,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION,
+        return securityContext.secureResult(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION,
                 () -> indexShardDao.find(criteria));
     }
 
@@ -64,6 +64,9 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        if (!IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria).addAll(getFields()).build();
     }
 
@@ -90,7 +93,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
+        securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () ->
                 indexShardDao.search(criteria, fieldIndex, consumer));
     }
 }

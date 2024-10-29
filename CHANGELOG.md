@@ -12,8 +12,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4562** : Use Zip64 compatibility mode.
 
-## [v7.5.0] - 2024-10-16
+* Issue **#4564** : Use expression as column name.
+
+* Issue **#4558** : Fix query pause behaviour.
+
+* Issue **#4549** : Fix conditional formatting fall through behaviour.
+
+* In the Pipeline Properties pane, add copy/goto hover icons to any properties that are Documents. Add copy/goto hover links to the Pipeline, Feed and Inherited From columns in the Pipeline References pane.
+
+* Issue **#4560** : Don't sort the list of Pipeline References (reference loaders).  Instead display them in the order they will get used in the lookup.
+
+* Issue **#4570** : Fix error when clearing then filtering in a doc ref picker.
+
+
+## [v7.6-beta.3] - 2024-10-18
 
 * Issue **#4501** : Fix Query editor syntax highlighting.
 
@@ -47,15 +61,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Improve the process of (re-)indexing content. It is now triggered by a user doing a content search. Users will get an error message if the index is still being initialised. The `stroom.contentIndex.enabled` property has been removed.
 
-
-## [v7.5-beta.20] - 2024-10-07
-
 * Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
 
 * Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.
 
 
-## [v7.5-beta.19] - 2024-10-07
+## [v7.6-beta.2] - 2024-10-07
 
 * Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
 
@@ -66,9 +77,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4510** : Fix right click in editor pane.
 
 * Issue **#4511** : Fix StreamId, EventId selection in query tables.
-
-
-## [v7.5-beta.18] - 2024-10-03
 
 * Issue **#4485** : Improve dialog move/resize behaviour.
 
@@ -86,17 +94,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
 
-
-## [v7.5-beta.17] - 2024-09-30
-
 * Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
 
 * Issue **#4458** : Fix explorer node tags not being copied. Also fix copy/move not selecting the parent folder of the source as the default destination folder.
 
 * Issue **#4478** : Fix boolean expression precedence in StroomQL.
-
-
-## [v7.5-beta.16] - 2024-09-30
 
 * Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
 
@@ -121,10 +123,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4412** : Fix `/` key not working in quick filter text input fields.
 
 * Issue **#4463** : Fix NPE with analytic rule email templating.
- 
-
-
-## [v7.5-beta.15] - 2024-09-24
 
 * Issue **#4146** : Fix audit events for deleting/restoring streams.
 
@@ -134,17 +132,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4471** : Fix NPE with stepping filter.
 
-
-## [v7.5-beta.14] - 2024-09-20
-
 * Issue **#4451** : Add S3 pipeline appender.
 
 * Issue **#4401** : Improve content search.
 
 * Issue **#4417** : Show stepping progress and allow termination.
-
-
-## [v7.5-beta.13] - 2024-09-19
 
 * Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
 
@@ -166,9 +158,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
 
-
-## [v7.5-beta.12] - 2024-09-06
-
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 
 * Issue **#4422** : Don't show _Edit Schedule_ in actions menu on Jobs screen for Distributed jobs.
@@ -185,15 +174,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
 
-
-## [v7.5-beta.11] - 2024-09-04
-
 * Issue **#4426** : Add INFO message when an index shard is created.
 
 * Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
-
-
-## [v7.5-beta.10] - 2024-09-04
 
 * Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
 
@@ -204,6 +187,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
 
 * Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
+## [v7.6-beta.1] - 2024-08-30
+
+* Issue **#4345** : Write analytic email notification failures to the analytic error feed.
+
+* Issue **#4379** : Improve Stroom permission model.
 
 
 ## [v7.5-beta.9] - 2024-08-30
@@ -946,19 +936,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.0...HEAD
-[v7.5.0]: https://github.com/gchq/stroom/compare/v7.5-beta.20...v7.5.0
-[v7.5-beta.20]: https://github.com/gchq/stroom/compare/v7.5-beta.19...v7.5-beta.20
-[v7.5-beta.19]: https://github.com/gchq/stroom/compare/v7.5-beta.18...v7.5-beta.19
-[v7.5-beta.18]: https://github.com/gchq/stroom/compare/v7.5-beta.17...v7.5-beta.18
-[v7.5-beta.17]: https://github.com/gchq/stroom/compare/v7.5-beta.16...v7.5-beta.17
-[v7.5-beta.16]: https://github.com/gchq/stroom/compare/v7.5-beta.15...v7.5-beta.16
-[v7.5-beta.15]: https://github.com/gchq/stroom/compare/v7.5-beta.14...v7.5-beta.15
-[v7.5-beta.14]: https://github.com/gchq/stroom/compare/v7.5-beta.13...v7.5-beta.14
-[v7.5-beta.13]: https://github.com/gchq/stroom/compare/v7.5-beta.12...v7.5-beta.13
-[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
-[v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
-[v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.3...HEAD
+[v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
+[v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
+[v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
 [v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7

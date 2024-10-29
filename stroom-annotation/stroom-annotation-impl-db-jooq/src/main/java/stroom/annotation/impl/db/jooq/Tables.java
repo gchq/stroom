@@ -12,7 +12,7 @@ import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 /**
  * Convenience access to all tables in stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
 
     /**

@@ -17,7 +17,10 @@
 package stroom.event.logging.rs.impl;
 
 import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.event.logging.api.ThreadLocalLogState;
 import stroom.event.logging.impl.LoggingConfig;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
@@ -96,13 +99,21 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         if (request != null) {
             final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (object != null) {
-                RequestInfo requestInfo = (RequestInfo) object;
-                requestEventLogProvider.get().log(requestInfo, null, exception);
+                final RequestInfo requestInfo = (RequestInfo) object;
+                if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
+                    if (!ThreadLocalLogState.hasLogged()) {
+                        LOGGER.error("Expected manual logging to have happened: " + requestInfo);
+                    }
+                } else {
+                    requestEventLogProvider.get().log(requestInfo, null, exception);
+                }
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY, null);
             }
         } else {
             LOGGER.warn("Unable to create audit log for exception, request is null", exception);
         }
+
+        ThreadLocalLogState.setLogged(false);
 
         if (exception instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) exception;
@@ -122,11 +133,19 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         }
 
         final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
-
         if (object != null) {
-            RequestInfo requestInfo = (RequestInfo) object;
-            requestEventLogProvider.get().log(requestInfo, writerInterceptorContext.getEntity());
+            final RequestInfo requestInfo = (RequestInfo) object;
+            if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
+                if (!ThreadLocalLogState.hasLogged()) {
+                    LOGGER.error("Expected manual logging to have happened: " + requestInfo);
+                }
+            } else {
+                requestEventLogProvider.get().log(requestInfo, writerInterceptorContext.getEntity());
+            }
+            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, null);
         }
+
+        ThreadLocalLogState.setLogged(false);
     }
 
     @Override
