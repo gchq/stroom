@@ -1052,7 +1052,7 @@ public class SearchRequestFactory {
                     }
 
                     final FunctionGroup functionGroup = (FunctionGroup) token;
-                    columnName = functionGroup.getName();
+                    columnName = functionGroup.getText();
                     final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
                     try {
                         fieldExpression = expressionParser

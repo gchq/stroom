@@ -12,6 +12,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4562** : Use Zip64 compatibility mode.
+
+* Issue **#4564** : Use expression as column name.
+
+* Issue **#4558** : Fix query pause behaviour.
+
+* Issue **#4549** : Fix conditional formatting fall through behaviour.
+
+* In the Pipeline Properties pane, add copy/goto hover icons to any properties that are Documents. Add copy/goto hover links to the Pipeline, Feed and Inherited From columns in the Pipeline References pane.
+
+* Issue **#4560** : Don't sort the list of Pipeline References (reference loaders).  Instead display them in the order they will get used in the lookup.
+
+* Issue **#4570** : Fix error when clearing then filtering in a doc ref picker.
+
 
 ## [v7.6-beta.3] - 2024-10-18
 

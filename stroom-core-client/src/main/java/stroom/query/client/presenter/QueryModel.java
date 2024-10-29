@@ -205,14 +205,11 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     /**
      * Refresh the search data for the specified component.
      */
-    public void refresh(final String componentId,
-                        final Consumer<Result> resultConsumer) {
+    public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         boolean exec = false;
         final QueryKey queryKey = currentQueryKey;
         final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
-            // Tell the refreshing component that it should want data.
-            resultComponent.startSearch();
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
