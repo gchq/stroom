@@ -62,6 +62,7 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -428,18 +429,64 @@ class QueryServiceImpl implements QueryService {
         if (resultRequests != null) {
             List<ResultRequest> modifiedResultRequests = new ArrayList<>();
             for (final ResultRequest resultRequest : resultRequests) {
-                modifiedResultRequests.add(
-                        resultRequest
-                                .copy()
-                                .openGroups(searchRequest.getOpenGroups())
-                                .requestedRange(searchRequest.getRequestedRange())
-                                .build()
-                );
+
+                // Modify result request to apply additional UI table preferences.
+                ResultRequest modified = addTablePreferences(resultRequest, searchRequest.getQueryTablePreferences());
+
+                // Modify result request to open grouped rows and change result display range.
+                modified = modified
+                        .copy()
+                        .openGroups(searchRequest.getOpenGroups())
+                        .requestedRange(searchRequest.getRequestedRange())
+                        .build();
+
+                modifiedResultRequests.add(modified);
             }
             mappedRequest = mappedRequest.copy().resultRequests(modifiedResultRequests).build();
         }
 
         return mappedRequest;
+    }
+
+    private ResultRequest addTablePreferences(final ResultRequest resultRequest,
+                                              final QueryTablePreferences queryTablePreferences) {
+        if (queryTablePreferences != null) {
+            final Map<String, Column> prefs = NullSafe.list(queryTablePreferences.getColumns())
+                    .stream()
+                    .collect(Collectors.toMap(Column::getId, c -> c));
+
+            if (!resultRequest.getMappings().isEmpty()) {
+                final TableSettings tableSettings = resultRequest.getMappings().getFirst();
+                final TableSettings.Builder builder = tableSettings.copy();
+
+                final List<Column> modifiedColumns = new ArrayList<>();
+                for (final Column column : tableSettings.getColumns()) {
+                    Column.Builder columnBuilder = column.copy();
+                    final Column pref = prefs.get(column.getId());
+                    if (pref != null) {
+                        columnBuilder.filter(pref.getFilter());
+                        columnBuilder.columnFilter(pref.getColumnFilter());
+                        columnBuilder.width(pref.getWidth());
+                        columnBuilder.format(pref.getFormat());
+                        if (pref.getSort() != null) {
+                            columnBuilder.sort(pref.getSort());
+                        }
+                    }
+                    modifiedColumns.add(columnBuilder.build());
+                }
+
+                builder.columns(modifiedColumns);
+                builder.applyValueFilters(queryTablePreferences.applyValueFilters());
+
+                builder.conditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+                final List<TableSettings> mappings = new ArrayList<>(resultRequest.getMappings().size());
+                mappings.add(builder.build());
+                mappings.addAll(resultRequest.getMappings().subList(1, resultRequest.getMappings().size()));
+
+                return resultRequest.copy().mappings(mappings).build();
+            }
+        }
+        return resultRequest;
     }
 
     private DashboardSearchResponse processRequest(final QuerySearchRequest searchRequest) {

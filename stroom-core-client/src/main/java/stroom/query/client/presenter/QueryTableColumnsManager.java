@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.main.UniqueUtil;
+import stroom.dashboard.client.table.FormatPresenter;
+import stroom.dashboard.client.table.HasValueFilter;
+import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -31,8 +34,11 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
@@ -46,35 +52,25 @@ import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ColumnsManager implements HeadingListener, HasValueFilter {
+public class QueryTableColumnsManager implements HeadingListener, HasValueFilter {
 
-    private final TablePresenter tablePresenter;
-    private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
-    private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
+    private final QueryResultTablePresenter tablePresenter;
     private final FormatPresenter formatPresenter;
-    private final FilterPresenter filterPresenter;
+    private final Provider<RulesPresenter> rulesPresenterProvider;
     private int columnsStartIndex;
     private int currentColIndex = -1;
     private boolean ignoreNext;
 
-    public ColumnsManager(final TablePresenter tablePresenter,
-                          final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
-                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
-                          final FormatPresenter formatPresenter,
-                          final FilterPresenter filterPresenter) {
+    public QueryTableColumnsManager(final QueryResultTablePresenter tablePresenter,
+                                    final FormatPresenter formatPresenter,
+                                    final Provider<RulesPresenter> rulesPresenterProvider) {
         this.tablePresenter = tablePresenter;
-        this.renameColumnPresenterProvider = renameColumnPresenterProvider;
-        this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
-        this.filterPresenter = filterPresenter;
+        this.rulesPresenterProvider = rulesPresenterProvider;
     }
 
     @Override
@@ -111,8 +107,6 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
                         } else {
                             currentColIndex = colIndex;
-                            final Element target = heading.getElement();
-
                             final List<Item> menuItems = getMenuItems(column);
 
                             Element element = event.getEventTarget().cast();
@@ -144,7 +138,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     public void moveColumn(final int fromIndex, final int toIndex) {
         final Column column = getColumn(fromIndex);
         if (column != null) {
-            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+            final List<Column> columns = tablePresenter.getCurrentColumns();
             columns.remove(column);
 
             final int destIndex = toIndex - columnsStartIndex;
@@ -156,7 +150,8 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 columns.add(destIndex, column);
             }
 
-            tablePresenter.setDirty(true);
+            tablePresenter.setPreferredColumns(columns);
+//            tablePresenter.setDirty(true);
         }
     }
 
@@ -170,7 +165,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     }
 
     private void changeSort(final Column column, final SortDirection direction) {
-        final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
+        final List<Column> columns = tablePresenter.getCurrentColumns();
         boolean change = false;
 
         if (direction == null) {
@@ -205,7 +200,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
         if (change) {
             tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
+//            tablePresenter.updateColumns();
             tablePresenter.refresh();
         }
     }
@@ -233,22 +228,6 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         }
     }
 
-    public void showRename(final Column column) {
-        renameColumnPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
-        });
-    }
-
-    public void showExpression(final Column column) {
-        expressionPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
-            tablePresenter.refresh();
-        });
-    }
-
     public void showFormat(final Column column) {
         formatPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
@@ -257,85 +236,24 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         });
     }
 
-    private void filterField(final Column column) {
-        filterPresenter.show(tablePresenter, column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
-        });
-    }
-
-    public void addColumn(final Column templateColumn) {
-        addColumn(getColumns().size(), templateColumn);
-    }
-
-    public void addColumn(final int index, final Column templateColumn) {
-        final String columnName = makeUniqueColumnName(templateColumn.getName());
-        final Column newColumn = templateColumn.copy()
-                .id(createRandomColumnId())
-                .name(columnName)
-                .build();
-
-        final List<Column> columns = getColumns();
-        columns.add(index, newColumn);
-        updateColumns(columns);
-
-        tablePresenter.setDirty(true);
-        tablePresenter.updateColumns();
-        tablePresenter.refresh();
-    }
-
-    private void duplicateColumn(final Column column) {
-        final List<Column> columns = getColumns();
-        final int index = columns.indexOf(column);
-        addColumn(index + 1, column);
-    }
-
     private void moveFirst(final Column column) {
         final List<Column> columns = getColumns();
         columns.remove(column);
         columns.add(0, column);
-        updateColumns(columns);
-        tablePresenter.setDirty(true);
-        tablePresenter.updateColumns();
+        tablePresenter.updateColumns(columns);
+        tablePresenter.setPreferredColumns(columns);
+//        tablePresenter.setDirty(true);
+//        tablePresenter.updateColumns(columns);
     }
 
     private void moveLast(final Column column) {
         final List<Column> columns = getColumns();
         columns.remove(column);
         columns.add(column);
-        updateColumns(columns);
-        tablePresenter.setDirty(true);
-        tablePresenter.updateColumns();
-    }
-
-    private String makeUniqueColumnName(final String columnName) {
-        final Set<String> currentColumns = getColumns().stream().map(Column::getName).collect(
-                Collectors.toSet());
-        return UniqueUtil.makeUniqueName(columnName, currentColumns);
-    }
-
-    private String createRandomColumnId() {
-        final Set<String> usedColumnIds = getColumns().stream().map(Column::getId).collect(Collectors.toSet());
-        return createRandomColumnId(usedColumnIds);
-    }
-
-    public String createRandomColumnId(final Set<String> usedColumnIds) {
-        final String componentId = tablePresenter.getComponentConfig().getId();
-        return UniqueUtil.createUniqueColumnId(componentId, usedColumnIds);
-    }
-
-    private void deleteColumn(final Column column) {
-        if (getVisibleColumnCount() <= 1) {
-            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
-        } else {
-            replaceColumn(column, null);
-
-            tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
-        }
+        tablePresenter.updateColumns(columns);
+        tablePresenter.setPreferredColumns(columns);
+//        tablePresenter.setDirty(true);
+//        tablePresenter.updateColumns(columns);
     }
 
     private void replaceColumn(final Column oldColumn, final Column newColumn) {
@@ -349,7 +267,8 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 columns.add(column);
             }
         }
-        updateColumns(columns);
+        tablePresenter.updateColumns(columns);
+        tablePresenter.setPreferredColumns(columns);
     }
 
     @Override
@@ -377,7 +296,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         }
 
         replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-        tablePresenter.setDirty(true);
+//        tablePresenter.setDirty(true);
         tablePresenter.refresh(() -> focusHeader(index, selectionStart));
     }
 
@@ -409,24 +328,22 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     }
 
     private List<Column> getColumns() {
-        if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
-            return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
-        }
-        return new ArrayList<>();
+        return tablePresenter.getCurrentColumns();
+//
+//        if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
+//            return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
+//        }
+//        return new ArrayList<>();
     }
 
-    private void updateColumns(final List<Column> columns) {
-        tablePresenter.setSettings(
-                tablePresenter.getTableComponentSettings()
-                        .copy()
-                        .columns(columns)
-                        .build());
-    }
+//    private void updateColumns(final List<Column> columns) {
+//        tablePresenter.setPreferredColumns(columns);
+//    }
 
     private void showColumn(final Column column) {
         replaceColumn(column, column.copy().visible(true).build());
-        tablePresenter.setDirty(true);
-        tablePresenter.updateColumns();
+//        tablePresenter.setDirty(true);
+//        tablePresenter.updateColumns(columns);
     }
 
     private void hideColumn(final Column column) {
@@ -434,8 +351,8 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
             replaceColumn(column, column.copy().visible(false).build());
-            tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
+//            tablePresenter.setDirty(true);
+//            tablePresenter.updateColumns();
         }
     }
 
@@ -467,25 +384,25 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     private List<Item> getMenuItems(final Column column) {
         final List<Item> menuItems = new ArrayList<>();
 
-        // Create rename menu.
-        menuItems.add(createRenameMenu(column));
-        // Create expression menu.
-        menuItems.add(createExpressionMenu(column));
+//        // Create rename menu.
+//        menuItems.add(createRenameMenu(column));
+//        // Create expression menu.
+//        menuItems.add(createExpressionMenu(column));
         // Create sort menu.
         menuItems.add(createSortMenu(column));
-        // Create group by menu.
-        menuItems.add(createGroupByMenu(column));
+//        // Create group by menu.
+//        menuItems.add(createGroupByMenu(column));
         // Create format menu.
         menuItems.add(createFormatMenu(column));
-        // Add filter menu item.
-        menuItems.add(createFilterMenu(column));
+//        // Add filter menu item.
+//        menuItems.add(createFilterMenu(column));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
         menuItems.add(createMoveLastMenu(column));
 
-        // Create duplicate menu.
-        menuItems.add(createDuplicateMenu(column));
+//        // Create duplicate menu.
+//        menuItems.add(createDuplicateMenu(column));
 
         // Create hide menu.
         menuItems.add(createHideMenu(column));
@@ -496,40 +413,42 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             menuItems.add(showMenu);
         }
 
-        // Create remove menu.
-        menuItems.add(createRemoveMenu(column));
+        menuItems.add(createConditionalFormattingMenu(column));
+
+//        // Create remove menu.
+//        menuItems.add(createRemoveMenu(column));
 
         return menuItems;
     }
 
-    private Item createRenameMenu(final Column column) {
-        return new IconMenuItem.Builder()
-                .priority(0)
-                .icon(SvgImage.EDIT)
-                .text("Rename")
-                .command(() -> showRename(column))
-                .build();
-    }
+//    private Item createRenameMenu(final Column column) {
+//        return new IconMenuItem.Builder()
+//                .priority(0)
+//                .icon(SvgImage.EDIT)
+//                .text("Rename")
+//                .command(() -> showRename(column))
+//                .build();
+//    }
 
-    private Item createExpressionMenu(final Column column) {
-        boolean highlight = false;
-        if (column.getExpression() != null) {
-            String expression = column.getExpression();
-            expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
-            expression = expression.trim();
-            if (expression.length() > 0) {
-                highlight = true;
-            }
-        }
-
-        return new IconMenuItem.Builder()
-                .priority(1)
-                .icon(SvgImage.FIELDS_EXPRESSION)
-                .text("Expression")
-                .command(() -> showExpression(column))
-                .highlight(highlight)
-                .build();
-    }
+//    private Item createExpressionMenu(final Column column) {
+//        boolean highlight = false;
+//        if (column.getExpression() != null) {
+//            String expression = column.getExpression();
+//            expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
+//            expression = expression.trim();
+//            if (expression.length() > 0) {
+//                highlight = true;
+//            }
+//        }
+//
+//        return new IconMenuItem.Builder()
+//                .priority(1)
+//                .icon(SvgImage.FIELDS_EXPRESSION)
+//                .text("Expression")
+//                .command(() -> showExpression(column))
+//                .highlight(highlight)
+//                .build();
+//    }
 
     private Item createSortMenu(final Column column) {
         final List<Item> menuItems = new ArrayList<>();
@@ -569,122 +488,107 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 .build();
     }
 
-    private Item createGroupByMenu(final Column column) {
-        final List<Item> menuItems = new ArrayList<>();
-        final int maxGroup = fixGroups(getColumns());
-        for (int i = 0; i < maxGroup; i++) {
-            final int group = i;
-            final Item item = new IconMenuItem.Builder()
-                    .priority(i)
-                    .icon(SvgImage.FIELDS_GROUP)
-                    .text("Level " + (i + 1))
-                    .command(() -> setGroup(column, group))
-                    .highlight(column.getGroup() != null && column.getGroup() == i)
-                    .build();
-            menuItems.add(item);
-        }
+//    private Item createGroupByMenu(final Column column) {
+//        final List<Item> menuItems = new ArrayList<>();
+//        final int maxGroup = fixGroups(getColumns());
+//        for (int i = 0; i < maxGroup; i++) {
+//            final int group = i;
+//            final Item item = new IconMenuItem.Builder()
+//                    .priority(i)
+//                    .icon(SvgImage.FIELDS_GROUP)
+//                    .text("Level " + (i + 1))
+//                    .command(() -> setGroup(column, group))
+//                    .highlight(column.getGroup() != null && column.getGroup() == i)
+//                    .build();
+//            menuItems.add(item);
+//        }
+//
+//        // Add the next possible group if the column isn't the only column in the
+//        // next group.
+//        if (addNextGroup(maxGroup, column)) {
+//            final Item item = new IconMenuItem.Builder()
+//                    .priority(maxGroup)
+//                    .icon(SvgImage.FIELDS_GROUP)
+//                    .text("Level " + (maxGroup + 1))
+//                    .command(() -> setGroup(column, maxGroup))
+//                    .build();
+//            menuItems.add(item);
+//        }
+//
+//        final Item item = new IconMenuItem.Builder()
+//                .priority(maxGroup + 1)
+//                .text("Not grouped")
+//                .command(() -> setGroup(column, null))
+//                .build();
+//        menuItems.add(item);
+//
+//        return new IconParentMenuItem.Builder()
+//                .priority(3)
+//                .icon(SvgImage.FIELDS_GROUP)
+//                .text("Group")
+//                .children(menuItems)
+//                .highlight(column.getGroup() != null)
+//                .build();
+//    }
 
-        // Add the next possible group if the column isn't the only column in the
-        // next group.
-        if (addNextGroup(maxGroup, column)) {
-            final Item item = new IconMenuItem.Builder()
-                    .priority(maxGroup)
-                    .icon(SvgImage.FIELDS_GROUP)
-                    .text("Level " + (maxGroup + 1))
-                    .command(() -> setGroup(column, maxGroup))
-                    .build();
-            menuItems.add(item);
-        }
-
-        final Item item = new IconMenuItem.Builder()
-                .priority(maxGroup + 1)
-                .text("Not grouped")
-                .command(() -> setGroup(column, null))
-                .build();
-        menuItems.add(item);
-
-        return new IconParentMenuItem.Builder()
-                .priority(3)
-                .icon(SvgImage.FIELDS_GROUP)
-                .text("Group")
-                .children(menuItems)
-                .highlight(column.getGroup() != null)
-                .build();
-    }
-
-    private void setGroup(final Column column, final Integer group) {
-        if (!Objects.equals(column.getGroup(), group)) {
-            replaceColumn(column, column.copy().group(group).build());
-            fixGroups(getColumns());
-            tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
-        }
-    }
-
-    private boolean addNextGroup(final int maxGroup, final Column column) {
-        // If the column we are dragging has no group then add the next possible
-        // group.
-        if (column.getGroup() == null) {
-            return true;
-        }
-
-        // If the group the dragging column belongs to is not the current max
-        // group then add the next possible group.
-        if (column.getGroup() < maxGroup - 1) {
-            return true;
-        }
-
-        // If there is another column with the same group level as the dragging
-        // group then add the next possible group.
-        for (final Column col : getColumns()) {
-            if (col != column && col.getGroup() != null && col.getGroup() >= column.getGroup()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private int fixGroups(final List<Column> columns) {
-        // Make a map that groups columns by group depth.
-        final Map<Integer, List<Column>> map = new HashMap<>();
-        for (final Column column : columns) {
-            final Integer group = column.getGroup();
-            if (group != null) {
-                map.computeIfAbsent(group, k -> new ArrayList<>()).add(column);
-            }
-        }
-
-        // Fix group depths and add columns to grouped columns list.
-        final List<Integer> depths = new ArrayList<>(map.keySet());
-        Collections.sort(depths);
-
-        for (int i = 0; i < depths.size(); i++) {
-            final Integer depth = depths.get(i);
-            final List<Column> groupedColumns = map.get(depth);
-            for (final Column column : groupedColumns) {
-                replaceColumn(column, column.copy().group(i).build());
-            }
-        }
-
-        return depths.size();
-    }
-
-    private Item createFilterMenu(final Column column) {
-        return new IconMenuItem.Builder()
-                .priority(4)
-                .icon(SvgImage.FILTER)
-                .disabledIcon(SvgImage.FILTER)
-                .text("Filter")
-                .command(() -> filterField(column))
-                .highlight(column.getFilter() != null
-                        && ((column.getFilter().getIncludes() != null
-                        && column.getFilter().getIncludes().trim().length() > 0)
-                        || (column.getFilter().getExcludes() != null
-                        && column.getFilter().getExcludes().trim().length() > 0)))
-                .build();
-    }
+//    private void setGroup(final Column column, final Integer group) {
+//        if (!Objects.equals(column.getGroup(), group)) {
+//            replaceColumn(column, column.copy().group(group).build());
+//            fixGroups(getColumns());
+//            tablePresenter.setDirty(true);
+//            tablePresenter.updateColumns();
+//            tablePresenter.refresh();
+//        }
+//    }
+//
+//    private boolean addNextGroup(final int maxGroup, final Column column) {
+//        // If the column we are dragging has no group then add the next possible
+//        // group.
+//        if (column.getGroup() == null) {
+//            return true;
+//        }
+//
+//        // If the group the dragging column belongs to is not the current max
+//        // group then add the next possible group.
+//        if (column.getGroup() < maxGroup - 1) {
+//            return true;
+//        }
+//
+//        // If there is another column with the same group level as the dragging
+//        // group then add the next possible group.
+//        for (final Column col : getColumns()) {
+//            if (col != column && col.getGroup() != null && col.getGroup() >= column.getGroup()) {
+//                return true;
+//            }
+//        }
+//
+//        return false;
+//    }
+//
+//    private int fixGroups(final List<Column> columns) {
+//        // Make a map that groups columns by group depth.
+//        final Map<Integer, List<Column>> map = new HashMap<>();
+//        for (final Column column : columns) {
+//            final Integer group = column.getGroup();
+//            if (group != null) {
+//                map.computeIfAbsent(group, k -> new ArrayList<>()).add(column);
+//            }
+//        }
+//
+//        // Fix group depths and add columns to grouped columns list.
+//        final List<Integer> depths = new ArrayList<>(map.keySet());
+//        Collections.sort(depths);
+//
+//        for (int i = 0; i < depths.size(); i++) {
+//            final Integer depth = depths.get(i);
+//            final List<Column> groupedColumns = map.get(depth);
+//            for (final Column column : groupedColumns) {
+//                replaceColumn(column, column.copy().group(i).build());
+//            }
+//        }
+//
+//        return depths.size();
+//    }
 
     private Item createFormatMenu(final Column column) {
         return new IconMenuItem.Builder()
@@ -715,14 +619,14 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 .build();
     }
 
-    private Item createDuplicateMenu(final Column column) {
-        return new IconMenuItem.Builder()
-                .priority(8)
-                .icon(SvgImage.COPY)
-                .text("Duplicate")
-                .command(() -> duplicateColumn(column))
-                .build();
-    }
+//    private Item createDuplicateMenu(final Column column) {
+//        return new IconMenuItem.Builder()
+//                .priority(8)
+//                .icon(SvgImage.COPY)
+//                .text("Duplicate")
+//                .command(() -> duplicateColumn(column))
+//                .build();
+//    }
 
     private Item createHideMenu(final Column column) {
         return new IconMenuItem.Builder()
@@ -761,12 +665,44 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 .build();
     }
 
-    private Item createRemoveMenu(final Column column) {
+    private Item createConditionalFormattingMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(11)
-                .icon(SvgImage.DELETE)
-                .text("Remove")
-                .command(() -> deleteColumn(column))
+                .icon(SvgImage.FORMAT)
+                .text("Conditional Formatting")
+                .command(() -> {
+                    final QueryTablePreferences queryTablePreferences = tablePresenter.getQueryTablePreferences();
+                    final RulesPresenter rulesPresenter = rulesPresenterProvider.get();
+                    rulesPresenter.read(queryTablePreferences);
+
+                    final PopupSize popupSize = PopupSize.resizable(800, 650);
+                    ShowPopupEvent.builder(rulesPresenter)
+                            .popupType(PopupType.OK_CANCEL_DIALOG)
+                            .popupSize(popupSize)
+                            .modal(true)
+                            .caption("Settings")
+                            .onShow(e -> rulesPresenter.focus())
+                            .onHideRequest(e -> {
+                                if (e.isOk()) {
+                                    if (rulesPresenter.validate()) {
+                                        final QueryTablePreferences updated = rulesPresenter
+                                                .write(queryTablePreferences);
+                                        if (!Objects.equals(updated, queryTablePreferences)) {
+                                            tablePresenter.setQueryTablePreferences(updated);
+                                            tablePresenter.setDirty(true);
+                                            tablePresenter.refresh();
+                                        }
+
+                                        e.hide();
+                                    } else {
+                                        e.reset();
+                                    }
+                                } else {
+                                    e.hide();
+                                }
+                            })
+                            .fire();
+                })
                 .build();
     }
 }

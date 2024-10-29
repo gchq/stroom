@@ -16,8 +16,8 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dashboard.client.table.ColumnsManager;
 import stroom.dashboard.client.table.FilterCell;
+import stroom.dashboard.client.table.HasValueFilter;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
 import stroom.query.api.v2.IncludeExcludeFilter;
@@ -43,7 +43,7 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
         super(cells);
     }
 
-    public static ColumnHeaderCell create(final ColumnsManager columnsManager) {
+    public static ColumnHeaderCell create(final HasValueFilter hasValueFilter) {
         final com.google.gwt.user.cellview.client.Column<Column, SafeHtml> name =
                 new com.google.gwt.user.cellview.client.Column<Column, SafeHtml>(new SafeHtmlCell()) {
                     @Override
@@ -109,7 +109,7 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
         filterInput.setFieldUpdater(new FieldUpdater<Column, String>() {
             @Override
             public void update(final int index, final Column column, final String value) {
-                columnsManager.setValueFilter(column, value);
+                hasValueFilter.setValueFilter(column, value);
             }
         });
 

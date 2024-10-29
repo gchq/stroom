@@ -16,7 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dashboard.client.table.ColumnsManager;
+import stroom.dashboard.client.table.HasValueFilter;
 import stroom.query.api.v2.Column;
 
 import com.google.gwt.user.cellview.client.Header;
@@ -25,8 +25,8 @@ public class ColumnHeader extends Header<Column> {
 
     private final Column column;
 
-    public ColumnHeader(final Column column, final ColumnsManager columnsManager) {
-        super(ColumnHeaderCell.create(columnsManager));
+    public ColumnHeader(final Column column, final HasValueFilter hasValueFilter) {
+        super(ColumnHeaderCell.create(hasValueFilter));
         this.column = column;
     }
 

@@ -29,10 +29,11 @@ import java.util.List;
 
 public class ResizeHandle<R> extends Widget {
 
-    public static final int HANDLE_WIDTH = 10;
-    public static final int HALF_HANDLE_WIDTH = HANDLE_WIDTH / 2;
-    public static final int LINE_WIDTH = 2;
-    public static final int HALF_LINE_WIDTH = LINE_WIDTH / 2;
+    private static final int HANDLE_WIDTH = 10;
+    private static final int HALF_HANDLE_WIDTH = HANDLE_WIDTH / 2;
+    private static final int LINE_WIDTH = 2;
+    private static final int HALF_LINE_WIDTH = LINE_WIDTH / 2;
+    private static final int MIN_COL_WIDTH = 30;
 
     private final MyDataGrid<R> dataGrid;
     private final List<ColSettings> colSettings;
@@ -45,6 +46,7 @@ public class ResizeHandle<R> extends Widget {
     private int colNo;
     private int offset;
     private int startPos;
+    private int minPos;
 
     public ResizeHandle(final MyDataGrid<R> dataGrid,
                         final List<ColSettings> colSettings,
@@ -61,7 +63,7 @@ public class ResizeHandle<R> extends Widget {
 
     public boolean update(final NativeEvent event, final Heading heading) {
         if (heading != null) {
-            final int childIndex = heading.getColIndex();
+            int childIndex = heading.getColIndex();
             final Element th = heading.getElement();
             final Element headerRow = th.getParentElement();
 
@@ -72,9 +74,8 @@ public class ResizeHandle<R> extends Widget {
                 canResizePreviousColumn = settings.isResizable();
             }
             // See if we can resize this column.
-            boolean canResizeThisColumn = false;
             final ColSettings settings = colSettings.get(childIndex);
-            canResizeThisColumn = settings.isResizable();
+            boolean canResizeThisColumn = settings.isResizable();
 
             // If we can't resize this column or the previous one then return no
             // handle as no resize will be possible.
@@ -86,22 +87,20 @@ public class ResizeHandle<R> extends Widget {
                 final int diffLeft = clientX - th.getAbsoluteLeft();
                 final int diffRight = th.getAbsoluteRight() - clientX;
 
-                if (diffLeft <= ResizeHandle.HANDLE_WIDTH && diffLeft < diffRight && canResizePreviousColumn) {
+                Element resizeHeading = th;
+                if (!canResizeThisColumn ||
+                        (diffLeft <= ResizeHandle.HANDLE_WIDTH && diffLeft < diffRight && canResizePreviousColumn)) {
                     // Show the resize handle on the left.
-                    resizeHandleStyle.setLeft(th.getAbsoluteLeft() - ResizeHandle.HALF_HANDLE_WIDTH, Unit.PX);
-                    setColNo(childIndex - 1);
-                } else if (canResizeThisColumn) {
-                    // Show the resize handle on the right.
-                    resizeHandleStyle.setLeft(th.getAbsoluteRight() - ResizeHandle.HALF_HANDLE_WIDTH, Unit.PX);
-                    setColNo(childIndex);
-                } else if (canResizePreviousColumn) {
-                    // Show the resize handle on the left.
-                    resizeHandleStyle.setLeft(th.getAbsoluteLeft() - ResizeHandle.HALF_HANDLE_WIDTH, Unit.PX);
-                    setColNo(childIndex - 1);
+                    resizeHeading = headerRow.getChild(childIndex - 1).cast();
+                    childIndex--;
                 }
 
-                resizeHandleStyle.setTop(th.getAbsoluteTop(), Unit.PX);
-                resizeHandleStyle.setHeight(th.getOffsetHeight(), Unit.PX);
+                minPos = resizeHeading.getAbsoluteLeft() - HALF_HANDLE_WIDTH + MIN_COL_WIDTH;
+                resizeHandleStyle.setLeft(resizeHeading.getAbsoluteRight() - ResizeHandle.HALF_HANDLE_WIDTH, Unit.PX);
+                setColNo(childIndex);
+
+                resizeHandleStyle.setTop(resizeHeading.getAbsoluteTop(), Unit.PX);
+                resizeHandleStyle.setHeight(resizeHeading.getOffsetHeight(), Unit.PX);
 
                 return true;
             }
@@ -142,14 +141,13 @@ public class ResizeHandle<R> extends Widget {
         if (diff != 0) {
             resize(startPos + diff - offset);
 
-            for (int i = colNo; i >= 0; i--) {
-                final Element col = headerRow.getChild(i).cast();
-                final int existingWidth = col.getOffsetWidth();
-                int newWidth = existingWidth;
+            final Element col = headerRow.getChild(colNo).cast();
+            final int existingWidth = col.getOffsetWidth();
 
-                final ColSettings settings = colSettings.get(i);
+            if (existingWidth > 0) {
+                final ColSettings settings = colSettings.get(colNo);
                 if (settings.isResizable()) {
-                    newWidth = Math.max(existingWidth + diff, 30);
+                    int newWidth = Math.max(existingWidth + diff, MIN_COL_WIDTH);
                     if (newWidth != existingWidth) {
                         // DataGrid allows you to resize a column by index
                         // rather than getting the column first but if you do
@@ -158,20 +156,45 @@ public class ResizeHandle<R> extends Widget {
                         // problem I get the column first and then use the
                         // setColumnWidth() method that takes a column instead
                         // of an index. The GWT control is not behaving consistently.
-                        dataGrid.resizeColumn(i, newWidth);
+                        dataGrid.resizeColumn(colNo, newWidth);
                     }
                 }
 
-                diff = diff + existingWidth - newWidth;
+// TODO: OLD CODE THAT REDUCED SIZE OF PREVIOUS COLS TOO IF NEEDED.
+//  KEPT HERE IN CASE WE WANT TO GO BACK TO IT.
 
-                // If there is no remaining negative diff to take off the
-                // previous column then exit.
-                if (diff >= 0) {
-                    break;
-                }
+//            for (int i = colNo; i >= 0; i--) {
+//                final Element col = headerRow.getChild(i).cast();
+//                final int existingWidth = col.getOffsetWidth();
+//                int newWidth = existingWidth;
+//
+//                final ColSettings settings = colSettings.get(i);
+//                if (settings.isResizable()) {
+//                    newWidth = Math.max(existingWidth + diff, 30);
+//                    if (newWidth != existingWidth) {
+//                        // DataGrid allows you to resize a column by index
+//                        // rather than getting the column first but if you do
+//                        // this then the grid will not remember to column sizes
+//                        // if you subsequently move a column. To avoid this
+//                        // problem I get the column first and then use the
+//                        // setColumnWidth() method that takes a column instead
+//                        // of an index. The GWT control is not behaving consistently.
+//                        dataGrid.resizeColumn(i, newWidth);
+//                    }
+//                }
+//
+//                diff = diff + existingWidth - newWidth;
+//
+//                // If there is no remaining negative diff to take off the
+//                // previous column then exit.
+//                if (diff >= 0) {
+//                    break;
+//                }
+//            }
+
+
+                dataGrid.resizeTableToFitColumns();
             }
-
-            dataGrid.resizeTableToFitColumns();
         }
 
         resizing = false;
@@ -191,8 +214,9 @@ public class ResizeHandle<R> extends Widget {
         resize(left);
     }
 
-    private void resize(final int left) {
+    private void resize(int left) {
         if (resizing) {
+            left = Math.max(minPos, left);
             getElement().getStyle().setLeft(left, Unit.PX);
             resizeLine.getStyle().setLeft(left + HALF_HANDLE_WIDTH - HALF_LINE_WIDTH, Unit.PX);
         }

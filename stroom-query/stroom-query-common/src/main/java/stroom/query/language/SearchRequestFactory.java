@@ -72,6 +72,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -1040,7 +1041,7 @@ public class SearchRequestFactory {
             String columnName = null;
             boolean afterAs = false;
             boolean doneAs = false;
-            int columnCount = 0;
+            final Map<String, AtomicInteger> columnCount = new HashMap<>();
             final List<Column> columns = new ArrayList<>();
 
             for (final AbstractToken token : children) {
@@ -1094,8 +1095,7 @@ public class SearchRequestFactory {
 
                 } else if (TokenType.COMMA.equals(token.getTokenType())) {
                     if (fieldToken != null) {
-                        columnCount++;
-                        final String columnId = "column-" + columnCount;
+                        final String columnId = createColumnId(columnCount, columnName);
                         columns.add(createColumn(
                                 fieldToken,
                                 columnId,
@@ -1108,8 +1108,7 @@ public class SearchRequestFactory {
                                 filterMap));
 
                     } else if (fieldExpression != null) {
-                        columnCount++;
-                        final String columnId = "column-" + columnCount;
+                        final String columnId = createColumnId(columnCount, columnName);
                         columns.add(createColumn(
                                 columnId,
                                 fieldExpression,
@@ -1131,8 +1130,7 @@ public class SearchRequestFactory {
 
             // Add final field if we have one.
             if (fieldToken != null) {
-                columnCount++;
-                final String columnId = "column-" + columnCount;
+                final String columnId = createColumnId(columnCount, columnName);
                 columns.add(createColumn(
                         fieldToken,
                         columnId,
@@ -1145,8 +1143,7 @@ public class SearchRequestFactory {
                         filterMap));
 
             } else if (fieldExpression != null) {
-                columnCount++;
-                final String columnId = "column-" + columnCount;
+                final String columnId = createColumnId(columnCount, columnName);
                 columns.add(createColumn(
                         columnId,
                         fieldExpression,
@@ -1160,6 +1157,16 @@ public class SearchRequestFactory {
             final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
                     compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
             tableSettingsBuilder.addColumns(modifiedColumns);
+        }
+
+        private String createColumnId(final Map<String, AtomicInteger> map, final String name) {
+            final String cleanName = name
+                    .trim()
+                    .toLowerCase(Locale.ROOT)
+                    .replaceAll("[^a-z0-9]", "_")
+                    .replaceAll("_+", "_");
+            final int id = map.computeIfAbsent(cleanName, k -> new AtomicInteger()).incrementAndGet();
+            return cleanName + "-" + id;
         }
 
         private Column createColumn(final AbstractToken token,

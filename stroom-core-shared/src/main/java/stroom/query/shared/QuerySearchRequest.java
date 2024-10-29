@@ -69,6 +69,8 @@ public class QuerySearchRequest {
     private final OffsetRange requestedRange;
     @JsonProperty
     private final Set<String> openGroups;
+    @JsonProperty
+    private final QueryTablePreferences queryTablePreferences;
 
     @JsonCreator
     public QuerySearchRequest(
@@ -80,7 +82,8 @@ public class QuerySearchRequest {
             @JsonProperty("timeout") final long timeout,
             @JsonProperty("storeHistory") final boolean storeHistory,
             @JsonProperty("requestedRange") final OffsetRange requestedRange,
-            @JsonProperty("openGroups") final Set<String> openGroups) {
+            @JsonProperty("openGroups") final Set<String> openGroups,
+            @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
         this.query = query;
@@ -90,6 +93,7 @@ public class QuerySearchRequest {
         this.storeHistory = storeHistory;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
+        this.queryTablePreferences = queryTablePreferences;
     }
 
     public SearchRequestSource getSearchRequestSource() {
@@ -132,6 +136,10 @@ public class QuerySearchRequest {
         return openGroups != null && openGroups.contains(group);
     }
 
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -149,7 +157,8 @@ public class QuerySearchRequest {
                 Objects.equals(query, that.query) &&
                 Objects.equals(queryContext, that.queryContext) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
-                Objects.equals(openGroups, that.openGroups);
+                Objects.equals(openGroups, that.openGroups) &&
+                Objects.equals(queryTablePreferences, that.queryTablePreferences);
     }
 
     @Override
@@ -163,7 +172,8 @@ public class QuerySearchRequest {
                 timeout,
                 storeHistory,
                 requestedRange,
-                openGroups);
+                openGroups,
+                queryTablePreferences);
     }
 
     @Override
@@ -178,6 +188,7 @@ public class QuerySearchRequest {
                 ", storeHistory=" + storeHistory +
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
+                ", queryTablePreferences=" + queryTablePreferences +
                 '}';
     }
 
@@ -203,6 +214,7 @@ public class QuerySearchRequest {
         private boolean storeHistory;
         private OffsetRange requestedRange = OffsetRange.ZERO_100;
         private Set<String> openGroups;
+        private QueryTablePreferences queryTablePreferences;
 
         private Builder() {
         }
@@ -215,6 +227,7 @@ public class QuerySearchRequest {
             this.incremental = request.incremental;
             this.timeout = request.timeout;
             this.storeHistory = request.storeHistory;
+            this.queryTablePreferences = request.queryTablePreferences;
         }
 
         /**
@@ -281,6 +294,11 @@ public class QuerySearchRequest {
             return this;
         }
 
+        public Builder queryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+            this.queryTablePreferences = queryTablePreferences;
+            return this;
+        }
+
         public QuerySearchRequest build() {
             return new QuerySearchRequest(
                     searchRequestSource,
@@ -291,7 +309,8 @@ public class QuerySearchRequest {
                     timeout,
                     storeHistory,
                     requestedRange,
-                    openGroups);
+                    openGroups,
+                    queryTablePreferences);
         }
     }
 }

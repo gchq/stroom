@@ -31,6 +31,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
@@ -71,6 +72,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private boolean polling;
     private SourceType sourceType = SourceType.QUERY_UI;
     private Set<String> currentHighlights;
+    private QueryTablePreferences queryTablePreferences;
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
@@ -153,13 +155,6 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
 
-//        final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
-//        if (resultComponentMap != null) {
-//            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
-//            if (dataSourceRef != null && expression != null) {
-//                // Copy the expression.
-//                ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
-//
         final QueryContext currentQueryContext = QueryContext
                 .builder()
                 .params(params)
@@ -180,6 +175,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
+                .queryTablePreferences(queryTablePreferences)
                 .build();
 //            }
 //        }
@@ -219,6 +215,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .storeHistory(false)
                     .openGroups(resultComponent.getOpenGroups())
                     .requestedRange(resultComponent.getRequestedRange())
+                    .queryTablePreferences(queryTablePreferences)
                     .build();
 
             exec = true;
@@ -291,6 +288,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .storeHistory(storeHistory)
                     .openGroups(openGroups)
                     .requestedRange(requestedRange)
+                    .queryTablePreferences(queryTablePreferences)
                     .build();
 
             restFactory
@@ -445,5 +443,9 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public Set<String> getCurrentHighlights() {
         return currentHighlights;
+    }
+
+    public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+        this.queryTablePreferences = queryTablePreferences;
     }
 }

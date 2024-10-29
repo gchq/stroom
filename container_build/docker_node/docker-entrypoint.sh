@@ -31,12 +31,7 @@ echo_version() {
   echo -e "${GREEN}${cmd} version: ${YELLOW}${version}${NC}"
 }
 
-echo 
-echo_version nvm
-echo_version node
-echo_version npm
-echo_version npx
-echo_version yarn
+echo
 
 # Re-set permission to the `stroom` user if current user is root
 # This avoids permission denied if the data volume is mounted by root

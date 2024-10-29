@@ -312,12 +312,14 @@ public class QueryDocEditPresenter
         this.docRef = docRef;
         queryEditPresenter.setTimeRange(entity.getTimeRange());
         queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
+        queryEditPresenter.read(entity.getQueryTablePreferences());
     }
 
     @Override
     protected QueryDoc onWrite(final QueryDoc entity) {
         entity.setTimeRange(queryEditPresenter.getTimeRange());
         entity.setQuery(queryEditPresenter.getQuery());
+        entity.setQueryTablePreferences(queryEditPresenter.write());
         return entity;
     }
 

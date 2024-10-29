@@ -28,7 +28,9 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -302,6 +304,26 @@ public class RulesPresenter
         update();
     }
 
+    public void read(final QueryTablePreferences queryTablePreferences) {
+        // We have to deal in field names (aka column names) here as all the
+        // exp tree code only has a single field/term name so can't cope with working with
+        // ids and mapping to col name for the ui.
+        this.fields = GwtNullSafe.list(queryTablePreferences.getColumns())
+                .stream()
+                .map(TablePresenter::buildDsField)
+                .collect(Collectors.toList());
+
+        if (queryTablePreferences.getConditionalFormattingRules() != null) {
+            this.rules = queryTablePreferences.getConditionalFormattingRules();
+        } else {
+            this.rules.clear();
+        }
+
+        listPresenter.getSelectionModel().clear();
+        setDirty(false);
+        update();
+    }
+
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
         final TableComponentSettings oldSettings = (TableComponentSettings) componentConfig.getSettings();
@@ -310,6 +332,13 @@ public class RulesPresenter
                 .conditionalFormattingRules(rules)
                 .build();
         return componentConfig.copy().settings(newSettings).build();
+    }
+
+    public QueryTablePreferences write(final QueryTablePreferences queryTablePreferences) {
+        return queryTablePreferences
+                .copy()
+                .conditionalFormattingRules(rules)
+                .build();
     }
 
     @Override

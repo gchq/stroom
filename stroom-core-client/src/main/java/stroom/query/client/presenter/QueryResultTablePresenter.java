@@ -21,13 +21,18 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
+import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
+import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.OffsetRange;
@@ -40,12 +45,15 @@ import stroom.query.client.presenter.TableRow.Cell;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -53,17 +61,21 @@ import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,7 +86,7 @@ import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasComponentSelection {
+        implements ResultComponent, HasComponentSelection, HasDirtyHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -96,6 +108,12 @@ public class QueryResultTablePresenter
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
+    private final InlineSvgToggleButton valueFilterButton;
+
+    private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
+    private final QueryTableColumnsManager columnsManager;
+    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
+    private List<Column> currentColumns = Collections.emptyList();
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -104,7 +122,9 @@ public class QueryResultTablePresenter
                                      final QueryResultTableView tableView,
                                      final PagerView pagerView,
                                      final DownloadPresenter downloadPresenter,
-                                     final ClientSecurityContext securityContext) {
+                                     final ClientSecurityContext securityContext,
+                                     final FormatPresenter formatPresenter,
+                                     final Provider<RulesPresenter> rulesPresenterProvider) {
         super(eventBus, tableView);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -112,12 +132,22 @@ public class QueryResultTablePresenter
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
+        dataGrid.addStyleName("TablePresenter");
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
         final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
                 false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+
+
+        columnsManager = new QueryTableColumnsManager(
+                this,
+                formatPresenter,
+                rulesPresenterProvider);
+        dataGrid.setHeadingListener(columnsManager);
+        columnsManager.setColumnsStartIndex(1);
+
 
         pagerView.setDataWidget(dataGrid);
         tableView.setTableView(pagerView);
@@ -142,6 +172,12 @@ public class QueryResultTablePresenter
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+
+        // Filter values
+        valueFilterButton = new InlineSvgToggleButton();
+        valueFilterButton.setSvg(SvgImage.FILTER);
+        valueFilterButton.setTitle("Filter Values");
+        pagerView.addButton(valueFilterButton);
     }
 
     private void toggleOpenGroup(final String group) {
@@ -215,6 +251,23 @@ public class QueryResultTablePresenter
                 }
             }
         }));
+
+        registerHandler(valueFilterButton.addClickHandler(event -> {
+            final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
+            queryTablePreferences = queryTablePreferences.copy().applyValueFilters(applyValueFilters).build();
+            setDirty(true);
+            refresh();
+            setApplyValueFilters(applyValueFilters);
+        }));
+    }
+
+    private void setApplyValueFilters(final boolean applyValueFilters) {
+        valueFilterButton.setState(applyValueFilters);
+        if (applyValueFilters) {
+            dataGrid.addStyleName("applyValueFilters");
+        } else {
+            dataGrid.removeStyleName("applyValueFilters");
+        }
     }
 
     private void setPause(final boolean pause,
@@ -227,7 +280,21 @@ public class QueryResultTablePresenter
         pagerView.getRefreshButton().setPaused(this.pause);
     }
 
-    private void refresh() {
+
+    void refresh() {
+        refresh(() -> {
+        });
+    }
+
+    public TableSectionElement getTableHeadElement() {
+        return dataGrid.getTableHeadElement();
+    }
+
+    public void setFocused(final boolean focused) {
+        dataGrid.setFocused(focused);
+    }
+
+    void refresh(final Runnable afterRefresh) {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
             currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
@@ -237,6 +304,8 @@ public class QueryResultTablePresenter
                     }
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
+                } finally {
+                    afterRefresh.run();
                 }
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
@@ -244,6 +313,7 @@ public class QueryResultTablePresenter
             RefreshRequestEvent.fire(this);
         }
     }
+
 
 //    @Override
 //    protected void addColumns(final boolean allowSelectAll) {
@@ -353,9 +423,6 @@ public class QueryResultTablePresenter
         }
     }
 
-    private List<Column> currentColumns;
-    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
-
     private void setDataInternal(final Result componentResult) {
         GWT.log("setDataInternal");
 
@@ -366,24 +433,76 @@ public class QueryResultTablePresenter
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                if (!Objects.equals(currentColumns, tableResult.getColumns())) {
-//                    final Set<String> newIdSet = tableResult
-//                            .getFields()
+                // Get result columns.
+                List<Column> columns = tableResult.getColumns();
+
+                if (columns != null && queryTablePreferences.getColumns() != null) {
+
+                    // Create a map of the result columns by id and remember the order that the result has them in.
+                    final Map<String, ColAndPosition> mapped = new HashMap<>();
+                    int position = 0;
+                    for (final Column column : columns) {
+                        mapped.put(column.getId(), new ColAndPosition(position++, column));
+                    }
+
+                    final List<ColAndPosition> fixedColumns = new ArrayList<>(columns.size());
+
+                    // Add columns based on preference order and add preferred widths.
+                    for (final Column prefColumn : queryTablePreferences.getColumns()) {
+                        final ColAndPosition colAndPosition = mapped.remove(prefColumn.getId());
+                        if (colAndPosition != null) {
+                            final Column col = colAndPosition.column;
+                            fixedColumns.add(new ColAndPosition(
+                                    colAndPosition.position,
+                                    col
+                                            .copy()
+                                            .width(prefColumn.getWidth())
+                                            .visible(prefColumn.isVisible())
+                                            .format(prefColumn.getFormat())
+                                            .build()));
+                        }
+                    }
+
+                    // Add in columns that we didn't have a preference for in the most sensible position.
+                    mapped.values().forEach(colAndPosition -> {
+                        int insertPos = 0;
+                        for (int i = 0; i < fixedColumns.size(); i++) {
+                            if (fixedColumns.get(i).position < colAndPosition.position) {
+                                insertPos = i + 1;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        fixedColumns.add(insertPos, colAndPosition);
+                    });
+
+                    columns = fixedColumns
+                            .stream()
+                            .map(c -> c.column)
+                            .collect(Collectors.toList());
+
+
+//                    // Adjust result columns to match UI preferences.
+//                    final Map<String, Column> prefs = queryTablePreferences
+//                            .getColumns()
 //                            .stream()
-//                            .map(Field::getId)
-//                            .collect(Collectors.toSet());
-
-                    // First remove stale fields.
-                    updateColumns(tableResult.getColumns());
-
-//                    removeAllColumns();
+//                            .collect(Collectors.toMap(Column::getId, c -> c));
 //
-//                    // Add new columns.
-//                    for (final Field field : tableResult.getFields()) {
-//                        addColumn(field);
-//                    }
-                    currentColumns = tableResult.getColumns();
+//                    final List<Column> fixedColumns = new ArrayList<>(columns.size());
+//                    columns.forEach(column -> {
+//                        final Column pref = prefs.get(column.getId());
+//                        if (pref != null) {
+//                            fixedColumns.add(column.copy().width(pref.getWidth()).build());
+//                        } else {
+//                            fixedColumns.add(column);
+//                        }
+//                    });
+//                    columns = fixedColumns;
                 }
+
+
+                updateColumns(columns);
 
                 final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
@@ -420,28 +539,26 @@ public class QueryResultTablePresenter
     }
 
     void updateColumns(final List<Column> columns) {
-//        // Now make sure special fields exist for stream id and event id.
-//        ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
+        if (!Objects.equals(currentColumns, columns)) {
+            currentColumns = columns;
 
-        // Remove existing columns.
-        for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
-            dataGrid.removeColumn(column);
-        }
-        existingColumns.clear();
+            // Remove existing columns.
+            removeAllColumns();
 
-//        final List<Field> fields = getTableSettings().getFields();
-        addExpanderColumn();
-//        fieldsManager.setFieldsStartIndex(1);
+            // Add expander column.
+            addExpanderColumn();
 
-        // Add fields as columns.
-        for (final Column column : columns) {
-            // Only include the field if it is supposed to be visible.
-            if (column.isVisible()) {
-                addColumn(column);
+            // Add columns.
+            for (final Column column : columns) {
+                // Only include the field if it is supposed to be visible.
+                if (column.isVisible()) {
+                    addColumn(column);
+                }
             }
-        }
 
-        dataGrid.resizeTableToFitColumns();
+//                dataGrid.redrawHeaders();
+            dataGrid.resizeTableToFitColumns();
+        }
     }
 
     private void addExpanderColumn() {
@@ -462,7 +579,7 @@ public class QueryResultTablePresenter
                     }
                 };
 
-        final ColumnHeader columnHeader = new ColumnHeader(column, null);
+        final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
     }
@@ -605,6 +722,25 @@ public class QueryResultTablePresenter
                 .collect(Collectors.toList());
     }
 
+    public List<Column> getCurrentColumns() {
+        return new ArrayList<>(currentColumns);
+    }
+
+    public void setPreferredColumns(final List<Column> columns) {
+        setQueryTablePreferences(queryTablePreferences.copy().columns(columns).build());
+        currentColumns = columns;
+        setDirty(true);
+    }
+
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
+    }
+
+    public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+        currentSearchModel.setQueryTablePreferences(queryTablePreferences);
+        this.queryTablePreferences = queryTablePreferences;
+    }
+
     @Override
     public List<ComponentSelection> getSelection() {
         return GwtNullSafe.list(selectionModel.getSelectedItems())
@@ -640,11 +776,45 @@ public class QueryResultTablePresenter
         return GwtNullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
     }
 
+    public QueryTablePreferences write() {
+        return queryTablePreferences;
+    }
+
+    public void read(final QueryTablePreferences queryTablePreferences) {
+        if (queryTablePreferences != null) {
+            this.queryTablePreferences = queryTablePreferences;
+            currentSearchModel.setQueryTablePreferences(queryTablePreferences);
+            // Change value filter state.
+            setApplyValueFilters(queryTablePreferences.applyValueFilters());
+            refresh();
+        }
+    }
+
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setDirty(final boolean dirty) {
+        DirtyEvent.fire(this, dirty);
+    }
+
     // --------------------------------------------------------------------------------
 
 
     public interface QueryResultTableView extends View {
 
         void setTableView(View view);
+    }
+
+    private static class ColAndPosition {
+
+        private final int position;
+        private final Column column;
+
+        public ColAndPosition(final int position, final Column column) {
+            this.position = position;
+            this.column = column;
+        }
     }
 }

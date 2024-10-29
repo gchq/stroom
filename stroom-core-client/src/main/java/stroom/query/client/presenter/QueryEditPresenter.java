@@ -35,6 +35,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.GwtNullSafe;
@@ -286,6 +287,7 @@ public class QueryEditPresenter
         }));
         registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
                 selectTab(e.getSelectedItem())));
+        registerHandler(queryResultPresenter.addDirtyHandler(e -> setDirty(true)));
     }
 
     @Override
@@ -411,6 +413,14 @@ public class QueryEditPresenter
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         queryModel.setTaskMonitorFactory(taskMonitorFactory);
         queryHelpPresenter.setTaskMonitorFactory(taskMonitorFactory);
+    }
+
+    public QueryTablePreferences write() {
+        return queryResultPresenter.write();
+    }
+
+    public void read(final QueryTablePreferences queryTablePreferences) {
+        queryResultPresenter.read(queryTablePreferences);
     }
 
 
