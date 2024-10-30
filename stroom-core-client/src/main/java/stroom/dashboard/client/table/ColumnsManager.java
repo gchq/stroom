@@ -36,13 +36,9 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
@@ -105,9 +101,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                     @Override
                     public void run() {
                         if (currentColIndex == colIndex) {
-                            HideMenuEvent
-                                    .builder()
-                                    .fire(tablePresenter);
+                            HideMenuEvent.builder().fire(tablePresenter);
 
                         } else {
                             currentColIndex = colIndex;
@@ -355,21 +349,6 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     @Override
     public void setValueFilter(final Column column,
                                final String valueFilter) {
-        final List<Column> columns = getColumns();
-        final int index = columns
-                .stream()
-                .filter(Column::isVisible)
-                .map(Column::getId)
-                .collect(Collectors.toList())
-                .indexOf(column.getId());
-        final Element input = getColumnInput(index);
-        final int selectionStart;
-        if (input != null) {
-            selectionStart = ElementUtil.getSelectionStart(input);
-        } else {
-            selectionStart = 0;
-        }
-
         ColumnFilter columnFilter = null;
         if (GwtNullSafe.isNonBlankString(valueFilter)) {
             // TODO : Add case sensitive option.
@@ -377,35 +356,9 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         }
 
         replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-        tablePresenter.setDirty(true);
-        tablePresenter.refresh(() -> focusHeader(index, selectionStart));
-    }
-
-
-    private void focusHeader(final int colNo, final int selectionStart) {
-        Scheduler.get().scheduleDeferred(() -> {
-            final Element newInput = getColumnInput(colNo);
-            if (newInput != null) {
-                FocusUtil.forceFocus(() -> {
-                    newInput.focus();
-                    ElementUtil.setSelectionStart(newInput, selectionStart);
-                });
-            }
-        });
-    }
-
-    private Element getColumnInput(final int colNo) {
         tablePresenter.setFocused(false);
-        final TableSectionElement tableSectionElement = tablePresenter.getTableHeadElement();
-        final Element tr = tableSectionElement.getFirstChildElement();
-        if (tr != null && colNo >= 0 && tr.getChildCount() > colNo + 1) {
-            final Element th = tr.getChild(colNo + 1).cast();
-            final NodeList<Element> nodes = th.getElementsByTagName("input");
-            if (nodes.getLength() > 0) {
-                return nodes.getItem(0);
-            }
-        }
-        return null;
+        tablePresenter.setDirty(true);
+        tablePresenter.refresh();
     }
 
     private List<Column> getColumns() {

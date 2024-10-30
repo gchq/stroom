@@ -61,7 +61,6 @@ import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableSectionElement;
@@ -280,21 +279,11 @@ public class QueryResultTablePresenter
         pagerView.getRefreshButton().setPaused(this.pause);
     }
 
-
-    void refresh() {
-        refresh(() -> {
-        });
-    }
-
-    public TableSectionElement getTableHeadElement() {
-        return dataGrid.getTableHeadElement();
-    }
-
     public void setFocused(final boolean focused) {
         dataGrid.setFocused(focused);
     }
 
-    void refresh(final Runnable afterRefresh) {
+    void refresh() {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
             currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
@@ -304,8 +293,6 @@ public class QueryResultTablePresenter
                     }
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
-                } finally {
-                    afterRefresh.run();
                 }
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });

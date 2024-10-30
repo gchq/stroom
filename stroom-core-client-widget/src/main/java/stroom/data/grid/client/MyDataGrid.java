@@ -59,7 +59,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
     private static final String MULTI_LINE = "multiline";
     private static final String ALLOW_HEADER_SELECTION = "allow-header-selection";
-    private static final int DEFAULT_INITIAL_MINIMUM_WIDTH = 100;
 
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
@@ -82,6 +81,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     public MyDataGrid(final int size) {
         super(size, RESOURCES);
+        setAutoHeaderRefreshDisabled(true);
+        setAutoFooterRefreshDisabled(true);
 
         // Set the message to display when the table is empty.
         setEmptyTableWidget(emptyTableWidget);
@@ -101,7 +102,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
-        final MultiSelectionModelImpl selectionModel = new MultiSelectionModelImpl<>(this);
+        final MultiSelectionModelImpl<R> selectionModel = new MultiSelectionModelImpl<>(this);
         final DataGridSelectionEventManager<R> selectionEventManager =
                 new DataGridSelectionEventManager<>(this, selectionModel, allowMultiSelect);
         setSelectionModel(selectionModel, selectionEventManager);
