@@ -253,7 +253,7 @@ public class QueryResultTablePresenter
 
         registerHandler(valueFilterButton.addClickHandler(event -> {
             final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
-            queryTablePreferences = queryTablePreferences.copy().applyValueFilters(applyValueFilters).build();
+            setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
             setDirty(true);
             refresh();
             setApplyValueFilters(applyValueFilters);
@@ -725,7 +725,9 @@ public class QueryResultTablePresenter
     }
 
     public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
-        currentSearchModel.setQueryTablePreferences(queryTablePreferences);
+        if (currentSearchModel != null) {
+            currentSearchModel.setQueryTablePreferences(queryTablePreferences);
+        }
         this.queryTablePreferences = queryTablePreferences;
     }
 

@@ -445,4 +445,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
         this.queryTablePreferences = queryTablePreferences;
     }
+
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
+    }
 }

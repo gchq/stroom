@@ -54,6 +54,7 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryResource;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -69,6 +70,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -108,7 +110,7 @@ public class EmbeddedQueryPresenter
 
     private QueryResultTablePresenter currentTablePresenter;
     private QueryResultVisPresenter currentVisPresenter;
-    private HandlerRegistration tableHandlerRegistration;
+    private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
     private List<String> currentErrors;
     private boolean initialised;
@@ -401,17 +403,16 @@ public class EmbeddedQueryPresenter
             currentTablePresenter = tablePresenterProvider.get();
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
-            tableHandlerRegistration =
-                    currentTablePresenter.getSelectionModel().addSelectionHandler(event ->
-                            getComponents().fireComponentChangeEvent(this));
+            currentTablePresenter.read(queryModel.getQueryTablePreferences());
+            tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> setDirty(true)));
+            tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
+                    .addSelectionHandler(event -> getComponents().fireComponentChangeEvent(this)));
         }
     }
 
     private void destroyCurrentTable() {
-        if (tableHandlerRegistration != null) {
-            tableHandlerRegistration.removeHandler();
-            tableHandlerRegistration = null;
-        }
+        tableHandlerRegistrations.forEach(HandlerRegistration::removeHandler);
+        tableHandlerRegistrations.clear();
 
         if (currentTablePresenter != null) {
 //            currentTablePresenter.onRemove();
@@ -537,15 +538,51 @@ public class EmbeddedQueryPresenter
 
     private void loadEmbeddedQuery() {
         initialised = false;
-        final DocRef queryRef = getQuerySettings().getQueryRef();
+        final EmbeddedQueryComponentSettings settings = getQuerySettings();
+        final DocRef queryRef = settings.getQueryRef();
         if (queryRef != null) {
             restFactory
                     .create(QUERY_RESOURCE)
                     .method(res -> res.fetch(queryRef.getUuid()))
                     .onSuccess(result -> {
                         if (result != null) {
+//                            final QueryTablePreferences.Builder builder;
+//                            // Merge preferences.
+//                            if (result.getQueryTablePreferences() != null) {
+//                                builder = result.getQueryTablePreferences().copy();
+//                            } else {
+//                                builder = QueryTablePreferences.builder();
+//                            }
+//
+//                            if (settings != null && settings.getQueryTablePreferences() != null) {
+//                                final QueryTablePreferences local = settings.getQueryTablePreferences();
+//                                if (local.getColumns() != null && local.getColumns().size() > 0) {
+//                                    builder.columns(local.getColumns());
+//                                }
+//                                if (local.getPageSize() != null) {
+//                                    builder.pageSize(local.getPageSize());
+//                                }
+//                                if (local.getConditionalFormattingRules() != null) {
+//                                    builder.conditionalFormattingRules(local.getConditionalFormattingRules());
+//                                }
+//                                builder.applyValueFilters(local.applyValueFilters());
+//                                if (local.getSelectionHandlers() != null) {
+//                                    builder.selectionHandlers(local.getSelectionHandlers());
+//                                }
+//                            }
+
+                            final QueryTablePreferences queryTablePreferences;
+                            if (settings.getQueryTablePreferences() != null) {
+                                queryTablePreferences = settings.getQueryTablePreferences();
+                            } else if (result.getQueryTablePreferences() != null) {
+                                queryTablePreferences = result.getQueryTablePreferences();
+                            } else {
+                                queryTablePreferences = QueryTablePreferences.builder().build();
+                            }
+
                             // Read expression.
                             queryModel.init(result.asDocRef());
+                            queryModel.setQueryTablePreferences(queryTablePreferences);
                             query = result.getQuery();
                             initialised = true;
                             if (queryOnOpen) {
@@ -560,11 +597,17 @@ public class EmbeddedQueryPresenter
 
     @Override
     public ComponentConfig write() {
+        QueryTablePreferences queryTablePreferences = queryModel.getQueryTablePreferences();
+        if (currentTablePresenter != null) {
+            queryTablePreferences = currentTablePresenter.write();
+        }
+
         // Write expression.
         setSettings(getQuerySettings()
                 .copy()
                 .lastQueryKey(queryModel.getCurrentQueryKey())
                 .lastQueryNode(queryModel.getCurrentNode())
+                .queryTablePreferences(queryTablePreferences)
                 .build());
         return super.write();
     }

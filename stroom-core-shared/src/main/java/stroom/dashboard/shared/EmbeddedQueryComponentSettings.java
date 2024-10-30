@@ -19,6 +19,7 @@ package stroom.dashboard.shared;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,7 +36,8 @@ import java.util.Objects;
         "selectionHandlers",
         "lastQueryKey",
         "lastQueryNode",
-        "showTable"
+        "showTable",
+        "queryTablePreferences"
 })
 @JsonInclude(Include.NON_NULL)
 public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettings {
@@ -44,6 +46,8 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
     private final DocRef queryRef;
     @JsonProperty
     private final Boolean showTable;
+    @JsonProperty
+    private final QueryTablePreferences queryTablePreferences;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
@@ -52,10 +56,12 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
                                           @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
                                           @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
                                           @JsonProperty("lastQueryNode") final String lastQueryNode,
-                                          @JsonProperty("showTable") final Boolean showTable) {
+                                          @JsonProperty("showTable") final Boolean showTable,
+                                          @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
         this.queryRef = queryRef;
         this.showTable = showTable;
+        this.queryTablePreferences = queryTablePreferences;
     }
 
     public DocRef getQueryRef() {
@@ -64,6 +70,10 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
 
     public Boolean getShowTable() {
         return showTable;
+    }
+
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
     }
 
     @Override
@@ -79,12 +89,13 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
         }
         final EmbeddedQueryComponentSettings that = (EmbeddedQueryComponentSettings) o;
         return Objects.equals(queryRef, that.queryRef) &&
-                Objects.equals(showTable, that.showTable);
+                Objects.equals(showTable, that.showTable) &&
+                Objects.equals(queryTablePreferences, that.queryTablePreferences);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), queryRef, showTable);
+        return Objects.hash(super.hashCode(), queryRef, showTable, queryTablePreferences);
     }
 
     public static Builder builder() {
@@ -104,6 +115,7 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
 
         private DocRef queryRef;
         private Boolean showTable;
+        private QueryTablePreferences queryTablePreferences;
 
         private Builder() {
             super();
@@ -113,6 +125,7 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
             super(settings);
             this.queryRef = settings.queryRef;
             this.showTable = settings.showTable;
+            this.queryTablePreferences = settings.queryTablePreferences;
         }
 
         public Builder queryRef(final DocRef queryRef) {
@@ -122,6 +135,11 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
 
         public Builder showTable(final Boolean showTable) {
             this.showTable = showTable;
+            return self();
+        }
+
+        public Builder queryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+            this.queryTablePreferences = queryTablePreferences;
             return self();
         }
 
@@ -138,7 +156,8 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
                     selectionHandlers,
                     lastQueryKey,
                     lastQueryNode,
-                    showTable);
+                    showTable,
+                    queryTablePreferences);
         }
     }
 }
