@@ -73,24 +73,14 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .withToolTip("Rows matching this expression will be formatted by this rule.")
                         .build(),
                 200);
-        // Background colour.
-        dataGrid.addColumn(
-                DataGridUtil.colourSwatchColumnBuilder(ConditionalFormattingRule::getBackgroundColor)
+        // Style.
+        dataGrid.addColumn(DataGridUtil.htmlColumnBuilder(ConditionalFormattingSwatchUtil::createTableCell)
                         .enabledWhen(ConditionalFormattingRule::isEnabled)
                         .build(),
-                DataGridUtil.headingBuilder("Background Colour")
-                        .withToolTip("The background colour of matching rows.")
+                DataGridUtil.headingBuilder("Style")
+                        .withToolTip("The style of matching rows.")
                         .build(),
-                150);
-        // Text colour.
-        dataGrid.addColumn(
-                DataGridUtil.colourSwatchColumnBuilder(ConditionalFormattingRule::getTextColor)
-                        .enabledWhen(ConditionalFormattingRule::isEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Text Colour")
-                        .withToolTip("The text colour of matching rows.")
-                        .build(),
-                150);
+                200);
         // Hide.
         addHideColumn();
 

@@ -186,3 +186,7 @@ AND {defaultField matches regex (wo?man$}
 =====
 AND {defaultField matches regex ^man}
 -----
+a
+=====
+AND {defaultField contains a}
+-----

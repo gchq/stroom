@@ -31,45 +31,46 @@ import java.util.Objects;
         "values",
         "depth",
         "backgroundColor",
-        "textColor"})
+        "textColor",
+        "style"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A row of data in a result set")
 public final class Row {
 
-    @Schema(description = "TODO",
-            required = true)
     @JsonProperty
     private final String groupKey;
 
     @Schema(description = "The value for this row of data. The values in the list are in the same order as the " +
-            "fields in the ResultRequest",
-            required = true)
+            "fields in the ResultRequest"
+    )
     @JsonProperty
     private final List<String> values;
 
     @Schema(description = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
-            example = "0",
-            required = true)
+            example = "0")
     @JsonProperty
     private final Integer depth;
 
     @JsonProperty
     private final String backgroundColor;
-
     @JsonProperty
     private final String textColor;
+    @JsonProperty
+    private final ConditionalFormattingStyle style;
 
     @JsonCreator
     public Row(@JsonProperty("groupKey") final String groupKey,
                @JsonProperty("values") final List<String> values,
                @JsonProperty("depth") final Integer depth,
                @JsonProperty("backgroundColor") final String backgroundColor,
-               @JsonProperty("textColor") final String textColor) {
+               @JsonProperty("textColor") final String textColor,
+               @JsonProperty("style") final ConditionalFormattingStyle style) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
         this.backgroundColor = backgroundColor;
         this.textColor = textColor;
+        this.style = style;
     }
 
     public String getGroupKey() {
@@ -92,6 +93,10 @@ public final class Row {
         return textColor;
     }
 
+    public ConditionalFormattingStyle getStyle() {
+        return style;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -105,12 +110,13 @@ public final class Row {
                 Objects.equals(values, row.values) &&
                 Objects.equals(depth, row.depth) &&
                 Objects.equals(backgroundColor, row.backgroundColor) &&
-                Objects.equals(textColor, row.textColor);
+                Objects.equals(textColor, row.textColor) &&
+                Objects.equals(style, row.style);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey, values, depth, backgroundColor, textColor);
+        return Objects.hash(groupKey, values, depth, backgroundColor, textColor, style);
     }
 
     @Override
@@ -121,6 +127,7 @@ public final class Row {
                 ", depth=" + depth +
                 ", backgroundColor='" + backgroundColor + '\'' +
                 ", textColor='" + textColor + '\'' +
+                ", style='" + style + '\'' +
                 '}';
     }
 
@@ -139,9 +146,10 @@ public final class Row {
 
         private String groupKey;
         private List<String> values;
-        private Integer depth;
+        private Integer depth = 0;
         private String backgroundColor;
         private String textColor;
+        private ConditionalFormattingStyle style;
 
         private Builder() {
         }
@@ -152,6 +160,7 @@ public final class Row {
             depth = row.depth;
             backgroundColor = row.backgroundColor;
             textColor = row.textColor;
+            style = row.style;
         }
 
         /**
@@ -192,8 +201,13 @@ public final class Row {
             return this;
         }
 
+        public Builder style(final ConditionalFormattingStyle style) {
+            this.style = style;
+            return this;
+        }
+
         public Row build() {
-            return new Row(groupKey, values, depth, backgroundColor, textColor);
+            return new Row(groupKey, values, depth, backgroundColor, textColor, style);
         }
     }
 }

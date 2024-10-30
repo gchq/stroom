@@ -662,7 +662,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     row.getGroupKey(),
                     cellsMap,
                     row.getBackgroundColor(),
-                    row.getTextColor()));
+                    row.getTextColor(),
+                    row.getStyle()));
         }
 
         // Set the expander column width.

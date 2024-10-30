@@ -11,7 +11,12 @@ public class TableRowStyles implements RowStyles<TableRow> {
 
     @Override
     public String getStyleNames(final TableRow row, final int rowIndex) {
-        // Row styles.
+        // Fixed styles.
+        if (row.getStyle() != null) {
+            return row.getStyle().getCssClassName();
+        }
+
+        // Custom row styles.
         if (GwtNullSafe.isNonBlankString(row.getBackgroundColor()) ||
                 GwtNullSafe.isNonBlankString(row.getTextColor())) {
             final SafeStylesBuilder rowStyle = new SafeStylesBuilder();

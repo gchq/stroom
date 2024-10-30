@@ -137,7 +137,7 @@ public class ExpressionPredicateBuilder {
         termField = termField.trim();
         final ValueFunctionFactory<T> valueFunctionFactory = valueFunctionFactories.get(termField);
         if (valueFunctionFactory == null) {
-            throw new MatchException("QueryField not found: " + termField);
+            throw new MatchException("Field not found: " + termField);
         }
 
         if (Condition.IS_NULL.equals(condition)) {
