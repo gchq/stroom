@@ -47,12 +47,15 @@ public abstract class AbstractQueryTest {
         final List<String> inputs = new ArrayList<>();
         int end = 0;
         while (matcher.find(end)) {
-            final String input = in.substring(end, matcher.start());
-            if (!input.isEmpty()) {
-                inputs.add(input);
+            final String substring = in.substring(end, matcher.start());
+            if (!substring.isEmpty()) {
+                inputs.add(substring);
             }
-
             end = matcher.end();
+        }
+        final String substring = in.substring(end);
+        if (!substring.isEmpty()) {
+            inputs.add(substring);
         }
 
 
