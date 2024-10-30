@@ -63,7 +63,6 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
@@ -81,6 +80,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
@@ -109,7 +110,8 @@ public class QueryResultTablePresenter
     private final DownloadPresenter downloadPresenter;
     private final InlineSvgToggleButton valueFilterButton;
 
-    private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
+    private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
+    private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
     private final QueryTableColumnsManager columnsManager;
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private List<Column> currentColumns = Collections.emptyList();
@@ -252,6 +254,7 @@ public class QueryResultTablePresenter
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> {
+            final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
             final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
             setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
             setDirty(true);
@@ -283,7 +286,7 @@ public class QueryResultTablePresenter
         dataGrid.setFocused(focused);
     }
 
-    void refresh() {
+    public void refresh() {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
             currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
@@ -413,6 +416,7 @@ public class QueryResultTablePresenter
     private void setDataInternal(final Result componentResult) {
         GWT.log("setDataInternal");
 
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         ignoreRangeChange = true;
 
         try {
@@ -715,20 +719,17 @@ public class QueryResultTablePresenter
     }
 
     public void setPreferredColumns(final List<Column> columns) {
-        setQueryTablePreferences(queryTablePreferences.copy().columns(columns).build());
+        setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
         setDirty(true);
     }
 
-    public QueryTablePreferences getQueryTablePreferences() {
-        return queryTablePreferences;
+    QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferencesSupplier.get();
     }
 
-    public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
-        if (currentSearchModel != null) {
-            currentSearchModel.setQueryTablePreferences(queryTablePreferences);
-        }
-        this.queryTablePreferences = queryTablePreferences;
+    void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+        queryTablePreferencesConsumer.accept(queryTablePreferences);
     }
 
     @Override
@@ -766,18 +767,18 @@ public class QueryResultTablePresenter
         return GwtNullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
     }
 
-    public QueryTablePreferences write() {
-        return queryTablePreferences;
+    public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
+        this.queryTablePreferencesSupplier = queryTablePreferencesSupplier;
     }
 
-    public void read(final QueryTablePreferences queryTablePreferences) {
-        if (queryTablePreferences != null) {
-            this.queryTablePreferences = queryTablePreferences;
-            currentSearchModel.setQueryTablePreferences(queryTablePreferences);
-            // Change value filter state.
-            setApplyValueFilters(queryTablePreferences.applyValueFilters());
-            refresh();
-        }
+    public void setQueryTablePreferencesConsumer(final Consumer<QueryTablePreferences> queryTablePreferencesConsumer) {
+        this.queryTablePreferencesConsumer = queryTablePreferencesConsumer;
+    }
+
+    public void update() {
+        // Change value filter state.
+        setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
+        refresh();
     }
 
     @Override

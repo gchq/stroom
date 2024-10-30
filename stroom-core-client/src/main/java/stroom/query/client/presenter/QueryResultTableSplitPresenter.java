@@ -17,7 +17,6 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.IndexConstants;
-import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.SourceLocation;
@@ -36,6 +35,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class QueryResultTableSplitPresenter
         extends MyPresenterWidget<QueryResultTableSplitView>
@@ -163,12 +164,12 @@ public class QueryResultTableSplitPresenter
         tablePresenter.setData(componentResult);
     }
 
-    public QueryTablePreferences write() {
-        return tablePresenter.write();
+    public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
+        tablePresenter.setQueryTablePreferencesSupplier(queryTablePreferencesSupplier);
     }
 
-    public void read(final QueryTablePreferences queryTablePreferences) {
-        tablePresenter.read(queryTablePreferences);
+    public void setQueryTablePreferencesConsumer(final Consumer<QueryTablePreferences> queryTablePreferencesConsumer) {
+        tablePresenter.setQueryTablePreferencesConsumer(queryTablePreferencesConsumer);
     }
 
     @Override

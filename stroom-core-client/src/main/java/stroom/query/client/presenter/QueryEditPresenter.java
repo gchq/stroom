@@ -75,6 +75,7 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
+    private final QueryTablePreferencesHolder queryTablePreferencesHolder = new QueryTablePreferencesHolder();
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
@@ -106,6 +107,9 @@ public class QueryEditPresenter
         this.visPresenterProvider = visPresenterProvider;
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
+
+        queryResultPresenter.setQueryTablePreferencesSupplier(queryTablePreferencesHolder);
+        queryResultPresenter.setQueryTablePreferencesConsumer(queryTablePreferencesHolder);
 
         final ResultComponent resultConsumer = new ResultComponent() {
             boolean start;
@@ -181,7 +185,8 @@ public class QueryEditPresenter
                 eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
-                resultStoreModel);
+                resultStoreModel,
+                queryTablePreferencesHolder);
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
 
@@ -416,11 +421,11 @@ public class QueryEditPresenter
     }
 
     public QueryTablePreferences write() {
-        return queryResultPresenter.write();
+        return queryTablePreferencesHolder.get();
     }
 
     public void read(final QueryTablePreferences queryTablePreferences) {
-        queryResultPresenter.read(queryTablePreferences);
+        queryTablePreferencesHolder.accept(queryTablePreferences);
     }
 
 

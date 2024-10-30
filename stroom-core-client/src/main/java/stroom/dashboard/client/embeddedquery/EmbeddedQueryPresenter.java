@@ -116,6 +116,7 @@ public class EmbeddedQueryPresenter
     private boolean initialised;
     private Timer autoRefreshTimer;
     private ExpressionOperator currentDecoration;
+    private DocRef loadedQueryRef;
 
     @Inject
     public EmbeddedQueryPresenter(final EventBus eventBus,
@@ -289,7 +290,8 @@ public class EmbeddedQueryPresenter
                 eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
-                resultStoreModel);
+                resultStoreModel,
+                () -> getQuerySettings().getQueryTablePreferences());
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableResultConsumer);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, visResultConsumer);
         queryModel.addSearchStateListener(this);
@@ -401,9 +403,13 @@ public class EmbeddedQueryPresenter
     private void createNewTable() {
         if (currentTablePresenter == null) {
             currentTablePresenter = tablePresenterProvider.get();
+            currentTablePresenter.setQueryTablePreferencesSupplier(() ->
+                    getQuerySettings().getQueryTablePreferences());
+            currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
+                    setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build()));
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
-            currentTablePresenter.read(queryModel.getQueryTablePreferences());
+            currentTablePresenter.update();
             tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> setDirty(true)));
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
                     .addSelectionHandler(event -> getComponents().fireComponentChangeEvent(this)));
@@ -423,9 +429,8 @@ public class EmbeddedQueryPresenter
     private void createNewVis() {
         if (currentVisPresenter == null) {
             final VisSelectionModel visSelectionModel = new VisSelectionModel();
-            visSelectionModel.addSelectionHandler(event -> {
-                getComponents().fireComponentChangeEvent(EmbeddedQueryPresenter.this);
-            });
+            visSelectionModel.addSelectionHandler(event ->
+                    getComponents().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
 
             currentVisPresenter = visPresenterProvider.get();
             currentVisPresenter.setQueryModel(queryModel);
@@ -540,7 +545,8 @@ public class EmbeddedQueryPresenter
         initialised = false;
         final EmbeddedQueryComponentSettings settings = getQuerySettings();
         final DocRef queryRef = settings.getQueryRef();
-        if (queryRef != null) {
+        if (queryRef != null && !Objects.equals(queryRef, loadedQueryRef)) {
+            loadedQueryRef = queryRef;
             restFactory
                     .create(QUERY_RESOURCE)
                     .method(res -> res.fetch(queryRef.getUuid()))
@@ -571,18 +577,25 @@ public class EmbeddedQueryPresenter
 //                                }
 //                            }
 
-                            final QueryTablePreferences queryTablePreferences;
-                            if (settings.getQueryTablePreferences() != null) {
-                                queryTablePreferences = settings.getQueryTablePreferences();
-                            } else if (result.getQueryTablePreferences() != null) {
-                                queryTablePreferences = result.getQueryTablePreferences();
-                            } else {
-                                queryTablePreferences = QueryTablePreferences.builder().build();
+                            if (settings.getQueryTablePreferences() == null && result.getQueryTablePreferences() != null) {
+                                setSettings(settings
+                                        .copy()
+                                        .queryTablePreferences(result.getQueryTablePreferences())
+                                        .build());
                             }
+
+//                            final QueryTablePreferences queryTablePreferences;
+//                            if (settings.getQueryTablePreferences() != null) {
+//                                queryTablePreferences = settings.getQueryTablePreferences();
+//                            } else if (result.getQueryTablePreferences() != null) {
+//                                queryTablePreferences = result.getQueryTablePreferences();
+//                            } else {
+//                                queryTablePreferences = QueryTablePreferences.builder().build();
+//                            }
 
                             // Read expression.
                             queryModel.init(result.asDocRef());
-                            queryModel.setQueryTablePreferences(queryTablePreferences);
+//                            queryModel.setQueryTablePreferences(queryTablePreferences);
                             query = result.getQuery();
                             initialised = true;
                             if (queryOnOpen) {
@@ -596,18 +609,20 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public ComponentConfig write() {
-        QueryTablePreferences queryTablePreferences = queryModel.getQueryTablePreferences();
+    public void setSettings(final ComponentSettings componentSettings) {
+        super.setSettings(componentSettings);
         if (currentTablePresenter != null) {
-            queryTablePreferences = currentTablePresenter.write();
+            currentTablePresenter.refresh();
         }
+    }
 
+    @Override
+    public ComponentConfig write() {
         // Write expression.
         setSettings(getQuerySettings()
                 .copy()
                 .lastQueryKey(queryModel.getCurrentQueryKey())
                 .lastQueryNode(queryModel.getCurrentNode())
-                .queryTablePreferences(queryTablePreferences)
                 .build());
         return super.write();
     }
@@ -733,6 +748,9 @@ public class EmbeddedQueryPresenter
     @Override
     protected void changeSettings() {
         super.changeSettings();
+        if (currentTablePresenter != null) {
+            currentTablePresenter.refresh();
+        }
         loadEmbeddedQuery();
     }
 

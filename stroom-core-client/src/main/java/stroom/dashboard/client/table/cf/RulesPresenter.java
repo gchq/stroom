@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.QueryField;
 import stroom.document.client.event.DirtyEvent;
@@ -208,7 +209,7 @@ public class RulesPresenter
         selectionBoxModel.addItems(fields);
         editRulePresenter.read(newRule, selectionBoxModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 550);
+        final PopupSize popupSize = PopupSize.resizable(1000, 700);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -266,8 +267,18 @@ public class RulesPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
+        if (componentConfig.getSettings() instanceof TableComponentSettings) {
+            final TableComponentSettings tableComponentSettings =
+                    (TableComponentSettings) componentConfig.getSettings();
+            read(tableComponentSettings);
+        } else if (componentConfig.getSettings() instanceof EmbeddedQueryComponentSettings) {
+            final EmbeddedQueryComponentSettings embeddedQueryComponentSettings =
+                    (EmbeddedQueryComponentSettings) componentConfig.getSettings();
+            read(embeddedQueryComponentSettings.getQueryTablePreferences());
+        }
+    }
 
+    private void read(final TableComponentSettings settings) {
 //        final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
 
 //        final Function<Field, DataSourceField.DataSourceFieldType> typeMapper = field -> {
@@ -328,12 +339,26 @@ public class RulesPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        final TableComponentSettings oldSettings = (TableComponentSettings) componentConfig.getSettings();
-        final TableComponentSettings newSettings = oldSettings
-                .copy()
-                .conditionalFormattingRules(rules)
-                .build();
-        return componentConfig.copy().settings(newSettings).build();
+        if (componentConfig.getSettings() instanceof TableComponentSettings) {
+            final TableComponentSettings oldSettings =
+                    (TableComponentSettings) componentConfig.getSettings();
+            final TableComponentSettings newSettings = oldSettings
+                    .copy()
+                    .conditionalFormattingRules(rules)
+                    .build();
+            return componentConfig.copy().settings(newSettings).build();
+        } else if (componentConfig.getSettings() instanceof EmbeddedQueryComponentSettings) {
+            final EmbeddedQueryComponentSettings oldSettings =
+                    (EmbeddedQueryComponentSettings) componentConfig.getSettings();
+            final QueryTablePreferences queryTablePreferences =
+                    write(oldSettings.getQueryTablePreferences());
+            final EmbeddedQueryComponentSettings newSettings = oldSettings
+                    .copy()
+                    .queryTablePreferences(queryTablePreferences)
+                    .build();
+            return componentConfig.copy().settings(newSettings).build();
+        }
+        throw new RuntimeException("Unexpected type");
     }
 
     public QueryTablePreferences write(final QueryTablePreferences queryTablePreferences) {

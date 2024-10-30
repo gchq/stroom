@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
@@ -72,7 +73,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private boolean polling;
     private SourceType sourceType = SourceType.QUERY_UI;
     private Set<String> currentHighlights;
-    private QueryTablePreferences queryTablePreferences;
+    private final Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
@@ -82,11 +83,13 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     public QueryModel(final EventBus eventBus,
                       final RestFactory restFactory,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
-                      final ResultStoreModel resultStoreModel) {
+                      final ResultStoreModel resultStoreModel,
+                      final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
+        this.queryTablePreferencesSupplier = queryTablePreferencesSupplier;
     }
 
     public void addResultComponent(final String componentId, final ResultComponent resultComponent) {
@@ -175,7 +178,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
-                .queryTablePreferences(queryTablePreferences)
+                .queryTablePreferences(queryTablePreferencesSupplier.get())
                 .build();
 //            }
 //        }
@@ -212,7 +215,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .storeHistory(false)
                     .openGroups(resultComponent.getOpenGroups())
                     .requestedRange(resultComponent.getRequestedRange())
-                    .queryTablePreferences(queryTablePreferences)
+                    .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();
 
             exec = true;
@@ -285,7 +288,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .storeHistory(storeHistory)
                     .openGroups(openGroups)
                     .requestedRange(requestedRange)
-                    .queryTablePreferences(queryTablePreferences)
+                    .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();
 
             restFactory
@@ -440,13 +443,5 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public Set<String> getCurrentHighlights() {
         return currentHighlights;
-    }
-
-    public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
-        this.queryTablePreferences = queryTablePreferences;
-    }
-
-    public QueryTablePreferences getQueryTablePreferences() {
-        return queryTablePreferences;
     }
 }

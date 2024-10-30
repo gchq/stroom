@@ -18,6 +18,7 @@ package stroom.dashboard.client.embeddedquery;
 
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.query.SelectionHandlersPresenter;
+import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -42,6 +43,7 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
     public EmbeddedQuerySettingsPresenter(final EventBus eventBus,
                                           final LinkTabsLayoutView view,
                                           final BasicEmbeddedQuerySettingsPresenter basicSettingsPresenter,
+                                          final RulesPresenter rulesPresenter,
                                           final SelectionHandlersPresenter selectionHandlersPresenter,
                                           final RestFactory restFactory) {
         super(eventBus, view);
@@ -74,6 +76,7 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
         });
 
         addTab("Basic", basicSettingsPresenter);
+        addTab("Conditional Formatting", rulesPresenter);
         addTab("Selection Handlers", selectionHandlersPresenter);
     }
 }
