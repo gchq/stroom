@@ -40,11 +40,13 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
+import java.util.Objects;
 
 public class RuleListPresenter extends MyPresenterWidget<PagerView> implements HasDirtyHandlers {
 
     private final MyDataGrid<ConditionalFormattingRule> dataGrid;
     private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
+    private List<ConditionalFormattingRule> currentData;
 
     @Inject
     public RuleListPresenter(final EventBus eventBus,
@@ -95,9 +97,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build();
 
         enabledColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            row.setEnabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()));
-            setDirty(true);
-            dataGrid.redraw();
+            replaceRow(row, row.copy().enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean())).build());
         });
 
         dataGrid.addColumn(
@@ -116,9 +116,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build();
 
         hideColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            row.setHide(GwtNullSafe.isTrue(tickBoxState.toBoolean()));
-            setDirty(true);
-            dataGrid.redraw();
+            replaceRow(row, row.copy().hide(GwtNullSafe.isTrue(tickBoxState.toBoolean())).build());
         });
 
         dataGrid.addColumn(hideColumn,
@@ -128,9 +126,30 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                 70);
     }
 
+    private void replaceRow(final ConditionalFormattingRule oldRow, final ConditionalFormattingRule newRow) {
+        final int i = currentData.indexOf(oldRow);
+        if (i != -1) {
+            currentData.set(i, newRow);
+            final boolean selected = Objects.equals(selectionModel.getSelected(), oldRow);
+            if (selected) {
+                selectionModel.setSelected(newRow);
+            }
+
+            final int keyboardSelected = dataGrid.getKeyboardSelectedRow();
+            refresh();
+            dataGrid.setKeyboardSelectedRow(keyboardSelected);
+            setDirty(true);
+        }
+    }
+
     public void setData(final List<ConditionalFormattingRule> data) {
-        dataGrid.setRowData(0, data);
-        dataGrid.setRowCount(data.size());
+        this.currentData = data;
+        refresh();
+    }
+
+    private void refresh() {
+        dataGrid.setRowData(0, currentData);
+        dataGrid.setRowCount(currentData.size());
     }
 
     public MultiSelectionModel<ConditionalFormattingRule> getSelectionModel() {

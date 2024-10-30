@@ -115,6 +115,7 @@ public class RulesPresenter
             if (selected != null) {
                 final ConditionalFormattingRule newRule = selected
                         .copy()
+                        .id(RandomId.createId(5))
                         .build();
 
                 final int index = rules.indexOf(selected);
@@ -315,13 +316,7 @@ public class RulesPresenter
                 .collect(Collectors.toList());
 
         if (queryTablePreferences.getConditionalFormattingRules() != null) {
-            // Deep copy all rules so we can detect changes after writing.
-            // This is only needed as the rules can be mutated by the table on changing the enabled state.
-            this.rules = new ArrayList<>(queryTablePreferences
-                    .getConditionalFormattingRules()
-                    .stream()
-                    .map(rule -> rule.copy().build())
-                    .collect(Collectors.toList()));
+            this.rules = new ArrayList<>(queryTablePreferences.getConditionalFormattingRules());
         } else {
             this.rules = new ArrayList<>();
         }

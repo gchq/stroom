@@ -62,7 +62,7 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
     }
 
     ConditionalFormattingRule write() {
-        String id = null;
+        final String id;
         if (originalRule != null && originalRule.getId() != null) {
             id = originalRule.getId();
         } else {

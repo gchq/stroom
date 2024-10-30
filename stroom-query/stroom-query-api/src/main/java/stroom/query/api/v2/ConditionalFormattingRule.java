@@ -26,13 +26,13 @@ public class ConditionalFormattingRule {
     @JsonProperty("expression")
     private final ExpressionOperator expression;
     @JsonProperty("hide")
-    private boolean hide;
+    private final boolean hide;
     @JsonProperty("backgroundColor")
     private final String backgroundColor;
     @JsonProperty("textColor")
     private final String textColor;
     @JsonProperty("enabled")
-    private boolean enabled;
+    private final boolean enabled;
 
     @JsonProperty("style")
     private final ConditionalFormattingStyle style;
@@ -70,10 +70,6 @@ public class ConditionalFormattingRule {
         return hide;
     }
 
-    public void setHide(final boolean hide) {
-        this.hide = hide;
-    }
-
     public String getBackgroundColor() {
         return backgroundColor;
     }
@@ -84,10 +80,6 @@ public class ConditionalFormattingRule {
 
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     public ConditionalFormattingStyle getStyle() {
