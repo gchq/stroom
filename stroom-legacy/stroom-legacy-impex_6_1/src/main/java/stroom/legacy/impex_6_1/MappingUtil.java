@@ -223,7 +223,9 @@ public final class MappingUtil {
                 value.isHide(),
                 value.getBackgroundColor(),
                 value.getTextColor(),
-                value.isEnabled());
+                value.isEnabled(),
+                null,
+                null);
     }
 
     public static stroom.dashboard.shared.VisComponentSettings map(stroom.legacy.model_6_1.VisComponentSettings value) {

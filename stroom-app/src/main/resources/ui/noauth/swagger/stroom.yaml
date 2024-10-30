@@ -8550,6 +8550,8 @@ components:
       properties:
         backgroundColor:
           type: string
+        customStyle:
+          type: boolean
         enabled:
           type: boolean
         expression:
@@ -8558,6 +8560,28 @@ components:
           type: boolean
         id:
           type: string
+        style:
+          type: string
+          enum:
+          - RED
+          - PINK
+          - PURPLE
+          - DEEP_PURPLE
+          - INDIGO
+          - BLUE
+          - LIGHT_BLUE
+          - CYAN
+          - TEAL
+          - GREEN
+          - LIGHT_GREEN
+          - LIME
+          - YELLOW
+          - AMBER
+          - ORANGE
+          - DEEP_ORANGE
+          - BROWN
+          - GREY
+          - BLUE_GREY
         textColor:
           type: string
     ConfigProperty:
@@ -14654,7 +14678,28 @@ components:
           example: 0
         groupKey:
           type: string
-          description: TODO
+        style:
+          type: string
+          enum:
+          - RED
+          - PINK
+          - PURPLE
+          - DEEP_PURPLE
+          - INDIGO
+          - BLUE
+          - LIGHT_BLUE
+          - CYAN
+          - TEAL
+          - GREEN
+          - LIGHT_GREEN
+          - LIME
+          - YELLOW
+          - AMBER
+          - ORANGE
+          - DEEP_ORANGE
+          - BROWN
+          - GREY
+          - BLUE_GREY
         textColor:
           type: string
         values:
@@ -14665,10 +14710,6 @@ components:
             type: string
             description: The value for this row of data. The values in the list are
               in the same order as the fields in the ResultRequest
-      required:
-      - depth
-      - groupKey
-      - values
     S3ClientConfig:
       type: object
       properties:

@@ -5,12 +5,15 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -23,6 +26,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         implements SelectionBoxView<T, I>, Focus, HasValueChangeHandlers<T> {
 
     public static final String POINTER_CLASS_NAME = "pointer";
+    private final SimplePanel renderBox;
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
@@ -34,6 +38,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
+            registerHandler(renderBox.addDomHandler(event -> showPopup(), ClickEvent.getType()));
             registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
@@ -51,9 +56,18 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         textBox = new TextBox();
         textBox.addStyleName("SelectionBox-textBox stroom-control allow-focus");
 
+        renderBox = new SimplePanel();
+        renderBox.addStyleName("SelectionBox-renderBox stroom-control allow-focus");
+        renderBox.setVisible(false);
+
+        final FlowPanel outer = new FlowPanel();
+        outer.addStyleName("SelectionBox-outer");
+        outer.add(textBox);
+        outer.add(renderBox);
+
         svgIconBox = new SvgIconBox();
         svgIconBox.addStyleName("SelectionBox");
-        svgIconBox.setWidget(textBox, SvgImage.DROP_DOWN);
+        svgIconBox.setWidget(outer, SvgImage.DROP_DOWN);
 
         initWidget(svgIconBox);
         setAllowTextEntry(false);
@@ -112,6 +126,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         } else {
             popup = new SelectionPopup<>();
             popup.init(model);
+            popup.addAutoHidePartner(renderBox.getElement());
             popup.addAutoHidePartner(textBox.getElement());
             popup.addAutoHidePartner(svgIconBox.getElement());
 
@@ -138,7 +153,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
                 hidePopup();
             }));
 
-            popup.show(textBox.getElement());
+            popup.show(renderBox.getElement());
         }
     }
 
@@ -177,7 +192,14 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         String currentText = textBox.getText();
         String newText = "";
         if (value != null) {
-            newText = model.wrap(value).getLabel();
+            final SelectionItem selectionItem = model.wrap(value);
+            newText = selectionItem.getLabel();
+
+            if (!allowTextEntry) {
+                renderBox.setVisible(true);
+                renderBox.clear();
+                renderBox.getElement().setInnerHTML(selectionItem.getRenderedLabel().asString());
+            }
         }
 
         textBox.setValue(newText);

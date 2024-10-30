@@ -62,10 +62,20 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                 final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
                 final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);
                 for (final ConditionalFormattingRule rule : activeRules) {
-                    final Optional<Predicate<Val[]>> optionalValuesPredicate =
-                            ExpressionPredicateBuilder.create(rule.getExpression(), queryFieldIndex, dateTimeSettings);
-                    optionalValuesPredicate.ifPresent(columnExpressionMatcher ->
-                            ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
+                    try {
+                        final Optional<Predicate<Val[]>> optionalValuesPredicate =
+                                ExpressionPredicateBuilder.create(rule.getExpression(),
+                                        queryFieldIndex,
+                                        dateTimeSettings);
+                        optionalValuesPredicate.ifPresent(columnExpressionMatcher ->
+                                ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
+                    } catch (final RuntimeException e) {
+                        throw new RuntimeException("Error evaluating conditional formatting rule: " +
+                                rule.getExpression() +
+                                " (" +
+                                e.getMessage() +
+                                ")", e);
+                    }
                 }
 
                 if (!ruleAndMatchers.isEmpty()) {
@@ -130,13 +140,11 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                                 .values(stringValues)
                                 .depth(item.getKey().getDepth());
 
-                        if (matchingRule.getBackgroundColor() != null
-                                && !matchingRule.getBackgroundColor().isEmpty()) {
+                        if (matchingRule.isCustomStyle()) {
                             builder.backgroundColor(matchingRule.getBackgroundColor());
-                        }
-                        if (matchingRule.getTextColor() != null
-                                && !matchingRule.getTextColor().isEmpty()) {
                             builder.textColor(matchingRule.getTextColor());
+                        } else {
+                            builder.style(matchingRule.getStyle());
                         }
 
                         row = builder.build();

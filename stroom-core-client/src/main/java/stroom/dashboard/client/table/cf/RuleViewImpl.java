@@ -17,10 +17,15 @@
 
 package stroom.dashboard.client.table.cf;
 
+import stroom.item.client.SelectionBox;
+import stroom.query.api.v2.ConditionalFormattingStyle;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,6 +42,16 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
     @UiField
     CustomCheckBox hide;
     @UiField
+    FormGroup styleGroup;
+    @UiField
+    FormGroup backgroundColorGroup;
+    @UiField
+    FormGroup textColorGroup;
+    @UiField
+    CustomCheckBox customStyle;
+    @UiField
+    SelectionBox<ConditionalFormattingStyle> style;
+    @UiField
     TextBox backgroundColor;
     @UiField
     TextBox textColor;
@@ -46,6 +61,9 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
     @Inject
     public RuleViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        style.setRenderFunction(ConditionalFormattingSwatchUtil::createSwatch);
+        style.addItems(ConditionalFormattingStyle.LIST);
+        style.addStyleName("conditionalFormatStyleSelection");
     }
 
     @Override
@@ -66,6 +84,27 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
     @Override
     public void setHide(final boolean hide) {
         this.hide.setValue(hide);
+    }
+
+    @Override
+    public void setCustomStyle(final boolean customStyle) {
+        this.customStyle.setValue(customStyle);
+        updateVisibility();
+    }
+
+    @Override
+    public boolean isCustomStyle() {
+        return customStyle.getValue();
+    }
+
+    @Override
+    public void setStyle(final ConditionalFormattingStyle style) {
+        this.style.setValue(style);
+    }
+
+    @Override
+    public ConditionalFormattingStyle getStyle() {
+        return style.getValue();
     }
 
     @Override
@@ -96,6 +135,18 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
     @Override
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
+    }
+
+    private void updateVisibility() {
+        final boolean custom = customStyle.getValue();
+        style.setEnabled(!custom);
+        backgroundColor.setEnabled(custom);
+        textColor.setEnabled(custom);
+    }
+
+    @UiHandler("customStyle")
+    public void onCustomStyle(final ValueChangeEvent<Boolean> e) {
+        updateVisibility();
     }
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {
