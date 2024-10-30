@@ -235,7 +235,7 @@ public class RulesPresenter
         selectionBoxModel.addItems(fields);
         editRulePresenter.read(existingRule, selectionBoxModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        final PopupSize popupSize = PopupSize.resizable(1000, 700);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
