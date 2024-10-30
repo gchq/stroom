@@ -54,7 +54,6 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryResource;
-import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -552,50 +551,16 @@ public class EmbeddedQueryPresenter
                     .method(res -> res.fetch(queryRef.getUuid()))
                     .onSuccess(result -> {
                         if (result != null) {
-//                            final QueryTablePreferences.Builder builder;
-//                            // Merge preferences.
-//                            if (result.getQueryTablePreferences() != null) {
-//                                builder = result.getQueryTablePreferences().copy();
-//                            } else {
-//                                builder = QueryTablePreferences.builder();
-//                            }
-//
-//                            if (settings != null && settings.getQueryTablePreferences() != null) {
-//                                final QueryTablePreferences local = settings.getQueryTablePreferences();
-//                                if (local.getColumns() != null && local.getColumns().size() > 0) {
-//                                    builder.columns(local.getColumns());
-//                                }
-//                                if (local.getPageSize() != null) {
-//                                    builder.pageSize(local.getPageSize());
-//                                }
-//                                if (local.getConditionalFormattingRules() != null) {
-//                                    builder.conditionalFormattingRules(local.getConditionalFormattingRules());
-//                                }
-//                                builder.applyValueFilters(local.applyValueFilters());
-//                                if (local.getSelectionHandlers() != null) {
-//                                    builder.selectionHandlers(local.getSelectionHandlers());
-//                                }
-//                            }
-
-                            if (settings.getQueryTablePreferences() == null && result.getQueryTablePreferences() != null) {
+                            if (settings.getQueryTablePreferences() == null &&
+                                    result.getQueryTablePreferences() != null) {
                                 setSettings(settings
                                         .copy()
                                         .queryTablePreferences(result.getQueryTablePreferences())
                                         .build());
                             }
 
-//                            final QueryTablePreferences queryTablePreferences;
-//                            if (settings.getQueryTablePreferences() != null) {
-//                                queryTablePreferences = settings.getQueryTablePreferences();
-//                            } else if (result.getQueryTablePreferences() != null) {
-//                                queryTablePreferences = result.getQueryTablePreferences();
-//                            } else {
-//                                queryTablePreferences = QueryTablePreferences.builder().build();
-//                            }
-
                             // Read expression.
                             queryModel.init(result.asDocRef());
-//                            queryModel.setQueryTablePreferences(queryTablePreferences);
                             query = result.getQuery();
                             initialised = true;
                             if (queryOnOpen) {

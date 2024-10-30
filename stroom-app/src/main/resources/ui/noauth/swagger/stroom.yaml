@@ -9813,6 +9813,8 @@ components:
             type: string
           queryRef:
             $ref: '#/components/schemas/DocRef'
+          queryTablePreferences:
+            $ref: '#/components/schemas/QueryTablePreferences'
           selectionHandlers:
             type: array
             items:
