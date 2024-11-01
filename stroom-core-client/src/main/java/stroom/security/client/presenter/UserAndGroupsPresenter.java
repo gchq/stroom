@@ -21,6 +21,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.client.CurrentUser;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
@@ -54,6 +55,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private final CreateUserPresenter createUserPresenter;
     private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
     private final RestFactory restFactory;
+    private final CurrentUser currentUser;
 
     private ButtonView createButton = null;
     private ButtonView deleteButton = null;
@@ -71,7 +73,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                   final CreateUserPresenter createUserPresenter,
                                   final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
                                   final UiConfigCache uiConfigCache,
-                                  final RestFactory restFactory) {
+                                  final RestFactory restFactory,
+                                  final CurrentUser currentUser) {
         super(eventBus, view);
         this.userList = userListPresenterProvider.get();
         this.memberOfList = userListPresenterProvider.get();
@@ -79,6 +82,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.createUserPresenter = createUserPresenter;
         this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
         this.restFactory = restFactory;
+        this.currentUser = currentUser;
 
         userList.getView().setLabel("Users And Groups");
         view.setUserList(userList.getView());
@@ -206,7 +210,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             getView().setMembersInVisible(selected.isGroup());
 
             deleteButton.setTitle("Delete " + getDescription(selected));
-            deleteButton.setEnabled(true);
+            deleteButton.setEnabled(!currentUser.getUserRef().equals(selected.asRef()));
             addMemberOfButton.setEnabled(true);
             addMembersInButton.setEnabled(selected.isGroup());
 
@@ -315,10 +319,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private void onDelete() {
         final User user = userList.getSelectionModel().getSelected();
-        if (user != null) {
+        if (user != null && !currentUser.getUserRef().equals(user.asRef())) {
             ConfirmEvent.fire(this,
                     "Are you sure you want to delete the selected " +
-                            getDescription(user) + "?",
+                    getDescription(user) + "?",
                     ok -> {
                         if (ok) {
                             user.setEnabled(false);
