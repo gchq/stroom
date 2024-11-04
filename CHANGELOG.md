@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.1] - 2024-11-04
+
+* Issue **#4523** : Embed queries in dashboards.
+
+* Issue **#4504** : Add column value filters.
+
+* Issue **#4546** : Remove redundant dashboard tab options.
+
+* Issue **#4547** : Add selection handlers to dashboard tables to quick filter based on component selection.
+
+* Issue **#4071** : Add preset theme compatible styles for conditional formatting.
+
+* Issue **#4157** : Fix copy of conditional formatting rules.
+
+
 ## [v7.6-beta.4] - 2024-11-04
 
 * Issue **#4550** : Fix datasource already in use issue.
@@ -947,7 +962,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.1...HEAD
+[v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
 [v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
 [v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
 [v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
