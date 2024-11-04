@@ -227,19 +227,19 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private void checkGetPermission(final DocRef docRef) {
         if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) &&
-                !securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
+            !securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
             throw new PermissionException(securityContext.getUserRef(), "You do not have permission to get " +
-                    "permissions of " +
-                    docRef.getDisplayValue());
+                                                                        "permissions of " +
+                                                                        docRef.getDisplayValue());
         }
     }
 
     private void checkSetPermission(final DocRef docRef) {
         if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) &&
-                !securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
+            !securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
             throw new PermissionException(securityContext.getUserRef(), "You do not have permission to change " +
-                    "permissions of " +
-                    docRef.getDisplayValue());
+                                                                        "permissions of " +
+                                                                        docRef.getDisplayValue());
         }
     }
 
@@ -303,9 +303,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public DocumentUserPermissions getPermissions(final DocRef docRef, final UserRef userRef) {
         if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) &&
-                !userRef.equals(securityContext.getUserRef())) {
+            !userRef.equals(securityContext.getUserRef())) {
             throw new PermissionException(securityContext.getUserRef(), "You do not have permission to view user " +
-                    "permissions");
+                                                                        "permissions");
         }
 
         final DocumentPermission permission = documentPermissionDao
@@ -470,10 +470,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     final DocumentPermission documentPermission = documentPermissionDao
                             .getDocumentUserPermission(docRef.getUuid(), group.getUuid());
                     if (documentPermission != null) {
-                        if (inheritedPermission.get() != null) {
-                            if (!inheritedPermission.get().isEqualOrHigher(documentPermission)) {
-                                inheritedPermission.set(documentPermission);
-                            }
+                        if (inheritedPermission.get() == null ||
+                            !inheritedPermission.get().isEqualOrHigher(documentPermission)) {
+                            inheritedPermission.set(documentPermission);
                         }
                     }
                     final Set<String> documentUserCreatePermissions = documentPermissionDao

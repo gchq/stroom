@@ -41,24 +41,20 @@ import javax.inject.Provider;
 public class DocumentUserPermissionsPresenter
         extends MyPresenterWidget<DocumentUserPermissionsView> {
 
-    private final RestFactory restFactory;
     private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final ButtonView docEdit;
-    private final InlineSvgToggleButton showAllToggleButton;
-    private boolean showAllUsers;
+    private final InlineSvgToggleButton explicitOnly;
     private DocRef docRef;
 
     @Inject
     public DocumentUserPermissionsPresenter(
             final EventBus eventBus,
             final DocumentUserPermissionsView view,
-            final RestFactory restFactory,
             final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
             final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
 
         super(eventBus, view);
-        this.restFactory = restFactory;
         this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         view.setPermissionsView(documentUserPermissionsListPresenter.getView());
@@ -68,11 +64,12 @@ public class DocumentUserPermissionsPresenter
                 "Edit Permissions For Selected User",
                 false));
 
-        showAllToggleButton = new InlineSvgToggleButton();
-        showAllToggleButton.setSvg(SvgImage.EYE);
-        showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
-        showAllToggleButton.setState(false);
-        documentUserPermissionsListPresenter.addButton(showAllToggleButton);
+        explicitOnly = new InlineSvgToggleButton();
+        explicitOnly.setSvg(SvgImage.EYE_OFF);
+        explicitOnly.setTitle("Only Show Users With Explicit Permissions");
+        explicitOnly.setState(false);
+        documentUserPermissionsListPresenter.addButton(explicitOnly);
+        documentUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
     }
 
     @Override
@@ -91,15 +88,15 @@ public class DocumentUserPermissionsPresenter
                 onEdit();
             }
         }));
-        registerHandler(showAllToggleButton.addClickHandler(e -> {
-            if (showAllToggleButton.getState()) {
-                showAllToggleButton.setTitle("Hide Users Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE_OFF);
+        registerHandler(explicitOnly.addClickHandler(e -> {
+            if (explicitOnly.getState()) {
+                explicitOnly.setTitle("Show All Users");
+                explicitOnly.setSvg(SvgImage.EYE);
             } else {
-                showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE);
+                explicitOnly.setTitle("Only Show Users With Explicit Permissions");
+                explicitOnly.setSvg(SvgImage.EYE_OFF);
             }
-            documentUserPermissionsListPresenter.setAllUsers(showAllToggleButton.getState());
+            documentUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
             documentUserPermissionsListPresenter.refresh();
         }));
     }

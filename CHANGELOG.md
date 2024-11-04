@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.6-beta.4] - 2024-11-04
+
+* Issue **#4550** : Fix datasource already in use issue.
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.5_11-jdk-alpine`.
+
+* Issue **#4580** : Auto add a permission user when an account is created.
+
+* Issue **#4582** : Show all users by default and not just ones with explicit permissions.
+
 * Issue **#4562** : Use Zip64 compatibility mode.
 
 * Issue **#4564** : Use expression as column name.
@@ -936,7 +947,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.4...HEAD
+[v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
 [v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
 [v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
 [v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1

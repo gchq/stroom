@@ -57,7 +57,7 @@ public class UserPermissionReportPresenter
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
     private final ButtonView docEdit;
-    private final InlineSvgToggleButton showAllToggleButton;
+    private final InlineSvgToggleButton explicitOnly;
     private final ButtonView docFilter;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
@@ -91,11 +91,12 @@ public class UserPermissionReportPresenter
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
                 false));
-        showAllToggleButton = new InlineSvgToggleButton();
-        showAllToggleButton.setSvg(SvgImage.EYE);
-        showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
-        showAllToggleButton.setState(false);
-        documentListPresenter.getView().addButton(showAllToggleButton);
+        explicitOnly = new InlineSvgToggleButton();
+        explicitOnly.setSvg(SvgImage.EYE_OFF);
+        explicitOnly.setTitle("Only Show Documents With Explicit Permissions");
+        explicitOnly.setState(false);
+        documentListPresenter.getView().addButton(explicitOnly);
+        documentListPresenter.getCriteriaBuilder().explicitPermission(explicitOnly.getState());
         docFilter = documentListPresenter.getView().addButton(new Preset(
                 SvgImage.FILTER,
                 "Filter Documents To Apply Permissions Changes On",
@@ -121,15 +122,15 @@ public class UserPermissionReportPresenter
                 onEdit();
             }
         }));
-        registerHandler(showAllToggleButton.addClickHandler(e -> {
-            if (showAllToggleButton.getState()) {
-                showAllToggleButton.setTitle("Hide Documents Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE_OFF);
+        registerHandler(explicitOnly.addClickHandler(e -> {
+            if (explicitOnly.getState()) {
+                explicitOnly.setTitle("Show All Documents");
+                explicitOnly.setSvg(SvgImage.EYE);
             } else {
-                showAllToggleButton.setTitle("Show Documents Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE);
+                explicitOnly.setTitle("Only Show Documents With Explicit Permissions");
+                explicitOnly.setSvg(SvgImage.EYE_OFF);
             }
-            documentListPresenter.getCriteriaBuilder().explicitPermission(!showAllToggleButton.getState());
+            documentListPresenter.getCriteriaBuilder().explicitPermission(explicitOnly.getState());
             documentListPresenter.refresh();
         }));
         registerHandler(docFilter.addClickHandler(e -> {

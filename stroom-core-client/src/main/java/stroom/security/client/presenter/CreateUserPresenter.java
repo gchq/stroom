@@ -17,18 +17,15 @@
 
 package stroom.security.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.HasDisplayValue;
 import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.shared.User;
-import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -40,13 +37,10 @@ import java.util.function.Consumer;
 
 public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> implements CreateUserUiHandlers {
 
-    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
-
     private final CreateNewGroupPresenter createNewGroupPresenter;
     private final CreateExternalUserPresenter createNewUserPresenter;
     private final CreateMultipleUsersPresenter createMultipleUsersPresenter;
     private final UiConfigCache uiConfigCache;
-    private final RestFactory restFactory;
 
     @Inject
     public CreateUserPresenter(final EventBus eventBus,
@@ -54,14 +48,12 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
                                final CreateNewGroupPresenter createNewGroupPresenter,
                                final CreateExternalUserPresenter createNewUserPresenter,
                                final CreateMultipleUsersPresenter createMultipleUsersPresenter,
-                               final UiConfigCache uiConfigCache,
-                               final RestFactory restFactory) {
+                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.createNewGroupPresenter = createNewGroupPresenter;
         this.createNewUserPresenter = createNewUserPresenter;
         this.createMultipleUsersPresenter = createMultipleUsersPresenter;
         this.uiConfigCache = uiConfigCache;
-        this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
