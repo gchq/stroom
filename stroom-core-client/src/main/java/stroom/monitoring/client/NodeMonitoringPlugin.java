@@ -24,7 +24,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.event.OpenNodeEvent;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -49,12 +49,13 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
         registerHandler(getEventBus().addHandler(
                 OpenNodeEvent.getType(), openNodeEvent -> {
                     final JobNode jobNode = openNodeEvent.getJobNode();
-                    final NodePresenter nodePresenter = open();
-                    if (jobNode != null) {
-                        nodePresenter.setSelected(jobNode);
-                    } else {
-                        nodePresenter.setSelected(openNodeEvent.getNodeName());
-                    }
+                    open(nodePresenter -> {
+                        if (jobNode != null) {
+                            nodePresenter.setSelected(jobNode);
+                        } else {
+                            nodePresenter.setSelected(openNodeEvent.getNodeName());
+                        }
+                    });
                 }));
     }
 
@@ -74,8 +75,8 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_NODES_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_NODES_PERMISSION;
     }
 
     @Override

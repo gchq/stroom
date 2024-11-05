@@ -18,6 +18,7 @@
 package stroom.dashboard.client.table.cf;
 
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
@@ -53,13 +54,15 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
             editExpressionPresenter.read(rule.getExpression());
         }
         getView().setHide(rule.isHide());
+        getView().setCustomStyle(rule.isCustomStyle());
+        getView().setStyle(rule.getStyle());
         getView().setBackgroundColor(rule.getBackgroundColor());
         getView().setTextColor(rule.getTextColor());
         getView().setEnabled(rule.isEnabled());
     }
 
     ConditionalFormattingRule write() {
-        String id = null;
+        final String id;
         if (originalRule != null && originalRule.getId() != null) {
             id = originalRule.getId();
         } else {
@@ -72,6 +75,8 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
                 .id(id)
                 .expression(expression)
                 .hide(getView().isHide())
+                .customStyle(getView().isCustomStyle())
+                .style(getView().getStyle())
                 .backgroundColor(getView().getBackgroundColor())
                 .textColor(getView().getTextColor())
                 .enabled(getView().isEnabled())
@@ -94,6 +99,14 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
         boolean isHide();
 
         void setHide(boolean hide);
+
+        void setCustomStyle(boolean customStyle);
+
+        boolean isCustomStyle();
+
+        void setStyle(ConditionalFormattingStyle styleName);
+
+        ConditionalFormattingStyle getStyle();
 
         String getBackgroundColor();
 

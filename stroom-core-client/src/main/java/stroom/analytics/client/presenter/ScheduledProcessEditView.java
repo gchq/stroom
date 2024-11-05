@@ -32,4 +32,6 @@ public interface ScheduledProcessEditView extends View,
     DateTimeBox getStartTime();
 
     DateTimeBox getEndTime();
+
+    void setRunAsUserView(View view);
 }

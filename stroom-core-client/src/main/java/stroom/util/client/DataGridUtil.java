@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.GwtUtil;
@@ -291,6 +292,26 @@ public class DataGridUtil {
                         orderByColumn.getField(),
                         !event.isSortAscending(),
                         orderByColumn.isIgnoreCase());
+                onSortChange.run();
+            }
+        });
+    }
+
+    public static void addColumnSortHandler(final MyDataGrid<?> view,
+                                            final BaseCriteria.AbstractBuilder criteria,
+                                            final Runnable onSortChange) {
+
+        view.addColumnSortHandler(event -> {
+            if (event != null
+                    && event.getColumn() instanceof OrderByColumn<?, ?>
+                    && event.getColumn().isSortable()) {
+
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                final CriteriaFieldSort sort = new CriteriaFieldSort(
+                        orderByColumn.getField(),
+                        !event.isSortAscending(),
+                        orderByColumn.isIgnoreCase());
+                criteria.sortList(List.of(sort));
                 onSortChange.run();
             }
         });

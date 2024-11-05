@@ -49,7 +49,6 @@ import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
@@ -58,7 +57,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -236,7 +235,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -279,9 +278,8 @@ class DashboardServiceImpl implements DashboardService {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final ColumnFormatter fieldFormatter =
-                        new ColumnFormatter(
-                                new FormatterFactory(searchRequest.getDateTimeSettings()));
+                final FormatterFactory formatterFactory =
+                        new FormatterFactory(searchRequest.getDateTimeSettings());
 
                 // Start target
                 try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
@@ -315,7 +313,7 @@ class DashboardServiceImpl implements DashboardService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(fieldFormatter) {
+                                        new TableResultCreator(formatterFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -357,12 +355,12 @@ class DashboardServiceImpl implements DashboardService {
 
     private String getQueryFileName(final DashboardSearchRequest request) {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
-        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocUuid());
+        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
         final String dashboardName = NullSafe.getOrElse(
                 dashDocRefInfo,
                 DocRefInfo::getDocRef,
                 DocRef::getName,
-                searchRequestSource.getOwnerDocUuid());
+                searchRequestSource.getOwnerDocRef().getName());
         final String basename = dashboardName + "__" + searchRequestSource.getComponentId();
         return getFileName(basename, "json");
     }
@@ -496,7 +494,7 @@ class DashboardServiceImpl implements DashboardService {
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");
-                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocUuid());
+                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocRef().getUuid());
                 storedQuery.setComponentId(searchRequestSource.getComponentId());
                 storedQuery.setQuery(query);
                 queryService.create(storedQuery);

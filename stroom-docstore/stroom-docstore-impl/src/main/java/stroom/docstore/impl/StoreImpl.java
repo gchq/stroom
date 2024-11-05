@@ -33,7 +33,7 @@ import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
@@ -155,9 +155,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public final DocRef moveDocument(final String uuid) {
-        Objects.requireNonNull(uuid);
-        final D document = read(uuid);
+    public final DocRef moveDocument(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
+        final D document = read(docRef);
 
 //        // If we are moving folder then make sure we are allowed to create items in the target folder.
 //        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
@@ -171,10 +171,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        Objects.requireNonNull(uuid);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        Objects.requireNonNull(docRef);
         Objects.requireNonNull(name);
-        final D document = read(uuid);
+        final D document = read(docRef);
 
         final DocRef oldDocRef = createDocRef(document);
 
@@ -189,26 +189,25 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public final void deleteDocument(final String uuid) {
-        Objects.requireNonNull(uuid);
+    public final void deleteDocument(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
         // Check that the user has permission to delete this item.
-        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.DELETE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     "You are not authorised to delete this item");
         }
 
-        persistence.getLockFactory().lock(uuid, () -> {
-            final DocRef docRef = new DocRef(type, uuid);
+        persistence.getLockFactory().lock(docRef.getUuid(), () -> {
             persistence.delete(docRef);
             EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
         });
     }
 
     @Override
-    public DocRefInfo info(final String uuid) {
-        Objects.requireNonNull(uuid);
-        final D document = read(uuid);
+    public DocRefInfo info(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
+        final D document = read(docRef);
         return DocRefInfo
                 .builder()
                 .docRef(DocRef.builder()
@@ -328,7 +327,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private boolean canRead(final DocRef docRef) {
         Objects.requireNonNull(docRef);
-        return securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ);
+        return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
     }
 
     @Override
@@ -358,9 +357,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
                     } else {
                         docRef = docRef.copy().name(existingDocument.getName()).build();
-                        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
+                        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
                             throw new PermissionException(
-                                    securityContext.getUserIdentityForAudit(),
+                                    securityContext.getUserRef(),
                                     "You are not authorised to update " + toDocRefDisplayString(docRef));
                         }
 
@@ -378,9 +377,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 } else if (ImportSettings.ok(importSettings, importState)) {
                     if (existingDocument != null) {
                         docRef = docRef.copy().name(existingDocument.getName()).build();
-                        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
+                        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
                             throw new PermissionException(
-                                    securityContext.getUserIdentityForAudit(),
+                                    securityContext.getUserRef(),
                                     "You are not authorised to update " + toDocRefDisplayString(docRef));
                         }
                     }
@@ -440,7 +439,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             }
         } catch (final PermissionException e) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     "The document being imported exists but you are not authorised to read "
                             + toDocRefDisplayString(docRef));
         } catch (final RuntimeException e) {
@@ -460,7 +459,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             // Check that the user has permission to read this item.
             if (!canRead(docRef)) {
                 throw new PermissionException(
-                        securityContext.getUserIdentityForAudit(),
+                        securityContext.getUserRef(),
                         "You are not authorised to read " + toDocRefDisplayString(docRef));
             } else {
                 D document = read(docRef);
@@ -565,9 +564,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         final String uuid = NullSafe.requireNonNull(docRef, DocRef::getUuid, () -> "UUID required");
         checkType(docRef);
         // Check that the user has permission to read this item.
-        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     LogUtil.message("You are not authorised to read {}",
                             toDocRefDisplayString(docRef)));
         }
@@ -618,9 +617,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         final DocRef docRef = createDocRef(document);
 
         // Check that the user has permission to update this item.
-        if (!securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.UPDATE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     "You are not authorised to update " + toDocRefDisplayString(docRef));
         }
 

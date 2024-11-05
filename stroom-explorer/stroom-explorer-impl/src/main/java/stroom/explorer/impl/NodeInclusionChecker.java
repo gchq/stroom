@@ -5,6 +5,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
 import stroom.util.filter.FilterFieldMapper;
@@ -118,7 +119,7 @@ class NodeInclusionChecker {
         }
 
         if (!foundAlwaysFalsePredicate) {
-            final Set<String> requiredPermissions = filter.getRequiredPermissions();
+            final Set<DocumentPermission> requiredPermissions = filter.getRequiredPermissions();
             if (NullSafe.isEmptyCollection(requiredPermissions)) {
                 LOGGER.debug("Always false triggered by hasPermission");
                 foundAlwaysFalsePredicate = true;
@@ -174,21 +175,19 @@ class NodeInclusionChecker {
 
     private boolean hasPermission(final FilterableNode filterableNode) {
         return permCheckOutcomeMap.computeIfAbsent(filterableNode.node.getDocRef(), docRef -> {
-            final String uuid = docRef.getUuid();
             return filter.getRequiredPermissions().stream()
-                    .allMatch(permission -> securityContext.hasDocumentPermission(uuid, permission));
+                    .allMatch(permission -> securityContext.hasDocumentPermission(docRef, permission));
         });
     }
 
     static boolean hasPermission(final SecurityContext securityContext,
                                  final ExplorerNode node,
-                                 final Set<String> requiredPermissions) {
+                                 final Set<DocumentPermission> requiredPermissions) {
         if (requiredPermissions == null || requiredPermissions.isEmpty()) {
             return false;
         } else {
-            final String uuid = node.getUuid();
             return requiredPermissions.stream()
-                    .allMatch(permission -> securityContext.hasDocumentPermission(uuid, permission));
+                    .allMatch(permission -> securityContext.hasDocumentPermission(node.getDocRef(), permission));
         }
     }
 
@@ -217,7 +216,7 @@ class NodeInclusionChecker {
         return filter.getTags();
     }
 
-    public Set<String> getRequiredPermissions() {
+    public Set<DocumentPermission> getRequiredPermissions() {
         return filter.getRequiredPermissions();
     }
 

@@ -17,8 +17,6 @@
 package stroom.widget.xsdbrowser.client.view;
 
 import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import com.google.gwt.xml.client.Node;
 import com.google.gwt.xml.client.NodeList;
@@ -28,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class XSDNode implements Comparable<XSDNode> {
 
@@ -296,31 +295,26 @@ public class XSDNode implements Comparable<XSDNode> {
     }
 
     @Override
-    public int hashCode() {
-        final String name = XMLUtil.getAttributeValue(node, XSDAttribute.NAME);
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(name);
-        return builder.toHashCode();
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
-        } else if (o == null || !(o instanceof XSDNode)) {
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         final XSDNode xsdNode = (XSDNode) o;
-        final Node node1 = node;
         final Node node2 = xsdNode.getNode();
 
-        final String o1Name = XMLUtil.getAttributeValue(node1, XSDAttribute.NAME);
+        final String o1Name = XMLUtil.getAttributeValue(node, XSDAttribute.NAME);
         final String o2Name = XMLUtil.getAttributeValue(node2, XSDAttribute.NAME);
 
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(o1Name, o2Name);
-        return builder.isEquals();
+        return Objects.equals(o1Name, o2Name);
+    }
+
+    @Override
+    public int hashCode() {
+        final String name = XMLUtil.getAttributeValue(node, XSDAttribute.NAME);
+        return Objects.hashCode(name);
     }
 
     @Override

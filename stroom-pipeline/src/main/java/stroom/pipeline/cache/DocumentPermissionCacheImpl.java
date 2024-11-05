@@ -18,10 +18,11 @@ package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.docref.DocRef;
 import stroom.pipeline.PipelineConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -36,7 +37,7 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     private static final String CACHE_NAME = "Document Permission Cache";
 
     private final SecurityContext securityContext;
-    private final LoadingStroomCache<DocumentPermission, Boolean> cache;
+    private final LoadingStroomCache<DocumentPermissionKey, Boolean> cache;
 
     @Inject
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
@@ -52,19 +53,19 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
                 this::create);
     }
 
-    private boolean create(final DocumentPermission documentPermission) {
+    private boolean create(final DocumentPermissionKey documentPermission) {
         return securityContext.asUserResult(documentPermission.userIdentity, () ->
                 securityContext.hasDocumentPermission(
-                        documentPermission.documentUuid,
+                        documentPermission.docRef,
                         documentPermission.permission));
     }
 
     @Override
-    public boolean canUseDocument(final String documentUuid) {
-        return cache.get(new DocumentPermission(
+    public boolean canUseDocument(final DocRef docRef) {
+        return cache.get(new DocumentPermissionKey(
                 securityContext.getUserIdentity(),
-                documentUuid,
-                DocumentPermissionNames.USE));
+                docRef,
+                DocumentPermission.USE));
     }
 
     @Override
@@ -72,15 +73,17 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
         cache.clear();
     }
 
-    private static class DocumentPermission {
+    private static class DocumentPermissionKey {
 
         private final UserIdentity userIdentity;
-        private final String documentUuid;
-        private final String permission;
+        private final DocRef docRef;
+        private final DocumentPermission permission;
 
-        DocumentPermission(final UserIdentity userIdentity, final String documentUuid, final String permission) {
+        DocumentPermissionKey(final UserIdentity userIdentity,
+                              final DocRef docRef,
+                              final DocumentPermission permission) {
             this.userIdentity = userIdentity;
-            this.documentUuid = documentUuid;
+            this.docRef = docRef;
             this.permission = permission;
         }
 
@@ -92,15 +95,15 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final DocumentPermission that = (DocumentPermission) o;
+            final DocumentPermissionKey that = (DocumentPermissionKey) o;
             return Objects.equals(userIdentity, that.userIdentity) &&
-                    Objects.equals(documentUuid, that.documentUuid) &&
+                    Objects.equals(docRef, that.docRef) &&
                     Objects.equals(permission, that.permission);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(userIdentity, documentUuid, permission);
+            return Objects.hash(userIdentity, docRef, permission);
         }
     }
 }

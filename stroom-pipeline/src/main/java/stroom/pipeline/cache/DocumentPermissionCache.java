@@ -16,10 +16,12 @@
 
 package stroom.pipeline.cache;
 
+import stroom.docref.DocRef;
+
 public interface DocumentPermissionCache {
 
     /**
      * Return true if the currently logged in user has USE permission on the passed document
      */
-    boolean canUseDocument(String documentUuid);
+    boolean canUseDocument(DocRef docRef);
 }

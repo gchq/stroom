@@ -16,9 +16,8 @@
 
 package stroom.legacy.db.migration;
 
-import stroom.dashboard.shared.StoredQuery;
 import stroom.legacy.impex_6_1.MappingUtil;
-import stroom.storedquery.impl.db.StoredQuerySerialiser;
+import stroom.storedquery.impl.db.QueryJsonSerialiser;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import jakarta.xml.bind.JAXBContext;
@@ -39,6 +38,7 @@ public class V07_00_00_2002__query extends BaseJavaMigration {
     @Override
     public void migrate(final Context context) throws Exception {
         final JAXBContext jaxbContext = JAXBContext.newInstance(stroom.legacy.model_6_1.Query.class);
+        final QueryJsonSerialiser queryJsonSerialiser = new QueryJsonSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
                 "SELECT " +
@@ -56,18 +56,14 @@ public class V07_00_00_2002__query extends BaseJavaMigration {
                                     stroom.legacy.model_6_1.Query.class,
                                     data);
                             final stroom.query.api.v2.Query mapped = MappingUtil.map(query);
-
-                            final StoredQuery storedQuery = new StoredQuery();
-                            storedQuery.setQuery(mapped);
-                            StoredQuerySerialiser.serialise(storedQuery);
-                            final String newData = storedQuery.getData();
+                            final String json = queryJsonSerialiser.serialise(mapped);
 
                             // Update the record.
                             try (final PreparedStatement ps = context.getConnection().prepareStatement(
                                     "UPDATE query SET " +
                                             "  data = ? " +
                                             "WHERE id = ?")) {
-                                ps.setString(1, newData);
+                                ps.setString(1, json);
                                 ps.setInt(2, id);
                                 ps.executeUpdate();
                             } catch (final SQLException e) {

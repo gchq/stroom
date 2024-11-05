@@ -36,6 +36,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
@@ -228,7 +229,8 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria, final String permission) {
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria,
+                                                final DocumentPermission permission) {
         return null;
     }
 
@@ -238,7 +240,8 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria, final String permission) {
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria,
+                                                         final DocumentPermission permission) {
         return null;
     }
 

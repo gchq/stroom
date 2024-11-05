@@ -25,7 +25,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 
 import jakarta.inject.Inject;
 
@@ -48,41 +48,55 @@ public class ExplorerNodePermissionsServiceImpl implements ExplorerNodePermissio
     public Set<ExplorerNodePermissions> fetchExplorerPermissions(final List<ExplorerNode> explorerNodes) {
         final Set<ExplorerNodePermissions> result = new HashSet<>(explorerNodes.size());
 
-        for (final ExplorerNode explorerNode : explorerNodes) {
-            final Set<String> createPermissions = new HashSet<>();
-            final Set<String> documentPermissions = new HashSet<>();
-            DocRef docRef = explorerNode.getDocRef();
+        if (securityContext.isAdmin()) {
+            // If the user is an admin then we don't need to check any other permissions as they are allowed to do
+            // anything.
+            for (final ExplorerNode explorerNode : explorerNodes) {
+                result.add(new ExplorerNodePermissions(explorerNode,
+                        null,
+                        null,
+                        securityContext.isAdmin()));
+            }
 
-            if (docRef != null) {
-                for (final String permissionName : DocumentPermissionNames.DOCUMENT_PERMISSIONS) {
-                    if (securityContext.hasDocumentPermission(docRef.getUuid(),
-                            permissionName)) {
-                        documentPermissions.add(permissionName);
+        } else {
+            for (final ExplorerNode explorerNode : explorerNodes) {
+                final Set<String> createPermissions = new HashSet<>();
+                final Set<DocumentPermission> documentPermissions = new HashSet<>();
+                DocRef docRef = explorerNode.getDocRef();
+
+                if (docRef != null) {
+                    final DocumentPermission[] usedPerms = {
+                            DocumentPermission.VIEW,
+                            DocumentPermission.EDIT,
+                            DocumentPermission.DELETE};
+                    for (final DocumentPermission permission : usedPerms) {
+                        if (securityContext.hasDocumentPermission(docRef,
+                                permission)) {
+                            documentPermissions.add(permission);
+                        }
                     }
                 }
-            }
 
-            // If no entity reference has been passed then assume root folder.
-            if (docRef == null) {
-                docRef = ExplorerConstants.SYSTEM_DOC_REF;
-            }
+                // If no entity reference has been passed then assume root folder.
+                if (docRef == null) {
+                    docRef = ExplorerConstants.SYSTEM_DOC_REF;
+                }
 
-            // Add special permissions for folders to control creation of sub items.
-            if (DocumentTypes.isFolder(docRef.getType())) {
-                for (final DocumentType documentType : explorerService.getTypes()) {
-                    final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(
-                            documentType.getType());
-                    if (securityContext.hasDocumentPermission(docRef.getUuid(),
-                            permissionName)) {
-                        createPermissions.add(documentType.getType());
+                // Add special permissions for folders to control creation of sub items.
+                if (DocumentTypes.isFolder(docRef)) {
+                    for (final DocumentType documentType : explorerService.getTypes()) {
+                        if (securityContext.hasDocumentCreatePermission(docRef,
+                                documentType.getType())) {
+                            createPermissions.add(documentType.getType());
+                        }
                     }
                 }
-            }
 
-            result.add(new ExplorerNodePermissions(explorerNode,
-                    createPermissions,
-                    documentPermissions,
-                    securityContext.isAdmin()));
+                result.add(new ExplorerNodePermissions(explorerNode,
+                        createPermissions,
+                        documentPermissions,
+                        false));
+            }
         }
 
         return result;

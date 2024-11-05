@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -25,6 +24,8 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -33,11 +34,11 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.data.pager.client.RefreshButton;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -47,7 +48,6 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -69,14 +69,13 @@ import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class VisPresenter
         extends AbstractComponentPresenter<VisPresenter.VisView>
-        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection {
+        implements ResultComponent, StatusHandler, HasComponentSelection {
 
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
@@ -121,8 +120,7 @@ public class VisPresenter
     //    private double opacity = 0;
     private TablePresenter linkedTablePresenter;
 
-    private final Timer timer;
-    private List<Map<String, String>> currentSelection;
+    private final VisSelectionModel visSelectionModel;
     private boolean pause;
 
     @Inject
@@ -136,27 +134,15 @@ public class VisPresenter
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
 
+        visSelectionModel = new VisSelectionModel();
+        visSelectionModel.addSelectionHandler(event -> getComponents().fireComponentChangeEvent(VisPresenter.this));
+
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
-        visFrame.setUiHandlers(this);
+        visFrame.setUiHandlers(visSelectionModel);
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
-
-        timer = new Timer() {
-            @Override
-            public void run() {
-                getComponents().fireComponentChangeEvent(VisPresenter.this);
-            }
-        };
-    }
-
-    @Override
-    public void onSelection(final List<Map<String, String>> selection) {
-        if (!Objects.equals(currentSelection, selection)) {
-            currentSelection = selection;
-            timer.schedule(250);
-        }
     }
 
     /*****************
@@ -244,7 +230,7 @@ public class VisPresenter
     public void setComponents(final Components components) {
         super.setComponents(components);
         registerHandler(components.addComponentChangeHandler(event -> {
-            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
+            if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(),
                     event.getComponentId())) {
                 updateTableId(event.getComponentId());
             }
@@ -262,7 +248,7 @@ public class VisPresenter
             final TablePresenter tablePresenter = (TablePresenter) component;
             linkedTablePresenter = tablePresenter;
 
-            final TableComponentSettings tableSettings = tablePresenter.getTableSettings();
+            final TableComponentSettings tableSettings = tablePresenter.getTableComponentSettings();
             builder.tableSettings(tableSettings);
             final String queryId = tableSettings.getQueryId();
             setQueryId(queryId);
@@ -674,7 +660,7 @@ public class VisPresenter
         // Update table settings.
         TableComponentSettings tableComponentSettings = null;
         if (linkedTablePresenter != null) {
-            tableComponentSettings = linkedTablePresenter.getTableSettings();
+            tableComponentSettings = linkedTablePresenter.getTableComponentSettings();
         }
         setSettings(getVisSettings()
                 .copy()
@@ -722,17 +708,18 @@ public class VisPresenter
     }
 
     @Override
-    public List<QueryField> getFields() {
-        final List<QueryField> abstractFields = new ArrayList<>();
-        // TODO : @66 TEMPORARY FIELDS
-        abstractFields.add(QueryField.createText("name", true));
-        abstractFields.add(QueryField.createText("value", true));
-        return abstractFields;
+    public List<ColumnRef> getColumns() {
+        return visSelectionModel.getColumns();
     }
 
     @Override
-    public List<Map<String, String>> getSelection() {
-        return currentSelection;
+    public List<ComponentSelection> getSelection() {
+        return visSelectionModel.getSelection();
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        return visSelectionModel.getHighlights();
     }
 
     @Override

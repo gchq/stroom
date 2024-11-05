@@ -7,15 +7,12 @@ import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
-import stroom.security.shared.UserNameProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.util.string.StringUtil;
 
 import com.google.inject.AbstractModule;
@@ -33,7 +30,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -90,7 +86,7 @@ class TestApiKeyDaoImpl {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(UserNameProvider.class).to(MyUserNameProvider.class);
+//                        bind(UserNameProvider.class).to(MyUserNameProvider.class);
                     }
                 });
 
@@ -206,15 +202,12 @@ class TestApiKeyDaoImpl {
         final String saltedApiKeyHash = "myHash";
         final String prefix = "sak_1234567_";
 
-        final UserName owner = SimpleUserName.builder()
-                .subjectId(USER_1)
-                .uuid("user1_uuid")
-                .build();
+        final UserRef user = createUser("user1");
 
         final CreateHashedApiKeyRequest request = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey")
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -249,15 +242,12 @@ class TestApiKeyDaoImpl {
                                       final String prefix,
                                       final String hash) throws DuplicateApiKeyException {
 
-        final UserName owner = SimpleUserName.builder()
-                .subjectId(ownerSubjectId)
-                .uuid(Objects.requireNonNull(SUBJECT_ID_TO_UUID_MAP.get(ownerSubjectId)))
-                .build();
+        final UserRef user = createUser(ownerSubjectId);
 
         final CreateHashedApiKeyRequest request1 = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName(keyName)
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -355,20 +345,20 @@ class TestApiKeyDaoImpl {
     }
 
     private void loadData() {
-        final long nowMs = Instant.now().toEpochMilli();
-
-        UUID_TO_SUBJECT_ID_MAP.forEach((uuid, subjectId) -> {
-            final User user = User.builder()
-                    .subjectId(subjectId)
-                    .uuid(uuid)
-                    .group(false)
-                    .build();
-            user.setCreateUser(subjectId);
-            user.setUpdateUser(subjectId);
-            user.setCreateTimeMs(nowMs);
-            user.setUpdateTimeMs(nowMs);
-            userDao.create(user);
-        });
+//        final long nowMs = Instant.now().toEpochMilli();
+//
+//        UUID_TO_SUBJECT_ID_MAP.forEach((uuid, subjectId) -> {
+//            final User user = User.builder()
+//                    .subjectId(subjectId)
+//                    .uuid(uuid)
+//                    .group(false)
+//                    .build();
+//            user.setCreateUser(subjectId);
+//            user.setUpdateUser(subjectId);
+//            user.setCreateTimeMs(nowMs);
+//            user.setUpdateTimeMs(nowMs);
+//            userDao.create(user);
+//        });
 
         user1ApiKey1 = apiKey("user1 key 1 valid", USER_1, EXPIRY_IN_FUTURE, true);
         user1ApiKey2 = apiKey("user1 key 2 valid", USER_1, EXPIRY_IN_FUTURE, true);
@@ -392,14 +382,15 @@ class TestApiKeyDaoImpl {
         // Doesn't matter what the values are for these tests
         final String hash = StringUtil.createRandomCode(secureRandom, 20);
         final String prefixHash = StringUtil.createRandomCode(secureRandom, 7);
+        final UserRef user = createUser(userSubjectId);
 
         final CreateHashedApiKeyRequest createHashedApiKeyRequest = CreateHashedApiKeyRequest.builder()
                 .withName(keyName)
-                .withOwner(SimpleUserName.builder()
-                        .uuid(Objects.requireNonNull(SUBJECT_ID_TO_UUID_MAP.get(userSubjectId), () ->
-                                "No UUID for subject " + userSubjectId))
-                        .subjectId(userSubjectId)
-                        .build())
+                .withOwner(user)
+//                .withOwner(SimpleUserName.builder()
+//                        .uuid(userSubjectId + "_uuid")
+//                        .subjectId(userSubjectId)
+//                        .build())
                 .withEnabled(enabled)
                 .withExpireTimeMs(expiryTime.toEpochMilli())
                 .build();
@@ -413,48 +404,18 @@ class TestApiKeyDaoImpl {
         }
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class MyUserNameProvider implements UserNameProvider {
-
-        @Override
-        public int getPriority() {
-            return 0;
-        }
-
-        @Override
-        public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
-            return null;
-        }
-
-        @Override
-        public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
-            return null;
-        }
-
-        @Override
-        public Optional<UserName> getBySubjectId(final String subjectId) {
-            return Optional.ofNullable(SUBJECT_ID_TO_UUID_MAP.get(subjectId))
-                    .map(uuid -> SimpleUserName.builder()
-                            .uuid(uuid)
-                            .subjectId(subjectId)
-                            .build());
-        }
-
-        @Override
-        public Optional<UserName> getByDisplayName(final String displayName) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UserName> getByUuid(final String userUuid) {
-            return Optional.ofNullable(UUID_TO_SUBJECT_ID_MAP.get(userUuid))
-                    .map(subjectId -> SimpleUserName.builder()
-                            .uuid(userUuid)
-                            .subjectId(subjectId)
-                            .build());
-        }
+    private UserRef createUser(final String subjectId) {
+        final long nowMs = Instant.now().toEpochMilli();
+        final User user = User.builder()
+                .subjectId(subjectId)
+                .group(false)
+                .enabled(true)
+                .build();
+        user.setCreateUser(subjectId);
+        user.setUpdateUser(subjectId);
+        user.setCreateTimeMs(nowMs);
+        user.setUpdateTimeMs(nowMs);
+        final User persistedUser = userDao.tryCreate(user);
+        return persistedUser.asRef();
     }
 }

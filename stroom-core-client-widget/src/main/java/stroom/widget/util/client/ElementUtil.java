@@ -7,14 +7,13 @@ public class ElementUtil {
 
     public static boolean hasClassName(final Element element,
                                        final String className) {
-        return findMatching(element, className, 0, 0) != null;
+        return findParent(element, className, 0, 0) != null;
     }
 
     public static boolean hasClassName(final Element element,
                                        final String className,
-                                       final int depth,
                                        final int maxDepth) {
-        return findMatching(element, className, depth, maxDepth) != null;
+        return findParent(element, className, 0, maxDepth) != null;
     }
 
     public static Element findChild(final Element element, final String className) {
@@ -37,15 +36,16 @@ public class ElementUtil {
         return null;
     }
 
-    public static Element findMatching(final Element element,
-                                       final String className) {
-        return findMatching(element, className, 0, 0);
+    public static Element findParent(final Element element,
+                                     final String className,
+                                     final int maxDepth) {
+        return findParent(element, className, 0, maxDepth);
     }
 
-    public static Element findMatching(final Element element,
-                                       final String className,
-                                       final int depth,
-                                       final int maxDepth) {
+    private static Element findParent(final Element element,
+                                      final String className,
+                                      final int depth,
+                                      final int maxDepth) {
         if (element == null) {
             return null;
         }
@@ -65,7 +65,7 @@ public class ElementUtil {
         }
 
         if (depth < maxDepth) {
-            return findMatching(element.getParentElement(), className, depth + 1, maxDepth);
+            return findParent(element.getParentElement(), className, depth + 1, maxDepth);
         }
 
         return null;
@@ -263,5 +263,13 @@ public class ElementUtil {
             left += offsetLeft - cur.scrollLeft;
             cur = cur.parentNode;
         }
+    }-*/;
+
+    public static native int getSelectionStart(Element elem) /*-{
+        return elem.selectionStart;
+    }-*/;
+
+    public static native void setSelectionStart(Element elem, int selectionStart) /*-{
+        elem.selectionStart = selectionStart;
     }-*/;
 }

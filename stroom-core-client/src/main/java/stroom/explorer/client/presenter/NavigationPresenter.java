@@ -58,7 +58,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
@@ -435,7 +435,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, getView().getTaskListener());
 
         explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
+        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermission.VIEW);
         explorerTree.getTreeModel().setIncludedTypeSet(null);
 
         // Show the tree.

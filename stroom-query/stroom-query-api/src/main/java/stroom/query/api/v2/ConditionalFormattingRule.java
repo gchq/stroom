@@ -1,6 +1,7 @@
 package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +15,9 @@ import java.util.Objects;
         "hide",
         "backgroundColor",
         "textColor",
-        "enabled"})
+        "enabled",
+        "style",
+        "customStyle"})
 @JsonInclude(Include.NON_NULL)
 public class ConditionalFormattingRule {
 
@@ -23,13 +26,18 @@ public class ConditionalFormattingRule {
     @JsonProperty("expression")
     private final ExpressionOperator expression;
     @JsonProperty("hide")
-    private boolean hide;
+    private final boolean hide;
     @JsonProperty("backgroundColor")
     private final String backgroundColor;
     @JsonProperty("textColor")
     private final String textColor;
     @JsonProperty("enabled")
-    private boolean enabled;
+    private final boolean enabled;
+
+    @JsonProperty("style")
+    private final ConditionalFormattingStyle style;
+    @JsonProperty("customStyle")
+    private final Boolean customStyle;
 
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
@@ -37,13 +45,17 @@ public class ConditionalFormattingRule {
                                      @JsonProperty("hide") final boolean hide,
                                      @JsonProperty("backgroundColor") final String backgroundColor,
                                      @JsonProperty("textColor") final String textColor,
-                                     @JsonProperty("enabled") final boolean enabled) {
+                                     @JsonProperty("enabled") final boolean enabled,
+                                     @JsonProperty("style") final ConditionalFormattingStyle style,
+                                     @JsonProperty("customStyle") final Boolean customStyle) {
         this.id = id;
         this.expression = expression;
         this.hide = hide;
         this.backgroundColor = backgroundColor;
         this.textColor = textColor;
         this.enabled = enabled;
+        this.style = style;
+        this.customStyle = customStyle;
     }
 
     public String getId() {
@@ -58,10 +70,6 @@ public class ConditionalFormattingRule {
         return hide;
     }
 
-    public void setHide(final boolean hide) {
-        this.hide = hide;
-    }
-
     public String getBackgroundColor() {
         return backgroundColor;
     }
@@ -74,8 +82,17 @@ public class ConditionalFormattingRule {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    public ConditionalFormattingStyle getStyle() {
+        return style;
+    }
+
+    public Boolean getCustomStyle() {
+        return customStyle;
+    }
+
+    @JsonIgnore
+    public boolean isCustomStyle() {
+        return customStyle != Boolean.FALSE;
     }
 
     @Override
@@ -92,12 +109,14 @@ public class ConditionalFormattingRule {
                 Objects.equals(id, that.id) &&
                 Objects.equals(expression, that.expression) &&
                 Objects.equals(backgroundColor, that.backgroundColor) &&
-                Objects.equals(textColor, that.textColor);
+                Objects.equals(textColor, that.textColor) &&
+                Objects.equals(style, that.style) &&
+                Objects.equals(customStyle, that.customStyle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, expression, hide, backgroundColor, textColor, enabled);
+        return Objects.hash(id, expression, hide, backgroundColor, textColor, enabled, style, customStyle);
     }
 
     @Override
@@ -109,6 +128,8 @@ public class ConditionalFormattingRule {
                 ", backgroundColor='" + backgroundColor + '\'' +
                 ", textColor='" + textColor + '\'' +
                 ", enabled=" + enabled +
+                ", styleName=" + style +
+                ", customStyle=" + customStyle +
                 '}';
     }
 
@@ -132,6 +153,9 @@ public class ConditionalFormattingRule {
         private String backgroundColor;
         private String textColor;
         private boolean enabled;
+        private ConditionalFormattingStyle style;
+        private Boolean customStyle;
+
 
         private Builder() {
         }
@@ -143,6 +167,8 @@ public class ConditionalFormattingRule {
             this.backgroundColor = rule.backgroundColor;
             this.textColor = rule.textColor;
             this.enabled = rule.enabled;
+            this.style = rule.style;
+            this.customStyle = rule.customStyle;
         }
 
         public Builder id(final String id) {
@@ -161,17 +187,39 @@ public class ConditionalFormattingRule {
         }
 
         public Builder backgroundColor(final String backgroundColor) {
-            this.backgroundColor = backgroundColor;
+            if (backgroundColor.trim().length() == 0) {
+                this.backgroundColor = null;
+            } else {
+                this.backgroundColor = backgroundColor.trim();
+            }
             return this;
         }
 
         public Builder textColor(final String textColor) {
-            this.textColor = textColor;
+            if (textColor.trim().length() == 0) {
+                this.textColor = null;
+            } else {
+                this.textColor = textColor.trim();
+            }
             return this;
         }
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+
+        public Builder style(final ConditionalFormattingStyle style) {
+            this.style = style;
+            return this;
+        }
+
+        public Builder customStyle(final Boolean customStyle) {
+            if (customStyle != Boolean.FALSE) {
+                this.customStyle = null;
+            } else {
+                this.customStyle = false;
+            }
             return this;
         }
 
@@ -186,7 +234,9 @@ public class ConditionalFormattingRule {
                     hide,
                     backgroundColor,
                     textColor,
-                    enabled);
+                    enabled,
+                    style,
+                    customStyle);
         }
     }
 }

@@ -365,6 +365,21 @@ public class ExpressionUtil {
         return item;
     }
 
+    public static ExpressionOperator combine(final ExpressionOperator in,
+                                             final ExpressionOperator decoration) {
+        if (in == null) {
+            return decoration;
+        } else if (decoration == null) {
+            return in;
+        }
+
+        return ExpressionOperator
+                .builder()
+                .addOperator(in)
+                .addOperator(decoration)
+                .build();
+    }
+
     public interface ExpressionItemVisitor {
 
         /**

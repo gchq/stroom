@@ -18,7 +18,7 @@ package stroom.task.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
@@ -142,7 +142,7 @@ class TaskManagerImpl implements TaskManager {
     }
 
     ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_TASKS_PERMISSION, () -> {
             // This can change a little between servers
             final long timeNowMs = System.currentTimeMillis();
 
@@ -197,7 +197,7 @@ class TaskManagerImpl implements TaskManager {
             // have been requested.
             return doFind(findTaskProgressCriteria);
         } else {
-            return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () ->
+            return securityContext.secureResult(AppPermission.MANAGE_TASKS_PERMISSION, () ->
                     doFind(findTaskProgressCriteria));
         }
     }
@@ -264,7 +264,7 @@ class TaskManagerImpl implements TaskManager {
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(taskContext.getTaskId());
         taskProgress.setTaskName(taskContext.getName());
-        taskProgress.setUserName(taskContext.getUserIdentityForAudit());
+        taskProgress.setUserName(taskContext.getUserIdentity().getUserIdentityForAudit());
         taskProgress.setThreadName(taskContext.getThreadName());
         taskProgress.setTaskInfo(taskContext.getInfo());
         taskProgress.setSubmitTimeMs(taskContext.getSubmitTimeMs());
@@ -301,7 +301,7 @@ class TaskManagerImpl implements TaskManager {
 
     @Override
     public void terminate(final TaskId taskId) {
-        securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_TASKS_PERMISSION, () -> {
             final TaskContextImpl taskContext = taskRegistry.get(taskId);
             if (taskContext != null) {
                 taskContext.terminate();

@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 
-import java.time.Instant;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory

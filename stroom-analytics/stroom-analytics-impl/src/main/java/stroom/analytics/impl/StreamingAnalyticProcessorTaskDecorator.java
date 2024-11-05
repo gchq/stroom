@@ -127,10 +127,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                 tableSettings.getValueFilter(),
                 compiledColumns,
                 searchRequest.getDateTimeSettings(),
-                paramMap,
-                e -> {
-                    throw new RuntimeException(e);
-                });
+                paramMap);
 
         try {
             final Provider<DetectionConsumer> detectionConsumerProvider =

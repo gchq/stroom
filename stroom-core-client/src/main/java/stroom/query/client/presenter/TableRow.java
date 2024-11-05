@@ -1,6 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
+import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.util.shared.Expander;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -18,13 +19,22 @@ public class TableRow {
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
+    private final String backgroundColor;
+    private final String textColor;
+    private final ConditionalFormattingStyle style;
 
     public TableRow(final Expander expander,
                     final String groupKey,
-                    final Map<String, Cell> cells) {
+                    final Map<String, Cell> cells,
+                    final String backgroundColor,
+                    final String textColor,
+                    final ConditionalFormattingStyle style) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
+        this.backgroundColor = backgroundColor;
+        this.textColor = textColor;
+        this.style = style;
     }
 
     public Expander getExpander() {
@@ -43,6 +53,18 @@ public class TableRow {
         } else {
             return SafeHtmlUtil.NBSP;
         }
+    }
+
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public String getTextColor() {
+        return textColor;
+    }
+
+    public ConditionalFormattingStyle getStyle() {
+        return style;
     }
 
     private SafeHtml decorateValue(final Cell cell) {

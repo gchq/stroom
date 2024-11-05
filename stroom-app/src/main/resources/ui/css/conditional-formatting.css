@@ -1,0 +1,232 @@
+/**************************************************
+*  NOTE: This file gets copied into stroom-docs by
+*  stroom-docs/update_stroom_icons.sh
+*  so any significant changes may break the docs.
+***************************************************/
+
+
+
+.cf-colour-swatch {
+    min-width: 200px;
+    padding: 3px;
+    border: 1px solid rgba(0,0,0,.2);
+}
+
+.dataGridCell .cf-colour-swatch {
+    min-width: 100px;
+    padding: 2px;
+}
+
+
+
+.cf-red {
+    background-color: var(--red-200);
+    color: var(--black);
+}
+
+.cf-pink {
+    background-color: var(--pink-200);
+    color: var(--black);
+}
+
+.cf-purple {
+    background-color: var(--purple-200);
+    color: var(--black);
+}
+
+.cf-deep-purple {
+    background-color: var(--deep-purple-200);
+    color: var(--black);
+}
+
+.cf-indigo {
+    background-color: var(--indigo-200);
+    color: var(--black);
+}
+
+.cf-blue {
+    background-color: var(--blue-200);
+    color: var(--black);
+}
+
+.cf-light-blue {
+    background-color: var(--light-blue-200);
+    color: var(--black);
+}
+
+.cf-cyan {
+    background-color: var(--cyan-200);
+    color: var(--black);
+}
+
+.cf-teal {
+    background-color: var(--teal-200);
+    color: var(--black);
+}
+
+.cf-green {
+    background-color: var(--green-200);
+    color: var(--black);
+}
+
+.cf-light-green {
+    background-color: var(--light-green-200);
+    color: var(--black);
+}
+
+.cf-lime {
+    background-color: var(--lime-200);
+    color: var(--black);
+}
+
+.cf-yellow {
+    background-color: var(--yellow-200);
+    color: var(--black);
+}
+
+.cf-amber {
+    background-color: var(--amber-200);
+    color: var(--black);
+}
+
+.cf-orange {
+    background-color: var(--orange-200);
+    color: var(--black);
+}
+
+.cf-deep-orange {
+    background-color: var(--deep-orange-200);
+    color: var(--black);
+}
+
+.cf-brown {
+    background-color: var(--brown-200);
+    color: var(--black);
+}
+
+.cf-grey {
+    background-color: var(--grey-200);
+    color: var(--black);
+}
+
+.cf-blue-grey {
+    background-color: var(--blue-grey-200);
+    color: var(--black);
+}
+
+
+
+
+
+.stroom-theme-dark .cf-colour-swatch {
+    border: 1px solid rgba(255,255,255,.3);
+}
+
+
+
+.stroom-theme-dark .cf-red {
+    background-color: var(--red-900);
+    color: var(--red-50);
+}
+
+.stroom-theme-dark .cf-pink {
+    background-color: var(--pink-900);
+    color: var(--pink-50);
+}
+
+.stroom-theme-dark .cf-purple {
+    background-color: var(--purple-900);
+    color: var(--purple-50);
+}
+
+.stroom-theme-dark .cf-deep-purple {
+    background-color: var(--deep-purple-900);
+    color: var(--deep-purple-50);
+}
+
+.stroom-theme-dark .cf-indigo {
+    background-color: var(--indigo-900);
+    color: var(--indigo-50);
+}
+
+.stroom-theme-dark .cf-blue {
+    background-color: var(--blue-900);
+    color: var(--blue-50);
+}
+
+.stroom-theme-dark .cf-light-blue {
+    background-color: var(--light-blue-900);
+    color: var(--light-blue-50);
+}
+
+.stroom-theme-dark .cf-cyan {
+    background-color: var(--cyan-900);
+    color: var(--cyan-50);
+}
+
+.stroom-theme-dark .cf-teal {
+    background-color: var(--teal-900);
+    color: var(--teal-50);
+}
+
+.stroom-theme-dark .cf-green {
+    background-color: var(--green-900);
+    color: var(--green-50);
+}
+
+.stroom-theme-dark .cf-light-green {
+    background-color: var(--light-green-900);
+    color: var(--light-green-50);
+}
+
+.stroom-theme-dark .cf-lime {
+    background-color: var(--lime-900);
+    color: var(--lime-50);
+}
+
+.stroom-theme-dark .cf-yellow {
+    background-color: var(--yellow-900);
+    color: var(--yellow-50);
+}
+
+.stroom-theme-dark .cf-amber {
+    background-color: var(--amber-900);
+    color: var(--amber-50);
+}
+
+.stroom-theme-dark .cf-orange {
+    background-color: var(--orange-900);
+    color: var(--orange-50);
+}
+
+.stroom-theme-dark .cf-deep-orange {
+    background-color: var(--deep-orange-900);
+    color: var(--deep-orange-50);
+}
+
+.stroom-theme-dark .cf-brown {
+    background-color: var(--brown-900);
+    color: var(--brown-50);
+}
+
+.stroom-theme-dark .cf-grey {
+    background-color: var(--grey-900);
+    color: var(--grey-50);
+}
+
+.stroom-theme-dark .cf-blue-grey {
+    background-color: var(--blue-grey-900);
+    color: var(--blue-grey-50);
+}
+
+/* Styles for the drop down selection box */
+.conditionalFormatStyleSelection .SelectionBox-renderBox {
+    padding: 0;
+}
+
+.conditionalFormatStyleSelection .cf-colour-swatch {
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
+}

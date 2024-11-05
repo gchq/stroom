@@ -16,9 +16,11 @@
 
 package stroom.processor.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.BulkProcessorFilterChangeRequest;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.ProcessorFilter;
@@ -26,6 +28,9 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ReprocessDataInfo;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -36,11 +41,16 @@ import java.util.List;
 @AutoLogged
 class ProcessorFilterResourceImpl implements ProcessorFilterResource {
 
+    private static final AppPermission PERMISSION = AppPermission.MANAGE_PROCESSORS_PERMISSION;
+
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    ProcessorFilterResourceImpl(final Provider<ProcessorFilterService> processorFilterServiceProvider) {
+    ProcessorFilterResourceImpl(final Provider<ProcessorFilterService> processorFilterServiceProvider,
+                                final Provider<SecurityContext> securityContextProvider) {
         this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -92,5 +102,31 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
         final ResultPage<ProcessorListRow> resultPage = processorFilterServiceProvider.get().find(request);
         return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
+    }
+
+    @Override
+    public Boolean bulkChange(final BulkProcessorFilterChangeRequest request) {
+        final ProcessorFilterService processorFilterService = processorFilterServiceProvider.get();
+        final SecurityContext securityContext = securityContextProvider.get();
+        securityContext.secure(PERMISSION, () -> {
+            final ExpressionCriteria criteria = new ExpressionCriteria(
+                    PageRequest.unlimited(),
+                    null,
+                    request.getExpression());
+            final ResultPage<ProcessorFilter> resultPage = processorFilterService.find(criteria);
+            resultPage.getValues().stream().forEach(filter -> {
+                switch (request.getChange()) {
+                    case ENABLE -> processorFilterService.setEnabled(filter.getId(), true);
+                    case DISABLE -> processorFilterService.setEnabled(filter.getId(), false);
+                    case DELETE -> processorFilterService.delete(filter.getId());
+                    case SET_RUN_AS_USER -> {
+                        filter.setRunAsUser(request.getUserRef());
+                        processorFilterService.update(filter);
+                    }
+                }
+            });
+        });
+
+        return true;
     }
 }

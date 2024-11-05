@@ -7,7 +7,7 @@ import stroom.test.common.TestUtil;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,6 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
     @Override
     public SessionResource getRestResource() {
         return new SessionResourceImpl(
-                TestUtil.mockProvider(AuthenticationConfig.class),
                 TestUtil.mockProvider(OpenIdManager.class),
                 TestUtil.mockProvider(HttpServletRequest.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
@@ -46,13 +45,14 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
 
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
+        final UserRef userRef = UserRef.builder().uuid("user1").subjectId("user1").build();
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(userRef,
                         123L,
                         456L,
                         "agent1",
                         "node1"),
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(userRef,
                         123L,
                         456L,
                         "agent1",
@@ -76,13 +76,14 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
 
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
+        final UserRef userRef = UserRef.builder().uuid("user1").subjectId("user1").build();
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(userRef,
                         123L,
                         456L,
                         "agent1",
                         "node1"),
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(userRef,
                         123L,
                         456L,
                         "agent1",

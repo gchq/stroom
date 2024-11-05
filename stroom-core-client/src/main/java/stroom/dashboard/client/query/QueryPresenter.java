@@ -19,7 +19,6 @@ package stroom.dashboard.client.query;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -31,7 +30,6 @@ import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
@@ -50,7 +48,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultStoreInfo;
@@ -65,14 +62,13 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -93,9 +89,8 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Optional;
 
 public class QueryPresenter
         extends AbstractComponentPresenter<QueryPresenter.QueryView>
@@ -135,6 +130,7 @@ public class QueryPresenter
     private Timer autoRefreshTimer;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
+    private ExpressionOperator currentDecoration;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -200,7 +196,7 @@ public class QueryPresenter
         favouriteButton = view.addButtonLeft(SvgPresets.FAVOURITES.enabled(true));
         downloadQueryButton = view.addButtonLeft(SvgPresets.DOWNLOAD);
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
@@ -299,56 +295,19 @@ public class QueryPresenter
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
                 final Component component = event.getComponent();
-                if (component instanceof HasSelection) {
-                    final HasSelection hasSelection = (HasSelection) component;
-                    final List<Map<String, String>> selection = hasSelection.getSelection();
-                    final List<ComponentSelectionHandler> selectionHandlers = getQuerySettings().getSelectionHandlers();
-                    if (selectionHandlers != null) {
-                        final List<ComponentSelectionHandler> matchingHandlers = selectionHandlers
-                                .stream()
-                                .filter(ComponentSelectionHandler::isEnabled)
-                                .filter(selectionHandler -> selectionHandler.getComponentId() == null ||
-                                        selectionHandler.getComponentId().equals(component.getId()))
-                                .collect(Collectors.toList());
-
-                        if (matchingHandlers.size() > 0) {
-                            final Function<ExpressionOperator, ExpressionOperator> decorator = (in) -> {
-                                final ExpressionOperator.Builder innerBuilder = ExpressionOperator
-                                        .builder();
-                                boolean added = false;
-                                for (final ComponentSelectionHandler selectionHandler : matchingHandlers) {
-                                    for (final Map<String, String> params : selection) {
-                                        ExpressionOperator ex = selectionHandler.getExpression();
-                                        ex = ExpressionUtil.replaceExpressionParameters(ex, params);
-                                        innerBuilder.addOperator(ex);
-
-                                        if (!added) {
-                                            added = true;
-                                        } else {
-                                            innerBuilder.op(Op.OR);
-                                        }
-                                    }
-                                }
-
-                                if (added) {
-                                    return ExpressionOperator
-                                            .builder()
-                                            .addOperator(in)
-                                            .addOperator(innerBuilder.build())
-                                            .build();
-                                }
-
-                                return in;
-                            };
+                final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
+                        .create(component, getQuerySettings().getSelectionHandlers());
 
 //                          this.params = params;
 //                          lastUsedQueryInfo = null;
 
-                            searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
-                            run(true, true, decorator);
-                        }
+                optional.ifPresent(selectionExpression -> {
+                    if (!Objects.equals(currentDecoration, selectionExpression)) {
+                        currentDecoration = selectionExpression;
+                        searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
+                        run(true, true, selectionExpression);
                     }
-                }
+                });
             }
 
 //            if (component instanceof HasAbstractFields) {
@@ -370,7 +329,7 @@ public class QueryPresenter
 //                        currentTablePresenter = (TablePresenter) component;
 //                        update(currentTablePresenter);
 //                    }
-//                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
+//                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
 //                    if (component instanceof TablePresenter) {
 //                        currentTablePresenter = (TablePresenter) component;
 //                        update(currentTablePresenter);
@@ -453,15 +412,12 @@ public class QueryPresenter
     }
 
     private void loadedDataSource(final DocRef dataSourceRef) {
-        fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(dataSourceRef));
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
 
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(getQuerySettings().getDataSource(), dataSourceRef);
-
-        if (!builder.isEquals()) {
+        if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
                     .copy()
                     .dataSource(dataSourceRef)
@@ -524,7 +480,7 @@ public class QueryPresenter
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        chooser.setRequiredPermissions(DocumentPermissionNames.USE);
+        chooser.setRequiredPermissions(DocumentPermission.USE);
         chooser.show(pipeline -> {
             if (pipeline != null) {
                 setProcessorLimits(queryData, pipeline);
@@ -631,12 +587,12 @@ public class QueryPresenter
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        run(incremental, storeHistory, Function.identity());
+        run(incremental, storeHistory, null);
     }
 
     private void run(final boolean incremental,
                      final boolean storeHistory,
-                     final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
+                     final ExpressionOperator expressionDecorator) {
         final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
@@ -649,7 +605,7 @@ public class QueryPresenter
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
-            final ExpressionOperator decorated = expressionDecorator.apply(root);
+            final ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
 
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
@@ -714,7 +670,7 @@ public class QueryPresenter
 
         // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
         final DashboardDoc dashboard = getComponents().getDashboard();
-        searchModel.init(dashboard.getUuid(), componentConfig.getId());
+        searchModel.init(dashboard.asDocRef(), componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());

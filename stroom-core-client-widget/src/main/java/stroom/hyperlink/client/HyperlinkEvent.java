@@ -61,7 +61,7 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
         return hyperlink;
     }
 
-    public TaskMonitorFactory getTaskHandlerFactory() {
+    public TaskMonitorFactory getTaskMonitorFactory() {
         return taskMonitorFactory;
     }
 

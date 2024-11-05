@@ -29,8 +29,10 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -85,7 +87,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
             @Override
             public String getValue(final ResultStoreInfo resultStoreInfo) {
-                return resultStoreInfo.getCreateUser();
+                return GwtNullSafe.get(resultStoreInfo.getOwner(), UserRef::toDisplayString);
             }
         }, "User Display Name", 300);
 

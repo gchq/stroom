@@ -78,6 +78,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
         // Create text column.
         final Column columnText = Column.builder()
+                .id("Text")
                 .name("Text")
                 .expression(ParamSubstituteUtil.makeParam("Text"))
                 .group(0)
@@ -86,6 +87,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
         // Create count column.
         final Column columnCount = Column.builder()
+                .id("Count")
                 .name("Count")
                 .expression("count()")
                 .format(Format.NUMBER)

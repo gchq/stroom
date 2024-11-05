@@ -23,11 +23,9 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
-import stroom.security.shared.UserNameResource;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -36,7 +34,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -110,11 +107,11 @@ public class AnnotationManager {
         final List<String> streamIds = getValues(
                 tableComponentSettings,
                 selectedItems,
-                IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID));
+                IndexConstants.RESERVED_STREAM_ID_FIELD_NAME);
         final List<String> eventIds = getValues(
                 tableComponentSettings,
                 selectedItems,
-                IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID));
+                IndexConstants.RESERVED_EVENT_ID_FIELD_NAME);
         final List<String> eventIdLists = getValues(tableComponentSettings, selectedItems, "EventIdList");
 
         for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {
@@ -240,26 +237,17 @@ public class AnnotationManager {
         final String title = getValue(tableComponentSettings, selectedItems, "title");
         final String subject = getValue(tableComponentSettings, selectedItems, "subject");
         final String status = getValue(tableComponentSettings, selectedItems, "status");
-        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
+//        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
         final String comment = getValue(tableComponentSettings, selectedItems, "comment");
 
-        // assignedTo is a display name so have to convert it back to a unique username
-        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-        restFactory
-                .create(userNameResource)
-                .method(res -> res.getByDisplayName(assignedTo))
-                .onSuccess(optUserName -> {
-                    final Annotation annotation = new Annotation();
-                    annotation.setTitle(title);
-                    annotation.setSubject(subject);
-                    annotation.setStatus(status);
-                    annotation.setAssignedTo(optUserName);
-                    annotation.setComment(comment);
+        final Annotation annotation = new Annotation();
+        annotation.setTitle(title);
+        annotation.setSubject(subject);
+        annotation.setStatus(status);
+//        annotation.setAssignedTo(optUserName);
+        annotation.setComment(comment);
 
-                    ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
-                })
-                .taskMonitorFactory(new QuietTaskMonitorFactory())
-                .exec();
+        ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

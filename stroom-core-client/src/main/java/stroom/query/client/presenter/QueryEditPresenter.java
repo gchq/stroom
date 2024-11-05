@@ -32,10 +32,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QLVisResult;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.GwtNullSafe;
@@ -75,6 +75,7 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
+    private final QueryTablePreferencesHolder queryTablePreferencesHolder = new QueryTablePreferencesHolder();
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
@@ -106,6 +107,9 @@ public class QueryEditPresenter
         this.visPresenterProvider = visPresenterProvider;
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
+
+        queryResultPresenter.setQueryTablePreferencesSupplier(queryTablePreferencesHolder);
+        queryResultPresenter.setQueryTablePreferencesConsumer(queryTablePreferencesHolder);
 
         final ResultComponent resultConsumer = new ResultComponent() {
             boolean start;
@@ -177,15 +181,15 @@ public class QueryEditPresenter
             }
         };
 
-
         queryModel = new QueryModel(
                 eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                queryResultPresenter,
-                resultConsumer);
-        queryResultPresenter.setQueryModel(queryModel);
+                queryTablePreferencesHolder);
+        queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
+        queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
+
         queryModel.addSearchErrorListener(queryToolbarPresenter);
         queryModel.addTokenErrorListener(e -> {
             final Indicators indicators = new Indicators();
@@ -288,6 +292,7 @@ public class QueryEditPresenter
         }));
         registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
                 selectTab(e.getSelectedItem())));
+        registerHandler(queryResultPresenter.addDirtyHandler(e -> setDirty(true)));
     }
 
     @Override
@@ -367,7 +372,8 @@ public class QueryEditPresenter
                 queryToolbarPresenter.getTimeRange(),
                 incremental,
                 storeHistory,
-                queryInfo.getMessage());
+                queryInfo.getMessage(),
+                null);
     }
 
     public TimeRange getTimeRange() {
@@ -381,7 +387,7 @@ public class QueryEditPresenter
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
         this.readOnly = readOnly;
 
-        queryModel.init(docRef.getUuid());
+        queryModel.init(docRef);
         if (query != null) {
             reading = true;
             if (GwtNullSafe.isBlankString(editorPresenter.getText())
@@ -408,14 +414,18 @@ public class QueryEditPresenter
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    public void setSourceType(final SourceType sourceType) {
-        queryModel.setSourceType(sourceType);
-    }
-
     @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         queryModel.setTaskMonitorFactory(taskMonitorFactory);
         queryHelpPresenter.setTaskMonitorFactory(taskMonitorFactory);
+    }
+
+    public QueryTablePreferences write() {
+        return queryTablePreferencesHolder.get();
+    }
+
+    public void read(final QueryTablePreferences queryTablePreferences) {
+        queryTablePreferencesHolder.accept(queryTablePreferences);
     }
 
 

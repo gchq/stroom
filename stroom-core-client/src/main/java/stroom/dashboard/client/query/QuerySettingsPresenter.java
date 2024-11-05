@@ -31,7 +31,8 @@ public class QuerySettingsPresenter extends SettingsPresenter {
         super(eventBus, view);
         getView().asWidget().addStyleName("settingsPresenter");
 
-        selectionHandlersPresenter.setBasicQuerySettingsPresenter(basicSettingsPresenter);
+        selectionHandlersPresenter.setDataSourceRefConsumer(consumer ->
+                consumer.accept(basicSettingsPresenter.getDataSource()));
 
         addTab("Basic", basicSettingsPresenter);
         addTab("Selection Handlers", selectionHandlersPresenter);

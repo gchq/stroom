@@ -16,11 +16,9 @@
 
 package stroom.processor.api;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class InclusiveRanges {
 
@@ -197,25 +195,19 @@ public class InclusiveRanges {
 
         @Override
         public boolean equals(final Object o) {
-            if (o == this) {
+            if (this == o) {
                 return true;
-            } else if (!(o instanceof InclusiveRange)) {
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-
-            final InclusiveRange range = (InclusiveRange) o;
-            final EqualsBuilder builder = new EqualsBuilder();
-            builder.append(min, range.min);
-            builder.append(max, range.max);
-            return builder.isEquals();
+            final InclusiveRange that = (InclusiveRange) o;
+            return min == that.min && max == that.max;
         }
 
         @Override
         public int hashCode() {
-            final HashCodeBuilder builder = new HashCodeBuilder();
-            builder.append(min);
-            builder.append(max);
-            return builder.toHashCode();
+            return Objects.hash(min, max);
         }
 
         @Override

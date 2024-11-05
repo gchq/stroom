@@ -10,6 +10,7 @@
 package stroom.query.shared;
 
 import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
 
@@ -34,16 +35,21 @@ public class QueryContext {
     private final String queryInfo;
     @JsonProperty
     private final DateTimeSettings dateTimeSettings;
+    @JsonProperty
+    private final ExpressionOperator additionalQueryExpression;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public QueryContext(@JsonProperty("params") final List<Param> params,
                         @JsonProperty("timeRange") final TimeRange timeRange,
                         @JsonProperty("queryInfo") final String queryInfo,
-                        @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings) {
+                        @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
+                        @JsonProperty("additionalQueryExpression") final ExpressionOperator additionalQueryExpression) {
         this.params = params;
         this.timeRange = timeRange;
         this.queryInfo = queryInfo;
         this.dateTimeSettings = dateTimeSettings;
+        this.additionalQueryExpression = additionalQueryExpression;
     }
 
     public List<Param> getParams() {
@@ -62,6 +68,10 @@ public class QueryContext {
         return dateTimeSettings;
     }
 
+    public ExpressionOperator getAdditionalQueryExpression() {
+        return additionalQueryExpression;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -74,12 +84,13 @@ public class QueryContext {
         return Objects.equals(params, that.params) &&
                 Objects.equals(timeRange, that.timeRange) &&
                 Objects.equals(queryInfo, that.queryInfo) &&
-                Objects.equals(dateTimeSettings, that.dateTimeSettings);
+                Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
+                Objects.equals(additionalQueryExpression, that.additionalQueryExpression);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, timeRange, queryInfo, dateTimeSettings);
+        return Objects.hash(params, timeRange, queryInfo, dateTimeSettings, additionalQueryExpression);
     }
 
     @Override
@@ -89,6 +100,7 @@ public class QueryContext {
                 ", timeRange=" + timeRange +
                 ", queryInfo='" + queryInfo + '\'' +
                 ", dateTimeSettings=" + dateTimeSettings +
+                ", currentSelectionExpression=" + additionalQueryExpression +
                 '}';
     }
 
@@ -106,6 +118,7 @@ public class QueryContext {
         private TimeRange timeRange;
         private String queryInfo;
         private DateTimeSettings dateTimeSettings;
+        private ExpressionOperator additionalQueryExpression;
 
         private Builder() {
         }
@@ -115,6 +128,7 @@ public class QueryContext {
             this.timeRange = queryContext.timeRange;
             this.queryInfo = queryContext.queryInfo;
             this.dateTimeSettings = queryContext.dateTimeSettings;
+            this.additionalQueryExpression = queryContext.additionalQueryExpression;
         }
 
         public Builder params(final List<Param> params) {
@@ -137,12 +151,18 @@ public class QueryContext {
             return this;
         }
 
+        public Builder additionalQueryExpression(final ExpressionOperator additionalQueryExpression) {
+            this.additionalQueryExpression = additionalQueryExpression;
+            return this;
+        }
+
         public QueryContext build() {
             return new QueryContext(
                     params,
                     timeRange,
                     queryInfo,
-                    dateTimeSettings);
+                    dateTimeSettings,
+                    additionalQueryExpression);
         }
     }
 }

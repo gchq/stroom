@@ -134,7 +134,8 @@ public class ListInputComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder extends ComponentSettings
+            .AbstractBuilder<ListInputComponentSettings, ListInputComponentSettings.Builder> {
 
         private String key;
         private String value;
@@ -159,31 +160,36 @@ public class ListInputComponentSettings implements ComponentSettings {
 
         public Builder key(final String key) {
             this.key = key;
-            return this;
+            return self();
         }
 
         public Builder value(final String value) {
             this.value = value;
-            return this;
+            return self();
         }
 
         public Builder values(final List<String> values) {
             this.values = values;
-            return this;
+            return self();
         }
 
         public Builder dictionary(final DocRef dictionary) {
             this.dictionary = dictionary;
-            return this;
+            return self();
         }
 
         public Builder useDictionary(final boolean useDictionary) {
             this.useDictionary = useDictionary;
-            return this;
+            return self();
         }
 
         public Builder allowTextEntry(final boolean allowTextEntry) {
             this.allowTextEntry = allowTextEntry;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

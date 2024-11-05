@@ -31,7 +31,7 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -65,7 +65,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         this.restFactory = restFactory;
 
         pipelinePickerPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePickerPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        pipelinePickerPresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePickerPresenter.getView());

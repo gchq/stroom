@@ -77,8 +77,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         final NativeEvent nativeEvent = event.getNativeEvent();
         if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
-            return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 0, 5) ||
-                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5);
+            return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5) ||
+                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
         }
         return false;
     }
@@ -111,12 +111,12 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         final Element element = event.getEventTarget().cast();
         final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
         if (docRef != null) {
-            if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 0, 5)) {
+            if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
                 final String text = getTextFromDocRef(docRef);
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }
-            } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5)) {
+            } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 OpenDocumentEvent.fire(this, docRef, true);
             }
         }

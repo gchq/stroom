@@ -28,6 +28,8 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.function.Consumer;
+
 public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plugin {
 
     private final ContentManager contentManager;
@@ -46,7 +48,12 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         return presenter;
     }
 
-    public P open() {
+    public final void open() {
+        open(presenter -> {
+        });
+    }
+
+    public void open(Consumer<P> consumer) {
         if (presenter == null) {
             // If the presenter is null then we haven't got this tab open.
             // Create a new presenter.
@@ -84,6 +91,6 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
             final Refreshable refreshable = (Refreshable) presenter;
             refreshable.refresh();
         }
-        return presenter;
+        consumer.accept(presenter);
     }
 }

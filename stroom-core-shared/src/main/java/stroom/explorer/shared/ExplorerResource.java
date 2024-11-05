@@ -18,6 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -181,7 +182,24 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             summary = "Find documents with names and types matching the supplied request",
             operationId = "find")
     ResultPage<FindResult> find(
-            @Parameter(description = "request", required = true) FindRequest request);
+            @Parameter(description = "request", required = true) DocumentFindRequest request);
+
+    @POST
+    @Path("/advancedFind")
+    @Operation(
+            summary = "Find documents with names and types matching the supplied request",
+            operationId = "advancedFind")
+    ResultPage<FindResult> advancedFind(
+            @Parameter(description = "request", required = true) AdvancedDocumentFindRequest request);
+
+    @POST
+    @Path("/advancedFindWithPermissions")
+    @Operation(
+            summary = "Find documents with names and types matching the supplied request and the accociated " +
+                    "permissions for a given user",
+            operationId = "advancedFindWithPermissions")
+    ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            @Parameter(description = "request", required = true) AdvancedDocumentFindWithPermissionsRequest request);
 
     @POST
     @Path("/findInContent")
@@ -199,6 +217,13 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     DocContentHighlights fetchHighlights(
             @Parameter(description = "request", required = true) FetchHighlightsRequest request);
 
+    @POST
+    @Path("/changeDocumentPermissions")
+    @Operation(
+            summary = "Change document permissions",
+            operationId = "changeDocumentPermissions")
+    Boolean changeDocumentPermissions(
+            @Parameter(description = "request", required = true) BulkDocumentPermissionChangeRequest request);
 
     // --------------------------------------------------------------------------------
 

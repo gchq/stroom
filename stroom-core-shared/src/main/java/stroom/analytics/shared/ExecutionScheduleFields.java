@@ -6,6 +6,7 @@ public class ExecutionScheduleFields {
     public static final String ENABLED = "Enabled";
     public static final String NODE_NAME = "Node Name";
     public static final String SCHEDULE = "Schedule";
+    public static final String RUN_AS_USER = "Run As User";
     public static final String BOUNDS = "Bounds";
 
 }

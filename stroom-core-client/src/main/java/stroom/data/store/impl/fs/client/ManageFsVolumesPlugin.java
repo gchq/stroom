@@ -22,7 +22,7 @@ import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -46,8 +46,8 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupP
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_VOLUMES_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_VOLUMES_PERMISSION;
     }
 
     @Override

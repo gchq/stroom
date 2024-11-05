@@ -27,6 +27,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
@@ -216,7 +217,7 @@ public interface MetaService {
      * @param criteria The selection criteria.
      * @return An object that provides a summary of the current selection.
      */
-    SelectionSummary getSelectionSummary(FindMetaCriteria criteria, final String permission);
+    SelectionSummary getSelectionSummary(FindMetaCriteria criteria, final DocumentPermission permission);
 
 
     /**
@@ -235,7 +236,7 @@ public interface MetaService {
      * @return An object that provides a summary of the parent items of the current selection for
      * reprocessing purposes.
      */
-    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria, final String permission);
+    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria, final DocumentPermission permission);
 
     /**
      * Return back a aet of meta data records that are effective for a period in

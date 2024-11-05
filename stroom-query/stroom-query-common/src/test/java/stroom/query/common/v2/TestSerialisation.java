@@ -23,10 +23,10 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
@@ -94,7 +94,7 @@ class TestSerialisation {
                                         .name("name1")
                                         .expression("expression1")
                                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
-                                        .filter(new Filter("include1", "exclude1"))
+                                        .filter(new IncludeExcludeFilter("include1", "exclude1"))
                                         .format(Format.builder()
                                                 .type(Type.NUMBER)
                                                 .settings(new NumberFormatSettings(1, false))
@@ -106,7 +106,7 @@ class TestSerialisation {
                                         .name("name2")
                                         .expression("expression2")
                                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
-                                        .filter(new Filter("include2", "exclude2"))
+                                        .filter(new IncludeExcludeFilter("include2", "exclude2"))
                                         .format(Format.builder()
                                                 .type(Type.DATE_TIME)
                                                 .settings(createDateTimeFormat())

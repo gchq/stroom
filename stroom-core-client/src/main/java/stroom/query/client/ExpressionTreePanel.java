@@ -23,7 +23,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -39,7 +39,6 @@ import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
@@ -60,13 +59,11 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private DefaultTreeForTreeLayout<Item> tree;
 
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
+                               final Provider<UserRefSelectionBoxPresenter> userRefProvider,
                                final boolean utc) {
-        final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
-        docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-        docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefPresenter);
+        termEditor = new TermEditor(docRefProvider, userRefProvider);
         termEditor.setUtc(utc);
 
         final FlowPanel panel = new FlowPanel();

@@ -5,44 +5,48 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.format.Formatter;
+import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.google.common.base.Predicates;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class ConditionalFormattingRowCreator extends FilteredRowCreator {
+public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConditionalFormattingRowCreator.class);
 
-    private final Predicate<Map<String, Object>> rowFilter;
-    private final List<RuleAndMatcher> rules;
+    private final int[] columnIndexMapping;
+    private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
+    private final Formatter[] columnFormatters;
+    private final Predicate<Val[]> rowFilter;
+    private final List<RuleAndMatcher> rules;
 
-    private ConditionalFormattingRowCreator(final List<Column> originalColumns,
-                                            final List<Column> newColumns,
-                                            final ColumnFormatter columnFormatter,
+    private ConditionalFormattingRowCreator(final int[] columnIndexMapping,
                                             final KeyFactory keyFactory,
-                                            final Predicate<Map<String, Object>> rowFilter,
-                                            final List<RuleAndMatcher> rules,
-                                            final ErrorConsumer errorConsumer) {
-        super(originalColumns, newColumns, columnFormatter, keyFactory, rowFilter, errorConsumer);
-
+                                            final ErrorConsumer errorConsumer,
+                                            final Formatter[] columnFormatters,
+                                            final Predicate<Val[]> rowFilter,
+                                            final List<RuleAndMatcher> rules) {
+        this.columnIndexMapping = columnIndexMapping;
+        this.keyFactory = keyFactory;
+        this.errorConsumer = errorConsumer;
+        this.columnFormatters = columnFormatters;
         this.rowFilter = rowFilter;
         this.rules = rules;
-        this.errorConsumer = errorConsumer;
     }
 
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
                                                    final List<Column> newColumns,
-                                                   final ColumnFormatter columnFormatter,
+                                                   final boolean applyValueFilters,
+                                                   final FormatterFactory formatterFactory,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilterExpression,
                                                    final List<ConditionalFormattingRule> rules,
@@ -55,29 +59,41 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
                     .filter(ConditionalFormattingRule::isEnabled)
                     .toList();
             if (!activeRules.isEmpty()) {
-                final Optional<RowExpressionMatcher> optionalRowExpressionMatcher =
-                        RowExpressionMatcher.create(newColumns, dateTimeSettings, rowFilterExpression);
-                final Predicate<Map<String, Object>> rowFilter = optionalRowExpressionMatcher
-                        .map(orem -> (Predicate<Map<String, Object>>) orem)
-                        .orElse(Predicates.alwaysTrue());
-
                 final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
-                for (final ConditionalFormattingRule rule : rules) {
-                    final Optional<RowExpressionMatcher> optionalRuleFilter =
-                            RowExpressionMatcher.create(newColumns, dateTimeSettings, rule.getExpression());
-                    optionalRuleFilter.ifPresent(columnExpressionMatcher ->
-                            ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
+                final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);
+                for (final ConditionalFormattingRule rule : activeRules) {
+                    try {
+                        final Optional<Predicate<Val[]>> optionalValuesPredicate =
+                                ExpressionPredicateBuilder.create(rule.getExpression(),
+                                        queryFieldIndex,
+                                        dateTimeSettings);
+                        optionalValuesPredicate.ifPresent(columnExpressionMatcher ->
+                                ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
+                    } catch (final RuntimeException e) {
+                        throw new RuntimeException("Error evaluating conditional formatting rule: " +
+                                rule.getExpression() +
+                                " (" +
+                                e.getMessage() +
+                                ")", e);
+                    }
                 }
 
-                if (optionalRowExpressionMatcher.isPresent() || !ruleAndMatchers.isEmpty()) {
+                if (!ruleAndMatchers.isEmpty()) {
+                    final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
+                    final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
+                    final Optional<Predicate<Val[]>> rowFilter = FilteredRowCreator
+                            .createValuesPredicate(newColumns,
+                                    applyValueFilters,
+                                    rowFilterExpression,
+                                    dateTimeSettings);
+
                     return Optional.of(new ConditionalFormattingRowCreator(
-                            originalColumns,
-                            newColumns,
-                            columnFormatter,
+                            columnIndexMapping,
                             keyFactory,
-                            rowFilter,
-                            ruleAndMatchers,
-                            errorConsumer));
+                            errorConsumer,
+                            formatters,
+                            rowFilter.orElse(values -> true),
+                            ruleAndMatchers));
                 }
             }
         }
@@ -86,23 +102,17 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
     }
 
     @Override
-    public Row create(final Item item,
-                      final List<String> stringValues,
-                      final Map<String, Object> fieldIdToValueMap) {
+    public final Row create(final Item item) {
         Row row = null;
 
-        // Find a matching rule.
-        ConditionalFormattingRule matchingRule = null;
-
-        try {
-            // See if we can exit early by applying row filter.
-            if (!rowFilter.test(fieldIdToValueMap)) {
-                return null;
-            }
-
+        // Create values array.
+        final Val[] values = RowUtil.createValuesArray(item, columnIndexMapping);
+        if (rowFilter.test(values)) {
+            // Find a matching rule.
+            ConditionalFormattingRule matchingRule = null;
             for (final RuleAndMatcher ruleAndMatcher : rules) {
                 try {
-                    final boolean match = ruleAndMatcher.matcher.test(fieldIdToValueMap);
+                    final boolean match = ruleAndMatcher.matcher.test(values);
                     if (match) {
                         matchingRule = ruleAndMatcher.rule;
                         break;
@@ -117,41 +127,50 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
                     errorConsumer.add(exception);
                 }
             }
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            errorConsumer.add(e);
-        }
 
-        if (matchingRule != null) {
-            if (!matchingRule.isHide()) {
-                final Row.Builder builder = Row.builder()
-                        .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
-                        .values(stringValues)
-                        .depth(item.getKey().getDepth());
+            // Now apply formatting choices.
+            final List<String> stringValues = RowUtil.convertValues(values, columnFormatters);
 
-                if (matchingRule.getBackgroundColor() != null
-                        && !matchingRule.getBackgroundColor().isEmpty()) {
-                    builder.backgroundColor(matchingRule.getBackgroundColor());
+
+            try {
+                if (matchingRule != null) {
+                    if (!matchingRule.isHide()) {
+                        final Row.Builder builder = Row.builder()
+                                .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
+                                .values(stringValues)
+                                .depth(item.getKey().getDepth());
+
+                        if (matchingRule.isCustomStyle()) {
+                            builder.backgroundColor(matchingRule.getBackgroundColor());
+                            builder.textColor(matchingRule.getTextColor());
+                        } else {
+                            builder.style(matchingRule.getStyle());
+                        }
+
+                        row = builder.build();
+                    }
+                } else {
+                    row = Row.builder()
+                            .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
+                            .values(stringValues)
+                            .depth(item.getKey().getDepth())
+                            .build();
                 }
-                if (matchingRule.getTextColor() != null
-                        && !matchingRule.getTextColor().isEmpty()) {
-                    builder.textColor(matchingRule.getTextColor());
-                }
-
-                row = builder.build();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+                errorConsumer.add(e);
             }
-        } else {
-            row = Row.builder()
-                    .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
-                    .values(stringValues)
-                    .depth(item.getKey().getDepth())
-                    .build();
         }
 
         return row;
     }
 
-    private record RuleAndMatcher(ConditionalFormattingRule rule, RowExpressionMatcher matcher) {
+    @Override
+    public boolean hidesRows() {
+        return true;
+    }
+
+    private record RuleAndMatcher(ConditionalFormattingRule rule, Predicate<Val[]> matcher) {
 
     }
 }

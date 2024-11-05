@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="permission" label="Permission">
+            <l:SelectionBox ui:field="permission"/>
+        </form:FormGroup>
+        <form:FormGroup label="Permission Details">
+            <g:HTML ui:field="details" styleName="form-control-border form-control-background form-padding"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="permissions" styleName="max"/>
+    </g:FlowPanel>
+</ui:UiBinder> 

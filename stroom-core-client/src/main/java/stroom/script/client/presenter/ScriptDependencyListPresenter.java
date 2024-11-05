@@ -27,7 +27,7 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 
@@ -60,7 +60,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
 
         explorerDropDownTreePresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
-        explorerDropDownTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        explorerDropDownTreePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setView(scriptListPresenter.getView());
 

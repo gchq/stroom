@@ -16,12 +16,13 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.table.ComponentSelection;
+
 import com.gwtplatform.mvp.client.UiHandlers;
 
 import java.util.List;
-import java.util.Map;
 
 public interface SelectionUiHandlers extends UiHandlers {
 
-    void onSelection(List<Map<String, String>> values);
+    void onSelection(List<ComponentSelection> values);
 }

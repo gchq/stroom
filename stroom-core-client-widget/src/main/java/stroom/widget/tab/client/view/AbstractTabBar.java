@@ -16,7 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -50,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractTabBar extends Widget implements TabBar, RequiresResize {
@@ -150,7 +150,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void selectTab(final TabData tabData) {
-        if (!EqualsUtil.isEquals(tabData, selectedTab)) {
+        if (!Objects.equals(tabData, selectedTab)) {
             selectedTab = tabData;
             keyboardSelectedTab = tabData;
             if (selectedTab != null) {

@@ -537,8 +537,12 @@ public class StringPredicateFactory {
         return toNullSafePredicate(false, predicate);
     }
 
+    public static Predicate<String> createWordBoundaryPredicate(final String userInput) {
+        return createWordBoundaryPredicate(userInput, DEFAULT_SEPARATOR_CHAR_CLASS);
+    }
+
     @NotNull
-    private static Predicate<String> createWordBoundaryPredicate(
+    public static Predicate<String> createWordBoundaryPredicate(
             final String userInput,
             final Pattern separatorCharacterClass) {
 

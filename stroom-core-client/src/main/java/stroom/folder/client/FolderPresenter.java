@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -60,7 +60,7 @@ public class FolderPresenter
 
         TabData selectedTab = null;
 
-        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, new AbstractTabProvider<Object, MetaPresenter>(eventBus) {
                 @Override
@@ -79,13 +79,13 @@ public class FolderPresenter
             selectedTab = DATA;
         }
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(PROCESSORS);
             tabContentProvider.add(PROCESSORS, new AbstractTabProvider<Object, ProcessorPresenter>(eventBus) {
                 @Override
                 protected ProcessorPresenter createPresenter() {
                     final ProcessorPresenter processorPresenter = processorPresenterProvider.get();
-                    final boolean isAdmin = securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR);
+                    final boolean isAdmin = securityContext.hasAppPermission(AppPermission.ADMINISTRATOR);
                     processorPresenter.setIsAdmin(isAdmin);
                     processorPresenter.setAllowUpdate(isAdmin);
                     return processorPresenter;

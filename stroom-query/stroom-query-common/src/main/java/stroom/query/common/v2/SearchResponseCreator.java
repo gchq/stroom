@@ -23,7 +23,6 @@ import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.util.logging.LambdaLogger;
@@ -297,10 +296,8 @@ public class SearchResponseCreator {
             ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
-                    final ColumnFormatter columnFormatter =
-                            new ColumnFormatter(
-                                    new FormatterFactory(searchRequest.getDateTimeSettings()));
-                    resultCreator = new TableResultCreator(columnFormatter, cacheLastResult);
+                    final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
+                    resultCreator = new TableResultCreator(formatterFactory, cacheLastResult);
 
                 } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {
                     final FlatResultCreator flatResultCreator = new FlatResultCreator(

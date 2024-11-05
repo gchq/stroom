@@ -17,24 +17,30 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.IndexConstants;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class QueryResultTableSplitPresenter
         extends MyPresenterWidget<QueryResultTableSplitView>
-        implements ResultComponent {
+        implements ResultComponent, HasDirtyHandlers {
 
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
@@ -156,6 +162,19 @@ public class QueryResultTableSplitPresenter
     @Override
     public void setData(final Result componentResult) {
         tablePresenter.setData(componentResult);
+    }
+
+    public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
+        tablePresenter.setQueryTablePreferencesSupplier(queryTablePreferencesSupplier);
+    }
+
+    public void setQueryTablePreferencesConsumer(final Consumer<QueryTablePreferences> queryTablePreferencesConsumer) {
+        tablePresenter.setQueryTablePreferencesConsumer(queryTablePreferencesConsumer);
+    }
+
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return tablePresenter.addDirtyHandler(handler);
     }
 
     public interface QueryResultTableSplitView extends View {

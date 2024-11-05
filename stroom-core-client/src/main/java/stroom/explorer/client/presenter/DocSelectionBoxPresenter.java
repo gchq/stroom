@@ -27,6 +27,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.StandardExplorerTags;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
@@ -55,7 +56,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private DocRef value = null;
     private String errorMsg = null;
     // The perms required on any selected docRef or nodes in the picker
-    private Set<String> requiredPermissions = null;
+    private Set<DocumentPermission> requiredPermissions = null;
 
     @Inject
     public DocSelectionBoxPresenter(final EventBus eventBus,
@@ -120,7 +121,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                 .toArray(NodeFlag[]::new));
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         this.requiredPermissions = GwtNullSafe.asSet(requiredPermissions);
         explorerPopupPresenter.setRequiredPermissions(requiredPermissions);
 
@@ -131,7 +132,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         }
     }
 
-    public Set<String> getRequiredPermissions() {
+    public Set<DocumentPermission> getRequiredPermissions() {
         return requiredPermissions;
     }
 

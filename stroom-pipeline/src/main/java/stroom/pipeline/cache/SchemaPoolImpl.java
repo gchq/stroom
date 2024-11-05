@@ -102,8 +102,8 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
                     FindXMLSchemaCriteria::getSchemaGroup,
                     str -> builder.put("schemaGroup", str));
             NullSafe.consume(schemaCriteria,
-                    FindXMLSchemaCriteria::getUser,
-                    str -> builder.put("user", str));
+                    FindXMLSchemaCriteria::getUserRef,
+                    str -> builder.put("userRef", str));
 
             return builder.build();
         }

@@ -24,6 +24,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.AbstractTestModule;
@@ -32,6 +33,7 @@ import stroom.util.db.ForceLegacyMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.UserRef;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -43,6 +45,7 @@ import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -106,6 +109,12 @@ class AbstractProcessorTest {
                         // Not using all the DB modules so just bind to an empty anonymous class
                         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
                         });
+                        bind(UserRefLookup.class).toInstance(new UserRefLookup() {
+                            @Override
+                            public Optional<UserRef> getByUuid(final String userUuid) {
+                                return Optional.of(UserRef.builder().uuid(userUuid).build());
+                            }
+                        });
                     }
                 });
         injector.injectMembers(this);
@@ -161,6 +170,7 @@ class AbstractProcessorTest {
         processorFilter.setQueryData(QueryData.builder()
                 .build());
         processorFilter.setUuid(UUID.randomUUID().toString());
+        processorFilter.setRunAsUser(UserRef.builder().uuid(UUID.randomUUID().toString()).build());
         stampProcessorFilter(processorFilter, "jbloggs");
 
         return processorFilterDao.create(processorFilter);

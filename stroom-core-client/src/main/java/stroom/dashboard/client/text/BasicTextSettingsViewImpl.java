@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -141,7 +141,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     }
 
     @Override
-    public void setColumns(final List<Column> columns) {
+    public void setColumns(final List<ColumnRef> columns) {
         setFieldNames(columns, streamIdColumn);
         setFieldNames(columns, partNoColumn);
         setFieldNames(columns, recordNoColumn);
@@ -151,7 +151,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
         setFieldNames(columns, colToColumn);
     }
 
-    private void setFieldNames(final List<Column> columns, final SelectionBox<HasDisplayValue> ctrl) {
+    private void setFieldNames(final List<ColumnRef> columns, final SelectionBox<HasDisplayValue> ctrl) {
         final HasDisplayValue selected = ctrl.getValue();
         ctrl.clear();
         ctrl.addItem(NONE);
@@ -163,80 +163,80 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     }
 
     @Override
-    public Column getStreamIdColumn() {
+    public ColumnRef getStreamIdColumn() {
         return getColumn(streamIdColumn);
     }
 
     @Override
-    public void setStreamIdColumn(final Column column) {
+    public void setStreamIdColumn(final ColumnRef column) {
         streamIdColumn.setValue(column);
     }
 
     @Override
-    public Column getPartNoColumn() {
+    public ColumnRef getPartNoColumn() {
         return getColumn(partNoColumn);
     }
 
     @Override
-    public void setPartNoColumn(final Column column) {
+    public void setPartNoColumn(final ColumnRef column) {
         partNoColumn.setValue(column);
     }
 
     @Override
-    public Column getRecordNoColumn() {
+    public ColumnRef getRecordNoColumn() {
         return getColumn(recordNoColumn);
     }
 
     @Override
-    public void setRecordNoColumn(final Column column) {
+    public void setRecordNoColumn(final ColumnRef column) {
         recordNoColumn.setValue(column);
     }
 
     @Override
-    public Column getLineFromColumn() {
+    public ColumnRef getLineFromColumn() {
         return getColumn(lineFromColumn);
     }
 
     @Override
-    public void setLineFromColumn(final Column column) {
+    public void setLineFromColumn(final ColumnRef column) {
         lineFromColumn.setValue(column);
     }
 
     @Override
-    public Column getColFromColumn() {
+    public ColumnRef getColFromColumn() {
         return getColumn(colFromColumn);
     }
 
     @Override
-    public void setColFromColumn(final Column column) {
+    public void setColFromColumn(final ColumnRef column) {
         colFromColumn.setValue(column);
     }
 
     @Override
-    public Column getLineToColumn() {
+    public ColumnRef getLineToColumn() {
         return getColumn(lineToColumn);
     }
 
     @Override
-    public void setLineToColumn(final Column column) {
+    public void setLineToColumn(final ColumnRef column) {
         lineToColumn.setValue(column);
     }
 
     @Override
-    public Column getColToColumn() {
+    public ColumnRef getColToColumn() {
         return getColumn(colToColumn);
     }
 
     @Override
-    public void setColToColumn(final Column column) {
+    public void setColToColumn(final ColumnRef column) {
         colToColumn.setValue(column);
     }
 
-    private Column getColumn(final SelectionBox<HasDisplayValue> ctrl) {
+    private ColumnRef getColumn(final SelectionBox<HasDisplayValue> ctrl) {
         if (ctrl.getValue() == null || NONE.equals(ctrl.getValue())) {
             return null;
         }
-        return (Column) ctrl.getValue();
+        return (ColumnRef) ctrl.getValue();
     }
 
     @Override

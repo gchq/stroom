@@ -32,6 +32,8 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -48,7 +50,6 @@ import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -61,9 +62,10 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -200,7 +202,7 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final QuerySearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -231,26 +233,17 @@ class QueryServiceImpl implements QueryService {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final ColumnFormatter fieldFormatter =
-                        new ColumnFormatter(
-                                new FormatterFactory(dateTimeSettings));
+                final FormatterFactory formatterFactory = new FormatterFactory(dateTimeSettings);
 
                 // Start target
                 try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-                    SearchResultWriter.Target target = null;
+                    final SearchResultWriter.Target target = switch (request.getFileType()) {
+                        case CSV -> new DelimitedTarget(outputStream, ",");
+                        case TSV -> new DelimitedTarget(outputStream, "\t");
+                        case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+                    };
 
                     // Write delimited file.
-                    switch (request.getFileType()) {
-                        case CSV:
-                            target = new DelimitedTarget(outputStream, ",");
-                            break;
-                        case TSV:
-                            target = new DelimitedTarget(outputStream, "\t");
-                            break;
-                        case EXCEL:
-                            target = new ExcelTarget(outputStream, dateTimeSettings);
-                            break;
-                    }
 
                     try {
                         target.start();
@@ -265,7 +258,7 @@ class QueryServiceImpl implements QueryService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(fieldFormatter) {
+                                        new TableResultCreator(formatterFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -417,23 +410,83 @@ class QueryServiceImpl implements QueryService {
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
         SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
+        // Mutate expression with selection expression.
+        Query qry = mappedRequest.getQuery();
+        ExpressionOperator expression = qry.getExpression();
+        expression = ExpressionUtil.combine(
+                expression,
+                NullSafe.get(queryContext, QueryContext::getAdditionalQueryExpression));
+        mappedRequest = mappedRequest
+                .copy()
+                .query(qry
+                        .copy()
+                        .expression(expression)
+                        .build())
+                .build();
+
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
         if (resultRequests != null) {
             List<ResultRequest> modifiedResultRequests = new ArrayList<>();
             for (final ResultRequest resultRequest : resultRequests) {
-                modifiedResultRequests.add(
-                        resultRequest
-                                .copy()
-                                .openGroups(searchRequest.getOpenGroups())
-                                .requestedRange(searchRequest.getRequestedRange())
-                                .build()
-                );
+
+                // Modify result request to apply additional UI table preferences.
+                ResultRequest modified = addTablePreferences(resultRequest, searchRequest.getQueryTablePreferences());
+
+                // Modify result request to open grouped rows and change result display range.
+                modified = modified
+                        .copy()
+                        .openGroups(searchRequest.getOpenGroups())
+                        .requestedRange(searchRequest.getRequestedRange())
+                        .build();
+
+                modifiedResultRequests.add(modified);
             }
             mappedRequest = mappedRequest.copy().resultRequests(modifiedResultRequests).build();
         }
 
         return mappedRequest;
+    }
+
+    private ResultRequest addTablePreferences(final ResultRequest resultRequest,
+                                              final QueryTablePreferences queryTablePreferences) {
+        if (queryTablePreferences != null) {
+            final Map<String, Column> prefs = NullSafe.list(queryTablePreferences.getColumns())
+                    .stream()
+                    .collect(Collectors.toMap(Column::getId, c -> c));
+
+            if (!resultRequest.getMappings().isEmpty()) {
+                final TableSettings tableSettings = resultRequest.getMappings().getFirst();
+                final TableSettings.Builder builder = tableSettings.copy();
+
+                final List<Column> modifiedColumns = new ArrayList<>();
+                for (final Column column : tableSettings.getColumns()) {
+                    Column.Builder columnBuilder = column.copy();
+                    final Column pref = prefs.get(column.getId());
+                    if (pref != null) {
+                        columnBuilder.filter(pref.getFilter());
+                        columnBuilder.columnFilter(pref.getColumnFilter());
+                        columnBuilder.width(pref.getWidth());
+                        columnBuilder.format(pref.getFormat());
+                        if (pref.getSort() != null) {
+                            columnBuilder.sort(pref.getSort());
+                        }
+                    }
+                    modifiedColumns.add(columnBuilder.build());
+                }
+
+                builder.columns(modifiedColumns);
+                builder.applyValueFilters(queryTablePreferences.applyValueFilters());
+
+                builder.conditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+                final List<TableSettings> mappings = new ArrayList<>(resultRequest.getMappings().size());
+                mappings.add(builder.build());
+                mappings.addAll(resultRequest.getMappings().subList(1, resultRequest.getMappings().size()));
+
+                return resultRequest.copy().mappings(mappings).build();
+            }
+        }
+        return resultRequest;
     }
 
     private DashboardSearchResponse processRequest(final QuerySearchRequest searchRequest) {

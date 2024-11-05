@@ -3,96 +3,122 @@ package stroom.query.common.v2;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.format.Formatter;
+import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.google.common.base.Predicates;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class FilteredRowCreator extends SimpleRowCreator {
+public class FilteredRowCreator implements ItemMapper<Row> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FilteredRowCreator.class);
 
-    private final Predicate<Map<String, Object>> rowFilter;
+    private final int[] columnIndexMapping;
+    private final KeyFactory keyFactory;
+    private final ErrorConsumer errorConsumer;
+    private final Formatter[] columnFormatters;
+    private final Predicate<Val[]> rowFilter;
 
-    FilteredRowCreator(final List<Column> originalColumns,
-                               final List<Column> newColumns,
-                               final ColumnFormatter columnFormatter,
+    private FilteredRowCreator(final int[] columnIndexMapping,
                                final KeyFactory keyFactory,
-                               final Predicate<Map<String, Object>> rowFilter,
-                               final ErrorConsumer errorConsumer) {
-        super(originalColumns, newColumns, columnFormatter, keyFactory, errorConsumer);
-
+                               final ErrorConsumer errorConsumer,
+                               final Formatter[] columnFormatters,
+                               final Predicate<Val[]> rowFilter) {
+        this.columnIndexMapping = columnIndexMapping;
+        this.keyFactory = keyFactory;
+        this.errorConsumer = errorConsumer;
+        this.columnFormatters = columnFormatters;
         this.rowFilter = rowFilter;
     }
 
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
                                                    final List<Column> newColumns,
-                                                   final ColumnFormatter columnFormatter,
+                                                   final boolean applyValueFilters,
+                                                   final FormatterFactory formatterFactory,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilterExpression,
                                                    final DateTimeSettings dateTimeSettings,
                                                    final ErrorConsumer errorConsumer) {
-        if (ExpressionUtil.hasTerms(rowFilterExpression)) {
-            final Optional<RowExpressionMatcher> optionalRowExpressionMatcher =
-                    RowExpressionMatcher.create(newColumns, dateTimeSettings, rowFilterExpression);
-            final Predicate<Map<String, Object>> rowFilter = optionalRowExpressionMatcher
-                    .map(orem -> (Predicate<Map<String, Object>>) orem)
-                    .orElse(Predicates.alwaysTrue());
-
-            return Optional.of(new FilteredRowCreator(
-                    originalColumns,
-                    newColumns,
-                    columnFormatter,
-                    keyFactory,
-                    rowFilter,
-                    errorConsumer));
+        // Combine filters.
+        final Optional<Predicate<Val[]>> optionalCombinedPredicate = createValuesPredicate(
+                newColumns,
+                applyValueFilters,
+                rowFilterExpression,
+                dateTimeSettings);
+        // If we have no predicate then return an empty optional.
+        if (optionalCombinedPredicate.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
+        final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
+
+        return Optional.of(new FilteredRowCreator(
+                columnIndexMapping,
+                keyFactory,
+                errorConsumer,
+                formatters,
+                optionalCombinedPredicate.get()));
+    }
+
+    public static Optional<Predicate<Val[]>> createValuesPredicate(final List<Column> newColumns,
+                                                                   final boolean applyValueFilters,
+                                                                   final ExpressionOperator rowFilterExpression,
+                                                                   final DateTimeSettings dateTimeSettings) {
+        Optional<Predicate<Val[]>> valuesPredicate = Optional.empty();
+
+        // Apply value filters.
+        if (applyValueFilters) {
+            // Create column value filter expression.
+            final Optional<ExpressionOperator> optionalExpressionOperator = RowValueFilter.create(newColumns);
+            valuesPredicate = optionalExpressionOperator.flatMap(expressionOperator -> {
+                // Create the field position map for the new columns.
+                final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(newColumns);
+                return ExpressionPredicateBuilder.create(expressionOperator, queryFieldIndex, dateTimeSettings);
+            });
+        }
+
+        // Apply having filters.
+        final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);
+        final Optional<Predicate<Val[]>> optionalRowFilterPredicate = ExpressionPredicateBuilder
+                .create(rowFilterExpression, queryFieldIndex, dateTimeSettings);
+
+        // Combine filters.
+        return valuesPredicate
+                .map(vp1 -> optionalRowFilterPredicate
+                        .map(vp1::and)
+                        .or(() -> Optional.of(vp1)))
+                .orElse(optionalRowFilterPredicate);
     }
 
     @Override
     public final Row create(final Item item) {
-        final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-        final List<String> stringValues = new ArrayList<>(functions.size());
-        functions.forEach(f -> {
-            final String string = f.apply(item);
-            stringValues.add(string);
-            fieldIdToValueMap.put(f.column.getId(), string);
-            fieldIdToValueMap.put(f.column.getName(), string);
-        });
-
-        return create(item, stringValues, fieldIdToValueMap);
-    }
-
-    public Row create(final Item item,
-                      final List<String> stringValues,
-                      final Map<String, Object> fieldIdToValueMap) {
         Row row = null;
-        try {
-            // See if we can exit early by applying row filter.
-            if (!rowFilter.test(fieldIdToValueMap)) {
-                return null;
-            }
 
-            row = Row.builder()
-                    .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
-                    .values(stringValues)
-                    .depth(item.getKey().getDepth())
-                    .build();
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            errorConsumer.add(e);
+        // Create values array.
+        final Val[] values = RowUtil.createValuesArray(item, columnIndexMapping);
+        if (rowFilter.test(values)) {
+            // Now apply formatting choices.
+            final List<String> stringValues = RowUtil.convertValues(values, columnFormatters);
+
+
+            try {
+                row = Row.builder()
+                        .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
+                        .values(stringValues)
+                        .depth(item.getKey().getDepth())
+                        .build();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+                errorConsumer.add(e);
+            }
         }
 
         return row;

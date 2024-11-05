@@ -109,4 +109,12 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
             summary = "Sets the enabled/disabled state for a filter",
             operationId = "setProcessorFilterEnabled")
     boolean setEnabled(@PathParam("id") Integer id, Boolean enabled);
+
+    @POST
+    @Path("/bulkChange")
+    @Operation(
+            summary = "Bulk change processors",
+            operationId = "bulkChange")
+    Boolean bulkChange(
+            @Parameter(description = "request", required = true) BulkProcessorFilterChangeRequest request);
 }

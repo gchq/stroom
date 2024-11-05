@@ -2,17 +2,22 @@ package stroom.storedquery.impl.db;
 
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.security.user.api.UserRefLookup;
 import stroom.storedquery.impl.StoredQueryDao;
-import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
+import stroom.util.NullSafe;
+import stroom.util.exception.DataChangedException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.validation.constraints.NotNull;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
+import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
@@ -34,47 +39,119 @@ class StoredQueryDaoImpl implements StoredQueryDao {
             FindStoredQueryCriteria.FIELD_NAME, QUERY.NAME,
             FindStoredQueryCriteria.FIELD_TIME, QUERY.CREATE_TIME_MS);
 
-    private final GenericDao<QueryRecord, StoredQuery, Integer> genericDao;
     private final StoredQueryDbConnProvider storedQueryDbConnProvider;
+    private final QueryJsonSerialiser queryJsonSerialiser;
+    private final Function<Record, StoredQuery> recordToStoredQueryMapper;
 
     @Inject
-    StoredQueryDaoImpl(final StoredQueryDbConnProvider storedQueryDbConnProvider) {
-        genericDao = new GenericDao<>(storedQueryDbConnProvider, QUERY, QUERY.ID, StoredQuery.class);
+    StoredQueryDaoImpl(final StoredQueryDbConnProvider storedQueryDbConnProvider,
+                       final QueryJsonSerialiser queryJsonSerialiser,
+                       final Provider<UserRefLookup> userRefLookupProvider) {
         this.storedQueryDbConnProvider = storedQueryDbConnProvider;
+        this.queryJsonSerialiser = queryJsonSerialiser;
+        recordToStoredQueryMapper = new RecordToStoredQueryMapper(
+                queryJsonSerialiser,
+                userRefLookupProvider);
     }
 
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
+        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> create(context, storedQuery));
+    }
+
+    private StoredQuery create(final DSLContext context, final StoredQuery storedQuery) {
+        storedQuery.setVersion(1);
         storedQuery.setUuid(UUID.randomUUID().toString());
-        StoredQuerySerialiser.serialise(storedQuery);
-        StoredQuery result = genericDao.create(storedQuery);
-        StoredQuerySerialiser.deserialise(result);
-        return result;
+        final String data = queryJsonSerialiser.serialise(storedQuery.getQuery());
+        final int id = context
+                .insertInto(QUERY)
+                .columns(QUERY.VERSION,
+                        QUERY.CREATE_TIME_MS,
+                        QUERY.CREATE_USER,
+                        QUERY.UPDATE_TIME_MS,
+                        QUERY.UPDATE_USER,
+                        QUERY.DASHBOARD_UUID,
+                        QUERY.COMPONENT_ID,
+                        QUERY.NAME,
+                        QUERY.DATA,
+                        QUERY.FAVOURITE,
+                        QUERY.UUID,
+                        QUERY.OWNER_UUID)
+                .values(storedQuery.getVersion(),
+                        storedQuery.getCreateTimeMs(),
+                        storedQuery.getCreateUser(),
+                        storedQuery.getUpdateTimeMs(),
+                        storedQuery.getUpdateUser(),
+                        storedQuery.getDashboardUuid(),
+                        storedQuery.getComponentId(),
+                        storedQuery.getName(),
+                        data,
+                        storedQuery.isFavourite(),
+                        storedQuery.getUuid(),
+                        NullSafe.get(storedQuery.getOwner(), UserRef::getUuid))
+                .returning(QUERY.ID)
+                .fetchOne(QUERY.ID);
+        storedQuery.setId(id);
+        return storedQuery;
     }
 
     @Override
     public StoredQuery update(@NotNull final StoredQuery storedQuery) {
-        StoredQuerySerialiser.serialise(storedQuery);
-        StoredQuery result = genericDao.update(storedQuery);
-        StoredQuerySerialiser.deserialise(result);
-        return result;
+        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> update(context, storedQuery));
     }
+
+    private StoredQuery update(final DSLContext context, final StoredQuery storedQuery) {
+        final String data = queryJsonSerialiser.serialise(storedQuery.getQuery());
+        final int count = context
+                .update(QUERY)
+                .set(QUERY.VERSION, QUERY.VERSION.plus(1))
+                .set(QUERY.UPDATE_TIME_MS, storedQuery.getUpdateTimeMs())
+                .set(QUERY.UPDATE_USER, storedQuery.getUpdateUser())
+                .set(QUERY.DASHBOARD_UUID, storedQuery.getDashboardUuid())
+                .set(QUERY.COMPONENT_ID, storedQuery.getComponentId())
+                .set(QUERY.NAME, storedQuery.getName())
+                .set(QUERY.DATA, data)
+                .set(QUERY.FAVOURITE, storedQuery.isFavourite())
+                .set(QUERY.UUID, storedQuery.getUuid())
+                .set(QUERY.OWNER_UUID, NullSafe.get(storedQuery.getOwner(), UserRef::getUuid))
+                .where(QUERY.ID.eq(storedQuery.getId()))
+                .and(QUERY.VERSION.eq(storedQuery.getVersion()))
+                .execute();
+
+        if (count == 0) {
+            throw new DataChangedException("Failed to update stored query, " +
+                    "it may have been updated by another user or deleted");
+        }
+
+        return fetch(storedQuery.getId()).orElseThrow(() ->
+                new RuntimeException("Error fetching updated stored query"));
+    }
+
 
     @Override
     public boolean delete(int id) {
-        return genericDao.delete(id);
+        final int count = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
+                .deleteFrom(QUERY)
+                .where(QUERY.ID.eq(id))
+                .execute());
+        return count > 0;
     }
 
     @Override
     public Optional<StoredQuery> fetch(int id) {
-        return genericDao.fetch(id).map(StoredQuerySerialiser::deserialise);
+        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
+                        .select()
+                        .from(QUERY)
+                        .where(QUERY.ID.eq(id))
+                        .fetchOptional())
+                .map(recordToStoredQueryMapper);
     }
 
     @Override
     public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
-        List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
+        final List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.ofNullable(criteria.getOwnerUuid()).map(QUERY.OWNER_UUID::eq),
+                    Optional.ofNullable(criteria.getOwner()).map(UserRef::getUuid).map(QUERY.OWNER_UUID::eq),
                     JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()),
                     Optional.ofNullable(criteria.getDashboardUuid()).map(QUERY.DASHBOARD_UUID::eq),
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
@@ -89,13 +166,8 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     .where(conditions)
                     .orderBy(orderFields)
                     .limit(offset, limit)
-                    .fetch()
-                    .into(StoredQuery.class);
-        });
-
-        list = list.stream()
-                .map(StoredQuerySerialiser::deserialise)
-                .collect(Collectors.toList());
+                    .fetch();
+        }).map(recordToStoredQueryMapper::apply);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 

@@ -34,13 +34,12 @@ import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -316,20 +315,19 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final Set<AnalyticRuleDoc> currentRules = getCurrentRules();
         currentRules.forEach(analyticRuleDoc -> {
             try {
+                final DocRef docRef = analyticRuleDoc.asDocRef();
                 final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
                 final String componentId = getComponentId(searchRequest);
                 final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
                 final Path path = analyticResultStoreDir.resolve(dir);
                 if (Files.isDirectory(path)) {
-                    if (securityContext.hasDocumentPermission(
-                            analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
-
+                    if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                         list.add(new ResultStoreInfo(
                                 new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
-                                        analyticRuleDoc.getUuid(),
+                                        docRef,
                                         null),
                                 searchRequest.getKey(),
-                                analyticRuleDoc.getCreateUser(),
+                                null,
                                 analyticRuleDoc.getCreateTimeMs(),
                                 nodeInfo.getThisNodeName(),
                                 FileUtil.getByteSize(path),
@@ -382,7 +380,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
             final Path path = analyticResultStoreDir.resolve(dir);
             if (Files.isDirectory(path)) {
                 if (securityContext.hasDocumentPermission(
-                        analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
+                        analyticRuleDoc.asDocRef(), DocumentPermission.VIEW)) {
 
                     long createTime = 0;
                     try {
@@ -419,10 +417,9 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final SearchRequest searchRequest = analyticDataStore.searchRequest;
                 final LmdbDataStore lmdbDataStore = analyticDataStore.lmdbDataStore;
 
-                final ColumnFormatter fieldFormatter =
-                        new ColumnFormatter(
-                                new FormatterFactory(searchRequest.getDateTimeSettings()));
-                final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
+                final FormatterFactory formatterFactory =
+                        new FormatterFactory(searchRequest.getDateTimeSettings());
+                final TableResultCreator resultCreator = new TableResultCreator(formatterFactory);
                 ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
                 TableSettings tableSettings = resultRequest.getMappings().getFirst();
                 tableSettings = tableSettings
