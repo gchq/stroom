@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client.presenter;
@@ -21,6 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -29,8 +29,9 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -126,7 +127,9 @@ public class DataRetentionPresenter
     }
 
     public void selectTab(final TabData tab) {
-        TaskStartEvent.fire(DataRetentionPresenter.this);
+        final TaskMonitor taskMonitor = createTaskMonitor();
+        final Task task = new SimpleTask("Selecting tab");
+        taskMonitor.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -144,8 +147,7 @@ public class DataRetentionPresenter
                     }
                 });
             }
-
-            TaskEndEvent.fire(DataRetentionPresenter.this);
+            taskMonitor.onEnd(task);
         });
     }
 
@@ -211,8 +213,9 @@ public class DataRetentionPresenter
 
     @Override
     public void onCloseRequest(final CloseContentEvent event) {
-        if (dirty) {
-            if (!event.isIgnoreIfDirty()) {
+        final DirtyMode dirtyMode = event.getDirtyMode();
+        if (dirty && DirtyMode.FORCE != dirtyMode) {
+            if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
                 ConfirmEvent.fire(this,
                         "There are unsaved changes. Are you sure you want to close this tab?",
                         result -> {
@@ -221,6 +224,10 @@ public class DataRetentionPresenter
                                 unbind();
                             }
                         });
+            } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
+                // Do nothing
+            } else {
+                throw new RuntimeException("Unexpected DirtyMode: " + dirtyMode);
             }
         } else {
             event.getCallback().closeTab(true);

@@ -1,5 +1,6 @@
 package stroom.data.store.impl.fs.db;
 
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
@@ -7,7 +8,6 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.db.util.JooqUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;

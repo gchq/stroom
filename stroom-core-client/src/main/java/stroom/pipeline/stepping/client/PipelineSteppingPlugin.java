@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -76,55 +76,58 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
 
-        final Runnable onShow;
+        final Runnable showChooser = () -> {
+            choosePipeline(chooser,
+                    event.getStepType(),
+                    event.getStepLocation(),
+                    event.getChildStreamType());
+        };
+
         if (event.getPipelineRef() != null) {
-            onShow = () -> chooser.setSelectedEntityReference(event.getPipelineRef());
+            chooser.setSelectedEntityReference(event.getPipelineRef(), showChooser);
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
-            onShow = () -> restFactory
+            restFactory
                     .create(STEPPING_RESOURCE)
                     .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
                             event.getStepLocation().getMetaId(),
                             event.getChildStreamId())))
-                    .onSuccess(chooser::setSelectedEntityReference)
-                    .taskListener(chooser)
+                    .onSuccess(docRef ->
+                            chooser.setSelectedEntityReference(docRef, showChooser))
+                    .taskMonitorFactory(chooser)
                     .exec();
         }
-
-        choosePipeline(chooser,
-                event.getStepType(),
-                event.getStepLocation(),
-                event.getChildStreamType(),
-                onShow);
     }
 
-    private void choosePipeline(final DocSelectionPopup chooser,
+    private void choosePipeline(final DocSelectionPopup docRefChooserPopup,
                                 final StepType stepType,
                                 final StepLocation stepLocation,
-                                final String childStreamType,
-                                final Runnable onShow) {
-        chooser.show(pipeline -> {
-            if (pipeline != null) {
+                                final String childStreamType) {
+
+        docRefChooserPopup.show(pipeDocRef -> {
+            if (pipeDocRef != null) {
                 final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                         stepLocation.getMetaId());
+
                 restFactory
                         .create(META_RESOURCE)
                         .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {
                                 final MetaRow row = result.getFirst();
-                                openEditor(pipeline,
+                                openEditor(
+                                        pipeDocRef,
                                         stepType,
                                         stepLocation,
                                         row.getMeta(),
                                         childStreamType);
                             }
                         })
-                        .taskListener(new DefaultTaskListener(this))
+                        .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                         .exec();
             }
-        }, onShow);
+        });
     }
 
     private void openEditor(final DocRef pipeline,

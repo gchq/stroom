@@ -16,24 +16,35 @@
 
 package stroom.editor.client.view;
 
+import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.HasKeyUpHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
+import java.util.Objects;
 
-public class Editor extends Composite implements HasValueChangeHandlers<String> {
+public class Editor extends Composite implements
+        HasValueChangeHandlers<String>,
+        HasKeyDownHandlers,
+        HasKeyUpHandlers {
 
     private final AceEditor editor;
     private String text = "";
@@ -82,7 +93,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     public Editor() {
         editor = new AceEditor();
-
         // Use an attach handler to set up the editor as we can't start it
         // until it is attached.
         editor.addAttachHandler(event -> {
@@ -104,8 +114,16 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
                     started = true;
+
+                    DOM.setEventListener(editor.getTextInputElement(), e -> {
+                        if (Objects.equals(e.getType(), "keydown")) {
+                            KeyDownEvent.fireNativeEvent(e, Editor.this, editor.getTextInputElement());
+                        } else if (Objects.equals(e.getType(), "keyup")) {
+                            KeyUpEvent.fireNativeEvent(e, Editor.this, editor.getTextInputElement());
+                        }
+                    });
                 }
-                //
+
                 updateAnnotations();
                 updateChangeHandler();
                 updateFirstLineNumber();
@@ -552,6 +570,16 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         addChangeHandler = true;
         updateChangeHandler();
         return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
+        return addHandler(handler, KeyDownEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addKeyUpHandler(final KeyUpHandler handler) {
+        return addHandler(handler, KeyUpEvent.getType());
     }
 
     private void updateChangeHandler() {

@@ -15,6 +15,7 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
@@ -543,11 +544,59 @@ public class DataGridUtil {
      * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
      * @param <T_ROW>       The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRef, DocRef, Cell<DocRef>> docRefColumnBuilder(
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> cellExtractor,
             final EventBus eventBus,
             final boolean allowLinkByName) {
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), () -> new DocRefCell(eventBus, allowLinkByName));
+
+        Objects.requireNonNull(cellExtractor);
+
+        return new ColumnBuilder<>(
+                row -> GwtNullSafe.get(cellExtractor.apply(row), DocRefProvider::forDocRef),
+                Function.identity(),
+                () -> new DocRefCell<>(eventBus, allowLinkByName));
+    }
+
+    /**
+     * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
+     * and to open the doc.
+     *
+     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
+            final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
+            final EventBus eventBus,
+            final boolean allowLinkByName,
+            final Function<T_ROW, String> cssClassFunc) {
+
+        return new ColumnBuilder<>(
+                cellExtractor,
+                Function.identity(),
+                () -> new DocRefCell<>(eventBus, allowLinkByName, cssClassFunc));
+    }
+
+    /**
+     * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
+     * and to open the doc.
+     *
+     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
+            final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
+            final EventBus eventBus,
+            final boolean allowLinkByName,
+            final Function<T_ROW, String> cssClassFunc,
+            final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunc) {
+
+        return new ColumnBuilder<>(
+                cellExtractor,
+                Function.identity(),
+                () -> new DocRefCell<>(eventBus, allowLinkByName, cssClassFunc, cellTextFunc));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(

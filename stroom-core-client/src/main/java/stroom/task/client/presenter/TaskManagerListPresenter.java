@@ -502,7 +502,7 @@ public class TaskManagerListPresenter
                         }
                         delayedUpdate.update();
                     })
-                    .taskListener(getView())
+                    .taskMonitorFactory(getView())
                     .exec();
         }
     }
@@ -561,7 +561,7 @@ public class TaskManagerListPresenter
         restFactory
                 .create(TASK_RESOURCE)
                 .method(res -> res.terminate(taskProgress.getNodeName(), request))
-                .taskListener(getView())
+                .taskMonitorFactory(getView())
                 .exec();
     }
 

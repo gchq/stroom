@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docref;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -22,16 +38,20 @@ public class DocContentMatch {
     private final StringMatchLocation location;
     @JsonProperty
     private final String sample;
+    @JsonProperty
+    private final boolean sampleAtStartOfLine;
 
     @JsonCreator
     public DocContentMatch(@JsonProperty("docRef") final DocRef docRef,
                            @JsonProperty("extension") final String extension,
                            @JsonProperty("location") final StringMatchLocation location,
-                           @JsonProperty("sample") final String sample) {
+                           @JsonProperty("sample") final String sample,
+                           @JsonProperty("sampleAtStartOfLine") final boolean sampleAtStartOfLine) {
         this.docRef = docRef;
         this.extension = extension;
         this.location = location;
         this.sample = sample;
+        this.sampleAtStartOfLine = sampleAtStartOfLine;
     }
 
     @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
@@ -45,9 +65,11 @@ public class DocContentMatch {
         final int min = Math.max(0, offset - SAMPLE_LENGTH_BEFORE);
         int sampleStart = offset;
         // Go back to get a sample from the same line.
+        boolean sampleAtStartOfLine = sampleStart == 0;
         for (; sampleStart >= min; sampleStart--) {
             char c = chars[sampleStart];
             if (c == '\n') {
+                sampleAtStartOfLine = true;
                 break;
             }
         }
@@ -99,6 +121,7 @@ public class DocContentMatch {
                 .extension(extension)
                 .location(match)
                 .sample(sample.toString())
+                .sampleAtStartOfLine(sampleAtStartOfLine)
                 .build();
     }
 
@@ -116,6 +139,10 @@ public class DocContentMatch {
 
     public String getSample() {
         return sample;
+    }
+
+    public boolean isSampleAtStartOfLine() {
+        return sampleAtStartOfLine;
     }
 
     @Override
@@ -151,12 +178,17 @@ public class DocContentMatch {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private DocRef docRef;
         private String extension;
         private StringMatchLocation location;
         private String sample;
+        private boolean sampleAtStartOfLine = true;
 
         private Builder() {
         }
@@ -166,6 +198,7 @@ public class DocContentMatch {
             this.extension = docContentMatch.extension;
             this.location = docContentMatch.location;
             this.sample = docContentMatch.sample;
+            this.sampleAtStartOfLine = docContentMatch.sampleAtStartOfLine;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -188,8 +221,13 @@ public class DocContentMatch {
             return this;
         }
 
+        public Builder sampleAtStartOfLine(final boolean sampleAtStartOfLine) {
+            this.sampleAtStartOfLine = sampleAtStartOfLine;
+            return this;
+        }
+
         public DocContentMatch build() {
-            return new DocContentMatch(docRef, extension, location, sample);
+            return new DocContentMatch(docRef, extension, location, sample, sampleAtStartOfLine);
         }
     }
 }

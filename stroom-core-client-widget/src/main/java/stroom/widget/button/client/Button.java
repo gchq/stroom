@@ -1,7 +1,9 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -12,7 +14,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-public class Button extends ButtonBase implements ButtonView, TaskListener {
+public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
 
     private final Element rippleContainer;
     private final Element buttonContent;
@@ -164,19 +166,24 @@ public class Button extends ButtonBase implements ButtonView, TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        setLoading(taskCount > 0);
-    }
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                taskCount++;
+                setLoading(taskCount > 0);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
+            @Override
+            public void onEnd(final Task task) {
+                taskCount--;
 
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
 
-        setLoading(taskCount > 0);
+                setLoading(taskCount > 0);
+            }
+        };
     }
 }

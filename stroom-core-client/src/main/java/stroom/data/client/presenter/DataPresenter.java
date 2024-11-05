@@ -35,7 +35,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -471,7 +471,7 @@ public class DataPresenter
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
-                .taskListener(dataView)
+                .taskMonitorFactory(dataView)
                 .exec();
     }
 
@@ -581,7 +581,7 @@ public class DataPresenter
                             })
                             .onFailure(caught ->
                                     itemNavigatorPresenter.setRefreshing(false))
-                            .taskListener(dataView)
+                            .taskMonitorFactory(dataView)
                             .exec();
                 } else {
                     showInvalidStreamErrorMsg();
@@ -760,7 +760,7 @@ public class DataPresenter
                                 })
                                 .onFailure(caught ->
                                         itemNavigatorPresenter.setRefreshing(false))
-                                .taskListener(dataView)
+                                .taskMonitorFactory(dataView)
                                 .exec();
                     }
                 }
@@ -1119,7 +1119,7 @@ public class DataPresenter
                     .create(DATA_RESOURCE)
                     .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
-                    .taskListener(dataView)
+                    .taskMonitorFactory(dataView)
                     .exec();
         }
     }
@@ -1227,7 +1227,7 @@ public class DataPresenter
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    public interface DataView extends View, Focus, TaskListener {
+    public interface DataView extends View, Focus, TaskMonitorFactory {
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
 

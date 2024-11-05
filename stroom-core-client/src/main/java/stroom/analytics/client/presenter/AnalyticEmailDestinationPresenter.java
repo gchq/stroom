@@ -118,7 +118,7 @@ public class AnalyticEmailDestinationPresenter
                     })
                     .onFailure(throwable ->
                             AlertEvent.fireError(this, throwable.getMessage(), null))
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -140,7 +140,7 @@ public class AnalyticEmailDestinationPresenter
                     restFactory
                             .create(ANALYTIC_RULE_RESOURCE)
                             .call(res -> res.sendTestEmail(emailDestination))
-                            .taskListener(getView().getSendTestEmailBtn())
+                            .taskMonitorFactory(getView().getSendTestEmailBtn())
                             .exec();
                 }
             });

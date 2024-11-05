@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.explorer.impl;
@@ -141,15 +140,17 @@ class ExplorerServiceImpl
         final DurationTimer timer = DurationTimer.start();
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
+            // Get a copy of the master tree model, so we can add the favourites into it.
+            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
+
             if (LOGGER.isDebugEnabled()) {
                 logOpenItems(
+                        masterTreeModelClone,
                         OpenItemsImpl.create(criteria.getOpenItems()),
                         OpenItemsImpl.create(criteria.getTemporaryOpenedItems()),
                         OpenItemsImpl.create(criteria.getEnsureVisible()));
             }
 
-            // Get a copy of the master tree model, so we can add the favourites into it.
-            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
             // See if we need to open any more folders to see nodes we want to ensure are visible.
             final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModelClone, criteria);
 
@@ -240,15 +241,18 @@ class ExplorerServiceImpl
 
         rootNodes = ensureRootNodes(rootNodes, filter);
 
+        final FetchExplorerNodeResult result = new FetchExplorerNodeResult(
+                rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getQualifiedNameFilterInput());
+
         if (LOGGER.isTraceEnabled()) {
             logOpenItems(
+                    masterTreeModelClone,
                     OpenItemsImpl.create(openedItems),
                     OpenItemsImpl.create(temporaryOpenItems),
                     null);
+            LOGGER.trace("Tree:\n{}", result.dumpTree());
         }
-
-        return new FetchExplorerNodeResult(
-                rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getQualifiedNameFilterInput());
+        return result;
     }
 
     private void logResult(final Consumer<String> loggerFunc,
@@ -288,17 +292,45 @@ class ExplorerServiceImpl
                 NullSafe.size(result.getTemporaryOpenedItems())));
     }
 
-    private static void logOpenItems(final OpenItems openItems,
+    private static void logOpenItems(final TreeModel treeModel,
+                                     final OpenItems openItems,
                                      final OpenItems tempOpenItems,
                                      final OpenItems ensureVisible) {
         if (NullSafe.hasItems(openItems)) {
-            LOGGER.trace(() -> LogUtil.message("openItems:\n{}", openItems));
+            LOGGER.trace(() -> LogUtil.message("openItems:\n{}", openItemsToStr(treeModel, openItems)));
         }
         if (NullSafe.hasItems(tempOpenItems)) {
-            LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", openItems));
+            LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", openItemsToStr(treeModel, openItems)));
         }
         if (NullSafe.hasItems(ensureVisible)) {
-            LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", openItems));
+            LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", openItemsToStr(treeModel, openItems)));
+        }
+    }
+
+    /**
+     * For debug only really
+     */
+    private static String openItemsToStr(final TreeModel treeModel, final OpenItems openItems) {
+        if (openItems == null) {
+            return null;
+        } else {
+            if (openItems instanceof OpenItemsImpl openItemsImpl) {
+                try {
+                    return openItemsImpl.getOpenItemSet()
+                            .stream()
+                            .filter(Objects::nonNull)
+                            .map(explorerNodeKey -> treeModel.getNode(explorerNodeKey.getUuid()))
+                            .map(node -> node.getDocRef().getType() + " "
+                                    + node.getName()
+                                    + " (" + node.getUuid() + ")")
+                            .collect(Collectors.joining("\n"));
+                } catch (Exception e) {
+                    LOGGER.trace(e::getMessage, e);
+                    return Objects.toString(openItems);
+                }
+            } else {
+                return Objects.toString(openItems);
+            }
         }
     }
 
@@ -519,7 +551,7 @@ class ExplorerServiceImpl
         final Set<ExplorerNodeKey> forcedOpen = new HashSet<>();
 
         // Add parents of nodes that we have been requested to ensure are visible.
-        if (criteria.getEnsureVisible() != null && !criteria.getEnsureVisible().isEmpty()) {
+        if (NullSafe.hasItems(criteria.getEnsureVisible())) {
             for (final ExplorerNodeKey ensureVisible : criteria.getEnsureVisible()) {
                 ExplorerNode parent = masterTreeModel.getParent(ensureVisible.getUuid());
                 while (parent != null) {
@@ -901,7 +933,11 @@ class ExplorerServiceImpl
      */
     private DocRef getDestinationFolderRef(final ExplorerNode destinationFolder) {
         if (destinationFolder != null) {
-            return destinationFolder.getDocRef();
+            final DocRef destDocRef = destinationFolder.getDocRef();
+            if (!ExplorerConstants.isFolder(destDocRef) && !ExplorerConstants.isRootNode(destinationFolder)) {
+                throw new IllegalArgumentException(destDocRef + " is not a valid destination folder");
+            }
+            return destDocRef;
         }
 
         final ExplorerNode rootNode = explorerNodeService.getRoot();
@@ -1019,7 +1055,8 @@ class ExplorerServiceImpl
                 // Create the explorer node
                 if (destinationDocRef != null) {
                     // Copy the explorer node.
-                    explorerNodeService.copyNode(sourceNode.getDocRef(),
+                    explorerNodeService.copyNode(
+                            sourceNode,
                             destinationDocRef,
                             destinationFolderRef,
                             permissionInheritance);

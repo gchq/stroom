@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,10 @@ import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler
 import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -77,7 +78,8 @@ public class ContentTabPanePresenter
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
                 event -> {
                     final TabData selectedTab = getSelectedTab();
-                    if (selectedTab != null && selectedTab instanceof Refreshable) {
+                    if (selectedTab instanceof Refreshable) {
+                        //noinspection PatternVariableCanBeUsed // Not in GWT
                         final Refreshable refreshable = (Refreshable) selectedTab;
                         refreshable.refresh();
                     }
@@ -96,13 +98,13 @@ public class ContentTabPanePresenter
                     } else {
                         final String key = event.getValue();
 
-                        final int id = Integer.valueOf(key);
+                        final int id = Integer.parseInt(key);
                         final int diff = id - currentHistoryId;
                         currentHistoryId = id;
 
                         currentIndex = currentIndex + diff;
 
-                        if (historyList.size() == 0) {
+                        if (historyList.isEmpty()) {
                             currentIndex = 0;
                         } else {
                             if (currentIndex >= historyList.size()) {
@@ -153,10 +155,10 @@ public class ContentTabPanePresenter
         forceReveal();
         add(event.getTabData(), event.getLayer());
 
-        if (event.getLayer() instanceof HasTaskListener) {
+        if (event.getLayer() instanceof HasTaskMonitorFactory) {
             final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
-            ((HasTaskListener) event.getLayer())
-                    .setTaskListener(new TabTaskListener(tab));
+            ((HasTaskMonitorFactory) event.getLayer())
+                    .setTaskMonitorFactory(new TabTaskMonitorFactory(tab));
         }
     }
 
@@ -175,9 +177,9 @@ public class ContentTabPanePresenter
             }
         }
 
-        if (event.getTabData() instanceof HasTaskListener) {
-            ((HasTaskListener) event.getTabData())
-                    .setTaskListener(new DefaultTaskListener(this));
+        if (event.getTabData() instanceof HasTaskMonitorFactory) {
+            ((HasTaskMonitorFactory) event.getTabData())
+                    .setTaskMonitorFactory(new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -229,22 +231,21 @@ public class ContentTabPanePresenter
 
     }
 
-    private static class TabTaskListener implements TaskListener {
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class TabTaskMonitorFactory implements TaskMonitorFactory {
 
         private final AbstractTab tab;
 
-        public TabTaskListener(final AbstractTab tab) {
+        public TabTaskMonitorFactory(final AbstractTab tab) {
             this.tab = tab;
         }
 
         @Override
-        public void incrementTaskCount() {
-            tab.incrementTaskCount();
-        }
-
-        @Override
-        public void decrementTaskCount() {
-            tab.decrementTaskCount();
+        public TaskMonitor createTaskMonitor() {
+            return tab.createTaskMonitor();
         }
     }
 }

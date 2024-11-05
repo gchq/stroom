@@ -21,6 +21,9 @@ import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
+import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
+import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorProxy;
+import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.identity.client.presenter.CurrentPasswordPresenter;
@@ -33,6 +36,7 @@ import stroom.security.identity.client.presenter.LoginPresenter;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginProxy;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.view.AccountsViewImpl;
+import stroom.security.identity.client.view.AuthenticationErrorViewImpl;
 import stroom.security.identity.client.view.ChangePasswordViewImpl;
 import stroom.security.identity.client.view.CurrentPasswordViewImpl;
 import stroom.security.identity.client.view.EditAccountViewImpl;
@@ -50,6 +54,10 @@ public class ChangePasswordModule extends PluginModule {
                 LoginView.class,
                 LoginViewImpl.class,
                 LoginProxy.class);
+        bindPresenter(AuthenticationErrorPresenter.class,
+                AuthenticationErrorView.class,
+                AuthenticationErrorViewImpl.class,
+                AuthenticationErrorProxy.class);
         bindPresenterWidget(CurrentPasswordPresenter.class,
                 CurrentPasswordView.class,
                 CurrentPasswordViewImpl.class);

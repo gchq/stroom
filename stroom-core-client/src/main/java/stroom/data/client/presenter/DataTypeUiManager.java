@@ -18,7 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaResource;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 
@@ -40,12 +40,12 @@ public class DataTypeUiManager {
     }
 
     public void getTypes(final Consumer<List<String>> consumer,
-                         final TaskListener taskListener) {
+                         final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(META_RESOURCE)
                 .method(MetaResource::getTypes)
                 .onSuccess(consumer)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 }

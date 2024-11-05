@@ -16,9 +16,10 @@
 
 package com.gwtplatform.mvp.client;
 
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event.Type;
@@ -27,9 +28,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class MyPresenterWidget<V extends View>
         extends PresenterWidget<V>
-        implements Layer, TaskListener, HasTaskListener {
+        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory {
 
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
@@ -63,17 +64,12 @@ public class MyPresenterWidget<V extends View>
     }
 
     @Override
-    public synchronized void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override
-    public synchronized void incrementTaskCount() {
-        taskListener.incrementTaskCount();
-    }
-
-    @Override
-    public synchronized void decrementTaskCount() {
-        taskListener.decrementTaskCount();
+    public TaskMonitor createTaskMonitor() {
+        return taskMonitorFactory.createTaskMonitor();
     }
 }

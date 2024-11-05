@@ -32,12 +32,15 @@ include 'stroom-analytics:stroom-analytics-rule-impl'
 include 'stroom-analytics:stroom-analytics-impl-db'
 include 'stroom-analytics:stroom-analytics-impl-db-jooq'
 
-// Annotations project.
+// Annotations
 include 'stroom-annotation:stroom-annotation-api'
 include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
+
+// AWS
+include 'stroom-aws:stroom-aws-s3-impl'
 
 // App.
 include 'stroom-app'
@@ -237,7 +240,6 @@ include 'stroom-receive:stroom-receive-common'
 include 'stroom-receive:stroom-receive-rules-impl'
 
 // Search
-include 'stroom-search:elastic-shaded'
 include 'stroom-search:stroom-expression-matcher'
 include 'stroom-search:stroom-search-api'
 include 'stroom-search:stroom-search-elastic'
@@ -290,3 +292,4 @@ include 'stroom-view:stroom-view-impl'
 
 include 'stroom-ssl-test'
 include 'stroom-view:stroom-view-api'
+include 'stroom-index:stroom-index-api'

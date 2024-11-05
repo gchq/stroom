@@ -202,7 +202,7 @@ public class UsersAndGroupsTabPresenter
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
                                     })
-                                    .taskListener(this)
+                                    .taskMonitorFactory(this)
                                     .exec();
                         }
                     });
@@ -252,7 +252,7 @@ public class UsersAndGroupsTabPresenter
                             edit(result);
                         })
                         .onFailure(RestErrorHandler.forPopup(this, e))
-                        .taskListener(this)
+                        .taskMonitorFactory(this)
                         .exec();
             } else {
                 e.hide();
@@ -272,7 +272,7 @@ public class UsersAndGroupsTabPresenter
                             edit(result);
                         })
                         .onFailure(RestErrorHandler.forPopup(this, e))
-                        .taskListener(this)
+                        .taskMonitorFactory(this)
                         .exec();
             } else {
                 e.hide();
@@ -295,7 +295,7 @@ public class UsersAndGroupsTabPresenter
 //                                    edit(result);
                             })
                             .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskListener(this)
+                            .taskMonitorFactory(this)
                             .exec();
                 } else {
                     e.hide();

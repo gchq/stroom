@@ -56,7 +56,7 @@ import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.HasTaskListener;
+import stroom.task.client.HasTaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
@@ -547,10 +547,10 @@ public class DashboardPresenter
                 final Queryable queryable = (Queryable) component;
                 queryable.addSearchStateListener(this);
                 queryable.addSearchErrorListener(this);
-                queryable.setTaskListener(this);
+                queryable.setTaskMonitorFactory(this);
                 queryable.setQueryInfo(queryInfo);
-            } else if (component instanceof HasTaskListener) {
-                ((HasTaskListener) component).setTaskListener(this);
+            } else if (component instanceof HasTaskMonitorFactory) {
+                ((HasTaskMonitorFactory) component).setTaskMonitorFactory(this);
             }
 
             component.read(componentConfig);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 
@@ -26,9 +28,10 @@ public class LinkTab extends AbstractTab {
     private final Element label;
     private final Element hotspot;
 
-    public LinkTab(final String text) {
+    public LinkTab(final String text, final String tooltip) {
         element = DOM.createDiv();
         element.setClassName("linkTab");
+        GwtNullSafe.consumeNonBlankString(tooltip, element::setTitle);
 
         background = DOM.createDiv();
         background.setClassName("linkTab-background");

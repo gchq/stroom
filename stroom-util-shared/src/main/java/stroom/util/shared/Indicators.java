@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -49,9 +50,9 @@ public class Indicators {
     private final List<StoredError> errorList;
 
     public Indicators() {
-        errorCount = new HashMap<>();
-        uniqueErrorSet = new HashSet<>();
-        errorList = new ArrayList<>();
+        errorCount = new ConcurrentHashMap<>();
+        uniqueErrorSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        errorList = Collections.synchronizedList(new ArrayList<>());
     }
 
     @JsonCreator
@@ -67,9 +68,7 @@ public class Indicators {
      * Copying constructor.
      */
     public Indicators(final Indicators indicators) {
-        errorCount = new HashMap<>();
-        uniqueErrorSet = new HashSet<>();
-        errorList = new ArrayList<>();
+        this();
         addAll(indicators);
     }
 
@@ -97,43 +96,43 @@ public class Indicators {
         return result;
     }
 
-    public Map<Severity, Integer> getErrorCount() {
+    public synchronized Map<Severity, Integer> getErrorCount() {
         return errorCount != null
-                ? errorCount
+                ? new HashMap<>(errorCount)
                 : Collections.emptyMap();
     }
 
-    public Set<StoredError> getUniqueErrorSet() {
+    public synchronized Set<StoredError> getUniqueErrorSet() {
         return uniqueErrorSet != null
-                ? uniqueErrorSet
+                ? new HashSet<>(uniqueErrorSet)
                 : Collections.emptySet();
     }
 
-    public List<StoredError> getErrorList() {
+    public synchronized List<StoredError> getErrorList() {
         return errorList != null
-                ? errorList
+                ? new ArrayList<>(errorList)
                 : Collections.emptyList();
     }
 
     /**
      * Add all of the indicators from another map.
      */
-    public void addAll(final Indicators indicators) {
+    public synchronized void addAll(final Indicators indicators) {
         if (indicators != null) {
             // Merge
-            for (final StoredError storedError : indicators.errorList) {
+            for (final StoredError storedError : indicators.getErrorList()) {
                 add(storedError);
             }
         }
     }
 
-    public void addAll(final Collection<StoredError> storedErrors) {
+    public synchronized void addAll(final Collection<StoredError> storedErrors) {
         if (!GwtNullSafe.isEmptyCollection(storedErrors)) {
             storedErrors.forEach(this::add);
         }
     }
 
-    public void add(final StoredError storedError) {
+    public synchronized void add(final StoredError storedError) {
         // Check to make sure we haven't seen this error before. If we have then
         // ignore it as we only want to store unique errors.
         if (uniqueErrorSet.add(storedError)) {
@@ -146,8 +145,8 @@ public class Indicators {
      * @return A new {@link Indicators} instance containing only those {@link StoredError}s
      * matching the supplied types
      */
-    public Indicators filter(final boolean includeLocationAgnostic,
-                             final ErrorType... includedErrorTypes) {
+    public synchronized Indicators filter(final boolean includeLocationAgnostic,
+                                          final ErrorType... includedErrorTypes) {
 
         if (includedErrorTypes == null || includedErrorTypes.length == 0) {
             return new Indicators(this);
@@ -179,14 +178,14 @@ public class Indicators {
     /**
      * Clears the map.
      */
-    public void clear() {
+    public synchronized void clear() {
         uniqueErrorSet.clear();
         errorList.clear();
         errorCount.clear();
     }
 
     @JsonIgnore
-    public Severity getMaxSeverity() {
+    public synchronized Severity getMaxSeverity() {
         for (final Severity sev : Severity.SEVERITIES) {
             final Integer cnt = errorCount.get(sev);
             if (cnt != null && cnt > 0) {
@@ -196,7 +195,7 @@ public class Indicators {
         return null;
     }
 
-    public int getCount(final Severity severity) {
+    public synchronized int getCount(final Severity severity) {
         if (severity == null) {
             return 0;
         } else {
@@ -204,7 +203,7 @@ public class Indicators {
         }
     }
 
-    public void append(final StringBuilder sb) {
+    public synchronized void append(final StringBuilder sb) {
         for (final StoredError storedError : errorList) {
             storedError.append(sb);
             sb.append("\n");
@@ -212,14 +211,14 @@ public class Indicators {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         final StringBuilder sb = new StringBuilder();
         append(sb);
         return sb.toString();
     }
 
     @JsonIgnore
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         return errorList == null || errorList.isEmpty();
     }
 }

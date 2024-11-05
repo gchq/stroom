@@ -7,7 +7,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docstore.shared.Documentation;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -31,12 +31,12 @@ public class DataSourceClient {
 
     public void findFields(final FindFieldCriteria findFieldInfoCriteria,
                            final Consumer<ResultPage<QueryField>> consumer,
-                           final TaskListener taskListener) {
+                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(DATA_SOURCE_RESOURCE)
                 .method(res -> res.findFields(findFieldInfoCriteria))
                 .onSuccess(consumer)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -44,7 +44,7 @@ public class DataSourceClient {
                                 final String fieldName,
                                 final Boolean queryable,
                                 final Consumer<QueryField> consumer,
-                                final TaskListener taskListener) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         if (dataSourceRef != null) {
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     PageRequest.oneRow(),
@@ -60,14 +60,14 @@ public class DataSourceClient {
                             consumer.accept(result.getFirst());
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }
 
     public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
                                            final Consumer<Optional<String>> descriptionConsumer,
-                                           final TaskListener taskListener) {
+                                           final TaskMonitorFactory taskMonitorFactory) {
 
         if (dataSourceDocRef != null) {
             restFactory
@@ -80,19 +80,19 @@ public class DataSourceClient {
                             descriptionConsumer.accept(optMarkDown);
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }
 
     public void fetchDefaultExtractionPipeline(final DocRef dataSourceRef,
                                                final Consumer<DocRef> consumer,
-                                               final TaskListener taskListener) {
+                                               final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(DATA_SOURCE_RESOURCE)
                 .method(res -> res.fetchDefaultExtractionPipeline(dataSourceRef))
                 .onSuccess(consumer)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 }

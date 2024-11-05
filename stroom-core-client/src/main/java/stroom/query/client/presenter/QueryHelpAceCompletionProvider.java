@@ -1,19 +1,34 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
-import stroom.docref.StringMatch.MatchType;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
-import stroom.util.shared.PageRequest;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -27,29 +42,33 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 
+import java.util.Set;
 import javax.inject.Inject;
 
 
 public class QueryHelpAceCompletionProvider
-        implements AceCompletionProvider, HasTaskListener, HasHandlers {
+        implements AceCompletionProvider, HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final MarkdownConverter markdownConverter;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private final UiConfigCache uiConfigCache;
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private DocRef dataSourceRef;
-    private boolean showAll = true;
+    private Set<QueryHelpType> includedTypes = QueryHelpType.ALL_TYPES;
 
     @Inject
     public QueryHelpAceCompletionProvider(final EventBus eventBus,
                                           final RestFactory restFactory,
-                                          final MarkdownConverter markdownConverter) {
+                                          final MarkdownConverter markdownConverter,
+                                          final UiConfigCache uiConfigCache) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.markdownConverter = markdownConverter;
+        this.uiConfigCache = uiConfigCache;
     }
 
     @Override
@@ -57,30 +76,32 @@ public class QueryHelpAceCompletionProvider
                              final AceEditorCursorPosition pos,
                              final String prefix,
                              final AceCompletionCallback callback) {
-        final CompletionsRequest completionsRequest =
-                new CompletionsRequest(
-                        PageRequest.createDefault(),
-                        null,
-                        dataSourceRef,
-                        editor.getText(),
-                        pos.getRow(),
-                        pos.getColumn(),
-                        new StringMatch(MatchType.STARTS_WITH, false, prefix),
-                        showAll);
-        restFactory
-                .create(QUERY_RESOURCE)
-                .method(res -> res.fetchCompletions(completionsRequest))
-                .onSuccess(result -> {
-                    final AceCompletion[] aceCompletions = result
-                            .getValues()
-                            .stream()
-                            .map(this::convertCompletion)
-                            .toArray(AceCompletion[]::new);
 
-                    callback.invokeWithCompletions(aceCompletions);
-                })
-                .taskListener(taskListener)
-                .exec();
+        uiConfigCache.get(uiConfig -> {
+            final CompletionsRequest completionsRequest =
+                    new CompletionsRequest(
+                            dataSourceRef,
+                            editor.getText(),
+                            pos.getRow(),
+                            pos.getColumn(),
+                            prefix,
+                            includedTypes,
+                            uiConfig.getMaxEditorCompletionEntries());
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(res -> res.fetchCompletions(completionsRequest))
+                    .onSuccess(result -> {
+                        final AceCompletion[] aceCompletions = result
+                                .getValues()
+                                .stream()
+                                .map(this::convertCompletion)
+                                .toArray(AceCompletion[]::new);
+
+                        callback.invokeWithCompletions(aceCompletions);
+                    })
+                .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        });
     }
 
     @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
@@ -126,13 +147,13 @@ public class QueryHelpAceCompletionProvider
         this.dataSourceRef = dataSourceRef;
     }
 
-    public void setShowAll(final boolean showAll) {
-        this.showAll = showAll;
+    public void setIncludedTypes(final Set<QueryHelpType> includedTypes) {
+        this.includedTypes = includedTypes;
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

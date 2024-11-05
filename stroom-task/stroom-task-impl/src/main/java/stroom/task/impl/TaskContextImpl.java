@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,11 +187,7 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
 
     String getInfo() {
-        final Supplier<String> messageSupplier = this.messageSupplier;
-        if (messageSupplier != null) {
-            return messageSupplier.get();
-        }
-        return "";
+        return NullSafe.getOrElse(messageSupplier, Supplier::get, "");
     }
 
     synchronized void addChild(final TaskContextImpl taskContext) {
@@ -211,6 +207,6 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
     @Override
     public String toString() {
-        return getInfo();
+        return name + " - " + getInfo();
     }
 }

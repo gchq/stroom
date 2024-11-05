@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
@@ -42,6 +43,9 @@ public class IndexModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new IndexElementModule());
+
+        // Needed in IndexStoreImpl
+        requireBinding(IndexVolumeGroupService.class);
 
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
         bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);

@@ -92,7 +92,7 @@ public class DuplicateManagementListPresenter
                                 dataConsumer.accept(result.getResultPage());
                             })
                             .onFailure(errorHandler)
-                            .taskListener(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             }
@@ -178,7 +178,7 @@ public class DuplicateManagementListPresenter
                                     .create(DUPLICATE_CHECK_RESOURCE)
                                     .method(res -> res.delete(request))
                                     .onSuccess(r -> refresh())
-                                    .taskListener(getView())
+                                    .taskMonitorFactory(getView())
                                     .exec();
                         }
                     });

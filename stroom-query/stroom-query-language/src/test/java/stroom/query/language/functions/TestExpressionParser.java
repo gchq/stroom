@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,10 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.token.TokenException;
+
 import io.vavr.Tuple;
-import org.assertj.core.data.Offset;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -94,7 +96,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testMatch2() {
         createGenerator("match('this', 'that')", (gen, storedValues) -> {
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toBoolean()).isFalse();
+            ValAssertions.valFalse().actual(out);
         });
     }
 
@@ -102,161 +104,160 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testMatch3() {
         compute("match(${val1}, 'this')",
                 Val.of("this"),
-                out -> assertThat(out.toBoolean()).isTrue());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testMatch4() {
         compute("match(${val1}, 'that')",
                 Val.of("this"),
-                out -> assertThat(out.toBoolean()).isFalse());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testTrue() {
         compute("true()",
-                out -> assertThat(out.toBoolean()).isTrue());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testFalse() {
         compute("false()",
-                out -> assertThat(out.toBoolean()).isFalse());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testNull() {
-        compute("null()",
-                out -> assertThat(out).isInstanceOf(ValNull.class));
+        compute("null()", ValAssertions.valNull());
     }
 
     @Test
     void testErr() {
         compute("err()",
-                out -> assertThat(out).isInstanceOf(ValErr.class));
+                ValAssertions.valErr());
     }
 
     @Test
     void testNotTrue() {
         compute("not(true())",
-                out -> assertThat(out.toBoolean()).isFalse());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testNotFalse() {
         compute("not(false())",
-                out -> assertThat(out.toBoolean()).isTrue());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testAnd1() {
         compute("and(false(), false())",
-                out -> assertThat(out.toBoolean()).isFalse());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testAnd2() {
         compute("and(false(), true())",
-                out -> assertThat(out.toBoolean()).isFalse());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testAnd3() {
         compute("and(true(), true())",
-                out -> assertThat(out.toBoolean()).isTrue());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testOr1() {
         compute("or(false(), false())",
-                out -> assertThat(out.toBoolean()).isFalse());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testOr2() {
         compute("or(false(), true())",
-                out -> assertThat(out.toBoolean()).isTrue());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testOr3() {
         compute("or(true(), true())",
-                out -> assertThat(out.toBoolean()).isTrue());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testIf1() {
         compute("if(true(), 'this', 'that')",
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
     }
 
     @Test
     void testIf2() {
         compute("if(false(), 'this', 'that')",
-                out -> assertThat(out.toString()).isEqualTo("that"));
+                ValAssertions.valString("that"));
     }
 
     @Test
     void testIf3() {
         compute("if(${val1}, 'this', 'that')",
                 Val.of("true"),
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
     }
 
     @Test
     void testIf4() {
         compute("if(${val1}, 'this', 'that')",
                 Val.of("false"),
-                out -> assertThat(out.toString()).isEqualTo("that"));
+                ValAssertions.valString("that"));
     }
 
     @Test
     void testIf5() {
         compute("if(match(${val1}, 'foo'), 'this', 'that')",
                 Val.of("foo"),
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
     }
 
     @Test
     void testIf6() {
         compute("if(match(${val1}, 'foo'), 'this', 'that')",
                 Val.of("bar"),
-                out -> assertThat(out.toString()).isEqualTo("that"));
+                ValAssertions.valString("that"));
     }
 
     @Test
     void testNotIf() {
         compute("if(not(${val1}), 'this', 'that')",
                 Val.of("false"),
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
     }
 
     @Test
     void testIf_nullHandling() {
         compute("if(${val1}=null(), true(), false())",
                 Val.of(ValNull.INSTANCE),
-                out -> assertThat(out.type().isError()).isTrue());
+                ValAssertions.valErr());
     }
 
     @Test
     void testReplace1() {
         compute("replace('this', 'is', 'at')",
                 Val.of(3D),
-                out -> assertThat(out.toString()).isEqualTo("that"));
+                ValAssertions.valString("that"));
     }
 
     @Test
     void testReplace2() {
         compute("replace(${val1}, 'is', 'at')",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("that"));
+                ValAssertions.valString("that"));
     }
 
     @Test
     void testConcat1() {
         compute("concat('this', ' is ', 'it')",
                 Val.of(3D),
-                out -> assertThat(out.toString()).isEqualTo("this is it"));
+                ValAssertions.valString("this is it"));
     }
 
 
@@ -264,28 +265,28 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testConcat1Plus() {
         compute("'this'+' is '+'it'",
                 Val.of(3D),
-                out -> assertThat(out.toString()).isEqualTo("this is it"));
+                ValAssertions.valString("this is it"));
     }
 
     @Test
     void testConcat2() {
         compute("concat(${val1}, ' is ', 'it')",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("this is it"));
+                ValAssertions.valString("this is it"));
     }
 
     @Test
     void testConcatSingle1() {
         compute("concat(${val1})",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
     }
 
     @Test
     void testConcatSingle2() {
         compute("concat('hello')",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("hello"));
+                ValAssertions.valString("hello"));
     }
 
     @Test
@@ -293,7 +294,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("concat(${val1}, ${val2})",
                 2,
                 Val.of(ValNull.INSTANCE, ValNull.INSTANCE),
-                out -> assertThat(out.toString()).isEqualTo(""));
+                ValAssertions.valString(""));
     }
 
     @Test
@@ -301,7 +302,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}",
                 2,
                 Val.of(ValNull.INSTANCE, ValNull.INSTANCE),
-                out -> assertThat(out).isEqualTo(ValNull.INSTANCE));
+                ValAssertions.valNull());
     }
 
     @Test
@@ -309,7 +310,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}+'test'",
                 2,
                 Val.of(ValNull.INSTANCE, ValNull.INSTANCE),
-                out -> assertThat(out.toString()).isEqualTo("test"));
+                ValAssertions.valString("test"));
     }
 
     @Test
@@ -317,7 +318,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}+''",
                 2,
                 Val.of(ValNull.INSTANCE, ValNull.INSTANCE),
-                out -> assertThat(out.toString()).isEqualTo(""));
+                ValAssertions.valString(""));
     }
 
     @Test
@@ -325,7 +326,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                out -> assertThat(out.toString()).isEqualTo("2"));
+                ValAssertions.valDouble(2));
     }
 
     @Test
@@ -333,16 +334,15 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}+''",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                out -> assertThat(out.toString()).isEqualTo("2"));
+                ValAssertions.valString("2"));
     }
-
 
     @Test
     void testConcatBooleanPlus3() {
         compute("${val1}+${val2}+'test'",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                out -> assertThat(out.toString()).isEqualTo("2test"));
+                ValAssertions.valString("2test"));
     }
 
     @Test
@@ -350,7 +350,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+'test'+${val2}",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                out -> assertThat(out.toString()).isEqualTo("truetesttrue"));
+                ValAssertions.valString("truetesttrue"));
     }
 
 
@@ -358,239 +358,238 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testStaticString1() {
         compute("'hello'",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("hello"));
+                ValAssertions.valString("hello"));
     }
 
     @Test
     void testStaticString2() {
         compute("'[Click Here](http://www.somehost.com/somepath){DIALOG}'",
                 Val.of("this"),
-                out -> assertThat(out.toString())
-                        .isEqualTo("[Click Here](http://www.somehost.com/somepath){DIALOG}"));
+                ValAssertions.valString("[Click Here](http://www.somehost.com/somepath){DIALOG}"));
     }
 
     @Test
     void testStaticNumber() {
         compute("50",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("50"));
+                ValAssertions.valDouble(50));
     }
 
     @Test
     void testStringLength1() {
         compute("stringLength(${val1})",
                 Val.of("this"),
-                out -> assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D)));
+                ValAssertions.valInteger(4));
     }
 
     @Test
     void testSubstring1() {
         compute("substring(${val1}, 1, 2)",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("h"));
+                ValAssertions.valString("h"));
     }
 
     @Test
     void testSubstring3() {
         compute("substring(${val1}, 2, 99)",
                 Val.of("his"),
-                out -> assertThat(out.toString()).isEqualTo("s"));
+                ValAssertions.valString("s"));
     }
 
     @Test
     void testSubstring4() {
         compute("substring(${val1}, 1+1, 99-1)",
                 Val.of("his"),
-                out -> assertThat(out.toString()).isEqualTo("s"));
+                ValAssertions.valString("s"));
     }
 
     @Test
     void testSubstring5() {
         compute("substring(${val1}, 2+5, 99-1)",
                 Val.of("his"),
-                out -> assertThat(out.toString()).isEmpty());
+                ValAssertions.valStringEmpty());
     }
 
     @Test
     void testSubstringBefore1() {
         compute("substringBefore(${val1}, '-')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("aa"));
+                ValAssertions.valString("aa"));
     }
 
     @Test
     void testSubstringBefore2() {
         compute("substringBefore(${val1}, 'a')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEmpty());
+                ValAssertions.valStringEmpty());
     }
 
     @Test
     void testSubstringBefore3() {
         compute("substringBefore(${val1}, 'b')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("aa-"));
+                ValAssertions.valString("aa-"));
     }
 
     @Test
     void testSubstringBefore4() {
         compute("substringBefore(${val1}, 'q')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEmpty());
+                ValAssertions.valStringEmpty());
     }
 
     @Test
     void testSubstringAfter1() {
         compute("substringAfter(${val1}, '-')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("bb"));
+                ValAssertions.valString("bb"));
     }
 
     @Test
     void testSubstringAfter2() {
         compute("substringAfter(${val1}, 'a')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("a-bb"));
+                ValAssertions.valString("a-bb"));
     }
 
     @Test
     void testSubstringAfter3() {
         compute("substringAfter(${val1}, 'b')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("b"));
+                ValAssertions.valString("b"));
     }
 
     @Test
     void testSubstringAfter4() {
         compute("substringAfter(${val1}, 'q')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEmpty());
+                ValAssertions.valStringEmpty());
     }
 
     @Test
     void testIndexOf() {
         compute("indexOf(${val1}, '-')",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toInteger().intValue()).isEqualTo(2));
+                ValAssertions.valInteger(2));
     }
 
     @Test
     void testIndexOf1() {
         compute("substring(${val1}, indexOf(${val1}, '-'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("-bb"));
+                ValAssertions.valString("-bb"));
     }
 
     @Test
     void testIndexOf2() {
         compute("substring(${val1}, indexOf(${val1}, 'a'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("aa-bb"));
+                ValAssertions.valString("aa-bb"));
     }
 
     @Test
     void testIndexOf3() {
         compute("substring(${val1}, indexOf(${val1}, 'b'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("bb"));
+                ValAssertions.valString("bb"));
     }
 
     @Test
     void testIndexOf4() {
         compute("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo(""));
+                ValAssertions.valString(""));
     }
 
     @Test
     void testLastIndexOf1() {
         compute("substring(${val1}, lastIndexOf(${val1}, '-'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("-bb"));
+                ValAssertions.valString("-bb"));
     }
 
     @Test
     void testLastIndexOf2() {
         compute("substring(${val1}, lastIndexOf(${val1}, 'a'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("a-bb"));
+                ValAssertions.valString("a-bb"));
     }
 
     @Test
     void testLastIndexOf3() {
         compute("substring(${val1}, lastIndexOf(${val1}, 'b'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo("b"));
+                ValAssertions.valString("b"));
     }
 
     @Test
     void testLastIndexOf4() {
         compute("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.toString()).isEqualTo(""));
+                ValAssertions.valStringEmpty());
     }
 
     @Test
     void testDecode1() {
         compute("decode(${val1}, 'hullo', 'hello', 'goodbye')",
                 Val.of("hullo"),
-                out -> assertThat(out.toString()).isEqualTo("hello"));
+                ValAssertions.valString("hello"));
     }
 
     @Test
     void testDecode2() {
         compute("decode(${val1}, 'h.+o', 'hello', 'goodbye')",
                 Val.of("hullo"),
-                out -> assertThat(out.toString()).isEqualTo("hello"));
+                ValAssertions.valString("hello"));
     }
 
     @Test
     void testInclude1() {
         compute("include(${val1}, 'this', 'that')",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
     }
 
     @Test
     void testInclude2() {
         compute("include(${val1}, 'this', 'that')",
                 Val.of("that"),
-                out -> assertThat(out.toString()).isEqualTo("that"));
+                ValAssertions.valString("that"));
     }
 
     @Test
     void testInclude3() {
         compute("include(${val1}, 'this', 'that')",
                 Val.of("other"),
-                out -> assertThat(out.toString()).isNull());
+                ValAssertions.valNull());
     }
 
     @Test
     void testExclude1() {
         compute("exclude(${val1}, 'this', 'that')",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isNull());
+                ValAssertions.valNull());
     }
 
     @Test
     void testExclude2() {
         compute("exclude(${val1}, 'this', 'that')",
                 Val.of("that"),
-                out -> assertThat(out.toString()).isNull());
+                ValAssertions.valNull());
     }
 
     @Test
     void testExclude3() {
         compute("exclude(${val1}, 'this', 'that')",
                 Val.of("other"),
-                out -> assertThat(out.toString()).isEqualTo("other"));
+                ValAssertions.valString("other"));
     }
 
     @Test
     void testEncodeUrl() {
         compute("encodeUrl('https://www.somesite.com:8080/this/path?query=string')",
                 Val.of(""),
-                out -> assertThat(out.toString()).isEqualTo(
+                ValAssertions.valString(
                         "https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring"));
     }
 
@@ -598,117 +597,112 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testDecodeUrl() {
         compute("decodeUrl('https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring')",
                 Val.of(""),
-                out -> assertThat(out.toString())
-                        .isEqualTo("https://www.somesite.com:8080/this/path?query=string"));
+                ValAssertions.valString("https://www.somesite.com:8080/this/path?query=string"));
     }
 
     @Test
     void testEquals1() {
         compute("equals(${val1}, 'plop')",
                 Val.of("plop"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testEquals2() {
         compute("equals(${val1}, ${val1})",
                 Val.of("plop"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testEquals3() {
         compute("equals(${val1}, 'plip')",
                 Val.of("plop"),
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
     void testEquals4() {
         compute("equals(${val1}, ${val2})", 2, Val.of("plop", "plip"),
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
     void testEquals5() {
         compute("equals(${val1}, ${val2})", 2, Val.of("plop", "plop"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testEquals6() {
         compute("${val1}=${val2}", 2, Val.of("plop", "plop"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testEqualsNull1() {
         compute("${val1}=null()",
                 Val.of(ValNull.INSTANCE),
-                out -> assertThat(out.type().isError()).isTrue());
+                ValAssertions.valErr());
     }
 
     @Test
     void testEqualsNull2() {
         compute("${val1}=null()",
                 Val.of("plop"),
-                out -> assertThat(out.type().isError()).isTrue());
+                ValAssertions.valErr());
     }
 
     @Test
     void testEqualsNull3() {
         compute("null()=null()",
                 Val.of("plop"),
-                out -> assertThat(out.type().isError()).isTrue());
+                ValAssertions.valErr());
     }
 
     @Test
     void testEqualsNull4() {
         compute("if(${val1}=null(), true(), false())",
                 Val.of(ValNull.INSTANCE),
-                out -> assertThat(out.type().isError()).isTrue());
+                ValAssertions.valErr());
     }
 
     @Test
     void testIsNull1() {
         compute("isNull(${val1})",
                 Val.of(ValNull.INSTANCE),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testIsNull2() {
         compute("isNull(${val1})",
                 Val.of("plop"),
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
     void testIsNull3() {
         compute("isNull(null())",
                 Val.of("plop"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testIsNull4() {
         compute("if(isNull(${val1}), true(), false())",
                 Val.of(ValNull.INSTANCE),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
     void testLessThan1() {
-        compute("lessThan(1, 0)",
-                2,
-                out -> assertThat(out.toString()).isEqualTo("false"));
+        compute("lessThan(1, 0)", 2, ValAssertions.valFalse());
     }
 
     @Test
     void testLessThan2() {
-        compute("lessThan(1, 1)",
-                2,
-                out -> assertThat(out.toString()).isEqualTo("false"));
+        compute("lessThan(1, 1)", 2, ValAssertions.valFalse());
     }
 
     @Test
@@ -716,7 +710,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThan(${val1}, ${val2})",
                 2,
                 Val.of(1D, 2D),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -724,7 +718,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThan(${val1}, ${val2})",
                 2,
                 Val.of("fred", "fred"),
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
@@ -732,7 +726,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThan(${val1}, ${val2})",
                 2,
                 Val.of("fred", "fred1"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -740,21 +734,21 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThan(${val1}, ${val2})",
                 2,
                 Val.of("fred1", "fred"),
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
     void testLessThanOrEqualTo1() {
         compute("lessThanOrEqualTo(1, 0)",
                 2,
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
     void testLessThanOrEqualTo2() {
         compute("lessThanOrEqualTo(1, 1)",
                 2,
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -762,7 +756,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThanOrEqualTo(${val1}, ${val2})",
                 2,
                 Val.of(1D, 2D),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -770,7 +764,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("(${val1}<=${val2})",
                 2,
                 Val.of(1D, 2D),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -778,7 +772,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThanOrEqualTo(${val1}, ${val2})",
                 2,
                 Val.of("fred", "fred"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -786,7 +780,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThanOrEqualTo(${val1}, ${val2})",
                 2,
                 Val.of("fred", "fred1"),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -794,7 +788,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("lessThanOrEqualTo(${val1}, ${val2})",
                 2,
                 Val.of("fred1", "fred"),
-                out -> assertThat(out.toString()).isEqualTo("false"));
+                ValAssertions.valFalse());
     }
 
     @Test
@@ -802,7 +796,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("greaterThanOrEqualTo(${val1}, ${val2})",
                 2,
                 Val.of(2D, 1D),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -810,7 +804,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("(${val1}>=${val2})",
                 2,
                 Val.of(2D, 1D),
-                out -> assertThat(out.toString()).isEqualTo("true"));
+                ValAssertions.valTrue());
     }
 
     @TestFactory
@@ -1104,31 +1098,132 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testSubstring2() {
         compute("substring(${val1}, 0, 99)",
                 Val.of("this"),
-                out -> assertThat(out.toString()).isEqualTo("this"));
+                ValAssertions.valString("this"));
+    }
+
+    @Test
+    void testContains() {
+        compute("contains(${val1}, ${val2})", Val.of("foobar", "foo"), ValAssertions.valTrue());
+    }
+
+    @Test
+    void testHash_static1() {
+        compute("hash('foo')",
+                null,
+                ValAssertions.valString(
+                        "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"));
+    }
+
+    @Test
+    void testHash_static2() {
+        compute("hash('foo', 'MD5')",
+                null,
+                ValAssertions.valString(
+                        "acbd18db4cc2f85cedef654fccc4a4d8"));
+    }
+
+    @Test
+    void testHash_static3() {
+        compute("hash('foo', 'MD5', 'some salt')",
+                null,
+                ValAssertions.valString(
+                        "c58c215b43ef3b3480c0d0f770ec1b57"));
     }
 
     @Test
     void testHash1() {
         compute("hash(${val1})",
                 Val.of("test"),
-                out -> assertThat(out.toString()).isEqualTo(
+                ValAssertions.valString(
                         "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"));
     }
 
     @Test
     void testHash2() {
-        compute("hash(${val1}, 'SHA-512')",
-                Val.of("test"),
-                out -> assertThat(out.toString()).isEqualTo(
+        compute("hash(${val1}, ${val2})",
+                Val.of("test", "SHA-512"),
+                ValAssertions.valString(
                         "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"));
     }
 
     @Test
     void testHash3() {
-        compute("hash(${val1}, 'SHA-512', 'mysalt')",
-                Val.of("test"),
-                out -> assertThat(out.toString()).isEqualTo(
+        compute("hash(${val1}, ${val2}, ${val3})",
+                Val.of("test", "SHA-512", "mysalt"),
+                ValAssertions.valString(
                         "af2910d4d8acf3fcf9683d3ca4425327cb1b4b48bc690f566e27b0e0144c17af82066cf6af14d3a30312ed9df671e0e24b1c66ed3973d1a7836899d75c4d6bb8"));
+    }
+
+    @Test
+    void testHash4() {
+        compute("hash(${val1})",
+                Val.of(123),
+                ValAssertions.valString(
+                        "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"));
+    }
+
+    @Test
+    void testHash5() {
+        compute("hash(${val1}, ${val2}, ${val3})",
+                Val.of(ValLong.create(123), ValString.create("SHA-256"), ValLong.create(456)),
+                ValAssertions.valString(
+                        "c1cf024576e9c756b252bd5035efc64c72c17affe236909ded190d266a5bfdf1"));
+    }
+
+    @Test
+    void testHash6() {
+        compute("hash(${val1})",
+                Val.of(ValErr.create("bad things happened")),
+                ValAssertions.valErrContainsIgnoreCase("bad things"));
+    }
+
+    @Test
+    void testHash7() {
+        compute("hash(${val1}, ${val2})",
+                Val.of("test", "BAD ALGO"),
+                ValAssertions.valErrContainsIgnoreCase("BAD ALGO", "digest"));
+    }
+
+    @Test
+    void testHash8() {
+        Assertions.assertThatThrownBy(() -> {
+            compute("hash()",
+                    null,
+                    null);
+        }).isInstanceOf(TokenException.class);
+    }
+
+    @Test
+    void testHash9() {
+        Assertions.assertThatThrownBy(() -> {
+            compute("hash(${val1}, ${val2}, ${val3}, ${val4)",
+                    Val.of("test", "SHA-512", "mysalt", "BAD PARAM"),
+                    null);
+        }).isInstanceOf(TokenException.class);
+    }
+
+    @Test
+    void testHash10() {
+        compute("hash(${val1}, concat('SHA-', ${val2}))",
+                Val.of(ValString.create("test"), ValLong.create(256)),
+                ValAssertions.valString(
+                        "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"));
+    }
+
+    @Test
+    void testHash11() {
+        compute("hash(${val1}, 'MD5', ${val2})",
+                Val.of("test", "mysalt"),
+                ValAssertions.valString(
+                        "ea43fd72fb05dd2cb8e186abd56afc47"));
+    }
+
+    @Test
+    void testHash12() {
+        compute("hash(${val1}, ${val2}, 'mysalt')",
+                Val.of("test", "MD5"),
+                ValAssertions.valString(
+                        "ea43fd72fb05dd2cb8e186abd56afc47"));
     }
 
     @Test
@@ -1139,7 +1234,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of("three"), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toString()).isEqualTo("one,two,three");
+            ValAssertions.valString("one,two,three").actual(out);
         });
     }
 
@@ -1151,7 +1246,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of("three"), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toString()).isEqualTo("onetwothree");
+            ValAssertions.valString("onetwothree").actual(out);
         });
     }
 
@@ -1162,13 +1257,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(133D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            ValAssertions.valLong(2).actual(out);
 
             gen.set(Val.of(11D), storedValues);
             gen.set(Val.of(122D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            ValAssertions.valLong(4).actual(out);
         });
     }
 
@@ -1182,7 +1277,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                     createChildDataSupplier(List.of(storedValues, storedValues));
 
             Val out = gen.eval(storedValues, childDataSupplier);
-            assertThat(out.toInteger()).isEqualTo(2);
+            ValAssertions.valLong(2).actual(out);
         });
     }
 
@@ -1193,13 +1288,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(133D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            ValAssertions.valInteger(2).actual(out);
 
             gen.set(Val.of(11D), storedValues);
             gen.set(Val.of(122D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+            ValAssertions.valInteger(3).actual(out);
         });
     }
 
@@ -1210,13 +1305,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(133D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+            ValAssertions.valInteger(1).actual(out);
 
             gen.set(Val.of(11D), storedValues);
             gen.set(Val.of(122D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+            ValAssertions.valInteger(1).actual(out);
         });
     }
 
@@ -1224,14 +1319,14 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testAdd1() {
         compute("3+4",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D)));
+                ValAssertions.valDouble(7D));
     }
 
     @Test
     void testAdd2() {
         compute("3+4+5",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D)));
+                ValAssertions.valDouble(12D));
     }
 
     @Test
@@ -1241,13 +1336,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            ValAssertions.valDouble(4D).actual(out);
 
             gen.set(Val.of(1D), storedValues);
             gen.set(Val.of(1D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+            ValAssertions.valDouble(6D).actual(out);
         });
     }
 
@@ -1255,7 +1350,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testSubtract1() {
         compute("3-4",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(-1D, Offset.offset(0D)));
+                ValAssertions.valDouble(-1D));
     }
 
     @Test
@@ -1265,13 +1360,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(0D, Offset.offset(0D));
+            ValAssertions.valDouble(0D).actual(out);
 
             gen.set(Val.of(1D), storedValues);
             gen.set(Val.of(1D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(-2D, Offset.offset(0D));
+            ValAssertions.valDouble(-2D).actual(out);
         });
     }
 
@@ -1279,7 +1374,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testMultiply1() {
         compute("3*4",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D)));
+                ValAssertions.valDouble(12D));
     }
 
     @Test
@@ -1289,23 +1384,20 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            ValAssertions.valDouble(4D).actual(out);
 
             gen.set(Val.of(1D), storedValues);
             gen.set(Val.of(1D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            ValAssertions.valDouble(8D).actual(out);
         });
     }
 
     @Test
     void testDivide1() {
         compute("8/4",
-                out -> {
-//        gen.set(getVal(1D));
-                    assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
-                });
+                ValAssertions.valDouble(2D));
     }
 
     @Test
@@ -1315,13 +1407,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1D), storedValues);
 
             Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            ValAssertions.valDouble(4D).actual(out);
 
             gen.set(Val.of(1D), storedValues);
             gen.set(Val.of(1D), storedValues);
 
             out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            ValAssertions.valDouble(2D).actual(out);
         });
     }
 
@@ -1337,21 +1429,21 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testFloorNum1() {
         compute("floor(8.4234)",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D)));
+                ValAssertions.valDouble(8D));
     }
 
     @Test
     void testFloorNum2() {
         compute("floor(8.5234)",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D)));
+                ValAssertions.valDouble(8D));
     }
 
     @Test
     void testFloorNum3() {
         compute("floor(${val1})",
                 Val.of(1.34D),
-                out -> assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D)));
+                ValAssertions.valDouble(1D));
     }
 
     @Test
@@ -1361,7 +1453,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+            ValAssertions.valDouble(3D).actual(out);
         });
     }
 
@@ -1372,7 +1464,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3.8D, Offset.offset(0D));
+            ValAssertions.valDouble(3.8D).actual(out);
         });
     }
 
@@ -1383,7 +1475,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3.86D, Offset.offset(0D));
+            ValAssertions.valDouble(3.86D).actual(out);
         });
     }
 
@@ -1391,21 +1483,21 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testCeilNum1() {
         compute("ceiling(8.4234)",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D)));
+                ValAssertions.valDouble(9D));
     }
 
     @Test
     void testCeilNum2() {
         compute("ceiling(8.5234)",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D)));
+                ValAssertions.valDouble(9D));
     }
 
     @Test
     void testCeilNum3() {
         compute("ceiling(${val1})",
                 Val.of(1.34D),
-                out -> assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D)));
+                ValAssertions.valDouble(2D));
     }
 
     @Test
@@ -1415,7 +1507,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            ValAssertions.valDouble(4D).actual(out);
         });
     }
 
@@ -1426,7 +1518,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
+            ValAssertions.valDouble(3.9D).actual(out);
         });
     }
 
@@ -1437,7 +1529,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
+            ValAssertions.valDouble(3.87D).actual(out);
         });
     }
 
@@ -1445,21 +1537,21 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testRoundNum1() {
         compute("round(8.4234)",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D)));
+                ValAssertions.valDouble(8D));
     }
 
     @Test
     void testRoundNum2() {
         compute("round(8.5234)",
                 Val.of(1D),
-                out -> assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D)));
+                ValAssertions.valDouble(9D));
     }
 
     @Test
     void testRoundNum3() {
         compute("round(${val1})",
                 Val.of(1.34D),
-                out -> assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D)));
+                ValAssertions.valDouble(1D));
     }
 
     @Test
@@ -1469,7 +1561,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            ValAssertions.valDouble(4D).actual(out);
         });
     }
 
@@ -1480,7 +1572,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
+            ValAssertions.valDouble(3.9D).actual(out);
         });
     }
 
@@ -1491,7 +1583,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.8655D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
+            ValAssertions.valDouble(3.87D).actual(out);
         });
     }
 
@@ -1501,7 +1593,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.34D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toLong()).isEqualTo(DateUtil.parseNormalDateTimeString("2014-02-22T11:12:12.888Z"));
+            ValAssertions.valDate("2014-02-22T11:12:12.888Z")
+                    .actual(out);
         });
     }
 
@@ -1511,7 +1604,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(Val.of(1.34D), storedValues);
 
             final Val out = gen.eval(storedValues, null);
-            assertThat(out.toLong()).isEqualTo(DateUtil.parseNormalDateTimeString("2014-02-22T12:12:15.888Z"));
+            ValAssertions.valDate("2014-02-22T12:12:15.888Z")
+                    .actual(out);
         });
     }
 
@@ -1540,11 +1634,9 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             roundYear, 2014-02-22T12:12:12.888Z, 2014-01-01T00:00:00.000Z
             """)
     void testTime(final String expr, final String input, final String expectedResult) {
-        final double expectedMs = DateUtil.parseNormalDateTimeString(expectedResult);
+        final long expectedMs = DateUtil.parseNormalDateTimeString(expectedResult);
         final String expression = expr + "(${val1})";
-        compute(expression,
-                Val.of(input),
-                out -> assertThat(out.toDouble()).isEqualTo(expectedMs, Offset.offset(0D)));
+        compute(expression, Val.of(input), ValAssertions.valDate(expectedMs));
     }
 
     @TestFactory
@@ -1559,9 +1651,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         compute(testCase.expression,
                                 testCase.inputValues,
-                                out -> assertThat(out.toDouble())
-                                        .isEqualTo(testCase.expectedResult.toDouble(),
-                                                Offset.offset(0D)))));
+                                ValAssertions.valDouble(testCase.expectedResult.toDouble()))));
     }
 
     @TestFactory
@@ -1640,14 +1730,14 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testMappedValues1() {
         compute("param('testkey')",
                 Val.of("100"),
-                out -> assertThat(out).isEqualTo(ValString.create("testvalue")));
+                ValAssertions.valString("testvalue"));
     }
 
     @Test
     void testMappedValues2() {
         compute("params()",
                 Val.of("100"),
-                out -> assertThat(out).isEqualTo(ValString.create("testkey=\"testvalue\"")));
+                ValAssertions.valString("testkey=\"testvalue\""));
     }
 
     @TestFactory
@@ -1829,5 +1919,15 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                                 testCase.expression,
                                 testCase.expectedResult,
                                 testCase.inputValues)));
+    }
+
+    @Test
+    void testBadFunction() {
+        Assertions.assertThatThrownBy(() -> {
+                    compute("foo(1)", out -> {
+                    });
+                })
+                .isInstanceOf(TokenException.class)
+                .hasMessageContainingAll("Unknown function", "foo");
     }
 }

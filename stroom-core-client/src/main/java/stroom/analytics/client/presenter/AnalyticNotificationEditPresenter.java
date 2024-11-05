@@ -25,7 +25,7 @@ import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -178,8 +178,8 @@ public class AnalyticNotificationEditPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        analyticEmailDestinationPresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        analyticEmailDestinationPresenter.setTaskMonitorFactory(taskMonitorFactory);
 //        analyticStreamDestinationPresenter.setTaskListener(taskListener);
     }
 

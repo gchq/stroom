@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.client.presenter;
@@ -28,7 +27,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -95,6 +95,9 @@ public class CopyDocumentPresenter
         entityTreePresenter.getModel().setEnsureVisible(firstChild);
         entityTreePresenter.getModel().refresh();
 
+        // We want to select the parent folder, so we have a default dest to copy into.
+        entityTreePresenter.setSelectParentIfNotFound(true);
+
         forceReveal();
     }
 
@@ -114,8 +117,7 @@ public class CopyDocumentPresenter
                 .onShow(e -> entityTreePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        if (singleItemMode &&
-                                (getView().getName() == null || getView().getName().trim().length() == 0)) {
+                        if (singleItemMode && GwtNullSafe.isBlankString(getView().getName())) {
                             AlertEvent.fireError(CopyDocumentPresenter.this, "No name specified", e::reset);
                         } else {
                             final ExplorerNode folder = entityTreePresenter.getSelectedItem();
@@ -136,10 +138,14 @@ public class CopyDocumentPresenter
     }
 
     @Override
-    public synchronized void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        entityTreePresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface CopyDocumentView extends View {
 
@@ -155,6 +161,10 @@ public class CopyDocumentPresenter
 
         void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface CopyDocumentProxy extends Proxy<CopyDocumentPresenter> {

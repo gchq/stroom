@@ -64,7 +64,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 })
                 .onFailure(caught ->
                         AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
 
         uiConfigCache.get(result -> {

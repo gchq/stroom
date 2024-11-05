@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface ContentHighlighter {
 
-    List<StringMatchLocation> getHighlights(String field, String text, int maxMatches);
+    List<StringMatchLocation> getHighlights(String text, int maxMatches);
 }

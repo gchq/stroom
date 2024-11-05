@@ -29,7 +29,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.state.client.presenter.ScyllaDbPresenter;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.ScyllaDbDocResource;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -70,13 +70,13 @@ public class ScyllaDbPlugin extends DocumentPlugin<ScyllaDbDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ScyllaDbDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(SCYLLA_DB_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -85,13 +85,13 @@ public class ScyllaDbPlugin extends DocumentPlugin<ScyllaDbDoc> {
                      final ScyllaDbDoc document,
                      final Consumer<ScyllaDbDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(SCYLLA_DB_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

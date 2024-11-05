@@ -29,7 +29,7 @@ import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -70,13 +70,13 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ELASTIC_INDEX_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -85,13 +85,13 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
                      final ElasticIndexDoc document,
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ELASTIC_INDEX_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

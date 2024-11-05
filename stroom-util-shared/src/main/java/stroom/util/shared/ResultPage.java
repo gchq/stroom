@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,12 +330,17 @@ public class ResultPage<T> implements Serializable {
         return values.size();
     }
 
+    @JsonIgnore
+    public boolean isEmpty() {
+        return values.isEmpty();
+    }
+
     /**
      * @return the first item or null if the list is empty
      */
     @JsonIgnore
     public T getFirst() {
-        if (values.size() > 0) {
+        if (!values.isEmpty()) {
             return values.get(0);
         } else {
             return null;

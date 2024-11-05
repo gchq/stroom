@@ -30,7 +30,7 @@ import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -202,7 +202,6 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Usage Date")
-                        .centerAligned()
                         .withToolTip("The date/time this volume was last written to.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
@@ -266,14 +265,14 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                             }
                         })
                         .onFailure(errorHandler)
-                        .taskListener(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    public TaskListener getTaskListener() {
+    public TaskMonitorFactory getTaskListener() {
         return getView();
     }
 }

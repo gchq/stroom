@@ -21,7 +21,7 @@ import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 
@@ -182,8 +182,8 @@ public class DocumentPermissionsTabPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        permissionsListPresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        permissionsListPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
 

@@ -16,7 +16,7 @@
 
 package stroom.security.client.presenter;
 
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
@@ -64,9 +64,9 @@ public class UsersAndGroupsPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        usersPresenter.setTaskListener(taskListener);
-        groupsPresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        usersPresenter.setTaskMonitorFactory(taskMonitorFactory);
+        groupsPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 }

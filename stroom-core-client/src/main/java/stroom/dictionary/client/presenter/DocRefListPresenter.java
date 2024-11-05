@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,24 @@
 
 package stroom.dictionary.client.presenter;
 
+import stroom.cell.info.client.CommandLink;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
+import java.util.function.Function;
 
 public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
 
@@ -53,23 +57,42 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void initTableColumns() {
         // Name.
-        final Column<DocRef, String> nameColumn = new Column<DocRef, String>(new TextCell()) {
-            @Override
-            public String getValue(final DocRef row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getName();
-            }
-        };
-        dataGrid.addResizableColumn(nameColumn, "Name", 400);
+        final Column<DocRef, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
+                        buildOpenDocCommandLink())
+                .build();
+        DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
+        dataGrid.addAutoResizableColumn(
+                nodeNameColumn,
+                DataGridUtil.headingBuilder("Document Name")
+                        .build(),
+                500);
 
         dataGrid.addEndColumn(new EndColumn<>());
+    }
+
+    private Function<DocRef, CommandLink> buildOpenDocCommandLink() {
+        return (DocRef docRef) -> {
+            if (docRef != null) {
+                final String name = docRef.getName();
+                return new CommandLink(
+                        name,
+                        "Open " + docRef.getType() + " '" + name + "'.",
+                        () ->
+                                OpenDocumentEvent.fire(DocRefListPresenter.this, docRef, true));
+            } else {
+                return null;
+            }
+        };
     }
 
     public void setData(final List<DocRef> docRefs) {
         dataGrid.setRowData(0, docRefs);
         dataGrid.setRowCount(docRefs.size());
+        if (GwtNullSafe.hasItems(docRefs)) {
+            selectionModel.setSelected(docRefs.get(0));
+        } else {
+            selectionModel.clear();
+        }
     }
 
 //    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {

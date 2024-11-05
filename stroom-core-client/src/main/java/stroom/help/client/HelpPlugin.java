@@ -20,7 +20,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -67,7 +67,7 @@ public class HelpPlugin extends Plugin {
 
                 event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
             }
-        }, new DefaultTaskListener(this));
+        }, new DefaultTaskMonitorFactory(this));
 
         final IconMenuItem apiMenuItem = new IconMenuItem.Builder()
                 .priority(2)

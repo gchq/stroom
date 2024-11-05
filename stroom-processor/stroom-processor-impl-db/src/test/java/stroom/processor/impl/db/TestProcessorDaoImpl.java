@@ -1,8 +1,28 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl.db;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +44,38 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
     ProcessorFilter processorFilter1;
     ProcessorFilter processorFilter2;
 
+    @Test
+    void testChangeTaskStatus() {
+        processor1 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+
+        createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.QUEUED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
+
+        dumpProcessorTaskTable();
+
+        final ExpressionCriteria expressionCriteria = new ExpressionCriteria(ExpressionOperator.builder()
+                .addTextTerm(ProcessorTaskFields.FEED, Condition.EQUALS, FEED)
+                .build());
+
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())))
+                .isEqualTo(0);
+
+        processorTaskDao.changeTaskStatus(
+                expressionCriteria,
+                NODE1,
+                TaskStatus.COMPLETE,
+                0L,
+                Long.MAX_VALUE);
+
+        dumpProcessorTaskTable();
+
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())))
+                .isEqualTo(3);
+    }
 
     @Test
     void testLogicalDeleteByProcessorId() {
@@ -119,7 +171,14 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
 //        processorFilterDao.logicalDeleteByProcessorFilterId(processorFilter2.getId());
 
         processorTaskDao.logicalDeleteForDeletedProcessorFilters(threshold);
+
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(6);
+
         processorTaskDao.physicallyDeleteOldTasks(threshold);
+
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                .isEqualTo(0);
 
         // Have to delete the filters first else we can't delete the procs
         processorFilterDao.physicalDeleteOldProcessorFilters(threshold);
@@ -142,4 +201,5 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +102,8 @@ public class NewPipelineReferencePresenter
 
         getView().setElement(pipelineReference.getElement());
 
-        pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
-        feedPresenter.setSelectedEntityReference(pipelineReference.getFeed());
+        pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline(), true);
+        feedPresenter.setSelectedEntityReference(pipelineReference.getFeed(), true);
         updateDataTypes(pipelineReference.getStreamType());
 
         pipelinePresenter.addDataSelectionHandler(event -> {
@@ -160,7 +160,7 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

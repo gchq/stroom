@@ -20,16 +20,17 @@ package stroom.pipeline.reader;
 import stroom.test.common.util.ZipResource;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
-import java.util.zip.ZipInputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,22 +55,22 @@ class TestBOMRemovalInputStream extends StroomUnitTest {
 
     @Test
     void testBlank() throws IOException {
-        final LineNumberReader lineNumberReader = getLineNumberReader(bomBlank);
-        assertThat(lineNumberReader.readLine()).isNull();
-        lineNumberReader.close();
+        try (final LineNumberReader lineNumberReader = getLineNumberReader(bomBlank)) {
+            assertThat(lineNumberReader.readLine()).isNull();
+        }
     }
 
     @Test
     void testContent() throws IOException {
-        final LineNumberReader lineNumberReader = getLineNumberReader(bomContent);
-        assertThat(lineNumberReader.readLine()).isNotNull();
-        lineNumberReader.close();
+        try (final LineNumberReader lineNumberReader = getLineNumberReader(bomContent)) {
+            assertThat(lineNumberReader.readLine()).isNotNull();
+        }
     }
 
     private LineNumberReader getLineNumberReader(final ZipResource zipResource) throws IOException {
-        final ZipInputStream zipInputStream = zipResource.getZipInputStream();
+        final ZipArchiveInputStream zipInputStream =
+                new ZipArchiveInputStream(new ByteArrayInputStream(zipResource.getBytes()));
         zipInputStream.getNextEntry();
-
         return new LineNumberReader(new InputStreamReader(
                 new BOMRemovalInputStream(zipInputStream, StandardCharsets.UTF_8.toString()), StandardCharsets.UTF_8));
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.db.migration;
 
 import stroom.util.ColouredStringBuilder;
@@ -149,17 +165,17 @@ public class TestListDbMigrations {
     }
 
     private void appendOtherMig(final Version version, final Script script, final StringBuilder sb) {
-        final String branch = version.getMinor() + "." + version.getMinor();
+        final String branch = version.getMajor() + "." + version.getMinor();
         final String githubUrl = "https://github.com/gchq/stroom/tree/" + branch + "/" + script.relPath.toString();
         final String template = """
 
 
-                #### Script `{}`
+                ##### Script `{}`
 
                 **Path**: `{}`
 
                 It is not possible to display the content here.
-                The file can be viewed on : \\{\\{< external-link "GitHub" "{}" >}}""";
+                The file can be viewed on : {{< external-link "GitHub" "{}" >}}""";
         sb.append(LogUtil.message(
                 template,
                 script.fileName,

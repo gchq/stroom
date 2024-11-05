@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
@@ -49,12 +65,15 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        if (criteria.getDataSourceRef() != null && !loadedIndexes.contains(criteria.getDataSourceRef())) {
-            transferFieldsToDB(criteria.getDataSourceRef());
-            loadedIndexes.add(criteria.getDataSourceRef());
-        }
-
+        ensureLoaded(criteria.getDataSourceRef());
         return indexFieldDao.findFields(criteria);
+    }
+
+    private void ensureLoaded(final DocRef dataSourceRef) {
+        if (dataSourceRef != null && !loadedIndexes.contains(dataSourceRef)) {
+            transferFieldsToDB(dataSourceRef);
+            loadedIndexes.add(dataSourceRef);
+        }
     }
 
     @Override
@@ -87,6 +106,12 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        ensureLoaded(docRef);
+        return indexFieldDao.getFieldCount(docRef);
+    }
+
+    @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
         return securityContext.useAsReadResult(() -> {
 
@@ -100,7 +125,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
                     PageRequest.oneRow(),
                     null,
                     docRef,
-                    StringMatch.equals(fieldName),
+                    StringMatch.equals(fieldName, true),
                     null);
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
             if (resultPage.size() > 0) {

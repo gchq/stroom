@@ -6,7 +6,7 @@ import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.scheduler.Schedule;
 
 import com.google.gwt.core.client.GWT;
@@ -33,21 +33,21 @@ public class ScheduledTimeClient implements HasHandlers {
     public void validate(final Schedule schedule,
                          final ScheduleRestriction scheduleRestriction,
                          final Consumer<ScheduledTimes> consumer,
-                         final TaskListener taskListener) {
+                         final TaskMonitorFactory taskMonitorFactory) {
         final GetScheduledTimesRequest request =
                 new GetScheduledTimesRequest(schedule, null, scheduleRestriction);
-        getScheduledTimes(request, consumer, taskListener);
+        getScheduledTimes(request, consumer, taskMonitorFactory);
     }
 
     public void getScheduledTimes(final GetScheduledTimesRequest request,
                                   final Consumer<ScheduledTimes> consumer,
-                                  final TaskListener taskListener) {
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(SCHEDULED_TIME_RESOURCE)
                 .method(res -> res.get(request))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(null)))
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

@@ -104,7 +104,7 @@ public class NewIndexVolumeGroupPresenter
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, e))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -117,7 +117,7 @@ public class NewIndexVolumeGroupPresenter
                     e.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, e))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

@@ -20,7 +20,7 @@ import stroom.dashboard.client.query.QueryInfo;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import java.util.List;
 
@@ -50,5 +50,5 @@ public interface Queryable {
 
     void setResultStoreInfo(ResultStoreInfo resultStoreInfo);
 
-    void setTaskListener(TaskListener taskListener);
+    void setTaskMonitorFactory(TaskMonitorFactory taskMonitorFactory);
 }

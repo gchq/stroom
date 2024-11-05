@@ -6,21 +6,14 @@ import java.util.function.Consumer;
 
 public class LmdbPutFilterFactory {
 
-    static LmdbPutFilter create(final CompiledSorter<Item>[] compiledSorters,
+    static LmdbPutFilter create(final CompiledSorters compiledSorters,
                                 final CompiledDepths compiledDepths,
                                 final Sizes maxResultSizes,
                                 final AtomicLong totalResultCount,
                                 final CompletionState completionState) {
 
         // Find out if we have any sorting.
-        boolean hasSort = false;
-        for (final CompiledSorter<Item> sorter : compiledSorters) {
-            if (sorter != null) {
-                hasSort = true;
-                break;
-            }
-        }
-
+        final boolean hasSort = compiledSorters.hasSort();
         final long maxResults = maxResultSizes.size(0);
 
         // Determine if we are going to limit the result count.

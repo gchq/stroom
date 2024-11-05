@@ -16,18 +16,33 @@
 
 package stroom.query.client.presenter;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.core.client.LocationManager;
+import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
+import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryResource;
+import stroom.query.shared.QuerySearchRequest;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -55,33 +70,47 @@ public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
         implements ResultComponent {
 
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+
     private int expanderColumnWidth;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
+    private final RestFactory restFactory;
+    private final LocationManager locationManager;
     private final PagerView pagerView;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
-    private final DataGridSelectionEventManager<TableRow> selectionEventManager;
 
     private QueryModel currentSearchModel;
     private boolean ignoreRangeChange;
     private boolean pause;
-    private int currentRequestCount;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
 
+    private final ButtonView downloadButton;
+    private final DownloadPresenter downloadPresenter;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
+                                     final RestFactory restFactory,
+                                     final LocationManager locationManager,
                                      final QueryResultTableView tableView,
-                                     final PagerView pagerView) {
+                                     final PagerView pagerView,
+                                     final DownloadPresenter downloadPresenter,
+                                     final ClientSecurityContext securityContext) {
         super(eventBus, tableView);
+        this.restFactory = restFactory;
+        this.locationManager = locationManager;
+        this.downloadPresenter = downloadPresenter;
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
+                dataGrid,
+                selectionModel,
+                false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
 
         pagerView.setDataWidget(dataGrid);
@@ -103,6 +132,10 @@ public class QueryResultTablePresenter
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        // Download
+        downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
+        downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
     }
 
     private void toggleOpenGroup(final String group) {
@@ -159,21 +192,40 @@ public class QueryResultTablePresenter
 //        }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
-            if (pause) {
-                this.pause = false;
-                refresh();
-            } else {
-                this.pause = true;
-            }
-            pagerView.getRefreshButton().setPaused(this.pause);
+            setPause(!pause, true);
         }));
+
+        registerHandler(downloadButton.addClickHandler(event -> {
+            if (currentSearchModel != null) {
+                if (currentSearchModel.isSearching()) {
+                    ConfirmEvent.fire(QueryResultTablePresenter.this,
+                            "Search still in progress. Do you want to download the current results? " +
+                                    "Note that these may be incomplete.",
+                            ok -> {
+                                if (ok) {
+                                    download();
+                                }
+                            });
+                } else {
+                    download();
+                }
+            }
+        }));
+    }
+
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If currently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        pagerView.getRefreshButton().setPaused(this.pause);
     }
 
     private void refresh() {
         if (currentSearchModel != null) {
-            currentRequestCount++;
             pagerView.getRefreshButton().setRefreshing(true);
-            pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
             currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
                 try {
                     if (result != null) {
@@ -182,8 +234,6 @@ public class QueryResultTablePresenter
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
                 }
-                currentRequestCount--;
-                pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         } else {
@@ -281,6 +331,7 @@ public class QueryResultTablePresenter
 //                .tableSettings(tableSettings)
 //                .build();
 
+        setPause(false, false);
         pagerView.getRefreshButton().setRefreshing(true);
     }
 
@@ -340,11 +391,11 @@ public class QueryResultTablePresenter
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
 
-//                // Enable download of current results.
-//                downloadButton.setEnabled(true);
+                // Enable download of current results.
+                downloadButton.setEnabled(true);
             } else {
-//                // Disable download of current results.
-//                downloadButton.setEnabled(false);
+                // Disable download of current results.
+                downloadButton.setEnabled(false);
 
                 dataGrid.setRowData(0, new ArrayList<>());
                 dataGrid.setRowCount(0, true);
@@ -471,6 +522,7 @@ public class QueryResultTablePresenter
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
+                cellsMap.put(column.getName(), cell);
                 cellsMap.put(column.getId(), cell);
             }
 
@@ -493,26 +545,6 @@ public class QueryResultTablePresenter
         return processed;
     }
 
-
-//    private void refresh() {
-//        currentRequestCount++;
-//        getView().setPaused(pause && currentRequestCount == 0);
-//        getView().setRefreshing(true);
-//        currentSearchModel.refresh("table", result -> {
-//            try {
-//                if (result != null) {
-//                    setDataInternal(result);
-//                }
-//            } catch (final Exception e) {
-//                GWT.log(e.getMessage());
-//            }
-//            currentRequestCount--;
-//            getView().setPaused(pause && currentRequestCount == 0);
-//            getView().setRefreshing(currentSearchModel.getMode());
-//        });
-//    }
-
-
     public HandlerRegistration addRefreshRequestHandler(RefreshRequestEvent.Handler handler) {
         return addHandler(RefreshRequestEvent.getType(), handler);
     }
@@ -524,6 +556,49 @@ public class QueryResultTablePresenter
     @Override
     public void setQueryModel(final QueryModel queryModel) {
         this.currentSearchModel = queryModel;
+    }
+
+    private void download() {
+        if (currentSearchModel != null) {
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final QuerySearchRequest currentSearch = currentSearchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
+                final QuerySearchRequest request = currentSearch
+                        .copy()
+                        .queryKey(queryKey)
+                        .storeHistory(false)
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .build();
+
+                downloadPresenter.setShowDownloadAll(false);
+                ShowPopupEvent.builder(downloadPresenter)
+                        .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .caption("Download Options")
+                        .onShow(e -> downloadPresenter.getView().focus())
+                        .onHideRequest(e -> {
+                            if (e.isOk()) {
+                                final DownloadQueryResultsRequest downloadSearchResultsRequest =
+                                        new DownloadQueryResultsRequest(
+                                                request,
+                                                downloadPresenter.getFileType(),
+                                                downloadPresenter.isSample(),
+                                                downloadPresenter.getPercent());
+                                restFactory
+                                        .create(QUERY_RESOURCE)
+                                        .method(res -> res.downloadSearchResults(
+                                                currentSearchModel.getCurrentNode(),
+                                                downloadSearchResultsRequest))
+                                        .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
+                                                this,
+                                                result))
+                                        .taskMonitorFactory(this)
+                                        .exec();
+                            }
+                            e.hide();
+                        })
+                        .fire();
+            }
+        }
     }
 
 

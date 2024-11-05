@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client;
@@ -24,6 +23,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.HasSave;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
+import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.RestErrorHandler;
@@ -34,15 +34,22 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
@@ -96,114 +103,107 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
-                                     final TaskListener taskListener) {
+                                     final TaskMonitorFactory taskMonitorFactory) {
         MyPresenterWidget<?> presenter = null;
-
-        final DocumentTabData existing = documentToTabDataMap.get(docRef);
-        // If we already have a tab item for this document then make sure it is
-        // visible.
-        if (existing != null) {
+        final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
+        final Task task = new SimpleTask("Opening: " + docRef);
+        try {
             // Start spinning.
-            taskListener.incrementTaskCount();
+            taskMonitor.onStart(task);
 
-            // Tell the content presenter to select this existing tab.
-            SelectContentTabEvent.fire(this, existing);
+            final DocumentTabData existing = documentToTabDataMap.get(docRef);
+            // If we already have a tab item for this document then make sure it is
+            // visible.
+            if (existing != null) {
+                // Tell the content presenter to select this existing tab.
+                SelectContentTabEvent.fire(this, existing);
 
+                if (existing instanceof DocumentEditPresenter) {
+                    presenter = (DocumentEditPresenter<?, D>) existing;
+                }
+
+            } else if (forceOpen) {
+                // If the item isn't already open but we are forcing it open then,
+                // create a new presenter and register it as open.
+                final MyPresenterWidget<?> documentEditPresenter = createEditor();
+                presenter = documentEditPresenter;
+
+                if (documentEditPresenter instanceof HasTaskMonitorFactory) {
+                    ((HasTaskMonitorFactory) documentEditPresenter).setTaskMonitorFactory(taskMonitorFactory);
+                }
+
+                if (documentEditPresenter instanceof DocumentTabData) {
+                    final DocumentTabData tabData = (DocumentTabData) documentEditPresenter;
+
+                    // Register the tab as being open.
+                    documentToTabDataMap.put(docRef, tabData);
+                    tabDataToDocumentMap.put(tabData, docRef);
+
+                    // Load the document and show the tab.
+                    final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
+                    showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskMonitorFactory);
+                }
+            }
+
+        } finally {
             // Stop spinning.
-            taskListener.decrementTaskCount();
-
-            if (existing instanceof DocumentEditPresenter) {
-                presenter = (DocumentEditPresenter<?, D>) existing;
-            }
-
-        } else if (forceOpen) {
-            // Start spinning.
-            taskListener.incrementTaskCount();
-
-            // If the item isn't already open but we are forcing it open then,
-            // create a new presenter and register it as open.
-            final MyPresenterWidget<?> documentEditPresenter = createEditor();
-            presenter = documentEditPresenter;
-
-            if (documentEditPresenter instanceof HasTaskListener) {
-                ((HasTaskListener) documentEditPresenter).setTaskListener(taskListener);
-            }
-
-            if (documentEditPresenter instanceof DocumentTabData) {
-                final DocumentTabData tabData = (DocumentTabData) documentEditPresenter;
-
-                // Register the tab as being open.
-                documentToTabDataMap.put(docRef, tabData);
-                tabDataToDocumentMap.put(tabData, docRef);
-
-                // Load the document and show the tab.
-                final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
-                showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskListener);
-
-            } else {
-                // Stop spinning.
-                taskListener.decrementTaskCount();
-            }
+            taskMonitor.onEnd(task);
         }
 
         return presenter;
     }
 
+    @SuppressWarnings("unchecked")
     protected void showDocument(final DocRef docRef,
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final CloseContentEvent.Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskListener taskListener) {
-        final RestErrorHandler errorHandler = caught -> {
-            AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
-            // Stop spinning.
-            taskListener.decrementTaskCount();
-        };
+                                final TaskMonitorFactory taskMonitorFactory) {
+        final RestErrorHandler errorHandler = caught ->
+                AlertEvent.fireError(
+                        DocumentPlugin.this,
+                        "Unable to load document " + docRef, caught.getMessage(),
+                        null);
 
         final Consumer<D> loadConsumer = doc -> {
-            try {
-                if (doc == null) {
-                    AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+            if (doc == null) {
+                AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+            } else {
+                // Read the newly loaded document.
+                if (documentEditPresenter instanceof HasDocumentRead) {
+                    // Check document permissions and read.
+                    securityContext
+                            .hasDocumentPermission(
+                                    docRef.getUuid(),
+                                    DocumentPermissionNames.UPDATE,
+                                    allowUpdate -> {
+                                        ((HasDocumentRead<D>) documentEditPresenter).read(
+                                                getDocRef(doc),
+                                                doc,
+                                                !allowUpdate);
+                                        // Open the tab.
+                                        if (fullScreen) {
+                                            showFullScreen(documentEditPresenter);
+                                        } else {
+                                            contentManager.open(closeHandler, tabData, documentEditPresenter);
+                                        }
+                                    },
+                                    throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
+                                    taskMonitorFactory);
                 } else {
-                    // Read the newly loaded document.
-                    if (documentEditPresenter instanceof HasDocumentRead) {
-                        // Check document permissions and read.
-                        securityContext
-                                .hasDocumentPermission(
-                                        docRef.getUuid(),
-                                        DocumentPermissionNames.UPDATE,
-                                        allowUpdate -> {
-                                            ((HasDocumentRead<D>) documentEditPresenter).read(
-                                                    getDocRef(doc),
-                                                    doc,
-                                                    !allowUpdate);
-                                            // Open the tab.
-                                            if (fullScreen) {
-                                                showFullScreen(documentEditPresenter);
-                                            } else {
-                                                contentManager.open(closeHandler, tabData, documentEditPresenter);
-                                            }
-                                        },
-                                        throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
-                                        taskListener);
+                    // Open the tab.
+                    if (fullScreen) {
+                        showFullScreen(documentEditPresenter);
                     } else {
-                        // Open the tab.
-                        if (fullScreen) {
-                            showFullScreen(documentEditPresenter);
-                        } else {
-                            contentManager.open(closeHandler, tabData, documentEditPresenter);
-                        }
+                        contentManager.open(closeHandler, tabData, documentEditPresenter);
                     }
                 }
-            } finally {
-                // Stop spinning.
-                taskListener.decrementTaskCount();
             }
         };
 
         // Load the document and show the tab.
-        load(docRef, loadConsumer, errorHandler, taskListener);
+        load(docRef, loadConsumer, errorHandler, taskMonitorFactory);
     }
 
     private void showFullScreen(final MyPresenterWidget<?> documentEditPresenter) {
@@ -489,7 +489,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         // Get the existing tab data for this document.
         final DocumentTabData tabData = documentToTabDataMap.get(docRef);
         // If we have an document edit presenter then reload the document.
-        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
 
             // Reload the document.
@@ -502,6 +502,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     },
                     presenter);
         }
+    }
+
+    public List<DocumentTabData> getOpenDocuments(final List<DocRef> docRefs) {
+        return GwtNullSafe.stream(docRefs)
+                .map(documentToTabDataMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
 //    private void deleteDocument(final DocRef document, final DocumentTabData tabData) {
@@ -526,17 +533,21 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public abstract void load(final DocRef docRef,
                               final Consumer<D> resultConsumer,
                               final RestErrorHandler errorHandler,
-                              final TaskListener taskListener);
+                              final TaskMonitorFactory taskMonitorFactory);
 
     public abstract void save(final DocRef docRef,
                               final D document,
                               final Consumer<D> resultConsumer,
                               final RestErrorHandler errorHandler,
-                              final TaskListener taskListener);
+                              final TaskMonitorFactory taskMonitorFactory);
 
     protected abstract DocRef getDocRef(D document);
 
     public abstract String getType();
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class EntityCloseHandler implements CloseContentEvent.Handler {
 
@@ -552,13 +563,19 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             if (tabData != null) {
                 if (tabData instanceof DocumentEditPresenter<?, ?>) {
                     final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
-                    if (presenter.isDirty()) {
-                        if (!event.isIgnoreIfDirty()) {
+                    final DirtyMode dirtyMode = event.getDirtyMode();
+                    if (presenter.isDirty() && DirtyMode.FORCE != dirtyMode) {
+                        if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
                             final DocRef docRef = getDocRef(presenter.getEntity());
                             ConfirmEvent.fire(DocumentPlugin.this,
                                     docRef.getType() + " '" + docRef.getName()
                                             + "' has unsaved changes. Are you sure you want to close this item?",
-                                    result -> actuallyClose(tabData, event.getCallback(), presenter, result));
+                                    result ->
+                                            actuallyClose(tabData, event.getCallback(), presenter, result));
+                        } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
+                            // Do nothing
+                        } else {
+                            throw new RuntimeException("Unexpected DirtyMode: " + dirtyMode);
                         }
                     } else {
                         actuallyClose(tabData, event.getCallback(), presenter, true);
@@ -572,8 +589,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             }
         }
 
-        private void actuallyClose(final DocumentTabData tabData, final Callback callback,
-                                   final DocumentEditPresenter<?, D> presenter, final boolean ok) {
+        private void actuallyClose(final DocumentTabData tabData,
+                                   final Callback callback,
+                                   final DocumentEditPresenter<?, D> presenter,
+                                   final boolean ok) {
             if (ok) {
                 // Tell the presenter we are closing.
                 presenter.onClose();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.job.impl;
@@ -30,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -113,16 +113,12 @@ public class JobBootstrap {
                     newJobNode.setNodeName(nodeName);
                     newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                    switch (scheduledJob.getSchedule().getType()) {
-                        case CRON:
-                            newJobNode.setJobType(JobType.CRON);
-                            break;
-                        case FREQUENCY:
-                            newJobNode.setJobType(JobType.FREQUENCY);
-                            break;
-                        default:
-                            throw new RuntimeException("Unknown ScheduleType!");
-                    }
+                    final JobType newJobType = switch (scheduledJob.getSchedule().getType()) {
+                        case ScheduleType.CRON -> JobType.CRON;
+                        case ScheduleType.FREQUENCY -> JobType.FREQUENCY;
+                        default -> throw new RuntimeException("Unknown ScheduleType!");
+                    };
+                    newJobNode.setJobType(newJobType);
                     newJobNode.setSchedule(scheduledJob.getSchedule().getExpression());
 
                     // Add the job node to the DB if it isn't there already.

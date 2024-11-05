@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util;
 
 import stroom.test.common.TestUtil;
@@ -27,8 +43,10 @@ import org.junit.jupiter.api.TestFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -194,6 +212,38 @@ class TestNullSafe {
                 .addCase(new String[]{null, "foo", null}, Optional.of("foo"))
                 .addCase(new String[]{null, "foo", "bar"}, Optional.of("foo"))
                 .addCase(new String[]{"1", "2", "3"}, Optional.of("1"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFirst() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.first(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(Collections.emptyList(), null)
+                .addCase(List.of("bar"), "bar")
+                .addCase(List.of("foo", "bar"), "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testLast() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.last(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(Collections.emptyList(), null)
+                .addCase(List.of("bar"), "bar")
+                .addCase(List.of("foo", "bar"), "bar")
                 .build();
     }
 
@@ -1131,6 +1181,25 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testCollection() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Collection<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.collection(testCase.getInput()))
+                .withAssertions(outcome -> {
+                    assertThat(outcome.getActualOutput())
+                            .containsExactlyInAnyOrderElementsOf(outcome.getExpectedOutput());
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(Collections.singleton("bar"), List.of("bar"))
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .addCase(Set.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testList() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
@@ -1140,7 +1209,70 @@ class TestNullSafe {
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptyList())
                 .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("bar"), List.of("bar"))
                 .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testUnmodifiableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifiableList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testMutableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.mutableList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isInstanceOf(ArrayList.class);
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo"), List.of("foo"))
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testMutableSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.mutableSet(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isInstanceOf(HashSet.class);
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("foo"), Set.of("foo"))
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
                 .build();
     }
 
@@ -1199,6 +1331,28 @@ class TestNullSafe {
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptySet())
                 .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("bar"), Set.of("bar"))
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testUnmodifiableSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifialbeSet(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("bar"), Set.of("bar"))
                 .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
                 .build();
     }
@@ -1380,6 +1534,22 @@ class TestNullSafe {
                 .addCase(null, false)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testSupply() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Supplier<String>>() {
+                })
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::supply)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(() -> null, null)
+                .addCase(() -> "foo", "foo")
+                .addCase(() -> "", "")
+                .build();
+    }
+
 
     @Test
     void testConsume1() {

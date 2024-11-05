@@ -29,7 +29,7 @@ import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,13 +68,13 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     public void load(final DocRef docRef,
                      final Consumer<TextConverterDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(TEXT_CONVERTER_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -83,13 +83,13 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                      final TextConverterDoc document,
                      final Consumer<TextConverterDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(TEXT_CONVERTER_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

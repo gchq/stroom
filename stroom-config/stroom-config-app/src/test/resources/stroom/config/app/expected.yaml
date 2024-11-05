@@ -141,8 +141,6 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
-  contentIndex:
-    enabled: false
   contentPackImport:
     enabled: false
     importAsSubjectId: "Administrators"
@@ -182,6 +180,12 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  dashboard:
+    visualisationDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -330,7 +334,9 @@ appConfig:
     indexing:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
-      retryCount: 10
+      retryCount: 5
+    retention:
+      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
@@ -588,6 +594,7 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
+    createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:
@@ -708,6 +715,16 @@ appConfig:
     - "Records"
     receiptPolicyUuid: null
     tokenAuthenticationEnabled: false
+  s3:
+    s3ConfigDocCache:
+      expireAfterAccess: "PT10S"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+    skeletonConfigContent: "{\n  \"credentialsProviderType\" : \"DEFAULT\",\n  \"\
+      region\" : \"eu-west-2\",\n  \"bucketName\" : \"XXXX-eu-west-2\",\n  \"keyPattern\"\
+      \ : \"${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip\"\n\
+      }\n"
   search:
     extraction:
       extractionDelayMs: 100
@@ -749,7 +766,7 @@ appConfig:
     authentication:
       apiKeyCache:
         expireAfterAccess: null
-        expireAfterWrite: "PT5S"
+        expireAfterWrite: "PT1M"
         maximumSize: 1000
         refreshAfterWrite: null
       authenticationRequired: true
@@ -1125,8 +1142,9 @@ appConfig:
         \  <ul>\n    {% for linkedEvent in linkedEvents -%}\n      <li>Environment:\
         \ {{ linkedEvent.stroom | escape }}, Stream ID: {{ linkedEvent.streamId |\
         \ escape }}, Event ID: {{ linkedEvent.eventId | escape }}</li>\n    {% endfor\
-        \ %}\n  </ul>\n  {% endif %}\n</body>\n{% endif %}\n"
+        \ %}\n  </ul>\n  {% endif %}\n</body>\n"
       defaultSubjectTemplate: "Detector '{{ detectorName | escape }}' Alert"
+    defaultApiKeyHashAlgorithm: "SHA3_256"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
@@ -1136,6 +1154,7 @@ appConfig:
     helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
     helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
     htmlTitle: "Stroom"
+    maxEditorCompletionEntries: 1000
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     nestedIndexFieldsDelimiterPattern: "[.:]"
     nodeMonitoring:
@@ -1148,6 +1167,8 @@ appConfig:
     query:
       dashboardPipelineSelectorIncludedTags:
       - "extraction"
+      indexPipelineSelectorIncludedTags:
+      - "extraction"
       infoPopup:
         enabled: false
         title: "Please Provide Query Info"
@@ -1156,7 +1177,6 @@ appConfig:
       - "extraction"
     referencePipelineSelectorIncludedTags:
     - "reference-loader"
-    requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000

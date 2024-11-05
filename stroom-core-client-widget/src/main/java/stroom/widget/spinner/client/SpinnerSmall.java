@@ -17,14 +17,16 @@
 package stroom.widget.spinner.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SpinnerSmall extends Widget implements TaskListener {
+public class SpinnerSmall extends Widget implements TaskMonitorFactory {
 
     private int taskCount;
 
@@ -51,19 +53,24 @@ public class SpinnerSmall extends Widget implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        setRefreshing(taskCount > 0);
-    }
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                taskCount++;
+                setRefreshing(taskCount > 0);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
+            @Override
+            public void onEnd(final Task task) {
+                taskCount--;
 
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
 
-        setRefreshing(taskCount > 0);
+                setRefreshing(taskCount > 0);
+            }
+        };
     }
 }

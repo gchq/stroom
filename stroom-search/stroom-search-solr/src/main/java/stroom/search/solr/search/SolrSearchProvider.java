@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.solr.search;
@@ -43,6 +42,7 @@ import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -102,6 +102,18 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
                 builder.addAll(fields);
             }
             return builder.build();
+        });
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+            return NullSafe.getOrElse(
+                    index,
+                    d -> SolrIndexDataSourceFieldUtil.getDataSourceFields(index),
+                    List::size,
+                    0);
         });
     }
 

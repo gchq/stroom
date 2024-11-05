@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -403,7 +403,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         break;
 
                     case MOVE_RIGHT:
-                        if (visibleTabs.size() > 0) {
+                        if (!visibleTabs.isEmpty()) {
                             if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(0);
                             } else {
@@ -417,7 +417,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         break;
 
                     case MOVE_LEFT:
-                        if (visibleTabs.size() > 0) {
+                        if (!visibleTabs.isEmpty()) {
                             if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(visibleTabs.size() - 1);
                             } else {
@@ -692,6 +692,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     protected int getTabGap() {
         return 0;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TabItemComparator implements Comparator<TabData> {
 

@@ -20,37 +20,20 @@ import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.shared.DownloadQueryResultsRequest;
 
 import java.util.List;
 
 public interface SearchEventLog {
 
-    void search(DocRef dataSourceRef,
-                ExpressionOperator expression,
-                String queryInfo,
-                final List<Param> params);
-
-    void search(DocRef dataSourceRef,
+    void search(String type,
+                String rawQuery,
+                DocRef dataSourceRef,
                 ExpressionOperator expression,
                 String queryInfo,
                 List<Param> params,
                 Exception ex);
-
-    void search(String query,
-                String queryInfo,
-                List<Param> params,
-                Exception ex);
-
-    void batchSearch(DocRef dataSourceRef,
-                     ExpressionOperator expression,
-                     String queryInfo,
-                     List<Param> params);
-
-    void batchSearch(DocRef dataSourceRef,
-                     ExpressionOperator expression,
-                     String queryInfo,
-                     List<Param> params,
-                     Exception ex);
 
     default void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
                                  Long resultCount) {
@@ -60,6 +43,20 @@ public interface SearchEventLog {
     }
 
     void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
+                         Long resultCount,
+                         Exception ex);
+
+    default void downloadResults(DownloadQueryResultsRequest downloadSearchResultsRequest,
+                                 SearchRequest request,
+                                 Long resultCount) {
+        downloadResults(downloadSearchResultsRequest,
+                request,
+                resultCount,
+                null);
+    }
+
+    void downloadResults(DownloadQueryResultsRequest req,
+                         SearchRequest request,
                          Long resultCount,
                          Exception ex);
 }

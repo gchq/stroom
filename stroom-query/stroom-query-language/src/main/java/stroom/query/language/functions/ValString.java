@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public final class ValString implements Val {
             ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
 
     public static final Type TYPE = Type.STRING;
-    static final ValString EMPTY = new ValString("");
+    public static final ValString EMPTY = new ValString("");
     private final String value;
 
     // Permanent lazy cache of the slightly costly conversion to long/double

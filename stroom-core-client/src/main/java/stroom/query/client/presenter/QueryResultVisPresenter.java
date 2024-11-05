@@ -30,7 +30,7 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
-import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
@@ -99,7 +99,6 @@ public class QueryResultVisPresenter
     private JavaScriptObject lastData;
 
     private boolean pause;
-    private int currentRequestCount;
 
     private final JavaScriptObject context;
 
@@ -115,7 +114,7 @@ public class QueryResultVisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
-        visFrame.setTaskListener(getView().getRefreshButton());
+        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
 //        visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
 
@@ -193,18 +192,22 @@ public class QueryResultVisPresenter
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
         registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            if (pause) {
-                this.pause = false;
-                refresh();
-            } else {
-                this.pause = true;
-            }
-            getView().getRefreshButton().setPaused(this.pause);
+            setPause(!pause, true);
         }));
     }
 
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If currently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        getView().getRefreshButton().setPaused(this.pause);
+    }
+
     private String getClassName(final String theme) {
-        return "vis " + Themes.getClassName(theme);
+        return "vis " + Theme.getClassName(theme);
     }
 
     @Override
@@ -288,6 +291,7 @@ public class QueryResultVisPresenter
             updateStatusMessage();
         }
 
+        setPause(false, false);
         getView().getRefreshButton().setRefreshing(true);
     }
 
@@ -311,25 +315,6 @@ public class QueryResultVisPresenter
     }
 
     private void refresh() {
-
-//        currentRequestCount++;
-//        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
-//        getView().getRefreshButton().setRefreshing(true);
-//        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-//            try {
-//                if (result != null) {
-//                    setDataInternal(result);
-//                }
-//            } catch (final Exception e) {
-//                GWT.log(e.getMessage());
-//            }
-//            currentRequestCount--;
-//            getView().setPaused(pause && currentRequestCount == 0);
-//            getView().setRefreshing(currentSearchModel.isSearching());
-//        });
-
-        currentRequestCount++;
-        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
         getView().getRefreshButton().setRefreshing(true);
         currentSearchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
             try {
@@ -339,8 +324,6 @@ public class QueryResultVisPresenter
             } catch (final Exception e) {
                 GWT.log(e.getMessage());
             }
-            currentRequestCount--;
-            getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
             getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
         });
     }
@@ -488,7 +471,7 @@ public class QueryResultVisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskListener(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -499,7 +482,7 @@ public class QueryResultVisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskListener(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 

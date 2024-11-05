@@ -1,7 +1,9 @@
 package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.core.client.GWT;
@@ -14,7 +16,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 public class RefreshButton
         extends Composite
-        implements TaskListener {
+        implements TaskMonitorFactory {
 
     private final SvgButton button;
     private int taskCount;
@@ -79,20 +81,16 @@ public class RefreshButton
         } else {
             button.removeStyleName("allowPause");
         }
-
         update();
     }
 
     public void setPaused(final boolean paused) {
         this.paused = paused;
         if (paused) {
-            button.setTitle("Resume Update");
             button.addStyleName("paused");
         } else {
-            button.setTitle("Pause Update");
             button.removeStyleName("paused");
         }
-
         update();
     }
 
@@ -105,23 +103,27 @@ public class RefreshButton
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        updateRefreshState();
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                taskCount++;
+                updateRefreshState();
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+                taskCount--;
+                updateRefreshState();
+            }
+        };
     }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
-
+    public void updateRefreshState() {
         if (taskCount < 0) {
             GWT.log("Negative task count");
         }
 
-        updateRefreshState();
-    }
-
-    public void updateRefreshState() {
         final boolean refreshState = refreshing || taskCount > 0;
         if (refreshState != this.refreshState) {
             this.refreshState = refreshState;
@@ -130,13 +132,23 @@ public class RefreshButton
             } else {
                 button.removeStyleName("refreshing");
             }
-            update();
         }
+        update();
     }
 
     private void update() {
-        if (allowPause && !paused) {
-            setEnabled(refreshState);
+        if (allowPause) {
+            setEnabled(paused || refreshing || taskCount > 0);
+
+            if (paused) {
+                button.setTitle("Resume Update");
+            } else if (refreshing || taskCount > 0) {
+                button.setTitle("Pause Update");
+            } else {
+                button.setTitle("Not Updating");
+            }
+        } else {
+            button.setTitle("Refresh");
         }
     }
 }

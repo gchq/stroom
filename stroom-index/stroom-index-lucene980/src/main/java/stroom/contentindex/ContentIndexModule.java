@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,26 +29,31 @@ public class ContentIndexModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ContentIndex.class).to(ContentIndexImpl.class);
+        bind(ContentIndex.class).to(LuceneContentIndex.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(ContentIndexImpl.class);
+                .addBinding(LuceneContentIndex.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexContent.class, builder -> builder
-                        .name("Reindex Content")
-                        .description("Reindex Stroom content to improve content find results.")
+                        .name(LuceneContentIndex.RE_INDEX_JOB_NAME)
+                        .description("Reindex Stroom content to improve \"Find in Content\" results. " +
+                                "This only needs to run on nodes serving the user interface.")
                         .managed(true)
                         .enabled(false)
                         .advanced(true)
                         .frequencySchedule("1h"));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexContent extends RunnableWrapper {
 
         @Inject
-        IndexContent(final ContentIndexImpl contentIndex) {
-            super(contentIndex::reindex);
+        IndexContent(final LuceneContentIndex luceneContentIndex) {
+            super(luceneContentIndex::reindex);
         }
     }
 }

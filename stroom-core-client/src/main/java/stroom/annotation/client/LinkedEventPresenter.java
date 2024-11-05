@@ -101,7 +101,7 @@ public class LinkedEventPresenter
                         .create(annotationResource)
                         .method(res -> res.link(new EventLink(annotation.getId(), eventId)))
                         .onSuccess(this::setData)
-                        .taskListener(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         })));
@@ -124,7 +124,7 @@ public class LinkedEventPresenter
                         .create(annotationResource)
                         .method(res -> res.unlink(new EventLink(annotation.getId(), selected)))
                         .onSuccess(this::setData)
-                        .taskListener(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         }));
@@ -140,7 +140,7 @@ public class LinkedEventPresenter
                 .create(annotationResource)
                 .method(res -> res.getLinkedEvents(annotation.getId()))
                 .onSuccess(this::show)
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

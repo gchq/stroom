@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,12 +110,19 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "fetchExplorerItemInfo")
     ExplorerNodeInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
 
+    /**
+     * @param decorateRequest
+     * @return A {@link DocRef} if the doc could be found and any required permissions are met. The
+     * {@link DocRef} will either be the same as passed, have a different name or have a name when
+     * the passed {@link DocRef} didn't. If the doc is not found or the user doesn't have the required
+     * permissions then null will be returned.
+     */
     @POST
     @Path("/decorate")
     @Operation(
             summary = "Decorate the docRef will all values, e.g. add the name",
             operationId = "decorateDocRef")
-    DocRef decorate(@Parameter(description = "docRef", required = true) DocRef docRef);
+    DocRef decorate(@Parameter(description = "decorateRequest", required = true) DecorateRequest decorateRequest);
 
     @POST
     @Path("/getFromDocRef")

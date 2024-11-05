@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util;
 
 import stroom.util.io.ByteSize;
@@ -7,9 +23,11 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -143,6 +161,29 @@ public class NullSafe {
             }
         }
         return Optional.empty();
+    }
+
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T first(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.getFirst();
+        }
+    }
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T last(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.getLast();
+        }
     }
 
     /**
@@ -466,12 +507,50 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed collection if it is non-null else returns an immutable empty collection.
+     */
+    public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
+        return collection != null
+                ? collection
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an immutable empty list.
      */
     public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
                 ? list
                 : Collections.emptyList();
+    }
+
+    /**
+     * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
+     */
+    public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
+        return list != null
+                ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
+     * Returns a new {@link ArrayList} instance. If list is not null, the new {@link ArrayList} will
+     * contain the contents of list, else it will be empty.
+     */
+    public static <L extends List<T>, T> List<T> mutableList(final L list) {
+        return list != null
+                ? new ArrayList<>(list)
+                : new ArrayList<>();
+    }
+
+    /**
+     * Returns a new {@link java.util.HashSet} instance. If set is not null, the new {@link java.util.HashSet} will
+     * contain the contents of set, else it will be empty.
+     */
+    public static <C extends Collection<T>, T> Set<T> mutableSet(final C set) {
+        return set != null
+                ? new HashSet<>(set)
+                : new HashSet<>();
     }
 
     /**
@@ -516,6 +595,15 @@ public class NullSafe {
     public static <S extends Set<T>, T> Set<T> set(final S set) {
         return set != null
                 ? set
+                : Collections.emptySet();
+    }
+
+    /**
+     * Returns an unmodifiable view of the passed set if it is non-null else returns an immutable empty set.
+     */
+    public static <S extends Set<T>, T> Set<T> unmodifialbeSet(final S set) {
+        return set != null
+                ? Collections.unmodifiableSet(set)
                 : Collections.emptySet();
     }
 
@@ -711,6 +799,17 @@ public class NullSafe {
                                    final Consumer<T> consumer) {
         if (value != null && consumer != null) {
             consumer.accept(value);
+        }
+    }
+
+    /**
+     * Return the value supplier or null if supplier is itself null.
+     */
+    public static <T> T supply(final Supplier<T> supplier) {
+        if (supplier != null) {
+            return supplier.get();
+        } else {
+            return null;
         }
     }
 

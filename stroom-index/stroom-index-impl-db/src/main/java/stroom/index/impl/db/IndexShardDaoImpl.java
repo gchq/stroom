@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl.db;
 
 import stroom.db.util.ExpressionMapper;
@@ -313,7 +329,19 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .and(currentStateCondition)
                 .execute()) > 0;
 
-        LOGGER.debug("Setting shard status to {} for shard id {}, didUpdate: {}", status, id, didUpdate);
+        if (LOGGER.isDebugEnabled()) {
+            if (didUpdate) {
+                LOGGER.debug("Set shard status to {} for shard id {}", status, id);
+            } else {
+                try {
+                    final Optional<IndexShardStatus> optStatus = fetch(id)
+                            .map(IndexShard::getStatus);
+                    LOGGER.debug("Unable to update status to {} for shard id {}, optStatus: {}", status, id, optStatus);
+                } catch (Exception e) {
+                    LOGGER.debug("Error trying to fetch shard for debug", e);
+                }
+            }
+        }
 
         return didUpdate;
     }

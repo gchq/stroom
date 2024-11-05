@@ -20,7 +20,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
@@ -35,8 +35,8 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     private List<ExplorerNode> rootNodes;
 
     public ExplorerTickBoxTree(final RestFactory restFactory,
-                               final TaskListener taskListener) {
-        super(restFactory, taskListener, false, true);
+                               final TaskMonitorFactory taskMonitorFactory) {
+        super(restFactory, taskMonitorFactory, false, true);
     }
 
     @Override

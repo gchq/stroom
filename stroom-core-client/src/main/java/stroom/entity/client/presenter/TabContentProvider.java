@@ -21,8 +21,8 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -91,7 +91,7 @@ public class TabContentProvider<E>
         tabProviders.put(tab, provider);
     }
 
-    public PresenterWidget<?> getPresenter(final TabData tab, final TaskListener taskListener) {
+    public PresenterWidget<?> getPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
         currentTabProvider = presenterCache.get(tab);
         if (currentTabProvider == null) {
             final TabProvider<E> provider = tabProviders.get(tab);
@@ -103,11 +103,13 @@ public class TabContentProvider<E>
                 // Handle dirty events.
                 registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
 
-                if (currentTabProvider instanceof HasTaskListener) {
-                    ((HasTaskListener) currentTabProvider).setTaskListener(taskListener);
+                if (currentTabProvider instanceof HasTaskMonitorFactory) {
+                    ((HasTaskMonitorFactory) currentTabProvider)
+                            .setTaskMonitorFactory(taskMonitorFactory);
                 }
-                if (currentTabProvider.getPresenter() instanceof HasTaskListener) {
-                    ((HasTaskListener) currentTabProvider.getPresenter()).setTaskListener(taskListener);
+                if (currentTabProvider.getPresenter() instanceof HasTaskMonitorFactory) {
+                    ((HasTaskMonitorFactory) currentTabProvider.getPresenter())
+                            .setTaskMonitorFactory(taskMonitorFactory);
                 }
             }
         }

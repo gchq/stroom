@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,7 +297,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
@@ -347,7 +347,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
@@ -394,7 +394,7 @@ public class NewPropertyPresenter
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         try {
-            entityDropDownPresenter.setSelectedEntityReference(value);
+            entityDropDownPresenter.setSelectedEntityReference(value, true);
         } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);
         }
@@ -415,6 +415,10 @@ public class NewPropertyPresenter
     private void setDirty(final boolean dirty) {
         setDirty(dirty, true);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface NewPropertyView extends View, Focus, HasUiHandlers<NewPropertyUiHandlers> {
 

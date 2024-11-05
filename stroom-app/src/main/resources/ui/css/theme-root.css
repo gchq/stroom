@@ -43,6 +43,10 @@
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-900);
 
+    /* e.g. Find in content match highlighting */
+    --highlight__background-color: yellow;
+    --highlight__background-color--selected: yellow;
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */

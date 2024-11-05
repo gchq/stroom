@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.client.presenter;
@@ -33,7 +32,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -107,13 +106,13 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
-        clusterPresenter.setSelectedEntityReference(index.getClusterRef());
+        clusterPresenter.setSelectedEntityReference(index.getClusterRef(), true);
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
         getView().setSearchScrollSize(index.getSearchScrollSize());
@@ -126,7 +125,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         fieldSelectionBoxModel.setDataSourceRef(docRef);
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
     @Override
@@ -150,9 +149,9 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     }
 
     @Override
-    public synchronized void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        fieldSelectionBoxModel.setTaskListener(taskListener);
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface ElasticIndexSettingsView

@@ -29,7 +29,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,13 +68,13 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
     public void load(final DocRef docRef,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -83,13 +83,13 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final AnalyticRuleDoc document,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

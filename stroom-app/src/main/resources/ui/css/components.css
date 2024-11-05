@@ -158,6 +158,10 @@
 
 .curveTab .curveTab-spinner {
     position: absolute;
+    transition: opacity 0.2s ease-in-out;
+    -webkit-transition: opacity 0.2s ease-in-out;
+    -moz-transition: opacity 0.2s ease-in-out;
+    -o-transition: opacity 0.2s ease-in-out;
 }
 
 .curveTab .curveTab-spinner svg {
@@ -500,6 +504,28 @@
 	width: 15px;
 	height: 15px;
     cursor: pointer;
+}
+
+.dropDownView-warning {
+    position: absolute;
+    display: flex;
+    bottom: 8px;
+    right: 3px;
+	width: 17px;
+	width: 17px;
+    cursor: pointer;
+}
+
+.dropDownView-warning svg {
+    width: 17px;
+    height: 17px;
+}
+
+.dropDownView-warning > .background {
+    /* Because the icon is inside the drop down text box, we need to alter its hover background
+       so it doesn't spill over the border of the text box. */
+    height: 88%;
+    margin-top: 2px;
 }
 
 .dropDownView-button svg {
@@ -1370,6 +1396,10 @@
     padding: 6px 8px;
 }
 
+.stepToolbar {
+    align-items: center;
+}
+
 .steppingFilterViewImpl {
 }
 
@@ -1986,6 +2016,11 @@ button.main-menu svg {
     position: relative;
 }
 
+.find-topBar .gwt-TextArea {
+    /* Single line */
+    height: 2.1rem;
+}
+
 .find-buttons {
     display: flex;
     position: absolute;
@@ -2007,12 +2042,14 @@ button.main-menu svg {
 .findCell-row {
 	display: flex;
 	flex-direction: column;
+	margin-bottom: 0.5em;
 }
 
 .findCell-main {
     display: flex;
     gap: .7rem;
     padding: .2rem;
+    align-items: center;
 }
 
 .findCell-icon {
@@ -2027,11 +2064,44 @@ button.main-menu svg {
     flex-grow: 1;
     overflow: hidden;
     white-space: pre;
+    letter-spacing: -0.6px;
+    font-size: 95%;
+    /* Fade out the long lines */
+    mask-image: linear-gradient(to right, #000000 0%, #000000 90%, rgb(128 0 52 / 0%) 100%);
+    overflow: hidden;
+    /* Padding to make room for the highlight outline */
+    padding: 2px;
+}
+
+/* if the sample does not start at the beginning of the line fade the text out on the left and the right */
+.findCell-sample.findCell-sample-truncated {
+    mask-image: linear-gradient(to right, rgb(128 0 52 / 0%) 0%, #000000 10%, #000000 90%, rgb(128 0 52 / 0%) 100%);
+}
+
+.findCell-sample div {
+    font-family: var(--monospace-font-family);
+}
+
+.findCell-sample-before {
 }
 
 .findCell-highlight {
-	background-color: yellow;
-	color: black;
+    background-color: var(--highlight__background-color);
+    border-radius: 2px;
+    color: black;
+    /*
+    outline-color: var(--highlight__background-color);
+    outline-style: solid;
+    outline-width: 2px;
+    border-radius: 2px;
+    */
+}
+
+.cellTableSelectedRowCell .findCell-highlight {
+	background-color: var(--highlight__background-color--selected);
+}
+
+.findCell-sample-after {
 }
 
 .findCell-name {
@@ -2040,12 +2110,19 @@ button.main-menu svg {
     align-items: end;
     white-space: pre;
     color: var(--navigation__text-color);
+    user-select: text;
+}
+
+/* findCell-name is used for both Find In Content and Recent Items
+ so only add the margin when used in Find In Content */
+.findCell-sample + .findCell-name {
+    margin-left: 6rem;
 }
 
 .findCell-sub {
     display: flex;
-    gap: .7rem;
-    padding: .2rem;
+    gap: 6rem;
+    padding: .1rem;
 }
 
 .findCell-path {
@@ -2053,6 +2130,7 @@ button.main-menu svg {
     font-size: 0.7rem;
     flex-grow: 1;
     opacity: .5;
+    user-select: text;
 }
 
 .findCell-uuid {
@@ -2060,6 +2138,7 @@ button.main-menu svg {
     font-size: .7rem;
     flex-grow: 0;
     opacity: .5;
+    user-select: text;
 }
 
 .pipelineElementChooser-iconCell {
@@ -2084,7 +2163,7 @@ button.main-menu svg {
 
 .SelectionPopup .listContainer {
     min-width: 200px;
-    max-width: 300px;
+    max-width: 400px;
     max-height: 400px;
 }
 
@@ -2309,4 +2388,9 @@ button.main-menu svg {
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
+}
+
+/* Add a smidge of a gap between the split and the next form group */
+.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+    margin-top: 0.5em;
 }

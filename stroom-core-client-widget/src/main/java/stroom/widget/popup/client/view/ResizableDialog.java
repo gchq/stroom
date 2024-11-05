@@ -17,11 +17,14 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -46,11 +49,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class ResizableDialog extends AbstractPopupPanel implements TaskListener {
+public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
     private static final Binder binder = GWT.create(Binder.class);
-
-    private final PopupSize popupSize;
 
     @UiField
     SimplePanel icon;
@@ -59,17 +60,39 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
     @UiField
     SimplePanel content;
     @UiField
-    SimplePanel resizeHandle;
+    SimplePanel resizeN;
+    @UiField
+    SimplePanel resizeE;
+    @UiField
+    SimplePanel resizeS;
+    @UiField
+    SimplePanel resizeW;
+    @UiField
+    SimplePanel resizeNE;
+    @UiField
+    SimplePanel resizeNW;
+    @UiField
+    SimplePanel resizeSE;
+    @UiField
+    SimplePanel resizeSW;
     @UiField
     SpinnerLarge spinner;
 
-    private DragType dragType;
+    private final PopupSize popupSize;
     private boolean dragging;
+    private boolean resizeWidth;
+    private boolean resizeHeight;
+    private boolean moveX;
+    private boolean moveY;
     private int dragStartX;
     private int dragStartY;
-    private int windowWidth;
-    private int windowHeight;
+    private Rect dragStartWindow;
+    private int initialWindowWidth;
+    private int initialWindowHeight;
     private HandlerRegistration resizeHandlerRegistration;
+
+    private Element dialogContent;
+    private Element dialogButtons;
 
     /**
      * Creates an empty dialog box. It should not be shown until its child
@@ -116,8 +139,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
         setStyleName("resizableDialog-popup");
         setWidget(binder.createAndBindUi(this));
 
-        windowWidth = Window.getClientWidth();
-        windowHeight = Window.getClientHeight();
+        initialWindowWidth = Window.getClientWidth();
+        initialWindowHeight = Window.getClientHeight();
 
         final MouseHandler mouseHandler = new MouseHandler();
         addDomHandler(mouseHandler, MouseDownEvent.getType());
@@ -127,7 +150,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
         setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
                 (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
 
-        SvgImageUtil.setSvgAsInnerHtml(resizeHandle, SvgImage.RESIZE_HANDLE);
+        SvgImageUtil.setSvgAsInnerHtml(resizeSE, SvgImage.RESIZE_HANDLE);
     }
 
     @Override
@@ -154,8 +177,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
     public void show() {
         if (resizeHandlerRegistration == null) {
             resizeHandlerRegistration = Window.addResizeHandler(event -> {
-                windowWidth = event.getWidth();
-                windowHeight = event.getHeight();
+                initialWindowWidth = event.getWidth();
+                initialWindowHeight = event.getHeight();
             });
         }
         super.show();
@@ -200,6 +223,9 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
                 if (!dragging && !isCaptionEvent(event) && !isResizeHandleEvent(event)) {
                     return;
                 }
+                break;
+            default:
+                // Don't care about all mouse events
         }
 
         super.onBrowserEvent(event);
@@ -217,15 +243,52 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
         getDragGlass().show();
 
         dragging = true;
-        if (isCaptionEvent(event.getNativeEvent())) {
-            dragType = DragType.MOVE;
-            dragStartX = event.getX();
-            dragStartY = event.getY();
-        } else {
-            dragType = DragType.RESIZE;
-            dragStartX = getOffsetWidth() - event.getX();
-            dragStartY = getOffsetHeight() - event.getY();
+        dragStartX = event.getClientX();
+        dragStartY = event.getClientY();
+        dragStartWindow = new Rect(getElement());
+        resizeWidth = false;
+        resizeHeight = false;
+        moveX = false;
+        moveY = false;
+
+        final EventTarget target = event.getNativeEvent().getEventTarget();
+        if (Element.is(target)) {
+            final Element element = Element.as(target);
+            if (resizeN.getElement().isOrHasChild(element)) {
+                resizeHeight = true;
+                moveY = true;
+            } else if (resizeE.getElement().isOrHasChild(element)) {
+                resizeWidth = true;
+            } else if (resizeS.getElement().isOrHasChild(element)) {
+                resizeHeight = true;
+            } else if (resizeW.getElement().isOrHasChild(element)) {
+                resizeWidth = true;
+                moveX = true;
+            } else if (resizeNE.getElement().isOrHasChild(element)) {
+                resizeWidth = true;
+                resizeHeight = true;
+                moveY = true;
+            } else if (resizeNW.getElement().isOrHasChild(element)) {
+                resizeWidth = true;
+                resizeHeight = true;
+                moveX = true;
+                moveY = true;
+            } else if (resizeSE.getElement().isOrHasChild(element)) {
+                resizeWidth = true;
+                resizeHeight = true;
+            } else if (resizeSW.getElement().isOrHasChild(element)) {
+                resizeWidth = true;
+                resizeHeight = true;
+                moveX = true;
+            }
         }
+
+        // If we aren't resizing we are moving.
+        if (!resizeWidth && !resizeHeight) {
+            moveX = true;
+            moveY = true;
+        }
+
         DOM.setCapture(getElement());
     }
 
@@ -239,58 +302,89 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
      */
     private void continueDragging(final MouseMoveEvent event) {
         if (dragging) {
-            final int x = event.getX();
-            final int y = event.getY();
+            final int x = event.getClientX();
+            final int y = event.getClientY();
+            double dx = x - dragStartX;
+            double dy = y - dragStartY;
 
-            if (dragType == DragType.MOVE) {
-                final int absX = x + getAbsoluteLeft();
-                final int absY = y + getAbsoluteTop();
-                int left = absX - dragStartX;
-                int top = absY - dragStartY;
-
-                // Add some constraints to stop the dialog being moved off screen.
-                left = Math.min(windowWidth - 22, Math.max(0, left));
-                top = Math.min(windowHeight - 22, Math.max(0, top));
-
-                setPopupPosition(left, top);
-
-            } else {
+            if (resizeWidth || resizeHeight) {
                 final Widget widget = getWidget();
                 final Element elem = widget.getElement();
                 final Size widthSize = popupSize.getWidth();
                 final Size heightSize = popupSize.getHeight();
 
-                if (widthSize != null && widthSize.isResizable()) {
-                    int width = x + dragStartX;
+                if (resizeWidth && widthSize != null && widthSize.isResizable()) {
+                    double newWidth = moveX
+                            ? dragStartWindow.getWidth() - dx
+                            : dragStartWindow.getWidth() + dx;
+                    double constrainedWidth = newWidth;
+
                     // Constrain width.
-                    if (widthSize.getMin() != null && width < widthSize.getMin()) {
-                        width = widthSize.getMin();
-                    } else if (widthSize.getMax() != null && width > widthSize.getMax()) {
-                        width = widthSize.getMax();
+                    if (widthSize.getMin() != null) {
+                        constrainedWidth = Math.max(constrainedWidth, widthSize.getMin());
+                    }
+                    if (widthSize.getMax() != null) {
+                        constrainedWidth = Math.min(constrainedWidth, widthSize.getMax());
                     }
                     // Add window based size constraint.
-                    width = Math.min(windowWidth, width);
+                    constrainedWidth = Math.min(initialWindowWidth, constrainedWidth);
 
-                    elem.getStyle().setPropertyPx("width", width);
+                    // If we were constrained then reduce the move distance.
+                    double constraintDiff = newWidth - constrainedWidth;
+                    dx = dx + constraintDiff;
+
+                    elem.getStyle().setPropertyPx("width", (int) constrainedWidth);
                 }
-                if (heightSize != null && heightSize.isResizable()) {
-                    int height = y + dragStartY;
+                if (resizeHeight && heightSize != null && heightSize.isResizable()) {
+                    double newHeight = moveY
+                            ? dragStartWindow.getHeight() - dy
+                            : dragStartWindow.getHeight() + dy;
+                    double constrainedHeight = newHeight;
+
                     // Constrain height.
-                    if (heightSize.getMin() != null && height < heightSize.getMin()) {
-                        height = heightSize.getMin();
-                    } else if (heightSize.getMax() != null && height > heightSize.getMax()) {
-                        height = heightSize.getMax();
+                    if (heightSize.getMin() != null) {
+                        constrainedHeight = Math.max(constrainedHeight, heightSize.getMin());
+                    }
+                    if (heightSize.getMax() != null) {
+                        constrainedHeight = Math.min(constrainedHeight, heightSize.getMax());
                     }
                     // Add window based size constraint.
-                    height = Math.min(windowHeight, height);
+                    constrainedHeight = Math.min(initialWindowHeight, constrainedHeight);
 
-                    elem.getStyle().setPropertyPx("height", height);
+                    // If we were constrained then reduce the move distance.
+                    double constraintDiff = newHeight - constrainedHeight;
+                    dy = dy + constraintDiff;
+
+                    elem.getStyle().setPropertyPx("height", (int) constrainedHeight);
                 }
 
+                // Resize popup contents.
                 if (widget instanceof RequiresResize) {
                     final RequiresResize requiresResize = (RequiresResize) widget;
                     requiresResize.onResize();
                 }
+            }
+
+            if (moveX || moveY) {
+                double left = dragStartWindow.getLeft();
+                double top = dragStartWindow.getTop();
+                if (moveX) {
+                    left = left + dx;
+                }
+                if (moveY) {
+                    top = top + dy;
+                }
+
+                // Don't constrain if we are resizing.
+                if (!resizeWidth && !resizeHeight) {
+                    // Add some constraints to stop the dialog being moved off screen.
+                    //            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
+                    //            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
+                    left = Math.max(0, Math.min(Window.getClientWidth() - 22, left));
+                    top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
+                }
+
+                setPopupPosition((int) left, (int) top);
             }
         }
     }
@@ -298,10 +392,14 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
     /**
      * Called on mouse up in the caption area, ends dragging by ending event
      * capture.
+     *
+     * @param event the mouse up event that ended dragging
+     * @see DOM#releaseCapture
+     * @see #beginDragging
+     * @see #endDragging
      */
     private void endDragging(final MouseUpEvent event) {
         dragging = false;
-        dragType = null;
         DOM.releaseCapture(getElement());
 
         getDragGlass().hide();
@@ -323,9 +421,27 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
     }
 
     private boolean isCaptionEvent(final NativeEvent event) {
+        // Lazy init content elements.
+        if (dialogContent == null) {
+            dialogContent = ElementUtil.findChild(content.getElement(), "dialog-content");
+            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog-buttons");
+        }
+
         final EventTarget target = event.getEventTarget();
         if (Element.is(target)) {
-            return titleText.getElement().isOrHasChild(Element.as(target));
+            final Element element = Element.as(target);
+            // Check the event targets the dialog.
+            if (getElement().isOrHasChild(element)) {
+                // If the target is dialog content then ensure the event does not target child elements.
+                if (dialogContent != null && dialogContent.isOrHasChild(element)) {
+                    return dialogContent.equals(element);
+                }
+                // If the target is dialog buttons then ensure the event does not target child elements.
+                if (dialogButtons != null && dialogButtons.isOrHasChild(element)) {
+                    return dialogButtons.equals(element);
+                }
+                return true;
+            }
         }
         return false;
     }
@@ -333,28 +449,33 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
     private boolean isResizeHandleEvent(final NativeEvent event) {
         final EventTarget target = event.getEventTarget();
         if (Element.is(target)) {
-            return resizeHandle.getElement().isOrHasChild(Element.as(target));
+            final Element element = Element.as(target);
+            return resizeN.getElement().isOrHasChild(element) ||
+                    resizeE.getElement().isOrHasChild(element) ||
+                    resizeS.getElement().isOrHasChild(element) ||
+                    resizeW.getElement().isOrHasChild(element) ||
+                    resizeNE.getElement().isOrHasChild(element) ||
+                    resizeNW.getElement().isOrHasChild(element) ||
+                    resizeSE.getElement().isOrHasChild(element) ||
+                    resizeSW.getElement().isOrHasChild(element);
         }
         return false;
     }
 
     private void setResizeEnabled(final boolean enabled) {
-        resizeHandle.setVisible(enabled);
+        resizeN.setVisible(enabled);
+        resizeE.setVisible(enabled);
+        resizeS.setVisible(enabled);
+        resizeW.setVisible(enabled);
+        resizeNE.setVisible(enabled);
+        resizeNW.setVisible(enabled);
+        resizeSE.setVisible(enabled);
+        resizeSW.setVisible(enabled);
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
-    }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
-    }
-
-    private enum DragType {
-        MOVE,
-        RESIZE
+    public TaskMonitor createTaskMonitor() {
+        return spinner.createTaskMonitor();
     }
 
     public interface Binder extends UiBinder<Widget, ResizableDialog> {

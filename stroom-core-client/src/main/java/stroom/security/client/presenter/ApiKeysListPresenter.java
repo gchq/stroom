@@ -21,10 +21,11 @@ import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Selection;
@@ -209,7 +210,7 @@ public class ApiKeysListPresenter
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .taskListener(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             });
@@ -226,7 +227,7 @@ public class ApiKeysListPresenter
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .taskListener(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             });
@@ -294,6 +295,14 @@ public class ApiKeysListPresenter
                 .build();
         dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
+        final Column<HashedApiKey, String> hashAlgorithmColumn = DataGridUtil.textColumnBuilder(
+                        HashedApiKey::getHashAlgorithm,
+                        HashAlgorithm::getDisplayValue)
+                .enabledWhen(HashedApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_HASH_ALGORITHM)
+                .build();
+        dataGrid.addResizableColumn(hashAlgorithmColumn, "Hash Algorithm", 120);
+
         final Column<HashedApiKey, String> commentsColumn = DataGridUtil.textColumnBuilder(HashedApiKey::getComments)
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_COMMENTS)
@@ -306,7 +315,7 @@ public class ApiKeysListPresenter
     private void fetchData(final Range range,
                            final Consumer<ApiKeyResultPage> dataConsumer,
                            final RestErrorHandler errorHandler,
-                           final TaskListener taskListener) {
+                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteria))
@@ -333,7 +342,7 @@ public class ApiKeysListPresenter
                             "Error fetching API Keys: " + throwable.getMessage(),
                             null);
                 })
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

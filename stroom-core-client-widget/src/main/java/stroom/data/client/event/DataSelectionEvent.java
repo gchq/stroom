@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,8 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
      * @param source       the source of the handlers
      * @param selectedItem the selected item
      */
-    public static <I> void fire(final HasDataSelectionHandlers<I> source, final I selectedItem,
+    public static <I> void fire(final HasDataSelectionHandlers<I> source,
+                                final I selectedItem,
                                 final boolean doubleSelect) {
         if (TYPE != null) {
             final DataSelectionEvent<I> event = new DataSelectionEvent<>(selectedItem, doubleSelect);
@@ -95,6 +96,10 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
     protected void dispatch(final DataSelectionHandler<I> handler) {
         handler.onSelection(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DataSelectionHandler<I> extends EventHandler {
 

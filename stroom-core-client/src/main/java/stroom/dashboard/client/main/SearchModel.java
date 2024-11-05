@@ -39,9 +39,9 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -57,7 +57,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SearchModel implements HasTaskListener, HasHandlers {
+public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
@@ -68,7 +68,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
     private Map<String, ResultComponent> resultComponents = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
@@ -201,6 +201,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
      * Refresh the search data for the specified component.
      */
     public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
+        boolean exec = false;
         final QueryKey queryKey = currentQueryKey;
         final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
@@ -208,9 +209,6 @@ public class SearchModel implements HasTaskListener, HasHandlers {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    // Tell the refreshing component that it should want data.
-                    resultComponent.startSearch();
-
                     final Search search = Search
                             .builder()
                             .dataSourceRef(currentSearch.getDataSourceRef())
@@ -235,6 +233,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                             .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
                             .build();
 
+                    exec = true;
                     restFactory
                             .create(DASHBOARD_RESOURCE)
                             .method(res -> res.search(currentNode, request))
@@ -263,24 +262,29 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                                 }
                                 resultConsumer.accept(null);
                             })
-                            .taskListener(taskListener)
+                            .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 }
             }
+        }
+
+        // If no exec happened then let the caller know.
+        if (!exec) {
+            resultConsumer.accept(null);
         }
     }
 
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey), taskListener);
+                    GWT.log("Destroyed store " + queryKey), taskMonitorFactory);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey), taskListener);
+                    GWT.log("Terminate search " + queryKey), taskMonitorFactory);
         }
     }
 
@@ -351,7 +355,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                             poll(Fetch.CHANGES, false);
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }
@@ -536,8 +540,8 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

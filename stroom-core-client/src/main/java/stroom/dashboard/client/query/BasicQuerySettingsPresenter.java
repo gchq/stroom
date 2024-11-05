@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class BasicQuerySettingsPresenter
     }
 
     private void setDataSource(final DocRef dataSourceRef) {
-        dataSourceSelectionPresenter.setSelectedEntityReference(dataSourceRef);
+        dataSourceSelectionPresenter.setSelectedEntityReference(dataSourceRef, true);
     }
 
     @Override
@@ -140,6 +140,10 @@ public class BasicQuerySettingsPresenter
 
         return !equal;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface BasicQuerySettingsView extends BasicSettingsView {
 
