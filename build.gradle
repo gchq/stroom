@@ -281,7 +281,10 @@ ext.libs = [
         // Potentially caused by https://github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
         // lmdbjava 0.9.0 has a cursor bug though, https://github.com/lmdbjava/lmdbjava/issues/228
         lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
+        // This is the bridge from log4j v1 to slf4j
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
+        // This is the bridge from log4j v2 to slf4j
+        //log4j_slf4j2_impl                   : "org.apache.logging.log4j:log4j-slf4j2-impl:2.24.1",
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
