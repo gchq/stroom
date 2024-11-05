@@ -231,6 +231,7 @@ ext.libs = [
         jackson_core                        : "com.fasterxml.jackson.core:jackson-core", // version controlled by dropwizard-dependencies
         jackson_databind                    : "com.fasterxml.jackson.core:jackson-databind", // version controlled by dropwizard-dependencies // files('libs/jackson-databind-2.10.5.1.jar'),//
         jackson_dataformat_yaml             : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by dropwizard-dependencies
+        jackson_datatype_jdk8               : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", // version controlled by dropwizard-dependencies
         jackson_datatype_jsr310             : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by dropwizard-dependencies
         jakarta_activation                  : "jakarta.activation:jakarta.activation-api", // version controlled by dropwizard-dependencies
         jakarta_annotation_api              : "jakarta.annotation:jakarta.annotation-api", // version controlled by dropwizard-dependencies
@@ -306,7 +307,7 @@ ext.libs = [
         simple_java_mail                    : "org.simplejavamail:simple-java-mail:${versions.simple_java_mail}",
         simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
-        snake_yaml                          : "org.yaml:snakeyaml:2.2",
+        snake_yaml                          : "org.yaml:snakeyaml:2.3",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
         sqlite                              : "org.xerial:sqlite-jdbc:3.43.2.2",
         stax_api                            : "stax:stax-api:1.0.1",

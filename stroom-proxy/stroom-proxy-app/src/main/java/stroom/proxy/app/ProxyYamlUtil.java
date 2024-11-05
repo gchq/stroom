@@ -19,9 +19,10 @@ package stroom.proxy.app;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -61,11 +62,14 @@ public class ProxyYamlUtil {
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();
 
+        final ObjectMapper objectMapper = Jackson.newObjectMapper()
+                .registerModule(new Jdk8Module());
+
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
                 .create(
                         Config.class,
                         io.dropwizard.jersey.validation.Validators.newValidator(),
-                        Jackson.newObjectMapper(),
+                        objectMapper,
                         "dw");
 
         Config config = null;
@@ -90,8 +94,7 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
-        final YAMLFactory yf = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yf);
+        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(outputStream, config);
 
@@ -104,8 +107,7 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final YAMLFactory yf = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yf);
+        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(path.toFile(), config);
     }
