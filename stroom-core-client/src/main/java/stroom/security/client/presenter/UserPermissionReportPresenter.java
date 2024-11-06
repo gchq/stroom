@@ -144,7 +144,8 @@ public class UserPermissionReportPresenter
             }
         }));
         registerHandler(documentPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
-            final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel().getSelected();
+            final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel()
+                    .getSelected();
             docEdit.setEnabled(selected != null);
             if (selected != null && e.getSelectionType().isDoubleSelect()) {
                 onEdit();
