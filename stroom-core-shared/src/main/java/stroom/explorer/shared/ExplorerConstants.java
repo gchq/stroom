@@ -40,6 +40,12 @@ public final class ExplorerConstants {
         }
     }
 
+    public static boolean isSystemNode(final String type,
+                                       final String uuid) {
+        return Objects.equals(SYSTEM_NODE.getType(), type)
+               && Objects.equals(SYSTEM_NODE.getUuid(), uuid);
+    }
+
     /**
      * Tests whether a node is the root Favourites node
      */
@@ -51,6 +57,12 @@ public final class ExplorerConstants {
         }
     }
 
+    public static boolean isFavouritesNode(final String type,
+                                           final String uuid) {
+        return Objects.equals(SYSTEM_NODE.getType(), type)
+               && Objects.equals(SYSTEM_NODE.getUuid(), uuid);
+    }
+
     /**
      * @return True if node is non-null and one of the root nodes
      */
@@ -59,7 +71,7 @@ public final class ExplorerConstants {
             return false;
         } else {
             return Objects.equals(SYSTEM_NODE, node)
-                    || Objects.equals(FAVOURITES_NODE, node);
+                   || Objects.equals(FAVOURITES_NODE, node);
         }
     }
 

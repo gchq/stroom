@@ -88,6 +88,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -110,6 +111,13 @@ class ExplorerServiceImpl
             ExplorerConstants.SYSTEM,
             ExplorerConstants.FAVOURITES,
             ExplorerConstants.FOLDER);
+
+    // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
+    // All are something only an OWNER (or admin) can do.
+    private static final Set<PermissionInheritance> ALLOW_PERMISSION_CHANGE = EnumSet.of(
+            PermissionInheritance.DESTINATION,
+            PermissionInheritance.NONE,
+            PermissionInheritance.COMBINED);
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
@@ -333,8 +341,8 @@ class ExplorerServiceImpl
                             .filter(Objects::nonNull)
                             .map(explorerNodeKey -> treeModel.getNode(explorerNodeKey.getUuid()))
                             .map(node -> node.getDocRef().getType() + " "
-                                    + node.getName()
-                                    + " (" + node.getUuid() + ")")
+                                         + node.getName()
+                                         + " (" + node.getUuid() + ")")
                             .collect(Collectors.joining("\n"));
                 } catch (Exception e) {
                     LOGGER.trace(e::getMessage, e);
@@ -460,7 +468,7 @@ class ExplorerServiceImpl
         }
 
         if (filter != null
-                && NullSafe.set(filter.getNodeFlags()).contains(NodeFlag.DATA_SOURCE)) {
+            && NullSafe.set(filter.getNodeFlags()).contains(NodeFlag.DATA_SOURCE)) {
 
             final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
             if (explorerDecorator != null) {
@@ -636,8 +644,8 @@ class ExplorerServiceImpl
 
             // If set, only include specified roots
             if (children != null
-                    && parent == null
-                    && NullSafe.hasItems(filter.getIncludedRootTypes())) {
+                && parent == null
+                && NullSafe.hasItems(filter.getIncludedRootTypes())) {
                 children = children.stream()
                         .filter(child ->
                                 filter.getIncludedRootTypes().contains(child.getType()))
@@ -647,8 +655,8 @@ class ExplorerServiceImpl
             if (children != null) {
                 // Add all children if the name filter has changed or the parent item is open.
                 final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
-                        || parent == null
-                        || allOpenItems.isOpen(parent.getUniqueKey());
+                                               || parent == null
+                                               || allOpenItems.isOpen(parent.getUniqueKey());
 
                 // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
                 final Iterator<ExplorerNode> iterator = children.iterator();
@@ -820,7 +828,7 @@ class ExplorerServiceImpl
                                    final LocalMetrics metrics) {
         return metrics.measure("isNodeIncluded (hasChildren)", () ->
                 hasChildren
-                        || nodeInclusionChecker.isNodeIncluded(ignoreNameFilter, child));
+                || nodeInclusionChecker.isNodeIncluded(ignoreNameFilter, child));
     }
 
     private List<ExplorerNode> addRoots(final FilteredTreeModel filteredModel,
@@ -1156,7 +1164,7 @@ class ExplorerServiceImpl
             DocRef result = null;
 
             try {
-                checkOwnershipForMove(explorerNode, permissionInheritance);
+                checkPermsForMove(explorerNode, permissionInheritance);
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
                 checkCreatePermission(folderRef, explorerNode.getType());
@@ -1188,35 +1196,32 @@ class ExplorerServiceImpl
         return new BulkActionResult(resultNodes, resultMessage.toString());
     }
 
-    private void checkOwnershipForMove(final ExplorerNode node,
-                                       final PermissionInheritance permissionInheritance) {
-        if (allowsPermissionChange(permissionInheritance)) {
-
+    private void checkPermsForMove(final ExplorerNode node,
+                                   final PermissionInheritance permissionInheritance) {
+        // Even though move is not changing the actual document, it is not right that a user with only VIEW
+        // can move a doc and potentially move it into a folder that only they have access to.
+        if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You must have 'Edit' permission on the document to move it.");
+        }
+        if (ALLOW_PERMISSION_CHANGE.contains(permissionInheritance)) {
             if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.OWNER)) {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must have 'Owner' permission on the document to move it with permission mode '"
-                                + permissionInheritance.getDisplayValue() + "'.");
+                        + permissionInheritance.getDisplayValue() + "'.");
             }
         }
     }
 
     private void checkOwnershipForCopy(final ExplorerNode node,
                                        final PermissionInheritance permissionInheritance) {
-        if (allowsPermissionChange(permissionInheritance)) {
+        if (ALLOW_PERMISSION_CHANGE.contains(permissionInheritance)) {
             if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.OWNER)) {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must have 'Owner' permission on the document to copy it with permission mode '"
-                                + permissionInheritance.getDisplayValue() + "'.");
+                        + permissionInheritance.getDisplayValue() + "'.");
             }
         }
-    }
-
-    private boolean allowsPermissionChange(final PermissionInheritance permissionInheritance) {
-        // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
-        // All are something only an OWNER (or admin) can do.
-        return permissionInheritance == PermissionInheritance.DESTINATION
-                || permissionInheritance == PermissionInheritance.NONE
-                || permissionInheritance == PermissionInheritance.COMBINED;
     }
 
     @Override
@@ -1244,6 +1249,11 @@ class ExplorerServiceImpl
         try {
             beforeNode = explorerNodeService.getNode(docRef)
                     .orElse(null);
+
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You must have 'Edit' permission on the document to change it's tags.");
+            }
 
             explorerNodeService.updateTags(docRef, tags);
 
@@ -1357,7 +1367,7 @@ class ExplorerServiceImpl
                 children = explorerNodeService.getChildren(explorerNode.getDocRef());
                 if (NullSafe.hasItems(children)) {
                     final String message = "Unable to delete '" + explorerNode.getName() +
-                            "' because the folder is not empty";
+                                           "' because the folder is not empty";
                     resultMessage.append(message);
                     resultMessage.append("\n");
                     explorerEventLog.delete(explorerNode.getDocRef(), new RuntimeException(message));
@@ -1496,7 +1506,7 @@ class ExplorerServiceImpl
                     types.add(type);
                     added = true;
                 } else if (!types.contains(type)
-                        && NodeInclusionChecker.hasPermission(securityContext, child, requiredPermissions)) {
+                           && NodeInclusionChecker.hasPermission(securityContext, child, requiredPermissions)) {
                     types.add(type);
                     added = true;
                 }
@@ -1561,8 +1571,8 @@ class ExplorerServiceImpl
 
             walk(Collections.emptyList(), result.getRootNodes(), (path, node) -> {
                 if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
-                        node.getDocRef() != null &&
-                        !ExplorerConstants.isRootNode(node)) {
+                    node.getDocRef() != null &&
+                    !ExplorerConstants.isRootNode(node)) {
                     results.add(new FindResult(
                             node.getDocRef(),
                             path.stream().map(ExplorerNode::getDisplayValue).collect(Collectors.joining(" / ")),
@@ -1707,8 +1717,8 @@ class ExplorerServiceImpl
                     .getPermissions(node.getDocRef(), request.getUserRef());
             if (request.isExplicitPermission()) {
                 if (permissions.getPermission() != null ||
-                        (permissions.getDocumentCreatePermissions() != null &&
-                                !permissions.getDocumentCreatePermissions().isEmpty())) {
+                    (permissions.getDocumentCreatePermissions() != null &&
+                     !permissions.getDocumentCreatePermissions().isEmpty())) {
                     results.add(new FindResultWithPermissions(createFindResult(path, node), permissions));
                 }
             } else {
