@@ -81,11 +81,15 @@ public class ExpressionCriteria extends BaseCriteria {
     @Override
     public String toString() {
         return "BaseCriteria{" +
-                "pageRequest=" + getPageRequest() +
-                ", sortList=" + getSortList() +
-                ", expression=" + expression +
-                '}';
+               "pageRequest=" + getPageRequest() +
+               ", sortList=" + getSortList() +
+               ", expression=" + expression +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<ExpressionCriteria, Builder> {
 
@@ -108,6 +112,10 @@ public class ExpressionCriteria extends BaseCriteria {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public abstract static class AbstractBuilder<T extends ExpressionCriteria, B extends AbstractBuilder<T, B>>
             extends BaseCriteria.AbstractBuilder<T, B> {
 
@@ -127,6 +135,10 @@ public class ExpressionCriteria extends BaseCriteria {
         public B expression(final ExpressionOperator expression) {
             this.expression = expression;
             return self();
+        }
+
+        public ExpressionOperator getExpression() {
+            return expression;
         }
     }
 }

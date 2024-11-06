@@ -29,6 +29,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class PageRequest implements Serializable, Copyable<PageRequest> {
 
+    public static final int DEFAULT_PAGE_LENGTH = 100;
+
     /**
      * Offset from the start 0 is no offset.
      */
@@ -52,7 +54,7 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
     }
 
     public static PageRequest createDefault() {
-        return new PageRequest(0, 100);
+        return new PageRequest(0, DEFAULT_PAGE_LENGTH);
     }
 
     public static PageRequest oneRow() {
@@ -89,7 +91,7 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
         }
         final PageRequest that = (PageRequest) o;
         return Objects.equals(offset, that.offset) &&
-                Objects.equals(length, that.length);
+               Objects.equals(length, that.length);
     }
 
     @Override
@@ -100,9 +102,9 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
     @Override
     public String toString() {
         return "PageRequest{" +
-                "offset=" + offset +
-                ", length=" + length +
-                '}';
+               "offset=" + offset +
+               ", length=" + length +
+               '}';
     }
 
     @Override

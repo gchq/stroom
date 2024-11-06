@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -43,6 +44,29 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     public boolean isExplicitPermission() {
         return explicitPermission;
     }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        if (!super.equals(object)) {
+            return false;
+        }
+        final AdvancedDocumentFindWithPermissionsRequest that = (AdvancedDocumentFindWithPermissionsRequest) object;
+        return explicitPermission == that.explicitPermission && Objects.equals(userRef, that.userRef);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), userRef, explicitPermission);
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<AdvancedDocumentFindWithPermissionsRequest, Builder> {
 
