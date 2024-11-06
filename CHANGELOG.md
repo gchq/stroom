@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.2] - 2024-11-06
+
+* Change the permission filtering to use a LinkedHashSet for children of and descendants of terms.
+
+* Fix error when creating a document as a user without `Administrator` or `Manager Users`.
+
+* Issue **#4588** : Fix the API allowing documents to be moved with only VIEW permission. The UI requires EDIT permission. The API is now in line with that.
+
+* Fix the `Copy As` menu item for ancestor folders that the user does not have VIEW permission on. For these cases, the `Copy As` sub menu now only displays the `Copy as name` entry.
+
+* Change the explorer context menu to include the entries for `Dependencies` and `Dependants` if the user has at least VIEW permission. Previously required OWNER.
+
+* Issue **#4586** : Fix error when changing filter on Document Permissions Report.
+
+
 ## [v7.7-beta.1] - 2024-11-04
 
 * Issue **#4523** : Embed queries in dashboards.
@@ -962,7 +977,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.2...HEAD
+[v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
 [v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
 [v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
 [v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
