@@ -133,7 +133,7 @@ public abstract class BaseCriteria {
         }
         final BaseCriteria that = (BaseCriteria) o;
         return Objects.equals(pageRequest, that.pageRequest) &&
-                Objects.equals(sortList, that.sortList);
+               Objects.equals(sortList, that.sortList);
     }
 
     @Override
@@ -144,10 +144,14 @@ public abstract class BaseCriteria {
     @Override
     public String toString() {
         return "BaseCriteria{" +
-                "pageRequest=" + pageRequest +
-                ", sortList=" + sortList +
-                '}';
+               "pageRequest=" + pageRequest +
+               ", sortList=" + sortList +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public abstract static class AbstractBuilder<T extends BaseCriteria, B extends AbstractBuilder<T, B>>
             extends BaseBuilder<T, B> {

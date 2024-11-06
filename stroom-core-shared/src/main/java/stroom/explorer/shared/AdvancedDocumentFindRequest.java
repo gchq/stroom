@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -33,6 +34,30 @@ public class AdvancedDocumentFindRequest extends ExpressionCriteria {
     public Set<DocumentPermission> getRequiredPermissions() {
         return requiredPermissions;
     }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        if (!super.equals(object)) {
+            return false;
+        }
+        final AdvancedDocumentFindRequest that = (AdvancedDocumentFindRequest) object;
+        return Objects.equals(requiredPermissions, that.requiredPermissions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), requiredPermissions);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<AdvancedDocumentFindRequest, Builder> {
 

@@ -1350,6 +1350,26 @@ class TestGwtNullSafe {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testToString() {
+        final Object obj = new Object() {
+            @Override
+            public String toString() {
+                return "foo";
+            }
+        };
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Object.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(GwtNullSafe::toString)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase("foo", "foo")
+                .addCase(obj, "foo")
+                .build();
+    }
+
     private void doConsumeTest(final Consumer<Consumer<Long>> action, final long expectedValue) {
         final AtomicLong val = new AtomicLong(-1);
         final Consumer<Long> consumer = val::set;

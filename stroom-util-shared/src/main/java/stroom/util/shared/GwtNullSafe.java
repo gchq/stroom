@@ -328,8 +328,8 @@ public class GwtNullSafe {
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.contains(subStr);
+               && subStr != null
+               && str.contains(subStr);
     }
 
     /**
@@ -711,9 +711,19 @@ public class GwtNullSafe {
             final R result = Objects.requireNonNull(getter)
                     .apply(value);
             return result != null
-                    && Objects.requireNonNull(predicate)
-                    .test(result);
+                   && Objects.requireNonNull(predicate)
+                           .test(result);
         }
+    }
+
+    /**
+     * @return The result of calling {@link Object#toString()} on value
+     * or an empty string if value is null.
+     */
+    public static String toString(final Object value) {
+        return value != null
+                ? value.toString()
+                : "";
     }
 
     public static <T1> String toString(final T1 value,
@@ -826,8 +836,8 @@ public class GwtNullSafe {
             } else {
                 final R result = Objects.requireNonNull(getter2).apply(value2);
                 return result != null
-                        && Objects.requireNonNull(predicate)
-                        .test(result);
+                       && Objects.requireNonNull(predicate)
+                               .test(result);
             }
         }
     }

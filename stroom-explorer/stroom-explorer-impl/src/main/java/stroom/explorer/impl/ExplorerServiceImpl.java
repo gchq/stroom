@@ -87,6 +87,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -112,6 +113,13 @@ class ExplorerServiceImpl
             ExplorerConstants.SYSTEM,
             ExplorerConstants.FAVOURITES,
             ExplorerConstants.FOLDER);
+
+    // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
+    // All are something only an OWNER (or admin) can do.
+    private static final Set<PermissionInheritance> ALLOW_PERMISSION_CHANGE = EnumSet.of(
+            PermissionInheritance.DESTINATION,
+            PermissionInheritance.NONE,
+            PermissionInheritance.COMBINED);
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
@@ -1158,7 +1166,7 @@ class ExplorerServiceImpl
             DocRef result = null;
 
             try {
-                checkOwnershipForMove(explorerNode, permissionInheritance);
+                checkPermsForMove(explorerNode, permissionInheritance);
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
                 checkCreatePermission(folderRef, explorerNode.getType());
@@ -1190,10 +1198,15 @@ class ExplorerServiceImpl
         return new BulkActionResult(resultNodes, resultMessage.toString());
     }
 
-    private void checkOwnershipForMove(final ExplorerNode node,
-                                       final PermissionInheritance permissionInheritance) {
-        if (allowsPermissionChange(permissionInheritance)) {
-
+    private void checkPermsForMove(final ExplorerNode node,
+                                   final PermissionInheritance permissionInheritance) {
+        // Even though move is not changing the actual document, it is not right that a user with only VIEW
+        // can move a doc and potentially move it into a folder that only they have access to.
+        if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You must have 'Edit' permission on the document to move it.");
+        }
+        if (ALLOW_PERMISSION_CHANGE.contains(permissionInheritance)) {
             if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.OWNER)) {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must have 'Owner' permission on the document to move it with permission mode '"
@@ -1204,21 +1217,13 @@ class ExplorerServiceImpl
 
     private void checkOwnershipForCopy(final ExplorerNode node,
                                        final PermissionInheritance permissionInheritance) {
-        if (allowsPermissionChange(permissionInheritance)) {
+        if (ALLOW_PERMISSION_CHANGE.contains(permissionInheritance)) {
             if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.OWNER)) {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must have 'Owner' permission on the document to copy it with permission mode '"
                         + permissionInheritance.getDisplayValue() + "'.");
             }
         }
-    }
-
-    private boolean allowsPermissionChange(final PermissionInheritance permissionInheritance) {
-        // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
-        // All are something only an OWNER (or admin) can do.
-        return permissionInheritance == PermissionInheritance.DESTINATION
-               || permissionInheritance == PermissionInheritance.NONE
-               || permissionInheritance == PermissionInheritance.COMBINED;
     }
 
     @Override
@@ -1246,6 +1251,11 @@ class ExplorerServiceImpl
         try {
             beforeNode = explorerNodeService.getNode(docRef)
                     .orElse(null);
+
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You must have 'Edit' permission on the document to change it's tags.");
+            }
 
             explorerNodeService.updateTags(docRef, tags);
 
