@@ -19,12 +19,14 @@ package stroom.config.app;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -108,9 +110,9 @@ public class StroomYamlUtil {
 
         // fail on unknown so it skips over all the drop wiz yaml content that has no
         // corresponding annotated props in DummyConfig
-        final ObjectMapper mapper = new ObjectMapper()
+        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
+                .registerModule(new Jdk8Module()) // Needed to deal with Optional<...>
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         try {
             final DummyConfig dummyConfig = mapper.convertValue(obj, DummyConfig.class);
             return dummyConfig.getAppConfig();
@@ -120,8 +122,7 @@ public class StroomYamlUtil {
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
-        final YAMLFactory yf = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yf);
+        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(outputStream, config);
 
@@ -134,8 +135,7 @@ public class StroomYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final YAMLFactory yf = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yf);
+        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
         mapper.writeValue(path.toFile(), config);
     }
 
@@ -151,10 +151,21 @@ public class StroomYamlUtil {
      */
     public static void writeAppConfig(final AppConfig appConfig, final Path path) throws IOException {
         final DummyConfig config = new DummyConfig(appConfig);
-        final YAMLFactory yf = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yf);
+        final ObjectMapper mapper = createObjectMapper();
         mapper.writeValue(path.toFile(), config);
     }
+
+    private static ObjectMapper createObjectMapper() {
+        final YAMLFactory yamlFactory = new YAMLFactory();
+        return new ObjectMapper(yamlFactory)
+                .registerModule(new Jdk8Module()); // Needed to deal with Optional<...>
+//                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+//        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+//        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
+    }
+
+
+    // --------------------------------------------------------------------------------
 
 
     /**
