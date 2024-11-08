@@ -353,7 +353,9 @@ public class KeyBinding {
             if (shortcuts2.contains(shortcut)) {
                 throw new RuntimeException("Duplicate shortcut " + shortcut + " for action " + action
                                            + ", existing shortcuts: "
-                                           + shortcuts2.stream().map(Objects::toString).collect(Collectors.joining(", ")));
+                                           + shortcuts2.stream()
+                                                   .map(Objects::toString)
+                                                   .collect(Collectors.joining(", ")));
             }
             shortcuts2.add(shortcut);
             SHORTCUT_TO_ACTION_MAP.put(shortcut, action);
