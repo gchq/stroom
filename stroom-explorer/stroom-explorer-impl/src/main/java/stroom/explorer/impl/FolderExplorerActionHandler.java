@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
 
-    private static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.STRUCTURE,
             FolderExplorerActionHandler.FOLDER,

@@ -23,7 +23,7 @@ import java.util.UUID;
 class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     private static final String SYSTEM = ExplorerConstants.SYSTEM;
-    private static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
     private static final SvgImage ICON = SvgImage.DOCUMENT_SYSTEM;
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM,

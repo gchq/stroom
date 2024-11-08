@@ -116,12 +116,12 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         deleteAllAndCheck();
 
         final ExplorerNode folder1 = explorerService.create(
-                ExplorerConstants.FOLDER,
+                ExplorerConstants.FOLDER_TYPE,
                 "Group1",
                 null,
                 null);
         final ExplorerNode folder2 = explorerService.create(
-                ExplorerConstants.FOLDER,
+                ExplorerConstants.FOLDER_TYPE,
                 "Group2",
                 null,
                 null);

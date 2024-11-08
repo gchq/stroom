@@ -135,7 +135,7 @@ public class FolderPresenter
 
     @Override
     public String getType() {
-        return ExplorerConstants.FOLDER;
+        return ExplorerConstants.FOLDER_TYPE;
     }
 
     @Override

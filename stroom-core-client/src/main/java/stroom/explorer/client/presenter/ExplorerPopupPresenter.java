@@ -274,7 +274,8 @@ public class ExplorerPopupPresenter
                                     final TaskMonitorFactory taskMonitorFactory) {
             super(restFactory, taskMonitorFactory, false, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-            this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
+            this.getTreeModel()
+                    .setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
         }
 
         @Override

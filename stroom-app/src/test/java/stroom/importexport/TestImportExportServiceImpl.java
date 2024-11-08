@@ -63,19 +63,21 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     void testExport() {
         final ExplorerNode systemNode = explorerNodeService.getRoot();
-        final DocRef systemDocRef = systemNode != null ? systemNode.getDocRef() : null;
+        final DocRef systemDocRef = systemNode != null
+                ? systemNode.getDocRef()
+                : null;
         assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(1);
 
-        final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", systemNode, null);
-        final ExplorerNode folder2 = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER_TYPE, "Root1_", systemNode, null);
+        final ExplorerNode folder2 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
                 "Root2_" + FileSystemTestUtil.getUniqueTestString(),
                 systemNode,
                 null);
-        final ExplorerNode folder2child1 = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder2child1 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
                 "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        final ExplorerNode folder2child2 = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder2child2 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
                 "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
