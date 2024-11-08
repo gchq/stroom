@@ -64,11 +64,13 @@ public class StroomYamlUtil {
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();
 
+        // Jackson.newObjectMapper() is a special dropwiz configured ObjectMapper that includes
+        // YamlFactory and registers Jdk8Module so DON'T use one from YamlUtil
         return configurationFactoryFactory
                 .create(
                         Config.class,
                         io.dropwizard.jersey.validation.Validators.newValidator(),
-                        Jackson.newObjectMapper(),  // This is a special dropwiz configured ObjectMapper
+                        Jackson.newObjectMapper(),
                         "dw");
     }
 
