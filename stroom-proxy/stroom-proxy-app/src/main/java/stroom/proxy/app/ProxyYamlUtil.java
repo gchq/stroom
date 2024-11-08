@@ -16,13 +16,13 @@
 
 package stroom.proxy.app;
 
+import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -41,8 +41,25 @@ public class ProxyYamlUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyYamlUtil.class);
 
+    private static final LazyValue<ConfigurationFactory<Config>> configFactorySupplier = LazyValue.initialisedBy(
+            ProxyYamlUtil::createConfigFactory);
+
     private ProxyYamlUtil() {
         // Utility
+    }
+
+    private static ConfigurationFactory<Config> createConfigFactory() {
+        final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
+                new DefaultConfigurationFactoryFactory<>();
+
+        // Jackson.newObjectMapper() is a special dropwiz configured ObjectMapper that includes
+        // YamlFactory and registers Jdk8Module so DON'T use one from YamlUtil
+        return configurationFactoryFactory
+                .create(
+                        Config.class,
+                        io.dropwizard.jersey.validation.Validators.newValidator(),
+                        Jackson.newObjectMapper(),
+                        "dw");
     }
 
     public static ProxyConfig readProxyConfig(final Path configFile) throws IOException {
@@ -59,18 +76,7 @@ public class ProxyYamlUtil {
         final ConfigurationSourceProvider configurationSourceProvider = createConfigurationSourceProvider(
                 new FileConfigurationSourceProvider(), false);
 
-        final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
-                new DefaultConfigurationFactoryFactory<>();
-
-        final ObjectMapper objectMapper = Jackson.newObjectMapper()
-                .registerModule(new Jdk8Module());
-
-        final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
-                .create(
-                        Config.class,
-                        io.dropwizard.jersey.validation.Validators.newValidator(),
-                        objectMapper,
-                        "dw");
+        final ConfigurationFactory<Config> configurationFactory = configFactorySupplier.getValueWithLocks();
 
         Config config = null;
         try {
