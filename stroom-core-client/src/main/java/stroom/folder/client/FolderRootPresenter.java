@@ -148,7 +148,7 @@ public class FolderRootPresenter
 
     @Override
     public String getType() {
-        return ExplorerConstants.SYSTEM;
+        return ExplorerConstants.SYSTEM_TYPE;
     }
 
     @Override

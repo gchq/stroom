@@ -73,7 +73,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
 
-    public static final String FOLDER = ExplorerConstants.FOLDER;
+    public static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
 
     private final ExplorerService explorerService;
     private final ExplorerNodeService explorerNodeService;
@@ -281,8 +281,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         try {
             // Import the item via the appropriate handler.
             if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                    importState.isAction()) {
+                ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                importState.isAction()) {
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,
@@ -388,8 +388,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Import the item via the appropriate handler.
             if (importExportActionHandler != null && (
                     ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                            ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
-                            importState.isAction())) {
+                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                    importState.isAction())) {
 
                 final DocRef imported = importExportActionHandler.importDocument(
                         docRef,
@@ -501,7 +501,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             } catch (final IOException | RuntimeException e) {
                 messageList.add(new Message(Severity.ERROR,
                         "Error created while exporting (" + docRef.toString() + ") : "
-                                + LogUtil.exceptionMessage(e)));
+                        + LogUtil.exceptionMessage(e)));
                 exportSummary.addFailure(docRef.getType());
             }
         }
@@ -616,7 +616,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 if (explorerDocRef == null) {
                     throw new RuntimeException(
                             "Unable to locate suitable location for export, whilst exporting " +
-                                    initialDocRef);
+                            initialDocRef);
                 }
 
                 final String docRefName = docRefProvider.findNameOfDocRef(initialDocRef);
@@ -638,7 +638,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 // Get the explorer path to this doc ref.
                 List<ExplorerNode> path = explorerNodeService.getPath(explorerDocRef);
                 List<String> pathElements = path.stream()
-                        .filter(p -> ExplorerConstants.FOLDER.equals(p.getType()))
+                        .filter(p -> ExplorerConstants.FOLDER_TYPE.equals(p.getType()))
                         .map(ExplorerNode::getName).collect(Collectors.toList());
 
                 // Turn the path into a list of strings but ignore any nodes that aren't folders, e.g. the root.
@@ -674,13 +674,13 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             localMessageList.add(new Message(
                                     Severity.ERROR,
                                     "Failed to write file '" + fileName + "': "
-                                            + LogUtil.exceptionMessage(e)));
+                                    + LogUtil.exceptionMessage(e)));
                         }
                     });
 
                     final List<Message> errors = localMessageList.stream()
                             .filter(message -> Severity.FATAL_ERROR.equals(message.getSeverity())
-                                    || Severity.ERROR.equals(message.getSeverity()))
+                                               || Severity.ERROR.equals(message.getSeverity()))
                             .collect(Collectors.toList());
 
                     if (errors.isEmpty()) {
@@ -698,8 +698,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 localMessageList.add(new Message(
                         Severity.ERROR,
                         "Error exporting directory '"
-                                + NullSafe.get(dir, Path::toAbsolutePath, Path::normalize) + "': "
-                                + LogUtil.exceptionMessage(e)));
+                        + NullSafe.get(dir, Path::toAbsolutePath, Path::normalize) + "': "
+                        + LogUtil.exceptionMessage(e)));
             } finally {
                 messageList.addAll(localMessageList);
             }

@@ -118,6 +118,17 @@ public abstract class ExpressionItem implements Serializable {
     }
 
     /**
+     * @return True if non-null and enalbed
+     */
+    public static boolean isEnabled(final ExpressionItem expressionItem) {
+        return expressionItem != null && expressionItem.enabled();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
      * Builder for constructing a {@link ExpressionItem}. This is an abstract type, each subclass
      * of ExpressionItem should provide a builder that extends this one.
      */

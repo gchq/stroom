@@ -221,8 +221,8 @@ public class MetaPresenter
                                     if (hasAdvancedCriteria(expression2)) {
                                         ConfirmEvent.fire(MetaPresenter.this,
                                                 "You are setting advanced filters!  It is recommended you constrain " +
-                                                        "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                        + "Are you sure you want to apply this advanced filter?",
+                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                                + "Are you sure you want to apply this advanced filter?",
                                                 confirm -> {
                                                     if (confirm) {
                                                         setExpression(expression2);
@@ -463,7 +463,7 @@ public class MetaPresenter
             hasSetCriteria = true;
             showUploadButton(false);
 
-            if (ExplorerConstants.SYSTEM.equals(folder.getType())) {
+            if (ExplorerConstants.SYSTEM_TYPE.equals(folder.getType())) {
                 // No point in adding a term for the root folder as everything is a descendent of it
                 metaListPresenter.setExpression(
                         ExpressionValidator.ALL_UNLOCKED_EXPRESSION,
@@ -575,8 +575,8 @@ public class MetaPresenter
         if (someSelected) {
             final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
             final boolean allowDelete = statusSet.isEmpty() ||
-                    statusSet.contains(Status.LOCKED) ||
-                    statusSet.contains(Status.UNLOCKED);
+                                        statusSet.contains(Status.LOCKED) ||
+                                        statusSet.contains(Status.UNLOCKED);
 
             boolean isDeleteEnabled = false;
             if (allowDelete) {
@@ -588,7 +588,7 @@ public class MetaPresenter
                         for (final Long id : streamIdSet.getSet()) {
                             final Meta meta = getMeta(metaListPresenter, id);
                             if (meta != null
-                                    && !Status.DELETED.equals(meta.getStatus())) {
+                                && !Status.DELETED.equals(meta.getStatus())) {
 //                                return true;
                                 isDeleteEnabled = true;
                                 break;
@@ -626,7 +626,7 @@ public class MetaPresenter
         if (someSelected) {
             final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
             final boolean allowRestore = statusSet.isEmpty() ||
-                    statusSet.contains(Status.DELETED);
+                                         statusSet.contains(Status.DELETED);
 
             boolean isRestoreEnabled = false;
             if (allowRestore) {

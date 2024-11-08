@@ -1,9 +1,17 @@
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.test.common.TestUtil;
 
+import com.google.inject.TypeLiteral;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.explorer.shared.NodeFlag.NodeFlagGroups.EXPANDER_GROUP;
@@ -82,5 +90,62 @@ class TestExplorerNode {
                 .isFalse();
         assertThat(node.hasNodeFlagGroup(NodeFlagGroups.FILTER_MATCH_PAIR))
                 .isFalse();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testBuildDocRefPathString() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    if (testCase.getInput() == null) {
+                        return ExplorerNode.buildDocRefPathString(null);
+                    } else {
+                        final List<DocRef> docRefs = testCase.getInput().stream()
+                                .map(name -> DocRef.builder()
+                                        .type("myType")
+                                        .randomUuid()
+                                        .name(name)
+                                        .build())
+                                .collect(Collectors.toList());
+                        return ExplorerNode.buildDocRefPathString(docRefs);
+                    }
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(List.of(), "")
+                .addCase(List.of("foo"), "foo")
+                .addCase(List.of("foo", "bar"), "foo / bar")
+                .addCase(List.of("a", "b", "c"), "a / b / c")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testBuildNodePathString() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    if (testCase.getInput() == null) {
+                        return ExplorerNode.buildDocRefPathString(null);
+                    } else {
+                        final List<ExplorerNode> explorerNodes = testCase.getInput().stream()
+                                .map(name -> ExplorerNode.builder()
+                                        .type("myType")
+                                        .name(name)
+                                        .build())
+                                .collect(Collectors.toList());
+                        return ExplorerNode.buildNodePathString(explorerNodes);
+                    }
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(List.of(), "")
+                .addCase(List.of("foo"), "foo")
+                .addCase(List.of("foo", "bar"), "foo / bar")
+                .addCase(List.of("a", "b", "c"), "a / b / c")
+                .build();
     }
 }

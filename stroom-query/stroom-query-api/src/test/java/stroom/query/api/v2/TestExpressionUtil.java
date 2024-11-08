@@ -2,11 +2,15 @@ package stroom.query.api.v2;
 
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.test.common.TestUtil;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,6 +85,50 @@ class TestExpressionUtil {
         assertThat(expressionOperator2.getChildren().get(1))
                 .isEqualTo(expressionOperator.getChildren().get(1));
     }
+
+    @TestFactory
+    Stream<DynamicTest> testHasTerms() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(ExpressionOperator.class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(ExpressionUtil::hasTerms)
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(ExpressionOperator.builder()
+                                .enabled(false)
+                                .build(),
+                        false)
+                .addCase(ExpressionOperator.builder()
+                                .enabled(true)
+                                .build(),
+                        false)
+                .addCase(ExpressionOperator.builder()
+                                .enabled(true)
+                                .addOperator(ExpressionOperator.builder()
+                                        .enabled(true)
+                                        .build())
+                                .build(),
+                        false)
+                .addCase(ExpressionOperator.builder()
+                                .enabled(true)
+                                .addTerm(ExpressionTerm.builder()
+                                        .enabled(false)
+                                        .build())
+                                .build(),
+                        false)
+                .addCase(ExpressionOperator.builder()
+                                .enabled(true)
+                                .addTerm(ExpressionTerm.builder()
+                                        .enabled(false)
+                                        .build())
+                                .addTerm(ExpressionTerm.builder()
+                                        .enabled(true)
+                                        .build())
+                                .build(),
+                        true)
+                .build();
+    }
+
 
     private static ExpressionOperator getExpressionOperator() {
         return ExpressionOperator.builder()

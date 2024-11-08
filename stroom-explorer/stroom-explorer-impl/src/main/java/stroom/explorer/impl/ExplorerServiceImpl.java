@@ -96,7 +96,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.SequencedCollection;
 import java.util.SequencedSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -110,9 +109,9 @@ class ExplorerServiceImpl
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerServiceImpl.class);
 
     private static final Set<String> FOLDER_TYPES = Set.of(
-            ExplorerConstants.SYSTEM,
-            ExplorerConstants.FAVOURITES,
-            ExplorerConstants.FOLDER);
+            ExplorerConstants.SYSTEM_TYPE,
+            ExplorerConstants.FAVOURITES_TYPE,
+            ExplorerConstants.FOLDER_TYPE);
 
     // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
     // All are something only an OWNER (or admin) can do.
@@ -1571,11 +1570,11 @@ class ExplorerServiceImpl
                     false);
             final List<FindResult> results = new ArrayList<>();
 
-            walk(Collections.emptyNavigableSet(), result.getRootNodes(), (path, node) -> {
+            walkNodeTree(result.getRootNodes(), (path, node) -> {
                 if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
                     node.getDocRef() != null &&
                     !ExplorerConstants.isRootNode(node)) {
-                    final String pathStr = buildNodePath(path);
+                    final String pathStr = ExplorerNode.buildDocRefPathString(path);
                     results.add(new FindResult(node.getDocRef(), pathStr, node.getIcon()));
                 }
                 return true;
@@ -1609,18 +1608,6 @@ class ExplorerServiceImpl
         }
     }
 
-    private String buildNodePath(final SequencedCollection<DocRef> path) {
-        if (NullSafe.isEmptyCollection(path)) {
-            return "";
-        } else {
-            final UnmodifiableTreeModel model = explorerTreeModel.getModel();
-            return path.stream()
-                    .map(docRef -> model.getNode(docRef))
-                    .map(ExplorerNode::getDisplayValue)
-                    .collect(Collectors.joining(" / "));
-        }
-    }
-
 //    private void addResults(final String parent,
 //                            final List<ExplorerNode> nodes,
 //                            final List<FindResult> results) {
@@ -1647,7 +1634,7 @@ class ExplorerServiceImpl
 
     @Override
     public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+//        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             final List<FindResult> results = new ArrayList<>();
             applyExpressionFilter(request, (path, node) -> {
@@ -1671,7 +1658,7 @@ class ExplorerServiceImpl
     }
 
     private FindResult createFindResult(final SequencedSet<DocRef> path, final ExplorerNode node) {
-        final String pathStr = buildNodePath(path);
+        final String pathStr = ExplorerNode.buildDocRefPathString(path);
         return new FindResult(node.getDocRef(), pathStr, node.getIcon());
     }
 
@@ -1679,17 +1666,21 @@ class ExplorerServiceImpl
                                        final TreeConsumer consumer) {
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
-            if (request.getExpression() == null || ExpressionUtil.termCount(request.getExpression()) == 0) {
+            if (!ExpressionUtil.hasTerms(request.getExpression())) {
                 return;
             }
 
             // Get a copy of the master tree model, so we can add the favourites into it.
             final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
 
+            // This is not used by the explorer tree so, we only want nodes under the System root,
+            // not Favourites.
             final ExplorerTreeFilter explorerTreeFilter = ExplorerTreeFilter
                     .builder()
                     .requiredPermissions(request.getRequiredPermissions())
+                    .includedRootTypes(ExplorerConstants.SYSTEM_TYPE)
                     .build();
+
             final FetchExplorerNodeResult result = getData(
                     explorerTreeFilter,
                     masterTreeModelClone,
@@ -1698,16 +1689,15 @@ class ExplorerServiceImpl
                     false);
 
             final ExpressionOperator expression = request.getExpression();
-            final Set<String> fields = new HashSet<>(ExpressionUtil.fields(expression));
             final ExpressionMatcher expressionMatcher =
                     new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
-            walk(Collections.emptyNavigableSet(), result.getRootNodes(), (path, node) -> {
+
+            walkNodeTree(result.getRootNodes(), (path, node) -> {
                 if (matchExpression(path, node, expressionMatcher, expression)) {
                     return consumer.consume(path, node);
                 }
                 return true;
             });
-
         } catch (Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
@@ -1747,9 +1737,14 @@ class ExplorerServiceImpl
         return ResultPage.createPageLimitedList(results, request.getPageRequest());
     }
 
-    private void walk(final SequencedSet<DocRef> nodePath,
-                      final List<ExplorerNode> nodes,
-                      final TreeConsumer consumer) {
+    private void walkNodeTree(final List<ExplorerNode> nodes,
+                              final TreeConsumer consumer) {
+        walkNodeTree(Collections.emptyNavigableSet(), nodes, consumer);
+    }
+
+    private void walkNodeTree(final SequencedSet<DocRef> nodePath,
+                              final List<ExplorerNode> nodes,
+                              final TreeConsumer consumer) {
         if (nodes != null) {
             for (final ExplorerNode node : nodes) {
                 if (consumer.consume(nodePath, node)) {
@@ -1757,7 +1752,7 @@ class ExplorerServiceImpl
                     // for the depth of most trees
                     final SequencedSet<DocRef> newAncestors = new LinkedHashSet<>(nodePath);
                     newAncestors.add(node.getDocRef());
-                    walk(newAncestors, node.getChildren(), consumer);
+                    walkNodeTree(newAncestors, node.getChildren(), consumer);
                 }
             }
         }
@@ -1965,7 +1960,9 @@ class ExplorerServiceImpl
 
     private interface TreeConsumer {
 
-        // Consume a node and return true if we should keep descending.
+        /**
+         * Consume a node and return true if we should keep descending.
+         */
         boolean consume(SequencedSet<DocRef> nodePath, ExplorerNode node);
     }
 }

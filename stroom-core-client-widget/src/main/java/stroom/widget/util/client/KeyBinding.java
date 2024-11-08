@@ -116,7 +116,7 @@ public class KeyBinding {
         DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.DOCUMENT_TYPE, Action.CREATE_ELASTIC_INDEX);
         DOC_TYPE_TO_ACTION_MAP.put(DashboardDoc.DOCUMENT_TYPE, Action.CREATE_DASHBOARD);
         DOC_TYPE_TO_ACTION_MAP.put(FeedDoc.DOCUMENT_TYPE, Action.CREATE_FEED);
-        DOC_TYPE_TO_ACTION_MAP.put(ExplorerConstants.FOLDER, Action.CREATE_FOLDER);
+        DOC_TYPE_TO_ACTION_MAP.put(ExplorerConstants.FOLDER_TYPE, Action.CREATE_FOLDER);
         DOC_TYPE_TO_ACTION_MAP.put(DictionaryDoc.DOCUMENT_TYPE, Action.CREATE_DICTIONARY);
         DOC_TYPE_TO_ACTION_MAP.put(LuceneIndexDoc.DOCUMENT_TYPE, Action.CREATE_LUCENE_INDEX);
         DOC_TYPE_TO_ACTION_MAP.put(DocumentationDoc.DOCUMENT_TYPE, Action.CREATE_DOCUMENTATION);
@@ -231,7 +231,7 @@ public class KeyBinding {
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
                 isInput = isTextBox(element, tagName)
-                        || "TEXTAREA".equalsIgnoreCase(tagName);
+                          || "TEXTAREA".equalsIgnoreCase(tagName);
 
 //                final String className = GwtNullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
@@ -248,18 +248,18 @@ public class KeyBinding {
 
     private static boolean isTextBox(final Element element, final String tagName) {
         return "INPUT".equalsIgnoreCase(tagName)
-                && isTextualInputType(element);
+               && isTextualInputType(element);
     }
 
     private static boolean isTextualInputType(final Element element) {
         // These are the type of input element that we want to stop
         final String type = element.getAttribute("type");
         return GwtNullSafe.isBlankString(type)
-                || "text".equalsIgnoreCase(type)
-                || "password".equalsIgnoreCase(type)
-                || "search".equalsIgnoreCase(type)
-                || "number".equalsIgnoreCase(type)
-                || "url".equalsIgnoreCase(type);
+               || "text".equalsIgnoreCase(type)
+               || "password".equalsIgnoreCase(type)
+               || "search".equalsIgnoreCase(type)
+               || "number".equalsIgnoreCase(type)
+               || "url".equalsIgnoreCase(type);
     }
 
     private static void logKey(final NativeEvent e) {
@@ -352,8 +352,8 @@ public class KeyBinding {
             final List<Shortcut> shortcuts2 = ACTION_TO_SHORTCUTS_MAP.computeIfAbsent(action, k -> new ArrayList<>());
             if (shortcuts2.contains(shortcut)) {
                 throw new RuntimeException("Duplicate shortcut " + shortcut + " for action " + action
-                        + ", existing shortcuts: "
-                        + shortcuts2.stream().map(Objects::toString).collect(Collectors.joining(", ")));
+                                           + ", existing shortcuts: "
+                                           + shortcuts2.stream().map(Objects::toString).collect(Collectors.joining(", ")));
             }
             shortcuts2.add(shortcut);
             SHORTCUT_TO_ACTION_MAP.put(shortcut, action);
@@ -564,9 +564,9 @@ public class KeyBinding {
         @Override
         public String toString() {
             return "Binding{" +
-                    "shortcut=" + shortcut +
-                    ", action=" + action +
-                    '}';
+                   "shortcut=" + shortcut +
+                   ", action=" + action +
+                   '}';
         }
 
         public static class Builder {
@@ -624,10 +624,10 @@ public class KeyBinding {
             }
             final Shortcut binding = (Shortcut) o;
             return keyCode == binding.keyCode &&
-                    shift == binding.shift &&
-                    ctrl == binding.ctrl &&
-                    alt == binding.alt &&
-                    meta == binding.meta;
+                   shift == binding.shift &&
+                   ctrl == binding.ctrl &&
+                   alt == binding.alt &&
+                   meta == binding.meta;
         }
 
         @Override

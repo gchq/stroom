@@ -41,8 +41,10 @@ public class FindPresenter
             final ExplorerTreeFilter.Builder explorerTreeFilterBuilder =
                     getFindResultListPresenter().getExplorerTreeFilterBuilder();
             // Don't want favourites in the recent items as they are effectively duplicates
-            explorerTreeFilterBuilder.includedRootTypes(ExplorerConstants.SYSTEM);
-            explorerTreeFilterBuilder.setNameFilter(explorerTreeFilterBuilder.build().getNameFilter(), true);
+            explorerTreeFilterBuilder.includedRootTypes(ExplorerConstants.SYSTEM_TYPE);
+            explorerTreeFilterBuilder.setNameFilter(
+                    explorerTreeFilterBuilder.build().getNameFilter(),
+                    true);
 
             // Refresh the results.
             refresh();
