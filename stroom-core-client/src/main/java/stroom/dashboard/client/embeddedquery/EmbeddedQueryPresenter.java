@@ -54,6 +54,7 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryResource;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -184,6 +185,16 @@ public class EmbeddedQueryPresenter
                         hasData = true;
                     }
 
+                    // Update the columns that are known to the query table preferences.
+                    if (tableResult.getColumns() != null && tableResult.getColumns().size() > 0) {
+                        final QueryTablePreferences queryTablePreferences = QueryTablePreferences
+                                .copy(getQuerySettings().getQueryTablePreferences())
+                                .columns(tableResult.getColumns())
+                                .build();
+                        setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build());
+                    }
+
+                    // Give the new data to the table.
                     currentTablePresenter.setData(componentResult);
                 }
 //                else {
@@ -552,7 +563,7 @@ public class EmbeddedQueryPresenter
                     .onSuccess(result -> {
                         if (result != null) {
                             if (settings.getQueryTablePreferences() == null &&
-                                    result.getQueryTablePreferences() != null) {
+                                result.getQueryTablePreferences() != null) {
                                 setSettings(settings
                                         .copy()
                                         .queryTablePreferences(result.getQueryTablePreferences())
