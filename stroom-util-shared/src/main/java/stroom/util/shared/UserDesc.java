@@ -89,7 +89,7 @@ public class UserDesc {
 
     public static class Builder {
 
-        private String subjectId;
+        private final String subjectId;
         private String displayName;
         private String fullName;
 
