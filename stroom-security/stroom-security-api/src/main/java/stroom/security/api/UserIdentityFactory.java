@@ -1,5 +1,7 @@
 package stroom.security.api;
 
+import stroom.util.shared.UserDesc;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
@@ -58,4 +60,14 @@ public interface UserIdentityFactory {
     Map<String, String> getAuthHeaders(final String jwt);
 
     void refresh(final UserIdentity userIdentity);
+
+    /**
+     * Allows an identity provider to manually add a userIdentity, e.g. so it is available
+     * in stroom for permissions to be granted to it prior to the user logging in.
+     * If the userIdentity is present, its displayName and fullName will be updated using
+     * the values from userIdentity.
+     */
+    default void ensureUserIdentity(final UserDesc userDesc) {
+        throw new UnsupportedOperationException("Ensuring user identities manually is not supported");
+    }
 }

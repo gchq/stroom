@@ -32,6 +32,10 @@ public class UserDesc {
         this.fullName = fullName;
     }
 
+    public static UserDesc forSubjectId(final String subjectId) {
+        return new UserDesc(subjectId, subjectId, null);
+    }
+
     public String getSubjectId() {
         return subjectId;
     }
@@ -65,19 +69,23 @@ public class UserDesc {
     @Override
     public String toString() {
         return "ExternalUser{" +
-                "subjectId='" + subjectId + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                '}';
+               "subjectId='" + subjectId + '\'' +
+               ", displayName='" + displayName + '\'' +
+               ", fullName='" + fullName + '\'' +
+               '}';
     }
 
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static Builder builder(final String subjectId) {
+        return new Builder(subjectId);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
@@ -85,18 +93,14 @@ public class UserDesc {
         private String displayName;
         private String fullName;
 
-        private Builder() {
+        private Builder(final String subjectId) {
+            this.subjectId = Objects.requireNonNull(subjectId);
         }
 
         private Builder(final UserDesc externalUser) {
-            this.subjectId = externalUser.subjectId;
+            this.subjectId = Objects.requireNonNull(externalUser.subjectId);
             this.displayName = externalUser.displayName;
             this.fullName = externalUser.fullName;
-        }
-
-        public Builder subjectId(final String subjectId) {
-            this.subjectId = subjectId;
-            return this;
         }
 
         public Builder displayName(final String displayName) {

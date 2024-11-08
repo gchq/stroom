@@ -28,7 +28,9 @@ import java.util.function.Consumer;
 public interface UserService {
 
     default User getOrCreateUser(String subjectId) {
-        return getOrCreateUser(UserDesc.builder().subjectId(subjectId).displayName(subjectId).build(), null);
+        return getOrCreateUser(UserDesc.builder(subjectId)
+                .displayName(subjectId)
+                .build(), null);
     }
 
     default User getOrCreateUser(UserDesc userDesc) {

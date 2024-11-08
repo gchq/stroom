@@ -1,6 +1,7 @@
 package stroom.security.identity.account;
 
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.shared.Account;
@@ -10,10 +11,13 @@ import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserDesc;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class AccountServiceImpl implements AccountService {
@@ -21,15 +25,18 @@ public class AccountServiceImpl implements AccountService {
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
     private final IdentityConfig config;
+    private final UserIdentityFactory userIdentityFactory;
 
 
     @Inject
     AccountServiceImpl(final AccountDao accountDao,
                        final SecurityContext securityContext,
-                       final IdentityConfig config) {
+                       final IdentityConfig config,
+                       final UserIdentityFactory userIdentityFactory) {
         this.accountDao = accountDao;
         this.securityContext = securityContext;
         this.config = config;
+        this.userIdentityFactory = userIdentityFactory;
     }
 
 //    @Override
@@ -131,17 +138,24 @@ public class AccountServiceImpl implements AccountService {
     public Account create(final CreateAccountRequest request) {
         checkPermission();
         validateCreateRequest(request);
+        final Account account = buildAccountObject(request);
+        final Account persistedAccount = accountDao.create(account, request.getPassword());
 
-        // Validate
-        final String userId = securityContext.getUserIdentityForAudit();
+        // Create a corresponding stroom user for the account
+        userIdentityFactory.ensureUserIdentity(createUserIdentity(account));
 
+        return persistedAccount;
+    }
+
+    @NotNull
+    private Account buildAccountObject(final CreateAccountRequest request) {
         final long now = System.currentTimeMillis();
-
+        final String userIdForAudit = securityContext.getUserIdentityForAudit();
         final Account account = new Account();
         account.setCreateTimeMs(now);
-        account.setCreateUser(userId);
+        account.setCreateUser(userIdForAudit);
         account.setUpdateTimeMs(now);
-        account.setUpdateUser(userId);
+        account.setUpdateUser(userIdForAudit);
         account.setFirstName(request.getFirstName());
         account.setLastName(request.getLastName());
         account.setUserId(request.getUserId());
@@ -152,8 +166,17 @@ public class AccountServiceImpl implements AccountService {
         account.setLoginCount(0);
         // Set enabled by default.
         account.setEnabled(true);
+        return account;
+    }
 
-        return accountDao.create(account, request.getPassword());
+    private UserDesc createUserIdentity(final Account account) {
+        if (account == null) {
+            return null;
+        } else {
+            return UserDesc.builder(account.getUserId())
+                    .fullName(account.getFullName())
+                    .build();
+        }
     }
 
     @Override
@@ -184,10 +207,8 @@ public class AccountServiceImpl implements AccountService {
         checkPermission();
         validateUpdateRequest(request);
 
-        final Optional<Account> existingAccount = accountDao.get(accountId);
-        if (existingAccount.isEmpty()) {
-            throw new RuntimeException("Account with id = " + accountId + " not found");
-        }
+        final Account existingAccount = accountDao.get(accountId)
+                .orElseThrow(() -> new RuntimeException("Account with id = " + accountId + " not found"));
 
 //        // Update Stroom user
 //        Optional<Account> optionalUser = accountDao.get(userId);
@@ -202,9 +223,9 @@ public class AccountServiceImpl implements AccountService {
         account.setUpdateTimeMs(System.currentTimeMillis());
 
         // If we are reactivating account then set the reactivated time.
-        if ((account.isEnabled() && !existingAccount.get().isEnabled()) ||
-                (!account.isInactive() && existingAccount.get().isInactive()) ||
-                (!account.isLocked() && existingAccount.get().isLocked())) {
+        if ((account.isEnabled() && !existingAccount.isEnabled()) ||
+            (!account.isInactive() && existingAccount.isInactive()) ||
+            (!account.isLocked() && existingAccount.isLocked())) {
             account.setReactivatedMs(System.currentTimeMillis());
         }
 
@@ -213,8 +234,14 @@ public class AccountServiceImpl implements AccountService {
 
         // Change the account password if the update request includes a new password.
         if (!Strings.isNullOrEmpty(request.getPassword())
-                && request.getPassword().equals(request.getConfirmPassword())) {
+            && request.getPassword().equals(request.getConfirmPassword())) {
             accountDao.changePassword(account.getUserId(), request.getPassword());
+        }
+
+        // If the fullName has changed we need to update the corresponding stroom user.
+        // userId obviously can't change and displayName is same as userId
+        if (!Objects.equals(existingAccount.getFirstName(), account.getFullName())) {
+            userIdentityFactory.ensureUserIdentity(createUserIdentity(account));
         }
     }
 
