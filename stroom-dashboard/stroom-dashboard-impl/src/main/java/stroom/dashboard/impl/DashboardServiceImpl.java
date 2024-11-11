@@ -252,7 +252,7 @@ class DashboardServiceImpl implements DashboardService {
                         .stream()
                         .filter(req -> req instanceof TableResultRequest)
                         .filter(req -> request.isDownloadAllTables() ||
-                                req.getComponentId().equals(request.getComponentId()))
+                                       req.getComponentId().equals(request.getComponentId()))
                         .collect(Collectors.toMap(
                                 ComponentResultRequest::getComponentId,
                                 req -> (TableResultRequest) req));
@@ -263,7 +263,7 @@ class DashboardServiceImpl implements DashboardService {
                         .stream()
                         .filter(req -> ResultStyle.TABLE.equals(req.getResultStyle()))
                         .filter(req -> request.isDownloadAllTables() ||
-                                req.getComponentId().equals(request.getComponentId()))
+                                       req.getComponentId().equals(request.getComponentId()))
                         .toList();
 
                 if (resultRequests.isEmpty()) {
@@ -325,10 +325,16 @@ class DashboardServiceImpl implements DashboardService {
                                 searchResponseCreatorManager.search(requestAndStore, resultCreatorMap);
                                 totalRowCount += searchResultWriter.getRowCount();
 
+                            } catch (final Exception e) {
+                                LOGGER.debug(e::getMessage, e);
+                                throw e;
                             } finally {
                                 target.endTable();
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e::getMessage, e);
+                        throw e;
                     } finally {
                         target.end();
                     }
