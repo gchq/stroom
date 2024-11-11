@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.4] - 2024-11-11
+
+* Issue **#4601** : Add null handling and better error logging to Excel download.
+
+
 ## [v7.7-beta.3] - 2024-11-11
 
 * Issue **#4597** : Fix NPE when opening the Document Permissions Report screen for a user.
@@ -988,7 +993,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.4...HEAD
+[v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
 [v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
 [v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
 [v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
