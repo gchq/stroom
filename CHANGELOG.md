@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.3] - 2024-11-11
+
+* Issue **#4597** : Fix NPE when opening the Document Permissions Report screen for a user.
+
+* Change the code that counts expression terms and gets all fields/values from an expression tree to no longer ignore NOT operators.
+
+* Issue **#4596** : Fix demo bugs.
+
+* Issue **#4596** : Add table value filter dialog option.
+
+
 ## [v7.7-beta.2] - 2024-11-06
 
 * Change the permission filtering to use a LinkedHashSet for children of and descendants of terms.
@@ -977,7 +988,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.3...HEAD
+[v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
 [v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
 [v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
 [v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
