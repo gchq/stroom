@@ -270,10 +270,16 @@ class QueryServiceImpl implements QueryService {
                                 searchResponseCreatorManager.search(requestAndStore, resultCreatorMap);
                                 totalRowCount += searchResultWriter.getRowCount();
 
+                            } catch (final Exception e) {
+                                LOGGER.debug(e::getMessage, e);
+                                throw e;
                             } finally {
                                 target.endTable();
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e::getMessage, e);
+                        throw e;
                     } finally {
                         target.end();
                     }
@@ -715,8 +721,8 @@ class QueryServiceImpl implements QueryService {
                         .collect(Collectors.toSet());
                 final boolean includeStructure = !keywordsValidAfter.isEmpty();
                 if (lastKeyword != null
-                        && keywordsSeen.contains(TokenType.FROM)
-                        && tokens.size() >= 4) {
+                    && keywordsSeen.contains(TokenType.FROM)
+                    && tokens.size() >= 4) {
                     types.addAll(getHelpTypes(lastKeyword, lastKeywordSequence, includeStructure));
                 }
             }
@@ -787,7 +793,7 @@ class QueryServiceImpl implements QueryService {
             } else if (lastToken == TokenType.COMMENT || lastToken == TokenType.BLOCK_COMMENT) {
                 doRemove = true;
             } else if (lastToken == TokenType.COMMA
-                    || TokenType.haveSeenLast(lastKeywordSequence, TokenType.COMMA, TokenType.WHITESPACE)) {
+                       || TokenType.haveSeenLast(lastKeywordSequence, TokenType.COMMA, TokenType.WHITESPACE)) {
                 doRemove = true;
             } else if (TokenType.ALL_CONDITIONS.contains(lastToken)) {
                 doRemove = true;
@@ -835,14 +841,14 @@ class QueryServiceImpl implements QueryService {
 
     private boolean includeDataSources(final List<TokenType> lastKeywordSequence) {
         return isAtIndex(lastKeywordSequence, TokenType.FROM, 0)
-                && isAtIndex(lastKeywordSequence, TokenType.WHITESPACE, 1)
-                && lastKeywordSequence.size() <= 3;
+               && isAtIndex(lastKeywordSequence, TokenType.WHITESPACE, 1)
+               && lastKeywordSequence.size() <= 3;
     }
 
     private boolean isAtIndex(final List<TokenType> tokenTypes, final TokenType tokenType, final int idx) {
         return tokenTypes != null
-                && tokenTypes.size() > idx
-                && tokenTypes.get(idx) == tokenType;
+               && tokenTypes.size() > idx
+               && tokenTypes.get(idx) == tokenType;
     }
 
     private boolean seenInDictionary(final List<Token> tokens) {
@@ -857,7 +863,7 @@ class QueryServiceImpl implements QueryService {
                     TokenType.WHITESPACE,
                     TokenType.DICTIONARY,
                     TokenType.WHITESPACE)
-                    || containsTailElements(
+                   || containsTailElements(
                     tokens,
                     Token::getTokenType,
                     TokenType.IN,
