@@ -19,15 +19,18 @@ package stroom.dashboard.client.table.gin;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
+import stroom.dashboard.client.table.ColumnFilterPresenter;
+import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
+import stroom.dashboard.client.table.ColumnFilterViewImpl;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.client.table.DownloadViewImpl;
-import stroom.dashboard.client.table.FilterPresenter;
-import stroom.dashboard.client.table.FilterPresenter.FilterView;
-import stroom.dashboard.client.table.FilterViewImpl;
+import stroom.dashboard.client.table.IncludeExcludeFilterPresenter;
+import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
+import stroom.dashboard.client.table.IncludeExcludeFilterViewImpl;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.dashboard.client.table.FormatViewImpl;
@@ -67,7 +70,8 @@ public class TableModule extends AbstractPresenterModule {
                 ColumnFunctionEditorView.class,
                 ColumnFunctionEditorViewImpl.class);
         bindPresenterWidget(FormatPresenter.class, FormatView.class, FormatViewImpl.class);
-        bindPresenterWidget(FilterPresenter.class, FilterView.class, FilterViewImpl.class);
+        bindPresenterWidget(IncludeExcludeFilterPresenter.class, IncludeExcludeFilterView.class, IncludeExcludeFilterViewImpl.class);
+        bindPresenterWidget(ColumnFilterPresenter.class, ColumnFilterView.class, ColumnFilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RenameColumnPresenter.class, RenameColumnView.class, RenameColumnViewImpl.class);
 

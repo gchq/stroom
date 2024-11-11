@@ -173,7 +173,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final FilterPresenter filterPresenter,
+                          final IncludeExcludeFilterPresenter includeExcludeFilterPresenter,
+                          final ColumnFilterPresenter columnFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
@@ -229,7 +230,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
-                filterPresenter);
+                includeExcludeFilterPresenter,
+                columnFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get(result -> {
@@ -296,7 +298,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (currentSearchModel.isPolling()) {
                     ConfirmEvent.fire(TablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
-                                    "Note that these may be incomplete.",
+                            "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -632,8 +634,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 // Wrap
                 if (column.getFormat() != null &&
-                        column.getFormat().getWrap() != null &&
-                        column.getFormat().getWrap()) {
+                    column.getFormat().getWrap() != null &&
+                    column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
@@ -701,7 +703,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
             if (getTableComponentSettings() != null &&
-                    getTableComponentSettings().getConditionalFormattingRules() != null) {
+                getTableComponentSettings().getConditionalFormattingRules() != null) {
                 final AtomicBoolean wasModified = new AtomicBoolean(false);
                 getTableComponentSettings().getConditionalFormattingRules().stream()
                         .map(ConditionalFormattingRule::getExpression)
@@ -1115,8 +1117,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public Set<String> getHighlights() {
         if (currentSearchModel != null
-                && currentSearchModel.getCurrentResponse() != null
-                && currentSearchModel.getCurrentResponse().getHighlights() != null) {
+            && currentSearchModel.getCurrentResponse() != null
+            && currentSearchModel.getCurrentResponse().getHighlights() != null) {
             return currentSearchModel.getCurrentResponse().getHighlights();
         }
 

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.client.table.FilterPresenter.FilterView;
+import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,16 +25,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class FilterViewImpl extends ViewImpl implements FilterView {
+public class ColumnFilterViewImpl extends ViewImpl implements ColumnFilterView {
 
     private final Widget widget;
     @UiField
-    TextArea includes;
-    @UiField
-    TextArea excludes;
+    TextArea filter;
 
     @Inject
-    public FilterViewImpl(final Binder binder) {
+    public ColumnFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -45,30 +43,20 @@ public class FilterViewImpl extends ViewImpl implements FilterView {
 
     @Override
     public void focus() {
-        includes.setFocus(true);
+        filter.setFocus(true);
     }
 
     @Override
-    public String getIncludes() {
-        return this.includes.getText();
+    public String getFilter() {
+        return filter.getText();
     }
 
     @Override
-    public void setIncludes(final String includes) {
-        this.includes.setText(includes);
+    public void setFilter(final String filter) {
+        this.filter.setText(filter);
     }
 
-    @Override
-    public String getExcludes() {
-        return this.excludes.getText();
-    }
-
-    @Override
-    public void setExcludes(final String excludes) {
-        this.excludes.setText(excludes);
-    }
-
-    public interface Binder extends UiBinder<Widget, FilterViewImpl> {
+    public interface Binder extends UiBinder<Widget, ColumnFilterViewImpl> {
 
     }
 }

@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
@@ -125,7 +126,8 @@ public class QueryResultTablePresenter
                                      final DownloadPresenter downloadPresenter,
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
-                                     final Provider<RulesPresenter> rulesPresenterProvider) {
+                                     final Provider<RulesPresenter> rulesPresenterProvider,
+                                     final ColumnFilterPresenter columnFilterPresenter) {
         super(eventBus, tableView);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -145,7 +147,8 @@ public class QueryResultTablePresenter
         columnsManager = new QueryTableColumnsManager(
                 this,
                 formatPresenter,
-                rulesPresenterProvider);
+                rulesPresenterProvider,
+                columnFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
 
