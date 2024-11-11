@@ -28,12 +28,12 @@ import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.client.table.DownloadViewImpl;
-import stroom.dashboard.client.table.IncludeExcludeFilterPresenter;
-import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
-import stroom.dashboard.client.table.IncludeExcludeFilterViewImpl;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.dashboard.client.table.FormatViewImpl;
+import stroom.dashboard.client.table.IncludeExcludeFilterPresenter;
+import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
+import stroom.dashboard.client.table.IncludeExcludeFilterViewImpl;
 import stroom.dashboard.client.table.RenameColumnPresenter;
 import stroom.dashboard.client.table.RenameColumnPresenter.RenameColumnView;
 import stroom.dashboard.client.table.RenameColumnViewImpl;
@@ -70,7 +70,9 @@ public class TableModule extends AbstractPresenterModule {
                 ColumnFunctionEditorView.class,
                 ColumnFunctionEditorViewImpl.class);
         bindPresenterWidget(FormatPresenter.class, FormatView.class, FormatViewImpl.class);
-        bindPresenterWidget(IncludeExcludeFilterPresenter.class, IncludeExcludeFilterView.class, IncludeExcludeFilterViewImpl.class);
+        bindPresenterWidget(IncludeExcludeFilterPresenter.class,
+                IncludeExcludeFilterView.class,
+                IncludeExcludeFilterViewImpl.class);
         bindPresenterWidget(ColumnFilterPresenter.class, ColumnFilterView.class, ColumnFilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RenameColumnPresenter.class, RenameColumnView.class, RenameColumnViewImpl.class);
