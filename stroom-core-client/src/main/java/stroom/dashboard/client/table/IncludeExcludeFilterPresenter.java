@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -30,22 +31,15 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.BiConsumer;
 
-public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> {
-
-    private Column column;
-    private BiConsumer<Column, Column> columnChangeConsumer;
+public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcludeFilterView> {
 
     @Inject
-    public FilterPresenter(final EventBus eventBus, final FilterView view) {
+    public IncludeExcludeFilterPresenter(final EventBus eventBus, final IncludeExcludeFilterView view) {
         super(eventBus, view);
     }
 
-    public void show(final TablePresenter tablePresenter,
-                     final Column column,
+    public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
-        this.column = column;
-        this.columnChangeConsumer = columnChangeConsumer;
-
         String includes = "";
         String excludes = "";
 
@@ -72,7 +66,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
                     if (e.isOk()) {
                         final IncludeExcludeFilter filter = getFilter();
                         if ((filter == null && column.getFilter() != null)
-                                || (filter != null && !filter.equals(column.getFilter()))) {
+                            || (filter != null && !filter.equals(column.getFilter()))) {
                             columnChangeConsumer.accept(column, column.copy().filter(filter).build());
                         }
                     }
@@ -98,7 +92,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
         return filter;
     }
 
-    public interface FilterView extends View, Focus {
+    public interface IncludeExcludeFilterView extends View, Focus {
 
         String getIncludes();
 

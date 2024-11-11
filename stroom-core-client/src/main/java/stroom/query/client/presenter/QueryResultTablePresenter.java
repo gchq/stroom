@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
@@ -125,7 +126,8 @@ public class QueryResultTablePresenter
                                      final DownloadPresenter downloadPresenter,
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
-                                     final Provider<RulesPresenter> rulesPresenterProvider) {
+                                     final Provider<RulesPresenter> rulesPresenterProvider,
+                                     final ColumnFilterPresenter columnFilterPresenter) {
         super(eventBus, tableView);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -145,7 +147,8 @@ public class QueryResultTablePresenter
         columnsManager = new QueryTableColumnsManager(
                 this,
                 formatPresenter,
-                rulesPresenterProvider);
+                rulesPresenterProvider,
+                columnFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
 
@@ -241,7 +244,7 @@ public class QueryResultTablePresenter
                 if (currentSearchModel.isSearching()) {
                     ConfirmEvent.fire(QueryResultTablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
-                                    "Note that these may be incomplete.",
+                            "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -427,7 +430,7 @@ public class QueryResultTablePresenter
                 // Get result columns.
                 List<Column> columns = tableResult.getColumns();
 
-                if (columns != null && queryTablePreferences.getColumns() != null) {
+                if (columns != null && queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
 
                     // Create a map of the result columns by id and remember the order that the result has them in.
                     final Map<String, ColAndPosition> mapped = new HashMap<>();
@@ -608,8 +611,8 @@ public class QueryResultTablePresenter
 
                 // Wrap
                 if (column.getFormat() != null &&
-                        column.getFormat().getWrap() != null &&
-                        column.getFormat().getWrap()) {
+                    column.getFormat().getWrap() != null &&
+                    column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped

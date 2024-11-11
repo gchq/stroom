@@ -318,17 +318,22 @@ public class RulesPresenter
     }
 
     public void read(final QueryTablePreferences queryTablePreferences) {
-        // We have to deal in field names (aka column names) here as all the
-        // exp tree code only has a single field/term name so can't cope with working with
-        // ids and mapping to col name for the ui.
-        this.fields = GwtNullSafe.list(queryTablePreferences.getColumns())
-                .stream()
-                .map(TablePresenter::buildDsField)
-                .collect(Collectors.toList());
+        if (queryTablePreferences != null) {
+            // We have to deal in field names (aka column names) here as all the
+            // exp tree code only has a single field/term name so can't cope with working with
+            // ids and mapping to col name for the ui.
+            this.fields = GwtNullSafe.list(queryTablePreferences.getColumns())
+                    .stream()
+                    .map(TablePresenter::buildDsField)
+                    .collect(Collectors.toList());
 
-        if (queryTablePreferences.getConditionalFormattingRules() != null) {
-            this.rules = new ArrayList<>(queryTablePreferences.getConditionalFormattingRules());
+            if (queryTablePreferences.getConditionalFormattingRules() != null) {
+                this.rules = new ArrayList<>(queryTablePreferences.getConditionalFormattingRules());
+            } else {
+                this.rules = new ArrayList<>();
+            }
         } else {
+            this.fields = new ArrayList<>();
             this.rules = new ArrayList<>();
         }
 
@@ -362,8 +367,8 @@ public class RulesPresenter
     }
 
     public QueryTablePreferences write(final QueryTablePreferences queryTablePreferences) {
-        return queryTablePreferences
-                .copy()
+        return QueryTablePreferences
+                .copy(queryTablePreferences)
                 .conditionalFormattingRules(rules)
                 .build();
     }

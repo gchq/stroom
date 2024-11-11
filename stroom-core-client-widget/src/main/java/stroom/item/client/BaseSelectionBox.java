@@ -4,8 +4,6 @@ import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -38,9 +36,8 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
-            registerHandler(renderBox.addDomHandler(event -> showPopup(), ClickEvent.getType()));
-            registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
+            registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 int keyCode = event.getNativeKeyCode();
                 if (KeyCodes.KEY_ENTER == keyCode) {
@@ -58,12 +55,11 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
         renderBox = new SimplePanel();
         renderBox.addStyleName("SelectionBox-renderBox stroom-control allow-focus");
-        renderBox.setVisible(false);
 
         final FlowPanel outer = new FlowPanel();
         outer.addStyleName("SelectionBox-outer");
-        outer.add(textBox);
         outer.add(renderBox);
+        outer.add(textBox);
 
         svgIconBox = new SvgIconBox();
         svgIconBox.addStyleName("SelectionBox");
@@ -76,6 +72,12 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
         textBox.setReadOnly(!allowTextEntry);
+        textBox.getElement().getStyle().setOpacity(allowTextEntry
+                ? 1
+                : 0);
+        renderBox.getElement().getStyle().setOpacity(allowTextEntry
+                ? 0
+                : 1);
         updatePointer();
     }
 
@@ -120,13 +122,12 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     private void showPopup() {
         if (popup != null) {
-            GWT.log("Hiding popup");
+//            GWT.log("Hiding popup");
             hidePopup();
 
         } else {
             popup = new SelectionPopup<>();
             popup.init(model);
-            popup.addAutoHidePartner(renderBox.getElement());
             popup.addAutoHidePartner(textBox.getElement());
             popup.addAutoHidePartner(svgIconBox.getElement());
 
@@ -153,7 +154,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
                 hidePopup();
             }));
 
-            popup.show(renderBox.getElement());
+            popup.show(textBox.getElement());
         }
     }
 
@@ -187,24 +188,21 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     public void setValue(final T value, final boolean fireEvents) {
+        final boolean changed = !Objects.equals(this.value, value);
         this.value = value;
 
-        String currentText = textBox.getText();
         String newText = "";
+        String newHTML = "";
         if (value != null) {
             final SelectionItem selectionItem = model.wrap(value);
             newText = selectionItem.getLabel();
-
-            if (!allowTextEntry) {
-                renderBox.setVisible(true);
-                renderBox.clear();
-                renderBox.getElement().setInnerHTML(selectionItem.getRenderedLabel().asString());
-            }
+            newHTML = selectionItem.getRenderedLabel().asString();
         }
 
         textBox.setValue(newText);
+        renderBox.getElement().setInnerHTML(newHTML);
 
-        if (fireEvents && !Objects.equals(currentText, newText)) {
+        if (fireEvents && changed) {
             ValueChangeEvent.fire(this, value);
         }
     }

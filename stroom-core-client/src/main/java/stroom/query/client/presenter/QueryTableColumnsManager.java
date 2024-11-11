@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasValueFilter;
 import stroom.dashboard.client.table.cf.RulesPresenter;
@@ -56,16 +57,19 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
     private final QueryResultTablePresenter tablePresenter;
     private final FormatPresenter formatPresenter;
     private final Provider<RulesPresenter> rulesPresenterProvider;
+    private final ColumnFilterPresenter columnFilterPresenter;
     private int columnsStartIndex;
     private int currentColIndex = -1;
     private boolean ignoreNext;
 
     public QueryTableColumnsManager(final QueryResultTablePresenter tablePresenter,
                                     final FormatPresenter formatPresenter,
-                                    final Provider<RulesPresenter> rulesPresenterProvider) {
+                                    final Provider<RulesPresenter> rulesPresenterProvider,
+                                    final ColumnFilterPresenter columnFilterPresenter) {
         this.tablePresenter = tablePresenter;
         this.formatPresenter = formatPresenter;
         this.rulesPresenterProvider = rulesPresenterProvider;
+        this.columnFilterPresenter = columnFilterPresenter;
     }
 
     @Override
@@ -231,6 +235,15 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         });
     }
 
+    private void filterColumn(final Column column) {
+        columnFilterPresenter.show(column, (oldField, newField) -> {
+            replaceColumn(oldField, newField);
+            tablePresenter.setDirty(true);
+//            tablePresenter.updateColumns();
+            tablePresenter.refresh();
+        });
+    }
+
     private void moveFirst(final Column column) {
         final List<Column> columns = getColumns();
         columns.remove(column);
@@ -350,6 +363,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         menuItems.add(createFormatMenu(column));
 //        // Add filter menu item.
 //        menuItems.add(createFilterMenu(column));
+        // Add column filter menu item.
+        menuItems.add(createColumnFilterMenu(column));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
@@ -544,9 +559,22 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 //        return depths.size();
 //    }
 
-    private Item createFormatMenu(final Column column) {
+    private Item createColumnFilterMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(5)
+                .icon(SvgImage.FILTER)
+                .disabledIcon(SvgImage.FILTER)
+                .text("Value Filter")
+                .command(() -> filterColumn(column))
+                .highlight(column.getColumnFilter() != null
+                           && ((column.getColumnFilter().getFilter() != null
+                                && column.getColumnFilter().getFilter().trim().length() > 0)))
+                .build();
+    }
+
+    private Item createFormatMenu(final Column column) {
+        return new IconMenuItem.Builder()
+                .priority(6)
                 .icon(SvgImage.FIELDS_FORMAT)
                 .text("Format")
                 .command(() -> showFormat(column))
@@ -557,7 +585,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 
     private Item createMoveFirstMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(6)
+                .priority(7)
                 .icon(SvgImage.STEP_BACKWARD)
                 .text("Move First")
                 .command(() -> moveFirst(column))
@@ -566,7 +594,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 
     private Item createMoveLastMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(7)
+                .priority(8)
                 .icon(SvgImage.STEP_FORWARD)
                 .text("Move Last")
                 .command(() -> moveLast(column))
@@ -584,7 +612,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 
     private Item createHideMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(9)
+                .priority(10)
                 .icon(SvgImage.HIDE)
                 .text("Hide")
                 .command(() -> hideColumn(column))
@@ -612,7 +640,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(10)
+                .priority(11)
                 .icon(SvgImage.SHOW)
                 .text("Show")
                 .children(menuItems)
@@ -621,7 +649,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 
     private Item createConditionalFormattingMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(11)
+                .priority(12)
                 .icon(SvgImage.FORMAT)
                 .text("Conditional Formatting")
                 .command(() -> {

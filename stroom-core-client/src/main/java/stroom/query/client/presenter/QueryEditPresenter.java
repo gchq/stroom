@@ -75,13 +75,13 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
-    private final QueryTablePreferencesHolder queryTablePreferencesHolder = new QueryTablePreferencesHolder();
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
     private final QueryModel queryModel;
     private final QueryResultTabsView linkTabsLayoutView;
     private final QueryInfo queryInfo;
+    private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
 
     private final Provider<QueryResultVisPresenter> visPresenterProvider;
 
@@ -108,8 +108,12 @@ public class QueryEditPresenter
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
 
-        queryResultPresenter.setQueryTablePreferencesSupplier(queryTablePreferencesHolder);
-        queryResultPresenter.setQueryTablePreferencesConsumer(queryTablePreferencesHolder);
+        queryResultPresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
+        queryResultPresenter.setQueryTablePreferencesConsumer(qtp -> {
+            if (qtp != null) {
+                queryTablePreferences = qtp;
+            }
+        });
 
         final ResultComponent resultConsumer = new ResultComponent() {
             boolean start;
@@ -186,7 +190,7 @@ public class QueryEditPresenter
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                queryTablePreferencesHolder);
+                () -> queryTablePreferences);
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
 
@@ -391,7 +395,7 @@ public class QueryEditPresenter
         if (query != null) {
             reading = true;
             if (GwtNullSafe.isBlankString(editorPresenter.getText())
-                    || !Objects.equals(editorPresenter.getText(), query)) {
+                || !Objects.equals(editorPresenter.getText(), query)) {
                 editorPresenter.setText(query);
                 queryHelpPresenter.setQuery(query);
             }
@@ -421,11 +425,13 @@ public class QueryEditPresenter
     }
 
     public QueryTablePreferences write() {
-        return queryTablePreferencesHolder.get();
+        return queryTablePreferences;
     }
 
     public void read(final QueryTablePreferences queryTablePreferences) {
-        queryTablePreferencesHolder.accept(queryTablePreferences);
+        if (queryTablePreferences != null) {
+            this.queryTablePreferences = queryTablePreferences;
+        }
     }
 
 

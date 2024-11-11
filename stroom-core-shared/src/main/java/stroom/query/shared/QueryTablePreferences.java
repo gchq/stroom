@@ -105,10 +105,10 @@ public class QueryTablePreferences {
         }
         final QueryTablePreferences that = (QueryTablePreferences) o;
         return Objects.equals(columns, that.columns) &&
-                Objects.equals(pageSize, that.pageSize) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(applyValueFilters, that.applyValueFilters) &&
-                Objects.equals(selectionHandlers, that.selectionHandlers);
+               Objects.equals(pageSize, that.pageSize) &&
+               Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+               Objects.equals(applyValueFilters, that.applyValueFilters) &&
+               Objects.equals(selectionHandlers, that.selectionHandlers);
     }
 
     @Override
@@ -124,16 +124,24 @@ public class QueryTablePreferences {
     @Override
     public String toString() {
         return "TableSettings{" +
-                "columns=" + columns +
-                ", pageSize=" + pageSize +
-                ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", applyValueFilters='" + applyValueFilters + '\'' +
-                ", selectionHandlers='" + selectionHandlers + '\'' +
-                '}';
+               "columns=" + columns +
+               ", pageSize=" + pageSize +
+               ", conditionalFormattingRules=" + conditionalFormattingRules +
+               ", applyValueFilters='" + applyValueFilters + '\'' +
+               ", selectionHandlers='" + selectionHandlers + '\'' +
+               '}';
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static Builder copy(final QueryTablePreferences queryTablePreferences) {
+        if (queryTablePreferences != null) {
+            return queryTablePreferences.copy();
+        } else {
+            return builder();
+        }
     }
 
     public Builder copy() {
