@@ -25,6 +25,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
+import stroom.security.client.presenter.AppPermissionsEditPresenter.ValueChange;
 import stroom.security.shared.AbstractAppPermissionChange;
 import stroom.security.shared.AbstractAppPermissionChange.AddAppPermission;
 import stroom.security.shared.AbstractAppPermissionChange.RemoveAppPermission;
@@ -32,15 +33,15 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissionsReport;
 import stroom.util.shared.UserRef;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.LegacyHandlerWrapper;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -54,7 +55,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class AppPermissionsEditPresenter
-        extends MyPresenterWidget<AppPermissionsEditView> {
+        extends MyPresenterWidget<AppPermissionsEditView>
+        implements HasValueChangeHandlers<ValueChange> {
 
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
@@ -62,7 +64,6 @@ public class AppPermissionsEditPresenter
     private final ClientSecurityContext securityContext;
     private final MyDataGrid<AppPermission> dataGrid;
     private final MultiSelectionModelImpl<AppPermission> selectionModel;
-    private final DataGridSelectionEventManager<AppPermission> selectionEventManager;
 
     private AppUserPermissionsReport currentPermissions;
     private List<AppPermission> allPermissions;
@@ -81,7 +82,10 @@ public class AppPermissionsEditPresenter
 
         dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<AppPermission> selectionEventManager = new DataGridSelectionEventManager<>(
+                dataGrid,
+                selectionModel,
+                false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
         view.setPermissionsView(pagerView);
@@ -89,140 +93,20 @@ public class AppPermissionsEditPresenter
         addColumns();
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(e -> updateDetails()));
+    public MultiSelectionModelImpl<AppPermission> getSelectionModel() {
+        return selectionModel;
     }
 
-    private void updateDetails() {
-        final SafeHtml details = getDetails();
-        getView().setDetails(details);
-    }
-
-    private SafeHtml getDetails() {
-        final DescriptionBuilder sb = new DescriptionBuilder();
-        final AppPermission permission = selectionModel.getSelected();
-        if (permission != null) {
-            addPaths(
-                    currentPermissions.getExplicitPermissions().contains(permission),
-                    currentPermissions.getInheritedPermissions().get(permission),
-                    sb,
-                    "Explicit Permission",
-                    "Inherited From:");
-
-            // See if implied by administrator.
-            if (!AppPermission.ADMINISTRATOR.equals(permission)) {
-                addPaths(
-                        currentPermissions
-                                .getExplicitPermissions()
-                                .contains(AppPermission.ADMINISTRATOR),
-                        currentPermissions
-                                .getInheritedPermissions()
-                                .get(AppPermission.ADMINISTRATOR),
-                        sb,
-                        "Implied By Administrator",
-                        "Implied By Administrator Inherited From:");
-            }
-
-            if (sb.toSafeHtml().asString().length() == 0) {
-                sb.addTitle("No Permission");
-            }
-        }
-
-        return sb.toSafeHtml();
-    }
-
-//    private void addPaths(final List<List<UserRef>> paths,
-//                          final SafeHtmlBuilder sb,
-//                          final String directTitle,
-//                          final String inheritedTitle) {
-//        if (paths != null) {
-//            final Optional<List<UserRef>> directPath = paths
-//                    .stream()
-//                    .filter(path -> path.size() == 1 && path.get(0).equals(relatedUser))
-//                    .findAny();
-//            if (directPath.isPresent()) {
-//                appendTitle(sb, directTitle);
-//                sb.appendHtmlConstant("<br/>");
-//            }
-//
-//            final List<List<UserRef>> inheritedPaths = paths
-//                    .stream()
-//                    .filter(path -> path.size() > 1)
-//                    .collect(Collectors.toList());
-//            if (inheritedPaths.size() > 0) {
-//                appendTitle(sb, inheritedTitle);
-//
-//                for (final List<UserRef> path : inheritedPaths) {
-//                    sb.appendEscaped(path
-//                            .stream()
-//                            .filter(userRef -> !userRef.equals(relatedUser))
-//                            .map(UserRef::toDisplayString)
-//                            .collect(Collectors.joining(" > ")));
-//                    sb.appendHtmlConstant("<br/>");
-//                }
-//
-//                sb.appendHtmlConstant("<br/>");
-//            }
-//        }
-//    }
-
-    private void addPaths(final boolean direct,
-                          final List<String> paths,
-                          final DescriptionBuilder sb,
-                          final String directTitle,
-                          final String inheritedTitle) {
-        if (direct) {
-            sb.addNewLine();
-            sb.addNewLine();
-            sb.addTitle(directTitle);
-        }
-
-        if (paths != null && paths.size() > 0) {
-            sb.addNewLine();
-            sb.addNewLine();
-            sb.addTitle(inheritedTitle);
-            for (final String path : paths) {
-                sb.addNewLine();
-                sb.addLine(path);
-            }
-        }
-    }
-
-    public void show(final UserRef userRef, final Runnable onClose) {
+    public void edit(final UserRef userRef) {
         this.relatedUser = userRef;
         refresh();
-
-        final PopupSize popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(800)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(800)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .build();
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .onShow(e -> dataGrid.setFocus(true))
-                .caption("Change Application Permissions")
-                .onHideRequest(e -> {
-                    onClose.run();
-                    e.hide();
-                })
-                .fire();
     }
 
     private void refresh() {
         if (relatedUser == null) {
             currentPermissions = null;
+            // Update details panel.
+            ValueChangeEvent.fire(this, new ValueChange(false, true));
             final List<AppPermission> permissions = new ArrayList<>();
             dataGrid.setRowData(0, permissions);
             dataGrid.setRowCount(permissions.size(), true);
@@ -235,7 +119,8 @@ public class AppPermissionsEditPresenter
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsEditPresenter.this.currentPermissions = userAppPermissions;
                         updateAllPermissions();
-                        updateDetails();
+                        // Update details panel.
+                        ValueChangeEvent.fire(this, new ValueChange(false, true));
                     })
                     .taskMonitorFactory(this)
                     .exec();
@@ -298,7 +183,13 @@ public class AppPermissionsEditPresenter
                 restFactory
                         .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeAppPermission(request))
-                        .onSuccess(result -> refresh())
+                        .onSuccess(result -> {
+                            refresh();
+                            // Refresh users pane.
+                            ValueChangeEvent.fire(
+                                    AppPermissionsEditPresenter.this,
+                                    new ValueChange(true, false));
+                        })
                         .taskMonitorFactory(this)
                         .exec();
             });
@@ -323,14 +214,41 @@ public class AppPermissionsEditPresenter
         }, "Description", 700);
     }
 
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<ValueChange> valueChangeHandler) {
+        return new LegacyHandlerWrapper(addHandler(ValueChangeEvent.getType(), valueChangeHandler));
+    }
+
     protected boolean isCurrentUserUpdate() {
         return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
+    }
+
+    public AppUserPermissionsReport getCurrentPermissions() {
+        return currentPermissions;
     }
 
     public interface AppPermissionsEditView extends View {
 
         void setPermissionsView(View view);
+    }
 
-        void setDetails(SafeHtml details);
+    public class ValueChange {
+
+        private final boolean refreshUsers;
+        private final boolean refreshDetails;
+
+        public ValueChange(final boolean refreshUsers,
+                           final boolean refreshDetails) {
+            this.refreshUsers = refreshUsers;
+            this.refreshDetails = refreshDetails;
+        }
+
+        public boolean isRefreshUsers() {
+            return refreshUsers;
+        }
+
+        public boolean isRefreshDetails() {
+            return refreshDetails;
+        }
     }
 }

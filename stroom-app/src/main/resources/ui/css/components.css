@@ -1763,6 +1763,12 @@ button.main-menu svg {
     margin-bottom: 0rem;
 }
 
+.form-label-padding .form-group-label {
+    margin-top: var(--control__gap--vertical);
+    margin-left: var(--control__gap--horizontal);
+    margin-right: var(--control__gap--horizontal);
+}
+
 .help-button-tooltip {
     /* width: 500px; */
     max-width: 500px;

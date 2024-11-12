@@ -18,8 +18,10 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -33,7 +35,11 @@ public final class AppPermissionsViewImpl
     private final Widget widget;
 
     @UiField
-    SimplePanel permissions;
+    SimplePanel appUserPermissionsList;
+    @UiField
+    SimplePanel appPermissionsEdit;
+    @UiField
+    HTML details;
 
     @Inject
     public AppPermissionsViewImpl(final Binder binder) {
@@ -46,8 +52,18 @@ public final class AppPermissionsViewImpl
     }
 
     @Override
-    public void setPermissionsView(View view) {
-        permissions.setWidget(view.asWidget());
+    public void setAppUserPermissionListView(View view) {
+        appUserPermissionsList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setAppPermissionsEditView(final View view) {
+        appPermissionsEdit.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDetails(final SafeHtml details) {
+        this.details.setHTML(details);
     }
 
     public interface Binder extends UiBinder<Widget, AppPermissionsViewImpl> {
