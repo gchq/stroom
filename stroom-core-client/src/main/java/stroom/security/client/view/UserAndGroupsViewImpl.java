@@ -23,7 +23,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
@@ -34,12 +33,12 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     @UiField
     SimplePanel userList;
     @UiField
-    SimplePanel memberOf;
+    SimplePanel parents;
     @UiField
-    SimplePanel membersIn;
+    SimplePanel children;
 
     @Inject
-    public UserAndGroupsViewImpl(final EventBus eventBus, final Binder binder) {
+    public UserAndGroupsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -54,18 +53,25 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
-    public void setMemberOfView(View view) {
-        memberOf.setWidget(view.asWidget());
+    public void setParentsView(final View view) {
+        parents.setWidget(view.asWidget());
     }
 
     @Override
-    public void setMembersInView(final View view) {
-        membersIn.setWidget(view.asWidget());
+    public void setParentsVisible(final boolean visible) {
+        parents.getElement().getStyle().setOpacity(visible
+                ? 1
+                : 0.4);
     }
 
     @Override
-    public void setMembersInVisible(final boolean visible) {
-        membersIn.getElement().getStyle().setOpacity(visible
+    public void setChildrenView(final View view) {
+        children.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setChildrenVisible(final boolean visible) {
+        children.getElement().getStyle().setOpacity(visible
                 ? 1
                 : 0.4);
     }

@@ -57,7 +57,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class UserListPresenter
@@ -121,21 +120,14 @@ public class UserListPresenter
         dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
 
         // Display Name
-        final Column<User, String> nameCol = new Column<User, String>(new TextCell()) {
+        final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
             @Override
             public String getValue(final User user) {
-                if (user.getDisplayName() != null) {
-                    if (!Objects.equals(user.getDisplayName(), user.getSubjectId())) {
-                        return user.getDisplayName() + " (" + user.getSubjectId() + ")";
-                    } else {
-                        return user.getDisplayName();
-                    }
-                }
-                return user.getSubjectId();
+                return user.getDisplayName();
             }
         };
-        nameCol.setSortable(true);
-        dataGrid.addResizableColumn(nameCol, "Name", 400);
+        displayNameCol.setSortable(true);
+        dataGrid.addResizableColumn(displayNameCol, "Display Name", 400);
 
         // Full name
         final Column<User, String> fullNameCol = new Column<User, String>(new TextCell()) {
@@ -144,9 +136,20 @@ public class UserListPresenter
                 return user.getFullName();
             }
         };
+        fullNameCol.setSortable(true);
         dataGrid.addResizableColumn(fullNameCol, "Full Name", 400);
-        dataGrid.addEndColumn(new EndColumn<>());
 
+        // Identity
+        final Column<User, String> idCol = new Column<User, String>(new TextCell()) {
+            @Override
+            public String getValue(final User user) {
+                return user.getSubjectId();
+            }
+        };
+        idCol.setSortable(true);
+        dataGrid.addResizableColumn(idCol, "Identity", 400);
+
+        dataGrid.addEndColumn(new EndColumn<>());
 
         final ColumnSortEvent.Handler columnSortHandler = event -> {
             final List<CriteriaFieldSort> sortList = new ArrayList<>();
@@ -163,13 +166,19 @@ public class UserListPresenter
                                     UserFields.IS_GROUP.getFldName(),
                                     !isAscending,
                                     true));
-                        } else if (column.equals(nameCol)) {
+                        } else if (column.equals(displayNameCol)) {
                             sortList.add(new CriteriaFieldSort(
                                     UserFields.DISPLAY_NAME.getFldName(),
                                     !isAscending,
                                     true));
+                        } else if (column.equals(idCol)) {
                             sortList.add(new CriteriaFieldSort(
-                                    UserFields.NAME.getFldName(),
+                                    UserFields.ID.getFldName(),
+                                    !isAscending,
+                                    true));
+                        } else if (column.equals(fullNameCol)) {
+                            sortList.add(new CriteriaFieldSort(
+                                    UserFields.FULL_NAME.getFldName(),
                                     !isAscending,
                                     true));
                         }
@@ -180,7 +189,8 @@ public class UserListPresenter
             refresh();
         };
         dataGrid.addColumnSortHandler(columnSortHandler);
-        dataGrid.getColumnSortList().push(nameCol);
+        dataGrid.getColumnSortList().push(displayNameCol);
+        dataGrid.getColumnSortList().push(idCol);
 
         builder.sortList(List.of(
                 new CriteriaFieldSort(
@@ -188,7 +198,7 @@ public class UserListPresenter
                         false,
                         true),
                 new CriteriaFieldSort(
-                        UserFields.NAME.getFldName(),
+                        UserFields.ID.getFldName(),
                         false,
                         true)));
     }

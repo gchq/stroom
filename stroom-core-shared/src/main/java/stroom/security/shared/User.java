@@ -1,7 +1,6 @@
 package stroom.security.shared;
 
 
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
@@ -248,33 +247,6 @@ public class User implements HasAuditInfo, HasIntegerId {
         return new UserRef(uuid, subjectId, displayName, fullName, group);
     }
 
-    public String asCombinedName() {
-        return buildCombinedName(subjectId, displayName);
-    }
-
-    /**
-     * Combine the name and displayName, only showing both if they are both present
-     * and not equal. Useful for the User parts of the UI where showing both is helpful.
-     * i.e.
-     * <p>{@code '6798d3ca-c1a1-490e-a52e-132ade052468'} if there is no displayName</p>
-     * <p>{@code 'admin'} if the displayName and subjectId are the same</p>
-     * <p>{@code 'admin (6798d3ca-c1a1-490e-a52e-132ade052468)'} if they are different</p>
-     */
-    static String buildCombinedName(final User userName) {
-        return GwtNullSafe.get(userName,
-                userName2 -> buildCombinedName(userName2.getSubjectId(), userName2.getDisplayName()));
-    }
-
-    static String buildCombinedName(final String subjectId, final String displayName) {
-        if (displayName == null) {
-            return subjectId;
-        } else if (Objects.equals(subjectId, displayName)) {
-            return displayName;
-        } else {
-            return displayName + " (" + subjectId + ")";
-        }
-    }
-
     /**
      * @return "Group" or "User" depending on type.
      */
@@ -288,18 +260,18 @@ public class User implements HasAuditInfo, HasIntegerId {
     @Override
     public String toString() {
         return "User{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", name='" + subjectId + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", group=" + group +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", name='" + subjectId + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", displayName='" + displayName + '\'' +
+               ", fullName='" + fullName + '\'' +
+               ", group=" + group +
+               '}';
     }
 
     @Override

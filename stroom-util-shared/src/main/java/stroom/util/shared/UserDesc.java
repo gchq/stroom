@@ -57,8 +57,9 @@ public class UserDesc {
             return false;
         }
         final UserDesc that = (UserDesc) o;
-        return Objects.equals(subjectId, that.subjectId) && Objects.equals(displayName,
-                that.displayName) && Objects.equals(fullName, that.fullName);
+        return Objects.equals(subjectId, that.subjectId) &&
+               Objects.equals(displayName, that.displayName) &&
+               Objects.equals(fullName, that.fullName);
     }
 
     @Override

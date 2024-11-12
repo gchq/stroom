@@ -56,11 +56,14 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     @Override
     public User getOrCreateUser(final UserDesc userDesc, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getUserBySubjectId(userDesc.getSubjectId());
-        final User persisted = optional.orElseGet(() -> {
+        return optional.orElseGet(() -> {
             final User user = new User();
             AuditUtil.stamp(securityContext, user);
             user.setSubjectId(userDesc.getSubjectId());
-            user.setDisplayName(userDesc.getDisplayName());
+            // Make sure we set a display name even if it is the same as the subject id.
+            user.setDisplayName(NullSafe.isBlankString(userDesc.getDisplayName())
+                    ? userDesc.getSubjectId()
+                    : userDesc.getDisplayName());
             user.setFullName(userDesc.getFullName());
             user.setGroup(false);
             user.setEnabled(true);
@@ -73,14 +76,12 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                         }
                     }));
         });
-
-        return persisted;
     }
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getGroupByName(name);
-        final User persisted = optional.orElseGet(() -> {
+        return optional.orElseGet(() -> {
             final User user = new User();
             AuditUtil.stamp(securityContext, user);
             user.setSubjectId(name);
@@ -96,8 +97,6 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                         }
                     }));
         });
-
-        return persisted;
     }
 
     @Override
@@ -129,7 +128,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
 
-            // If the updated user is a group then we need to let all chldren know there has been a change as we cache
+            // If the updated user is a group then we need to let all children know there has been a change as we cache
             // parent groups for children.
             if (updatedUser.isGroup()) {
                 final ResultPage<User> resultPage = findUsersInGroup(updatedUser.getUuid(), new FindUserCriteria());

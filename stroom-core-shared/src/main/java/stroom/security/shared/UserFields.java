@@ -15,6 +15,7 @@ import java.util.Set;
 public class UserFields {
 
     public static final String FIELD_IS_GROUP = "group";
+    public static final String FIELD_ID = "id";
     public static final String FIELD_NAME = "name";
     public static final String FIELD_DISPLAY_NAME = "display";
     public static final String FIELD_FULL_NAME = "full";
@@ -22,6 +23,7 @@ public class UserFields {
     public static final QueryField IS_GROUP = QueryField.createBoolean(FIELD_IS_GROUP);
     public static final QueryField NAME = QueryField.createText(FIELD_NAME);
     public static final QueryField DISPLAY_NAME = QueryField.createText(FIELD_DISPLAY_NAME);
+    public static final QueryField ID = QueryField.createText(FIELD_ID);
     public static final QueryField FULL_NAME = QueryField.createText(FIELD_FULL_NAME);
     public static final QueryField GROUP_CONTAINS = QueryField
             .builder()
