@@ -65,7 +65,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -202,19 +201,11 @@ public class DocumentUserPermissionsListPresenter
                 new Column<DocumentUserPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final DocumentUserPermissions documentUserPermissions) {
-                        final UserRef userRef = documentUserPermissions.getUserRef();
-                        if (userRef.getDisplayName() != null) {
-                            if (!Objects.equals(userRef.getDisplayName(), userRef.getSubjectId())) {
-                                return userRef.getDisplayName() + " (" + userRef.getSubjectId() + ")";
-                            } else {
-                                return userRef.getDisplayName();
-                            }
-                        }
-                        return userRef.getSubjectId();
+                        return documentUserPermissions.getUserRef().getDisplayName();
                     }
                 };
         nameCol.setSortable(true);
-        dataGrid.addResizableColumn(nameCol, "User or Group", 400);
+        dataGrid.addResizableColumn(nameCol, "Display Name", 400);
 
         // Permission
         final Column<DocumentUserPermissions, SafeHtml> permissionCol =
@@ -250,7 +241,7 @@ public class DocumentUserPermissionsListPresenter
                             final Set<String> inherited = documentUserPermissions
                                     .getInheritedDocumentCreatePermissions();
                             if ((explicit != null && explicit.size() > 0) ||
-                                    (inherited != null && inherited.size() > 0)) {
+                                (inherited != null && inherited.size() > 0)) {
 
                                 if (explicit != null && explicit.size() == documentTypes.getTypes().size()) {
                                     sb.addLine(true, false, "All");
@@ -271,7 +262,7 @@ public class DocumentUserPermissionsListPresenter
                                             lastInherited = false;
                                             notEmpty = true;
                                         } else if (inherited != null &&
-                                                inherited.contains(documentType.getType())) {
+                                                   inherited.contains(documentType.getType())) {
                                             if (notEmpty) {
                                                 sb.addLine(false, lastInherited, ", ");
                                             }

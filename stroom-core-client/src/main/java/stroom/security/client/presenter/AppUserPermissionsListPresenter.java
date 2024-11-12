@@ -26,8 +26,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
@@ -62,7 +60,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AppUserPermissionsListPresenter
@@ -76,9 +73,7 @@ public class AppUserPermissionsListPresenter
     private final MyDataGrid<AppUserPermissions> dataGrid;
     private final PagerView pagerView;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
-    private DocumentTypes documentTypes;
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
-    private final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager;
 
 
     @Inject
@@ -86,16 +81,17 @@ public class AppUserPermissionsListPresenter
                                            final QuickFilterPageView view,
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
-                                           final UiConfigCache uiConfigCache,
-                                           final DocumentTypeCache documentTypeCache) {
+                                           final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
-        documentTypeCache.fetch(dt -> this.documentTypes = dt, this);
 
         dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        DataGridSelectionEventManager<AppUserPermissions> selectionEventManager = new DataGridSelectionEventManager<>(
+                dataGrid,
+                selectionModel,
+                false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
@@ -192,11 +188,11 @@ public class AppUserPermissionsListPresenter
                 new Column<AppUserPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final AppUserPermissions appUserPermissions) {
-                        return getUserOrGroupName(appUserPermissions);
+                        return appUserPermissions.getUserRef().getDisplayName();
                     }
                 };
         nameCol.setSortable(true);
-        dataGrid.addResizableColumn(nameCol, "User or Group", 400);
+        dataGrid.addResizableColumn(nameCol, "Display Name", 400);
 
         // Permissions
         final Column<AppUserPermissions, SafeHtml> permissionCol =
@@ -205,17 +201,17 @@ public class AppUserPermissionsListPresenter
                     public SafeHtml getValue(final AppUserPermissions appUserPermissions) {
                         final DescriptionBuilder sb = new DescriptionBuilder();
                         if (appUserPermissions.getPermissions() != null &&
-                                appUserPermissions.getPermissions().contains(AppPermission.ADMINISTRATOR)) {
+                            appUserPermissions.getPermissions().contains(AppPermission.ADMINISTRATOR)) {
                             sb.addLine(true, false, AppPermission.ADMINISTRATOR.getDisplayValue());
                         } else if (appUserPermissions.getInherited() != null &&
-                                appUserPermissions.getInherited().contains(AppPermission.ADMINISTRATOR)) {
+                                   appUserPermissions.getInherited().contains(AppPermission.ADMINISTRATOR)) {
                             sb.addLine(true, true, AppPermission.ADMINISTRATOR.getDisplayValue());
                         } else {
                             boolean notEmpty = false;
                             boolean lastInherited = false;
                             for (final AppPermission permission : AppPermission.LIST) {
                                 if (appUserPermissions.getPermissions() != null &&
-                                        appUserPermissions.getPermissions().contains(permission)) {
+                                    appUserPermissions.getPermissions().contains(permission)) {
                                     if (notEmpty) {
                                         sb.addLine(false, lastInherited, ", ");
                                     }
@@ -223,7 +219,7 @@ public class AppUserPermissionsListPresenter
                                     notEmpty = true;
                                     lastInherited = false;
                                 } else if (appUserPermissions.getInherited() != null &&
-                                        appUserPermissions.getInherited().contains(permission)) {
+                                           appUserPermissions.getInherited().contains(permission)) {
                                     if (notEmpty) {
                                         sb.addLine(false, lastInherited, ", ");
                                     }
@@ -274,18 +270,6 @@ public class AppUserPermissionsListPresenter
         };
         dataGrid.addColumnSortHandler(columnSortHandler);
         dataGrid.getColumnSortList().push(nameCol);
-    }
-
-    private String getUserOrGroupName(AppUserPermissions appUserPermissions) {
-        final UserRef userRef = appUserPermissions.getUserRef();
-        if (userRef.getDisplayName() != null) {
-            if (!Objects.equals(userRef.getDisplayName(), userRef.getSubjectId())) {
-                return userRef.getDisplayName() + " (" + userRef.getSubjectId() + ")";
-            } else {
-                return userRef.getDisplayName();
-            }
-        }
-        return userRef.getSubjectId();
     }
 
     public ButtonView addButton(final Preset preset) {
