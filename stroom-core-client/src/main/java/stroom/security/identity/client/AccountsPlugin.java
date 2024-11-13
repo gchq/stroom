@@ -48,7 +48,7 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
 
     private void addMenuItem(final BeforeRevealMenubarEvent event) {
         final IconMenuItem apiKeysMenuItem;
-        final SvgImage icon = SvgImage.USERS;
+        final SvgImage icon = SvgImage.USER;
         apiKeysMenuItem = new IconMenuItem.Builder()
                 .priority(2)
                 .icon(icon)

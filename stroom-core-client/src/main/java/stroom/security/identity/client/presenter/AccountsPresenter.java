@@ -60,7 +60,7 @@ public class AccountsPresenter
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.USERS;
+        return SvgImage.USER;
     }
 
     @Override
