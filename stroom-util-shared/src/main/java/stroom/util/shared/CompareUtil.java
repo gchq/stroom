@@ -156,32 +156,54 @@ public final class CompareUtil {
         return comparator;
     }
 
+    /**
+     * Creates a null safe case-insensitive comparator that puts nulls first.
+     */
     public static <T> Comparator<T> getNullSafeCaseInsensitiveComparator(final Function<T, String> extractor) {
         return Comparator.nullsFirst(
-                Comparator.comparing(extractor, String.CASE_INSENSITIVE_ORDER));
+                Comparator.comparing(
+                        extractor,
+                        Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
     }
 
     /**
-     * Creates a null safe case insensitive comparator that can work with stuff like
+     * Creates a null safe case-insensitive comparator that puts nulls last.
+     */
+    public static <T> Comparator<T> getNullSafeCaseInsensitiveNullsLastComparator(
+            final Function<T, String> extractor) {
+        return Comparator.nullsLast(
+                Comparator.comparing(extractor, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+    }
+
+    /**
+     * Creates a null safe case-insensitive comparator that can work with stuff like
      * getDocRef().getName()
      */
     public static <T1, T2> Comparator<T1> getNullSafeCaseInsensitiveComparator(
             final Function<T1, T2> extractor1,
             final Function<T2, String> extractor2) {
-        return getNullSafeComparator(extractor1, extractor2, String.CASE_INSENSITIVE_ORDER);
+        return getNullSafeComparator(
+                extractor1,
+                extractor2,
+                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
     }
 
     public static <T1, T2 extends Comparable<T2>> Comparator<T1> getNullSafeComparator(
             final Function<T1, T2> extractor) {
 
         // Sort with nulls first but also handle null intermediate values
-        return Comparator.comparing(extractor, Comparator.nullsFirst(Comparator.naturalOrder()));
+        return Comparator.nullsFirst(Comparator.comparing(
+                extractor,
+                Comparator.nullsFirst(Comparator.naturalOrder())));
     }
 
     public static <T1, T2, T3 extends Comparable<T3>> Comparator<T1> getNullSafeComparator(
             final Function<T1, T2> extractor1,
             final Function<T2, T3> extractor2) {
-        return getNullSafeComparator(extractor1, extractor2, Comparator.naturalOrder());
+        return getNullSafeComparator(
+                extractor1,
+                extractor2,
+                Comparator.nullsFirst(Comparator.naturalOrder()));
     }
 
     public static <T1, T2, T3 extends Comparable<T3>> Comparator<T1> getNullSafeComparator(
@@ -206,7 +228,11 @@ public final class CompareUtil {
             final Function<T1, T2> extractor1,
             final Function<T2, T3> extractor2,
             final Function<T3, String> extractor3) {
-        return getNullSafeComparator(extractor1, extractor2, extractor3, String.CASE_INSENSITIVE_ORDER);
+        return getNullSafeComparator(
+                extractor1,
+                extractor2,
+                extractor3,
+                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
     }
 
     public static <T1, T2, T3, T4 extends Comparable<T4>> Comparator<T1> getNullSafeComparator(

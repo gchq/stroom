@@ -16,6 +16,8 @@ public class FindAccountRequest extends BaseCriteria {
 
     public static final String FIELD_NAME_USER_ID = "userId";
     public static final String FIELD_NAME_EMAIL = "email";
+    public static final String FIELD_NAME_FIRST_NAME = "firstName";
+    public static final String FIELD_NAME_LAST_NAME = "lastName";
     public static final String FIELD_NAME_STATUS = "status";
     public static final String FIELD_NAME_LAST_LOGIN_MS = "lastLoginMs";
     public static final String FIELD_NAME_LOGIN_FAILURES = "loginFailures";

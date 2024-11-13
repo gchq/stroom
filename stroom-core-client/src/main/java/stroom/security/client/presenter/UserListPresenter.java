@@ -208,11 +208,15 @@ public class UserListPresenter
         filter = text;
         if (filter != null) {
             filter = filter.trim();
-            if (filter.length() == 0) {
+            if (filter.isEmpty()) {
                 filter = null;
             }
         }
         refresh();
+    }
+
+    public void setQuickFilterText(final String quickFilterText) {
+        getView().setQuickFilterText(quickFilterText);
     }
 
     public void refresh() {

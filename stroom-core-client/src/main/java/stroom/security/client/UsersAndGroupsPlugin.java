@@ -5,8 +5,10 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.event.OpenUserOrGroupEvent;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -27,6 +29,15 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
                                 final Provider<UserAndGroupsPresenter> presenterProvider,
                                 final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(OpenUserOrGroupEvent.getType(), event -> {
+            open(taskManagerPresenter ->
+                    taskManagerPresenter.setFilterInput(buildFilterInput(event.getSubjectId())));
+        }));
+    }
+
+    private String buildFilterInput(final String subjectId) {
+        return UserFields.FIELD_DISPLAY_NAME + ":" + subjectId;
     }
 
     @Override

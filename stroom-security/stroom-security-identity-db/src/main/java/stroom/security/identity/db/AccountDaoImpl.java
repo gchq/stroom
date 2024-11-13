@@ -134,12 +134,6 @@ class AccountDaoImpl implements AccountDao {
                 return record;
             };
 
-    protected static final String FIELD_NAME_USER_ID = "userId";
-    protected static final String FIELD_NAME_EMAIL = "email";
-    protected static final String FIELD_NAME_STATUS = "status";
-    protected static final String FIELD_NAME_LAST_LOGIN_MS = "lastLoginMs";
-    protected static final String FIELD_NAME_LOGIN_FAILURES = "loginFailures";
-    protected static final String FIELD_NAME_COMMENTS = "comments";
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
             entry("id", ACCOUNT.ID),
             entry("version", ACCOUNT.VERSION),
@@ -147,14 +141,14 @@ class AccountDaoImpl implements AccountDao {
             entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
             entry("createUser", ACCOUNT.CREATE_USER),
             entry("updateUser", ACCOUNT.UPDATE_USER),
-            entry(FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
-            entry(FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
-            entry("firstName", ACCOUNT.FIRST_NAME),
-            entry("lastName", ACCOUNT.LAST_NAME),
-            entry(FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
+            entry(FindAccountRequest.FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
+            entry(FindAccountRequest.FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
+            entry(FindAccountRequest.FIELD_NAME_FIRST_NAME, ACCOUNT.FIRST_NAME),
+            entry(FindAccountRequest.FIELD_NAME_LAST_NAME, ACCOUNT.LAST_NAME),
+            entry(FindAccountRequest.FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
             entry("loginCount", ACCOUNT.LOGIN_COUNT),
-            entry(FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
-            entry(FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
+            entry(FindAccountRequest.FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
+            entry(FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
             entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
             entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
             entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
@@ -162,20 +156,24 @@ class AccountDaoImpl implements AccountDao {
             entry("inactive", ACCOUNT.INACTIVE),
             entry("locked", ACCOUNT.LOCKED),
             entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
-            entry(FIELD_NAME_STATUS, ACCOUNT_STATUS));
+            entry(FindAccountRequest.FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
     private static final Map<String, Comparator<Account>> FIELD_COMPARATORS = Map.of(
-            FIELD_NAME_USER_ID,
+            FindAccountRequest.FIELD_NAME_USER_ID,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getUserId),
-            FIELD_NAME_EMAIL,
+            FindAccountRequest.FIELD_NAME_FIRST_NAME,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getFirstName),
+            FindAccountRequest.FIELD_NAME_LAST_NAME,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getLastName),
+            FindAccountRequest.FIELD_NAME_EMAIL,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getEmail),
-            FIELD_NAME_STATUS,
+            FindAccountRequest.FIELD_NAME_STATUS,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getStatus),
-            FIELD_NAME_LAST_LOGIN_MS,
+            FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS,
             CompareUtil.getNullSafeComparator(Account::getLastLoginMs), // nullable
-            FIELD_NAME_LOGIN_FAILURES,
+            FindAccountRequest.FIELD_NAME_LOGIN_FAILURES,
             Comparator.comparingInt(Account::getLoginFailures), // not null
-            FIELD_NAME_COMMENTS,
+            FindAccountRequest.FIELD_NAME_COMMENTS,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getComments));
 
     private final Provider<IdentityConfig> identityConfigProvider;
@@ -220,7 +218,7 @@ class AccountDaoImpl implements AccountDao {
                 AccountDao.FIELD_MAPPERS);
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
-            if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
+            if (NullSafe.isNonEmptyString(request.getQuickFilter())) {
                 // Get the number of tokens so we can calculate the total number of pages
                 final int count = context
                         .selectCount()
@@ -327,7 +325,7 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public CredentialValidationResult validateCredentials(final String userId, final String password) {
         if (Strings.isNullOrEmpty(userId)
-                || Strings.isNullOrEmpty(password)) {
+            || Strings.isNullOrEmpty(password)) {
             return new CredentialValidationResult(false, true, false, false, false, false);
         }
 
@@ -576,13 +574,13 @@ class AccountDaoImpl implements AccountDao {
                 Instant.now());
 
         final boolean thresholdBreached = durationSinceLastPasswordChange
-                .compareTo(mandatoryPasswordChangeDuration) > 0;
+                                                  .compareTo(mandatoryPasswordChangeDuration) > 0;
 
         final boolean isFirstLogin = user.getPasswordLastChangedMs() == null;
 
         if (thresholdBreached
-                || (forcePasswordChangeOnFirstLogin && isFirstLogin)
-                || user.getForcePasswordChange()) {
+            || (forcePasswordChangeOnFirstLogin && isFirstLogin)
+            || user.getForcePasswordChange()) {
             LOGGER.debug("User {} needs a password change.", userId);
             return true;
         } else {

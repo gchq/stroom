@@ -2,6 +2,7 @@ package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CommandLink;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -15,6 +16,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.event.OpenUserOrGroupEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.AccountResultPage;
@@ -44,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class AccountsListPresenter
         extends MyPresenterWidget<PagerView>
@@ -158,8 +161,8 @@ public class AccountsListPresenter
         final Account account = selectionModel.getSelected();
         if (account != null) {
             final String msg = "Are you sure you want to delete account '"
-                    + account.getUserId()
-                    + "'?";
+                               + account.getUserId()
+                               + "'?";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     restFactory
@@ -180,13 +183,31 @@ public class AccountsListPresenter
     private void initTableColumns() {
         // User Id
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
-            final Column<Account, String> userIdColumn = DataGridUtil.textColumnBuilder(
-                            Account::getUserId)
-                    .enabledWhen(Account::isEnabled)
-                    .withSorting(FindAccountRequest.FIELD_NAME_USER_ID)
-                    .build();
-            dataGrid.addResizableColumn(userIdColumn, "User Id", 250);
+
+            dataGrid.addResizableColumn(
+                    DataGridUtil.commandLinkColumnBuilder(buildOpenUserCommandLink())
+                            .enabledWhen(Account::isEnabled)
+                            .withSorting(FindAccountRequest.FIELD_NAME_USER_ID)
+                            .build(),
+                    DataGridUtil.headingBuilder("User Id")
+                            .withToolTip("The unique identifier for both the account and the corresponding user.")
+                            .build(),
+                    200);
         }
+
+        // First Name
+        final Column<Account, String> firstNameColumn = DataGridUtil.textColumnBuilder(Account::getFirstName)
+                .enabledWhen(Account::isEnabled)
+                .withSorting(FindAccountRequest.FIELD_NAME_FIRST_NAME)
+                .build();
+        dataGrid.addResizableColumn(firstNameColumn, "First Name", 180);
+
+        // First Name
+        final Column<Account, String> lastNameColumn = DataGridUtil.textColumnBuilder(Account::getLastName)
+                .enabledWhen(Account::isEnabled)
+                .withSorting(FindAccountRequest.FIELD_NAME_LAST_NAME)
+                .build();
+        dataGrid.addResizableColumn(lastNameColumn, "Last Name", 180);
 
         // Email
         final Column<Account, String> emailColumn = DataGridUtil.textColumnBuilder(Account::getEmail)
@@ -196,27 +217,39 @@ public class AccountsListPresenter
         dataGrid.addResizableColumn(emailColumn, "Email", 250);
 
         // Status
-        final Column<Account, String> statusColumn = DataGridUtil.textColumnBuilder(Account::getStatus)
-                .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_STATUS)
-                .build();
-        dataGrid.addColumn(statusColumn, "Status", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(Account::getStatus)
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(FindAccountRequest.FIELD_NAME_STATUS)
+                        .build(),
+                DataGridUtil.headingBuilder("Status")
+                        .withToolTip("The status of the account. One of (Enabled|Disabled|Locked|Inactive).")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
 
         // Last Sign In
-        final Column<Account, String> lastSignInColumn = DataGridUtil.textColumnBuilder((Account account) ->
-                        dateTimeFormatter.format(account.getLastLoginMs()))
-                .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS)
-                .build();
-        dataGrid.addColumn(lastSignInColumn, "Last Sign In", ColumnSizeConstants.DATE_COL);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder((Account account) ->
+                                dateTimeFormatter.format(account.getLastLoginMs()))
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS)
+                        .build(),
+                DataGridUtil.headingBuilder("Last Sign In")
+                        .withToolTip("The date/time the user last successfully signed in.")
+                        .build(),
+                ColumnSizeConstants.DATE_COL);
 
         // Sign In Failures
-        final Column<Account, String> signInFailuresColumn = DataGridUtil.textColumnBuilder((Account account) ->
-                        "" + account.getLoginFailures())
-                .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_LOGIN_FAILURES)
-                .build();
-        dataGrid.addColumn(signInFailuresColumn, "Sign In Failures", 130);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder((Account account) ->
+                                "" + account.getLoginFailures())
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(FindAccountRequest.FIELD_NAME_LOGIN_FAILURES)
+                        .build(),
+                DataGridUtil.headingBuilder("Sign In Failures")
+                        .withToolTip("The number of login failures since the last successful login.")
+                        .build(),
+                130);
 
         // Comments
         final Column<Account, String> commentsColumn = DataGridUtil.textColumnBuilder(Account::getComments)
@@ -226,6 +259,22 @@ public class AccountsListPresenter
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private Function<Account, CommandLink> buildOpenUserCommandLink() {
+        return (Account account) -> {
+            if (account != null) {
+                final String userId = account.getUserId();
+
+                return new CommandLink(
+                        userId,
+                        "Open user '" + userId + "' on the Users and Groups screen.",
+                        () -> OpenUserOrGroupEvent.fire(
+                                AccountsListPresenter.this, userId));
+            } else {
+                return null;
+            }
+        };
     }
 
     private void fetchData(final Range range,
