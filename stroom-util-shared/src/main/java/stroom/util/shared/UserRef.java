@@ -53,7 +53,7 @@ public final class UserRef {
     }
 
     public String getDisplayName() {
-        return displayName;
+        return GwtNullSafe.requireNonNullElse(displayName, subjectId);
     }
 
     public String getFullName() {
@@ -98,12 +98,12 @@ public final class UserRef {
 
     public String toDebugString() {
         return "UserRef{" +
-                "uuid='" + uuid + '\'' +
-                ", subjectId='" + subjectId + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", group=" + group +
-                '}';
+               "uuid='" + uuid + '\'' +
+               ", subjectId='" + subjectId + '\'' +
+               ", displayName='" + displayName + '\'' +
+               ", fullName='" + fullName + '\'' +
+               ", group=" + group +
+               '}';
     }
 
     public String toDisplayString() {
@@ -111,13 +111,13 @@ public final class UserRef {
             return displayName;
         } else if (subjectId != null) {
             return subjectId;
-        } else if (fullName != null) {
-            return fullName;
         } else {
-            return "{" + uuid + "}";
+            return GwtNullSafe.requireNonNullElseGet(fullName, () ->
+                    "{" + uuid + "}");
         }
     }
 
+    @SuppressWarnings("SizeReplaceableByIsEmpty")
     public String toInfoString() {
         final StringBuilder sb = new StringBuilder();
         if (displayName != null) {
@@ -127,14 +127,12 @@ public final class UserRef {
         } else if (fullName != null) {
             sb.append(fullName);
         }
-        if (uuid != null) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            sb.append("{");
-            sb.append(uuid);
-            sb.append("}");
+        if (sb.length() > 0) {
+            sb.append(" ");
         }
+        sb.append("{");
+        sb.append(uuid);
+        sb.append("}");
 
         if (sb.length() > 0) {
             return sb.toString();
