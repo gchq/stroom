@@ -53,7 +53,7 @@ public final class UserRef {
     }
 
     public String getDisplayName() {
-        return GwtNullSafe.requireNonNullElse(displayName, subjectId);
+        return displayName;
     }
 
     public String getFullName() {
