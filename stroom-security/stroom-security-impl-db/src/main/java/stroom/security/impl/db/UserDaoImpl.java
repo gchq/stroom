@@ -16,6 +16,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -86,7 +87,7 @@ public class UserDaoImpl implements UserDao {
         this.securityDbConnProvider = securityDbConnProvider;
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, Boolean::valueOf);
+        expressionMapper.map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean);
         expressionMapper.map(UserFields.NAME, STROOM_USER.NAME, String::valueOf);
         expressionMapper.map(UserFields.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME, String::valueOf);
         expressionMapper.map(UserFields.FULL_NAME, STROOM_USER.FULL_NAME, String::valueOf);

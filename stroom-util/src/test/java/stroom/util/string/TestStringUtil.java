@@ -334,4 +334,37 @@ class TestStringUtil {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testAsBoolean() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(StringUtil::asBoolean)
+                .withSimpleEqualityAssertion()
+                .addCase("y", true)
+                .addCase("Y", true)
+                .addCase("yes", true)
+                .addCase("YES", true)
+                .addCase("Yes", true)
+                .addCase("true", true)
+                .addCase("TRUE", true)
+                .addCase("True", true)
+                .addCase("on", true)
+                .addCase("ON", true)
+                .addCase("On", true)
+                .addCase("enabled", true)
+                .addCase("ENABLED", true)
+                .addCase("Enabled", true)
+                .addCase("1", true)
+                .addCase("0", false)
+                .addCase("false", false)
+                .addCase("FALSE", false)
+                .addCase("False", false)
+                .addCase("foo", false)
+                .addCase("", false)
+                .addCase(null, false)
+                .build();
+    }
+
+
 }
