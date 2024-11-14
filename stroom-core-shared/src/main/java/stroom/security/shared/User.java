@@ -4,6 +4,7 @@ package stroom.security.shared;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -252,9 +253,24 @@ public class User implements HasAuditInfo, HasIntegerId {
      */
     @JsonIgnore
     public String getType() {
-        return group
+        return getType(CaseType.SENTENCE);
+    }
+
+    @JsonIgnore
+    public String getType(final CaseType caseType) {
+        Objects.requireNonNull(caseType);
+        final String type = group
                 ? "Group"
                 : "User";
+        if (CaseType.SENTENCE == caseType) {
+            return type;
+        } else if (CaseType.LOWER == caseType) {
+            return type.toLowerCase();
+        } else if (CaseType.UPPER == caseType) {
+            return type.toUpperCase();
+        } else {
+            throw new IllegalArgumentException("Unknown caseType: " + caseType);
+        }
     }
 
     @Override

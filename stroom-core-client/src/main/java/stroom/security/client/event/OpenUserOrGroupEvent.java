@@ -1,6 +1,8 @@
 package stroom.security.client.event;
 
 import stroom.security.client.event.OpenUserOrGroupEvent.OpenUserOrGroupHandler;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserRef;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -21,7 +23,17 @@ public class OpenUserOrGroupEvent extends GwtEvent<OpenUserOrGroupHandler> {
      * Open the named node on the nodes screen
      */
     public static void fire(final HasHandlers handlers, final String subjectId) {
-        handlers.fireEvent(new OpenUserOrGroupEvent(subjectId));
+        handlers.fireEvent(new OpenUserOrGroupEvent(Objects.requireNonNull(subjectId)));
+    }
+
+    /**
+     * Open the named node on the nodes screen
+     */
+    public static void fire(final HasHandlers handlers, final UserRef userRef) {
+        handlers.fireEvent(new OpenUserOrGroupEvent(GwtNullSafe.requireNonNull(
+                userRef,
+                UserRef::getSubjectId,
+                () -> "subjectId required")));
     }
 
     public static Type<OpenUserOrGroupHandler> getType() {

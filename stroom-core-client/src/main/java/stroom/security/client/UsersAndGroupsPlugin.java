@@ -23,6 +23,8 @@ import javax.inject.Singleton;
 @Singleton
 public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresenter> {
 
+    public static final String SCREEN_NAME = "Users And Groups";
+
     @Inject
     public UsersAndGroupsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
@@ -31,8 +33,8 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
         super(eventBus, contentManager, presenterProvider, securityContext);
 
         registerHandler(getEventBus().addHandler(OpenUserOrGroupEvent.getType(), event -> {
-            open(taskManagerPresenter ->
-                    taskManagerPresenter.setFilterInput(buildFilterInput(event.getSubjectId())));
+            open(userAndGroupsPresenter ->
+                    userAndGroupsPresenter.setFilterInput(buildFilterInput(event.getSubjectId())));
         }));
     }
 
@@ -48,7 +50,7 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
                     new Builder()
                             .priority(30)
                             .icon(SvgImage.USERS)
-                            .text("Users And Groups")
+                            .text(SCREEN_NAME)
                             .action(getOpenAction())
                             .command(this::open)
                             .build());

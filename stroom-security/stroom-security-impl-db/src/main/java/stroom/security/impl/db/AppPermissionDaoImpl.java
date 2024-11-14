@@ -90,6 +90,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
         final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 
+
         List<AppUserPermissions> list = null;
         if (request.isAllUsers()) {
             list = JooqUtil.contextResult(securityDbConnProvider, context -> context

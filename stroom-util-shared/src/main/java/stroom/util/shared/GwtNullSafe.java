@@ -333,6 +333,22 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if collection is non-null and contains item.
+     */
+    public static <E> boolean collectionContains(final Collection<E> collection, final E item) {
+        return collection != null
+               && collection.contains(item);
+    }
+
+    /**
+     * @return True if map is non-null and contains key key
+     */
+    public static <K> boolean containsKey(final Map<K, ?> map, final K key) {
+        return map != null
+               && map.containsKey(key);
+    }
+
+    /**
      * @return True if the collection is null or empty
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
@@ -1125,6 +1141,72 @@ public class GwtNullSafe {
         } else {
             return other;
         }
+    }
+
+    /**
+     * Require that both {@code value} is non-null and the result of applying {@code getter} to
+     * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
+     *
+     * @throws NullPointerException
+     */
+    public static <T1, R> R requireNonNull(final T1 value,
+                                           final Function<T1, R> getter,
+                                           final Supplier<String> messageSupplier) {
+        if (value == null) {
+            throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
+        } else {
+            R result = Objects.requireNonNull(getter, "Null getter")
+                    .apply(value);
+            if (result == null) {
+                throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
+            } else {
+                return result;
+            }
+        }
+    }
+
+    /**
+     * Require that {@code value} is non-null, the result of applying {@code getter1} to
+     * {@code value} is non-null and the result applying {@code getter2} to the result
+     * of {@code getter1} is non-null. Throws an {@link NullPointerException} otherwise.
+     *
+     * @throws NullPointerException
+     */
+    public static <T1, T2, R> R requireNonNull(final T1 value,
+                                               final Function<T1, T2> getter1,
+                                               final Function<T2, R> getter2,
+                                               final Supplier<String> messageSupplier) {
+        if (value == null) {
+            throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1, "Null getter1")
+                    .apply(value);
+            if (value2 == null) {
+                throw new NullPointerException(buildNullGetterResultMsg(1, messageSupplier));
+            } else {
+                final R result = Objects.requireNonNull(getter2, "Null getter2")
+                        .apply(value2);
+                if (result == null) {
+                    throw new NullPointerException(buildNullGetterResultMsg(2, messageSupplier));
+                } else {
+                    return result;
+                }
+            }
+        }
+    }
+
+    private static String buildNullValueMsg(final String variableName,
+                                            final Supplier<String> messageSupplier) {
+        return messageSupplier.get()
+               + " (Value of argument " + variableName + " is null)";
+    }
+
+    private static String buildNullGetterResultMsg(final int getterNo,
+                                                   final Supplier<String> messageSupplier) {
+        final String getterNoStr = getterNo == 0
+                ? ""
+                : String.valueOf(getterNo);
+        return messageSupplier.get() + " (Result of applying getter" + getterNoStr + " is null)";
     }
 
     /**

@@ -10,7 +10,6 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -21,7 +20,6 @@ import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
@@ -109,17 +107,7 @@ public class AccountsListPresenter
                 editSelectedAccount();
             }
         });
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                sortList = Collections.singletonList(
-                        new CriteriaFieldSort(
-                                orderByColumn.getField(),
-                                !event.isSortAscending(),
-                                orderByColumn.isIgnoreCase()));
-                dataProvider.refresh();
-            }
-        });
+
     }
 
     private void initButtons() {
@@ -180,20 +168,30 @@ public class AccountsListPresenter
         }
     }
 
-    private void initTableColumns() {
-        // User Id
-        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+    private void setSortList(final List<CriteriaFieldSort> sortList) {
+        this.sortList = sortList;
+    }
 
-            dataGrid.addResizableColumn(
-                    DataGridUtil.commandLinkColumnBuilder(buildOpenUserCommandLink())
-                            .enabledWhen(Account::isEnabled)
-                            .withSorting(FindAccountRequest.FIELD_NAME_USER_ID)
-                            .build(),
-                    DataGridUtil.headingBuilder("User Id")
-                            .withToolTip("The unique identifier for both the account and the corresponding user.")
-                            .build(),
-                    200);
-        }
+    private void initTableColumns() {
+
+        DataGridUtil.addColumnSortHandler(
+                dataGrid,
+                this::setSortList,
+                this::refresh);
+
+        // User Id
+        final Column<Account, CommandLink> userIdCol = DataGridUtil.commandLinkColumnBuilder(buildOpenUserCommandLink())
+                .enabledWhen(Account::isEnabled)
+                .withSorting(FindAccountRequest.FIELD_NAME_USER_ID)
+                .build();
+        dataGrid.addResizableColumn(
+                userIdCol,
+                DataGridUtil.headingBuilder("User Id")
+                        .withToolTip("The unique identifier for both the account and the corresponding user.")
+                        .build(),
+                200);
+
+        dataGrid.getColumnSortList().push(userIdCol);
 
         // First Name
         final Column<Account, String> firstNameColumn = DataGridUtil.textColumnBuilder(Account::getFirstName)
@@ -268,7 +266,7 @@ public class AccountsListPresenter
 
                 return new CommandLink(
                         userId,
-                        "Open user '" + userId + "' on the Users and Groups screen.",
+                        "Open account '" + userId + "' on the Users and Groups screen.",
                         () -> OpenUserOrGroupEvent.fire(
                                 AccountsListPresenter.this, userId));
             } else {
@@ -309,6 +307,9 @@ public class AccountsListPresenter
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Selection<Integer>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
+
+    // --------------------------------------------------------------------------------
+
 
     private class QuickFilterTimer extends Timer {
 

@@ -23,6 +23,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.AppUserPermissionsReport;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -90,6 +91,10 @@ public class AppPermissionsPresenter
         }));
     }
 
+    public void setFilterInput(final String filterInput) {
+        appUserPermissionsListPresenter.setQuickFilterText(filterInput);
+    }
+
     private void editPermissions() {
         final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (appUserPermissions != null) {
@@ -134,7 +139,7 @@ public class AppPermissionsPresenter
                         "Implied By Administrator Inherited From:");
             }
 
-            if (sb.toSafeHtml().asString().length() == 0) {
+            if (sb.toSafeHtml().asString().isEmpty()) {
                 sb.addTitle("No Permission");
             }
         }
@@ -153,7 +158,7 @@ public class AppPermissionsPresenter
             sb.addTitle(directTitle);
         }
 
-        if (paths != null && paths.size() > 0) {
+        if (GwtNullSafe.hasItems(paths)) {
             sb.addNewLine();
             sb.addNewLine();
             sb.addTitle(inheritedTitle);
@@ -178,6 +183,10 @@ public class AppPermissionsPresenter
     public String getType() {
         return "ApplicationPermissions";
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface AppPermissionsView extends View {
 
