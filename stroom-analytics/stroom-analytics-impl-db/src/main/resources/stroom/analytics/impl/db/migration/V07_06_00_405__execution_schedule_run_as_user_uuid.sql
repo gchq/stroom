@@ -35,6 +35,8 @@ BEGIN
     IF object_count = 0 THEN
         ALTER TABLE execution_schedule ADD COLUMN run_as_user_uuid varchar(255) DEFAULT NULL;
 
+        -- The now legacy doc_permission table may be removed at some later point
+        -- in which case we don't have to do anything
         SELECT COUNT(1)
         INTO object_count
         FROM information_schema.tables
@@ -43,10 +45,16 @@ BEGIN
 
         IF object_count = 1 THEN
             SET @sql_str = CONCAT(
-                'UPDATE execution_schedule es, doc_permission dp ',
-                'SET es.run_as_user_uuid = dp.user_uuid ',
-                'WHERE es.doc_uuid = dp.doc_uuid ',
-                'AND dp.permission = "Owner"');
+                'UPDATE execution_schedule es ',
+                'INNER JOIN ( ',
+                '    SELECT DISTINCT ',
+                '        dp.doc_uuid, ',
+                '        FIRST_VALUE(dp.user_uuid) ',
+                '            OVER (PARTITION BY dp.doc_uuid ORDER BY dp.id DESC) latest_owner_uuid ',
+                '    FROM doc_permission dp ',
+                '    WHERE dp.permission = "Owner" ',
+                ') as dpv on dpv.doc_uuid = es.doc_uuid ',
+                'SET es.run_as_user_uuid = dpv.latest_owner_uuid;');
             PREPARE stmt FROM @sql_str;
             EXECUTE stmt;
         END IF;
