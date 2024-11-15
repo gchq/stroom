@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
@@ -27,6 +28,8 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.security.client.AppPermissionsPlugin;
+import stroom.security.client.event.OpenAppPermissionsEvent;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
@@ -35,6 +38,7 @@ import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
@@ -58,6 +62,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class UserListPresenter
         extends MyPresenterWidget<QuickFilterPageView>
@@ -118,6 +123,15 @@ public class UserListPresenter
         };
         iconCol.setSortable(true);
         dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
+
+        dataGrid.addResizableColumn(
+                DataGridUtil.commandLinkColumnBuilder(buildOpenAppPermissionsCommandLink())
+                        .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                        .build(),
+                DataGridUtil.headingBuilder("Display Name")
+                        .withToolTip("The name of the user or group.")
+                        .build(),
+                200);
 
         // Display Name
         final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
@@ -208,11 +222,31 @@ public class UserListPresenter
         filter = text;
         if (filter != null) {
             filter = filter.trim();
-            if (filter.length() == 0) {
+            if (filter.isEmpty()) {
                 filter = null;
             }
         }
         refresh();
+    }
+
+    private Function<User, CommandLink> buildOpenAppPermissionsCommandLink() {
+        return (User user) -> {
+            if (user != null) {
+                final String displayName = user.getDisplayName();
+                return new CommandLink(
+                        displayName,
+                        "Open " + user.getType() + " '" + user.getDisplayName() + "' on the "
+                        + AppPermissionsPlugin.SCREEN_NAME + " screen.",
+                        () -> OpenAppPermissionsEvent.fire(
+                                UserListPresenter.this, user.getSubjectId()));
+            } else {
+                return null;
+            }
+        };
+    }
+
+    public void setQuickFilterText(final String quickFilterText) {
+        getView().setQuickFilterText(quickFilterText);
     }
 
     public void refresh() {

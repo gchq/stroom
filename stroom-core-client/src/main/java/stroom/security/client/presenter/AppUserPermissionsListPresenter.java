@@ -16,17 +16,18 @@
 
 package stroom.security.client.presenter;
 
-import stroom.cell.info.client.SvgCell;
+import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.security.client.UsersAndGroupsPlugin;
+import stroom.security.client.event.OpenUserOrGroupEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
@@ -37,31 +38,26 @@ import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.gwt.user.cellview.client.ColumnSortList;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class AppUserPermissionsListPresenter
         extends MyPresenterWidget<QuickFilterPageView>
@@ -110,15 +106,15 @@ public class AppUserPermissionsListPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        builder.sortList(List.of(
-                new CriteriaFieldSort(
-                        UserFields.DISPLAY_NAME.getFldName(),
-                        false,
-                        true),
-                new CriteriaFieldSort(
-                        UserFields.NAME.getFldName(),
-                        false,
-                        true)));
+//        builder.sortList(List.of(
+//                new CriteriaFieldSort(
+//                        UserFields.DISPLAY_NAME.getFldName(),
+//                        false,
+//                        true),
+//                new CriteriaFieldSort(
+//                        UserFields.NAME.getFldName(),
+//                        false,
+//                        true)));
 
         setupColumns();
     }
@@ -136,6 +132,10 @@ public class AppUserPermissionsListPresenter
                 .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
         builder.expression(expression);
         refresh();
+    }
+
+    public void setQuickFilterText(final String quickFilterText) {
+        getView().setQuickFilterText(quickFilterText);
     }
 
     public void setShowLevel(final PermissionShowLevel showLevel) {
@@ -168,101 +168,85 @@ public class AppUserPermissionsListPresenter
     }
 
     private void setupColumns() {
-        // Icon
-        final Column<AppUserPermissions, Preset> iconCol =
-                new Column<AppUserPermissions, Preset>(new SvgCell()) {
-                    @Override
-                    public Preset getValue(final AppUserPermissions documentUserPermissions) {
-                        final UserRef userRef = documentUserPermissions.getUserRef();
-                        if (!userRef.isGroup()) {
-                            return SvgPresets.USER;
-                        }
 
-                        return SvgPresets.USER_GROUP;
-                    }
-                };
-        iconCol.setSortable(true);
-        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
+        DataGridUtil.addColumnSortHandler(dataGrid, builder, this::refresh);
+
+        // Icon
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(false, (AppUserPermissions row) ->
+                                row.getUserRef().isGroup()
+                                        ? SvgPresets.USER_GROUP
+                                        : SvgPresets.USER)
+                        .withSorting(UserFields.FIELD_IS_GROUP)
+                        .build(),
+                DataGridUtil.headingBuilder("")
+                        .withToolTip("Whether this row is a single user or a named user group.")
+                        .build(),
+                ColumnSizeConstants.ICON_COL);
 
         // User Or Group Name
-        final Column<AppUserPermissions, String> nameCol =
-                new Column<AppUserPermissions, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final AppUserPermissions appUserPermissions) {
-                        return appUserPermissions.getUserRef().getDisplayName();
-                    }
-                };
-        nameCol.setSortable(true);
-        dataGrid.addResizableColumn(nameCol, "Display Name", 400);
+        final Column<AppUserPermissions, CommandLink> displayNameCol = DataGridUtil.commandLinkColumnBuilder(
+                        buildOpenAppPermissionsCommandLink())
+                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                .build();
+        dataGrid.addResizableColumn(
+                displayNameCol,
+                DataGridUtil.headingBuilder("Display Name")
+                        .withToolTip("The name of the user or group.")
+                        .build(),
+                400);
+
+        // Show it as the default sort
+        dataGrid.getColumnSortList().push(displayNameCol);
 
         // Permissions
-        final Column<AppUserPermissions, SafeHtml> permissionCol =
-                new Column<AppUserPermissions, SafeHtml>(new SafeHtmlCell()) {
-                    @Override
-                    public SafeHtml getValue(final AppUserPermissions appUserPermissions) {
-                        final DescriptionBuilder sb = new DescriptionBuilder();
-                        boolean notEmpty = false;
-                        boolean lastInherited = false;
-                        for (final AppPermission permission : AppPermission.LIST) {
-                            if (appUserPermissions.getPermissions() != null &&
-                                appUserPermissions.getPermissions().contains(permission)) {
-                                if (notEmpty) {
-                                    sb.addLine(false, lastInherited, ", ");
-                                }
-                                sb.addLine(permission.getDisplayValue());
-                                notEmpty = true;
-                                lastInherited = false;
-                            } else if (appUserPermissions.getInherited() != null &&
-                                       appUserPermissions.getInherited().contains(permission)) {
-                                if (notEmpty) {
-                                    sb.addLine(false, lastInherited, ", ");
-                                }
-                                sb.addLine(false, true, permission.getDisplayValue());
-                                notEmpty = true;
-                                lastInherited = true;
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.safeHtmlColumn((AppUserPermissions appUserPermissions) -> {
+                    final DescriptionBuilder sb = new DescriptionBuilder();
+                    boolean notEmpty = false;
+                    boolean lastInherited = false;
+                    for (final AppPermission permission : AppPermission.LIST) {
+                        if (GwtNullSafe.collectionContains(appUserPermissions.getPermissions(), permission)) {
+                            if (notEmpty) {
+                                sb.addLine(false, lastInherited, ", ");
                             }
-                        }
-                        return sb.toSafeHtml();
-                    }
-                };
-        dataGrid.addResizableColumn(permissionCol, "Permissions", 2000);
-
-        dataGrid.addEndColumn(new EndColumn<AppUserPermissions>());
-
-
-        final ColumnSortEvent.Handler columnSortHandler = event -> {
-            final List<CriteriaFieldSort> sortList = new ArrayList<>();
-            if (event != null) {
-                final ColumnSortList columnSortList = event.getColumnSortList();
-                if (columnSortList != null) {
-                    for (int i = 0; i < columnSortList.size(); i++) {
-                        final ColumnSortInfo columnSortInfo = columnSortList.get(i);
-                        final Column<?, ?> column = columnSortInfo.getColumn();
-                        final boolean isAscending = columnSortInfo.isAscending();
-
-                        if (column.equals(iconCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.IS_GROUP.getFldName(),
-                                    !isAscending,
-                                    true));
-                        } else if (column.equals(nameCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.DISPLAY_NAME.getFldName(),
-                                    !isAscending,
-                                    true));
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.NAME.getFldName(),
-                                    !isAscending,
-                                    true));
+                            sb.addLine(permission.getDisplayValue());
+                            notEmpty = true;
+                            lastInherited = false;
+                        } else if (GwtNullSafe.collectionContains(appUserPermissions.getInherited(), permission)) {
+                            if (notEmpty) {
+                                sb.addLine(false, lastInherited, ", ");
+                            }
+                            sb.addLine(false, true, permission.getDisplayValue());
+                            notEmpty = true;
+                            lastInherited = true;
                         }
                     }
-                }
+                    return sb.toSafeHtml();
+                }),
+                DataGridUtil.headingBuilder("Permissions")
+                        .withToolTip("The permissions held by this user/group. Inherited permissions are in grey.")
+                        .build(),
+                400);
+
+        DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private Function<AppUserPermissions, CommandLink> buildOpenAppPermissionsCommandLink() {
+        return (AppUserPermissions appUserPermissions) -> {
+            final UserRef userRef = GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
+            if (userRef != null) {
+                final String displayName = userRef.getDisplayName();
+                return new CommandLink(
+                        displayName,
+                        "Open " + userRef.getType(CaseType.LOWER)
+                        + " '" + displayName + "' on the "
+                        + UsersAndGroupsPlugin.SCREEN_NAME + " screen.",
+                        () -> OpenUserOrGroupEvent.fire(AppUserPermissionsListPresenter.this, userRef));
+            } else {
+                return null;
             }
-            builder.sortList(sortList);
-            refresh();
         };
-        dataGrid.addColumnSortHandler(columnSortHandler);
-        dataGrid.getColumnSortList().push(nameCol);
     }
 
     public ButtonView addButton(final Preset preset) {

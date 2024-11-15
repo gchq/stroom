@@ -16,6 +16,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -25,9 +26,11 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.exception.IntegrityConstraintViolationException;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +69,15 @@ public class UserDaoImpl implements UserDao {
         return user;
     };
 
+    private static final Map<String, Field<?>> SORT_FIELD_NAME_TO_FIELD_MAP = Map.of(
+            UserFields.FIELD_IS_GROUP, STROOM_USER.IS_GROUP,
+            UserFields.FIELD_NAME, STROOM_USER.NAME,
+            UserFields.FIELD_DISPLAY_NAME, STROOM_USER.DISPLAY_NAME,
+            UserFields.FIELD_FULL_NAME, STROOM_USER.FULL_NAME);
+
+    private static final Field<?> DEFAULT_SORT_FIELD = STROOM_USER.DISPLAY_NAME;
+    private static final String DEFAULT_SORT_ID = UserFields.FIELD_DISPLAY_NAME;
+
     private final SecurityDbConnProvider securityDbConnProvider;
     private final ExpressionMapper expressionMapper;
 
@@ -75,7 +87,7 @@ public class UserDaoImpl implements UserDao {
         this.securityDbConnProvider = securityDbConnProvider;
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, Boolean::valueOf);
+        expressionMapper.map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean);
         expressionMapper.map(UserFields.NAME, STROOM_USER.NAME, String::valueOf);
         expressionMapper.map(UserFields.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME, String::valueOf);
         expressionMapper.map(UserFields.FULL_NAME, STROOM_USER.FULL_NAME, String::valueOf);
@@ -85,7 +97,8 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User create(final User user) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> create(context, user));
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
+                create(context, user));
     }
 
     private User create(final DSLContext context, final User user) {
@@ -113,7 +126,7 @@ public class UserDaoImpl implements UserDao {
                         user.getUuid(),
                         user.isGroup(),
                         user.isEnabled(),
-                        user.getDisplayName(),
+                        getDisplayNameOrSubjectId(user),
                         user.getFullName())
                 .returning(STROOM_USER.ID)
                 .fetchOne(STROOM_USER.ID);
@@ -191,7 +204,7 @@ public class UserDaoImpl implements UserDao {
                 .set(STROOM_USER.UUID, user.getUuid())
                 .set(STROOM_USER.IS_GROUP, user.isGroup())
                 .set(STROOM_USER.ENABLED, user.isEnabled())
-                .set(STROOM_USER.DISPLAY_NAME, user.getDisplayName())
+                .set(STROOM_USER.DISPLAY_NAME, getDisplayNameOrSubjectId(user))
                 .set(STROOM_USER.FULL_NAME, user.getFullName())
                 .where(STROOM_USER.ID.eq(user.getId()))
                 .and(STROOM_USER.VERSION.eq(user.getVersion()))
@@ -199,11 +212,16 @@ public class UserDaoImpl implements UserDao {
 
         if (count == 0) {
             throw new DataChangedException("Failed to update user, " +
-                    "it may have been updated by another user or deleted");
+                                           "it may have been updated by another user or deleted");
         }
 
         return getByUuid(context, user.getUuid()).orElseThrow(() ->
                 new RuntimeException("Error fetching updated user"));
+    }
+
+    private String getDisplayNameOrSubjectId(final User user) {
+        Objects.requireNonNull(user);
+        return Objects.requireNonNullElseGet(user.getDisplayName(), user::getSubjectId);
     }
 
     @Override
@@ -265,33 +283,34 @@ public class UserDaoImpl implements UserDao {
     }
 
     Collection<OrderField<?>> createOrderFields(final BaseCriteria criteria) {
-        final List<CriteriaFieldSort> sortList = NullSafe
-                .getOrElseGet(criteria, BaseCriteria::getSortList, Collections::emptyList);
+        final List<CriteriaFieldSort> sortList = new ArrayList<>(NullSafe
+                .getOrElseGet(criteria, BaseCriteria::getSortList, Collections::emptyList));
         if (sortList.isEmpty()) {
-            return Collections.singleton(STROOM_USER.DISPLAY_NAME);
+            return Collections.singleton(DEFAULT_SORT_FIELD);
         }
 
-        return sortList.stream().map(sort -> {
-            Field<?> field;
-            if (UserFields.IS_GROUP.getFldName().equals(sort.getId())) {
-                field = STROOM_USER.IS_GROUP;
-            } else if (UserFields.NAME.getFldName().equals(sort.getId())) {
-                field = STROOM_USER.NAME;
-            } else if (UserFields.DISPLAY_NAME.getFldName().equals(sort.getId())) {
-                field = STROOM_USER.DISPLAY_NAME;
-            } else if (UserFields.FULL_NAME.getFldName().equals(sort.getId())) {
-                field = STROOM_USER.FULL_NAME;
-            } else {
-                field = STROOM_USER.DISPLAY_NAME;
-            }
+        final ArrayList<OrderField<?>> sortFields = sortList.stream()
+                .map(sort -> {
+                    Field<?> field = SORT_FIELD_NAME_TO_FIELD_MAP.get(sort.getId());
+                    if (field == null) {
+                        field = DEFAULT_SORT_FIELD;
+                    }
+                    return asOrderField(field, sort.isDesc());
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
 
-            OrderField<?> orderField = field;
-            if (sort.isDesc()) {
-                orderField = field.desc();
-            }
+        // Add displayName as a secondary sort
+        if (!sortFields.contains(DEFAULT_SORT_FIELD)) {
+            final OrderField<?> orderField = asOrderField(DEFAULT_SORT_FIELD, false);
+            sortFields.add(orderField);
+        }
+        return sortFields;
+    }
 
-            return orderField;
-        }).collect(Collectors.toList());
+    private <T> OrderField<T> asOrderField(final Field<T> field, final boolean isDesc) {
+        return isDesc
+                ? field.desc()
+                : field;
     }
 
     @Override

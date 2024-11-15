@@ -199,6 +199,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }));
     }
 
+    public void setFilterInput(final String filterInput) {
+        userList.setQuickFilterText(filterInput);
+    }
+
     private void onSelection() {
         final User selected = userList.getSelectionModel().getSelected();
         if (selected != null) {

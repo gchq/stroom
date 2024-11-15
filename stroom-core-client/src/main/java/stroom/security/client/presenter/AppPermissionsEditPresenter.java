@@ -32,10 +32,11 @@ import stroom.security.shared.AbstractAppPermissionChange.RemoveAppPermission;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissionsReport;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -151,22 +152,24 @@ public class AppPermissionsEditPresenter
             @Override
             public TickBoxState getValue(final AppPermission permission) {
                 if (currentPermissions != null) {
-                    if (currentPermissions.getExplicitPermissions().contains(permission)) {
+                    if (GwtNullSafe.collectionContains(currentPermissions.getExplicitPermissions(), permission)) {
                         return TickBoxState.TICK;
                     } else if (currentPermissions.getInheritedPermissions().containsKey(permission)) {
                         return TickBoxState.HALF_TICK;
                     }
-                }
 
-                // See if implied by administrator.
-                if (!AppPermission.ADMINISTRATOR.equals(permission)) {
-                    if (currentPermissions.getExplicitPermissions().contains(AppPermission.ADMINISTRATOR)) {
-                        return TickBoxState.HALF_TICK;
-                    } else if (currentPermissions.getInheritedPermissions().containsKey(AppPermission.ADMINISTRATOR)) {
-                        return TickBoxState.HALF_TICK;
+                    // See if implied by administrator.
+                    if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                        if (GwtNullSafe.collectionContains(currentPermissions.getExplicitPermissions(),
+                                AppPermission.ADMINISTRATOR)) {
+                            return TickBoxState.HALF_TICK;
+                        } else if (GwtNullSafe.containsKey(
+                                currentPermissions.getInheritedPermissions(),
+                                AppPermission.ADMINISTRATOR)) {
+                            return TickBoxState.HALF_TICK;
+                        }
                     }
                 }
-
                 return TickBoxState.UNTICK;
             }
         };
@@ -198,20 +201,24 @@ public class AppPermissionsEditPresenter
         dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Perm name
-        dataGrid.addColumn(new Column<AppPermission, String>(new TextCell()) {
-            @Override
-            public String getValue(final AppPermission permission) {
-                return permission.getDisplayValue();
-            }
-        }, "Permission", 200);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(AppPermission::getDisplayValue)
+                        .build(),
+                DataGridUtil.headingBuilder("Permission")
+                        .withToolTip("The name of the application permission.")
+                        .build(),
+                200);
 
         // Description
-        dataGrid.addColumn(new Column<AppPermission, String>(new TextCell()) {
-            @Override
-            public String getValue(final AppPermission permission) {
-                return permission.getDescription();
-            }
-        }, "Description", 700);
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.textColumnBuilder(AppPermission::getDescription)
+                        .build(),
+                DataGridUtil.headingBuilder("Description")
+                        .withToolTip("Description of what the permission allows the user/group to do.")
+                        .build(),
+                700);
+
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     @Override

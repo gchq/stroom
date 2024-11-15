@@ -33,7 +33,7 @@ public class UserDesc {
     }
 
     public static UserDesc forSubjectId(final String subjectId) {
-        return new UserDesc(subjectId, subjectId, null);
+        return new UserDesc(subjectId, null, null);
     }
 
     public String getSubjectId() {

@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,16 @@ public class StringUtil {
             "0123456789ABCDEF".toCharArray();
     // See Base58Check. This is NOT base58Check, but uses the same chars, ie. no 'o0il1' for readability
     public static final char[] ALLOWED_CHARS_BASE_58_STYLE = Base58.ALPHABET;
+
+    // Hold values as both upper and lower to make lookup faster
+    private static final Set<String> TRUE_VALUES = Stream.of(
+                    "y", "yes", "true", "on", "enabled", "1"
+            )
+            .flatMap(str -> Stream.of(
+                    str.toLowerCase(),
+                    str.toUpperCase()
+            ))
+            .collect(Collectors.toSet());
 
     private StringUtil() {
     }
@@ -199,6 +210,32 @@ public class StringUtil {
             }
         } catch (Exception e) {
             throw e;
+        }
+    }
+
+    /**
+     * @return True if str is non-null and equal to one of (y|yes|true|on|enabled|1)
+     * ignoring case.
+     */
+    public static boolean asBoolean(final String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        } else {
+            // Assume the user has not used mixed case, else incur the cost of lower casing the string
+            return TRUE_VALUES.contains(str)
+                   || TRUE_VALUES.contains(str.toLowerCase());
+        }
+    }
+
+    /**
+     * @return Null if str is null. True if str is equal to one of (y|yes|true|on|enabled|1)
+     * ignoring case, else false.
+     */
+    public static Boolean asNullableBoolean(final String str) {
+        if (str == null) {
+            return null;
+        } else {
+            return asBoolean(str);
         }
     }
 }
