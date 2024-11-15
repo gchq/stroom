@@ -38,7 +38,7 @@ public class TestV07_06_00_305 extends AbstractProcessorMigrationTest {
                     KEY doc_permission_doc_uuid (`doc_uuid`)
                 ) ENGINE=InnoDB DEFAULT
                     CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-                    
+
                 insert into processor (
                     version,
                     create_time_ms,
