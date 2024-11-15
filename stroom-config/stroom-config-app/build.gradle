@@ -74,7 +74,6 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
-    testImplementation libs.jackson_datatype_jdk8
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mbknor_jackson_jsonSchema
     testImplementation libs.java_diff_utils

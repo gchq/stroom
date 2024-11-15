@@ -127,7 +127,7 @@ ext.versions = [
         aws               : '2.20.157',
         bnd               : '7.0.0',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
-        dropwizard        : '4.0.10', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '8.11.2',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
         flyway            : '10.0.0',
@@ -231,7 +231,6 @@ ext.libs = [
         jackson_core                        : "com.fasterxml.jackson.core:jackson-core", // version controlled by dropwizard-dependencies
         jackson_databind                    : "com.fasterxml.jackson.core:jackson-databind", // version controlled by dropwizard-dependencies // files('libs/jackson-databind-2.10.5.1.jar'),//
         jackson_dataformat_yaml             : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by dropwizard-dependencies
-        jackson_datatype_jdk8               : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", // version controlled by dropwizard-dependencies
         jackson_datatype_jsr310             : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by dropwizard-dependencies
         jakarta_activation                  : "jakarta.activation:jakarta.activation-api", // version controlled by dropwizard-dependencies
         jakarta_annotation_api              : "jakarta.annotation:jakarta.annotation-api", // version controlled by dropwizard-dependencies
@@ -282,10 +281,7 @@ ext.libs = [
         // Potentially caused by https://github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
         // lmdbjava 0.9.0 has a cursor bug though, https://github.com/lmdbjava/lmdbjava/issues/228
         lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
-        // This is the bridge from log4j v1 to slf4j
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
-        // This is the bridge from log4j v2 to slf4j
-        //log4j_slf4j2_impl                   : "org.apache.logging.log4j:log4j-slf4j2-impl:2.24.1",
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
@@ -307,7 +303,7 @@ ext.libs = [
         simple_java_mail                    : "org.simplejavamail:simple-java-mail:${versions.simple_java_mail}",
         simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
-        snake_yaml                          : "org.yaml:snakeyaml:2.3",
+        snake_yaml                          : "org.yaml:snakeyaml:2.2",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
         sqlite                              : "org.xerial:sqlite-jdbc:3.43.2.2",
         stax_api                            : "stax:stax-api:1.0.1",
