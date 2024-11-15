@@ -46,9 +46,15 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -166,9 +172,40 @@ public class AppUserPermissionsListPresenter
         }
     }
 
+    private SafeHtml buildIconHeader() {
+        // TODO this is duplicated in UserListPresenter
+        final String iconClassName = "svgCell-icon";
+        final Preset userPreset = SvgPresets.USER.title("");
+        final Preset groupPreset = SvgPresets.USER_GROUP.title("");
+        return HtmlBuilder.builder()
+                .div(
+                        divBuilder -> {
+                            divBuilder.append(SvgImageUtil.toSafeHtml(
+                                    userPreset.getTitle(),
+                                    userPreset.getSvgImage(),
+                                    iconClassName));
+                            divBuilder.append("/");
+                            divBuilder.append(SvgImageUtil.toSafeHtml(
+                                    groupPreset.getTitle(),
+                                    groupPreset.getSvgImage(),
+                                    iconClassName));
+                        },
+                        Attribute.className("two-icon-column-header"))
+                .toSafeHtml();
+    }
+
     private void setupColumns() {
 
         DataGridUtil.addColumnSortHandler(dataGrid, builder, this::refresh);
+
+//        final DefaultHeaderOrFooterBuilder<AppUserPermissions> headerBuilder = new DefaultHeaderOrFooterBuilder<>(
+//                dataGrid,
+//                false);
+//        headerBuilder.setSortIconStartOfLine(false);
+//        dataGrid.setHeaderBuilder(headerBuilder);
+
+        // Permissions col contains a lot of text, so we need multiline rows
+        dataGrid.setMultiLine(true);
 
         // Icon
         dataGrid.addColumn(
@@ -177,11 +214,14 @@ public class AppUserPermissionsListPresenter
                                         ? SvgPresets.USER_GROUP
                                         : SvgPresets.USER)
                         .withSorting(UserFields.FIELD_IS_GROUP)
+                        .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("")
+                        .headingText(buildIconHeader())
+                        .centerAligned()
                         .withToolTip("Whether this row is a single user or a named user group.")
                         .build(),
-                ColumnSizeConstants.ICON_COL);
+                (ColumnSizeConstants.ICON_COL * 2) + 20);
 
         // User Or Group Name
         final Column<AppUserPermissions, CommandLink> displayNameCol = DataGridUtil.commandLinkColumnBuilder(
@@ -203,22 +243,27 @@ public class AppUserPermissionsListPresenter
                 DataGridUtil.safeHtmlColumn((AppUserPermissions appUserPermissions) -> {
                     final DescriptionBuilder sb = new DescriptionBuilder();
                     boolean notEmpty = false;
-                    boolean lastInherited = false;
+                    boolean lastIsInherited = false;
+                    SafeHtml delimiter = new SafeHtmlBuilder()
+                            .append(SafeHtmlUtil.ENSP)
+                            .appendEscaped("|")
+                            .append(SafeHtmlUtil.ENSP)
+                            .toSafeHtml();
                     for (final AppPermission permission : AppPermission.LIST) {
                         if (GwtNullSafe.collectionContains(appUserPermissions.getPermissions(), permission)) {
                             if (notEmpty) {
-                                sb.addLine(false, lastInherited, ", ");
+                                sb.addLine(false, lastIsInherited, true, delimiter);
                             }
                             sb.addLine(permission.getDisplayValue());
                             notEmpty = true;
-                            lastInherited = false;
+                            lastIsInherited = false;
                         } else if (GwtNullSafe.collectionContains(appUserPermissions.getInherited(), permission)) {
                             if (notEmpty) {
-                                sb.addLine(false, lastInherited, ", ");
+                                sb.addLine(false, lastIsInherited, true, delimiter);
                             }
                             sb.addLine(false, true, permission.getDisplayValue());
                             notEmpty = true;
-                            lastInherited = true;
+                            lastIsInherited = true;
                         }
                     }
                     return sb.toSafeHtml();

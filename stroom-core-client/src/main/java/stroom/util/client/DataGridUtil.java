@@ -42,6 +42,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
@@ -279,20 +280,26 @@ public class DataGridUtil {
         view.addEndColumn(new EndColumn<>());
     }
 
+    private static CriteriaFieldSort getSortFromEvent(final ColumnSortEvent event) {
+        final Column<?, ?> column = GwtNullSafe.get(event, ColumnSortEvent::getColumn);
+        if (column instanceof OrderByColumn<?, ?> && column.isSortable()) {
+            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+            return new CriteriaFieldSort(
+                    orderByColumn.getField(),
+                    !event.isSortAscending(),
+                    orderByColumn.isIgnoreCase());
+        } else {
+            return null;
+        }
+    }
+
     public static void addColumnSortHandler(final MyDataGrid<?> view,
                                             final BaseCriteria criteria,
                                             final Runnable onSortChange) {
-
         view.addColumnSortHandler(event -> {
-            if (event != null
-                && event.getColumn() instanceof OrderByColumn<?, ?>
-                && event.getColumn().isSortable()) {
-
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
+                criteria.setSort(sort);
                 onSortChange.run();
             }
         });
@@ -301,18 +308,9 @@ public class DataGridUtil {
     public static void addColumnSortHandler(final MyDataGrid<?> view,
                                             final BaseCriteria.AbstractBuilder<?, ?> criteria,
                                             final Runnable onSortChange) {
-
         view.addColumnSortHandler(event -> {
-            if (event != null
-                && event.getColumn() instanceof OrderByColumn<?, ?>
-                && event.getColumn().isSortable()) {
-
-                //noinspection PatternVariableCanBeUsed // Not in GWT
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                final CriteriaFieldSort sort = new CriteriaFieldSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
                 criteria.sortList(List.of(sort));
                 onSortChange.run();
             }
@@ -322,19 +320,22 @@ public class DataGridUtil {
     public static void addColumnSortHandler(final MyDataGrid<?> view,
                                             final Consumer<List<CriteriaFieldSort>> fieldSortConsumer,
                                             final Runnable onSortChange) {
-
         view.addColumnSortHandler(event -> {
-            if (event != null
-                && event.getColumn() instanceof OrderByColumn<?, ?>
-                && event.getColumn().isSortable()) {
-
-                //noinspection PatternVariableCanBeUsed // Not in GWT
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                final CriteriaFieldSort sort = new CriteriaFieldSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
                 fieldSortConsumer.accept(List.of(sort));
+                onSortChange.run();
+            }
+        });
+    }
+
+    public static void addColumnSortHandler(final DataGrid<?> view,
+                                            final BaseCriteria criteria,
+                                            final Runnable onSortChange) {
+        view.addColumnSortHandler(event -> {
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
+                criteria.setSort(sort);
                 onSortChange.run();
             }
         });
@@ -342,25 +343,6 @@ public class DataGridUtil {
 
     public static void addEndColumn(final DataGrid<?> view) {
         view.addColumn(new EndColumn<>());
-    }
-
-    public static void addColumnSortHandler(final DataGrid<?> view,
-                                            final BaseCriteria criteria,
-                                            final Runnable onSortChange) {
-
-        view.addColumnSortHandler(event -> {
-            if (event != null
-                && event.getColumn() instanceof OrderByColumn<?, ?>
-                && event.getColumn().isSortable()) {
-
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
-                onSortChange.run();
-            }
-        });
     }
 
     /**
@@ -928,11 +910,21 @@ public class DataGridUtil {
     public static class HeadingBuilder {
 
         private HeadingAlignment headingAlignment = null;
-        private String headingText;
+        private SafeHtml headingText = SafeHtmlUtils.EMPTY_SAFE_HTML;
         private String toolTip;
 
         public HeadingBuilder(final String headingText) {
-            this.headingText = headingText;
+            this.headingText = SafeHtmlUtil.getSafeHtml(headingText);
+        }
+
+        public HeadingBuilder headingText(final String headingText) {
+            this.headingText = SafeHtmlUtil.getSafeHtml(headingText);
+            return this;
+        }
+
+        public HeadingBuilder headingText(final SafeHtml headingText) {
+            this.headingText = GwtNullSafe.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
+            return this;
         }
 
         public HeadingBuilder leftAligned() {
@@ -958,7 +950,8 @@ public class DataGridUtil {
         public Header<SafeHtml> build() {
 
             final boolean hasToolTip = !GwtNullSafe.isBlankString(toolTip);
-            final boolean hasAlignment = headingAlignment != null && headingAlignment != HeadingAlignment.LEFT;
+            final boolean hasAlignment = headingAlignment != null
+                                         && headingAlignment != HeadingAlignment.LEFT;
             final Header<SafeHtml> header;
             String headingStyle = null;
             if (hasAlignment) {
@@ -973,7 +966,7 @@ public class DataGridUtil {
             if (hasToolTip) {
 
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder()
-                        .appendHtmlConstant("<span");
+                        .appendHtmlConstant("<div");
 //                if (hasToolTip) {
                 builder.appendHtmlConstant(" title=\"")
                         .appendEscaped(toolTip)
@@ -989,19 +982,20 @@ public class DataGridUtil {
 //                    }
 //                }
 
-                builder.appendHtmlConstant(">");
-                if (GwtNullSafe.isBlankString(headingText)) {
-                    builder.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
-                } else {
-                    builder.appendEscaped(headingText);
-                }
+                builder.appendHtmlConstant(">")
+                        .append(headingText);
+//                if (GwtNullSafe.isBlankString(headingText)) {
+//                    builder.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
+//                } else {
+//                    builder.appendEscaped(headingText);
+//                }
 
                 final SafeHtml safeHtml = builder
-                        .appendHtmlConstant("</span>")
+                        .appendHtmlConstant("</div>")
                         .toSafeHtml();
                 header = new SafeHtmlHeader(safeHtml);
             } else {
-                header = new SafeHtmlHeader(SafeHtmlUtil.getSafeHtml(headingText));
+                header = new SafeHtmlHeader(headingText);
             }
 
             // Apply a class to the header itself

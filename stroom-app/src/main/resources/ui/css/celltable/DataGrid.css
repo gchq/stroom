@@ -67,6 +67,14 @@
 	font-weight: 500;
 }
 
+.dataGridHeader .two-icon-column-header {
+    display: flex;
+}
+
+.dataGridHeader:has(.two-icon-column-header) {
+    text-decoration: none;
+}
+
 .dataGridCell {
 	overflow: hidden;
 	white-space: nowrap;

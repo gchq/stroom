@@ -2347,6 +2347,11 @@ button.main-menu svg {
     font-weight: 600;
 }
 
+.delimiter {
+    /* color: var(--text-color--disabled); */
+    color: var(--blue-300);
+}
+
 /* Add a smidge of a gap between the split and the next form group */
 .DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
     margin-top: 0.5em;
