@@ -44,7 +44,9 @@ with recursive cte as (
 		v.user_uuid,
 		v.group_uuid,
 		v.perms,
-		concat_ws(',', cte.inherited_perms, v.parent_perms)
+		if (cte.inherited_perms is null, v.parent_perms,
+		    if (v.parent_perms is null, cte.inherited_perms,
+		        concat(cte.inherited_perms, ',', v.parent_perms)))
 	from cte
     join v_permission_app_parent_perms as v
 	on cte.user_uuid = v.group_uuid

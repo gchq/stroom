@@ -166,10 +166,7 @@ class TestAppPermissionDaoImpl {
                 ExpressionOperator.builder().build(),
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
-        assertThat(resultPage.size()).isEqualTo(3);
-        validateAppPermissions(resultPage, "user1", Set.of(), Set.of());
-        validateAppPermissions(resultPage, "group1", Set.of(), Set.of());
-        validateAppPermissions(resultPage, "group2", Set.of(), Set.of());
+        assertThat(resultPage.size()).isEqualTo(0);
     }
 
     @Test
@@ -202,6 +199,31 @@ class TestAppPermissionDaoImpl {
                 Set.of(AppPermission.STEPPING_PERMISSION),
                 Set.of(AppPermission.CHANGE_OWNER_PERMISSION));
         validateAppPermissions(resultPage, "group2", Set.of(AppPermission.CHANGE_OWNER_PERMISSION), Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3Mid() {
+        final User user1 = createUser("user1");
+        final User group1 = createGroup("group1");
+        final User group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+
+        appPermissionDao.addPermission(group1.getUuid(), AppPermission.STEPPING_PERMISSION);
+
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()).size()).isEqualTo(0);
+        assertThat(appPermissionDao.getPermissionsForUser(group1.getUuid()).size()).isEqualTo(1);
+        assertThat(appPermissionDao.getPermissionsForUser(group2.getUuid()).size()).isEqualTo(0);
+
+        final FetchAppUserPermissionsRequest request = new FetchAppUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateAppPermissions(resultPage, "user1", Set.of(), Set.of(AppPermission.STEPPING_PERMISSION));
+        validateAppPermissions(resultPage, "group1", Set.of(AppPermission.STEPPING_PERMISSION), Set.of());
     }
 
     private void validateAppPermissions(final ResultPage<AppUserPermissions> resultPage,
