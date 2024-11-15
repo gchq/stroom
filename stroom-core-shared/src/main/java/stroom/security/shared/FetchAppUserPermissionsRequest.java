@@ -18,7 +18,6 @@ package stroom.security.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.shared.FetchDocumentUserPermissionsRequest.Builder;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 
@@ -33,24 +32,24 @@ import java.util.List;
 public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
 
     @JsonProperty
-    private boolean allUsers;
+    private PermissionShowLevel showLevel;
 
     @JsonCreator
     public FetchAppUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                           @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                           @JsonProperty("expression") final ExpressionOperator expression,
-                                          @JsonProperty("allUsers") boolean allUsers) {
+                                          @JsonProperty("showLevel") PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
-        this.allUsers = allUsers;
+        this.showLevel = showLevel;
     }
 
-    public boolean isAllUsers() {
-        return allUsers;
+    public PermissionShowLevel getShowLevel() {
+        return showLevel;
     }
 
     public static class Builder extends AbstractBuilder<FetchAppUserPermissionsRequest, Builder> {
 
-        private boolean allUsers;
+        private PermissionShowLevel showLevel;
 
         public Builder() {
 
@@ -60,8 +59,8 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
             super(expressionCriteria);
         }
 
-        public Builder allUsers(final boolean allUsers) {
-            this.allUsers = allUsers;
+        public Builder showLevel(final PermissionShowLevel showLevel) {
+            this.showLevel = showLevel;
             return this;
         }
 
@@ -76,7 +75,7 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    allUsers);
+                    showLevel);
         }
     }
 }

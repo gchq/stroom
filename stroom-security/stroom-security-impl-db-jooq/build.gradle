@@ -36,7 +36,17 @@ jooq {
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'api_key|stroom_user|stroom_user_group|permission_app|permission_app_id|permission_doc|permission_doc_id|permission_doc_create|permission_doc_type_id'
+                        includes = '' +
+                                'api_key|' +
+                                'stroom_user|' +
+                                'stroom_user_group|' +
+                                'permission_app|' +
+                                'permission_app_id|' +
+                                'v_permission_app_parent_perms|' +
+                                'v_permission_app_inherited_perms|' +
+                                'permission_doc|permission_doc_id|' +
+                                'permission_doc_create|' +
+                                'permission_doc_type_id'
                         // We don't want to include flyway versioning
                         excludes = 'security_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
@@ -46,9 +56,11 @@ jooq {
                             forcedType {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
-                                    '.*\\.api_key\\.enabled|' +
-                                    '.*\\.stroom_user\\.is_group|' +
-                                    '.*\\.stroom_user\\.enabled'
+                                        '.*\\.api_key\\.enabled|' +
+                                        '.*\\.stroom_user\\.is_group|' +
+                                        '.*\\.stroom_user\\.enabled|' +
+                                        '.*\\.v_permission_app_parent_perms\\.is_group|' +
+                                        '.*\\.v_permission_app_inherited_perms\\.is_group'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

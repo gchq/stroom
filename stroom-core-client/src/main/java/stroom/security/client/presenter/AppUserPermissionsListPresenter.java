@@ -31,6 +31,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
@@ -137,8 +138,8 @@ public class AppUserPermissionsListPresenter
         refresh();
     }
 
-    public void setAllUsers(final boolean allUsers) {
-        builder.allUsers(allUsers);
+    public void setShowLevel(final PermissionShowLevel showLevel) {
+        builder.showLevel(showLevel);
     }
 
     public void refresh() {
@@ -200,34 +201,26 @@ public class AppUserPermissionsListPresenter
                     @Override
                     public SafeHtml getValue(final AppUserPermissions appUserPermissions) {
                         final DescriptionBuilder sb = new DescriptionBuilder();
-//                        if (appUserPermissions.getPermissions() != null &&
-//                            appUserPermissions.getPermissions().contains(AppPermission.ADMINISTRATOR)) {
-//                            sb.addLine(true, false, AppPermission.ADMINISTRATOR.getDisplayValue());
-//                        } else if (appUserPermissions.getInherited() != null &&
-//                                   appUserPermissions.getInherited().contains(AppPermission.ADMINISTRATOR)) {
-//                            sb.addLine(true, true, AppPermission.ADMINISTRATOR.getDisplayValue());
-//                        } else {
-                            boolean notEmpty = false;
-                            boolean lastInherited = false;
-                            for (final AppPermission permission : AppPermission.LIST) {
-                                if (appUserPermissions.getPermissions() != null &&
-                                    appUserPermissions.getPermissions().contains(permission)) {
-                                    if (notEmpty) {
-                                        sb.addLine(false, lastInherited, ", ");
-                                    }
-                                    sb.addLine(permission.getDisplayValue());
-                                    notEmpty = true;
-                                    lastInherited = false;
-                                } else if (appUserPermissions.getInherited() != null &&
-                                           appUserPermissions.getInherited().contains(permission)) {
-                                    if (notEmpty) {
-                                        sb.addLine(false, lastInherited, ", ");
-                                    }
-                                    sb.addLine(false, true, permission.getDisplayValue());
-                                    notEmpty = true;
-                                    lastInherited = true;
+                        boolean notEmpty = false;
+                        boolean lastInherited = false;
+                        for (final AppPermission permission : AppPermission.LIST) {
+                            if (appUserPermissions.getPermissions() != null &&
+                                appUserPermissions.getPermissions().contains(permission)) {
+                                if (notEmpty) {
+                                    sb.addLine(false, lastInherited, ", ");
                                 }
-//                            }
+                                sb.addLine(permission.getDisplayValue());
+                                notEmpty = true;
+                                lastInherited = false;
+                            } else if (appUserPermissions.getInherited() != null &&
+                                       appUserPermissions.getInherited().contains(permission)) {
+                                if (notEmpty) {
+                                    sb.addLine(false, lastInherited, ", ");
+                                }
+                                sb.addLine(false, true, permission.getDisplayValue());
+                                notEmpty = true;
+                                lastInherited = true;
+                            }
                         }
                         return sb.toSafeHtml();
                     }

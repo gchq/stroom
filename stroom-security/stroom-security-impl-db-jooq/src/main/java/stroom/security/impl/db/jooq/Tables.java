@@ -13,6 +13,8 @@ import stroom.security.impl.db.jooq.tables.PermissionDocId;
 import stroom.security.impl.db.jooq.tables.PermissionDocTypeId;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
+import stroom.security.impl.db.jooq.tables.VPermissionAppInheritedPerms;
+import stroom.security.impl.db.jooq.tables.VPermissionAppParentPerms;
 
 
 /**
@@ -65,4 +67,14 @@ public class Tables {
      * The table <code>stroom.stroom_user_group</code>.
      */
     public static final StroomUserGroup STROOM_USER_GROUP = StroomUserGroup.STROOM_USER_GROUP;
+
+    /**
+     * VIEW
+     */
+    public static final VPermissionAppInheritedPerms V_PERMISSION_APP_INHERITED_PERMS = VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS;
+
+    /**
+     * VIEW
+     */
+    public static final VPermissionAppParentPerms V_PERMISSION_APP_PARENT_PERMS = VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS;
 }

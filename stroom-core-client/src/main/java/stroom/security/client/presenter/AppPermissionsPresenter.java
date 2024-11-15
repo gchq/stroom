@@ -18,12 +18,13 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.AppUserPermissionsReport;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgToggleButton;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
@@ -38,7 +39,7 @@ public class AppPermissionsPresenter
     private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
     private final AppPermissionsEditPresenter appPermissionsEditPresenter;
 
-    private final InlineSvgToggleButton explicitOnly;
+    private final SelectionBox<PermissionShowLevel> showLevel = new SelectionBox<>();
 
     @Inject
     public AppPermissionsPresenter(
@@ -53,12 +54,10 @@ public class AppPermissionsPresenter
         view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());
         view.setAppPermissionsEditView(appPermissionsEditPresenter.getView());
 
-        explicitOnly = new InlineSvgToggleButton();
-        explicitOnly.setSvg(SvgImage.EYE_OFF);
-        explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-        explicitOnly.setState(false);
-        appUserPermissionsListPresenter.addButton(explicitOnly);
-        appUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        showLevel.addItems(PermissionShowLevel.ITEMS);
+        showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        appUserPermissionsListPresenter.getPagerView().addToolbarWidget(showLevel);
+        appUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
     }
 
     @Override
@@ -68,15 +67,8 @@ public class AppPermissionsPresenter
         registerHandler(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             editPermissions();
         }));
-        registerHandler(explicitOnly.addClickHandler(e -> {
-            if (explicitOnly.getState()) {
-                explicitOnly.setTitle("Show All Users");
-                explicitOnly.setSvg(SvgImage.EYE);
-            } else {
-                explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-                explicitOnly.setSvg(SvgImage.EYE_OFF);
-            }
-            appUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        registerHandler(showLevel.addValueChangeHandler(e -> {
+            appUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
             appUserPermissionsListPresenter.refresh();
         }));
         registerHandler(appPermissionsEditPresenter.getSelectionModel().addSelectionHandler(e -> updateDetails()));
