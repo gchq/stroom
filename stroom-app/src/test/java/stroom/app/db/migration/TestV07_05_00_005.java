@@ -12,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.sql.ResultSet;
@@ -22,6 +23,7 @@ import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled // Migration no longer does anything so disabling the test
 public class TestV07_05_00_005 extends AbstractCrossModuleMigrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestV07_05_00_005.class);
