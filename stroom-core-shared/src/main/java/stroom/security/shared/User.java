@@ -256,7 +256,6 @@ public class User implements HasAuditInfo, HasIntegerId {
         return getType(CaseType.SENTENCE);
     }
 
-    @JsonIgnore
     public String getType(final CaseType caseType) {
         Objects.requireNonNull(caseType);
         final String type = group

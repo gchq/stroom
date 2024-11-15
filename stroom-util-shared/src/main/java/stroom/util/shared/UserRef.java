@@ -46,6 +46,20 @@ public final class UserRef {
         this.group = group;
     }
 
+    /**
+     * Creates a {@link UserRef} representing a user (not a group).
+     */
+    public static UserRef forUserUuid(final String userUuid) {
+        return new UserRef(userUuid, null, null, null, false);
+    }
+
+    /**
+     * Creates a {@link UserRef} representing a group.
+     */
+    public static UserRef forGroupUuid(final String groupUuid) {
+        return new UserRef(groupUuid, null, null, null, true);
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -74,7 +88,6 @@ public final class UserRef {
         return getType(CaseType.SENTENCE);
     }
 
-    @JsonIgnore
     public String getType(final CaseType caseType) {
         Objects.requireNonNull(caseType);
         final String type = group
