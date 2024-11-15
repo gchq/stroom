@@ -5,8 +5,8 @@ package stroom.security.impl.db.jooq.tables.records;
 
 
 import org.jooq.Field;
-import org.jooq.Record8;
-import org.jooq.Row8;
+import org.jooq.Record4;
+import org.jooq.Row4;
 import org.jooq.impl.TableRecordImpl;
 
 import stroom.security.impl.db.jooq.tables.VPermissionAppParentPerms;
@@ -16,94 +16,50 @@ import stroom.security.impl.db.jooq.tables.VPermissionAppParentPerms;
  * VIEW
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
-public class VPermissionAppParentPermsRecord extends TableRecordImpl<VPermissionAppParentPermsRecord> implements Record8<String, String, String, String, Boolean, String, String, String> {
+public class VPermissionAppParentPermsRecord extends TableRecordImpl<VPermissionAppParentPermsRecord> implements Record4<String, String, String, String> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>stroom.v_permission_app_parent_perms.uuid</code>.
+     * Setter for <code>stroom.v_permission_app_parent_perms.user_uuid</code>.
      */
-    public void setUuid(String value) {
+    public void setUserUuid(String value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>stroom.v_permission_app_parent_perms.uuid</code>.
+     * Getter for <code>stroom.v_permission_app_parent_perms.user_uuid</code>.
      */
-    public String getUuid() {
+    public String getUserUuid() {
         return (String) get(0);
     }
 
     /**
-     * Setter for <code>stroom.v_permission_app_parent_perms.name</code>.
+     * Setter for <code>stroom.v_permission_app_parent_perms.group_uuid</code>.
      */
-    public void setName(String value) {
+    public void setGroupUuid(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>stroom.v_permission_app_parent_perms.name</code>.
+     * Getter for <code>stroom.v_permission_app_parent_perms.group_uuid</code>.
      */
-    public String getName() {
+    public String getGroupUuid() {
         return (String) get(1);
-    }
-
-    /**
-     * Setter for
-     * <code>stroom.v_permission_app_parent_perms.display_name</code>.
-     */
-    public void setDisplayName(String value) {
-        set(2, value);
-    }
-
-    /**
-     * Getter for
-     * <code>stroom.v_permission_app_parent_perms.display_name</code>.
-     */
-    public String getDisplayName() {
-        return (String) get(2);
-    }
-
-    /**
-     * Setter for <code>stroom.v_permission_app_parent_perms.full_name</code>.
-     */
-    public void setFullName(String value) {
-        set(3, value);
-    }
-
-    /**
-     * Getter for <code>stroom.v_permission_app_parent_perms.full_name</code>.
-     */
-    public String getFullName() {
-        return (String) get(3);
-    }
-
-    /**
-     * Setter for <code>stroom.v_permission_app_parent_perms.is_group</code>.
-     */
-    public void setIsGroup(Boolean value) {
-        set(4, value);
-    }
-
-    /**
-     * Getter for <code>stroom.v_permission_app_parent_perms.is_group</code>.
-     */
-    public Boolean getIsGroup() {
-        return (Boolean) get(4);
     }
 
     /**
      * Setter for <code>stroom.v_permission_app_parent_perms.perms</code>.
      */
     public void setPerms(String value) {
-        set(5, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>stroom.v_permission_app_parent_perms.perms</code>.
      */
     public String getPerms() {
-        return (String) get(5);
+        return (String) get(2);
     }
 
     /**
@@ -111,7 +67,7 @@ public class VPermissionAppParentPermsRecord extends TableRecordImpl<VPermission
      * <code>stroom.v_permission_app_parent_perms.parent_perms</code>.
      */
     public void setParentPerms(String value) {
-        set(6, value);
+        set(3, value);
     }
 
     /**
@@ -119,215 +75,113 @@ public class VPermissionAppParentPermsRecord extends TableRecordImpl<VPermission
      * <code>stroom.v_permission_app_parent_perms.parent_perms</code>.
      */
     public String getParentPerms() {
-        return (String) get(6);
-    }
-
-    /**
-     * Setter for <code>stroom.v_permission_app_parent_perms.group_uuid</code>.
-     */
-    public void setGroupUuid(String value) {
-        set(7, value);
-    }
-
-    /**
-     * Getter for <code>stroom.v_permission_app_parent_perms.group_uuid</code>.
-     */
-    public String getGroupUuid() {
-        return (String) get(7);
+        return (String) get(3);
     }
 
     // -------------------------------------------------------------------------
-    // Record8 type implementation
+    // Record4 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<String, String, String, String, Boolean, String, String, String> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row4<String, String, String, String> fieldsRow() {
+        return (Row4) super.fieldsRow();
     }
 
     @Override
-    public Row8<String, String, String, String, Boolean, String, String, String> valuesRow() {
-        return (Row8) super.valuesRow();
+    public Row4<String, String, String, String> valuesRow() {
+        return (Row4) super.valuesRow();
     }
 
     @Override
     public Field<String> field1() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.UUID;
+        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.USER_UUID;
     }
 
     @Override
     public Field<String> field2() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.NAME;
-    }
-
-    @Override
-    public Field<String> field3() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.DISPLAY_NAME;
-    }
-
-    @Override
-    public Field<String> field4() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.FULL_NAME;
-    }
-
-    @Override
-    public Field<Boolean> field5() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.IS_GROUP;
-    }
-
-    @Override
-    public Field<String> field6() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.PERMS;
-    }
-
-    @Override
-    public Field<String> field7() {
-        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.PARENT_PERMS;
-    }
-
-    @Override
-    public Field<String> field8() {
         return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.GROUP_UUID;
     }
 
     @Override
+    public Field<String> field3() {
+        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.PERMS;
+    }
+
+    @Override
+    public Field<String> field4() {
+        return VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS.PARENT_PERMS;
+    }
+
+    @Override
     public String component1() {
-        return getUuid();
+        return getUserUuid();
     }
 
     @Override
     public String component2() {
-        return getName();
+        return getGroupUuid();
     }
 
     @Override
     public String component3() {
-        return getDisplayName();
+        return getPerms();
     }
 
     @Override
     public String component4() {
-        return getFullName();
-    }
-
-    @Override
-    public Boolean component5() {
-        return getIsGroup();
-    }
-
-    @Override
-    public String component6() {
-        return getPerms();
-    }
-
-    @Override
-    public String component7() {
         return getParentPerms();
-    }
-
-    @Override
-    public String component8() {
-        return getGroupUuid();
     }
 
     @Override
     public String value1() {
-        return getUuid();
+        return getUserUuid();
     }
 
     @Override
     public String value2() {
-        return getName();
-    }
-
-    @Override
-    public String value3() {
-        return getDisplayName();
-    }
-
-    @Override
-    public String value4() {
-        return getFullName();
-    }
-
-    @Override
-    public Boolean value5() {
-        return getIsGroup();
-    }
-
-    @Override
-    public String value6() {
-        return getPerms();
-    }
-
-    @Override
-    public String value7() {
-        return getParentPerms();
-    }
-
-    @Override
-    public String value8() {
         return getGroupUuid();
     }
 
     @Override
+    public String value3() {
+        return getPerms();
+    }
+
+    @Override
+    public String value4() {
+        return getParentPerms();
+    }
+
+    @Override
     public VPermissionAppParentPermsRecord value1(String value) {
-        setUuid(value);
+        setUserUuid(value);
         return this;
     }
 
     @Override
     public VPermissionAppParentPermsRecord value2(String value) {
-        setName(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppParentPermsRecord value3(String value) {
-        setDisplayName(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppParentPermsRecord value4(String value) {
-        setFullName(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppParentPermsRecord value5(Boolean value) {
-        setIsGroup(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppParentPermsRecord value6(String value) {
-        setPerms(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppParentPermsRecord value7(String value) {
-        setParentPerms(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppParentPermsRecord value8(String value) {
         setGroupUuid(value);
         return this;
     }
 
     @Override
-    public VPermissionAppParentPermsRecord values(String value1, String value2, String value3, String value4, Boolean value5, String value6, String value7, String value8) {
+    public VPermissionAppParentPermsRecord value3(String value) {
+        setPerms(value);
+        return this;
+    }
+
+    @Override
+    public VPermissionAppParentPermsRecord value4(String value) {
+        setParentPerms(value);
+        return this;
+    }
+
+    @Override
+    public VPermissionAppParentPermsRecord values(String value1, String value2, String value3, String value4) {
         value1(value1);
         value2(value2);
         value3(value3);
         value4(value4);
-        value5(value5);
-        value6(value6);
-        value7(value7);
-        value8(value8);
         return this;
     }
 
@@ -345,17 +199,13 @@ public class VPermissionAppParentPermsRecord extends TableRecordImpl<VPermission
     /**
      * Create a detached, initialised VPermissionAppParentPermsRecord
      */
-    public VPermissionAppParentPermsRecord(String uuid, String name, String displayName, String fullName, Boolean isGroup, String perms, String parentPerms, String groupUuid) {
+    public VPermissionAppParentPermsRecord(String userUuid, String groupUuid, String perms, String parentPerms) {
         super(VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS);
 
-        setUuid(uuid);
-        setName(name);
-        setDisplayName(displayName);
-        setFullName(fullName);
-        setIsGroup(isGroup);
+        setUserUuid(userUuid);
+        setGroupUuid(groupUuid);
         setPerms(perms);
         setParentPerms(parentPerms);
-        setGroupUuid(groupUuid);
         resetChangedOnNotNull();
     }
 }

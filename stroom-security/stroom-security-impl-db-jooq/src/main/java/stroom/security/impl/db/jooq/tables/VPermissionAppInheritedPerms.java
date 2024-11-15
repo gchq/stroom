@@ -8,11 +8,11 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function7;
+import org.jooq.Function4;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row7;
+import org.jooq.Row4;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -49,31 +49,16 @@ public class VPermissionAppInheritedPerms extends TableImpl<VPermissionAppInheri
     }
 
     /**
-     * The column <code>stroom.v_permission_app_inherited_perms.uuid</code>.
+     * The column
+     * <code>stroom.v_permission_app_inherited_perms.user_uuid</code>.
      */
-    public final TableField<VPermissionAppInheritedPermsRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>stroom.v_permission_app_inherited_perms.name</code>.
-     */
-    public final TableField<VPermissionAppInheritedPermsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255), this, "");
+    public final TableField<VPermissionAppInheritedPermsRecord, String> USER_UUID = createField(DSL.name("user_uuid"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column
-     * <code>stroom.v_permission_app_inherited_perms.display_name</code>.
+     * <code>stroom.v_permission_app_inherited_perms.group_uuid</code>.
      */
-    public final TableField<VPermissionAppInheritedPermsRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column
-     * <code>stroom.v_permission_app_inherited_perms.full_name</code>.
-     */
-    public final TableField<VPermissionAppInheritedPermsRecord, String> FULL_NAME = createField(DSL.name("full_name"), SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>stroom.v_permission_app_inherited_perms.is_group</code>.
-     */
-    public final TableField<VPermissionAppInheritedPermsRecord, Boolean> IS_GROUP = createField(DSL.name("is_group"), SQLDataType.BOOLEAN, this, "");
+    public final TableField<VPermissionAppInheritedPermsRecord, String> GROUP_UUID = createField(DSL.name("group_uuid"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.v_permission_app_inherited_perms.perms</code>.
@@ -91,7 +76,7 @@ public class VPermissionAppInheritedPerms extends TableImpl<VPermissionAppInheri
     }
 
     private VPermissionAppInheritedPerms(Name alias, Table<VPermissionAppInheritedPermsRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment("VIEW"), TableOptions.view("create view `v_permission_app_inherited_perms` as with recursive `cte` as (select `stroom`.`v`.`uuid` AS `uuid`,`stroom`.`v`.`name` AS `name`,`stroom`.`v`.`display_name` AS `display_name`,`stroom`.`v`.`full_name` AS `full_name`,`stroom`.`v`.`is_group` AS `is_group`,`stroom`.`v`.`perms` AS `perms`,`stroom`.`v`.`parent_perms` AS `inherited_perms`,`stroom`.`v`.`group_uuid` AS `group_uuid`,`stroom`.`v`.`name` AS `path` from `stroom`.`v_permission_app_parent_perms` `v` union all select `stroom`.`v`.`uuid` AS `uuid`,`stroom`.`v`.`name` AS `name`,`stroom`.`v`.`display_name` AS `display_name`,`stroom`.`v`.`full_name` AS `full_name`,`stroom`.`v`.`is_group` AS `is_group`,`stroom`.`v`.`perms` AS `perms`,concat_ws(',',`cte`.`inherited_perms`,`stroom`.`v`.`parent_perms`) AS `concat_ws(',', cte.inherited_perms, v.parent_perms)`,`stroom`.`v`.`group_uuid` AS `group_uuid`,concat_ws('/',`cte`.`path`,`stroom`.`v`.`name`) AS `concat_ws('/', cte.path, v.name)` from (`cte` join `stroom`.`v_permission_app_parent_perms` `v` on((`cte`.`uuid` = `stroom`.`v`.`group_uuid`)))) select `cte`.`uuid` AS `uuid`,`cte`.`name` AS `name`,`cte`.`display_name` AS `display_name`,`cte`.`full_name` AS `full_name`,`cte`.`is_group` AS `is_group`,group_concat(distinct `cte`.`perms` separator ',') AS `perms`,group_concat(distinct `cte`.`inherited_perms` separator ',') AS `inherited_perms` from `cte` group by `cte`.`uuid`,`cte`.`name`,`cte`.`display_name`,`cte`.`full_name`,`cte`.`is_group`"));
+        super(alias, null, aliased, parameters, DSL.comment("VIEW"), TableOptions.view("create view `v_permission_app_inherited_perms` as with recursive `cte` as (select `stroom`.`v`.`user_uuid` AS `user_uuid`,`stroom`.`v`.`group_uuid` AS `group_uuid`,`stroom`.`v`.`perms` AS `perms`,`stroom`.`v`.`parent_perms` AS `inherited_perms` from `stroom`.`v_permission_app_parent_perms` `v` union all select `stroom`.`v`.`user_uuid` AS `user_uuid`,`stroom`.`v`.`group_uuid` AS `group_uuid`,`stroom`.`v`.`perms` AS `perms`,concat_ws(',',`cte`.`inherited_perms`,`stroom`.`v`.`parent_perms`) AS `concat_ws(',', cte.inherited_perms, v.parent_perms)` from (`cte` join `stroom`.`v_permission_app_parent_perms` `v` on((`cte`.`user_uuid` = `stroom`.`v`.`group_uuid`)))) select `cte`.`user_uuid` AS `user_uuid`,`cte`.`group_uuid` AS `group_uuid`,group_concat(distinct `cte`.`perms` separator ',') AS `perms`,group_concat(distinct `cte`.`inherited_perms` separator ',') AS `inherited_perms` from `cte` group by `cte`.`user_uuid`,`cte`.`group_uuid`"));
     }
 
     /**
@@ -167,18 +152,18 @@ public class VPermissionAppInheritedPerms extends TableImpl<VPermissionAppInheri
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row4 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<String, String, String, String, Boolean, String, String> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row4<String, String, String, String> fieldsRow() {
+        return (Row4) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function7<? super String, ? super String, ? super String, ? super String, ? super Boolean, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function4<? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -186,7 +171,7 @@ public class VPermissionAppInheritedPerms extends TableImpl<VPermissionAppInheri
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function7<? super String, ? super String, ? super String, ? super String, ? super Boolean, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function4<? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

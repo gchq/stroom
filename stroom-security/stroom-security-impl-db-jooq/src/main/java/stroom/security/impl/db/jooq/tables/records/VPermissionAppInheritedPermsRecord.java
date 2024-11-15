@@ -5,8 +5,8 @@ package stroom.security.impl.db.jooq.tables.records;
 
 
 import org.jooq.Field;
-import org.jooq.Record7;
-import org.jooq.Row7;
+import org.jooq.Record4;
+import org.jooq.Row4;
 import org.jooq.impl.TableRecordImpl;
 
 import stroom.security.impl.db.jooq.tables.VPermissionAppInheritedPerms;
@@ -16,96 +16,54 @@ import stroom.security.impl.db.jooq.tables.VPermissionAppInheritedPerms;
  * VIEW
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
-public class VPermissionAppInheritedPermsRecord extends TableRecordImpl<VPermissionAppInheritedPermsRecord> implements Record7<String, String, String, String, Boolean, String, String> {
+public class VPermissionAppInheritedPermsRecord extends TableRecordImpl<VPermissionAppInheritedPermsRecord> implements Record4<String, String, String, String> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>stroom.v_permission_app_inherited_perms.uuid</code>.
+     * Setter for
+     * <code>stroom.v_permission_app_inherited_perms.user_uuid</code>.
      */
-    public void setUuid(String value) {
+    public void setUserUuid(String value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>stroom.v_permission_app_inherited_perms.uuid</code>.
+     * Getter for
+     * <code>stroom.v_permission_app_inherited_perms.user_uuid</code>.
      */
-    public String getUuid() {
+    public String getUserUuid() {
         return (String) get(0);
     }
 
     /**
-     * Setter for <code>stroom.v_permission_app_inherited_perms.name</code>.
+     * Setter for
+     * <code>stroom.v_permission_app_inherited_perms.group_uuid</code>.
      */
-    public void setName(String value) {
+    public void setGroupUuid(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>stroom.v_permission_app_inherited_perms.name</code>.
+     * Getter for
+     * <code>stroom.v_permission_app_inherited_perms.group_uuid</code>.
      */
-    public String getName() {
+    public String getGroupUuid() {
         return (String) get(1);
-    }
-
-    /**
-     * Setter for
-     * <code>stroom.v_permission_app_inherited_perms.display_name</code>.
-     */
-    public void setDisplayName(String value) {
-        set(2, value);
-    }
-
-    /**
-     * Getter for
-     * <code>stroom.v_permission_app_inherited_perms.display_name</code>.
-     */
-    public String getDisplayName() {
-        return (String) get(2);
-    }
-
-    /**
-     * Setter for
-     * <code>stroom.v_permission_app_inherited_perms.full_name</code>.
-     */
-    public void setFullName(String value) {
-        set(3, value);
-    }
-
-    /**
-     * Getter for
-     * <code>stroom.v_permission_app_inherited_perms.full_name</code>.
-     */
-    public String getFullName() {
-        return (String) get(3);
-    }
-
-    /**
-     * Setter for <code>stroom.v_permission_app_inherited_perms.is_group</code>.
-     */
-    public void setIsGroup(Boolean value) {
-        set(4, value);
-    }
-
-    /**
-     * Getter for <code>stroom.v_permission_app_inherited_perms.is_group</code>.
-     */
-    public Boolean getIsGroup() {
-        return (Boolean) get(4);
     }
 
     /**
      * Setter for <code>stroom.v_permission_app_inherited_perms.perms</code>.
      */
     public void setPerms(String value) {
-        set(5, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>stroom.v_permission_app_inherited_perms.perms</code>.
      */
     public String getPerms() {
-        return (String) get(5);
+        return (String) get(2);
     }
 
     /**
@@ -113,7 +71,7 @@ public class VPermissionAppInheritedPermsRecord extends TableRecordImpl<VPermiss
      * <code>stroom.v_permission_app_inherited_perms.inherited_perms</code>.
      */
     public void setInheritedPerms(String value) {
-        set(6, value);
+        set(3, value);
     }
 
     /**
@@ -121,179 +79,113 @@ public class VPermissionAppInheritedPermsRecord extends TableRecordImpl<VPermiss
      * <code>stroom.v_permission_app_inherited_perms.inherited_perms</code>.
      */
     public String getInheritedPerms() {
-        return (String) get(6);
+        return (String) get(3);
     }
 
     // -------------------------------------------------------------------------
-    // Record7 type implementation
+    // Record4 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<String, String, String, String, Boolean, String, String> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row4<String, String, String, String> fieldsRow() {
+        return (Row4) super.fieldsRow();
     }
 
     @Override
-    public Row7<String, String, String, String, Boolean, String, String> valuesRow() {
-        return (Row7) super.valuesRow();
+    public Row4<String, String, String, String> valuesRow() {
+        return (Row4) super.valuesRow();
     }
 
     @Override
     public Field<String> field1() {
-        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.UUID;
+        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.USER_UUID;
     }
 
     @Override
     public Field<String> field2() {
-        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.NAME;
+        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.GROUP_UUID;
     }
 
     @Override
     public Field<String> field3() {
-        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.DISPLAY_NAME;
-    }
-
-    @Override
-    public Field<String> field4() {
-        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.FULL_NAME;
-    }
-
-    @Override
-    public Field<Boolean> field5() {
-        return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.IS_GROUP;
-    }
-
-    @Override
-    public Field<String> field6() {
         return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.PERMS;
     }
 
     @Override
-    public Field<String> field7() {
+    public Field<String> field4() {
         return VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS.INHERITED_PERMS;
     }
 
     @Override
     public String component1() {
-        return getUuid();
+        return getUserUuid();
     }
 
     @Override
     public String component2() {
-        return getName();
+        return getGroupUuid();
     }
 
     @Override
     public String component3() {
-        return getDisplayName();
-    }
-
-    @Override
-    public String component4() {
-        return getFullName();
-    }
-
-    @Override
-    public Boolean component5() {
-        return getIsGroup();
-    }
-
-    @Override
-    public String component6() {
         return getPerms();
     }
 
     @Override
-    public String component7() {
+    public String component4() {
         return getInheritedPerms();
     }
 
     @Override
     public String value1() {
-        return getUuid();
+        return getUserUuid();
     }
 
     @Override
     public String value2() {
-        return getName();
+        return getGroupUuid();
     }
 
     @Override
     public String value3() {
-        return getDisplayName();
-    }
-
-    @Override
-    public String value4() {
-        return getFullName();
-    }
-
-    @Override
-    public Boolean value5() {
-        return getIsGroup();
-    }
-
-    @Override
-    public String value6() {
         return getPerms();
     }
 
     @Override
-    public String value7() {
+    public String value4() {
         return getInheritedPerms();
     }
 
     @Override
     public VPermissionAppInheritedPermsRecord value1(String value) {
-        setUuid(value);
+        setUserUuid(value);
         return this;
     }
 
     @Override
     public VPermissionAppInheritedPermsRecord value2(String value) {
-        setName(value);
+        setGroupUuid(value);
         return this;
     }
 
     @Override
     public VPermissionAppInheritedPermsRecord value3(String value) {
-        setDisplayName(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppInheritedPermsRecord value4(String value) {
-        setFullName(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppInheritedPermsRecord value5(Boolean value) {
-        setIsGroup(value);
-        return this;
-    }
-
-    @Override
-    public VPermissionAppInheritedPermsRecord value6(String value) {
         setPerms(value);
         return this;
     }
 
     @Override
-    public VPermissionAppInheritedPermsRecord value7(String value) {
+    public VPermissionAppInheritedPermsRecord value4(String value) {
         setInheritedPerms(value);
         return this;
     }
 
     @Override
-    public VPermissionAppInheritedPermsRecord values(String value1, String value2, String value3, String value4, Boolean value5, String value6, String value7) {
+    public VPermissionAppInheritedPermsRecord values(String value1, String value2, String value3, String value4) {
         value1(value1);
         value2(value2);
         value3(value3);
         value4(value4);
-        value5(value5);
-        value6(value6);
-        value7(value7);
         return this;
     }
 
@@ -311,14 +203,11 @@ public class VPermissionAppInheritedPermsRecord extends TableRecordImpl<VPermiss
     /**
      * Create a detached, initialised VPermissionAppInheritedPermsRecord
      */
-    public VPermissionAppInheritedPermsRecord(String uuid, String name, String displayName, String fullName, Boolean isGroup, String perms, String inheritedPerms) {
+    public VPermissionAppInheritedPermsRecord(String userUuid, String groupUuid, String perms, String inheritedPerms) {
         super(VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS);
 
-        setUuid(uuid);
-        setName(name);
-        setDisplayName(displayName);
-        setFullName(fullName);
-        setIsGroup(isGroup);
+        setUserUuid(userUuid);
+        setGroupUuid(groupUuid);
         setPerms(perms);
         setInheritedPerms(inheritedPerms);
         resetChangedOnNotNull();

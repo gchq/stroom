@@ -124,7 +124,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                                     V_PERMISSION_APP_INHERITED_PERMS.INHERITED_PERMS)
                             .from(STROOM_USER)
                             .join(V_PERMISSION_APP_INHERITED_PERMS)
-                            .on(V_PERMISSION_APP_INHERITED_PERMS.UUID.eq(STROOM_USER.UUID))
+                            .on(V_PERMISSION_APP_INHERITED_PERMS.USER_UUID.eq(STROOM_USER.UUID))
                             .where(conditions)
                             .orderBy(orderFields)
                             .offset(offset)

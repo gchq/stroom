@@ -20,14 +20,10 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create a view to show parent perms for each user by group.
 create or replace view v_permission_app_parent_perms as
 select
-	su.uuid,
-	su.name,
-	su.display_name,
-	su.full_name,
-	su.is_group,
+	su.uuid as user_uuid,
+	sug.group_uuid,
 	group_concat(pa.permission_id) as perms,
-	group_concat(pa_parent.permission_id) as parent_perms,
-	sug.group_uuid
+	group_concat(pa_parent.permission_id) as parent_perms
 from stroom_user su
 left outer join stroom_user_group sug on (sug.user_uuid = su.uuid)
 left outer join permission_app pa on (pa.user_uuid = su.uuid)
@@ -38,41 +34,28 @@ group by su.uuid, sug.group_uuid;
 create or replace view v_permission_app_inherited_perms as
 with recursive cte as (
 	select
-		v.uuid,
-		v.name,
-		v.display_name,
-		v.full_name,
-		v.is_group,
-		v.perms,
-		v.parent_perms as inherited_perms,
+		v.user_uuid,
 		v.group_uuid,
-		name as path
+		v.perms,
+		v.parent_perms as inherited_perms
 	from v_permission_app_parent_perms as v
 	union all
 	select
-		v.uuid,
-		v.name,
-		v.display_name,
-		v.full_name,
-		v.is_group,
-		v.perms,
-		concat_ws(',', cte.inherited_perms, v.parent_perms),
+		v.user_uuid,
 		v.group_uuid,
-		concat_ws('/', cte.path, v.name)
+		v.perms,
+		concat_ws(',', cte.inherited_perms, v.parent_perms)
 	from cte
     join v_permission_app_parent_perms as v
-	on cte.uuid = v.group_uuid
+	on cte.user_uuid = v.group_uuid
 )
 select
-	uuid,
-	name,
-	display_name,
-	full_name,
-	is_group,
+	user_uuid,
+	group_uuid,
 	group_concat(distinct perms) as perms,
     group_concat(distinct inherited_perms) as inherited_perms
 from cte
-group by uuid, name, display_name, full_name, is_group;
+group by user_uuid, group_uuid;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

@@ -8,11 +8,11 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function8;
+import org.jooq.Function4;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row8;
+import org.jooq.Row4;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -49,30 +49,14 @@ public class VPermissionAppParentPerms extends TableImpl<VPermissionAppParentPer
     }
 
     /**
-     * The column <code>stroom.v_permission_app_parent_perms.uuid</code>.
+     * The column <code>stroom.v_permission_app_parent_perms.user_uuid</code>.
      */
-    public final TableField<VPermissionAppParentPermsRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<VPermissionAppParentPermsRecord, String> USER_UUID = createField(DSL.name("user_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.v_permission_app_parent_perms.name</code>.
+     * The column <code>stroom.v_permission_app_parent_perms.group_uuid</code>.
      */
-    public final TableField<VPermissionAppParentPermsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column
-     * <code>stroom.v_permission_app_parent_perms.display_name</code>.
-     */
-    public final TableField<VPermissionAppParentPermsRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>stroom.v_permission_app_parent_perms.full_name</code>.
-     */
-    public final TableField<VPermissionAppParentPermsRecord, String> FULL_NAME = createField(DSL.name("full_name"), SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>stroom.v_permission_app_parent_perms.is_group</code>.
-     */
-    public final TableField<VPermissionAppParentPermsRecord, Boolean> IS_GROUP = createField(DSL.name("is_group"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+    public final TableField<VPermissionAppParentPermsRecord, String> GROUP_UUID = createField(DSL.name("group_uuid"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.v_permission_app_parent_perms.perms</code>.
@@ -85,17 +69,12 @@ public class VPermissionAppParentPerms extends TableImpl<VPermissionAppParentPer
      */
     public final TableField<VPermissionAppParentPermsRecord, String> PARENT_PERMS = createField(DSL.name("parent_perms"), SQLDataType.CLOB, this, "");
 
-    /**
-     * The column <code>stroom.v_permission_app_parent_perms.group_uuid</code>.
-     */
-    public final TableField<VPermissionAppParentPermsRecord, String> GROUP_UUID = createField(DSL.name("group_uuid"), SQLDataType.VARCHAR(255), this, "");
-
     private VPermissionAppParentPerms(Name alias, Table<VPermissionAppParentPermsRecord> aliased) {
         this(alias, aliased, null);
     }
 
     private VPermissionAppParentPerms(Name alias, Table<VPermissionAppParentPermsRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment("VIEW"), TableOptions.view("create view `v_permission_app_parent_perms` as select `su`.`uuid` AS `uuid`,`su`.`name` AS `name`,`su`.`display_name` AS `display_name`,`su`.`full_name` AS `full_name`,`su`.`is_group` AS `is_group`,group_concat(`pa`.`permission_id` separator ',') AS `perms`,group_concat(`pa_parent`.`permission_id` separator ',') AS `parent_perms`,`sug`.`group_uuid` AS `group_uuid` from (((`stroom`.`stroom_user` `su` left join `stroom`.`stroom_user_group` `sug` on((`sug`.`user_uuid` = `su`.`uuid`))) left join `stroom`.`permission_app` `pa` on((`pa`.`user_uuid` = `su`.`uuid`))) left join `stroom`.`permission_app` `pa_parent` on((`pa_parent`.`user_uuid` = `sug`.`group_uuid`))) group by `su`.`uuid`,`sug`.`group_uuid`"));
+        super(alias, null, aliased, parameters, DSL.comment("VIEW"), TableOptions.view("create view `v_permission_app_parent_perms` as select `su`.`uuid` AS `user_uuid`,`sug`.`group_uuid` AS `group_uuid`,group_concat(`pa`.`permission_id` separator ',') AS `perms`,group_concat(`pa_parent`.`permission_id` separator ',') AS `parent_perms` from (((`stroom`.`stroom_user` `su` left join `stroom`.`stroom_user_group` `sug` on((`sug`.`user_uuid` = `su`.`uuid`))) left join `stroom`.`permission_app` `pa` on((`pa`.`user_uuid` = `su`.`uuid`))) left join `stroom`.`permission_app` `pa_parent` on((`pa_parent`.`user_uuid` = `sug`.`group_uuid`))) group by `su`.`uuid`,`sug`.`group_uuid`"));
     }
 
     /**
@@ -171,18 +150,18 @@ public class VPermissionAppParentPerms extends TableImpl<VPermissionAppParentPer
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row4 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<String, String, String, String, Boolean, String, String, String> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row4<String, String, String, String> fieldsRow() {
+        return (Row4) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function8<? super String, ? super String, ? super String, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function4<? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -190,7 +169,7 @@ public class VPermissionAppParentPerms extends TableImpl<VPermissionAppParentPer
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function8<? super String, ? super String, ? super String, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function4<? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
