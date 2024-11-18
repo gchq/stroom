@@ -70,6 +70,7 @@ public class UserListPresenter
     private final MultiSelectionModelImpl<User> selectionModel;
     private final RestFactory restFactory;
     private final FindUserCriteria.Builder builder = new FindUserCriteria.Builder();
+    private final Column<User, String> fullNameCol;
     private RestDataProvider<User, ResultPage<User>> dataProvider;
     private User selected;
     private ExpressionTerm additionalTerm;
@@ -136,6 +137,9 @@ public class UserListPresenter
                 400);
 
         // Full name
+        fullNameCol = DataGridUtil.textColumnBuilder(User::getFullName)
+                .withSorting(UserFields.FIELD_FULL_NAME, true)
+                .build();
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(User::getFullName)
                         .withSorting(UserFields.FIELD_FULL_NAME, true)
@@ -145,67 +149,15 @@ public class UserListPresenter
                         .build(),
                 400);
 
-//        // Identity
-//        final Column<User, String> idCol = new Column<User, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final User user) {
-//                return user.getSubjectId();
-//            }
-//        };
-//        idCol.setSortable(true);
-//        dataGrid.addResizableColumn(idCol, "Identity", 400);
-
         DataGridUtil.addEndColumn(dataGrid);
 
-//        final ColumnSortEvent.Handler columnSortHandler = event -> {
-//            final List<CriteriaFieldSort> sortList = new ArrayList<>();
-//            if (event != null) {
-//                final ColumnSortList columnSortList = event.getColumnSortList();
-//                if (columnSortList != null) {
-//                    for (int i = 0; i < columnSortList.size(); i++) {
-//                        final ColumnSortInfo columnSortInfo = columnSortList.get(i);
-//                        final Column<?, ?> column = columnSortInfo.getColumn();
-//                        final boolean isAscending = columnSortInfo.isAscending();
-//
-//                        if (column.equals(iconCol)) {
-//                            sortList.add(new CriteriaFieldSort(
-//                                    UserFields.IS_GROUP.getFldName(),
-//                                    !isAscending,
-//                                    true));
-//                        } else if (column.equals(displayNameCol)) {
-//                            sortList.add(new CriteriaFieldSort(
-//                                    UserFields.DISPLAY_NAME.getFldName(),
-//                                    !isAscending,
-//                                    true));
-//                        } else if (column.equals(idCol)) {
-//                            sortList.add(new CriteriaFieldSort(
-//                                    UserFields.ID.getFldName(),
-//                                    !isAscending,
-//                                    true));
-//                        } else if (column.equals(fullNameCol)) {
-//                            sortList.add(new CriteriaFieldSort(
-//                                    UserFields.FULL_NAME.getFldName(),
-//                                    !isAscending,
-//                                    true));
-//                        }
-//                    }
-//                }
-//            }
-//            builder.sortList(sortList);
-//            refresh();
-//        };
-//        dataGrid.addColumnSortHandler(columnSortHandler);
         dataGrid.getColumnSortList().push(displayNameCol);
+    }
 
-//        builder.sortList(List.of(
-//                new CriteriaFieldSort(
-//                        UserFields.DISPLAY_NAME.getFldName(),
-//                        false,
-//                        true),
-//                new CriteriaFieldSort(
-//                        UserFields.ID.getFldName(),
-//                        false,
-//                        true)));
+    public void setIncludeFullNameCol(final boolean includeFullNameCol) {
+        if (!includeFullNameCol) {
+            dataGrid.removeColumn(dataGrid.getColumnCount() - 1);
+        }
     }
 
     @Override

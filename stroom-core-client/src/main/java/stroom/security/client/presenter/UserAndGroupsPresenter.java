@@ -30,6 +30,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -80,6 +81,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         super(eventBus, view);
         this.userList = userListPresenterProvider.get();
         this.parentsList = userListPresenterProvider.get();
+        // It only shows groups, so don't show the Full Name col
+        this.parentsList.setIncludeFullNameCol(false);
         this.childrenList = userListPresenterProvider.get();
         this.createUserPresenter = createUserPresenter;
         this.createNewGroupPresenterProvider = createNewGroupPresenterProvider;
@@ -144,6 +147,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             final User group = parentsList.getSelectionModel().getSelected();
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
+
         registerHandler(addMemberOfButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User user = userList.getSelectionModel().getSelected();
@@ -163,6 +167,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 }
             }
         }));
+
         registerHandler(removeMemberOfButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User user = userList.getSelectionModel().getSelected();
@@ -177,6 +182,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             final User user = childrenList.getSelectionModel().getSelected();
             removeMembersInButton.setEnabled(group != null && user != null);
         }));
+
         registerHandler(addMembersInButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User group = userList.getSelectionModel().getSelected();
@@ -190,6 +196,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 }
             }
         }));
+
         registerHandler(removeMembersInButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User group = userList.getSelectionModel().getSelected();
@@ -214,14 +221,11 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                     .build());
             parentsList.refresh();
 
-            final StringBuilder parentLabel = new StringBuilder();
-            if (selected.isGroup()) {
-                parentLabel.append("Group \"");
-            } else {
-                parentLabel.append("User \"");
-            }
-            parentLabel.append(selected.getDisplayName());
-            parentLabel.append("\" is a member of:");
+            final StringBuilder parentLabel = new StringBuilder()
+                    .append(selected.getType(CaseType.SENTENCE))
+                    .append(" \"")
+                    .append(selected.getDisplayName())
+                    .append("\" is a member of:");
             parentsList.getView().setLabel(parentLabel.toString());
             getView().setParentsVisible(true);
 
