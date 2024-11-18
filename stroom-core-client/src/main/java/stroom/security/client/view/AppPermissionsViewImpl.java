@@ -35,8 +35,8 @@ public final class AppPermissionsViewImpl
         extends ViewImpl
         implements AppPermissionsView {
 
-    public static final String APP_PERM_BASE_LABEL = "Application Permissions";
-    public static final String APP_PERM_DETAILS_BASE_LABEL = "Application Permission Details";
+    private static final String APP_PERM_BASE_LABEL = "Application Permissions";
+    private static final String APP_PERM_DETAILS_BASE_LABEL = "Application Permission Details";
     private final Widget widget;
 
     @UiField

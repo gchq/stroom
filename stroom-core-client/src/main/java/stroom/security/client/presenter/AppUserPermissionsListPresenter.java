@@ -71,7 +71,7 @@ public class AppUserPermissionsListPresenter
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final RestFactory restFactory;
-    private final FetchAppUserPermissionsRequest.Builder builder = new FetchAppUserPermissionsRequest.Builder();
+    private final FetchAppUserPermissionsRequest.Builder requestBuilder = new FetchAppUserPermissionsRequest.Builder();
     private final MyDataGrid<AppUserPermissions> dataGrid;
     private final PagerView pagerView;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
@@ -111,16 +111,6 @@ public class AppUserPermissionsListPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-//        builder.sortList(List.of(
-//                new CriteriaFieldSort(
-//                        UserFields.DISPLAY_NAME.getFldName(),
-//                        false,
-//                        true),
-//                new CriteriaFieldSort(
-//                        UserFields.NAME.getFldName(),
-//                        false,
-//                        true)));
-
         setupColumns();
     }
 
@@ -135,7 +125,7 @@ public class AppUserPermissionsListPresenter
 
         final ExpressionOperator expression = QuickFilterExpressionParser
                 .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
-        builder.expression(expression);
+        requestBuilder.expression(expression);
         refresh();
     }
 
@@ -144,7 +134,7 @@ public class AppUserPermissionsListPresenter
     }
 
     public void setAllUsers(final boolean allUsers) {
-        builder.allUsers(allUsers);
+        requestBuilder.allUsers(allUsers);
     }
 
     public void refresh() {
@@ -156,10 +146,10 @@ public class AppUserPermissionsListPresenter
                         protected void exec(final Range range,
                                             final Consumer<ResultPage<AppUserPermissions>> dataConsumer,
                                             final RestErrorHandler errorHandler) {
-                            builder.pageRequest(PageRequestUtil.createPageRequest(range));
+                            requestBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
                             restFactory
                                     .create(APP_PERMISSION_RESOURCE)
-                                    .method(res -> res.fetchAppUserPermissions(builder.build()))
+                                    .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
                                     .onSuccess(dataConsumer)
                                     .onFailure(errorHandler)
                                     .taskMonitorFactory(pagerView)
@@ -196,7 +186,7 @@ public class AppUserPermissionsListPresenter
 
     private void setupColumns() {
 
-        DataGridUtil.addColumnSortHandler(dataGrid, builder, this::refresh);
+        DataGridUtil.addColumnSortHandler(dataGrid, requestBuilder, this::refresh);
 
 //        final DefaultHeaderOrFooterBuilder<AppUserPermissions> headerBuilder = new DefaultHeaderOrFooterBuilder<>(
 //                dataGrid,

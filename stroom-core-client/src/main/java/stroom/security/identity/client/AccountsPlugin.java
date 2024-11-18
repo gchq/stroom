@@ -5,7 +5,9 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.identity.client.presenter.AccountsPresenter;
+import stroom.security.identity.shared.AccountFields;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -15,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
@@ -24,8 +27,17 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     public AccountsPlugin(final EventBus eventBus,
                           final ContentManager eventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<AccountsPresenter> apiKeysPresenterAsyncProvider) {
-        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext);
+                          final Provider<AccountsPresenter> accountsPresenterProvider) {
+        super(eventBus, eventManager, accountsPresenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
+            open(accountsPresenter ->
+                    accountsPresenter.setFilterInput(buildFilterInput(event.getUserId())));
+        }));
+    }
+
+    private String buildFilterInput(final String userId) {
+        return AccountFields.FIELD_NAME_USER_ID + ":" + userId;
     }
 
     @Override
@@ -34,6 +46,14 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
             MenuKeys.addSecurityMenu(event.getMenuItems());
             addMenuItem(event);
         }
+    }
+
+    @Override
+    public void open(final Consumer<AccountsPresenter> consumer) {
+        super.open(presenter -> {
+            presenter.refresh();
+            consumer.accept(presenter);
+        });
     }
 
     @Override

@@ -11,6 +11,7 @@ import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDesc;
 
 import com.google.common.base.Strings;
@@ -129,7 +130,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResultPage search(final FindAccountRequest request) {
+    public ResultPage search(final FindAccountRequest request) {
         checkPermission();
         return accountDao.search(request);
     }

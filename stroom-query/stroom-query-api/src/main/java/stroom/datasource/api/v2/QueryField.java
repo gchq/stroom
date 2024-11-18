@@ -18,6 +18,7 @@ package stroom.datasource.api.v2;
 
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,7 +27,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "type", // deprecated
@@ -372,6 +376,13 @@ public class QueryField implements Field, HasDisplayValue {
         return fldName;
     }
 
+    public static Map<String, QueryField> buildFieldMap(final QueryField... queryFields) {
+        return GwtNullSafe.stream(queryFields)
+                .collect(Collectors.toMap(
+                        QueryField::getFldName,
+                        Function.identity()));
+    }
+
     public Builder copy() {
         return new Builder(this);
     }
@@ -379,6 +390,10 @@ public class QueryField implements Field, HasDisplayValue {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
