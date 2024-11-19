@@ -1739,7 +1739,7 @@ button.main-menu svg {
     flex-direction: row;
     gap: var(--control__gap--horizontal);
     align-items: center;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
 }
 
 .form-group-label-container:has(> label.form-group-label:empty) {
@@ -1751,12 +1751,17 @@ button.main-menu svg {
     flex-direction: row;
     gap: var(--control__gap--horizontal);
     align-items: center;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
 }
 
 .form-group-description {
     font-size: 92%;
     opacity: 80%;
+}
+
+.form-group-description p {
+    /* Reduce the default <p> margin down from 11px */
+    margin-bottom: 4px;
 }
 
 .form-group .help-button {
@@ -1771,7 +1776,7 @@ button.main-menu svg {
 
 .help-button-tooltip {
     /* width: 500px; */
-    max-width: 500px;
+    max-width: 700px;
     border-width: 2px;
     border-color: var(--heading-color);
     border-style: solid;
@@ -1785,6 +1790,8 @@ button.main-menu svg {
 
 .help-button-tooltip .popupContent div {
     font-weight: 400;
+    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
+    font-size: var(--font-size-12);
 }
 
 .form-group .help-button .icon-button {
@@ -2355,4 +2362,14 @@ button.main-menu svg {
 /* Add a smidge of a gap between the split and the next form group */
 .DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
     margin-top: 0.5em;
+}
+
+/* Bit of space between the selection box and the form groups */
+.createUserViewImpl .createUserViewImpl-selection {
+    margin-bottom: 1em;
+}
+
+.createMultipleUsersViewImpl .createMultipleUsersViewImpl-userBatch {
+    overflow-y: scroll;
+    height: 300px;
 }

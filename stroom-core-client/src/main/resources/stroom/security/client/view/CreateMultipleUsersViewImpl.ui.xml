@@ -1,17 +1,59 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
 
-  <g:FlowPanel styleName="dock-container-vertical h-100">
-    <g:Label text="Users to add (in the form):" styleName="dock-min"/>
-    <g:Label
-            text="Unique User ID,[Optional Display Name],[Optional Full Name]"
-            styleName="dock-min user-batch-example"/>
-    <g:Label text="E.g." styleName="dock-min"/>
-    <g:Label
-            text="a59128fc-c437-41eb-a454-7c8cacb06e5c,jbloggs,Joe Bloggs"
-            styleName="dock-min user-batch-example"/>
-    <g:TextArea ui:field="userBatch" styleName="dock-max user-batch-text"/>
-  </g:FlowPanel>
+    <g:FlowPanel styleName="createMultipleUsersViewImpl dock-container-vertical h-100">
+
+        <form:FormGroup identity="subjectId"
+                        label="Users to add"
+                        addStyleNames="dock-min form">
+
+            <form:DescriptionHTML>
+                <p>Unique User ID,[Optional Display Name],[Optional Full Name]</p>
+                <p>E.g.</p>
+                <p>
+                    <code>a59128fc-c437-41eb-a454-7c8cacb06e5c,jbloggs,Joe Bloggs</code>
+                </p>
+            </form:DescriptionHTML>
+
+            <form:HelpHTML>
+                <p>This form allows you to create a batch of identity provider users in Stroom.</p>
+                <p>Enter one user per line with the following fields delimited by a comma:</p>
+                <ul>
+                    <li>
+                        <strong>Unique User ID</strong>
+                        - This is the user's unique identifier on the external identity provider
+                        (e.g. Azure Entra ID, Cognito, Keycloak, etc.).
+                        The identifier may be a UUID like <code>b2cf3670-9d78-4bdf-9638-21f96b522b87</code>,
+                        look like an email address or be something else. Find the user in the identity provider
+                        and copy their unique identifier.
+                        Stroom's property
+                        <code>stroom.security.authentication.openId.uniqueIdentityClaim</code>
+                        determines which Open ID Connect claim is used for the unique identity.
+                    </li>
+                    <li>
+                        <strong>Display Name</strong>
+                        - This is the display name for the user that will be used in most screens in Stroom and
+                        in audit log entries.
+                        Stroom's property
+                        <code>stroom.security.authentication.openId.userDisplayNameClaim</code>
+                        determines which Open ID Connect claim is used to supply the Display Name.
+                        The Display Name will be obtained from the identity provider when the user logs in, but
+                        you can optionally enter it to make it easier to identify the user in Stroom.
+                    </li>
+                    <li>
+                        <strong>Full Name</strong>
+                        - The full name of the user, e.g. <code>Joe Bloggs</code>.
+                        The Full Name will be obtained from the identity provider when the user logs in, but
+                        you can optionally enter it to make it easier to identify the user in Stroom.
+                    </li>
+                </ul>
+            </form:HelpHTML>
+
+            <g:TextArea ui:field="userBatch" styleName="dock-max createMultipleUsersViewImpl-userBatch"/>
+
+        </form:FormGroup>
+    </g:FlowPanel>
 
 </ui:UiBinder>

@@ -2,8 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client">
-    <g:FlowPanel styleName="form max dock-container-vertical">
-        <i:SelectionBox ui:field="createTypes" addStyleNames="dock-min w-100"/>
-        <g:SimplePanel ui:field="panel" addStyleNames="dock-max"/>
+    <g:FlowPanel styleName="createUserViewImpl form max dock-container-vertical">
+        <i:SelectionBox ui:field="createTypes" addStyleNames="createUserViewImpl-selection dock-min w-100"/>
+        <g:SimplePanel ui:field="panel" addStyleNames="createUserViewImpl-panel dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>
