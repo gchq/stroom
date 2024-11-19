@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5.2] - 2024-11-19
+
+* Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
+
+
 ## [v7.5.1] - 2024-10-28
 
 * Issue **#4562** : Use Zip64 compatibility mode.
@@ -963,7 +968,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.2...HEAD
+[v7.5.2]: https://github.com/gchq/stroom/compare/v7.5.1...v7.5.2
 [v7.5.1]: https://github.com/gchq/stroom/compare/v7.5.0...v7.5.1
 [v7.5.0]: https://github.com/gchq/stroom/compare/v7.5-beta.20...v7.5.0
 [v7.5-beta.20]: https://github.com/gchq/stroom/compare/v7.5-beta.19...v7.5-beta.20
