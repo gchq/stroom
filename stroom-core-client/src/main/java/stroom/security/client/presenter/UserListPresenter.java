@@ -70,7 +70,6 @@ public class UserListPresenter
     private final MultiSelectionModelImpl<User> selectionModel;
     private final RestFactory restFactory;
     private final FindUserCriteria.Builder builder = new FindUserCriteria.Builder();
-    private final Column<User, String> fullNameCol;
     private RestDataProvider<User, ResultPage<User>> dataProvider;
     private User selected;
     private ExpressionTerm additionalTerm;
@@ -137,9 +136,6 @@ public class UserListPresenter
                 400);
 
         // Full name
-        fullNameCol = DataGridUtil.textColumnBuilder(User::getFullName)
-                .withSorting(UserFields.FIELD_FULL_NAME, true)
-                .build();
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(User::getFullName)
                         .withSorting(UserFields.FIELD_FULL_NAME, true)
