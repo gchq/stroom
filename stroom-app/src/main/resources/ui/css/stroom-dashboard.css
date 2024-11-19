@@ -99,7 +99,14 @@
 }
 
 .stroom-dashboard-text {
-	width: 100%;
-	height: 100%;
-	padding-top: 18px;
+    width: 100%;
+    height: 100%;
+    /* Not sure why this padding is here */
+    /* padding-top: 18px; */
+}
+
+.stroom-dashboard-text .info-page {
+    /* Set this so vertical scrolling works in the content of the text pane
+       when set to show as HTML */
+    position: absolute !important;
 }
