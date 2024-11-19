@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 @Singleton
 public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresenter> {
 
-    public static final String SCREEN_NAME = "Users And Groups";
+    public static final String SCREEN_NAME = "Users and Groups";
 
     @Inject
     public UsersAndGroupsPlugin(final EventBus eventBus,
