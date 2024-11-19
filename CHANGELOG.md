@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
+
+
 ## [v7.6-beta.4] - 2024-11-04
 
 * Issue **#4550** : Fix datasource already in use issue.
