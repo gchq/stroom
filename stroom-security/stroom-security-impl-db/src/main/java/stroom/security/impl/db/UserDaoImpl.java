@@ -113,7 +113,7 @@ public class UserDaoImpl implements UserDao {
                         user.getUuid(),
                         user.isGroup(),
                         user.isEnabled(),
-                        user.getDisplayName(),
+                        getDisplayNameOrSubjectId(user),
                         user.getFullName())
                 .returning(STROOM_USER.ID)
                 .fetchOne(STROOM_USER.ID);
@@ -191,7 +191,7 @@ public class UserDaoImpl implements UserDao {
                 .set(STROOM_USER.UUID, user.getUuid())
                 .set(STROOM_USER.IS_GROUP, user.isGroup())
                 .set(STROOM_USER.ENABLED, user.isEnabled())
-                .set(STROOM_USER.DISPLAY_NAME, user.getDisplayName())
+                .set(STROOM_USER.DISPLAY_NAME, getDisplayNameOrSubjectId(user))
                 .set(STROOM_USER.FULL_NAME, user.getFullName())
                 .where(STROOM_USER.ID.eq(user.getId()))
                 .and(STROOM_USER.VERSION.eq(user.getVersion()))
@@ -199,11 +199,16 @@ public class UserDaoImpl implements UserDao {
 
         if (count == 0) {
             throw new DataChangedException("Failed to update user, " +
-                    "it may have been updated by another user or deleted");
+                                           "it may have been updated by another user or deleted");
         }
 
         return getByUuid(context, user.getUuid()).orElseThrow(() ->
                 new RuntimeException("Error fetching updated user"));
+    }
+
+    private String getDisplayNameOrSubjectId(final User user) {
+        Objects.requireNonNull(user);
+        return Objects.requireNonNullElseGet(user.getDisplayName(), user::getSubjectId);
     }
 
     @Override
