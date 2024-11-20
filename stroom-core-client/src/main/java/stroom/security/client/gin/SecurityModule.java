@@ -25,6 +25,7 @@ import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.UserPermissionsReportPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
+import stroom.security.client.UsersPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.security.client.presenter.AppPermissionsEditPresenter;
@@ -50,6 +51,8 @@ import stroom.security.client.presenter.DocumentUserPermissionsPresenter.Documen
 import stroom.security.client.presenter.EditApiKeyPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.security.client.presenter.UsersPresenter;
+import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.client.view.ApiKeysViewImpl;
 import stroom.security.client.view.AppPermissionsEditViewImpl;
 import stroom.security.client.view.AppPermissionsViewImpl;
@@ -63,6 +66,7 @@ import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
+import stroom.security.client.view.UsersViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -83,11 +87,16 @@ public class SecurityModule extends PluginModule {
         // Users
         bindPlugin(AppPermissionsPlugin.class);
         bindPlugin(DocumentPermissionsPlugin.class);
+        bindPlugin(UsersPlugin.class);
         bindPlugin(UsersAndGroupsPlugin.class);
         bindPlugin(UserPermissionsReportPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
+        bindPresenterWidget(
+                UsersPresenter.class,
+                UsersView.class,
+                UsersViewImpl.class);
         bindPresenterWidget(
                 UserAndGroupsPresenter.class,
                 UserAndGroupsView.class,

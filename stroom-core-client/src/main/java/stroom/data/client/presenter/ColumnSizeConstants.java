@@ -31,7 +31,7 @@ public final class ColumnSizeConstants {
     /**
      * Column with the heading 'Enabled'
      */
-    public static final int ENABLED_COL = 62;
+    public static final int ENABLED_COL = 66;
 
     private ColumnSizeConstants() {
         // Constants.

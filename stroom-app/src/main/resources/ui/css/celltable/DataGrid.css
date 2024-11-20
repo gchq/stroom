@@ -67,10 +67,21 @@
 	font-weight: 500;
 }
 
-.dataGridHeader .two-icon-column-header {
-    display: flex;
+.dataGridSortableHeader .single-icon-column-header,
+.dataGridSortableHeader .two-icon-column-header,
+.dataGridSortableHeader .single-icon-column-header .svgCell-icon,
+.dataGridSortableHeader .two-icon-column-header .svgCell-icon {
+    cursor: pointer;
 }
 
+.dataGridHeader .single-icon-column-header,
+.dataGridHeader .two-icon-column-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.dataGridHeader:has(.single-icon-column-header),
 .dataGridHeader:has(.two-icon-column-header) {
     text-decoration: none;
 }

@@ -17,12 +17,14 @@ public class UserFields {
     public static final String FIELD_NAME = "name";
     public static final String FIELD_DISPLAY_NAME = "display";
     public static final String FIELD_FULL_NAME = "full";
+    public static final String FIELD_ENABLED = "enabled";
 
     public static final QueryField IS_GROUP = QueryField.createBoolean(FIELD_IS_GROUP);
     public static final QueryField NAME = QueryField.createText(FIELD_NAME);
     public static final QueryField DISPLAY_NAME = QueryField.createText(FIELD_DISPLAY_NAME);
     public static final QueryField ID = QueryField.createText(FIELD_ID);
     public static final QueryField FULL_NAME = QueryField.createText(FIELD_FULL_NAME);
+    public static final QueryField ENABLED = QueryField.createBoolean(FIELD_ENABLED);
     public static final QueryField GROUP_CONTAINS = QueryField
             .builder()
             .fldName("GroupContains")
@@ -44,8 +46,11 @@ public class UserFields {
             FIELD_DISPLAY_NAME);
     public static final FilterFieldDefinition FIELD_DEF_FULL_NAME = FilterFieldDefinition.qualifiedField(
             FIELD_FULL_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_ENABLED = FilterFieldDefinition.qualifiedField(
+            FIELD_ENABLED);
 
     public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_ENABLED,
             FIELD_DEF_IS_GROUP,
             FIELD_DEF_NAME,
             FIELD_DEF_DISPLAY_NAME,
@@ -61,6 +66,7 @@ public class UserFields {
             NAME,
             DISPLAY_NAME,
             FULL_NAME,
+            ENABLED,
             GROUP_CONTAINS,
             PARENT_GROUP);
 }

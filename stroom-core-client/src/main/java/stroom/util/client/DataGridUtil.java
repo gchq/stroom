@@ -671,6 +671,10 @@ public class DataGridUtil {
         return new HeadingBuilder(headingText);
     }
 
+    public static HeadingBuilder headingBuilder() {
+        return new HeadingBuilder("");
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -721,6 +725,17 @@ public class DataGridUtil {
                 final String fieldName,
                 final boolean isIgnoreCase) {
             this.isSorted = true;
+            this.isIgnoreCaseOrdering = isIgnoreCase;
+            this.isSortableSupplier = () -> true;
+            this.fieldName = Objects.requireNonNull(fieldName);
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
+                final String fieldName,
+                final boolean isIgnoreCase,
+                final boolean isSorted) {
+            this.isSorted = isSorted;
             this.isIgnoreCaseOrdering = isIgnoreCase;
             this.isSortableSupplier = () -> true;
             this.fieldName = Objects.requireNonNull(fieldName);

@@ -319,8 +319,8 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                         .build(),
                 DataGridUtil.headingBuilder("Priority")
                         .withToolTip("Defines how important the node is when it comes to " +
-                                "assigning a master. The larger the number the more chance it will become " +
-                                "the master.")
+                                     "assigning a master. The larger the number the more chance it will become " +
+                                     "the master.")
                         .build(),
                 80);
 
@@ -351,7 +351,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                         .withToolTip("Whether the node is enabled for processing and background jobs.")
                         .centerAligned()
                         .build(),
-                70);
+                ColumnSizeConstants.ENABLED_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
     }
@@ -377,7 +377,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
             } else if (ping == null || ping < 0) {
                 ping = Long.MAX_VALUE;
                 pingMsg = "Invalid ping value: "
-                        + GwtNullSafe.requireNonNullElse(ping, "null");
+                          + GwtNullSafe.requireNonNullElse(ping, "null");
             }
 
             return buildPingBar(ping, pingMsg, pingResult.getNodeMonitoringConfig());
@@ -419,8 +419,8 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
             isErrorMsg = false;
         } else {
             if (msg.startsWith("Unable to connect")
-                    || msg.startsWith("Error calling node")
-                    || msg.startsWith("Request failed")) {
+                || msg.startsWith("Error calling node")
+                || msg.startsWith("Request failed")) {
                 text = "Unable to connect";
             } else {
                 text = "Error";

@@ -16,11 +16,9 @@
 
 package stroom.security.client.presenter;
 
-import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -31,11 +29,8 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserRefResource;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
@@ -47,20 +42,18 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.gwt.user.cellview.client.ColumnSortList;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
+
+// TODO I think this is not really needed as AccountService will create/update stroom_user
+//  records so we can just re-use UserListPresenter
+//
 
 /**
  * For selecting a username to add a user to a permissions set or selecting a user to add to a group.
@@ -79,7 +72,7 @@ public class UserRefPopupPresenter
     private RestDataProvider<UserRef, ResultPage<UserRef>> dataProvider;
     private final MultiSelectionModelImpl<UserRef> selectionModel;
     private final RestFactory restFactory;
-    private final FindUserCriteria.Builder builder = new FindUserCriteria.Builder();
+    private final FindUserCriteria.Builder criteriaBuilder = new FindUserCriteria.Builder();
     private UserRef initialSelection;
     private ExpressionTerm additionalTerm;
     private String filter;
@@ -116,91 +109,51 @@ public class UserRefPopupPresenter
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
 
-        // Icon
-        final Column<UserRef, Preset> iconCol = new Column<UserRef, Preset>(new SvgCell()) {
-            @Override
-            public Preset getValue(final UserRef user) {
-                if (!user.isGroup()) {
-                    return SvgPresets.USER;
-                }
+        setupColumns();
+    }
 
-                return SvgPresets.USER_GROUP;
-            }
-        };
-        iconCol.setSortable(true);
-        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
+    private void setupColumns() {
+        DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
+
+        // Icon
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(false, UserAndGroupHelper::mapUserRefTypeToIcon)
+                        .withSorting(UserFields.FIELD_IS_GROUP)
+//                .enabledWhen(UserRef::isEnabled)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder()
+                        .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                        .centerAligned()
+                        .withToolTip("Whether this row is a single user or a named user group.")
+                        .build(),
+                (ColumnSizeConstants.ICON_COL * 2) + 20);
 
         // Display Name
-        final Column<UserRef, String> displayNameCol = new Column<UserRef, String>(new TextCell()) {
-            @Override
-            public String getValue(final UserRef userRef) {
-                return GwtNullSafe.requireNonNullElse(userRef.getDisplayName(), userRef.getSubjectId());
-            }
-        };
-        iconCol.setSortable(true);
-        dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);
+        final Column<UserRef, String> displayNameCol = DataGridUtil.textColumnBuilder(UserRef::getDisplayName)
+//                .enabledWhen(UserRef::isEnabled)
+                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                .build();
+        dataGrid.addResizableColumn(
+                displayNameCol,
+                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
+                        .withToolTip("The name of the user or group.")
+                        .build(),
+                300);
 
         // Full name
-        final Column<UserRef, String> fullNameCol = new Column<UserRef, String>(new TextCell()) {
-            @Override
-            public String getValue(final UserRef userRef) {
-                return userRef.getFullName();
-            }
-        };
-        dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(UserRef::getFullName)
+//                        .enabledWhen(UserRef::isEnabled)
+                        .withSorting(UserFields.FIELD_FULL_NAME, true)
+                        .build(),
+                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_FULL_NAME)
+                        .withToolTip("The full name of the user. Groups do not have a full name.")
+                        .build(),
+                350);
 
-        // Subject ID (aka the unique ID for the user)
-        dataGrid.addResizableColumn(new Column<UserRef, String>(new TextCell()) {
-            @Override
-            public String getValue(final UserRef userRef) {
-                return userRef.getSubjectId();
-            }
-        }, "Unique User Identity", 300);
-        dataGrid.addEndColumn(new EndColumn<>());
-
-        final ColumnSortEvent.Handler columnSortHandler = event -> {
-            final List<CriteriaFieldSort> sortList = new ArrayList<>();
-            if (event != null) {
-                final ColumnSortList columnSortList = event.getColumnSortList();
-                if (columnSortList != null) {
-                    for (int i = 0; i < columnSortList.size(); i++) {
-                        final ColumnSortInfo columnSortInfo = columnSortList.get(i);
-                        final Column<?, ?> column = columnSortInfo.getColumn();
-                        final boolean isAscending = columnSortInfo.isAscending();
-
-                        if (column.equals(iconCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.IS_GROUP.getFldName(),
-                                    !isAscending,
-                                    true));
-                        } else if (column.equals(displayNameCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.DISPLAY_NAME.getFldName(),
-                                    !isAscending,
-                                    true));
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.NAME.getFldName(),
-                                    !isAscending,
-                                    true));
-                        }
-                    }
-                }
-            }
-            builder.sortList(sortList);
-            refresh();
-        };
-        dataGrid.addColumnSortHandler(columnSortHandler);
+        DataGridUtil.addEndColumn(dataGrid);
         dataGrid.getColumnSortList().push(displayNameCol);
-
-        builder.sortList(List.of(
-                new CriteriaFieldSort(
-                        UserFields.DISPLAY_NAME.getFldName(),
-                        false,
-                        true),
-                new CriteriaFieldSort(
-                        UserFields.NAME.getFldName(),
-                        false,
-                        true)));
     }
 
     @Override
@@ -224,7 +177,7 @@ public class UserRefPopupPresenter
         filter = text;
         if (filter != null) {
             filter = filter.trim();
-            if (filter.length() == 0) {
+            if (filter.isEmpty()) {
                 filter = null;
             }
         }
@@ -269,6 +222,7 @@ public class UserRefPopupPresenter
 
     public void refresh() {
         if (dataProvider == null) {
+            //noinspection Convert2Diamond // GWT
             this.dataProvider = new RestDataProvider<UserRef, ResultPage<UserRef>>(getEventBus()) {
                 @Override
                 protected void exec(final Range range,
@@ -279,11 +233,11 @@ public class UserRefPopupPresenter
                     if (additionalTerm != null) {
                         expression = expression.copy().addTerm(additionalTerm).build();
                     }
-                    builder.expression(expression);
-                    builder.pageRequest(PageRequestUtil.createPageRequest(range));
+                    criteriaBuilder.expression(expression);
+                    criteriaBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
                     restFactory
                             .create(RESOURCE)
-                            .method(res -> res.find(builder.build()))
+                            .method(res -> res.find(criteriaBuilder.build()))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)

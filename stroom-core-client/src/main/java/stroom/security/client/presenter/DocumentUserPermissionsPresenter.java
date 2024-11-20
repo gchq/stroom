@@ -17,7 +17,6 @@
 
 package stroom.security.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentUserPermissions;
@@ -105,8 +104,8 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            documentUserPermissionsEditPresenterProvider.get().show(docRef, selected, () ->
-                    documentUserPermissionsListPresenter.refresh());
+            documentUserPermissionsEditPresenterProvider.get().show(
+                    docRef, selected, documentUserPermissionsListPresenter::refresh);
         }
     }
 
@@ -137,6 +136,10 @@ public class DocumentUserPermissionsPresenter
                 .modal()
                 .fire();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DocumentUserPermissionsView extends View {
 

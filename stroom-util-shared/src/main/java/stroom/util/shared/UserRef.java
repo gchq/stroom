@@ -60,14 +60,28 @@ public final class UserRef {
         return new UserRef(groupUuid, null, null, null, true);
     }
 
+    /**
+     * The stroom_user UUID.
+     * No relation to any UUID on the IDP.
+     */
     public String getUuid() {
         return uuid;
     }
 
+    /**
+     * The unique ID for the user.
+     * Maps to the IDP claim defined by
+     * stroom.security.authentication.openId.uniqueIdentityClaim
+     */
     public String getSubjectId() {
         return subjectId;
     }
 
+    /**
+     * The friendly display name for the user
+     * Maps to the IDP claim defined by
+     * stroom.security.authentication.openId.userDisplayNameClaim
+     */
     public String getDisplayName() {
         return displayName;
     }
@@ -202,16 +216,30 @@ public final class UserRef {
             this.group = userRef.group;
         }
 
+        /**
+         * The stroom_user UUID.
+         * No relation to any UUID on the IDP.
+         */
         public Builder uuid(final String uuid) {
             this.uuid = uuid;
             return this;
         }
 
+        /**
+         * The unique ID for the user.
+         * Maps to the IDP claim defined by
+         * stroom.security.authentication.openId.uniqueIdentityClaim
+         */
         public Builder subjectId(final String subjectId) {
             this.subjectId = subjectId;
             return this;
         }
 
+        /**
+         * The friendly display name for the user
+         * Maps to the IDP claim defined by
+         * stroom.security.authentication.openId.userDisplayNameClaim
+         */
         public Builder displayName(final String displayName) {
             this.displayName = displayName;
             return this;
