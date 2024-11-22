@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5.3] - 2024-11-22
+
+* Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
+
+* Issue **#4612** : Fix stroomQL query not including all data points in the visualisation.
+
+* Issue **#4617** : Add debug to try to diagnose issue.
+
+
 ## [v7.5.2] - 2024-11-19
 
 * Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
@@ -968,7 +977,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.3...HEAD
+[v7.5.3]: https://github.com/gchq/stroom/compare/v7.5.2...v7.5.3
 [v7.5.2]: https://github.com/gchq/stroom/compare/v7.5.1...v7.5.2
 [v7.5.1]: https://github.com/gchq/stroom/compare/v7.5.0...v7.5.1
 [v7.5.0]: https://github.com/gchq/stroom/compare/v7.5-beta.20...v7.5.0
