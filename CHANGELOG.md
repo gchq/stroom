@@ -31,6 +31,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * If you are upgrading from a previous v7.6 beta release you will need to run the following SQL. `update analytics_schema_history set checksum = '-86554219' where version = '07.06.00.405';` and `update processor_schema_history set checksum = '-175036745' where version = '07.06.00.305';`.
 
+* Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
+
 
 ## [v7.6-beta.4] - 2024-11-04
 
