@@ -6,8 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.time.Instant;
-
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
         "actualExecutionTimeMs",
@@ -47,9 +45,9 @@ public class ExecutionTracker {
     @Override
     public String toString() {
         return "ExecutionTracker{" +
-               "actualExecutionTimeMs=" + Instant.ofEpochMilli(actualExecutionTimeMs) +
-               ", lastEffectiveExecutionTimeMs=" + Instant.ofEpochMilli(lastEffectiveExecutionTimeMs) +
-               ", nextEffectiveExecutionTimeMs=" + Instant.ofEpochMilli(nextEffectiveExecutionTimeMs) +
+               "actualExecutionTimeMs=" + actualExecutionTimeMs +
+               ", lastEffectiveExecutionTimeMs=" + lastEffectiveExecutionTimeMs +
+               ", nextEffectiveExecutionTimeMs=" + nextEffectiveExecutionTimeMs +
                '}';
     }
 }
