@@ -2,6 +2,7 @@ package stroom.analytics.impl;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.XMLFilter;
+import stroom.util.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -32,7 +33,6 @@ public class DetectionWriter implements DetectionConsumer {
     private static final String NAMESPACE = "detection:1";
     private static final String LOCATION = "file://detection-v1.1.xsd";
 //    private static final String VERSION = "2.0";
-
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
     private static final AttributesImpl ROOT_ATTS = new AttributesImpl();
@@ -97,13 +97,13 @@ public class DetectionWriter implements DetectionConsumer {
                 handler.endProcessing();
             }
         } catch (final SAXException e) {
-            log(Severity.ERROR, e.getMessage(), e);
+            logError(e.getMessage(), e);
         }
     }
 
-    private void log(final Severity severity, final String message, final Exception e) {
+    private void logError(final String message, final Exception e) {
         LOGGER.error(message, e);
-        errorReceiverProxy.log(severity, null,
+        errorReceiverProxy.log(Severity.ERROR, null,
                 getClass().getSimpleName(), message, e);
     }
 
@@ -140,12 +140,12 @@ public class DetectionWriter implements DetectionConsumer {
             writeEndElement(DETECTION);
 
         } catch (final SAXException e) {
-            log(Severity.ERROR, e.getMessage(), e);
+            logError(e.getMessage(), e);
         }
     }
 
     private void writeValues(List<DetectionValue> values) throws SAXException {
-        if (values != null && values.size() > 0) {
+        if (NullSafe.hasItems(values)) {
             for (final DetectionValue value : values) {
                 writeValue(value);
             }
@@ -162,7 +162,7 @@ public class DetectionWriter implements DetectionConsumer {
 
 
     private void writeLinkedEvents(final List<DetectionLinkedEvent> linkedEvents) throws SAXException {
-        if (linkedEvents != null && linkedEvents.size() > 0) {
+        if (NullSafe.hasItems(linkedEvents)) {
             writeStartElement(LINKED_EVENTS);
             for (final DetectionLinkedEvent linkedEvent : linkedEvents) {
                 writeLinkedEvent(linkedEvent);
@@ -201,7 +201,7 @@ public class DetectionWriter implements DetectionConsumer {
 
     private void writeOptionalDataElement(final String elementName,
                                           final String text) throws SAXException {
-        if (text != null && text.length() > 0) {
+        if (NullSafe.isNonEmptyString(text)) {
             writeDataElement(elementName, EMPTY_ATTS, text);
         }
     }
