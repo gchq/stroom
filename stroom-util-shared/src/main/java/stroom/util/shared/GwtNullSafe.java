@@ -328,8 +328,8 @@ public class GwtNullSafe {
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.contains(subStr);
+               && subStr != null
+               && str.contains(subStr);
     }
 
     /**
@@ -553,6 +553,15 @@ public class GwtNullSafe {
     }
 
     /**
+     * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
+     */
+    public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
+        return list != null
+                ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an empty list.
      */
     public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
@@ -711,8 +720,8 @@ public class GwtNullSafe {
             final R result = Objects.requireNonNull(getter)
                     .apply(value);
             return result != null
-                    && Objects.requireNonNull(predicate)
-                    .test(result);
+                   && Objects.requireNonNull(predicate)
+                           .test(result);
         }
     }
 
@@ -826,8 +835,8 @@ public class GwtNullSafe {
             } else {
                 final R result = Objects.requireNonNull(getter2).apply(value2);
                 return result != null
-                        && Objects.requireNonNull(predicate)
-                        .test(result);
+                       && Objects.requireNonNull(predicate)
+                               .test(result);
             }
         }
     }

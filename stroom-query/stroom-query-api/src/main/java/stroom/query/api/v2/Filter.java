@@ -27,7 +27,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"includes", "excludes"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
-        "Either or both can be supplied")
+                      "Either or both can be supplied")
 public final class Filter {
 
     @Schema(description = "Only results matching this filter will be included",
@@ -65,7 +65,7 @@ public final class Filter {
         }
         final Filter filter = (Filter) o;
         return Objects.equals(includes, filter.includes) &&
-                Objects.equals(excludes, filter.excludes);
+               Objects.equals(excludes, filter.excludes);
     }
 
     @Override
@@ -76,9 +76,9 @@ public final class Filter {
     @Override
     public String toString() {
         return "Filter{" +
-                "includes='" + includes + '\'' +
-                ", excludes='" + excludes + '\'' +
-                '}';
+               "includes='" + includes + '\'' +
+               ", excludes='" + excludes + '\'' +
+               '}';
     }
 
     public static Builder builder() {
@@ -88,6 +88,10 @@ public final class Filter {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link Filter}
