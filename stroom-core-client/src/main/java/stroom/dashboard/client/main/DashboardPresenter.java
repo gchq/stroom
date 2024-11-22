@@ -94,6 +94,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT
 public class DashboardPresenter
         extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements
@@ -391,10 +392,7 @@ public class DashboardPresenter
                         dashboardConfig.setComponents(componentConfigList);
                     }
 
-                    final String params = dashboardConfig.getParameters() == null
-                            ?
-                            ""
-                            : dashboardConfig.getParameters();
+                    final String params = GwtNullSafe.string(dashboardConfig.getParameters());
 
                     componentConfigList
                             .add(new ComponentConfig(
@@ -489,7 +487,7 @@ public class DashboardPresenter
                     if (resultStoreInfo != null) {
                         final SearchRequestSource searchRequestSource = resultStoreInfo.getSearchRequestSource();
                         if (searchRequestSource != null &&
-                                component.getId().equals(searchRequestSource.getComponentId())) {
+                            component.getId().equals(searchRequestSource.getComponentId())) {
                             ((Queryable) component).setResultStoreInfo(resultStoreInfo);
                         }
                     }
@@ -518,8 +516,8 @@ public class DashboardPresenter
 
             // Turn on design mode if this is a new dashboard.
             if (dashboardConfig != null &&
-                    dashboardConfig.getDesignMode() != null &&
-                    dashboardConfig.getDesignMode()) {
+                dashboardConfig.getDesignMode() != null &&
+                dashboardConfig.getDesignMode()) {
                 editModeButton.setState(true);
                 setDesignMode(true);
             }
@@ -649,7 +647,8 @@ public class DashboardPresenter
                 final ComponentType type = originalComponent.getComponentType();
 
                 final ComponentId componentId = componentNameSet.createUnique(type, originalComponent.getLabel());
-                final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
+                final ComponentConfig componentConfig = originalComponent.getComponentConfig()
+                        .copy()
                         .id(componentId.id)
                         .name(componentId.name)
                         .build();
@@ -669,27 +668,32 @@ public class DashboardPresenter
             ComponentSettings settings = componentConfig.getSettings();
             if (settings instanceof TableComponentSettings) {
                 TableComponentSettings tableComponentSettings = (TableComponentSettings) settings;
-                if (tableComponentSettings.getQueryId() != null &&
-                        idMapping.containsKey(tableComponentSettings.getQueryId())) {
-                    settings = tableComponentSettings
-                            .copy().queryId(idMapping.get(tableComponentSettings.getQueryId())).build();
+                if (tableComponentSettings.getQueryId() != null
+                    && idMapping.containsKey(tableComponentSettings.getQueryId())) {
+                    settings = tableComponentSettings.copy()
+                            .queryId(idMapping.get(tableComponentSettings.getQueryId()))
+                            .build();
                 }
             } else if (settings instanceof VisComponentSettings) {
                 VisComponentSettings visComponentSettings = (VisComponentSettings) settings;
-                if (visComponentSettings.getTableId() != null &&
-                        idMapping.containsKey(visComponentSettings.getTableId())) {
-                    settings = visComponentSettings
-                            .copy().tableId(idMapping.get(visComponentSettings.getTableId())).build();
+                if (visComponentSettings.getTableId() != null
+                    && idMapping.containsKey(visComponentSettings.getTableId())) {
+                    settings = visComponentSettings.copy()
+                            .tableId(idMapping.get(visComponentSettings.getTableId()))
+                            .build();
                 }
             } else if (settings instanceof TextComponentSettings) {
                 TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
-                if (textComponentSettings.getTableId() != null &&
-                        idMapping.containsKey(textComponentSettings.getTableId())) {
-                    settings = textComponentSettings
-                            .copy().tableId(idMapping.get(textComponentSettings.getTableId())).build();
+                if (textComponentSettings.getTableId() != null
+                    && idMapping.containsKey(textComponentSettings.getTableId())) {
+                    settings = textComponentSettings.copy()
+                            .tableId(idMapping.get(textComponentSettings.getTableId()))
+                            .build();
                 }
             }
-            modifiedComponents.add(componentConfig.copy().settings(settings).build());
+            modifiedComponents.add(componentConfig.copy()
+                    .settings(settings)
+                    .build());
         }
 
         // Now try and add all the duplicated components.
@@ -930,7 +934,7 @@ public class DashboardPresenter
                 final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) layoutConfig;
                 if (tabLayoutConfig.getTabs().size() > 0) {
                     if (tabLayoutConfig.getSelected() >= 0 &&
-                            tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()) {
+                        tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()) {
                         return tabLayoutConfig.get(tabLayoutConfig.getSelected());
                     } else {
                         return tabLayoutConfig.get(0);

@@ -20,6 +20,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -125,7 +126,7 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
     public boolean hasChildren() {
-        return children != null && children.size() > 0;
+        return GwtNullSafe.hasItems(children);
     }
 
     /**
@@ -146,9 +147,9 @@ public final class ExpressionOperator extends ExpressionItem {
      */
     public boolean hasEnabledChildren() {
         return children != null
-                && children.stream()
-                .anyMatch(expressionItem ->
-                        expressionItem != null && expressionItem.enabled());
+               && children.stream()
+                       .anyMatch(expressionItem ->
+                               expressionItem != null && expressionItem.enabled());
     }
 
     @Override
@@ -164,7 +165,7 @@ public final class ExpressionOperator extends ExpressionItem {
         }
         ExpressionOperator that = (ExpressionOperator) o;
         return op == that.op &&
-                Objects.equals(children, that.children);
+               Objects.equals(children, that.children);
     }
 
     @Override
@@ -175,6 +176,7 @@ public final class ExpressionOperator extends ExpressionItem {
     @Override
     void append(final StringBuilder sb, final String pad, final boolean singleLine) {
         if (enabled()) {
+            //noinspection SizeReplaceableByIsEmpty // Cos GWT
             if (!singleLine && sb.length() > 0) {
                 sb.append("\n");
                 sb.append(pad);
@@ -206,6 +208,10 @@ public final class ExpressionOperator extends ExpressionItem {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Op implements HasDisplayValue {
         AND("AND"),
         OR("OR"),
@@ -230,6 +236,10 @@ public final class ExpressionOperator extends ExpressionItem {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link ExpressionOperator}
@@ -391,7 +401,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                      final ExpressionTerm.Condition condition,
                                      final DocRef docRef) {
             if (!Condition.IS_DOC_REF.equals(condition) &&
-                    !Condition.IN_FOLDER.equals(condition)) {
+                !Condition.IN_FOLDER.equals(condition)) {
                 throw new RuntimeException("Unexpected condition used for doc ref :" + condition);
             }
 
@@ -490,7 +500,7 @@ public final class ExpressionOperator extends ExpressionItem {
             }
 
             List<ExpressionItem> children = this.children;
-            if (children.size() == 0) {
+            if (children.isEmpty()) {
                 children = null;
             } else {
                 children = Collections.unmodifiableList(children);
