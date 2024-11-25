@@ -12,6 +12,7 @@ import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -70,7 +71,7 @@ class TestAppPermissionDaoImpl {
     void testPermissionStory() {
         final String userName = String.format("SomePerson_%s", UUID.randomUUID());
 
-        final User user = createUser(userName);
+        final UserRef user = createUser(userName);
         appPermissionDao.addPermission(user.getUuid(), AppPermission.STEPPING_PERMISSION);
         appPermissionDao.addPermission(user.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
 
@@ -85,7 +86,7 @@ class TestAppPermissionDaoImpl {
 
     @Test
     void testEffectivePermissions1() {
-        final User user1 = createUser("user1");
+        final UserRef user1 = createUser("user1");
         appPermissionDao.addPermission(user1.getUuid(), AppPermission.STEPPING_PERMISSION);
         appPermissionDao.addPermission(user1.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
         assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()).size()).isEqualTo(2);
@@ -102,8 +103,8 @@ class TestAppPermissionDaoImpl {
 
     @Test
     void testEffectivePermissions2() {
-        final User user1 = createUser("user1");
-        final User group1 = createGroup("group1");
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
         userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
         appPermissionDao.addPermission(group1.getUuid(), AppPermission.STEPPING_PERMISSION);
         appPermissionDao.addPermission(group1.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
@@ -124,9 +125,9 @@ class TestAppPermissionDaoImpl {
 
     @Test
     void testEffectivePermissions3() {
-        final User user1 = createUser("user1");
-        final User group1 = createGroup("group1");
-        final User group2 = createGroup("group2");
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
         userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
         userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
         appPermissionDao.addPermission(group2.getUuid(), AppPermission.STEPPING_PERMISSION);
@@ -150,9 +151,9 @@ class TestAppPermissionDaoImpl {
 
     @Test
     void testEffectivePermissions3None() {
-        final User user1 = createUser("user1");
-        final User group1 = createGroup("group1");
-        final User group2 = createGroup("group2");
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
         userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
         userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
 
@@ -171,9 +172,9 @@ class TestAppPermissionDaoImpl {
 
     @Test
     void testEffectivePermissions3Split() {
-        final User user1 = createUser("user1");
-        final User group1 = createGroup("group1");
-        final User group2 = createGroup("group2");
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
         userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
         userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
 
@@ -203,9 +204,9 @@ class TestAppPermissionDaoImpl {
 
     @Test
     void testEffectivePermissions3Mid() {
-        final User user1 = createUser("user1");
-        final User group1 = createGroup("group1");
-        final User group2 = createGroup("group2");
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
         userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
         userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
 
@@ -258,15 +259,15 @@ class TestAppPermissionDaoImpl {
         return optional.get();
     }
 
-    private User createUser(final String name) {
-        return create(name, false);
+    private UserRef createUser(final String name) {
+        return createUserOrGroup(name, false);
     }
 
-    private User createGroup(final String name) {
-        return create(name, true);
+    private UserRef createGroup(final String name) {
+        return createUserOrGroup(name, true);
     }
 
-    private User create(final String name, final boolean group) {
+    private UserRef createUserOrGroup(final String name, final boolean group) {
         User user = User.builder()
                 .subjectId(name)
                 .displayName(name)
@@ -274,6 +275,6 @@ class TestAppPermissionDaoImpl {
                 .group(group)
                 .build();
         AuditUtil.stamp(() -> "test", user);
-        return userDao.create(user);
+        return userDao.create(user).asRef();
     }
 }

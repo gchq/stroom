@@ -14239,14 +14239,15 @@
       "FetchAppUserPermissionsRequest" : {
         "type" : "object",
         "properties" : {
-          "allUsers" : {
-            "type" : "boolean"
-          },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "showLevel" : {
+            "type" : "string",
+            "enum" : [ "SHOW_EXPLICIT", "SHOW_EFFECTIVE", "SHOW_ALL" ]
           },
           "sort" : {
             "type" : "string",
@@ -14316,9 +14317,6 @@
       "FetchDocumentUserPermissionsRequest" : {
         "type" : "object",
         "properties" : {
-          "allUsers" : {
-            "type" : "boolean"
-          },
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -14327,6 +14325,10 @@
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "showLevel" : {
+            "type" : "string",
+            "enum" : [ "SHOW_EXPLICIT", "SHOW_EFFECTIVE", "SHOW_ALL" ]
           },
           "sort" : {
             "type" : "string",

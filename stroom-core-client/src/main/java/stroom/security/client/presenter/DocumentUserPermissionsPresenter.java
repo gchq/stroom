@@ -17,14 +17,14 @@
 
 package stroom.security.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -44,7 +44,7 @@ public class DocumentUserPermissionsPresenter
     private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final ButtonView docEdit;
-    private final InlineSvgToggleButton explicitOnly;
+    private final SelectionBox<PermissionShowLevel> showLevel = new SelectionBox<>();
     private DocRef docRef;
 
     @Inject
@@ -64,12 +64,11 @@ public class DocumentUserPermissionsPresenter
                 "Edit Permissions For Selected User",
                 false));
 
-        explicitOnly = new InlineSvgToggleButton();
-        explicitOnly.setSvg(SvgImage.EYE_OFF);
-        explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-        explicitOnly.setState(false);
-        documentUserPermissionsListPresenter.addButton(explicitOnly);
-        documentUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        showLevel.addItems(PermissionShowLevel.ITEMS);
+        showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        showLevel.getElement().getStyle().setProperty("padding", "0 var(--control__gap--horizontal)");
+        documentUserPermissionsListPresenter.getPagerView().addToolbarWidget(showLevel);
+        documentUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
     }
 
     @Override
@@ -88,15 +87,8 @@ public class DocumentUserPermissionsPresenter
                 onEdit();
             }
         }));
-        registerHandler(explicitOnly.addClickHandler(e -> {
-            if (explicitOnly.getState()) {
-                explicitOnly.setTitle("Show All Users");
-                explicitOnly.setSvg(SvgImage.EYE);
-            } else {
-                explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-                explicitOnly.setSvg(SvgImage.EYE_OFF);
-            }
-            documentUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        registerHandler(showLevel.addValueChangeHandler(e -> {
+            documentUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
             documentUserPermissionsListPresenter.refresh();
         }));
     }
@@ -105,8 +97,8 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            documentUserPermissionsEditPresenterProvider.get().show(docRef, selected, () ->
-                    documentUserPermissionsListPresenter.refresh());
+            documentUserPermissionsEditPresenterProvider.get().show(docRef, selected,
+                    documentUserPermissionsListPresenter::refresh);
         }
     }
 

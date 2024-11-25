@@ -1,14 +1,20 @@
 package stroom.security.impl.db;
 
 import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.Guice;
@@ -19,7 +25,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -77,15 +85,6 @@ class TestDocPermissionDaoImpl {
         assertThat(docPermission).isEqualTo(DocumentPermission.VIEW);
     }
 
-    private UserRef createUser(final String name) {
-        User user = User.builder()
-                .subjectId(name)
-                .uuid(UUID.randomUUID().toString())
-                .build();
-        AuditUtil.stamp(() -> "test", user);
-        return userDao.create(user).asRef();
-    }
-
     private Map<UserRef, Set<DocumentPermission>> getPermissionsForDocument(final DocRef docRef,
                                                                             final Set<UserRef> users) {
         return users.stream().collect(Collectors.toMap(Function.identity(), userRef -> {
@@ -94,7 +93,7 @@ class TestDocPermissionDaoImpl {
             return Arrays
                     .stream(DocumentPermission.values())
                     .filter(permission -> documentPermission != null &&
-                            documentPermission.isEqualOrHigher(permission))
+                                          documentPermission.isEqualOrHigher(permission))
                     .collect(Collectors.toSet());
         }));
     }
@@ -204,10 +203,376 @@ class TestDocPermissionDaoImpl {
         assertThat(permissionsUser3Doc1_3).isNull();
     }
 
+    @Test
+    void testEffectivePermissions1() {
+        final DocRef docRef1 = createTestDocRef();
+        final UserRef user1 = createUser("user1");
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.EDIT);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isOne();
+        validateDocPermissions(
+                resultPage,
+                "user1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of(),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions1PlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), user1.getUuid(), "Dashboard");
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isOne();
+        validateDocPermissions(
+                resultPage,
+                "user1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Dashboard"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions2() {
+        final DocRef docRef1 = createTestDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of());
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of(),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions2PlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Dashboard");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Dashboard"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3PlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group2.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group2.getUuid(), "Dashboard");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(3);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Dashboard"));
+        validateDocPermissions(resultPage,
+                "group2",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Dashboard"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3None() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid())).isNull();
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(0);
+    }
+
+    @Test
+    void testEffectivePermissions3SplitPlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group2.getUuid(), DocumentPermission.VIEW);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Dashboard");
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group2.getUuid(), "Query");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid()))
+                .isEqualTo(DocumentPermission.VIEW);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(3);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Query", "Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                DocumentPermission.VIEW,
+                Set.of("Dashboard"),
+                Set.of("Query"));
+        validateDocPermissions(resultPage,
+                "group2",
+                DocumentPermission.VIEW,
+                null,
+                Set.of("Query"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3MidPlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Dashboard");
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Query");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid())).isNull();
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Query", "Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Query", "Dashboard"),
+                Set.of());
+    }
+
+
+    private void validateDocPermissions(final ResultPage<DocumentUserPermissions> resultPage,
+                                        final String userName,
+                                        final DocumentPermission expectedPermission,
+                                        final DocumentPermission expectedInherited,
+                                        final Set<String> expectedCreatePermissions,
+                                        final Set<String> expectedCreateInherited) {
+        final DocumentUserPermissions documentUserPermissions = get(resultPage, userName);
+        validateDocPermissions(
+                documentUserPermissions,
+                expectedPermission,
+                expectedInherited,
+                expectedCreatePermissions,
+                expectedCreateInherited);
+    }
+
+    private void validateDocPermissions(final DocumentUserPermissions appUserPermissions,
+                                        final DocumentPermission expectedPermission,
+                                        final DocumentPermission expectedInherited,
+                                        final Set<String> expectedCreatePermissions,
+                                        final Set<String> expectedCreateInherited) {
+        assertThat(appUserPermissions.getPermission()).isEqualTo(expectedPermission);
+        assertThat(appUserPermissions.getInheritedPermission()).isEqualTo(expectedInherited);
+        validatePermissionSet(appUserPermissions.getDocumentCreatePermissions(), expectedCreatePermissions);
+        validatePermissionSet(appUserPermissions.getInheritedDocumentCreatePermissions(), expectedCreateInherited);
+    }
+
+    private void validatePermissionSet(final Set<String> actual,
+                                       final Set<String> expected) {
+        assertThat(actual.size()).isEqualTo(expected.size());
+        assertThat(actual).containsAll(expected);
+    }
+
+    private DocumentUserPermissions get(final ResultPage<DocumentUserPermissions> resultPage,
+                                        final String userName) {
+        final Optional<DocumentUserPermissions> optional = resultPage
+                .getValues()
+                .stream()
+                .filter(aup -> userName.equals(aup.getUserRef().getSubjectId()))
+                .findAny();
+        assertThat(optional).isPresent();
+        return optional.get();
+    }
+
+    private DocRef createTestFolderDocRef() {
+        return DocRef.builder()
+                .type("Folder")
+                .uuid(UUID.randomUUID().toString())
+                .build();
+    }
+
     private DocRef createTestDocRef() {
         return DocRef.builder()
                 .type("Simple")
                 .uuid(UUID.randomUUID().toString())
                 .build();
+    }
+
+    private UserRef createUser(final String name) {
+        return createUserOrGroup(name, false);
+    }
+
+    private UserRef createGroup(final String name) {
+        return createUserOrGroup(name, true);
+    }
+
+    private UserRef createUserOrGroup(final String name, final boolean group) {
+        User user = User.builder()
+                .subjectId(name)
+                .displayName(name)
+                .uuid(UUID.randomUUID().toString())
+                .group(group)
+                .build();
+        AuditUtil.stamp(() -> "test", user);
+        return userDao.create(user).asRef();
     }
 }

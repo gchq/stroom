@@ -20,8 +20,6 @@ import stroom.security.impl.db.jooq.tables.PermissionDocId;
 import stroom.security.impl.db.jooq.tables.PermissionDocTypeId;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
-import stroom.security.impl.db.jooq.tables.VPermissionAppInheritedPerms;
-import stroom.security.impl.db.jooq.tables.VPermissionAppParentPerms;
 
 
 /**
@@ -83,16 +81,6 @@ public class Stroom extends SchemaImpl {
     public final StroomUserGroup STROOM_USER_GROUP = StroomUserGroup.STROOM_USER_GROUP;
 
     /**
-     * VIEW
-     */
-    public final VPermissionAppInheritedPerms V_PERMISSION_APP_INHERITED_PERMS = VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS;
-
-    /**
-     * VIEW
-     */
-    public final VPermissionAppParentPerms V_PERMISSION_APP_PARENT_PERMS = VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS;
-
-    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -116,9 +104,7 @@ public class Stroom extends SchemaImpl {
             PermissionDocId.PERMISSION_DOC_ID,
             PermissionDocTypeId.PERMISSION_DOC_TYPE_ID,
             StroomUser.STROOM_USER,
-            StroomUserGroup.STROOM_USER_GROUP,
-            VPermissionAppInheritedPerms.V_PERMISSION_APP_INHERITED_PERMS,
-            VPermissionAppParentPerms.V_PERMISSION_APP_PARENT_PERMS
+            StroomUserGroup.STROOM_USER_GROUP
         );
     }
 }

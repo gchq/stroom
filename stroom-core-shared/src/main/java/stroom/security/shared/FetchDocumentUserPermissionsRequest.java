@@ -35,32 +35,32 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final boolean allUsers;
+    private final PermissionShowLevel showLevel;
 
     @JsonCreator
     public FetchDocumentUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                                @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
-                                               @JsonProperty("allUsers") boolean allUsers) {
+                                               @JsonProperty("showLevel") PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
-        this.allUsers = allUsers;
+        this.showLevel = showLevel;
     }
 
     public DocRef getDocRef() {
         return docRef;
     }
 
-    public boolean isAllUsers() {
-        return allUsers;
+    public PermissionShowLevel getShowLevel() {
+        return showLevel;
     }
 
     public static class Builder
             extends ExpressionCriteria.AbstractBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
         private DocRef docRef;
-        private boolean allUsers;
+        private PermissionShowLevel showLevel;
 
         public Builder() {
 
@@ -69,7 +69,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
         public Builder(final FetchDocumentUserPermissionsRequest request) {
             super(request);
             this.docRef = request.docRef;
-            this.allUsers = request.allUsers;
+            this.showLevel = request.showLevel;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -77,8 +77,8 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             return this;
         }
 
-        public Builder allUsers(final boolean allUsers) {
-            this.allUsers = allUsers;
+        public Builder showLevel(final PermissionShowLevel showLevel) {
+            this.showLevel = showLevel;
             return this;
         }
 
@@ -94,7 +94,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                     sortList,
                     expression,
                     docRef,
-                    allUsers);
+                    showLevel);
         }
     }
 }

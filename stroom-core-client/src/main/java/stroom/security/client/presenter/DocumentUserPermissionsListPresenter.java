@@ -34,6 +34,7 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
@@ -81,7 +82,6 @@ public class DocumentUserPermissionsListPresenter
     private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
     private final PagerView pagerView;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
-    private DocumentTypes documentTypes;
     private DocRef docRef;
 
     @Inject
@@ -94,10 +94,7 @@ public class DocumentUserPermissionsListPresenter
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
-        documentTypeCache.fetch(dt -> {
-            this.documentTypes = dt;
-            setupColumns(dt);
-        }, this);
+        documentTypeCache.fetch(this::setupColumns, this);
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -172,11 +169,6 @@ public class DocumentUserPermissionsListPresenter
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
         builder.docRef(docRef);
-    }
-
-
-    public void setAllUsers(final boolean allUsers) {
-        builder.allUsers(allUsers);
     }
 
     private void setupColumns(final DocumentTypes documentTypes) {
@@ -332,5 +324,9 @@ public class DocumentUserPermissionsListPresenter
 
     public PagerView getPagerView() {
         return pagerView;
+    }
+
+    public void setShowLevel(final PermissionShowLevel showLevel) {
+        builder.showLevel(showLevel);
     }
 }

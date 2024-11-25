@@ -32,7 +32,7 @@ import java.util.List;
 public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
 
     @JsonProperty
-    private PermissionShowLevel showLevel;
+    private final PermissionShowLevel showLevel;
 
     @JsonCreator
     public FetchAppUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -57,6 +57,7 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
 
         public Builder(final FetchAppUserPermissionsRequest expressionCriteria) {
             super(expressionCriteria);
+            this.showLevel = expressionCriteria.showLevel;
         }
 
         public Builder showLevel(final PermissionShowLevel showLevel) {

@@ -226,6 +226,7 @@ public class TestV07_05_00_005 extends AbstractCrossModuleMigrationTest {
                 update_user,
                 name,
                 uuid,
+                display_name,
                 is_group,
                 enabled)
                 VALUES (
@@ -234,6 +235,7 @@ public class TestV07_05_00_005 extends AbstractCrossModuleMigrationTest {
                 'jbloggs',
                 0,
                 'jbloggs',
+                ?,
                 ?,
                 ?,
                 0,
@@ -411,6 +413,7 @@ public class TestV07_05_00_005 extends AbstractCrossModuleMigrationTest {
                     ThrowingConsumer.unchecked(prepStmt -> {
                         prepStmt.setString(1, "user__" + uuid);
                         prepStmt.setString(2, uuid);
+                        prepStmt.setString(3, "user__" + uuid);
                         final int cnt = prepStmt.executeUpdate();
                         LOGGER.debug("Inserted {} user records", cnt);
                     }));

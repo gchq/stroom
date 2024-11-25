@@ -655,6 +655,11 @@
     padding-left: 5px;
 }
 
+.pager-toolbar {
+    display: flex;
+    flex-grow: 1;
+}
+
 .pager-paging {
     position: relative;
     text-align: right;

@@ -42,9 +42,8 @@ jooq {
                                 'stroom_user_group|' +
                                 'permission_app|' +
                                 'permission_app_id|' +
-                                'v_permission_app_parent_perms|' +
-                                'v_permission_app_inherited_perms|' +
-                                'permission_doc|permission_doc_id|' +
+                                'permission_doc|' +
+                                'permission_doc_id|' +
                                 'permission_doc_create|' +
                                 'permission_doc_type_id'
                         // We don't want to include flyway versioning
@@ -58,9 +57,7 @@ jooq {
                                 includeExpression = '' +
                                         '.*\\.api_key\\.enabled|' +
                                         '.*\\.stroom_user\\.is_group|' +
-                                        '.*\\.stroom_user\\.enabled|' +
-                                        '.*\\.v_permission_app_parent_perms\\.is_group|' +
-                                        '.*\\.v_permission_app_inherited_perms\\.is_group'
+                                        '.*\\.stroom_user\\.enabled'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

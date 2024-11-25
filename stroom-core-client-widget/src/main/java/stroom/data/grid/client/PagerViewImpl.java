@@ -93,7 +93,7 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     private ButtonPanel getButtonPanel() {
         if (buttonPanel == null) {
             buttonPanel = new ButtonPanel();
-//            getButtonPanel().addStyleName("dock-max");
+            addToolbarWidget(buttonPanel);
         }
         return buttonPanel;
     }
