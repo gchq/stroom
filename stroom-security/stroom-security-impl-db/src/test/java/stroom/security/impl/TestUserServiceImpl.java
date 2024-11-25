@@ -136,11 +136,11 @@ class TestUserServiceImpl {
         assertThat(userService.find(createCriteria(userGroup1.getSubjectId())).size()).isEqualTo(1);
         assertThat(userService.find(createCriteria(userGroup2.getSubjectId())).size()).isEqualTo(1);
 
-        final Set<String> findUsers = userService.find(createCriteria("group:false"))
+        final Set<String> findUsers = userService.find(createCriteria("isgroup:false"))
                 .stream()
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
-        final Set<String> findGroups = userService.find(createCriteria("group:true"))
+        final Set<String> findGroups = userService.find(createCriteria("isgroup:true"))
                 .stream()
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
