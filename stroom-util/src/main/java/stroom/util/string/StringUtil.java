@@ -215,7 +215,7 @@ public class StringUtil {
 
     /**
      * @return True if str is non-null and equal to one of (y|yes|true|on|enabled|1)
-     * ignoring case.
+     * ignoring case. All other values return false.
      */
     public static boolean asBoolean(final String str) {
         if (str == null || str.isEmpty()) {

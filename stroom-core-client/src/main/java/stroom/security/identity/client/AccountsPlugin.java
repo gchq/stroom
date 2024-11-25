@@ -5,9 +5,12 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.identity.client.presenter.AccountsPresenter;
+import stroom.security.identity.shared.AccountFields;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -15,25 +18,53 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
 public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
 
+    final Provider<UiConfigCache> uiConfigCacheProvider;
+
     @Inject
     public AccountsPlugin(final EventBus eventBus,
                           final ContentManager eventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<AccountsPresenter> apiKeysPresenterAsyncProvider) {
-        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext);
+                          final Provider<AccountsPresenter> accountsPresenterProvider,
+                          final Provider<UiConfigCache> uiConfigCacheProvider) {
+        super(eventBus, eventManager, accountsPresenterProvider, securityContext);
+        this.uiConfigCacheProvider = uiConfigCacheProvider;
+
+        registerHandler(getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
+            open(accountsPresenter ->
+                    accountsPresenter.setFilterInput(buildFilterInput(event.getUserId())));
+        }));
+    }
+
+    private String buildFilterInput(final String userId) {
+        return AccountFields.FIELD_NAME_USER_ID + ":" + userId;
     }
 
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
-            MenuKeys.addSecurityMenu(event.getMenuItems());
-            addMenuItem(event);
-        }
+        uiConfigCacheProvider.get().get(extendedUiConfig -> {
+            // We don't show accounts if using an external IDP as all accounts
+            // are managed on the IDP
+            if (getSecurityContext().hasAppPermission(getRequiredAppPermission())
+                && !extendedUiConfig.isExternalIdentityProvider()) {
+
+                MenuKeys.addSecurityMenu(event.getMenuItems());
+                addMenuItem(event);
+            }
+        });
+    }
+
+    @Override
+    public void open(final Consumer<AccountsPresenter> consumer) {
+        super.open(presenter -> {
+            presenter.refresh();
+            consumer.accept(presenter);
+        });
     }
 
     @Override

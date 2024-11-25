@@ -16,24 +16,23 @@
 
 package stroom.security.client.presenter;
 
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.security.client.presenter.UserListPresenter.Mode;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -79,14 +78,21 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                   final RestFactory restFactory) {
         super(eventBus, view);
         this.userList = userListPresenterProvider.get();
+        this.userList.setMode(Mode.USERS_AND_GROUPS);
+        this.userList.getView().setLabel("Users And Groups");
+
         this.parentsList = userListPresenterProvider.get();
+        // A parent can only be a group
+        this.parentsList.setMode(Mode.GROUPS_ONLY);
+
         this.childrenList = userListPresenterProvider.get();
+        this.childrenList.setMode(Mode.USERS_AND_GROUPS);
+
         this.createUserPresenter = createUserPresenter;
         this.createNewGroupPresenterProvider = createNewGroupPresenterProvider;
         this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
         this.restFactory = restFactory;
 
-        userList.getView().setLabel("Users And Groups");
         view.setUserList(userList.getView());
         view.setParentsView(parentsList.getView());
         view.setChildrenView(childrenList.getView());
@@ -144,6 +150,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             final User group = parentsList.getSelectionModel().getSelected();
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
+
         registerHandler(addMemberOfButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User user = userList.getSelectionModel().getSelected();
@@ -155,6 +162,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                             .condition(Condition.EQUALS)
                             .value("true")
                             .build());
+
                     userRefPopupPresenter.show("Select Group", groupRef -> {
                         if (groupRef != null) {
                             addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
@@ -163,6 +171,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 }
             }
         }));
+
         registerHandler(removeMemberOfButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User user = userList.getSelectionModel().getSelected();
@@ -177,6 +186,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             final User user = childrenList.getSelectionModel().getSelected();
             removeMembersInButton.setEnabled(group != null && user != null);
         }));
+
         registerHandler(addMembersInButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User group = userList.getSelectionModel().getSelected();
@@ -190,6 +200,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 }
             }
         }));
+
         registerHandler(removeMembersInButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final User group = userList.getSelectionModel().getSelected();
@@ -214,14 +225,11 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                     .build());
             parentsList.refresh();
 
-            final StringBuilder parentLabel = new StringBuilder();
-            if (selected.isGroup()) {
-                parentLabel.append("Group \"");
-            } else {
-                parentLabel.append("User \"");
-            }
-            parentLabel.append(selected.getDisplayName());
-            parentLabel.append("\" is a member of:");
+            final StringBuilder parentLabel = new StringBuilder()
+                    .append(selected.getType(CaseType.SENTENCE))
+                    .append(" \"")
+                    .append(selected.getDisplayName())
+                    .append("\" is a member of:");
             parentsList.getView().setLabel(parentLabel.toString());
             getView().setParentsVisible(true);
 
@@ -316,8 +324,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void removeUserFromGroup(final User user,
                                      final User group,
                                      final UserListPresenter userListPresenter) {
-        if (group != null && user != null) {
-            final User currentSelection = userListPresenter.getSelectionModel().getSelected();
+        if (GwtNullSafe.allNonNull(user, group)) {
             final User nextSelection = getNextSelection(userListPresenter);
 
             restFactory
@@ -360,62 +367,21 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onCreateUserOrGroup() {
-        createUserPresenter.show(this::afterChange);
+        createUserPresenter.show(UserAndGroupHelper.createAfterChangeConsumer(userList), true);
     }
 
     private void onEditUserOrGroup() {
-        final User user = userList.getSelectionModel().getSelected();
-        if (user != null && user.isGroup()) {
-            final CreateNewGroupPresenter createNewGroupPresenter = createNewGroupPresenterProvider.get();
-            createNewGroupPresenter.getView().setName(user.getSubjectId());
-            final PopupSize popupSize = PopupSize.resizable(600, 200);
-            ShowPopupEvent.builder(createNewGroupPresenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Edit User Group")
-                    .onShow(e -> createNewGroupPresenter.getView().focus())
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            createNewGroupPresenter.editGroupName(user, this::afterChange, e, this);
-                        } else {
-                            e.hide();
-                        }
-                    })
-                    .fire();
-        }
+        UserAndGroupHelper.onEditUserOrGroup(userList, createNewGroupPresenterProvider, this);
     }
 
     private void onDelete() {
-        final User user = userList.getSelectionModel().getSelected();
-        if (user != null) {
-            ConfirmEvent.fire(this,
-                    "Are you sure you want to delete the selected " +
-                    getDescription(user) + "?",
-                    ok -> {
-                        if (ok) {
-                            user.setEnabled(false);
-                            restFactory
-                                    .create(USER_RESOURCE)
-                                    .method(res -> res.update(user))
-                                    .onSuccess(this::afterChange)
-                                    .taskMonitorFactory(userList.getPagerView())
-                                    .exec();
-                        }
-                    });
-        }
-    }
-
-    private void afterChange(final User user) {
-        userList.getSelectionModel().clear(true);
-        userList.refresh();
+        UserAndGroupHelper.onDelete(userList, restFactory, this);
     }
 
     private String getDescription(final User user) {
-        if (user.isGroup()) {
-            return "group '" + user.asRef().toDisplayString() + "'";
-        }
-
-        return "user '" + user.asRef().toDisplayString() + "'";
+        return user.isGroup()
+                ? "group '" + user.asRef().toDisplayString() + "'"
+                : "user '" + user.asRef().toDisplayString() + "'";
     }
 
     public void refresh() {
@@ -463,6 +429,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     public String getType() {
         return "UsersAndGroups";
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface UserAndGroupsView extends View {
 

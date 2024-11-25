@@ -141,9 +141,9 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 DataGridUtil.headingBuilder("Enabled")
                         .withToolTip("Whether this job is enabled. " +
-                                "The parent job and the node must both be enabled for the job to execute.")
+                                     "The parent job and the node must both be enabled for the job to execute.")
                         .build(),
-                60);
+                ColumnSizeConstants.ENABLED_COL);
 
         // Job name, allow for null rows
         dataGrid.addResizableColumn(

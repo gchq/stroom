@@ -26,6 +26,7 @@ import stroom.security.shared.AppUserPermissionsReport;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserRef;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
@@ -73,7 +74,8 @@ public class AppPermissionsPresenter
             appUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
             appUserPermissionsListPresenter.refresh();
         }));
-        registerHandler(appPermissionsEditPresenter.getSelectionModel().addSelectionHandler(e -> updateDetails()));
+        registerHandler(appPermissionsEditPresenter.getSelectionModel()
+                .addSelectionHandler(e -> updateDetails()));
         registerHandler(appPermissionsEditPresenter.addValueChangeHandler(e -> {
             if (e.getValue().isRefreshUsers()) {
                 refresh();
@@ -89,12 +91,11 @@ public class AppPermissionsPresenter
     }
 
     private void editPermissions() {
-        final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel().getSelected();
-        if (appUserPermissions != null) {
-            appPermissionsEditPresenter.edit(appUserPermissions.getUserRef());
-        } else {
-            appPermissionsEditPresenter.edit(null);
-        }
+        final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel()
+                .getSelected();
+        final UserRef userRef = GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
+        appPermissionsEditPresenter.edit(userRef);
+        getView().setUserRef(userRef);
     }
 
     public void refresh() {
@@ -188,5 +189,7 @@ public class AppPermissionsPresenter
         void setAppPermissionsEditView(View view);
 
         void setDetails(SafeHtml details);
+
+        void setUserRef(UserRef userRef);
     }
 }

@@ -111,10 +111,10 @@ public class JobNodeListHelper {
     public void executeJobNow(final JobNode jobNode) {
         ConfirmEvent.fire(hasHandlers,
                 "Are you sure you want to execute job '" + jobNode.getJobName()
-                        + "' on node '" + jobNode.getNodeName() + "' now. " +
-                        "\n\nThe job will execute shortly, likely within ten seconds. " +
-                        "You can check it has run by refreshing the table until the 'Last Executed' " +
-                        "column has been updated.",
+                + "' on node '" + jobNode.getNodeName() + "' now. " +
+                "\n\nThe job will execute shortly, likely within ten seconds. " +
+                "You can check it has run by refreshing the table until the 'Last Executed' " +
+                "column has been updated.",
                 ok -> {
                     restFactory.create(JOB_NODE_RESOURCE)
                             .call(resource -> resource.execute(jobNode.getId()))
@@ -191,15 +191,15 @@ public class JobNodeListHelper {
                 } else if (!Objects.equals(jobTypes.get(0), jobNode.getJobType())) {
                     AlertEvent.fireError(
                             hasHandlers, "Job types don't match, '" + jobTypes.get(0) + "' and '"
-                                    + jobNode.getJobType() + "'.", null);
+                                         + jobNode.getJobType() + "'.", null);
                 } else {
                     final String msg = "Are you sure you want to change the schedule of job '"
-                            + jobNode.getJobName() + " for " + nodeCount + " nodes?\n\n" +
-                            "All of the following nodes will be set to the same schedule.\n\n"
-                            + selectedItems.stream()
-                            .map(JobNode::getNodeName)
-                            .sorted()
-                            .collect(Collectors.joining("\n"));
+                                       + jobNode.getJobName() + " for " + nodeCount + " nodes?\n\n" +
+                                       "All of the following nodes will be set to the same schedule.\n\n"
+                                       + selectedItems.stream()
+                                               .map(JobNode::getNodeName)
+                                               .sorted()
+                                               .collect(Collectors.joining("\n"));
 
                     ConfirmEvent.fire(hasHandlers, msg, isConfirm -> {
                         if (isConfirm) {
@@ -253,7 +253,7 @@ public class JobNodeListHelper {
     public String getLastExecutedTimeAsStr(JobNodeAndInfo jobNodeAndInfo) {
         if (GwtNullSafe.test(jobNodeAndInfo, jobNode2 ->
                 jobNode2.getJobType() == JobType.CRON
-                        || jobNode2.getJobType() == JobType.FREQUENCY)) {
+                || jobNode2.getJobType() == JobType.FREQUENCY)) {
             return GwtNullSafe.getOrElse(
                     jobNodeAndInfo,
                     JobNodeAndInfo::getJobNodeInfo,
@@ -269,7 +269,7 @@ public class JobNodeListHelper {
         final boolean isJobNodeEnabled = isJobNodeEnabled(jobNodeAndInfo);
 
         if (isJobNodeEnabled
-                && (jobType == JobType.CRON || jobType == JobType.FREQUENCY)) {
+            && (jobType == JobType.CRON || jobType == JobType.FREQUENCY)) {
             return GwtNullSafe.getOrElse(
                     jobNodeAndInfo,
                     JobNodeAndInfo::getJobNodeInfo,
@@ -286,8 +286,8 @@ public class JobNodeListHelper {
         } else {
             // A job node is only enabled if the node and the parent job is also enabled
             return isNodeEnabled(GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getNodeName))
-                    && jobNodeAndInfo.isEnabled()
-                    && GwtNullSafe.isTrue(jobNodeAndInfo.getJob(), Job::isEnabled);
+                   && jobNodeAndInfo.isEnabled()
+                   && GwtNullSafe.isTrue(jobNodeAndInfo.getJob(), Job::isEnabled);
         }
     }
 
@@ -302,8 +302,8 @@ public class JobNodeListHelper {
 
     public static Preset buildRunIconPreset(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo != null
-                && jobNodeAndInfo.getJobType() != JobType.DISTRIBUTED
-                && jobNodeAndInfo.getJobType() != JobType.UNKNOWN) {
+            && jobNodeAndInfo.getJobType() != JobType.DISTRIBUTED
+            && jobNodeAndInfo.getJobType() != JobType.UNKNOWN) {
             return SvgPresets.RUN
                     .title("Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
         }
@@ -424,9 +424,9 @@ public class JobNodeListHelper {
                 column,
                 DataGridUtil.headingBuilder("Enabled")
                         .withToolTip("Whether this job is enabled on this node or not. " +
-                                "Both the node and parent job must also be enabled for the job to execute.")
+                                     "Both the node and parent job must also be enabled for the job to execute.")
                         .build(),
-                60);
+                ColumnSizeConstants.ENABLED_COL);
     }
 
     public void addTypeColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
@@ -480,7 +480,7 @@ public class JobNodeListHelper {
                         .build(),
                 DataGridUtil.headingBuilder("Last Executed")
                         .withToolTip("The date/time that this job was last executed on this node, " +
-                                "if applicable to the job type.")
+                                     "if applicable to the job type.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
@@ -492,7 +492,7 @@ public class JobNodeListHelper {
                         .build(),
                 DataGridUtil.headingBuilder("Next Scheduled")
                         .withToolTip("The date/time that this job is next scheduled to execute on this node, " +
-                                "if applicable to the job type.")
+                                     "if applicable to the job type.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }

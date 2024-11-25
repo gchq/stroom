@@ -97,8 +97,8 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            documentUserPermissionsEditPresenterProvider.get().show(docRef, selected,
-                    documentUserPermissionsListPresenter::refresh);
+            documentUserPermissionsEditPresenterProvider.get().show(
+                    docRef, selected, documentUserPermissionsListPresenter::refresh);
         }
     }
 
@@ -129,6 +129,10 @@ public class DocumentUserPermissionsPresenter
                 .modal()
                 .fire();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DocumentUserPermissionsView extends View {
 

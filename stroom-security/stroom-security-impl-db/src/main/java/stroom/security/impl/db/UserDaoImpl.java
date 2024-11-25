@@ -73,7 +73,8 @@ public class UserDaoImpl implements UserDao {
             UserFields.FIELD_IS_GROUP, STROOM_USER.IS_GROUP,
             UserFields.FIELD_NAME, STROOM_USER.NAME,
             UserFields.FIELD_DISPLAY_NAME, STROOM_USER.DISPLAY_NAME,
-            UserFields.FIELD_FULL_NAME, STROOM_USER.FULL_NAME);
+            UserFields.FIELD_FULL_NAME, STROOM_USER.FULL_NAME,
+            UserFields.FIELD_ENABLED, STROOM_USER.ENABLED);
 
     private static final Field<?> DEFAULT_SORT_FIELD = STROOM_USER.DISPLAY_NAME;
     private static final String DEFAULT_SORT_ID = UserFields.FIELD_DISPLAY_NAME;
@@ -86,13 +87,14 @@ public class UserDaoImpl implements UserDao {
                        final ExpressionMapperFactory expressionMapperFactory) {
         this.securityDbConnProvider = securityDbConnProvider;
 
-        expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean);
-        expressionMapper.map(UserFields.NAME, STROOM_USER.NAME, String::valueOf);
-        expressionMapper.map(UserFields.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME, String::valueOf);
-        expressionMapper.map(UserFields.FULL_NAME, STROOM_USER.FULL_NAME, String::valueOf);
-        expressionMapper.map(UserFields.PARENT_GROUP, STROOM_USER_GROUP.USER_UUID, String::valueOf);
-        expressionMapper.map(UserFields.GROUP_CONTAINS, STROOM_USER_GROUP.GROUP_UUID, String::valueOf);
+        expressionMapper = expressionMapperFactory.create()
+                .map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean)
+                .map(UserFields.NAME, STROOM_USER.NAME, String::valueOf)
+                .map(UserFields.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME, String::valueOf)
+                .map(UserFields.FULL_NAME, STROOM_USER.FULL_NAME, String::valueOf)
+                .map(UserFields.ENABLED, STROOM_USER.ENABLED, StringUtil::asBoolean)
+                .map(UserFields.PARENT_GROUP, STROOM_USER_GROUP.USER_UUID, String::valueOf)
+                .map(UserFields.GROUP_CONTAINS, STROOM_USER_GROUP.GROUP_UUID, String::valueOf);
     }
 
     @Override
@@ -240,7 +242,7 @@ public class UserDaoImpl implements UserDao {
                             .from(STROOM_USER)
                             .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.GROUP_UUID.eq(STROOM_USER.UUID))
                             .where(condition)
-                            .and(STROOM_USER.ENABLED.eq(true))
+//                            .and(STROOM_USER.ENABLED.eq(true))
                             .orderBy(orderFields)
                             .offset(offset)
                             .limit(limit)
@@ -255,7 +257,7 @@ public class UserDaoImpl implements UserDao {
                             .from(STROOM_USER)
                             .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.USER_UUID.eq(STROOM_USER.UUID))
                             .where(condition)
-                            .and(STROOM_USER.ENABLED.eq(true))
+//                            .and(STROOM_USER.ENABLED.eq(true))
                             .orderBy(orderFields)
                             .offset(offset)
                             .limit(limit)
@@ -269,7 +271,7 @@ public class UserDaoImpl implements UserDao {
                             .select()
                             .from(STROOM_USER)
                             .where(condition)
-                            .and(STROOM_USER.ENABLED.eq(true))
+//                            .and(STROOM_USER.ENABLED.eq(true))
                             .orderBy(orderFields)
                             .offset(offset)
                             .limit(limit)
@@ -326,7 +328,7 @@ public class UserDaoImpl implements UserDao {
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
                         .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                         .and(condition)
-                        .and(STROOM_USER.ENABLED.eq(true))
+//                        .and(STROOM_USER.ENABLED.eq(true))
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -349,7 +351,7 @@ public class UserDaoImpl implements UserDao {
                         .join(STROOM_USER_GROUP)
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
                         .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
-                        .and(STROOM_USER.ENABLED.eq(true))
+//                        .and(STROOM_USER.ENABLED.eq(true))
                         .and(condition)
                         .orderBy(orderFields)
                         .offset(offset)

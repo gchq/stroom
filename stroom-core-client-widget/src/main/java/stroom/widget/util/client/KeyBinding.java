@@ -15,7 +15,6 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.GwtNullSafe;
 import stroom.view.shared.ViewDoc;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -232,7 +231,7 @@ public class KeyBinding {
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
                 isInput = isTextBox(element, tagName)
-                        || "TEXTAREA".equalsIgnoreCase(tagName);
+                          || "TEXTAREA".equalsIgnoreCase(tagName);
 
 //                final String className = GwtNullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
@@ -249,18 +248,18 @@ public class KeyBinding {
 
     private static boolean isTextBox(final Element element, final String tagName) {
         return "INPUT".equalsIgnoreCase(tagName)
-                && isTextualInputType(element);
+               && isTextualInputType(element);
     }
 
     private static boolean isTextualInputType(final Element element) {
         // These are the type of input element that we want to stop
         final String type = element.getAttribute("type");
         return GwtNullSafe.isBlankString(type)
-                || "text".equalsIgnoreCase(type)
-                || "password".equalsIgnoreCase(type)
-                || "search".equalsIgnoreCase(type)
-                || "number".equalsIgnoreCase(type)
-                || "url".equalsIgnoreCase(type);
+               || "text".equalsIgnoreCase(type)
+               || "password".equalsIgnoreCase(type)
+               || "search".equalsIgnoreCase(type)
+               || "number".equalsIgnoreCase(type)
+               || "url".equalsIgnoreCase(type);
     }
 
     private static void logKey(final NativeEvent e) {
@@ -336,7 +335,10 @@ public class KeyBinding {
                     final boolean ctrl,
                     final int... keyCode) {
         for (int code : keyCode) {
-            add(action, Shortcut.builder().ctrl(ctrl).keyCode(code).build());
+            add(action, Shortcut.builder()
+                    .ctrl(ctrl)
+                    .keyCode(code)
+                    .build());
         }
     }
 
@@ -353,8 +355,10 @@ public class KeyBinding {
             final List<Shortcut> shortcuts2 = ACTION_TO_SHORTCUTS_MAP.computeIfAbsent(action, k -> new ArrayList<>());
             if (shortcuts2.contains(shortcut)) {
                 throw new RuntimeException("Duplicate shortcut " + shortcut + " for action " + action
-                        + ", existing shortcuts: "
-                        + shortcuts2.stream().map(Objects::toString).collect(Collectors.joining(", ")));
+                                           + ", existing shortcuts: "
+                                           + shortcuts2.stream()
+                                                   .map(Objects::toString)
+                                                   .collect(Collectors.joining(", ")));
             }
             shortcuts2.add(shortcut);
             SHORTCUT_TO_ACTION_MAP.put(shortcut, action);
@@ -527,6 +531,7 @@ public class KeyBinding {
         GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
         GOTO_USER_ACCOUNTS,
+        GOTO_USERS,
         GOTO_USER_GROUPS,
         GOTO_USER_PREFERENCES,
         GOTO_USER_PERMISSION_REPORT,
@@ -565,9 +570,9 @@ public class KeyBinding {
         @Override
         public String toString() {
             return "Binding{" +
-                    "shortcut=" + shortcut +
-                    ", action=" + action +
-                    '}';
+                   "shortcut=" + shortcut +
+                   ", action=" + action +
+                   '}';
         }
 
         public static class Builder {
@@ -625,10 +630,10 @@ public class KeyBinding {
             }
             final Shortcut binding = (Shortcut) o;
             return keyCode == binding.keyCode &&
-                    shift == binding.shift &&
-                    ctrl == binding.ctrl &&
-                    alt == binding.alt &&
-                    meta == binding.meta;
+                   shift == binding.shift &&
+                   ctrl == binding.ctrl &&
+                   alt == binding.alt &&
+                   meta == binding.meta;
         }
 
         @Override

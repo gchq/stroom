@@ -17,17 +17,17 @@
 package stroom.security.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
-import stroom.cell.info.client.SvgCell;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.AppPermissionsPlugin;
 import stroom.security.client.event.OpenAppPermissionsEvent;
 import stroom.security.shared.FindUserCriteria;
@@ -39,28 +39,26 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.gwt.user.cellview.client.ColumnSortList;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -74,13 +72,17 @@ public class UserListPresenter
     private final MyDataGrid<User> dataGrid;
     private final MultiSelectionModelImpl<User> selectionModel;
     private final RestFactory restFactory;
-    private final FindUserCriteria.Builder builder = new FindUserCriteria.Builder();
+    private final FindUserCriteria.Builder criteriaBuilder = new FindUserCriteria.Builder();
     private RestDataProvider<User, ResultPage<User>> dataProvider;
-    private User selected;
     private ExpressionTerm additionalTerm;
+    private ExpressionTerm isGroupTerm;
     private String filter;
     private ResultPage<User> currentData;
     private Consumer<ResultPage<User>> resultPageConsumer;
+
+    private boolean showUniqueUserIdCol = false;
+    private boolean showEnabledCol = false;
+    private Mode mode = Mode.USERS_AND_GROUPS;
 
     @Inject
     public UserListPresenter(final EventBus eventBus,
@@ -109,112 +111,163 @@ public class UserListPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+    }
+
+    private void setupColumns() {
+        DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
+
+        if (showEnabledCol) {
+            dataGrid.addColumn(
+                    DataGridUtil.updatableTickBoxColumnBuilder(
+                                    User::isEnabled)
+//                        .enabledWhen(this::isJobNodeEnabled)
+                            .withFieldUpdater((int index, User user, TickBoxState value) -> {
+                                if (user != null) {
+                                    user.setEnabled(value.toBoolean());
+                                    restFactory.create(USER_RESOURCE)
+                                            .method(userResource -> userResource.update(user))
+                                            .onSuccess(UserAndGroupHelper.createAfterChangeConsumer(
+                                                    this))
+                                            .taskMonitorFactory(this)
+                                            .exec();
+                                }
+                            })
+                            .withSorting(UserFields.FIELD_ENABLED, true)
+                            .build(),
+                    DataGridUtil.headingBuilder("Enabled")
+                            .withToolTip("The enabled state of the user. A disabled user effectively has no " +
+                                         "permissions and cannot login.")
+                            .build(),
+                    ColumnSizeConstants.ENABLED_COL);
+
+//            dataGrid.addResizableColumn(
+//                    DataGridUtil.textColumnBuilder((User user) -> user.isEnabled()
+//                                    ? "Yes"
+//                                    : "No")
+//                            .enabledWhen(User::isEnabled)
+//                            .withSorting(UserFields.FIELD_ENABLED, true)
+//                            .build(),
+//                    DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_ENABLED)
+//                            .withToolTip("The enabled state of the user. A disabled user effectively has no " +
+//                                         "permissions and cannot login.")
+//                            .build(),
+//                    ColumnSizeConstants.ENABLED_COL);
+        }
 
         // Icon
-        final Column<User, Preset> iconCol = new Column<User, Preset>(new SvgCell()) {
-            @Override
-            public Preset getValue(final User user) {
-                if (!user.isGroup()) {
-                    return SvgPresets.USER;
-                }
-
-                return SvgPresets.USER_GROUP;
-            }
-        };
-        iconCol.setSortable(true);
-        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
-
-        dataGrid.addResizableColumn(
-                DataGridUtil.commandLinkColumnBuilder(buildOpenAppPermissionsCommandLink())
-                        .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
-                        .build(),
-                DataGridUtil.headingBuilder("Display Name")
-                        .withToolTip("The name of the user or group.")
-                        .build(),
-                200);
+        if (mode == Mode.USERS_AND_GROUPS) {
+            dataGrid.addColumn(
+                    DataGridUtil.svgPresetColumnBuilder(false, (User user) ->
+                                    UserAndGroupHelper.mapUserTypeToIcon(user))
+                            .withSorting(UserFields.FIELD_IS_GROUP)
+                            .enabledWhen(User::isEnabled)
+                            .centerAligned()
+                            .build(),
+                    DataGridUtil.headingBuilder("")
+                            .headingText(buildDualIconHeader())
+                            .centerAligned()
+                            .withToolTip("Whether this row is a single user or a named user group.")
+                            .build(),
+                    (ColumnSizeConstants.ICON_COL * 2) + 20);
+        } else {
+            dataGrid.addColumn(
+                    DataGridUtil.svgPresetColumnBuilder(false, (User user) ->
+                                    UserAndGroupHelper.mapUserTypeToIcon(user))
+                            .enabledWhen(User::isEnabled)
+                            .centerAligned()
+                            .build(),
+                    DataGridUtil.headingBuilder("")
+                            .headingText(UserAndGroupHelper.buildSingleIconHeader(mode == Mode.GROUPS_ONLY))
+                            .centerAligned()
+                            .withToolTip(mode.includesUsers
+                                    ? "Users"
+                                    : "Groups")
+                            .build(),
+                    (ColumnSizeConstants.ICON_COL + 2));
+        }
 
         // Display Name
-        final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
-            @Override
-            public String getValue(final User user) {
-                return user.getDisplayName();
-            }
-        };
-        displayNameCol.setSortable(true);
-        dataGrid.addResizableColumn(displayNameCol, "Display Name", 400);
+        final String displayNameTooltip;
+        if (mode == Mode.USERS_ONLY) {
+            displayNameTooltip = "The name of the user.";
+        } else if (mode == Mode.GROUPS_ONLY) {
+            displayNameTooltip = "The name of the group.";
+        } else {
+            displayNameTooltip = "The name of the user or group.";
+        }
+        final Column<User, CommandLink> displayNameCol = DataGridUtil.commandLinkColumnBuilder(
+                        buildOpenAppPermissionsCommandLink())
+                .enabledWhen(User::isEnabled)
+                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                .build();
+        dataGrid.addResizableColumn(
+                displayNameCol,
+                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
+                        .withToolTip(displayNameTooltip)
+                        .build(),
+                400);
 
         // Full name
-        final Column<User, String> fullNameCol = new Column<User, String>(new TextCell()) {
-            @Override
-            public String getValue(final User user) {
-                return user.getFullName();
-            }
-        };
-        fullNameCol.setSortable(true);
-        dataGrid.addResizableColumn(fullNameCol, "Full Name", 400);
+        if (mode.includesUsers()) {
+            dataGrid.addResizableColumn(
+                    DataGridUtil.textColumnBuilder(User::getFullName)
+                            .enabledWhen(User::isEnabled)
+                            .withSorting(UserFields.FIELD_FULL_NAME, true)
+                            .build(),
+                    DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_FULL_NAME)
+                            .withToolTip(mode.includesGroups()
+                                    ? "The full name of the user. Groups do not have a full name."
+                                    : "The full name of the user.")
+                            .build(),
+                    400);
+        }
 
-        // Identity
-        final Column<User, String> idCol = new Column<User, String>(new TextCell()) {
-            @Override
-            public String getValue(final User user) {
-                return user.getSubjectId();
-            }
-        };
-        idCol.setSortable(true);
-        dataGrid.addResizableColumn(idCol, "Identity", 400);
+        // Unique User ID
+        if (mode == Mode.USERS_ONLY && showUniqueUserIdCol) {
+            dataGrid.addResizableColumn(
+                    DataGridUtil.copyTextColumnBuilder(User::getSubjectId)
+                            .enabledWhen(User::isEnabled)
+                            .withSorting(UserFields.FIELD_NAME, true)
+                            .build(),
+                    DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_UNIQUE_USER_ID)
+                            .withToolTip("The unique user ID on the identity provider.")
+                            .build(),
+                    400);
+        }
 
-        dataGrid.addEndColumn(new EndColumn<>());
 
-        final ColumnSortEvent.Handler columnSortHandler = event -> {
-            final List<CriteriaFieldSort> sortList = new ArrayList<>();
-            if (event != null) {
-                final ColumnSortList columnSortList = event.getColumnSortList();
-                if (columnSortList != null) {
-                    for (int i = 0; i < columnSortList.size(); i++) {
-                        final ColumnSortInfo columnSortInfo = columnSortList.get(i);
-                        final Column<?, ?> column = columnSortInfo.getColumn();
-                        final boolean isAscending = columnSortInfo.isAscending();
-
-                        if (column.equals(iconCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.IS_GROUP.getFldName(),
-                                    !isAscending,
-                                    true));
-                        } else if (column.equals(displayNameCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.DISPLAY_NAME.getFldName(),
-                                    !isAscending,
-                                    true));
-                        } else if (column.equals(idCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.ID.getFldName(),
-                                    !isAscending,
-                                    true));
-                        } else if (column.equals(fullNameCol)) {
-                            sortList.add(new CriteriaFieldSort(
-                                    UserFields.FULL_NAME.getFldName(),
-                                    !isAscending,
-                                    true));
-                        }
-                    }
-                }
-            }
-            builder.sortList(sortList);
-            refresh();
-        };
-        dataGrid.addColumnSortHandler(columnSortHandler);
+        DataGridUtil.addEndColumn(dataGrid);
         dataGrid.getColumnSortList().push(displayNameCol);
-        dataGrid.getColumnSortList().push(idCol);
+    }
 
-        builder.sortList(List.of(
-                new CriteriaFieldSort(
-                        UserFields.DISPLAY_NAME.getFldName(),
-                        false,
-                        true),
-                new CriteriaFieldSort(
-                        UserFields.ID.getFldName(),
-                        false,
-                        true)));
+    public void setShowUniqueUserIdCol(final boolean showUniqueUserIdCol) {
+        if (dataProvider == null) {
+            this.showUniqueUserIdCol = showUniqueUserIdCol;
+        } else {
+            throw new RuntimeException("Columns have already been initialised");
+        }
+    }
+
+    public void setShowEnabledCol(final boolean showEnabledCol) {
+        if (dataProvider == null) {
+            this.showEnabledCol = showEnabledCol;
+        } else {
+            throw new RuntimeException("Columns have already been initialised");
+        }
+    }
+
+    public void setMode(final Mode mode) {
+        Objects.requireNonNull(mode);
+        this.mode = mode;
+        if (Mode.USERS_AND_GROUPS == mode) {
+            isGroupTerm = null;
+        } else {
+            isGroupTerm = ExpressionTerm.builder()
+                    .field(UserFields.FIELD_IS_GROUP)
+                    .condition(Condition.EQUALS)
+                    .value(String.valueOf(mode.includesGroups))
+                    .build();
+        }
     }
 
     @Override
@@ -227,6 +280,28 @@ public class UserListPresenter
             }
         }
         refresh();
+    }
+
+    private SafeHtml buildDualIconHeader() {
+        // TODO this is duplicated in AppUserPermissionsListPresenter
+        final String iconClassName = "svgCell-icon";
+        final Preset userPreset = SvgPresets.USER.title("");
+        final Preset groupPreset = SvgPresets.USER_GROUP.title("");
+        return HtmlBuilder.builder()
+                .div(
+                        divBuilder -> {
+                            divBuilder.append(SvgImageUtil.toSafeHtml(
+                                    userPreset.getTitle(),
+                                    userPreset.getSvgImage(),
+                                    iconClassName));
+                            divBuilder.append("/");
+                            divBuilder.append(SvgImageUtil.toSafeHtml(
+                                    groupPreset.getTitle(),
+                                    groupPreset.getSvgImage(),
+                                    iconClassName));
+                        },
+                        Attribute.className("two-icon-column-header"))
+                .toSafeHtml();
     }
 
     private Function<User, CommandLink> buildOpenAppPermissionsCommandLink() {
@@ -251,6 +326,9 @@ public class UserListPresenter
 
     public void refresh() {
         if (dataProvider == null) {
+
+            setupColumns();
+            //noinspection Convert2Diamond // GWT
             this.dataProvider = new RestDataProvider<User, ResultPage<User>>(getEventBus()) {
                 @Override
                 protected void exec(final Range range,
@@ -258,14 +336,20 @@ public class UserListPresenter
                                     final RestErrorHandler errorHandler) {
                     ExpressionOperator expression = QuickFilterExpressionParser
                             .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+
                     if (additionalTerm != null) {
-                        expression = expression.copy().addTerm(additionalTerm).build();
+                        expression = expression.copy()
+                                .addTerm(additionalTerm).build();
                     }
-                    builder.expression(expression);
-                    builder.pageRequest(PageRequestUtil.createPageRequest(range));
+                    if (isGroupTerm != null) {
+                        expression = expression.copy()
+                                .addTerm(isGroupTerm).build();
+                    }
+                    criteriaBuilder.expression(expression);
+                    criteriaBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
                     restFactory
                             .create(USER_RESOURCE)
-                            .method(res -> res.find(builder.build()))
+                            .method(res -> res.find(criteriaBuilder.build()))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)
@@ -314,5 +398,32 @@ public class UserListPresenter
 
     public void setResultPageConsumer(final Consumer<ResultPage<User>> resultPageConsumer) {
         this.resultPageConsumer = resultPageConsumer;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum Mode {
+        USERS_ONLY(true, false),
+        GROUPS_ONLY(false, true),
+        USERS_AND_GROUPS(true, true),
+        ;
+
+        private final boolean includesUsers;
+        private final boolean includesGroups;
+
+        Mode(final boolean includesUsers, final boolean includesGroups) {
+            this.includesUsers = includesUsers;
+            this.includesGroups = includesGroups;
+        }
+
+        public boolean includesUsers() {
+            return includesUsers;
+        }
+
+        public boolean includesGroups() {
+            return includesGroups;
+        }
     }
 }

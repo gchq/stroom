@@ -57,6 +57,10 @@ public class ShowPermissionsDialogEvent extends GwtEvent<ShowPermissionsDialogEv
         return docRef;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onPermissions(final ShowPermissionsDialogEvent event);

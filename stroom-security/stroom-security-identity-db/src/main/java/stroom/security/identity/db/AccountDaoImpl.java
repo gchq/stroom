@@ -18,6 +18,8 @@
 
 package stroom.security.identity.db;
 
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.AccountDao;
@@ -26,16 +28,16 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.ResultPageFactory;
-import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
-import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
@@ -59,7 +61,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.util.Map.entry;
 import static stroom.security.identity.db.jooq.tables.Account.ACCOUNT;
@@ -141,14 +142,14 @@ class AccountDaoImpl implements AccountDao {
             entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
             entry("createUser", ACCOUNT.CREATE_USER),
             entry("updateUser", ACCOUNT.UPDATE_USER),
-            entry(FindAccountRequest.FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
-            entry(FindAccountRequest.FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
-            entry(FindAccountRequest.FIELD_NAME_FIRST_NAME, ACCOUNT.FIRST_NAME),
-            entry(FindAccountRequest.FIELD_NAME_LAST_NAME, ACCOUNT.LAST_NAME),
-            entry(FindAccountRequest.FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
+            entry(AccountFields.FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
+            entry(AccountFields.FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
+            entry(AccountFields.FIELD_NAME_FIRST_NAME, ACCOUNT.FIRST_NAME),
+            entry(AccountFields.FIELD_NAME_LAST_NAME, ACCOUNT.LAST_NAME),
+            entry(AccountFields.FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
             entry("loginCount", ACCOUNT.LOGIN_COUNT),
-            entry(FindAccountRequest.FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
-            entry(FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
+            entry(AccountFields.FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
+            entry(AccountFields.FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
             entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
             entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
             entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
@@ -156,33 +157,35 @@ class AccountDaoImpl implements AccountDao {
             entry("inactive", ACCOUNT.INACTIVE),
             entry("locked", ACCOUNT.LOCKED),
             entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
-            entry(FindAccountRequest.FIELD_NAME_STATUS, ACCOUNT_STATUS));
+            entry(AccountFields.FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
     private static final Map<String, Comparator<Account>> FIELD_COMPARATORS = Map.of(
-            FindAccountRequest.FIELD_NAME_USER_ID,
+            AccountFields.FIELD_NAME_USER_ID,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getUserId),
-            FindAccountRequest.FIELD_NAME_FIRST_NAME,
+            AccountFields.FIELD_NAME_FIRST_NAME,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getFirstName),
-            FindAccountRequest.FIELD_NAME_LAST_NAME,
+            AccountFields.FIELD_NAME_LAST_NAME,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getLastName),
-            FindAccountRequest.FIELD_NAME_EMAIL,
+            AccountFields.FIELD_NAME_EMAIL,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getEmail),
-            FindAccountRequest.FIELD_NAME_STATUS,
+            AccountFields.FIELD_NAME_STATUS,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getStatus),
-            FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS,
+            AccountFields.FIELD_NAME_LAST_LOGIN_MS,
             CompareUtil.getNullSafeComparator(Account::getLastLoginMs), // nullable
-            FindAccountRequest.FIELD_NAME_LOGIN_FAILURES,
+            AccountFields.FIELD_NAME_LOGIN_FAILURES,
             Comparator.comparingInt(Account::getLoginFailures), // not null
-            FindAccountRequest.FIELD_NAME_COMMENTS,
+            AccountFields.FIELD_NAME_COMMENTS,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getComments));
 
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
     public AccountDaoImpl(final Provider<IdentityConfig> identityConfigProvider,
-                          final IdentityDbConnProvider identityDbConnProvider) {
+                          final IdentityDbConnProvider identityDbConnProvider,
+                          final ExpressionMapperFactory expressionMapperFactory) {
         this.identityConfigProvider = identityConfigProvider;
         this.identityDbConnProvider = identityDbConnProvider;
         genericDao = new GenericDao<>(
@@ -191,6 +194,14 @@ class AccountDaoImpl implements AccountDao {
                 ACCOUNT.ID,
                 ACCOUNT_TO_RECORD_MAPPER,
                 RECORD_TO_ACCOUNT_MAPPER);
+
+        expressionMapper = expressionMapperFactory.create()
+                .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
+                .map(AccountFields.FIELD_FIRST_NAME, ACCOUNT.FIRST_NAME, String::valueOf)
+                .map(AccountFields.FIELD_LAST_NAME, ACCOUNT.LAST_NAME, String::valueOf)
+                .map(AccountFields.FIELD_EMAIL, ACCOUNT.EMAIL, String::valueOf)
+                .map(AccountFields.FIELD_STATUS, ACCOUNT_STATUS, String::valueOf)
+                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf);
     }
 
     @Override
@@ -208,72 +219,27 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public AccountResultPage search(final FindAccountRequest request) {
-        final Condition condition = createCondition(request);
-
+    public ResultPage<Account> search(final FindAccountRequest request) {
+        final Condition notProcessingUser = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
+        final Condition filterConditions = expressionMapper.apply(request.getExpression());
         // Sort on user_id if no sort supplied
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request, ACCOUNT.USER_ID);
-        final String fullyQualifyFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
-                request.getQuickFilter(),
-                AccountDao.FIELD_MAPPERS);
+        final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
+        final int offset = JooqUtil.getOffset(request.getPageRequest());
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
-            if (NullSafe.isNonEmptyString(request.getQuickFilter())) {
-                // Get the number of tokens so we can calculate the total number of pages
-                final int count = context
-                        .selectCount()
-                        .from(ACCOUNT)
-                        .where(condition)
-                        .fetchOptional()
-                        .map(Record1::value1)
-                        .orElse(0);
-
-                final int limit = JooqUtil.getLimit(request.getPageRequest(), false);
-                final int offset = JooqUtil.getOffset(request.getPageRequest(), limit, count);
-
-                final List<Account> list = context
-                        .select(ACCOUNT.asterisk(),
-                                ACCOUNT_STATUS)
-                        .from(ACCOUNT)
-                        .where(condition)
-                        .orderBy(orderFields)
-                        .offset(offset)
-                        .limit(limit)
-                        .fetch()
-                        .map(RECORD_TO_ACCOUNT_MAPPER::apply);
-
-                final PageResponse pageResponse = new PageResponse(
-                        offset,
-                        list.size(),
-                        (long) count,
-                        true);
-                return new AccountResultPage(
-                        list,
-                        pageResponse,
-                        fullyQualifyFilterInput);
-
-            } else {
-                try (final Stream<Record> stream = context
-                        .select(ACCOUNT.asterisk(),
-                                ACCOUNT_STATUS)
-                        .from(ACCOUNT)
-                        .where(condition)
-                        .orderBy(orderFields)
-                        .stream()) {
-
-                    final Comparator<Account> comparator = buildComparator(request).orElse(null);
-
-                    return QuickFilterPredicateFactory.filterStream(
-                                    request.getQuickFilter(),
-                                    AccountDao.FIELD_MAPPERS,
-                                    stream.map(RECORD_TO_ACCOUNT_MAPPER),
-                                    comparator)
-                            .collect(AccountResultPage.collector(
-                                    request.getPageRequest(),
-                                    (accounts, pageResponse) ->
-                                            new AccountResultPage(accounts, pageResponse, fullyQualifyFilterInput)));
-                }
-            }
+            final List<Account> accounts = context
+                    .select(ACCOUNT.asterisk(),
+                            ACCOUNT_STATUS)
+                    .from(ACCOUNT)
+                    .where(notProcessingUser)
+                    .and(filterConditions)
+                    .orderBy(orderFields)
+                    .offset(offset)
+                    .limit(limit)
+                    .fetch()
+                    .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+            return ResultPage.createCriterialBasedList(accounts, request);
         });
     }
 
