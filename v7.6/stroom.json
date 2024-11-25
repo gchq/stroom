@@ -28,7 +28,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AccountResultPage"
+                  "$ref" : "#/components/schemas/ResultPageAccount"
                 }
               }
             },
@@ -87,7 +87,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AccountResultPage"
+                  "$ref" : "#/components/schemas/ResultPageAccount"
                 }
               }
             },
@@ -10848,23 +10848,6 @@
           }
         }
       },
-      "AccountResultPage" : {
-        "type" : "object",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "qualifiedFilterInput" : {
-            "type" : "string"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Account"
-            }
-          }
-        }
-      },
       "AcknowledgeSplashRequest" : {
         "type" : "object",
         "properties" : {
@@ -14550,11 +14533,11 @@
       "FindAccountRequest" : {
         "type" : "object",
         "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilter" : {
-            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -18168,6 +18151,21 @@
           }
         },
         "required" : [ "componentId", "type" ]
+      },
+      "ResultPageAccount" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Account"
+            }
+          }
+        }
       },
       "ResultPageActivity" : {
         "type" : "object",

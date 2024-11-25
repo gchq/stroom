@@ -22,7 +22,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccountResultPage'
+                $ref: '#/components/schemas/ResultPageAccount'
           description: default response
       summary: Get all accounts.
       tags:
@@ -62,7 +62,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccountResultPage'
+                $ref: '#/components/schemas/ResultPageAccount'
           description: default response
       summary: Search for an account by email.
       tags:
@@ -7480,17 +7480,6 @@ components:
         version:
           type: integer
           format: int32
-    AccountResultPage:
-      type: object
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        qualifiedFilterInput:
-          type: string
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/Account'
     AcknowledgeSplashRequest:
       type: object
       properties:
@@ -10680,10 +10669,10 @@ components:
     FindAccountRequest:
       type: object
       properties:
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
-        quickFilter:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -14167,6 +14156,16 @@ components:
       required:
       - componentId
       - type
+    ResultPageAccount:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Account'
     ResultPageActivity:
       type: object
       description: A page of results.
