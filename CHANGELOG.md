@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.6-beta.6] - 2024-11-25
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+
 ## [v7.6-beta.5] - 2024-11-15
 
 * Fix error when creating a document as a user without `Administrator` or `Manager Users`.
@@ -968,7 +973,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.6...HEAD
+[v7.6-beta.6]: https://github.com/gchq/stroom/compare/v7.6-beta.5...v7.6-beta.6
 [v7.6-beta.5]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.6-beta.5
 [v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
 [v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
