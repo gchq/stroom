@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
@@ -27,7 +28,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.UsersAndGroupsPlugin;
-import stroom.security.client.event.OpenUserOrGroupEvent;
+import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
@@ -52,6 +53,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -74,9 +76,12 @@ public class AppUserPermissionsListPresenter
     private final FetchAppUserPermissionsRequest.Builder requestBuilder = new FetchAppUserPermissionsRequest.Builder();
     private final MyDataGrid<AppUserPermissions> dataGrid;
     private final PagerView pagerView;
+    private final UiConfigCache uiConfigCache;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
-
+    private ResultPage<AppUserPermissions> currentData = null;
+    private UserRef userToShow = null;
+    private boolean isExternalIdp = false;
 
     @Inject
     public AppUserPermissionsListPresenter(final EventBus eventBus,
@@ -87,6 +92,7 @@ public class AppUserPermissionsListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
+        this.uiConfigCache = uiConfigCache;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
@@ -129,8 +135,9 @@ public class AppUserPermissionsListPresenter
         refresh();
     }
 
-    public void setQuickFilterText(final String quickFilterText) {
+    public void setQuickFilter(final String quickFilterText) {
         getView().setQuickFilterText(quickFilterText);
+        onFilterChange(quickFilterText);
     }
 
     public void setAllUsers(final boolean allUsers) {
@@ -139,27 +146,51 @@ public class AppUserPermissionsListPresenter
 
     public void refresh() {
         if (dataProvider == null) {
-            dataProvider =
-                    new RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>>(
-                            getEventBus()) {
-                        @Override
-                        protected void exec(final Range range,
-                                            final Consumer<ResultPage<AppUserPermissions>> dataConsumer,
-                                            final RestErrorHandler errorHandler) {
-                            requestBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
-                            restFactory
-                                    .create(APP_PERMISSION_RESOURCE)
-                                    .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
-                                    .onSuccess(dataConsumer)
-                                    .onFailure(errorHandler)
-                                    .taskMonitorFactory(pagerView)
-                                    .exec();
-                        }
-                    };
-            dataProvider.addDataDisplay(dataGrid);
+            uiConfigCache.get(extendedUiConfig -> {
+                isExternalIdp = extendedUiConfig.isExternalIdentityProvider();
+                initDataProvider();
+            });
+            initDataProvider();
         } else {
             dataProvider.refresh();
         }
+    }
+
+    private boolean isExternalIdp() {
+        return isExternalIdp;
+    }
+
+    private void initDataProvider() {
+        //noinspection Convert2Diamond // Cos GWT
+        dataProvider =
+                new RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>>(
+                        getEventBus()) {
+                    @Override
+                    protected void exec(final Range range,
+                                        final Consumer<ResultPage<AppUserPermissions>> dataConsumer,
+                                        final RestErrorHandler errorHandler) {
+                        requestBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+                        restFactory
+                                .create(APP_PERMISSION_RESOURCE)
+                                .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
+                                .onSuccess(dataConsumer::accept)
+                                .onFailure(errorHandler)
+                                .taskMonitorFactory(pagerView)
+                                .exec();
+                    }
+
+                    @Override
+                    protected void changeData(final ResultPage<AppUserPermissions> data) {
+                        super.changeData(data);
+                        currentData = data;
+                        if (!data.isEmpty()) {
+                            selectionModel.setSelected(data.getFirst());
+                        } else {
+                            selectionModel.clear();
+                        }
+                    }
+                };
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     private SafeHtml buildIconHeader() {
@@ -213,57 +244,99 @@ public class AppUserPermissionsListPresenter
                         .build(),
                 (ColumnSizeConstants.ICON_COL * 2) + 20);
 
-        // User Or Group Name
-        final Column<AppUserPermissions, CommandLink> displayNameCol = DataGridUtil.commandLinkColumnBuilder(
-                        buildOpenAppPermissionsCommandLink())
+        // Display name
+//        final Column<AppUserPermissions, CommandLink> displayNameCol = DataGridUtil.commandLinkColumnBuilder(
+//                        buildOpenAppPermissionsCommandLink())
+//                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+//                .build();
+//        dataGrid.addResizableColumn(
+//                displayNameCol,
+//                DataGridUtil.headingBuilder("Display Name")
+//                        .withToolTip("The name of the user or group.")
+//                        .build(),
+//                400);
+
+        final Column<AppUserPermissions, String> displayNameCol = DataGridUtil.copyTextColumnBuilder(
+                        (AppUserPermissions appUsrPerms) ->
+                                GwtNullSafe.get(appUsrPerms, AppUserPermissions::getUserRef, UserRef::getDisplayName))
+                .enabledWhen(this::isUserEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                 .build();
-        dataGrid.addResizableColumn(
+        dataGrid.addAutoResizableColumn(
                 displayNameCol,
-                DataGridUtil.headingBuilder("Display Name")
+                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip("The name of the user or group.")
                         .build(),
-                400);
+                300);
 
         // Show it as the default sort
         dataGrid.getColumnSortList().push(displayNameCol);
 
         // Permissions
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.safeHtmlColumn((AppUserPermissions appUserPermissions) -> {
-                    final DescriptionBuilder sb = new DescriptionBuilder();
-                    boolean notEmpty = false;
-                    boolean lastIsInherited = false;
-                    SafeHtml delimiter = new SafeHtmlBuilder()
-                            .append(SafeHtmlUtil.ENSP)
-                            .appendEscaped("|")
-                            .append(SafeHtmlUtil.ENSP)
-                            .toSafeHtml();
-                    for (final AppPermission permission : AppPermission.LIST) {
-                        if (GwtNullSafe.collectionContains(appUserPermissions.getPermissions(), permission)) {
-                            if (notEmpty) {
-                                sb.addLine(false, lastIsInherited, true, delimiter);
-                            }
-                            sb.addLine(permission.getDisplayValue());
-                            notEmpty = true;
-                            lastIsInherited = false;
-                        } else if (GwtNullSafe.collectionContains(appUserPermissions.getInherited(), permission)) {
-                            if (notEmpty) {
-                                sb.addLine(false, lastIsInherited, true, delimiter);
-                            }
-                            sb.addLine(false, true, permission.getDisplayValue());
-                            notEmpty = true;
-                            lastIsInherited = true;
-                        }
-                    }
-                    return sb.toSafeHtml();
-                }),
-                DataGridUtil.headingBuilder("Permissions")
-                        .withToolTip("The permissions held by this user/group. Inherited permissions are in grey.")
+                DataGridUtil.columnBuilder(
+                                AppUserPermissionsListPresenter::buildPermissionsCellValue,
+                                SafeHtmlCell::new)
+                        .enabledWhen(this::isUserEnabled)
                         .build(),
+                String.valueOf(DataGridUtil.headingBuilder("Permissions")
+                        .withToolTip("The permissions held by this user/group. Inherited permissions are in grey.")
+                        .build()),
                 400);
 
+        // Actions Menu btn
+        final Column<AppUserPermissions, AppUserPermissions> actionMenuCol = DataGridUtil.columnBuilder(
+                        Function.identity(),
+                        () -> new ActionMenuCell<>(
+                                (AppUserPermissions appUsrPerms) ->
+                                        UserAndGroupHelper.buildUserActionMenu(
+                                                appUsrPerms.getUserRef(),
+                                                isExternalIdp(),
+                                                UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
+                                                this),
+                                this))
+//                .enabledWhen(User::isEnabled)
+                .build();
+        // x2 width so when it is hard right, it doesn't get in the way of the scroll bar
+        dataGrid.addResizableColumn(
+                actionMenuCol,
+                "",
+                ColumnSizeConstants.ICON_COL + 10);
+
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private static SafeHtml buildPermissionsCellValue(final AppUserPermissions appUserPermissions) {
+        final DescriptionBuilder sb = new DescriptionBuilder();
+        boolean notEmpty = false;
+        boolean lastIsInherited = false;
+        SafeHtml delimiter = new SafeHtmlBuilder()
+                .append(SafeHtmlUtil.ENSP)
+                .appendEscaped("|")
+                .append(SafeHtmlUtil.ENSP)
+                .toSafeHtml();
+        for (final AppPermission permission : AppPermission.LIST) {
+            if (GwtNullSafe.collectionContains(appUserPermissions.getPermissions(), permission)) {
+                if (notEmpty) {
+                    sb.addLine(false, lastIsInherited, true, delimiter);
+                }
+                sb.addLine(permission.getDisplayValue());
+                notEmpty = true;
+                lastIsInherited = false;
+            } else if (GwtNullSafe.collectionContains(appUserPermissions.getInherited(), permission)) {
+                if (notEmpty) {
+                    sb.addLine(false, lastIsInherited, true, delimiter);
+                }
+                sb.addLine(false, true, permission.getDisplayValue());
+                notEmpty = true;
+                lastIsInherited = true;
+            }
+        }
+        return sb.toSafeHtml();
+    }
+
+    private boolean isUserEnabled(final AppUserPermissions appUserPermissions) {
+        return GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
     private Function<AppUserPermissions, CommandLink> buildOpenAppPermissionsCommandLink() {
@@ -276,7 +349,7 @@ public class AppUserPermissionsListPresenter
                         "Open " + userRef.getType(CaseType.LOWER)
                         + " '" + displayName + "' on the "
                         + UsersAndGroupsPlugin.SCREEN_NAME + " screen.",
-                        () -> OpenUserOrGroupEvent.fire(AppUserPermissionsListPresenter.this, userRef));
+                        () -> OpenUsersAndGroupsScreenEvent.fire(AppUserPermissionsListPresenter.this, userRef));
             } else {
                 return null;
             }
@@ -298,4 +371,31 @@ public class AppUserPermissionsListPresenter
     public MultiSelectionModelImpl<AppUserPermissions> getSelectionModel() {
         return selectionModel;
     }
+
+    public void showUser(final UserRef userRef) {
+        if (userRef != null) {
+            setQuickFilter(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
+//            final ResultPage<AppUserPermissions> currentData = getCurrentData();
+//            if (currentData == null) {
+//                // First time the screen is opened so get the data in the hope our
+//                // user is on the first page
+//                userToShow = userRef;
+//                refresh();
+//            } else {
+//                boolean found = UserAndGroupHelper.selectUserIfShown(
+//                        userRef,
+//                        getCurrentData(),
+//                        selectionModel,
+//                        dataGrid);
+//                if (!found) {
+//                    setQuickFilter(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
+//                }
+//            }
+        }
+    }
+
+    public ResultPage<AppUserPermissions> getCurrentData() {
+        return currentData;
+    }
+
 }

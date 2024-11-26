@@ -123,7 +123,7 @@ public class DocumentUserPermissionsListPresenter
                         false,
                         true),
                 new CriteriaFieldSort(
-                        UserFields.NAME.getFldName(),
+                        UserFields.UNIQUE_ID.getFldName(),
                         false,
                         true)));
     }
@@ -304,7 +304,7 @@ public class DocumentUserPermissionsListPresenter
                                     !isAscending,
                                     true));
                             sortList.add(new CriteriaFieldSort(
-                                    UserFields.NAME.getFldName(),
+                                    UserFields.UNIQUE_ID.getFldName(),
                                     !isAscending,
                                     true));
                         }

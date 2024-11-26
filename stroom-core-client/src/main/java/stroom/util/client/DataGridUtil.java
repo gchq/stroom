@@ -633,7 +633,7 @@ public class DataGridUtil {
 
     public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
         column.setFieldUpdater((index, object, value) -> {
-            if (value != null && value.getCommand() != null) {
+            if (GwtNullSafe.allNonNull(value, value.getCommand())) {
                 value.getCommand().execute();
             }
         });

@@ -94,7 +94,11 @@ public class AppPermissionsPresenter
     }
 
     public void setFilterInput(final String filterInput) {
-        appUserPermissionsListPresenter.setQuickFilterText(filterInput);
+        appUserPermissionsListPresenter.setQuickFilter(filterInput);
+    }
+
+    public void showUser(final UserRef userRef) {
+        appUserPermissionsListPresenter.showUser(userRef);
     }
 
     private void editPermissions() {

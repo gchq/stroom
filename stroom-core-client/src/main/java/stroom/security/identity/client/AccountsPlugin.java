@@ -9,7 +9,8 @@ import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.shared.AppPermission;
-import stroom.svg.shared.SvgImage;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -23,6 +24,9 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
+
+    public static final String SCREEN_NAME = "Manage Accounts";
+    public static final Preset ICON = SvgPresets.USER;
 
     final Provider<UiConfigCache> uiConfigCacheProvider;
 
@@ -77,13 +81,16 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
         return Action.GOTO_USER_ACCOUNTS;
     }
 
+    Preset getIcon() {
+        return SvgPresets.USER;
+    }
+
     private void addMenuItem(final BeforeRevealMenubarEvent event) {
         final IconMenuItem apiKeysMenuItem;
-        final SvgImage icon = SvgImage.USER;
         apiKeysMenuItem = new IconMenuItem.Builder()
                 .priority(2)
-                .icon(icon)
-                .text("Manage Accounts")
+                .icon(ICON)
+                .text(SCREEN_NAME)
                 .action(getOpenAction())
                 .command(this::open)
                 .build();

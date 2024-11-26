@@ -5,9 +5,11 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.shared.SvgImage;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -23,6 +25,7 @@ import javax.inject.Singleton;
 public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
 
     public static final String SCREEN_NAME = "Users";
+    public static final Preset ICON = SvgPresets.USER;
 
     private final UiConfigCache uiConfigCache;
 
@@ -35,10 +38,10 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
         super(eventBus, contentManager, presenterProvider, securityContext);
         this.uiConfigCache = uiConfigCache;
 
-//        registerHandler(getEventBus().addHandler(OpenUserOrGroupEvent.getType(), event -> {
-//            open(userAndGroupsPresenter ->
-//                    userAndGroupsPresenter.setFilterInput(buildFilterInput(event.getSubjectId())));
-//        }));
+        registerHandler(getEventBus().addHandler(OpenUsersScreenEvent.getType(), event -> {
+            open(usersPresenter ->
+                    usersPresenter.showUser(event.getUserRef()));
+        }));
     }
 
 //    private String buildFilterInput(final String subjectId) {
@@ -57,7 +60,7 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
                     event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                             new Builder()
                                     .priority(25)
-                                    .icon(SvgImage.USER)
+                                    .icon(ICON)
                                     .text(SCREEN_NAME)
 //                            .action(getOpenAction())
                                     .command(this::open)

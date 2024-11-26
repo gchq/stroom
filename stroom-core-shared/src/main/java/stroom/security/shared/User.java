@@ -18,7 +18,7 @@ import java.util.Objects;
  * Represents a user or a named group of users.
  */
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo, HasIntegerId {
+public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
 
     /**
      * The unique subjectId of the default Admin user that gets created if
@@ -245,7 +245,13 @@ public class User implements HasAuditInfo, HasIntegerId {
     }
 
     public UserRef asRef() {
-        return new UserRef(uuid, subjectId, displayName, fullName, group);
+        return new UserRef(uuid, subjectId, displayName, fullName, group, enabled);
+    }
+
+    @JsonIgnore
+    @Override
+    public UserRef getUserRef() {
+        return asRef();
     }
 
     /**

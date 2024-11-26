@@ -6,6 +6,7 @@ import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.UserRef;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -71,6 +72,13 @@ public class ApiKeysPresenter
     @Override
     public String getType() {
         return TAB_TYPE;
+    }
+
+    public void showUser(final UserRef userRef) {
+        if (userRef != null) {
+            changeQuickFilterInput(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME.getFilterQualifier()
+                                   + ":" + userRef.getDisplayName());
+        }
     }
 
 

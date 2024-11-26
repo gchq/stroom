@@ -5,11 +5,11 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.event.OpenUserOrGroupEvent;
+import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.security.shared.UserFields;
-import stroom.svg.shared.SvgImage;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -24,6 +24,7 @@ import javax.inject.Singleton;
 public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresenter> {
 
     public static final String SCREEN_NAME = "Users and Groups";
+    public static final Preset ICON = SvgPresets.USER_GROUP;
 
     @Inject
     public UsersAndGroupsPlugin(final EventBus eventBus,
@@ -32,14 +33,10 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
                                 final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
 
-        registerHandler(getEventBus().addHandler(OpenUserOrGroupEvent.getType(), event -> {
+        registerHandler(getEventBus().addHandler(OpenUsersAndGroupsScreenEvent.getType(), event -> {
             open(userAndGroupsPresenter ->
-                    userAndGroupsPresenter.setFilterInput(buildFilterInput(event.getSubjectId())));
+                    userAndGroupsPresenter.showUser(event.getUserRef()));
         }));
-    }
-
-    private String buildFilterInput(final String subjectId) {
-        return UserFields.FIELD_DISPLAY_NAME + ":" + subjectId;
     }
 
     @Override
@@ -49,7 +46,7 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
                             .priority(30)
-                            .icon(SvgImage.USERS)
+                            .icon(ICON)
                             .text(SCREEN_NAME)
                             .action(getOpenAction())
                             .command(this::open)
