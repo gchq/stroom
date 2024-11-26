@@ -1,9 +1,9 @@
 package stroom.proxy.repo;
 
 import stroom.data.zip.CharsetConstants;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,7 +12,7 @@ import java.nio.file.Path;
 
 public class ErrorFileUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ErrorFileUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ErrorFileUtil.class);
 
     private static final String ZIP_EXTENSION = ".zip";
     private static final String ERROR_EXTENSION = ".err";
@@ -32,6 +32,7 @@ public class ErrorFileUtil {
 
     @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
     public static void addErrorMessage(final Path file, final String msg, final boolean bad) {
+        LOGGER.debug(() -> msg + " (" + FileUtil.getCanonicalPath(file) + ")");
         try {
             Path errorFile = getErrorFile(file);
             if (!Files.isRegularFile(file)) {
@@ -42,9 +43,8 @@ public class ErrorFileUtil {
                 final Path renamedFile = file.getParent().resolve(file.getFileName().toString() + BAD_EXTENSION);
                 try {
                     Files.move(file, renamedFile);
-//                    zipFile.renameTo(renamedFile);
                 } catch (final Exception e) {
-                    LOGGER.warn("Failed to rename zip file to " + renamedFile);
+                    LOGGER.warn(() -> "Failed to rename zip file to " + renamedFile);
                 }
                 if (Files.isRegularFile(errorFile)) {
                     final Path renamedErrorFile = errorFile.getParent()
@@ -59,20 +59,22 @@ public class ErrorFileUtil {
             }
 
         } catch (final IOException ex) {
-            LOGGER.warn("Failed to write to file " + file + " message " + msg);
+            LOGGER.warn(() -> "Failed to write to file " + file + " message " + msg);
         }
     }
 
     public static void deleteFileAndErrors(final Path zipFile) {
         try {
             // Delete the file.
-            final Path errorfile = getErrorFile(zipFile);
+            final Path errorFile = getErrorFile(zipFile);
+            LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(zipFile));
             Files.delete(zipFile);
-            if (Files.isRegularFile(errorfile)) {
-                Files.delete(errorfile);
+            if (Files.isRegularFile(errorFile)) {
+                LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(errorFile));
+                Files.delete(errorFile);
             }
         } catch (final IOException ioEx) {
-            LOGGER.error("delete() - Unable to delete zip file " + zipFile, ioEx);
+            LOGGER.error(() -> "delete() - Unable to delete zip file " + zipFile, ioEx);
         }
     }
 }
