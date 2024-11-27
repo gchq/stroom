@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -147,32 +146,19 @@ public class AppPermissionsEditPresenter
                 : new TickBoxCell.NoBorderAppearance();
 
         // Selection.
-        final Column<AppPermission, TickBoxState> selectionColumn = new Column<AppPermission, TickBoxState>(
-                TickBoxCell.create(appearance, true, true, updateable)) {
-            @Override
-            public TickBoxState getValue(final AppPermission permission) {
-                if (currentPermissions != null) {
-                    if (GwtNullSafe.collectionContains(currentPermissions.getExplicitPermissions(), permission)) {
-                        return TickBoxState.TICK;
-                    } else if (currentPermissions.getInheritedPermissions().containsKey(permission)) {
-                        return TickBoxState.HALF_TICK;
-                    }
+//        final Column<AppPermission, TickBoxState> selectionColumn = new Column<AppPermission, TickBoxState>(
+//                TickBoxCell.create(appearance, true, true, updateable)) {
+//            @Override
+//            public TickBoxState getValue(final AppPermission permission) {
+//                return getTickBoxState(permission);
+//            }
+//        };
 
-                    // See if implied by administrator.
-                    if (!AppPermission.ADMINISTRATOR.equals(permission)) {
-                        if (GwtNullSafe.collectionContains(currentPermissions.getExplicitPermissions(),
-                                AppPermission.ADMINISTRATOR)) {
-                            return TickBoxState.HALF_TICK;
-                        } else if (GwtNullSafe.containsKey(
-                                currentPermissions.getInheritedPermissions(),
-                                AppPermission.ADMINISTRATOR)) {
-                            return TickBoxState.HALF_TICK;
-                        }
-                    }
-                }
-                return TickBoxState.UNTICK;
-            }
-        };
+        final Column<AppPermission, TickBoxState> selectionColumn = DataGridUtil.columnBuilder(
+                        this::getTickBoxState, () -> TickBoxCell.create(
+                                appearance, true, true, updateable))
+                .centerAligned()
+                .build();
 
         if (updateable) {
             selectionColumn.setFieldUpdater((index, permission, value) -> {
@@ -198,7 +184,13 @@ public class AppPermissionsEditPresenter
             });
         }
 
-        dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(selectionColumn,
+                DataGridUtil.headingBuilder("Granted")
+                        .withToolTip("If ticked the permission is explicitly granted. If half ticked it is " +
+                                     "inferred from group membership.")
+                        .centerAligned()
+                        .build(),
+                70);
 
         // Perm name
         dataGrid.addResizableColumn(
@@ -219,6 +211,29 @@ public class AppPermissionsEditPresenter
                 700);
 
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private TickBoxState getTickBoxState(final AppPermission permission) {
+        if (currentPermissions != null) {
+            if (GwtNullSafe.collectionContains(currentPermissions.getExplicitPermissions(), permission)) {
+                return TickBoxState.TICK;
+            } else if (currentPermissions.getInheritedPermissions().containsKey(permission)) {
+                return TickBoxState.HALF_TICK;
+            }
+
+            // See if implied by administrator.
+            if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                if (GwtNullSafe.collectionContains(currentPermissions.getExplicitPermissions(),
+                        AppPermission.ADMINISTRATOR)) {
+                    return TickBoxState.HALF_TICK;
+                } else if (GwtNullSafe.containsKey(
+                        currentPermissions.getInheritedPermissions(),
+                        AppPermission.ADMINISTRATOR)) {
+                    return TickBoxState.HALF_TICK;
+                }
+            }
+        }
+        return TickBoxState.UNTICK;
     }
 
     @Override

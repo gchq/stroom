@@ -407,9 +407,9 @@ public class JobNodeListHelper {
     public void addEnabledTickBoxColumn(final MyDataGrid<JobNodeAndInfo> dataGrid,
                                         final boolean isSortable) {
 
-        final ColumnBuilder<JobNodeAndInfo, Boolean, TickBoxState, TickBoxCell> builder =
-                DataGridUtil.updatableTickBoxColumnBuilder(
-                                JobNodeAndInfo::isEnabled)
+        final ColumnBuilder<JobNodeAndInfo, TickBoxState, TickBoxState, TickBoxCell> builder =
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                JobNodeAndInfo::isEnabled))
                         .enabledWhen(this::isJobNodeEnabled)
                         .withFieldUpdater(createEnabledStateFieldUpdater(
                                 hasHandlers, taskMonitorFactory, refreshFunc));

@@ -140,8 +140,7 @@ public class UserListPresenter
 
         if (showEnabledCol) {
             dataGrid.addColumn(
-                    DataGridUtil.updatableTickBoxColumnBuilder(
-                                    User::isEnabled)
+                    DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(User::isEnabled))
 //                        .enabledWhen(this::isJobNodeEnabled)
                             .withFieldUpdater((int index, User user, TickBoxState value) -> {
                                 if (user != null) {
