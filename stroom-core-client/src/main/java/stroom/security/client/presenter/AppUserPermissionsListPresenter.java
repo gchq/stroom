@@ -263,12 +263,12 @@ public class AppUserPermissionsListPresenter
                 .enabledWhen(this::isUserEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                 .build();
-        dataGrid.addAutoResizableColumn(
+        dataGrid.addResizableColumn(
                 displayNameCol,
                 DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip("The name of the user or group.")
                         .build(),
-                300);
+                350);
 
         // Show it as the default sort
         dataGrid.getColumnSortList().push(displayNameCol);
@@ -280,9 +280,9 @@ public class AppUserPermissionsListPresenter
                                 SafeHtmlCell::new)
                         .enabledWhen(this::isUserEnabled)
                         .build(),
-                String.valueOf(DataGridUtil.headingBuilder("Permissions")
+                DataGridUtil.headingBuilder("Permissions")
                         .withToolTip("The permissions held by this user/group. Inherited permissions are in grey.")
-                        .build()),
+                        .build(),
                 400);
 
         // Actions Menu btn

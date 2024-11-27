@@ -10,7 +10,6 @@ import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -27,16 +26,12 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
     public static final String SCREEN_NAME = "Users";
     public static final Preset ICON = SvgPresets.USER;
 
-    private final UiConfigCache uiConfigCache;
-
     @Inject
     public UsersPlugin(final EventBus eventBus,
                        final ContentManager contentManager,
                        final Provider<UsersPresenter> presenterProvider,
-                       final ClientSecurityContext securityContext,
-                       final UiConfigCache uiConfigCache) {
+                       final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
-        this.uiConfigCache = uiConfigCache;
 
         registerHandler(getEventBus().addHandler(OpenUsersScreenEvent.getType(), event -> {
             open(usersPresenter ->
@@ -44,29 +39,18 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
         }));
     }
 
-//    private String buildFilterInput(final String subjectId) {
-//        return UserFields.FIELD_DISPLAY_NAME + ":" + subjectId;
-//    }
-
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
-            uiConfigCache.get(extendedUiConfig -> {
-                // The users screen is only applicable if using an external IDP
-                // as the only thing it adds over the UsersAndGroupsPresenter is the
-                // Unique User ID column.
-                if (extendedUiConfig.isExternalIdentityProvider()) {
-                    MenuKeys.addSecurityMenu(event.getMenuItems());
-                    event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
-                            new Builder()
-                                    .priority(25)
-                                    .icon(ICON)
-                                    .text(SCREEN_NAME)
+            MenuKeys.addSecurityMenu(event.getMenuItems());
+            event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
+                    new Builder()
+                            .priority(25)
+                            .icon(ICON)
+                            .text(SCREEN_NAME)
 //                            .action(getOpenAction())
-                                    .command(this::open)
-                                    .build());
-                }
-            });
+                            .command(this::open)
+                            .build());
         }
     }
 

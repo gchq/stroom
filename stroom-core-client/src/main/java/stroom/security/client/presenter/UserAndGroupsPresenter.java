@@ -81,15 +81,19 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.getView().setLabel("Users And Groups");
         this.userList.setName("userList");
+        // Top pane doesn't need to link back to itself
+        this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USERS_AND_GROUPS));
 
         this.parentsList = userListPresenterProvider.get();
         // A parent can only be a group
         this.parentsList.setMode(Mode.GROUPS_ONLY);
         this.parentsList.setName("parentsList");
+        this.parentsList.setValidUserScreensForActionMenu(UserScreen.all());
 
         this.childrenList = userListPresenterProvider.get();
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
         this.childrenList.setName("childrenList");
+        this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
 
         this.createUserPresenter = createUserPresenter;
         this.createNewGroupPresenterProvider = createNewGroupPresenterProvider;

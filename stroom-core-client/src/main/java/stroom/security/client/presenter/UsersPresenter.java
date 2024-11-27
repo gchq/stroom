@@ -50,6 +50,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
         this.userList.setMode(Mode.USERS_ONLY);
         this.userList.setShowUniqueUserIdCol(true);
         this.userList.setShowEnabledCol(true);
+        this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USERS));
 
         createButton = userList.addButton(SvgPresets.ADD.title("Create User"));
 //        editButton = userList.addButton(SvgPresets.EDIT.title("Edit User"));

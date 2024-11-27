@@ -72,6 +72,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -92,13 +93,14 @@ public class UserListPresenter
     private ExpressionTerm isGroupTerm;
     private String filter;
     private ResultPage<User> currentData = null;
-    private UserRef userToShow = null;
     private Consumer<ResultPage<User>> resultPageConsumer;
 
     private boolean showUniqueUserIdCol = false;
     private boolean showEnabledCol = false;
     private boolean isExternalIdp = false;
     private Mode mode = Mode.USERS_AND_GROUPS;
+    private Set<UserScreen> validUserScreensForActionMenu = UserScreen.all();
+    @SuppressWarnings({"unused", "FieldCanBeLocal"}) // Used in commented debug
     private String name = this.getClass().getSimpleName();
 
     @Inject
@@ -277,7 +279,8 @@ public class UserListPresenter
                                 (User user) -> UserAndGroupHelper.buildUserActionMenu(
                                         GwtNullSafe.get(user, User::asRef),
                                         isExternalIdp(),
-                                        UserScreen.all(),
+                                        GwtNullSafe.requireNonNullElseGet(
+                                                validUserScreensForActionMenu, UserScreen::all),
                                         this),
                                 this))
 //                .enabledWhen(User::isEnabled)
@@ -558,6 +561,10 @@ public class UserListPresenter
      */
     public void setName(final String name) {
         this.name = name;
+    }
+
+    public void setValidUserScreensForActionMenu(final Set<UserScreen> validUserScreensForActionMenu) {
+        this.validUserScreensForActionMenu = validUserScreensForActionMenu;
     }
 
     // --------------------------------------------------------------------------------
