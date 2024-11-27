@@ -208,7 +208,7 @@ public class DocumentUserPermissionsListPresenter
                         final DocumentPermission explicit = documentUserPermissions.getPermission();
                         final DocumentPermission inherited = documentUserPermissions.getInheritedPermission();
                         if (inherited != null) {
-                            if (explicit != null && explicit.isHigher(inherited)) {
+                            if (explicit != null && explicit.isEqualOrHigher(inherited)) {
                                 sb.addLine(explicit.getDisplayValue());
                             } else {
                                 sb.addLine(false, true, inherited.getDisplayValue());

@@ -39,6 +39,8 @@ public final class BatchDocumentPermissionsEditViewImpl
         extends ViewImpl
         implements BatchDocumentPermissionsEditView {
 
+    private static final String NONE_TITLE = "[ none ]";
+
     private final Widget widget;
 
     @UiField
@@ -66,6 +68,7 @@ public final class BatchDocumentPermissionsEditViewImpl
     public BatchDocumentPermissionsEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         permission.addItems(DocumentPermission.LIST);
+        permission.setNonSelectString(NONE_TITLE);
         documentPermissionChange.addItems(DocumentPermissionChange.LIST);
         documentPermissionChange.setValue(DocumentPermissionChange.SET_PERMISSION);
         update();
@@ -129,11 +132,11 @@ public final class BatchDocumentPermissionsEditViewImpl
                 permission.setVisible(true);
                 break;
             }
-            case REMOVE_PERMISSION: {
-                userRefLabel.setVisible(true);
-                userRef.setVisible(true);
-                break;
-            }
+//            case REMOVE_PERMISSION: {
+//                userRefLabel.setVisible(true);
+//                userRef.setVisible(true);
+//                break;
+//            }
             case ADD_DOCUMENT_CREATE_PERMISSION: {
                 userRefLabel.setVisible(true);
                 userRef.setVisible(true);

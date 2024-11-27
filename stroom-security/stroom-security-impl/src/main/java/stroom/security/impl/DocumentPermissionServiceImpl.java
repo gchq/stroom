@@ -103,13 +103,21 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         checkSetPermission(docRef);
 
         if (change instanceof final SetPermission req) {
-            Objects.requireNonNull(req.getUserRef(), "Null user ref");
-            Objects.requireNonNull(req.getPermission(), "Null permission");
-            documentPermissionDao.setDocumentUserPermission(
-                    docRef.getUuid(),
-                    req.getUserRef().getUuid(),
-                    req.getPermission());
-            PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+            if (req.getPermission() == null) {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                documentPermissionDao.removeDocumentUserPermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid());
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+
+            } else {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                documentPermissionDao.setDocumentUserPermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid(),
+                        req.getPermission());
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+            }
 
         } else if (change instanceof final RemovePermission req) {
             Objects.requireNonNull(req.getUserRef(), "Null user ref");

@@ -130,6 +130,7 @@ public class DocumentUserCreatePermissionsEditPresenter
                     if (e.isOk()) {
                         onChange(e, onClose);
                     } else {
+                        onClose.run();
                         e.hide();
                     }
                 })

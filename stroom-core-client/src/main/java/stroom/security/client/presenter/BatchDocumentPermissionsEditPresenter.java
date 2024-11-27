@@ -134,10 +134,10 @@ public class BatchDocumentPermissionsEditPresenter
                         userRefSelectionBoxPresenter.getSelected(),
                         getView().getPermission());
             }
-            case REMOVE_PERMISSION: {
-                return new AbstractDocumentPermissionsChange.RemovePermission(
-                        userRefSelectionBoxPresenter.getSelected());
-            }
+//            case REMOVE_PERMISSION: {
+//                return new AbstractDocumentPermissionsChange.RemovePermission(
+//                        userRefSelectionBoxPresenter.getSelected());
+//            }
             case ADD_DOCUMENT_CREATE_PERMISSION: {
                 return new AddDocumentUserCreatePermission(
                         userRefSelectionBoxPresenter.getSelected(),
