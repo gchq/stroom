@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.config.global.client.presenter.ErrorEvent;
-import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -53,7 +52,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class BatchDocumentPermissionsEditPresenter
         extends MyPresenterWidget<BatchDocumentPermissionsEditView> {
@@ -69,7 +67,6 @@ public class BatchDocumentPermissionsEditPresenter
     @Inject
     public BatchDocumentPermissionsEditPresenter(final EventBus eventBus,
                                                  final BatchDocumentPermissionsEditView view,
-                                                 final Provider<ExpressionPresenter> docFilterPresenterProvider,
                                                  final DocSelectionBoxPresenter docSelectionBoxPresenter,
                                                  final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                                  final RestFactory restFactory,
@@ -79,9 +76,7 @@ public class BatchDocumentPermissionsEditPresenter
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
 
-        documentTypeCache.fetch(types -> {
-            getView().setDocTypes(types.getTypes());
-        }, this);
+        documentTypeCache.fetch(types -> getView().setDocTypes(types.getTypes()), this);
         getView().setDocRefSelection(docSelectionBoxPresenter.getView());
         getView().setUserRefSelection(userRefSelectionBoxPresenter.getView());
     }

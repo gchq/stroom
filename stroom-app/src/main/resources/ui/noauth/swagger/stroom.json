@@ -28,7 +28,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AccountResultPage"
+                  "$ref" : "#/components/schemas/ResultPageAccount"
                 }
               }
             },
@@ -87,7 +87,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AccountResultPage"
+                  "$ref" : "#/components/schemas/ResultPageAccount"
                 }
               }
             },
@@ -10242,6 +10242,33 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/users/v1/fetchBySubjectId/{subjectId}" : {
+      "get" : {
+        "operationId" : "fetchBySubjectId",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetches the user with the supplied subjectId (aka Unique ID)",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1/find" : {
       "post" : {
         "operationId" : "findUsersByCriteria",
@@ -10299,6 +10326,33 @@
           }
         },
         "summary" : "Updates a user",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/users/v1/{userUuid}" : {
+      "get" : {
+        "operationId" : "fetchUser",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetches the user with the supplied UUID",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10848,23 +10902,6 @@
           }
         }
       },
-      "AccountResultPage" : {
-        "type" : "object",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "qualifiedFilterInput" : {
-            "type" : "string"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Account"
-            }
-          }
-        }
-      },
       "AcknowledgeSplashRequest" : {
         "type" : "object",
         "properties" : {
@@ -10951,7 +10988,7 @@
           }
         }
       },
-      "AddAllDocumentCreatePermissions" : {
+      "AddAllDocumentUserCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
@@ -10983,7 +11020,7 @@
           "$ref" : "#/components/schemas/AbstractAppPermissionChange"
         } ]
       },
-      "AddDocumentCreatePermission" : {
+      "AddDocumentUserCreatePermission" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
@@ -10991,7 +11028,7 @@
           "type" : "object",
           "properties" : {
             "documentType" : {
-              "$ref" : "#/components/schemas/DocumentType"
+              "type" : "string"
             },
             "userRef" : {
               "$ref" : "#/components/schemas/UserRef"
@@ -14552,11 +14589,11 @@
       "FindAccountRequest" : {
         "type" : "object",
         "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilter" : {
-            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -18058,7 +18095,7 @@
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
       },
-      "RemoveAllDocumentCreatePermissions" : {
+      "RemoveAllDocumentUserCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
@@ -18075,13 +18112,6 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "ignore" : {
-              "type" : "boolean"
-            }
-          }
         } ]
       },
       "RemoveAppPermission" : {
@@ -18090,7 +18120,7 @@
           "$ref" : "#/components/schemas/AbstractAppPermissionChange"
         } ]
       },
-      "RemoveDocumentCreatePermission" : {
+      "RemoveDocumentUserCreatePermission" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
@@ -18098,8 +18128,21 @@
           "type" : "object",
           "properties" : {
             "documentType" : {
-              "$ref" : "#/components/schemas/DocumentType"
+              "type" : "string"
             },
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "RemovePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
             "userRef" : {
               "$ref" : "#/components/schemas/UserRef"
             }
@@ -18170,6 +18213,21 @@
           }
         },
         "required" : [ "componentId", "type" ]
+      },
+      "ResultPageAccount" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Account"
+            }
+          }
+        }
       },
       "ResultPageActivity" : {
         "type" : "object",
@@ -19453,6 +19511,26 @@
             "$ref" : "#/components/schemas/UserRef"
           }
         }
+      },
+      "SetDocumentUserCreatePermissions" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "documentTypes" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              },
+              "uniqueItems" : true
+            },
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
       },
       "SetPermission" : {
         "type" : "object",
@@ -21262,6 +21340,9 @@
         "properties" : {
           "displayName" : {
             "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
           },
           "fullName" : {
             "type" : "string"

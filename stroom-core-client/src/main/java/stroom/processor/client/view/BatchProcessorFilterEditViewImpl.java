@@ -18,12 +18,9 @@ package stroom.processor.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
-import stroom.processor.client.presenter.BatchProcessorFilterEditUiHandlers;
 import stroom.processor.shared.ProcessorFilterChange;
-import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,10 +29,10 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
 public final class BatchProcessorFilterEditViewImpl
-        extends ViewWithUiHandlers<BatchProcessorFilterEditUiHandlers>
+        extends ViewImpl
         implements BatchProcessorFilterEditView {
 
     private final Widget widget;
@@ -46,8 +43,6 @@ public final class BatchProcessorFilterEditViewImpl
     FormGroup userRefLabel;
     @UiField
     SimplePanel userRef;
-    @UiField
-    Button apply;
 
     @Inject
     public BatchProcessorFilterEditViewImpl(final Binder binder) {
@@ -55,7 +50,6 @@ public final class BatchProcessorFilterEditViewImpl
         documentPermissionChange.addItems(ProcessorFilterChange.LIST);
         documentPermissionChange.setValue(ProcessorFilterChange.ENABLE);
         update();
-        apply.setEnabled(false);
     }
 
     @Override
@@ -92,20 +86,9 @@ public final class BatchProcessorFilterEditViewImpl
         }
     }
 
-    @Override
-    public void setApplyEnabled(final boolean enabled) {
-        apply.setEnabled(enabled);
-    }
-
     @UiHandler("documentPermissionChange")
     public void onDocumentPermissionChange(final ValueChangeEvent<ProcessorFilterChange> e) {
         update();
-        getUiHandlers().validate();
-    }
-
-    @UiHandler("apply")
-    public void onApply(final ClickEvent e) {
-        getUiHandlers().apply(apply);
     }
 
     public interface Binder extends UiBinder<Widget, BatchProcessorFilterEditViewImpl> {

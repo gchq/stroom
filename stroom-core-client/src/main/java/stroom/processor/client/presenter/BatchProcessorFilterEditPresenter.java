@@ -19,7 +19,6 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.config.global.client.presenter.ErrorEvent;
-import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.shared.BulkProcessorFilterChangeRequest;
@@ -29,6 +28,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageResponse;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -37,17 +37,14 @@ import stroom.widget.popup.client.presenter.Size;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class BatchProcessorFilterEditPresenter
-        extends MyPresenterWidget<BatchProcessorFilterEditView>
-        implements BatchProcessorFilterEditUiHandlers {
+        extends MyPresenterWidget<BatchProcessorFilterEditView> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
@@ -59,15 +56,11 @@ public class BatchProcessorFilterEditPresenter
     @Inject
     public BatchProcessorFilterEditPresenter(final EventBus eventBus,
                                              final BatchProcessorFilterEditView view,
-                                             final Provider<ExpressionPresenter> docFilterPresenterProvider,
                                              final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                              final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
-
-        view.setUiHandlers(this);
-
         getView().setUserRefSelection(userRefSelectionBoxPresenter.getView());
     }
 
@@ -76,7 +69,6 @@ public class BatchProcessorFilterEditPresenter
                      final Runnable onClose) {
         this.expression = expression;
         this.currentResultPageResponse = currentResultPageResponse;
-        validate();
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -93,46 +85,19 @@ public class BatchProcessorFilterEditPresenter
                         .build())
                 .build();
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
                 .caption("Batch Change All Filtered Processors")
                 .onHideRequest(e -> {
-                    onClose.run();
-                    e.hide();
+                    if (e.isOk()) {
+                        apply(this, e, onClose);
+                    } else {
+                        onClose.run();
+                        e.hide();
+                    }
                 })
                 .fire();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> {
-            validate();
-        }));
-    }
-
-    @Override
-    public void validate() {
-        getView().setApplyEnabled(isValid());
-    }
-
-    private boolean isValid() {
-        if (currentResultPageResponse == null) {
-            return false;
-        }
-        if (currentResultPageResponse.getLength() == 0) {
-            return false;
-        }
-        if (getView().getChange() == null) {
-            return false;
-        }
-        if (ProcessorFilterChange.SET_RUN_AS_USER.equals(getView().getChange())) {
-            if (userRefSelectionBoxPresenter.getSelected() == null) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private BulkProcessorFilterChangeRequest createRequest() {
@@ -145,8 +110,28 @@ public class BatchProcessorFilterEditPresenter
                 userRefSelectionBoxPresenter.getSelected());
     }
 
-    @Override
-    public void apply(final TaskMonitorFactory taskMonitorFactory) {
+    private void apply(final TaskMonitorFactory taskMonitorFactory,
+                       final HidePopupRequestEvent event,
+                       final Runnable onClose) {
+
+        if (getView().getChange() == null) {
+            ErrorEvent.fire(
+                    this,
+                    "No change selected.");
+            event.reset();
+            return;
+        }
+
+        if (ProcessorFilterChange.SET_RUN_AS_USER.equals(getView().getChange())) {
+            if (userRefSelectionBoxPresenter.getSelected() == null) {
+                ErrorEvent.fire(
+                        this,
+                        "No user selected.");
+                event.reset();
+                return;
+            }
+        }
+
         int docCount = 0;
         if (currentResultPageResponse != null) {
             docCount = currentResultPageResponse.getLength();
@@ -156,24 +141,30 @@ public class BatchProcessorFilterEditPresenter
             ErrorEvent.fire(
                     this,
                     "No processors are included in the current filter for this change.");
-        } else {
-            String message = "Are you sure you want to change this processor?";
-            if (docCount > 1) {
-                message = "Are you sure you want to change " + docCount + " processors?";
-            }
-            ConfirmEvent.fire(
-                    this,
-                    message,
-                    ok -> {
-                        if (ok) {
-                            doApply(taskMonitorFactory);
-                        }
-                    }
-            );
+            event.reset();
+            return;
         }
+
+        String message = "Are you sure you want to change this processor?";
+        if (docCount > 1) {
+            message = "Are you sure you want to change " + docCount + " processors?";
+        }
+        ConfirmEvent.fire(
+                this,
+                message,
+                ok -> {
+                    if (ok) {
+                        doApply(taskMonitorFactory, event, onClose);
+                    } else {
+                        event.reset();
+                    }
+                }
+        );
     }
 
-    private void doApply(final TaskMonitorFactory taskMonitorFactory) {
+    private void doApply(final TaskMonitorFactory taskMonitorFactory,
+                         final HidePopupRequestEvent event,
+                         final Runnable onClose) {
         final BulkProcessorFilterChangeRequest request = createRequest();
         restFactory
                 .create(PROCESSOR_FILTER_RESOURCE)
@@ -183,12 +174,15 @@ public class BatchProcessorFilterEditPresenter
                         AlertEvent.fireInfo(
                                 this,
                                 "Successfully changed.",
-                                null);
+                                () -> {
+                                    event.hide();
+                                    onClose.run();
+                                });
                     } else {
                         AlertEvent.fireError(
                                 this,
                                 "Failed to change.",
-                                null);
+                                event::reset);
                     }
                 })
                 .taskMonitorFactory(taskMonitorFactory)
@@ -200,12 +194,10 @@ public class BatchProcessorFilterEditPresenter
     }
 
     public interface BatchProcessorFilterEditView
-            extends View, Focus, HasUiHandlers<BatchProcessorFilterEditUiHandlers> {
+            extends View, Focus {
 
         ProcessorFilterChange getChange();
 
         void setUserRefSelection(View view);
-
-        void setApplyEnabled(boolean enabled);
     }
 }
