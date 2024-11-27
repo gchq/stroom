@@ -17,6 +17,7 @@
 package stroom.job.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
@@ -118,7 +119,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                              final MyDataGrid<Job> dataGrid) {
         // Enabled.
         dataGrid.addResizableColumn(
-                DataGridUtil.updatableTickBoxColumnBuilder(Job::isEnabled)
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(Job::isEnabled))
                         .withFieldUpdater(
                                 (rowIndex, job, tickBoxState) -> {
                                     job.setEnabled(tickBoxState.toBoolean());

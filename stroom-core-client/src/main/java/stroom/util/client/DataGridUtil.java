@@ -493,18 +493,10 @@ public class DataGridUtil {
      * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
      * @param <T_ROW>       The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
-            final Function<T_ROW, Boolean> cellExtractor) {
-        return new ColumnBuilder<>(
-                cellExtractor,
-                bool -> GwtNullSafe.isTrue(bool)
-                        ? TickBoxState.TICK
-                        : TickBoxState.UNTICK,
-                () -> TickBoxCell.create(
-                        new NoBorderAppearance(),
-                        false,
-                        false,
-                        false));
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> cellExtractor) {
+
+        return updatableTickBoxColumnBuilder(cellExtractor, false);
     }
 
     /**
@@ -513,18 +505,42 @@ public class DataGridUtil {
      * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
      * @param <T_ROW>       The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
-            final Function<T_ROW, Boolean> cellExtractor) {
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> cellExtractor) {
+
+        return updatableTickBoxColumnBuilder(cellExtractor, true);
+    }
+
+    /**
+     * Builds an updatable tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> cellExtractor,
+            final boolean isUpdatable) {
+
+        final DefaultAppearance defaultAppearance = isUpdatable
+                ? new DefaultAppearance()
+                : new NoBorderAppearance();
+
         return new ColumnBuilder<>(
                 cellExtractor,
-                bool -> GwtNullSafe.isTrue(bool)
-                        ? TickBoxState.TICK
-                        : TickBoxState.UNTICK,
+                Function.identity(),
                 () -> TickBoxCell.create(
-                        new DefaultAppearance(),
+                        defaultAppearance,
                         false,
                         false,
-                        true));
+                        isUpdatable));
+    }
+
+    public static <T_ROW> Function<T_ROW, TickBoxState> createTickBoxExtractor(
+            final Function<T_ROW, Boolean> booleanExtractor) {
+        return row -> {
+            final Boolean bool = Objects.requireNonNull(booleanExtractor).apply(row);
+            return TickBoxState.fromBoolean(bool);
+        };
     }
 
     /**

@@ -26,21 +26,10 @@ import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
-import stroom.security.shared.AbstractDocumentPermissionsChange;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
 import stroom.security.shared.AppPermission;
-import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
@@ -195,26 +184,26 @@ public class DocumentCreatePermissionsListPresenter
         if (currentPermissions != null) {
             if (explicitCreatePermissions != null &&
                 explicitCreatePermissions
-                            .contains(documentType.getType())) {
+                        .contains(documentType.getType())) {
                 return TickBoxState.TICK;
             } else if (explicitCreatePermissions != null &&
                        explicitCreatePermissions
-                            .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
+                               .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
                 return TickBoxState.HALF_TICK;
             } else if (currentPermissions.getExplicitPermission() != null &&
-                    currentPermissions
-                            .getExplicitPermission()
-                            .equals(DocumentPermission.OWNER)) {
+                       currentPermissions
+                               .getExplicitPermission()
+                               .equals(DocumentPermission.OWNER)) {
                 return TickBoxState.HALF_TICK;
             } else if (currentPermissions.getInheritedPermissionPaths() != null &&
-                    currentPermissions
-                            .getInheritedPermissionPaths()
-                            .containsKey(DocumentPermission.OWNER)) {
+                       currentPermissions
+                               .getInheritedPermissionPaths()
+                               .containsKey(DocumentPermission.OWNER)) {
                 return TickBoxState.HALF_TICK;
             } else if (currentPermissions.getInheritedCreatePermissionPaths() != null &&
-                    currentPermissions
-                            .getInheritedCreatePermissionPaths()
-                            .containsKey(documentType.getType())) {
+                       currentPermissions
+                               .getInheritedCreatePermissionPaths()
+                               .containsKey(documentType.getType())) {
                 return TickBoxState.HALF_TICK;
             }
         }
@@ -304,11 +293,11 @@ public class DocumentCreatePermissionsListPresenter
         }
 
         return currentPermissions != null &&
-                (currentPermissions.getExplicitPermission().equals(DocumentPermission.OWNER) ||
-                        (currentPermissions.getInheritedPermissionPaths() != null &&
-                                currentPermissions.getInheritedPermissionPaths().containsKey(DocumentPermission.OWNER)
-                        )
-                );
+               (currentPermissions.getExplicitPermission().equals(DocumentPermission.OWNER) ||
+                (currentPermissions.getInheritedPermissionPaths() != null &&
+                 currentPermissions.getInheritedPermissionPaths().containsKey(DocumentPermission.OWNER)
+                )
+               );
     }
 
     private void refresh() {
@@ -393,6 +382,10 @@ public class DocumentCreatePermissionsListPresenter
     public void setExplorerClient(final ExplorerClient explorerClient) {
         this.explorerClient = explorerClient;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DocumentCreatePermissionsListView extends View {
 
