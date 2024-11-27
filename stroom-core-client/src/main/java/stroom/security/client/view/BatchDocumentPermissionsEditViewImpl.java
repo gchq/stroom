@@ -19,13 +19,10 @@ package stroom.security.client.view;
 import stroom.explorer.shared.DocumentType;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
-import stroom.security.client.presenter.BatchDocumentPermissionsEditUiHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
-import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,15 +31,13 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.List;
 
 public final class BatchDocumentPermissionsEditViewImpl
-        extends ViewWithUiHandlers<BatchDocumentPermissionsEditUiHandlers>
+        extends ViewImpl
         implements BatchDocumentPermissionsEditView {
-
-    private static final String NONE_TITLE = "[ none ]";
 
     private final Widget widget;
 
@@ -66,17 +61,14 @@ public final class BatchDocumentPermissionsEditViewImpl
     SelectionBox<DocumentPermission> permission;
     @UiField
     SelectionBox<DocumentType> docType;
-    @UiField
-    Button apply;
 
     @Inject
     public BatchDocumentPermissionsEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         permission.addItems(DocumentPermission.LIST);
         documentPermissionChange.addItems(DocumentPermissionChange.LIST);
-        documentPermissionChange.setValue(DocumentPermissionChange.SET_PERMSSION);
+        documentPermissionChange.setValue(DocumentPermissionChange.SET_PERMISSION);
         update();
-        apply.setEnabled(false);
     }
 
     @Override
@@ -130,64 +122,56 @@ public final class BatchDocumentPermissionsEditViewImpl
         docType.setVisible(false);
 
         switch (documentPermissionChange.getValue()) {
-            case SET_PERMSSION: {
+            case SET_PERMISSION: {
                 userRefLabel.setVisible(true);
                 userRef.setVisible(true);
                 permissionLabel.setVisible(true);
                 permission.setVisible(true);
                 break;
             }
-//            case REMOVE_PERMISSION: {
-//                userRefLabel.setVisible(true);
-//                userRef.setVisible(true);
-//                break;
-//            }
-
-            case ADD_DOCUMENT_CREATE_PERMSSION: {
+            case REMOVE_PERMISSION: {
+                userRefLabel.setVisible(true);
+                userRef.setVisible(true);
+                break;
+            }
+            case ADD_DOCUMENT_CREATE_PERMISSION: {
                 userRefLabel.setVisible(true);
                 userRef.setVisible(true);
                 docTypeLabel.setVisible(true);
                 docType.setVisible(true);
                 break;
             }
-            case REMOVE_DOCUMENT_CREATE_PERMSSION: {
+            case REMOVE_DOCUMENT_CREATE_PERMISSION: {
                 userRefLabel.setVisible(true);
                 userRef.setVisible(true);
                 docTypeLabel.setVisible(true);
                 docType.setVisible(true);
                 break;
             }
-            case ADD_ALL_DOCUMENT_CREATE_PERMSSIONS: {
+            case ADD_ALL_DOCUMENT_CREATE_PERMISSIONS: {
                 userRefLabel.setVisible(true);
                 userRef.setVisible(true);
                 break;
             }
-            case REMOVE_ALL_DOCUMENT_CREATE_PERMSSIONS: {
+            case REMOVE_ALL_DOCUMENT_CREATE_PERMISSIONS: {
                 userRefLabel.setVisible(true);
                 userRef.setVisible(true);
                 break;
             }
-
-            case ADD_ALL_PERMSSIONS_FROM: {
+            case ADD_ALL_PERMISSIONS_FROM: {
                 docRefLabel.setVisible(true);
                 docRef.setVisible(true);
                 break;
             }
-            case SET_ALL_PERMSSIONS_FROM: {
+            case SET_ALL_PERMISSIONS_FROM: {
                 docRefLabel.setVisible(true);
                 docRef.setVisible(true);
                 break;
             }
-
             case REMOVE_ALL_PERMISSIONS: {
                 break;
             }
         }
-    }
-
-    @Override
-    public void setApplyEnabled(final boolean enabled) {
-        apply.setEnabled(enabled);
     }
 
     @UiHandler("documentPermissionChange")
@@ -195,20 +179,6 @@ public final class BatchDocumentPermissionsEditViewImpl
         update();
     }
 
-    @UiHandler("permission")
-    public void onPermissionChange(final ValueChangeEvent<DocumentPermission> e) {
-        getUiHandlers().validate();
-    }
-
-    @UiHandler("docType")
-    public void onDocTypeChange(final ValueChangeEvent<DocumentType> e) {
-        getUiHandlers().validate();
-    }
-
-    @UiHandler("apply")
-    public void onApply(final ClickEvent e) {
-        getUiHandlers().apply(apply);
-    }
 
     public interface Binder extends UiBinder<Widget, BatchDocumentPermissionsEditViewImpl> {
 

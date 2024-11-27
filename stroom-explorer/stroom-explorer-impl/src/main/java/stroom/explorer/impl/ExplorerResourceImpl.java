@@ -57,13 +57,15 @@ import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
@@ -502,24 +504,17 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     private void changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         final AbstractDocumentPermissionsChange change = request.getChange();
+
         if (change instanceof final SetPermission setPermission) {
+            Objects.requireNonNull(setPermission.getPermission(), "Null permission");
+
             final Group group = createGroup(setPermission.getUserRef(), setPermission.getPermission());
-            final AuthoriseEventAction action;
-            if (setPermission.getPermission() == null) {
-                action = AuthoriseEventAction
-                        .builder()
-                        .withAction(AuthorisationActionType.MODIFY)
-                        .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
-                        .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
-                        .build();
-            } else {
-                action = AuthoriseEventAction
-                        .builder()
-                        .withAction(AuthorisationActionType.MODIFY)
-                        .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
-                        .withAddGroups(AddGroups.builder().addGroups(group).build())
-                        .build();
-            }
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withAddGroups(AddGroups.builder().addGroups(group).build())
+                    .build();
             stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Set document permission")
@@ -532,14 +527,35 @@ class ExplorerResourceImpl implements ExplorerResource {
                     })
                     .getResultAndLog();
 
-        } else if (change instanceof final AddDocumentCreatePermission addDocumentCreatePermission) {
+        } else if (change instanceof final RemovePermission removePermission) {
+            final Group group = createGroup(removePermission.getUserRef(), null);
+            final AuthoriseEventAction action;
+            action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Remove document permission")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final AddDocumentUserCreatePermission addDocumentCreatePermission) {
             final Permission permission = Permission
                     .builder()
                     .withAllowAttributes(PermissionAttribute.AUTHOR)
                     .withUser(StroomEventLoggingUtil.createUser(addDocumentCreatePermission.getUserRef()))
                     .withGroup(Group
                             .builder()
-                            .withType(addDocumentCreatePermission.getDocumentType().getDisplayType())
+                            .withType(addDocumentCreatePermission.getDocumentType())
                             .build())
                     .build();
             final Group group = Group
@@ -564,14 +580,14 @@ class ExplorerResourceImpl implements ExplorerResource {
                     })
                     .getResultAndLog();
 
-        } else if (change instanceof final RemoveDocumentCreatePermission removeDocumentCreatePermission) {
+        } else if (change instanceof final RemoveDocumentUserCreatePermission removeDocumentCreatePermission) {
             final Permission permission = Permission
                     .builder()
                     .withAllowAttributes(PermissionAttribute.AUTHOR)
                     .withUser(StroomEventLoggingUtil.createUser(removeDocumentCreatePermission.getUserRef()))
                     .withGroup(Group
                             .builder()
-                            .withType(removeDocumentCreatePermission.getDocumentType().getDisplayType())
+                            .withType(removeDocumentCreatePermission.getDocumentType())
                             .build())
                     .build();
             final Group group = Group
@@ -596,7 +612,39 @@ class ExplorerResourceImpl implements ExplorerResource {
                     })
                     .getResultAndLog();
 
-        } else if (change instanceof final AddAllDocumentCreatePermissions addAllDocumentCreatePermissions) {
+        } else if (change instanceof final SetDocumentUserCreatePermissions setDocumentUserCreatePermissions) {
+            final Permission permission = Permission
+                    .builder()
+                    .withAllowAttributes(PermissionAttribute.AUTHOR)
+                    .withUser(StroomEventLoggingUtil.createUser(setDocumentUserCreatePermissions.getUserRef()))
+                    .withGroup(Group
+                            .builder()
+                            .withType(String.join(",", setDocumentUserCreatePermissions.getDocumentTypes()))
+                            .build())
+                    .build();
+            final Group group = Group
+                    .builder()
+                    .withPermissions(Permissions.builder().addPermissions(permission).build())
+                    .build();
+            final AuthoriseEventAction action = AuthoriseEventAction
+                    .builder()
+                    .withAction(AuthorisationActionType.MODIFY)
+                    .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
+                    .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
+                    .build();
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
+                    .withDescription("Remove document create permission for folder")
+                    .withDefaultEventAction(action)
+                    .withComplexLoggedResult(searchEventAction -> {
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
+                        final Boolean result = documentPermissionService.changeDocumentPermissions(request);
+                        return ComplexLoggedOutcome.success(result, action);
+                    })
+                    .getResultAndLog();
+
+        } else if (change instanceof final AddAllDocumentUserCreatePermissions addAllDocumentCreatePermissions) {
             final Permission permission = Permission
                     .builder()
                     .withAllowAttributes(PermissionAttribute.AUTHOR)
@@ -625,7 +673,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     })
                     .getResultAndLog();
 
-        } else if (change instanceof final RemoveAllDocumentCreatePermissions removeAllDocumentCreatePermissions) {
+        } else if (change instanceof final RemoveAllDocumentUserCreatePermissions removeAllDocumentCreatePermissions) {
             final Permission permission = Permission
                     .builder()
                     .withAllowAttributes(PermissionAttribute.AUTHOR)

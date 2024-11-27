@@ -17,9 +17,14 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
+import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
+import stroom.widget.form.client.FormGroup;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -30,10 +35,16 @@ public final class DocumentUserPermissionsViewImpl
         extends ViewImpl
         implements DocumentUserPermissionsView {
 
+    private static final String DOC_PERM_DETAILS_BASE_LABEL = "Document Permission Details";
+
     private final Widget widget;
 
     @UiField
-    SimplePanel permissions;
+    SimplePanel docUserPermissionsList;
+    @UiField
+    FormGroup detailsFormGroup;
+    @UiField
+    HTML details;
 
     @Inject
     public DocumentUserPermissionsViewImpl(final Binder binder) {
@@ -46,8 +57,24 @@ public final class DocumentUserPermissionsViewImpl
     }
 
     @Override
-    public void setPermissionsView(View view) {
-        permissions.setWidget(view.asWidget());
+    public void setDocUserPermissionListView(View view) {
+        docUserPermissionsList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDetails(final SafeHtml details) {
+        this.details.setHTML(details);
+    }
+
+    @Override
+    public void setUserRef(final UserRef userRef) {
+        if (userRef == null) {
+            detailsFormGroup.setLabel(DOC_PERM_DETAILS_BASE_LABEL + ":");
+        } else {
+            final String suffix = " for " + userRef.getType(CaseType.LOWER)
+                                  + " \"" + userRef.getDisplayName() + "\":";
+            detailsFormGroup.setLabel(DOC_PERM_DETAILS_BASE_LABEL + suffix);
+        }
     }
 
     public interface Binder extends UiBinder<Widget, DocumentUserPermissionsViewImpl> {

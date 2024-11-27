@@ -24,13 +24,15 @@ import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -102,19 +104,21 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         if (change instanceof final SetPermission req) {
             Objects.requireNonNull(req.getUserRef(), "Null user ref");
-            if (req.getPermission() == null) {
-                documentPermissionDao.removeDocumentUserPermission(
-                        docRef.getUuid(),
-                        req.getUserRef().getUuid());
-            } else {
-                documentPermissionDao.setDocumentUserPermission(
-                        docRef.getUuid(),
-                        req.getUserRef().getUuid(),
-                        req.getPermission());
-            }
+            Objects.requireNonNull(req.getPermission(), "Null permission");
+            documentPermissionDao.setDocumentUserPermission(
+                    docRef.getUuid(),
+                    req.getUserRef().getUuid(),
+                    req.getPermission());
             PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
 
-        } else if (change instanceof final AddDocumentCreatePermission req) {
+        } else if (change instanceof final RemovePermission req) {
+            Objects.requireNonNull(req.getUserRef(), "Null user ref");
+            documentPermissionDao.removeDocumentUserPermission(
+                    docRef.getUuid(),
+                    req.getUserRef().getUuid());
+            PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+
+        } else if (change instanceof final AddDocumentUserCreatePermission req) {
             // Only applies to folders.
             if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
@@ -122,11 +126,11 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 documentPermissionDao.addDocumentUserCreatePermission(
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
-                        req.getDocumentType().getType());
+                        req.getDocumentType());
                 PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
-        } else if (change instanceof final RemoveDocumentCreatePermission req) {
+        } else if (change instanceof final RemoveDocumentUserCreatePermission req) {
             // Only applies to folders.
             if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
@@ -134,15 +138,27 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 documentPermissionDao.removeDocumentUserCreatePermission(
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
-                        req.getDocumentType().getType());
+                        req.getDocumentType());
                 PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
-        } else if (change instanceof final AddAllDocumentCreatePermissions req) {
+        } else if (change instanceof final SetDocumentUserCreatePermissions req) {
             // Only applies to folders.
             if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
-                documentPermissionDao.removeDocumentUserCreatePermissions(
+                Objects.requireNonNull(req.getDocumentTypes(), "Null documentType");
+                documentPermissionDao.setDocumentUserCreatePermissions(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid(),
+                        req.getDocumentTypes());
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+            }
+
+        } else if (change instanceof final AddAllDocumentUserCreatePermissions req) {
+            // Only applies to folders.
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                documentPermissionDao.removeAllDocumentUserCreatePermissions(
                         docRef.getUuid(),
                         req.getUserRef().getUuid());
                 documentPermissionDao.addDocumentUserCreatePermission(
@@ -152,11 +168,11 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
-        } else if (change instanceof final RemoveAllDocumentCreatePermissions req) {
+        } else if (change instanceof final RemoveAllDocumentUserCreatePermissions req) {
             // Only applies to folders.
             if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
-                documentPermissionDao.removeDocumentUserCreatePermissions(
+                documentPermissionDao.removeAllDocumentUserCreatePermissions(
                         docRef.getUuid(),
                         req.getUserRef().getUuid());
                 PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);

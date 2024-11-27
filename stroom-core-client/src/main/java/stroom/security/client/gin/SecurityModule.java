@@ -44,6 +44,8 @@ import stroom.security.client.presenter.CreateUserPresenter;
 import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter;
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
+import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter;
+import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
 import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter;
 import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
@@ -62,6 +64,7 @@ import stroom.security.client.view.CreateExternalUserViewImpl;
 import stroom.security.client.view.CreateMultipleUsersViewImpl;
 import stroom.security.client.view.CreateUserViewImpl;
 import stroom.security.client.view.DocumentCreatePermissionsListViewImpl;
+import stroom.security.client.view.DocumentUserCreatePermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
@@ -131,6 +134,10 @@ public class SecurityModule extends PluginModule {
                 DocumentUserPermissionsEditPresenter.class,
                 DocumentUserPermissionsEditView.class,
                 DocumentUserPermissionsEditViewImpl.class);
+        bindPresenterWidget(
+                DocumentUserCreatePermissionsEditPresenter.class,
+                DocumentUserCreatePermissionsEditView.class,
+                DocumentUserCreatePermissionsEditViewImpl.class);
         bindPresenterWidget(
                 DocumentCreatePermissionsListPresenter.class,
                 DocumentCreatePermissionsListView.class,

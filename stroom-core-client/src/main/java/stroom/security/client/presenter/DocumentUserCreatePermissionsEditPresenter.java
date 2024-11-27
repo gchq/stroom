@@ -24,12 +24,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
+import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
-import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
-import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
@@ -46,42 +46,44 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class DocumentUserPermissionsEditPresenter
-        extends MyPresenterWidget<DocumentUserPermissionsEditView>
-        implements DocumentUserPermissionsEditUiHandler {
+public class DocumentUserCreatePermissionsEditPresenter
+        extends MyPresenterWidget<DocumentUserCreatePermissionsEditView>
+        implements DocumentUserCreatePermissionsEditUiHandler {
 
+    private final Provider<DocumentCreatePermissionsListPresenter>
+            documentCreatePermissionsListPresenterProvider;
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
-    private final Provider<DocumentUserCreatePermissionsEditPresenter>
-            documentUserCreatePermissionsEditPresenterProvider;
 
     private UserRef relatedUser;
     private DocRef relatedDoc;
+    private DocumentCreatePermissionsListPresenter documentCreatePermissionsListPresenter;
 
     @Inject
-    public DocumentUserPermissionsEditPresenter(final EventBus eventBus,
-                                                final DocumentUserPermissionsEditView view,
-                                                final DocPermissionRestClient docPermissionClient,
-                                                final ExplorerClient explorerClient,
-                                                final Provider<DocumentUserCreatePermissionsEditPresenter>
-                                                        documentUserCreatePermissionsEditPresenterProvider) {
+    public DocumentUserCreatePermissionsEditPresenter(final EventBus eventBus,
+                                                      final DocumentUserCreatePermissionsEditView view,
+                                                      final Provider<DocumentCreatePermissionsListPresenter>
+                                                              documentCreatePermissionsListPresenterProvider,
+                                                      final DocPermissionRestClient docPermissionClient,
+                                                      final ExplorerClient explorerClient) {
         super(eventBus, view);
+        this.documentCreatePermissionsListPresenterProvider = documentCreatePermissionsListPresenterProvider;
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
-        this.documentUserCreatePermissionsEditPresenterProvider = documentUserCreatePermissionsEditPresenterProvider;
         getView().setUiHandlers(this);
     }
 
     public void show(final DocRef docRef,
-                     final DocumentUserPermissions permissions,
+                     final UserRef userRef,
                      final Runnable onClose,
                      final TaskMonitorFactory taskMonitorFactory) {
         relatedDoc = docRef;
-        relatedUser = permissions.getUserRef();
+        relatedUser = userRef;
 
         // Fetch detailed permissions report.
         docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response ->
@@ -94,6 +96,11 @@ public class DocumentUserPermissionsEditPresenter
                         final Runnable onClose) {
         final PopupSize popupSize;
         if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
+            documentCreatePermissionsListPresenter = documentCreatePermissionsListPresenterProvider.get();
+            documentCreatePermissionsListPresenter.setDocPermissionClient(docPermissionClient);
+            documentCreatePermissionsListPresenter.setExplorerClient(explorerClient);
+            documentCreatePermissionsListPresenter.setup(relatedUser, relatedDoc, report);
+            getView().setDocumentTypeView(documentCreatePermissionsListPresenter.getView());
             popupSize = PopupSize.builder()
                     .width(Size
                             .builder()
@@ -114,12 +121,11 @@ public class DocumentUserPermissionsEditPresenter
 
         getView().setDocument(docRef);
         getView().setUser(userRef);
-        getView().setPermission(report.getExplicitPermission());
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
-                .caption("Set Permissions")
+                .caption("Set Document Create Permissions")
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         onChange(e, onClose);
@@ -147,12 +153,6 @@ public class DocumentUserPermissionsEditPresenter
     }
 
     @Override
-    public void onEditCreatePermissions(final TaskMonitorFactory taskMonitorFactory) {
-        documentUserCreatePermissionsEditPresenterProvider.get().show(relatedDoc, relatedUser, () -> {
-        }, taskMonitorFactory);
-    }
-
-    @Override
     public void onApplyToDescendants(final TaskMonitorFactory taskMonitorFactory) {
         final AbstractDocumentPermissionsChange change = createChange();
 
@@ -161,6 +161,11 @@ public class DocumentUserPermissionsEditPresenter
                 .field(DocumentPermissionFields.DESCENDANTS)
                 .condition(Condition.OF_DOC_REF)
                 .docRef(relatedDoc)
+                .build());
+        builder.addTerm(ExpressionTerm.builder()
+                .field(DocumentPermissionFields.DOCUMENT_TYPE)
+                .condition(Condition.EQUALS)
+                .value("Folder")
                 .build());
         final ExpressionOperator expression = builder.build();
 
@@ -194,23 +199,29 @@ public class DocumentUserPermissionsEditPresenter
                         }
                     });
         }, taskMonitorFactory);
+
     }
 
     private AbstractDocumentPermissionsChange createChange() {
-        return new AbstractDocumentPermissionsChange.SetPermission(
-                relatedUser,
-                getView().getPermission());
+        final Set<String> explicitCreatePermissions = documentCreatePermissionsListPresenter.getExplicitCreatePermissions();
+        if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
+            return new AddAllDocumentUserCreatePermissions(relatedUser);
+        } else if (explicitCreatePermissions.size() == 0) {
+            return new RemoveAllDocumentUserCreatePermissions(relatedUser);
+        } else {
+            return new AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions(
+                    relatedUser,
+                    explicitCreatePermissions);
+        }
     }
 
-    public interface DocumentUserPermissionsEditView
-            extends View, Focus, HasUiHandlers<DocumentUserPermissionsEditUiHandler> {
+    public interface DocumentUserCreatePermissionsEditView extends View, Focus,
+            HasUiHandlers<DocumentUserCreatePermissionsEditUiHandler> {
 
         void setDocument(DocRef docRef);
 
         void setUser(UserRef userRef);
 
-        DocumentPermission getPermission();
-
-        void setPermission(DocumentPermission permission);
+        void setDocumentTypeView(View view);
     }
 }

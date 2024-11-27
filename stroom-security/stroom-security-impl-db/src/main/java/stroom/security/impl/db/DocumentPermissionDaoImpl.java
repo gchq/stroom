@@ -196,9 +196,16 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         Objects.requireNonNull(documentUuid, "Null document UUID");
         Objects.requireNonNull(userUuid, "Null user UUID");
         Objects.requireNonNull(documentType, "Null document type");
-
         final UByte docTypeId = UByte.valueOf(docTypeIdDao.getOrCreateId(documentType));
-        JooqUtil.context(securityDbConnProvider, context -> context
+        JooqUtil.context(securityDbConnProvider, context ->
+                addDocumentUserCreatePermission(context, documentUuid, userUuid, docTypeId));
+    }
+
+    private void addDocumentUserCreatePermission(final DSLContext context,
+                                                 final String documentUuid,
+                                                 final String userUuid,
+                                                 final UByte docTypeId) {
+        context
                 .insertInto(PERMISSION_DOC_CREATE)
                 .columns(PERMISSION_DOC_CREATE.DOC_UUID,
                         PERMISSION_DOC_CREATE.USER_UUID,
@@ -206,7 +213,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .values(documentUuid, userUuid, docTypeId)
                 .onDuplicateKeyUpdate()
                 .set(PERMISSION_DOC_CREATE.DOC_TYPE_ID, docTypeId)
-                .execute());
+                .execute();
     }
 
     @Override
@@ -227,15 +234,43 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public void removeDocumentUserCreatePermissions(final String documentUuid, final String userUuid) {
+    public void setDocumentUserCreatePermissions(final String documentUuid,
+                                                 final String userUuid,
+                                                 final Set<String> documentTypes) {
         Objects.requireNonNull(documentUuid, "Null document UUID");
         Objects.requireNonNull(userUuid, "Null user UUID");
 
-        JooqUtil.context(securityDbConnProvider, context -> context
+        final Set<UByte> docTypeIds = documentTypes
+                .stream()
+                .map(documentType -> UByte.valueOf(docTypeIdDao.getOrCreateId(documentType)))
+                .collect(Collectors.toSet());
+        JooqUtil.transaction(securityDbConnProvider, context -> {
+            // Delete all permissions.
+            removeAllDocumentUserCreatePermissions(context, documentUuid, userUuid);
+            // Add new permissions.
+            for (final UByte docTypeId : docTypeIds) {
+                addDocumentUserCreatePermission(context, documentUuid, userUuid, docTypeId);
+            }
+        });
+    }
+
+    @Override
+    public void removeAllDocumentUserCreatePermissions(final String documentUuid, final String userUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+
+        JooqUtil.context(securityDbConnProvider, context ->
+                removeAllDocumentUserCreatePermissions(context, documentUuid, userUuid));
+    }
+
+    private void removeAllDocumentUserCreatePermissions(final DSLContext context,
+                                                        final String documentUuid,
+                                                        final String userUuid) {
+        context
                 .deleteFrom(PERMISSION_DOC_CREATE)
                 .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
                 .and(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
-                .execute());
+                .execute();
     }
 
     @Override

@@ -188,7 +188,8 @@ public class UserPermissionReportPresenter
             final DocumentUserPermissionsEditPresenter presenter = documentUserPermissionsEditPresenterProvider.get();
             presenter.show(selected.getFindResult().getDocRef(),
                     selected.getPermissions(),
-                    documentPermissionsListPresenter::refresh);
+                    documentPermissionsListPresenter::refresh,
+                    this);
         }
     }
 
