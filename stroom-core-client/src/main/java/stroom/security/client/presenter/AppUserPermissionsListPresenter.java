@@ -81,7 +81,6 @@ public class AppUserPermissionsListPresenter
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
     private ResultPage<AppUserPermissions> currentData = null;
-    private UserRef userToShow = null;
     private boolean isExternalIdp = false;
 
     @Inject
@@ -174,7 +173,7 @@ public class AppUserPermissionsListPresenter
                         restFactory
                                 .create(APP_PERMISSION_RESOURCE)
                                 .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
-                                .onSuccess(dataConsumer::accept)
+                                .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
                                 .taskMonitorFactory(pagerView)
                                 .exec();
@@ -376,27 +375,6 @@ public class AppUserPermissionsListPresenter
     public void showUser(final UserRef userRef) {
         if (userRef != null) {
             setQuickFilter(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
-//            final ResultPage<AppUserPermissions> currentData = getCurrentData();
-//            if (currentData == null) {
-//                // First time the screen is opened so get the data in the hope our
-//                // user is on the first page
-//                userToShow = userRef;
-//                refresh();
-//            } else {
-//                boolean found = UserAndGroupHelper.selectUserIfShown(
-//                        userRef,
-//                        getCurrentData(),
-//                        selectionModel,
-//                        dataGrid);
-//                if (!found) {
-//                    setQuickFilter(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
-//                }
-//            }
         }
     }
-
-    public ResultPage<AppUserPermissions> getCurrentData() {
-        return currentData;
-    }
-
 }

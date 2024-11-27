@@ -328,3 +328,25 @@ don't want the open link to appear
 	z-index: 10;
 	cursor: default;
 }
+
+
+
+/*
+ Sortable header styles.
+*/
+.dataGridSortableHeaderOuterDiv {
+    display: flex;
+    gap: 5px;
+    padding: 0 !important;
+}
+
+.dataGridSortableHeaderNameHolder {
+}
+
+.dataGridSortableHeaderImageHolder {
+}
+
+.dataGridSortableHeaderImageHolder svg {
+    width: 10px;
+    height: 10px;
+}
