@@ -203,7 +203,8 @@ public class DocumentUserCreatePermissionsEditPresenter
     }
 
     private AbstractDocumentPermissionsChange createChange() {
-        final Set<String> explicitCreatePermissions = documentCreatePermissionsListPresenter.getExplicitCreatePermissions();
+        final Set<String> explicitCreatePermissions =
+                documentCreatePermissionsListPresenter.getExplicitCreatePermissions();
         if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
             return new AddAllDocumentUserCreatePermissions(relatedUser);
         } else if (explicitCreatePermissions.size() == 0) {

@@ -906,7 +906,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKeyResultPage'
+                $ref: '#/components/schemas/ResultPageHashedApiKey'
           description: default response
       summary: Find the API keys matching the supplied criteria
       tags:
@@ -7881,7 +7881,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/HashedApiKey'
+            $ref: '#/components/schemas/ApiKey'
     AppUserPermissions:
       type: object
       properties:
@@ -10745,12 +10745,12 @@ components:
     FindApiKeyCriteria:
       type: object
       properties:
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
         owner:
           $ref: '#/components/schemas/UserRef'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
-        quickFilterInput:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -14386,6 +14386,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FsVolumeGroup'
+    ResultPageHashedApiKey:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/HashedApiKey'
     ResultPageIndexShard:
       type: object
       description: A page of results.
