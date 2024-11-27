@@ -118,7 +118,8 @@ public class UserListPresenter
 
         // Not easy to determine if we are dealing in users or groups at this point so just
         // call it Quick Filter
-        uiConfigCache.get(uiConfig -> {
+        uiConfigCache.get(
+                uiConfig -> {
                     if (uiConfig != null) {
                         userListView.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                                 "Quick Filter",
@@ -372,12 +373,9 @@ public class UserListPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        filter = text;
-        if (filter != null) {
-            filter = filter.trim();
-            if (filter.isEmpty()) {
-                filter = null;
-            }
+        filter = GwtNullSafe.trim(text);
+        if (filter.isEmpty()) {
+            filter = null;
         }
         refresh();
     }
@@ -483,7 +481,7 @@ public class UserListPresenter
                                 final Consumer<ResultPage<User>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 ExpressionOperator expression = QuickFilterExpressionParser
-                        .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                        .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
 
                 if (additionalTerm != null) {
                     expression = expression.copy()

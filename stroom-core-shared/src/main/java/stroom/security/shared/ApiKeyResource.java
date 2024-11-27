@@ -3,6 +3,7 @@ package stroom.security.shared;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,5 +69,5 @@ public interface ApiKeyResource extends RestResource, DirectRestService, FetchWi
     @Operation(
             summary = "Find the API keys matching the supplied criteria",
             operationId = "findApiKeysByCriteria")
-    ApiKeyResultPage find(@Parameter(description = "criteria", required = true) FindApiKeyCriteria criteria);
+    ResultPage<HashedApiKey> find(@Parameter(description = "criteria", required = true) FindApiKeyCriteria criteria);
 }

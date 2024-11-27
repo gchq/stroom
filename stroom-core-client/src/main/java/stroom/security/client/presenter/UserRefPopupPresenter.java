@@ -229,7 +229,7 @@ public class UserRefPopupPresenter
                                     final Consumer<ResultPage<UserRef>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
                     ExpressionOperator expression = QuickFilterExpressionParser
-                            .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                            .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
                     if (additionalTerm != null) {
                         expression = expression.copy().addTerm(additionalTerm).build();
                     }

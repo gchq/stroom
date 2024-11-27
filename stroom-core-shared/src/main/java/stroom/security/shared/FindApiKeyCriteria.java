@@ -1,6 +1,8 @@
 package stroom.security.shared;
 
-import stroom.util.shared.BaseCriteria;
+import stroom.datasource.api.v2.QueryField;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.UserRef;
@@ -14,18 +16,40 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class FindApiKeyCriteria extends BaseCriteria {
+public class FindApiKeyCriteria extends ExpressionCriteria {
 
-    public static final String FIELD_NAME = "Name";
-    public static final String FIELD_PREFIX = "Prefix";
-    public static final String FIELD_OWNER = "Owner";
-    public static final String FIELD_COMMENTS = "Comments";
-    public static final String FIELD_STATE = "State";
-    public static final String FIELD_EXPIRE_TIME = "Expire Time";
-    public static final String FIELD_HASH_ALGORITHM = "Hash Algorithm";
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_PREFIX = "prefix";
+    public static final String FIELD_OWNER = "owner";
+    public static final String FIELD_COMMENTS = "comments";
+    public static final String FIELD_STATE = "enabled";
+    public static final String FIELD_EXPIRE_TIME = "expiretime";
+    public static final String FIELD_HASH_ALGORITHM = "hashalgo";
+
+    public static final QueryField NAME = QueryField.createText(FIELD_NAME);
+    public static final QueryField PREFIX = QueryField.createText(FIELD_PREFIX);
+    public static final QueryField OWNER = QueryField.createText(FIELD_OWNER);
+    public static final QueryField COMMENTS = QueryField.createText(FIELD_COMMENTS);
+    public static final QueryField STATE = QueryField.createBoolean(FIELD_STATE);
+    public static final QueryField EXPIRE_TIME = QueryField.createText(FIELD_EXPIRE_TIME);
+    public static final QueryField HASH_ALGORITHM = QueryField.createText(FIELD_HASH_ALGORITHM);
+
+    public static final Set<QueryField> DEFAULT_FIELDS = Set.of(NAME, PREFIX);
+
+    public static final Map<String, QueryField> ALL_FIELDs_MAP = QueryField.buildFieldMap(
+            NAME,
+            PREFIX,
+            OWNER,
+            COMMENTS,
+            STATE,
+            EXPIRE_TIME,
+            HASH_ALGORITHM);
+
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
     public static final FilterFieldDefinition FIELD_DEF_PREFIX = FilterFieldDefinition.defaultField(FIELD_PREFIX);
@@ -47,8 +71,6 @@ public class FindApiKeyCriteria extends BaseCriteria {
             FIELD_DEF_HASH_ALGORITHM);
 
     @JsonProperty
-    private String quickFilterInput;
-    @JsonProperty
     private UserRef owner;
 
     public FindApiKeyCriteria() {
@@ -57,39 +79,30 @@ public class FindApiKeyCriteria extends BaseCriteria {
     @JsonCreator
     public FindApiKeyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("quickFilterInput") final String quickFilterInput,
+                              @JsonProperty("expression") final ExpressionOperator expression,
                               @JsonProperty("owner") final UserRef owner) {
-        super(pageRequest, sortList);
-        this.quickFilterInput = quickFilterInput;
+        super(pageRequest, sortList, expression);
         this.owner = owner;
     }
 
-    public static FindApiKeyCriteria create(final String quickFilterInput) {
-        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
-        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
-        return findApiKeyCriteria;
-    }
-
+    //    public static FindApiKeyCriteria create(final String quickFilterInput) {
+//        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
+//        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
+//        return findApiKeyCriteria;
+//    }
+//
     public static FindApiKeyCriteria create(final UserRef owner) {
         FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
         findApiKeyCriteria.setOwner(owner);
         return findApiKeyCriteria;
     }
-
-    public static FindApiKeyCriteria create(final String quickFilterInput, final UserRef owner) {
-        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
-        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
-        findApiKeyCriteria.setOwner(owner);
-        return findApiKeyCriteria;
-    }
-
-    public String getQuickFilterInput() {
-        return quickFilterInput;
-    }
-
-    public void setQuickFilterInput(final String quickFilterInput) {
-        this.quickFilterInput = quickFilterInput;
-    }
+//
+//    public static FindApiKeyCriteria create(final String quickFilterInput, final UserRef owner) {
+//        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
+//        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
+//        findApiKeyCriteria.setOwner(owner);
+//        return findApiKeyCriteria;
+//    }
 
     public UserRef getOwner() {
         return owner;
@@ -97,5 +110,51 @@ public class FindApiKeyCriteria extends BaseCriteria {
 
     public void setOwner(final UserRef owner) {
         this.owner = owner;
+    }
+
+    @Override
+    public String toString() {
+        return "FindApiKeyCriteria{" +
+               "owner=" + owner +
+               '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class Builder extends AbstractBuilder<FindApiKeyCriteria, Builder> {
+
+        private UserRef owner = null;
+
+        public Builder() {
+        }
+
+        public Builder(final FindApiKeyCriteria expressionCriteria) {
+            super(expressionCriteria);
+        }
+
+        public Builder owner(final UserRef owner) {
+            this.owner = owner;
+            return this;
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public FindApiKeyCriteria build() {
+            return new FindApiKeyCriteria(
+                    pageRequest,
+                    sortList,
+                    expression,
+                    owner);
+        }
     }
 }

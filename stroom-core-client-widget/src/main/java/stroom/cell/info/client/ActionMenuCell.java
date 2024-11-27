@@ -119,11 +119,16 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
         final List<Item> items = menuCreator.apply(row);
         final PopupPosition popupPosition = new PopupPosition(
                 event.getClientX() + 10,
-                event.getClientY());
+                event.getClientY() + 10);
         ShowMenuEvent
                 .builder()
                 .items(items)
                 .popupPosition(popupPosition)
+//                    .onShow(e -> {
+//                    })
+//                    .onHide(e -> {
+//                    })
+                .allowCloseOnMoveLeft()
                 .fire(hasHandlers);
     }
 

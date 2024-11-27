@@ -131,7 +131,7 @@ public class AppUserPermissionsListPresenter
         }
 
         final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
         requestBuilder.expression(expression);
         refresh();
     }

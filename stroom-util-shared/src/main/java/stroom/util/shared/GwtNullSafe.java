@@ -481,6 +481,14 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if the collection is non-null and contains exactly one item
+     */
+    public static <T> boolean hasOneItem(final Collection<T> collection) {
+        return collection != null
+               && collection.size() == 1;
+    }
+
+    /**
      * @return True if value is non-null and the collection is non-null and not empty
      */
     public static <T1, T2 extends Collection<E>, E> boolean hasItems(
