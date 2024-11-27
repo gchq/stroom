@@ -19,7 +19,6 @@
 package stroom.security.identity.db;
 
 import stroom.db.util.ExpressionMapper;
-import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.AccountDao;
@@ -180,12 +179,11 @@ class AccountDaoImpl implements AccountDao {
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
-    private final ExpressionMapper expressionMapper;
+    private final ExpressionMapper expressionMapper = null;
 
     @Inject
     public AccountDaoImpl(final Provider<IdentityConfig> identityConfigProvider,
-                          final IdentityDbConnProvider identityDbConnProvider,
-                          final ExpressionMapperFactory expressionMapperFactory) {
+                          final IdentityDbConnProvider identityDbConnProvider) {
         this.identityConfigProvider = identityConfigProvider;
         this.identityDbConnProvider = identityDbConnProvider;
         genericDao = new GenericDao<>(
@@ -195,13 +193,13 @@ class AccountDaoImpl implements AccountDao {
                 ACCOUNT_TO_RECORD_MAPPER,
                 RECORD_TO_ACCOUNT_MAPPER);
 
-        expressionMapper = expressionMapperFactory.create()
-                .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
-                .map(AccountFields.FIELD_FIRST_NAME, ACCOUNT.FIRST_NAME, String::valueOf)
-                .map(AccountFields.FIELD_LAST_NAME, ACCOUNT.LAST_NAME, String::valueOf)
-                .map(AccountFields.FIELD_EMAIL, ACCOUNT.EMAIL, String::valueOf)
-                .map(AccountFields.FIELD_STATUS, ACCOUNT_STATUS, String::valueOf)
-                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf);
+//        expressionMapper = expressionMapperFactory.create()
+//                .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
+//                .map(AccountFields.FIELD_FIRST_NAME, ACCOUNT.FIRST_NAME, String::valueOf)
+//                .map(AccountFields.FIELD_LAST_NAME, ACCOUNT.LAST_NAME, String::valueOf)
+//                .map(AccountFields.FIELD_EMAIL, ACCOUNT.EMAIL, String::valueOf)
+//                .map(AccountFields.FIELD_STATUS, ACCOUNT_STATUS, String::valueOf)
+//                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf);
     }
 
     @Override

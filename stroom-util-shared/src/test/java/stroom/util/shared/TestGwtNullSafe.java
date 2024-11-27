@@ -568,6 +568,25 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testHasOneItem() {
+        final List<String> emptyList = Collections.emptyList();
+        final List<String> nonEmptyList = List.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        GwtNullSafe.hasOneItem(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(Collections.emptyList(), false)
+                .addCase(List.of("foo"), true)
+                .addCase(List.of("foo", "bar"), false)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsEmptyCollection2() {
         final ListWrapper nullListWrapper = null;
         final ListWrapper nonNullListWrapper = new ListWrapper();

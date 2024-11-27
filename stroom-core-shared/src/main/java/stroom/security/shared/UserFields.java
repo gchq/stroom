@@ -69,7 +69,7 @@ public class UserFields {
             DISPLAY_NAME,
             UNIQUE_ID);
 
-    public static final Map<String, QueryField> ALL_FIELD_MAP = QueryField.buildFieldMap(
+    public static final Map<String, QueryField> ALL_FIELDS_MAP = QueryField.buildFieldMap(
             IS_GROUP,
             UNIQUE_ID,
 //            NAME,

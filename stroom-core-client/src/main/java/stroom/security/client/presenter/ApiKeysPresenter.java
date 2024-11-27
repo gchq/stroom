@@ -1,48 +1,224 @@
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestErrorHandler;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
-import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
+import stroom.security.shared.ApiKeyResource;
+import stroom.security.shared.HashedApiKey;
+import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.function.Supplier;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ApiKeysPresenter
         extends ContentTabPresenter<ApiKeysView>
         implements Refreshable, ApiKeyUiHandlers {
 
+    private static final ApiKeyResource API_KEY_RESOURCE = GWT.create(ApiKeyResource.class);
+
     public static final String TAB_TYPE = "ApiKeys";
+
     private final ApiKeysListPresenter listPresenter;
+    private final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider;
+    private final RestFactory restFactory;
+    private final ButtonView addButton;
+    private final ButtonView editButton;
+    private final ButtonView deleteButton;
 
     @Inject
     public ApiKeysPresenter(final EventBus eventBus,
                             final ApiKeysView view,
                             final ApiKeysListPresenter listPresenter,
-                            final UiConfigCache uiConfigCache) {
+                            final RestFactory restFactory,
+                            final UiConfigCache uiConfigCache,
+                            final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
-        view.setUiHandlers(this);
-        view.setList(listPresenter.getWidget());
+        this.restFactory = restFactory;
+        this.editApiKeyPresenterProvider = editApiKeyPresenterProvider;
 
-        uiConfigCache.get(uiConfig -> {
-            if (uiConfig != null) {
-                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                        "API Keys Quick Filter",
-                        FindApiKeyCriteria.FILTER_FIELD_DEFINITIONS,
-                        uiConfig.getHelpUrlQuickFilter()));
+//        view.setUiHandlers(this);
+        view.setList(listPresenter.getView());
+
+        addButton = listPresenter.addButton(SvgPresets.ADD.title("Add new API Key"));
+        addButton.addClickHandler(event -> createNewKey());
+        editButton = listPresenter.addButton(SvgPresets.EDIT.title("Edit API Key"));
+        editButton.addClickHandler(event -> editSelectedKey());
+        deleteButton = listPresenter.addButton(SvgPresets.DELETE.title("Delete API Key"));
+        deleteButton.addClickHandler(event -> deleteSelectedKeys());
+
+//        uiConfigCache.get(uiConfig -> {
+//            if (uiConfig != null) {
+//                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+//                        "API Keys Quick Filter",
+//                        FindApiKeyCriteria.FILTER_FIELD_DEFINITIONS,
+//                        uiConfig.getHelpUrlQuickFilter()));
+//            }
+//        }, this);
+    }
+
+    private void setButtonStates() {
+        final int selectedCount = GwtNullSafe.size(getSelectedItems());
+        editButton.setEnabled(selectedCount == 1);
+
+        deleteButton.setEnabled(selectedCount > 0);
+        if (selectedCount > 1) {
+            deleteButton.setTitle("Delete " + selectedCount + " API Keys");
+        } else {
+            deleteButton.setTitle("Delete API Key");
+        }
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(addButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                createNewKey();
             }
-        }, this);
+        }));
+        registerHandler(editButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                editSelectedKey();
+            }
+        }));
+        registerHandler(deleteButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                deleteSelectedKeys();
+            }
+        }));
+        registerHandler(getSelectionModel().addSelectionHandler(e -> {
+            onSelection();
+            if (e.getSelectionType().isDoubleSelect()
+                && GwtNullSafe.hasOneItem(getSelectedItems())) {
+                editSelectedKey();
+            }
+        }));
+    }
+
+    private void onSelection() {
+        setButtonStates();
+    }
+
+    private List<HashedApiKey> getSelectedItems() {
+        return listPresenter.getSelectionModel().getSelectedItems();
+    }
+
+    private MultiSelectionModelImpl<HashedApiKey> getSelectionModel() {
+        return listPresenter.getSelectionModel();
+    }
+
+    private void createNewKey() {
+        editApiKeyPresenterProvider.get().showCreateDialog(Mode.PRE_CREATE, listPresenter::refresh);
+    }
+
+    private void editSelectedKey() {
+        final HashedApiKey apiKey = getSelectionModel().getSelected();
+        editApiKeyPresenterProvider.get().showEditDialog(apiKey, Mode.EDIT, listPresenter::refresh);
+    }
+
+    private void deleteSelectedKeys() {
+        // This is the one selected using row selection, not the checkbox
+//        final HashedApiKey selectedApiKey = getSelectionModel().getSelected();
+
+        // The ones selected with the checkboxes
+//        final Set<Integer> selectedSet = GwtNullSafe.set(selection.getSet());
+//        final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
+//        final List<Integer> selectedItems = new ArrayList<>(selectedSet);
+        final List<HashedApiKey> selectedItems = getSelectedItems();
+
+        final Runnable onSuccess = () -> {
+////            if (clearSelection) {
+//                getSelectionModel().clear();
+////            }
+            getSelectionModel().clear();
+            refresh();
+        };
+
+        final RestErrorHandler onFailure = restError -> {
+            // Something went wrong so refresh the data.
+            AlertEvent.fireError(this, restError.getMessage(), null);
+            refresh();
+        };
+
+        final int cnt = selectedItems.size();
+        if (cnt == 1) {
+            deleteSingle(selectedItems, onSuccess, onFailure);
+        } else if (cnt > 1) {
+            deleteMultiple(selectedItems, onSuccess, onFailure);
+        }
+    }
+
+    private void deleteMultiple(final List<HashedApiKey> selectedItems,
+                                final Runnable onSuccess,
+                                final RestErrorHandler onFailure) {
+        final Set<Integer> ids = selectedItems.stream()
+                .map(HashedApiKey::getId)
+                .collect(Collectors.toSet());
+        final String msg = "Are you sure you want to delete " + selectedItems.size() + " API keys?" +
+                           "\n\nOnce deleted, anyone using these API Keys will no longer by able to " +
+                           "authenticate with them and it will not be possible to re-create them.";
+        ConfirmEvent.fire(this, msg, ok -> {
+            if (ok) {
+                restFactory
+                        .create(API_KEY_RESOURCE)
+                        .method(res ->
+                                res.deleteBatch(ids))
+                        .onSuccess(count -> {
+                            onSuccess.run();
+                        })
+                        .onFailure(onFailure)
+                        .taskMonitorFactory(this)
+                        .exec();
+            }
+        });
+    }
+
+    private void deleteSingle(final List<HashedApiKey> selectedItems,
+                              final Runnable onSuccess,
+                              final RestErrorHandler onFailure) {
+        final HashedApiKey apiKey = selectedItems.get(0);
+        final String msg = "Are you sure you want to delete API Key '"
+                           + apiKey.getName()
+                           + "' with prefix '"
+                           + apiKey.getApiKeyPrefix()
+                           + "'?" +
+                           "\n\nOnce deleted, anyone using this API Key will no longer by able to authenticate with it "
+                           + "and it will not be possible to re-create it.";
+        ConfirmEvent.fire(this, msg, ok -> {
+//                GWT.log("id: " + id);
+            if (ok) {
+                restFactory
+                        .create(API_KEY_RESOURCE)
+                        .method(res -> res.delete(apiKey.getId()))
+                        .onSuccess(unused -> {
+                            onSuccess.run();
+                        })
+                        .onFailure(onFailure)
+                        .taskMonitorFactory(this)
+                        .exec();
+            }
+        });
     }
 
     public void focus() {
@@ -75,22 +251,20 @@ public class ApiKeysPresenter
     }
 
     public void showUser(final UserRef userRef) {
-        if (userRef != null) {
-            changeQuickFilterInput(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME.getFilterQualifier()
-                                   + ":" + userRef.getDisplayName());
-        }
+        listPresenter.showUser(userRef);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface ApiKeysView extends View, HasUiHandlers<ApiKeyUiHandlers> {
+    //    public interface ApiKeysView extends View, HasUiHandlers<ApiKeyUiHandlers> {
+    public interface ApiKeysView extends View {
 
-        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
+//        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
         void focus();
 
-        void setList(Widget widget);
+        void setList(View view);
     }
 }
