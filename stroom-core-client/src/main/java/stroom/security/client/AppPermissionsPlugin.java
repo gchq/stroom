@@ -5,11 +5,13 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.event.OpenAppPermissionsEvent;
+import stroom.security.client.event.OpenAppPermissionsScreenEvent;
 import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.UserFields;
-import stroom.svg.shared.SvgImage;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
+import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -24,6 +26,7 @@ import javax.inject.Singleton;
 public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresenter> {
 
     public static final String SCREEN_NAME = "Application Permissions";
+    public static final Preset ICON = SvgPresets.SHIELD;
 
     @Inject
     public AppPermissionsPlugin(final EventBus eventBus,
@@ -32,14 +35,20 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
                                 final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
 
-        registerHandler(getEventBus().addHandler(OpenAppPermissionsEvent.getType(), event -> {
+        registerHandler(getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event -> {
             open(appPermissionsPresenter ->
-                    appPermissionsPresenter.setFilterInput(buildFilterInput(event.getSubjectId())));
+                    appPermissionsPresenter.showUser(event.getUserRef()));
         }));
     }
 
-    private String buildFilterInput(final String subjectId) {
-        return UserFields.FIELD_DISPLAY_NAME + ":" + subjectId;
+    private String buildFilterInput(final UserRef userRef) {
+        if (userRef == null) {
+            return "";
+        } else if (userRef.getDisplayName() != null) {
+            return UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName();
+        } else {
+            return UserFields.FIELD_UNIQUE_ID + ":" + userRef.getSubjectId();
+        }
     }
 
     @Override
@@ -49,7 +58,7 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
                             .priority(20)
-                            .icon(SvgImage.SHIELD)
+                            .icon(ICON)
                             .text(SCREEN_NAME)
                             .action(getOpenAction())
                             .command(this::open)

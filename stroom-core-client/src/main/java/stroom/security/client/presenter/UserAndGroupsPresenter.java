@@ -80,13 +80,16 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userList = userListPresenterProvider.get();
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.getView().setLabel("Users And Groups");
+        this.userList.setName("userList");
 
         this.parentsList = userListPresenterProvider.get();
         // A parent can only be a group
         this.parentsList.setMode(Mode.GROUPS_ONLY);
+        this.parentsList.setName("parentsList");
 
         this.childrenList = userListPresenterProvider.get();
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
+        this.childrenList.setName("childrenList");
 
         this.createUserPresenter = createUserPresenter;
         this.createNewGroupPresenterProvider = createNewGroupPresenterProvider;
@@ -210,16 +213,13 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }));
     }
 
-    public void setFilterInput(final String filterInput) {
-        userList.setQuickFilterText(filterInput);
-    }
-
     private void onSelection() {
         final User selected = userList.getSelectionModel().getSelected();
+//        GWT.log("onSelection - selected: " + selected);
         if (selected != null) {
             parentsList.setAdditionalTerm(ExpressionTerm
                     .builder()
-                    .field(UserFields.PARENT_GROUP.getFldName())
+                    .field(UserFields.PARENTS_OF.getFldName())
                     .condition(Condition.EQUALS)
                     .value(selected.getUuid())
                     .build());
@@ -235,7 +235,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
             childrenList.setAdditionalTerm(ExpressionTerm
                     .builder()
-                    .field(UserFields.GROUP_CONTAINS.getFldName())
+                    .field(UserFields.CHILDREN_OF.getFldName())
                     .condition(Condition.EQUALS)
                     .value(selected.getUuid())
                     .build());
@@ -428,6 +428,13 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     @Override
     public String getType() {
         return "UsersAndGroups";
+    }
+
+    public void showUser(final UserRef userRef) {
+        userList.setResultPageConsumer(userResultPage -> {
+            onSelection();
+        });
+        userList.showUser(userRef);
     }
 
 

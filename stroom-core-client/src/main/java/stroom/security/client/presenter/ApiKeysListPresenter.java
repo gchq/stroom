@@ -11,7 +11,6 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -29,6 +28,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Selection;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -106,6 +106,7 @@ public class ApiKeysListPresenter
         deleteButton = new InlineSvgButton();
         initButtons();
         initTableColumns();
+        //noinspection Convert2Diamond // Cos GWT
         dataProvider = new RestDataProvider<HashedApiKey, ApiKeyResultPage>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -115,6 +116,16 @@ public class ApiKeysListPresenter
                 ApiKeysListPresenter.this.dataConsumer = dataConsumer;
                 fetchData(range, dataConsumer, errorHandler, view);
             }
+
+            @Override
+            protected void changeData(final ApiKeyResultPage data) {
+                super.changeData(data);
+                if (!data.isEmpty()) {
+                    selectionModel.setSelected(data.getFirst());
+                } else {
+                    selectionModel.clear();
+                }
+            }
         };
         dataProvider.addDataDisplay(dataGrid);
         selectionModel.addSelectionHandler(event -> {
@@ -123,13 +134,13 @@ public class ApiKeysListPresenter
                 editSelectedKey();
             }
         });
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                dataProvider.refresh();
-            }
-        });
+//        dataGrid.addColumnSortHandler(event -> {
+//            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+//                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+//                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
+//                dataProvider.refresh();
+//            }
+//        });
     }
 
     private void initButtons() {
@@ -194,12 +205,12 @@ public class ApiKeysListPresenter
             final int id = selectedItems.get(0);
             final HashedApiKey apiKey = apiKeys.get(id);
             final String msg = "Are you sure you want to delete API Key '"
-                    + apiKey.getName()
-                    + "' with prefix '"
-                    + apiKey.getApiKeyPrefix()
-                    + "'?" +
-                    "\n\nOnce deleted, anyone using this API Key will no longer by able to authenticate with it "
-                    + "and it will not be possible to re-create it.";
+                               + apiKey.getName()
+                               + "' with prefix '"
+                               + apiKey.getApiKeyPrefix()
+                               + "'?" +
+                               "\n\nOnce deleted, anyone using this API Key will no longer by able to authenticate with it "
+                               + "and it will not be possible to re-create it.";
             ConfirmEvent.fire(this, msg, ok -> {
 //                GWT.log("id: " + id);
                 if (ok) {
@@ -216,8 +227,8 @@ public class ApiKeysListPresenter
             });
         } else if (cnt > 1) {
             final String msg = "Are you sure you want to delete " + selectedItems.size() + " API keys?" +
-                    "\n\nOnce deleted, anyone using these API Keys will no longer by able to authenticate with them " +
-                    "and it will not be possible to re-create them.";
+                               "\n\nOnce deleted, anyone using these API Keys will no longer by able to authenticate with them " +
+                               "and it will not be possible to re-create them.";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     restFactory
@@ -235,6 +246,7 @@ public class ApiKeysListPresenter
     }
 
     private void initTableColumns() {
+        DataGridUtil.addColumnSortHandler(dataGrid, criteria, this::refresh);
 
         final Column<HashedApiKey, TickBoxState> checkBoxColumn = DataGridUtil.columnBuilder(
                         (HashedApiKey row) ->
@@ -347,9 +359,16 @@ public class ApiKeysListPresenter
     }
 
     public void setQuickFilter(final String userInput) {
-        timer.setName(userInput);
-        timer.cancel();
-        timer.schedule(400);
+//        timer.setName(userInput);
+//        timer.cancel();
+//        timer.schedule(400);
+
+        criteria.setQuickFilterInput(userInput);
+        internalRefresh();
+    }
+
+    public void showUser(final UserRef userRef) {
+
     }
 
     public void refresh() {
@@ -376,12 +395,9 @@ public class ApiKeysListPresenter
 
         @Override
         public void run() {
-            String filter = name;
-            if (filter != null) {
-                filter = filter.trim();
-                if (filter.length() == 0) {
-                    filter = null;
-                }
+            String filter = GwtNullSafe.trim(name);
+            if (filter.isEmpty()) {
+                filter = null;
             }
 
             if (!Objects.equals(filter, criteria.getQuickFilterInput())) {

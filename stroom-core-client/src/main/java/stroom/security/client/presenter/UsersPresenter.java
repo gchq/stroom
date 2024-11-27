@@ -8,6 +8,7 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 
@@ -134,6 +135,10 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     @Override
     public String getType() {
         return "Users";
+    }
+
+    public void showUser(final UserRef userRef) {
+        userList.showUser(userRef);
     }
 
 

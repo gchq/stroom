@@ -17,7 +17,8 @@ import java.util.Objects;
         "subjectId",
         "displayName",
         "fullName",
-        "group"
+        "group",
+        "enabled"
 })
 public final class UserRef {
 
@@ -31,33 +32,41 @@ public final class UserRef {
     private final String fullName;
     @JsonProperty
     private final boolean group;
+    @JsonProperty
+    private final boolean enabled;
 
     @JsonCreator
     public UserRef(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("subjectId") final String subjectId,
                    @JsonProperty("displayName") final String displayName,
                    @JsonProperty("fullName") final String fullName,
-                   @JsonProperty("group") final boolean group) {
+                   @JsonProperty("group") final boolean group,
+                   @JsonProperty("enabled") final boolean enabled) {
         Objects.requireNonNull(uuid, "Null uuid provided to UserRef");
+        if (group && !enabled) {
+            throw new IllegalArgumentException("Groups cannot be disabled");
+        }
+
         this.uuid = uuid;
         this.subjectId = subjectId;
         this.displayName = displayName;
         this.fullName = fullName;
         this.group = group;
+        this.enabled = enabled;
     }
 
     /**
      * Creates a {@link UserRef} representing a user (not a group).
      */
     public static UserRef forUserUuid(final String userUuid) {
-        return new UserRef(userUuid, null, null, null, false);
+        return new UserRef(userUuid, null, null, null, false, true);
     }
 
     /**
      * Creates a {@link UserRef} representing a group.
      */
     public static UserRef forGroupUuid(final String groupUuid) {
-        return new UserRef(groupUuid, null, null, null, true);
+        return new UserRef(groupUuid, null, null, null, true, true);
     }
 
     /**
@@ -92,6 +101,20 @@ public final class UserRef {
 
     public boolean isGroup() {
         return group;
+    }
+
+    @JsonIgnore
+    public boolean isUser() {
+        return !group;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @JsonIgnore
+    public boolean isDisabled() {
+        return !enabled;
     }
 
     /**
@@ -147,6 +170,7 @@ public final class UserRef {
                ", displayName='" + displayName + '\'' +
                ", fullName='" + fullName + '\'' +
                ", group=" + group +
+               ", enabled=" + enabled +
                '}';
     }
 
@@ -203,7 +227,8 @@ public final class UserRef {
         private String subjectId;
         private String displayName;
         private String fullName;
-        private boolean group;
+        private boolean group = false;
+        private boolean enabled = true;
 
         private Builder() {
         }
@@ -214,6 +239,7 @@ public final class UserRef {
             this.displayName = userRef.displayName;
             this.fullName = userRef.fullName;
             this.group = userRef.group;
+            this.enabled = userRef.enabled;
         }
 
         /**
@@ -255,9 +281,37 @@ public final class UserRef {
             return this;
         }
 
+        public Builder group() {
+            this.group = true;
+            return this;
+        }
+
+        public Builder user() {
+            this.group = false;
+            return this;
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder enabled() {
+            this.enabled = true;
+            return this;
+        }
+
+        public Builder disabled() {
+            this.enabled = false;
+            return this;
+        }
+
         public UserRef build() {
             Objects.requireNonNull(uuid, "Null UUID");
-            return new UserRef(uuid, subjectId, displayName, fullName, group);
+            if (group && !enabled) {
+                throw new IllegalArgumentException("Groups cannot be disabled");
+            }
+            return new UserRef(uuid, subjectId, displayName, fullName, group, enabled);
         }
     }
 }

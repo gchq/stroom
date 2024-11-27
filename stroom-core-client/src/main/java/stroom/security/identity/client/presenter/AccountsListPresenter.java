@@ -14,12 +14,13 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.event.OpenUserOrGroupEvent;
+import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.shared.QuickFilterExpressionParser;
+import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
@@ -50,6 +51,7 @@ public class AccountsListPresenter
         implements QuickFilterUiHandlers {
 
     private static final AccountResource ACCOUNT_RESOURCE = GWT.create(AccountResource.class);
+    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -270,8 +272,21 @@ public class AccountsListPresenter
                 return new CommandLink(
                         userId,
                         "Open account '" + userId + "' on the Users and Groups screen.",
-                        () -> OpenUserOrGroupEvent.fire(
-                                AccountsListPresenter.this, userId));
+                        () -> {
+                            restFactory
+                                    .create(USER_RESOURCE)
+                                    .method(userResource ->
+                                            userResource.fetchBySubjectId(userId))
+                                    .onSuccess(user -> {
+                                        if (user != null) {
+                                            OpenUsersAndGroupsScreenEvent.fire(
+                                                    AccountsListPresenter.this,
+                                                    user.asRef());
+                                        }
+                                    })
+                                    .taskMonitorFactory(pagerView)
+                                    .exec();
+                        });
             } else {
                 return null;
             }

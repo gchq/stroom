@@ -13,6 +13,7 @@ import stroom.util.NullSafe;
 import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
@@ -71,7 +72,8 @@ public class UserDaoImpl implements UserDao {
 
     private static final Map<String, Field<?>> SORT_FIELD_NAME_TO_FIELD_MAP = Map.of(
             UserFields.FIELD_IS_GROUP, STROOM_USER.IS_GROUP,
-            UserFields.FIELD_NAME, STROOM_USER.NAME,
+            UserFields.FIELD_UNIQUE_ID, STROOM_USER.NAME,
+//            UserFields.FIELD_NAME, STROOM_USER.NAME,
             UserFields.FIELD_DISPLAY_NAME, STROOM_USER.DISPLAY_NAME,
             UserFields.FIELD_FULL_NAME, STROOM_USER.FULL_NAME,
             UserFields.FIELD_ENABLED, STROOM_USER.ENABLED);
@@ -89,12 +91,13 @@ public class UserDaoImpl implements UserDao {
 
         expressionMapper = expressionMapperFactory.create()
                 .map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean)
-                .map(UserFields.NAME, STROOM_USER.NAME, String::valueOf)
+                .map(UserFields.UNIQUE_ID, STROOM_USER.NAME, String::valueOf)
+//                .map(UserFields.NAME, STROOM_USER.NAME, String::valueOf)
                 .map(UserFields.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME, String::valueOf)
                 .map(UserFields.FULL_NAME, STROOM_USER.FULL_NAME, String::valueOf)
                 .map(UserFields.ENABLED, STROOM_USER.ENABLED, StringUtil::asBoolean)
-                .map(UserFields.PARENT_GROUP, STROOM_USER_GROUP.USER_UUID, String::valueOf)
-                .map(UserFields.GROUP_CONTAINS, STROOM_USER_GROUP.GROUP_UUID, String::valueOf);
+                .map(UserFields.PARENTS_OF, STROOM_USER_GROUP.USER_UUID, String::valueOf)
+                .map(UserFields.CHILDREN_OF, STROOM_USER_GROUP.GROUP_UUID, String::valueOf);
     }
 
     @Override
@@ -140,11 +143,15 @@ public class UserDaoImpl implements UserDao {
     @Override
     public User tryCreate(final User user, final Consumer<User> onUserCreateAction) {
         try {
+            LOGGER.debug("tryCreate user: {}", user);
             final User persisted = create(user);
+            LOGGER.debug("Created new user: {}", user);
             onUserCreateAction.accept(persisted);
             return persisted;
         } catch (final IntegrityConstraintViolationException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.debug(() -> LogUtil.message("User {} exists. " + LogUtil.exceptionMessage(e)
+                                               + ". TRACE for stacktrace"));
+            LOGGER.trace(e::getMessage, e);
         }
 
         if (user.isGroup()) {
@@ -155,40 +162,52 @@ public class UserDaoImpl implements UserDao {
                 new RuntimeException("Unable to create user"));
     }
 
+    /**
+     * Get user or group by their UUID.
+     */
     @Override
     public Optional<User> getByUuid(final String uuid) {
         return JooqUtil.contextResult(securityDbConnProvider, context -> getByUuid(context, uuid));
     }
 
+    /**
+     * Get user or group by their UUID.
+     */
     public Optional<User> getByUuid(final DSLContext context, final String uuid) {
-        return context
+        final Optional<User> optUser = context
                 .select()
                 .from(STROOM_USER)
                 .where(STROOM_USER.UUID.eq(uuid))
                 .fetchOptional()
                 .map(RECORD_TO_USER_MAPPER);
+        LOGGER.debug("getByUuid - uuid: {}, returning: {}", uuid, optUser);
+        return optUser;
     }
 
     @Override
     public Optional<User> getUserBySubjectId(final String subjectId) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+        final Optional<User> optUser = JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(subjectId))
                         .and(STROOM_USER.IS_GROUP.eq(false))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
+        LOGGER.debug("getUserBySubjectId - subjectId: {}, returning: {}", subjectId, optUser);
+        return optUser;
     }
 
     @Override
     public Optional<User> getGroupByName(final String groupName) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+        final Optional<User> optUser = JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(groupName))
                         .and(STROOM_USER.IS_GROUP.eq(true))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
+        LOGGER.debug("getGroupByName - groupName: {}, returning: {}", groupName, optUser);
+        return optUser;
     }
 
     @Override
@@ -197,6 +216,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     private User update(final DSLContext context, final User user) {
+        LOGGER.debug("update - user: {}", user);
         final int count = context
                 .update(STROOM_USER)
                 .set(STROOM_USER.VERSION, STROOM_USER.VERSION.plus(1))
@@ -235,53 +255,86 @@ public class UserDaoImpl implements UserDao {
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
 
-        List<User> list = null;
-        if (fields.contains(UserFields.PARENT_GROUP.getFldName())) {
-            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                            .selectDistinct()
-                            .from(STROOM_USER)
-                            .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.GROUP_UUID.eq(STROOM_USER.UUID))
-                            .where(condition)
-//                            .and(STROOM_USER.ENABLED.eq(true))
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch())
-                    .stream()
-                    .map(RECORD_TO_USER_MAPPER)
-                    .toList();
+        LOGGER.debug("find - criteria: {}, fields: {}, condition: {}, limit: {}, offset: {}",
+                criteria, fields, condition, limit, offset);
 
-        } else if (fields.contains(UserFields.GROUP_CONTAINS.getFldName())) {
-            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                            .selectDistinct()
-                            .from(STROOM_USER)
-                            .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.USER_UUID.eq(STROOM_USER.UUID))
-                            .where(condition)
-//                            .and(STROOM_USER.ENABLED.eq(true))
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch())
-                    .stream()
-                    .map(RECORD_TO_USER_MAPPER)
-                    .toList();
-
+        final List<User> list;
+        if (fields.contains(UserFields.PARENTS_OF.getFldName())) {
+            list = getParentsOf(condition, orderFields, offset, limit);
+        } else if (fields.contains(UserFields.CHILDREN_OF.getFldName())) {
+            list = getChildrenOf(condition, orderFields, offset, limit);
         } else {
-            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                            .select()
-                            .from(STROOM_USER)
-                            .where(condition)
-//                            .and(STROOM_USER.ENABLED.eq(true))
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch())
-                    .stream()
-                    .map(RECORD_TO_USER_MAPPER)
-                    .toList();
+            list = getMatchingUsersOrGroups(condition, orderFields, offset, limit);
         }
 
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private List<User> getMatchingUsersOrGroups(final Condition condition,
+                                                final Collection<OrderField<?>> orderFields,
+                                                final int offset,
+                                                final int limit) {
+        LOGGER.debug("getMatchingUsersOrGroups - condition: {}", condition);
+        final List<User> list;
+        list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select()
+                        .from(STROOM_USER)
+                        .where(condition)
+//                            .and(STROOM_USER.ENABLED.eq(true))
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch())
+                .stream()
+                .map(RECORD_TO_USER_MAPPER)
+                .toList();
+        return list;
+    }
+
+    private List<User> getChildrenOf(final Condition condition,
+                                     final Collection<OrderField<?>> orderFields,
+                                     final int offset,
+                                     final int limit) {
+        // Get all direct children of a group
+        LOGGER.debug("getChildrenOf - condition: {}", condition);
+        final List<User> list;
+        list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .selectDistinct()
+                        .from(STROOM_USER)
+                        .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.USER_UUID.eq(STROOM_USER.UUID))
+                        .where(condition)
+//                            .and(STROOM_USER.ENABLED.eq(true))
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch())
+                .stream()
+                .map(RECORD_TO_USER_MAPPER)
+                .toList();
+        return list;
+    }
+
+    private List<User> getParentsOf(final Condition condition,
+                                    final Collection<OrderField<?>> orderFields,
+                                    final int offset,
+                                    final int limit) {
+        // Get all direct parents of a user/group
+        LOGGER.debug("getParentsOf - condition: {}", condition);
+        final List<User> list;
+        list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .selectDistinct()
+                        .from(STROOM_USER)
+                        .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.GROUP_UUID.eq(STROOM_USER.UUID))
+                        .where(condition)
+//                            .and(STROOM_USER.ENABLED.eq(true))
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch())
+                .stream()
+                .map(RECORD_TO_USER_MAPPER)
+                .toList();
+        return list;
     }
 
     Collection<OrderField<?>> createOrderFields(final BaseCriteria criteria) {
@@ -306,6 +359,7 @@ public class UserDaoImpl implements UserDao {
             final OrderField<?> orderField = asOrderField(DEFAULT_SORT_FIELD, false);
             sortFields.add(orderField);
         }
+        LOGGER.debug("createOrderFields - sortList: {}, sortFields: {}", sortList, sortFields);
         return sortFields;
     }
 
@@ -366,23 +420,25 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void addUserToGroup(final String userUuid,
                                final String groupUuid) {
-        JooqUtil.context(securityDbConnProvider, context -> context
+        final Integer count = JooqUtil.contextResult(securityDbConnProvider, context -> context
                 .insertInto(STROOM_USER_GROUP)
                 .columns(STROOM_USER_GROUP.USER_UUID, STROOM_USER_GROUP.GROUP_UUID)
                 .values(userUuid, groupUuid)
                 .onDuplicateKeyUpdate()
                 .set(STROOM_USER_GROUP.GROUP_UUID, STROOM_USER_GROUP.GROUP_UUID)
                 .execute());
+        LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}", userUuid, groupUuid, count);
     }
 
     @Override
     public void removeUserFromGroup(final String userUuid,
                                     final String groupUuid) {
-        JooqUtil.context(securityDbConnProvider, context -> context
+        final Integer count = JooqUtil.contextResult(securityDbConnProvider, context -> context
                 .deleteFrom(STROOM_USER_GROUP)
                 .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
                 .and(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                 .execute());
+        LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}", userUuid, groupUuid, count);
     }
 
     Condition getUserCondition(final ExpressionOperator expression) {
