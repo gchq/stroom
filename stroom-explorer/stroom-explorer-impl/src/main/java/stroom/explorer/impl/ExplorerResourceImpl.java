@@ -587,7 +587,8 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     private void addDocumentUserCreatePermission(final SingleDocumentPermissionChangeRequest request,
-                                                 final AddDocumentUserCreatePermission addDocumentUserCreatePermission) {
+                                                 final AddDocumentUserCreatePermission
+                                                         addDocumentUserCreatePermission) {
         final Permission permission = Permission
                 .builder()
                 .withAllowAttributes(PermissionAttribute.AUTHOR)
