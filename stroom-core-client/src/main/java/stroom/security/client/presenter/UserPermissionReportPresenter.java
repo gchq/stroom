@@ -20,12 +20,14 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.explorer.client.presenter.DocumentPermissionsListPresenter;
 import stroom.explorer.shared.FindResultWithPermissions;
+import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
@@ -33,7 +35,6 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -56,8 +57,8 @@ public class UserPermissionReportPresenter
     private final DocumentPermissionsListPresenter documentPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
+    private final SelectionBox<PermissionShowLevel> showLevel = new SelectionBox<>();
     private final ButtonView docEdit;
-    private final InlineSvgToggleButton explicitOnly;
     private final ButtonView docFilter;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
@@ -87,16 +88,15 @@ public class UserPermissionReportPresenter
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
         quickFilterExpression = getShowAllExpression();
 
+        showLevel.addItems(PermissionShowLevel.ITEMS);
+        showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        documentPermissionsListPresenter.getView().addToolbarWidget(showLevel);
+        documentPermissionsListPresenter.getCriteriaBuilder().showLevel(showLevel.getValue());
+
         docEdit = documentPermissionsListPresenter.getView().addButton(new Preset(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
                 false));
-        explicitOnly = new InlineSvgToggleButton();
-        explicitOnly.setSvg(SvgImage.EYE_OFF);
-        explicitOnly.setTitle("Only Show Documents With Explicit Permissions");
-        explicitOnly.setState(false);
-        documentPermissionsListPresenter.getView().addButton(explicitOnly);
-        documentPermissionsListPresenter.getCriteriaBuilder().explicitPermission(explicitOnly.getState());
         docFilter = documentPermissionsListPresenter.getView().addButton(new Preset(
                 SvgImage.FILTER,
                 "Filter Documents To Apply Permissions Changes On",
@@ -122,15 +122,8 @@ public class UserPermissionReportPresenter
                 onEdit();
             }
         }));
-        registerHandler(explicitOnly.addClickHandler(e -> {
-            if (explicitOnly.getState()) {
-                explicitOnly.setTitle("Show All Documents");
-                explicitOnly.setSvg(SvgImage.EYE);
-            } else {
-                explicitOnly.setTitle("Only Show Documents With Explicit Permissions");
-                explicitOnly.setSvg(SvgImage.EYE_OFF);
-            }
-            documentPermissionsListPresenter.getCriteriaBuilder().explicitPermission(explicitOnly.getState());
+        registerHandler(showLevel.addValueChangeHandler(e -> {
+            documentPermissionsListPresenter.getCriteriaBuilder().showLevel(showLevel.getValue());
             documentPermissionsListPresenter.refresh();
         }));
         registerHandler(docFilter.addClickHandler(e -> {
@@ -151,9 +144,6 @@ public class UserPermissionReportPresenter
                 onEdit();
             }
         }));
-//        registerHandler(documentListPresenter.addFocusHandler(e -> {
-//            getView().focus();
-//        }));
     }
 
     private void onFilter() {

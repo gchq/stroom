@@ -49,6 +49,7 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
 
     private int taskCount;
     private ButtonPanel buttonPanel;
+    private boolean addedWidgets;
 
     private final Widget widget;
 
@@ -87,13 +88,18 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
 
     @Override
     public void addToolbarWidget(final Widget widget) {
+        if (!addedWidgets) {
+            addedWidgets = true;
+            toolbarWidgets.getElement().getStyle().setProperty("paddingLeft", "var(--control__gap--horizontal)");
+        }
         toolbarWidgets.add(widget);
     }
 
     private ButtonPanel getButtonPanel() {
         if (buttonPanel == null) {
             buttonPanel = new ButtonPanel();
-            addToolbarWidget(buttonPanel);
+            toolbarWidgets.add(buttonPanel);
+            addedWidgets = true;
         }
         return buttonPanel;
     }

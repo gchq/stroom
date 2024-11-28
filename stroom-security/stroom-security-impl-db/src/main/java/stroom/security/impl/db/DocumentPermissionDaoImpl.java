@@ -402,7 +402,11 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         final List<Condition> conditions = new ArrayList<>();
 
         conditions.add(userDao.getUserCondition(request.getExpression()));
-        conditions.add(STROOM_USER.ENABLED.eq(true));
+        if (request.getUserRef() != null) {
+            conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
+        } else {
+            conditions.add(STROOM_USER.ENABLED.eq(true));
+        }
 
         // If we have a single doc then try to deliver more useful permissions.
         final List<DocumentUserPermissions> list;

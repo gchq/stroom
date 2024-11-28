@@ -21,6 +21,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,6 +36,8 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
+    private final UserRef userRef;
+    @JsonProperty
     private final PermissionShowLevel showLevel;
 
     @JsonCreator
@@ -42,14 +45,20 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                                @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
+                                               @JsonProperty("userRef") final UserRef userRef,
                                                @JsonProperty("showLevel") PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
+        this.userRef = userRef;
         this.showLevel = showLevel;
     }
 
     public DocRef getDocRef() {
         return docRef;
+    }
+
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public PermissionShowLevel getShowLevel() {
@@ -60,6 +69,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             extends ExpressionCriteria.AbstractBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
         private DocRef docRef;
+        private UserRef userRef;
         private PermissionShowLevel showLevel;
 
         public Builder() {
@@ -69,11 +79,17 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
         public Builder(final FetchDocumentUserPermissionsRequest request) {
             super(request);
             this.docRef = request.docRef;
+            this.userRef = request.userRef;
             this.showLevel = request.showLevel;
         }
 
         public Builder docRef(final DocRef docRef) {
             this.docRef = docRef;
+            return this;
+        }
+
+        public Builder userRef(final UserRef userRef) {
+            this.userRef = userRef;
             return this;
         }
 
@@ -94,6 +110,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                     sortList,
                     expression,
                     docRef,
+                    userRef,
                     showLevel);
         }
     }

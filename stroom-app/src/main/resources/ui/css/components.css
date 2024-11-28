@@ -658,6 +658,7 @@
 .pager-toolbar {
     display: flex;
     flex-grow: 1;
+    gap: var(--control__gap--horizontal);
 }
 
 .pager-paging {

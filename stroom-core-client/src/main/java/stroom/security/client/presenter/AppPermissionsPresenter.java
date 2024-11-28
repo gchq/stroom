@@ -58,7 +58,6 @@ public class AppPermissionsPresenter
 
         showLevel.addItems(PermissionShowLevel.ITEMS);
         showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        showLevel.getElement().getStyle().setProperty("padding", "0 var(--control__gap--horizontal)");
         appUserPermissionsListPresenter.getPagerView().addToolbarWidget(showLevel);
         appUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
     }

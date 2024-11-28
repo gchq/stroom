@@ -11,8 +11,6 @@ import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -37,8 +35,6 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDocPermissionDaoImpl {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDocPermissionDaoImpl.class);
 
     @Inject
     private UserDao userDao;
@@ -217,6 +213,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -246,6 +243,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -277,6 +275,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -315,6 +314,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -356,6 +356,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -398,6 +399,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -432,6 +434,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
@@ -481,6 +484,7 @@ class TestDocPermissionDaoImpl {
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
                 docRef1,
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
                 request);
