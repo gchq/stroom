@@ -2,6 +2,8 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.explorer.shared.ExplorerConstants;
@@ -40,17 +42,34 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
         super(eventBus, contentManager, presenterProvider, securityContext);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
-        eventBus.addHandler(ShowPermissionsDialogEvent.getType(), event ->
-                documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
-                    @Override
-                    public void onSuccess(final DocumentUserPermissionsPresenter presenter) {
-                        presenter.show(event.getDocRef());
-                    }
+        eventBus.addHandler(ShowPermissionsDialogEvent.getType(), event -> {
+            documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
+                @Override
+                public void onSuccess(final DocumentUserPermissionsPresenter presenter) {
+                    presenter.setDocRef(event.getDocRef());
+                    final CloseContentEvent.Handler closeHandler = (event) -> {
+                        if (presenter instanceof CloseContentEvent.Handler) {
+                            final Callback callback = ok -> {
+                                event.getCallback().closeTab(ok);
+                            };
 
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                    }
-                }));
+                            ((CloseContentEvent.Handler) presenter)
+                                    .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
+                        } else {
+                            // Give the content manager the ok to close the tab.
+                            event.getCallback().closeTab(true);
+                        }
+                    };
+
+                    // Tell the content manager to open the tab.
+                    contentManager.open(closeHandler, presenter, presenter);
+                }
+
+                @Override
+                public void onFailure(final Throwable caught) {
+                }
+            });
+        });
     }
 
     @Override

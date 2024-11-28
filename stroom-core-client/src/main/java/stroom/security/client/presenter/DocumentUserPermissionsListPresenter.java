@@ -44,7 +44,7 @@ import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
+import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -70,7 +70,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class DocumentUserPermissionsListPresenter
-        extends MyPresenterWidget<QuickFilterDialogView>
+        extends MyPresenterWidget<QuickFilterPageView>
         implements QuickFilterUiHandlers {
 
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
@@ -86,7 +86,7 @@ public class DocumentUserPermissionsListPresenter
 
     @Inject
     public DocumentUserPermissionsListPresenter(final EventBus eventBus,
-                                                final QuickFilterDialogView userListView,
+                                                final QuickFilterPageView userListView,
                                                 final PagerView pagerView,
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,

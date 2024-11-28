@@ -17,6 +17,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
@@ -37,7 +38,6 @@ import stroom.widget.util.client.MouseUtil;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
@@ -45,7 +45,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class DocumentUserPermissionsPresenter
-        extends MyPresenterWidget<DocumentUserPermissionsView> {
+        extends ContentTabPresenter<DocumentUserPermissionsView> {
 
     private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
@@ -111,10 +111,14 @@ public class DocumentUserPermissionsPresenter
         }
     }
 
-    public void show(final DocRef docRef) {
+    public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
         documentUserPermissionsListPresenter.setDocRef(docRef);
         documentUserPermissionsListPresenter.refresh();
+    }
+
+    public void show(final DocRef docRef) {
+        setDocRef(docRef);
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -201,6 +205,20 @@ public class DocumentUserPermissionsPresenter
         return sb.toSafeHtml();
     }
 
+    @Override
+    public SvgImage getIcon() {
+        return SvgImage.LOCKED;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Permissions For '" + docRef.getDisplayValue() + "'";
+    }
+
+    @Override
+    public String getType() {
+        return "DocumentPermissions";
+    }
 
     // --------------------------------------------------------------------------------
 

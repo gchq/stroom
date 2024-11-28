@@ -2,11 +2,11 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="max default-min-sizes">
+    <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="200">
             <form:FormGroup ui:field="detailsFormGroup"
                             addStyleNames="form-label-padding">
-                <g:SimplePanel styleName="max form-padding form-control-background form-control-border">
+                <g:SimplePanel styleName="max form-padding">
                     <g:HTML ui:field="details" styleName="max"/>
                 </g:SimplePanel>
             </form:FormGroup>
@@ -16,5 +16,5 @@
                 <g:SimplePanel ui:field="docUserPermissionsList" styleName="max"/>
             </form:FormGroup>
         </g:center>
-    </g:MySplitLayoutPanel>
+    </g:ThinSplitLayoutPanel>
 </ui:UiBinder> 
