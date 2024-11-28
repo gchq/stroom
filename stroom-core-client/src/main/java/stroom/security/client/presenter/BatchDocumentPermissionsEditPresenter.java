@@ -179,7 +179,8 @@ public class BatchDocumentPermissionsEditPresenter
     private void apply(final HidePopupRequestEvent event,
                        final Runnable onClose) {
         long docCount = 0;
-        if (currentResultPageResponse != null) {
+        if (currentResultPageResponse != null &&
+            currentResultPageResponse.getTotal() != null) {
             docCount = currentResultPageResponse.getTotal();
         }
 

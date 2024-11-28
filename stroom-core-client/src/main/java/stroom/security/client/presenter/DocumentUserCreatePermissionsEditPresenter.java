@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -32,6 +33,7 @@ import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -173,34 +175,54 @@ public class DocumentUserCreatePermissionsEditPresenter
         final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
                 expression, change);
         explorerClient.advancedFind(builder.build(), resultPage -> {
-            final String details = resultPage
-                    .getValues()
-                    .stream()
-                    .map(fr -> fr.getPath() + " / " + fr.getDocRef().getName() + " [" + fr.getDocRef().getType() + "]")
-                    .collect(Collectors.joining("\n"));
-            ConfirmEvent.fire(this,
-                    SafeHtmlUtils.fromString("Confirm Change Of Permission For " +
-                                             resultPage.getPageSize() +
-                                             " Documents?"),
-                    SafeHtmlUtils.fromString(details), ok -> {
-                        if (ok) {
-                            explorerClient.changeDocumentPermissions(request, response -> {
-                                if (response) {
-                                    AlertEvent.fireInfo(
-                                            this,
-                                            "Successfully changed permissions.",
-                                            null);
-                                } else {
-                                    AlertEvent.fireError(
-                                            this,
-                                            "Failed to change permissions.",
-                                            null);
-                                }
-                            }, taskMonitorFactory);
-                        }
-                    });
+            long docCount = 0;
+            if (resultPage != null &&
+                resultPage.getPageResponse() != null &&
+                resultPage.getPageResponse().getTotal() != null) {
+                docCount = resultPage.getPageResponse().getTotal();
+            }
+
+            if (docCount == 0) {
+                AlertEvent.fireError(
+                        this,
+                        "There are no descendant folders of this folder.",
+                        null);
+            } else {
+                final String details = getResultDetails(resultPage);
+                String message = "Are you sure you want to change permissions on this document?";
+                if (docCount > 1) {
+                    message = "Are you sure you want to change permissions for " + docCount + " documents?";
+                }
+                ConfirmEvent.fire(this,
+                        SafeHtmlUtils.fromString(message),
+                        SafeHtmlUtils.fromString(details), ok -> {
+                            if (ok) {
+                                explorerClient.changeDocumentPermissions(request, response -> {
+                                    if (response) {
+                                        AlertEvent.fireInfo(
+                                                this,
+                                                "Successfully changed permissions.",
+                                                null);
+                                    } else {
+                                        AlertEvent.fireError(
+                                                this,
+                                                "Failed to change permissions.",
+                                                null);
+                                    }
+                                }, taskMonitorFactory);
+                            }
+                        });
+            }
         }, taskMonitorFactory);
 
+    }
+
+    private String getResultDetails(final ResultPage<FindResult> resultPage) {
+        return resultPage
+                .getValues()
+                .stream()
+                .map(fr -> fr.getPath() + " / " + fr.getDocRef().getName() + " [" + fr.getDocRef().getType() + "]")
+                .collect(Collectors.joining("\n"));
     }
 
     private AbstractDocumentPermissionsChange createChange() {

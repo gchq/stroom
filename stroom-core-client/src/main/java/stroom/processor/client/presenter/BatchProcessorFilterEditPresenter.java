@@ -132,15 +132,16 @@ public class BatchProcessorFilterEditPresenter
             }
         }
 
-        int docCount = 0;
-        if (currentResultPageResponse != null) {
-            docCount = currentResultPageResponse.getLength();
+        long docCount = 0;
+        if (currentResultPageResponse != null &&
+            currentResultPageResponse.getTotal() != null) {
+            docCount = currentResultPageResponse.getTotal();
         }
 
         if (docCount == 0) {
             ErrorEvent.fire(
                     this,
-                    "No processors are included in the current filter for this change.");
+                    "No processors are included in the current filter.");
             event.reset();
             return;
         }
