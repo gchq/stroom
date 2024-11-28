@@ -9,6 +9,7 @@ import stroom.util.shared.UserDesc;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -50,6 +51,11 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
             summary = "Fetches the user with the supplied subjectId (aka Unique ID)",
             operationId = "fetchBySubjectId")
     User fetchBySubjectId(@PathParam("subjectId") String subjectId);
+
+    @DELETE
+    @Path("{userUuid}")
+    @NotNull
+    boolean delete(@PathParam("userUuid") String userUuid);
 
     @POST
     @Path("/createGroup")

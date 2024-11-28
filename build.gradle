@@ -97,20 +97,20 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 // Jooq code generator with a locally named database (from SetupDevEnv),
 // joow will point to the correct DB.
 def localYamlFile = new File("${rootDir}/local.yml")
-println "YAML file: ${localYamlFile}"
+//println "YAML file: ${localYamlFile}"
 ext.dbSchema = 'stroom'
 ext.jdbcUrl = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
 if (localYamlFile.exists()) {
     def localYaml = new org.yaml.snakeyaml.Yaml().load(localYamlFile.newInputStream())
-    String val = localYaml?.appConfig?.commonDbDetails?.connection?.jdbcDriverUrl
-    println "val: ${val}"
-    if (val != null) {
+    String yamlVal = localYaml?.appConfig?.commonDbDetails?.connection?.jdbcDriverUrl
+    //println "yamlVal: ${yamlVal}"
+    if (yamlVal != null) {
         // Strip all the param sunstitution stuff
-        val = val.replaceAll('^\\$\\{STROOM_JDBC_DRIVER_URL:-', '')
+        yamlVal = yamlVal.replaceAll('^\\$\\{STROOM_JDBC_DRIVER_URL:-', '')
             .replaceAll('\\}$', '')
-        ext.jdbcUrl = val
+        ext.jdbcUrl = yamlVal
         // Extract the schema name from the url
-        ext.dbSchema = (val =~ /jdbc:mysql:\/\/[^:]+:[0-9]+\/([^?]+)\?.*/)[0][1]
+        ext.dbSchema = (yamlVal =~ /jdbc:mysql:\/\/[^:]+:[0-9]+\/([^?]+)\?.*/)[0][1]
         println "Using jdbc url [${jdbcUrl}] and dbSchema [${dbSchema}] from local.yml"
     }
 }
