@@ -29,6 +29,7 @@ import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -62,6 +63,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             .withLabel("Documentation")
             .withTooltip(TabData.createDocumentationTooltip(DictionaryDoc.DOCUMENT_TYPE))
             .build();
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ButtonView downloadButton;
     private final RestFactory restFactory;
@@ -75,6 +77,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                                final Provider<DictionarySettingsPresenter> dictionarySettingsPresenterProvider,
                                final Provider<EditorPresenter> editorPresenterProvider,
                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                               final DocumentUserPermissionsTabProvider<DictionaryDoc>
+                                       documentUserPermissionsTabProvider,
                                final Provider<WordListPresenter> wordListPresenterProvider,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
@@ -117,7 +121,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         });
         addTab(IMPORTS, new DocumentEditTabProvider<>(dictionarySettingsPresenterProvider::get));
         addTab(EFFECTIVE_WORDS, createEffectiveWordsTabProvider(eventBus, wordListPresenterProvider));
-
         addTab(DOCUMENTATION, new MarkdownTabProvider<DictionaryDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -135,6 +138,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(WORDS);
     }
 

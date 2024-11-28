@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -36,12 +37,15 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public ViewPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final Provider<ViewSettingsPresenter> settingsPresenterProvider,
-                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                         final DocumentUserPermissionsTabProvider<ViewDoc>
+                                 documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
@@ -62,6 +66,7 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(SETTINGS);
     }
 

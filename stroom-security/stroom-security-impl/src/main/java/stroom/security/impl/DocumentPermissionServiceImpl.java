@@ -249,19 +249,22 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         PermissionChangeEvent.fire(permissionChangeEventBus, null, destDocRef);
     }
 
-    private void checkGetPermission(final DocRef docRef) {
-        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) &&
-            !securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
-            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to get " +
+    private boolean canUserChangePermission(final DocRef docRef) {
+        return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) ||
+               securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER);
+    }
+
+    private void checkSetPermission(final DocRef docRef) {
+        if (!canUserChangePermission(docRef)) {
+            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to change " +
                                                                         "permissions of " +
                                                                         docRef.getDisplayValue());
         }
     }
 
-    private void checkSetPermission(final DocRef docRef) {
-        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) &&
-            !securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER)) {
-            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to change " +
+    private void checkGetPermission(final DocRef docRef) {
+        if (!canUserChangePermission(docRef)) {
+            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to get " +
                                                                         "permissions of " +
                                                                         docRef.getDisplayValue());
         }
@@ -270,14 +273,37 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
             final FetchDocumentUserPermissionsRequest request) {
-        checkGetPermission(request.getDocRef());
-        return documentPermissionDao.fetchDocumentUserPermissions(request);
+        FetchDocumentUserPermissionsRequest modified = request;
+
+        // If the current user is not allowed to change permissions then only show them permissions for themselves.
+        if (!canUserChangePermission(request.getDocRef())) {
+            final UserRef userRef = securityContext.getUserRef();
+            if (userRef == null) {
+                throw new PermissionException(userRef, "No user logged in");
+            }
+            modified = new FetchDocumentUserPermissionsRequest
+                    .Builder(request)
+                    .userRef(userRef)
+                    .build();
+        }
+
+        return documentPermissionDao.fetchDocumentUserPermissions(modified);
     }
 
     public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {
         final DocRef docRef = request.getDocRef();
         final UserRef userRef = request.getUserRef();
-        checkGetPermission(docRef);
+
+        // If the current user is not allowed to change the permissions of the specified document then only allow them
+        // to see a permissions report for themselves.
+        if (!canUserChangePermission(request.getDocRef())) {
+            final UserRef currentUser = securityContext.getUserRef();
+            if (currentUser == null) {
+                throw new PermissionException(currentUser, "No user logged in");
+            } else if (!currentUser.equals(userRef)) {
+                throw new PermissionException(currentUser, "You can only get a permissions report for yourself");
+            }
+        }
 
         final Map<DocumentPermission, List<List<UserRef>>> inheritedPermissions = new HashMap<>();
         final Map<String, List<List<UserRef>>> inheritedCreatePermissions = new HashMap<>();

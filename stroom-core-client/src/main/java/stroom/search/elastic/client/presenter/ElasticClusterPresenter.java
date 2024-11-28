@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -36,13 +37,15 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public ElasticClusterPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final DocumentUserPermissionsTabProvider<ElasticClusterDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocumentEditTabProvider<>(clusterSettingsPresenterProvider::get));
@@ -63,6 +66,7 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(SETTINGS);
     }
 

@@ -53,6 +53,8 @@ import stroom.security.client.presenter.DocumentUserPermissionsPresenter.Documen
 import stroom.security.client.presenter.EditApiKeyPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.security.client.presenter.UserPermissionReportPresenter;
+import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.client.view.ApiKeysViewImpl;
@@ -69,6 +71,7 @@ import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
+import stroom.security.client.view.UserPermissionReportViewImpl;
 import stroom.security.client.view.UsersViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
@@ -150,6 +153,10 @@ public class SecurityModule extends PluginModule {
                 BatchDocumentPermissionsEditPresenter.class,
                 BatchDocumentPermissionsEditView.class,
                 BatchDocumentPermissionsEditViewImpl.class);
+        bindPresenterWidget(
+                UserPermissionReportPresenter.class,
+                UserPermissionReportView.class,
+                UserPermissionReportViewImpl.class);
 
         bindPresenterWidget(
                 ApiKeysPresenter.class,

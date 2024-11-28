@@ -16,7 +16,9 @@
 
 package stroom.security.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.form.client.FormGroup;
@@ -39,6 +41,8 @@ public final class DocumentUserPermissionsViewImpl
 
     private final Widget widget;
 
+    @UiField
+    SelectionBox<PermissionShowLevel> permissionVisibility;
     @UiField
     SimplePanel docUserPermissionsList;
     @UiField
@@ -75,6 +79,11 @@ public final class DocumentUserPermissionsViewImpl
                                   + " \"" + userRef.getDisplayName() + "\":";
             detailsFormGroup.setLabel(DOC_PERM_DETAILS_BASE_LABEL + suffix);
         }
+    }
+
+    @Override
+    public SelectionBox<PermissionShowLevel> getPermissionVisibility() {
+        return permissionVisibility;
     }
 
     public interface Binder extends UiBinder<Widget, DocumentUserPermissionsViewImpl> {

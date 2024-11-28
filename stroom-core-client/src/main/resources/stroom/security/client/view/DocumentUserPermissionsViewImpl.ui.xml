@@ -1,20 +1,26 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="max default-min-sizes">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client">
+    <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="200">
             <form:FormGroup ui:field="detailsFormGroup"
                             addStyleNames="form-label-padding">
-                <g:SimplePanel styleName="max form-padding form-control-background form-control-border">
+                <g:SimplePanel styleName="max form-padding">
                     <g:HTML ui:field="details" styleName="max"/>
                 </g:SimplePanel>
             </form:FormGroup>
         </g:south>
         <g:center>
-            <form:FormGroup label="Users and Groups" addStyleNames="form-label-padding">
-                <g:SimplePanel ui:field="docUserPermissionsList" styleName="max"/>
-            </form:FormGroup>
+            <g:FlowPanel>
+                <form:FormGroup label="Permission Visibility" addStyleNames="form-padding">
+                    <l:SelectionBox ui:field="permissionVisibility"/>
+                </form:FormGroup>
+                <form:FormGroup label="Users and Groups" addStyleNames="form-label-padding max">
+                    <g:SimplePanel ui:field="docUserPermissionsList" styleName="max"/>
+                </form:FormGroup>
+            </g:FlowPanel>
         </g:center>
-    </g:MySplitLayoutPanel>
+    </g:ThinSplitLayoutPanel>
 </ui:UiBinder> 

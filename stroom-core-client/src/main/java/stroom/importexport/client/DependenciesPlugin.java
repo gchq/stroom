@@ -53,12 +53,12 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
 
         // Open the Dependencies view, filtered by a particular DocRef
         registerHandler(getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
-            open();
-
-            final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
-                    ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
-                    : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
-            getPresenter().setQuickFilterText(field + ":" + event.getDocRef().getUuid());
+            open(presenter -> {
+                final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
+                        ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
+                        : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
+                presenter.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
+            });
         }));
     }
 

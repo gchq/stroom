@@ -27,6 +27,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -43,13 +44,16 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public TextConverterPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final Provider<TextConverterSettingsPresenter> settingsPresenterProvider,
                                   final Provider<EditorPresenter> editorPresenterProvider,
-                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                  final DocumentUserPermissionsTabProvider<TextConverterDoc>
+                                          documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(CONVERSION, new AbstractTabProvider<TextConverterDoc, EditorPresenter>(eventBus) {
@@ -110,7 +114,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
                 return document;
             }
         });
-
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(CONVERSION);
     }
 
