@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -39,7 +38,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
@@ -94,32 +92,12 @@ public class DocumentUserPermissionsEditPresenter
                         final UserRef userRef,
                         final DocumentUserPermissionsReport report,
                         final Runnable onClose) {
-        final PopupSize popupSize;
-//        if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
-//            popupSize = PopupSize.builder()
-//                    .width(Size
-//                            .builder()
-//                            .initial(400)
-//                            .min(400)
-//                            .resizable(true)
-//                            .build())
-//                    .height(Size
-//                            .builder()
-//                            .initial(400)
-//                            .min(400)
-//                            .resizable(true)
-//                            .build())
-//                    .build();
-//        } else {
-            popupSize = PopupSize.builder().build();
-//        }
-
         getView().setDocument(docRef);
         getView().setUser(userRef);
         getView().setPermission(report.getExplicitPermission());
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
+                .popupSize(PopupSize.builder().build())
                 .onShow(e -> getView().focus())
                 .caption("Set Permissions")
                 .onHideRequest(e -> {
