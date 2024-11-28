@@ -21,6 +21,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,32 +36,41 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final boolean allUsers;
+    private final UserRef userRef;
+    @JsonProperty
+    private final PermissionShowLevel showLevel;
 
     @JsonCreator
     public FetchDocumentUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                                @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
-                                               @JsonProperty("allUsers") boolean allUsers) {
+                                               @JsonProperty("userRef") final UserRef userRef,
+                                               @JsonProperty("showLevel") PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
-        this.allUsers = allUsers;
+        this.userRef = userRef;
+        this.showLevel = showLevel;
     }
 
     public DocRef getDocRef() {
         return docRef;
     }
 
-    public boolean isAllUsers() {
-        return allUsers;
+    public UserRef getUserRef() {
+        return userRef;
+    }
+
+    public PermissionShowLevel getShowLevel() {
+        return showLevel;
     }
 
     public static class Builder
             extends ExpressionCriteria.AbstractBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
         private DocRef docRef;
-        private boolean allUsers;
+        private UserRef userRef;
+        private PermissionShowLevel showLevel;
 
         public Builder() {
 
@@ -69,7 +79,8 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
         public Builder(final FetchDocumentUserPermissionsRequest request) {
             super(request);
             this.docRef = request.docRef;
-            this.allUsers = request.allUsers;
+            this.userRef = request.userRef;
+            this.showLevel = request.showLevel;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -77,8 +88,13 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             return this;
         }
 
-        public Builder allUsers(final boolean allUsers) {
-            this.allUsers = allUsers;
+        public Builder userRef(final UserRef userRef) {
+            this.userRef = userRef;
+            return this;
+        }
+
+        public Builder showLevel(final PermissionShowLevel showLevel) {
+            this.showLevel = showLevel;
             return this;
         }
 
@@ -94,7 +110,8 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                     sortList,
                     expression,
                     docRef,
-                    allUsers);
+                    userRef,
+                    showLevel);
         }
     }
 }

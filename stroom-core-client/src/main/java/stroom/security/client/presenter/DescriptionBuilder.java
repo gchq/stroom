@@ -1,5 +1,7 @@
 package stroom.security.client.presenter;
 
+import stroom.widget.util.client.SafeHtmlUtil;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
@@ -9,22 +11,38 @@ public class DescriptionBuilder {
     private boolean written;
 
     public void addLine(final String text) {
-        addLine(false, false, text);
+        addLine(false, false, false, SafeHtmlUtil.getSafeHtml(text));
     }
 
-    public void addLine(final boolean bold,
-                        final boolean inherited,
+    public void addLine(final boolean isBold,
+                        final boolean isInherited,
                         final String text) {
+        addLine(isBold, isInherited, false, SafeHtmlUtil.getSafeHtml(text));
+    }
+
+    public void addLine(final boolean isBold,
+                        final boolean isInherited,
+                        final SafeHtml text) {
+        addLine(isBold, isInherited, false, text);
+    }
+
+    public void addLine(final boolean isBold,
+                        final boolean isInherited,
+                        final boolean isDelimiter,
+                        final SafeHtml text) {
         final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
-        if (inherited) {
+        if (isInherited) {
             classNameBuilder.addClassName("inherited");
         }
-        if (bold) {
+        if (isBold) {
             classNameBuilder.addClassName("bold");
+        }
+        if (isDelimiter) {
+            classNameBuilder.addClassName("delimiter");
         }
 
         sb.appendHtmlConstant("<span" + classNameBuilder.build() + ">");
-        sb.appendEscaped(text);
+        sb.append(text);
         sb.appendHtmlConstant("</span>");
         written = true;
     }

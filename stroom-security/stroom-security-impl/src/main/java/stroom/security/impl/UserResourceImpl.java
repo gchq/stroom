@@ -20,6 +20,7 @@ import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @AutoLogged
@@ -43,9 +44,18 @@ public class UserResourceImpl implements UserResource {
         return userServiceProvider.get().find(criteria);
     }
 
-    private User fetch(String userUuid) {
+    @Override
+    public User fetch(String userUuid) {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
+    }
+
+    @Override
+    public User fetchBySubjectId(final String subjectId) {
+        Objects.requireNonNull(subjectId);
+        return userServiceProvider.get()
+                .getUserBySubjectId(subjectId)
+                .orElseThrow(() -> new NotFoundException("User " + subjectId + " does not exist"));
     }
 
     @Override

@@ -36,7 +36,14 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtC
                 ThrowingFunction.unchecked(jwtClaims ->
                         jwtClaims.getClaimValue("name", String.class)));
 
-        this.userRef = new UserRef(userUuid, subjectId, displayName, fullName.orElse(null), false);
+        this.userRef = UserRef.builder()
+                .uuid(userUuid)
+                .subjectId(subjectId)
+                .displayName(displayName)
+                .fullName(fullName.orElse(null))
+                .user()
+                .enabled()
+                .build();
         this.sessionId = sessionId;
         this.jwtContext = jwtContext;
     }
@@ -81,7 +88,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtC
         }
         final ApiUserIdentity that = (ApiUserIdentity) o;
         return Objects.equals(userRef, that.userRef) &&
-                Objects.equals(sessionId, that.sessionId);
+               Objects.equals(sessionId, that.sessionId);
     }
 
     @Override

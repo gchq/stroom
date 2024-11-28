@@ -2,7 +2,9 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.Callback;
+import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserPermissionReportPresenter;
@@ -10,19 +12,24 @@ import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
+import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
+import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class UserPermissionsReportPlugin extends MonitoringPlugin<UserPermissionReportPresenter> {
+public class UserPermissionsReportPlugin extends Plugin {
 
+    private final ContentManager contentManager;
     private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
+    private final Provider<UserPermissionReportPresenter> userPermissionReportPresenterAsyncProvider;
+    private final ClientSecurityContext securityContext;
 
     @Inject
     public UserPermissionsReportPlugin(final EventBus eventBus,
@@ -31,13 +38,44 @@ public class UserPermissionsReportPlugin extends MonitoringPlugin<UserPermission
                                                userPermissionReportPresenterAsyncProvider,
                                        final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
                                        final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, userPermissionReportPresenterAsyncProvider, securityContext);
+        super(eventBus);
+        this.contentManager = contentManager;
         this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
+        this.userPermissionReportPresenterAsyncProvider = userPermissionReportPresenterAsyncProvider;
+        this.securityContext = securityContext;
+
+        final Action openAction = getOpenAction();
+        if (openAction != null) {
+            final AppPermission requiredAppPermission = getRequiredAppPermission();
+            final Command command;
+            if (requiredAppPermission != null) {
+                command = () -> {
+                    if (securityContext.hasAppPermission(requiredAppPermission)) {
+                        open();
+                    }
+                };
+            } else {
+                command = this::open;
+            }
+            KeyBinding.addCommand(openAction, command);
+        }
     }
 
     @Override
+    public void onReveal(final BeforeRevealMenubarEvent event) {
+        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
+                new KeyedParentMenuItem.Builder()
+                        .priority(3)
+                        .text("Monitoring")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.MONITORING_MENU)
+                        .build());
+
+        addChildItems(event);
+    }
+
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
+        if (securityContext.hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addSecurityMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
@@ -50,22 +88,33 @@ public class UserPermissionsReportPlugin extends MonitoringPlugin<UserPermission
         }
     }
 
-    @Override
-    public void open(final Consumer<UserPermissionReportPresenter> consumer) {
+    public void open() {
         userRefPopupPresenterProvider.get().show(userRef -> {
-            super.open(presenter -> {
-                presenter.setUserRef(userRef);
-                consumer.accept(presenter);
-            });
+            final UserPermissionReportPresenter presenter = userPermissionReportPresenterAsyncProvider.get();
+            presenter.setUserRef(userRef);
+            final CloseContentEvent.Handler closeHandler = (event) -> {
+                if (presenter instanceof CloseContentEvent.Handler) {
+                    final Callback callback = ok -> {
+                        event.getCallback().closeTab(ok);
+                    };
+
+                    ((CloseContentEvent.Handler) presenter)
+                            .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
+                } else {
+                    // Give the content manager the ok to close the tab.
+                    event.getCallback().closeTab(true);
+                }
+            };
+
+            // Tell the content manager to open the tab.
+            contentManager.open(closeHandler, presenter, presenter);
         });
     }
 
-    @Override
     protected AppPermission getRequiredAppPermission() {
         return AppPermission.MANAGE_USERS_PERMISSION;
     }
 
-    @Override
     protected Action getOpenAction() {
         return Action.GOTO_USER_PERMISSION_REPORT;
     }

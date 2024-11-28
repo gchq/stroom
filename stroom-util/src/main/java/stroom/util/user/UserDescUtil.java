@@ -26,7 +26,7 @@ public class UserDescUtil {
     private static final int FULL_NAME_CSV_COL_IDX = 2;
 
     /**
-     * Parses usersCsvData into a {@link List<  UserDesc  >}. usersCsvData is CSV format with
+     * Parses usersCsvData into a {@link List<UserDesc>}. usersCsvData is CSV format with
      * one line per user. Each line is of the form:
      * <pre>{@code
      * <unique identifier>,[<opt. display name>,[<opt. full name>]]
@@ -43,7 +43,7 @@ public class UserDescUtil {
      * Blank lines are ignored.
      *
      * @param usersCsvData The user names in CSV form.
-     * @return A list of {@link UserName}
+     * @return A list of {@link UserDesc}
      */
     public static List<UserDesc> parseUsersCsvData(final String usersCsvData) {
         if (NullSafe.isBlankString(usersCsvData)) {
@@ -51,8 +51,9 @@ public class UserDescUtil {
         } else {
             final StringReader stringReader = new StringReader(usersCsvData);
             try {
-                final CSVParser parse = CSVFormat.DEFAULT
-                        .withTrim()
+                final CSVParser parse = CSVFormat.DEFAULT.builder()
+                        .setTrim(true)
+                        .build()
                         .parse(stringReader);
 
                 // Expecting something like

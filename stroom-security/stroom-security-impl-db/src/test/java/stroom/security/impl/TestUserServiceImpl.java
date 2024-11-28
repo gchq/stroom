@@ -129,18 +129,18 @@ class TestUserServiceImpl {
         final User userGroup2 = createUserGroup("findGroup2");
 
         final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(user1.getSubjectId(), UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                .parse(user1.getSubjectId(), UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
 
         assertThat(userService.find(createCriteria(user1.getSubjectId())).size()).isEqualTo(1);
         assertThat(userService.find(createCriteria(user2.getSubjectId())).size()).isEqualTo(1);
         assertThat(userService.find(createCriteria(userGroup1.getSubjectId())).size()).isEqualTo(1);
         assertThat(userService.find(createCriteria(userGroup2.getSubjectId())).size()).isEqualTo(1);
 
-        final Set<String> findUsers = userService.find(createCriteria("group:false"))
+        final Set<String> findUsers = userService.find(createCriteria("isgroup:false"))
                 .stream()
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
-        final Set<String> findGroups = userService.find(createCriteria("group:true"))
+        final Set<String> findGroups = userService.find(createCriteria("isgroup:true"))
                 .stream()
                 .map(User::getUuid)
                 .collect(Collectors.toSet());
@@ -154,7 +154,7 @@ class TestUserServiceImpl {
     private FindUserCriteria createCriteria(final String filter) {
         final PageRequest pageRequest = new PageRequest(0, 100);
         final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
         return new FindUserCriteria(pageRequest, null, expression);
     }
 

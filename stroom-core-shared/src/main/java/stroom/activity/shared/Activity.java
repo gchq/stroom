@@ -177,6 +177,10 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private Integer id;
@@ -255,6 +259,10 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     @JsonInclude(Include.NON_NULL)
     public static class ActivityDetails {
 
@@ -299,6 +307,10 @@ public class Activity implements HasAuditInfo, HasIntegerId {
             return properties.stream().map(prop -> prop.value).collect(Collectors.joining(" - "));
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @JsonInclude(Include.NON_NULL)
     public static class Prop {

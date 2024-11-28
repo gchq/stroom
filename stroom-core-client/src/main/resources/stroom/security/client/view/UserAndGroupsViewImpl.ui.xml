@@ -9,10 +9,10 @@
         <g:center>
             <g:ThinSplitLayoutPanel unit="PX" hSplits="0.5" styleName="max">
                 <g:west size="400">
-                    <g:SimplePanel ui:field="memberOf" styleName="max"/>
+                    <g:SimplePanel ui:field="parents" styleName="max"/>
                 </g:west>
                 <g:center>
-                    <g:SimplePanel ui:field="membersIn" styleName="max"/>
+                    <g:SimplePanel ui:field="children" styleName="max"/>
                 </g:center>
             </g:ThinSplitLayoutPanel>
         </g:center>

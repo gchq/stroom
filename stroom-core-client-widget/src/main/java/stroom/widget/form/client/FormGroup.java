@@ -112,9 +112,9 @@ public class FormGroup extends Composite implements HasWidgets {
             formLabel.setLabel(label);
 
             if (GwtNullSafe.isBlankString(label)) {
-                helpButton.setTitle("Help");
+                helpButton.setTitle("Click for help");
             } else {
-                helpButton.setTitle(label + " - Help");
+                helpButton.setTitle(label + " - Click for help");
                 helpButton.setHelpContentHeading(label);
             }
             updateLabelPanel();
@@ -159,7 +159,7 @@ public class FormGroup extends Composite implements HasWidgets {
             // Not a HelpHTML so must be the childWidget
             if (childWidget != null) {
                 throw new IllegalStateException("FormGroup can only contain one child widget that is not a HelpHTML. " +
-                        "Class: " + widget.getClass().getName());
+                                                "Class: " + widget.getClass().getName());
             }
             this.childWidget = widget;
             if (id != null) {
@@ -180,7 +180,7 @@ public class FormGroup extends Composite implements HasWidgets {
     private void addDescriptionHtml(final DescriptionHTML descriptionHTML) {
         if (this.descriptionHTML != null) {
             throw new IllegalStateException("FormGroup can only contain one child DescriptionHTML widget. " +
-                    "Class: " + descriptionHTML.getClass().getName());
+                                            "Class: " + descriptionHTML.getClass().getName());
         }
         this.descriptionHTML = descriptionHTML;
         this.descriptionHTML.setStyleName("form-group-description");
@@ -190,7 +190,7 @@ public class FormGroup extends Composite implements HasWidgets {
     private void addHelpHtml(final HelpHTML helpHTML) {
         if (this.helpHTML != null) {
             throw new IllegalStateException("FormGroup can only contain one child HelpHTML widget. " +
-                    "Class: " + helpHTML.getClass().getName());
+                                            "Class: " + helpHTML.getClass().getName());
         }
         this.helpHTML = helpHTML;
         this.helpText = this.helpHTML.getHTML();

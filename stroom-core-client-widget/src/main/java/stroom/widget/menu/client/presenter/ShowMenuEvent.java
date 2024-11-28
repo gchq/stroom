@@ -166,7 +166,7 @@ public class ShowMenuEvent
 
         public void fire(HasHandlers hasHandlers) {
             Element[] elements = null;
-            if (autoHidePartners.size() > 0) {
+            if (!autoHidePartners.isEmpty()) {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 

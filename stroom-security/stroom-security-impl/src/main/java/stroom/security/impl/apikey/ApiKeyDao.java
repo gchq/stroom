@@ -2,13 +2,13 @@ package stroom.security.impl.apikey;
 
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
-import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import java.util.Collection;
@@ -28,7 +28,7 @@ public interface ApiKeyDao {
                             ? "enabled"
                             : "disabled"));
 
-    ApiKeyResultPage find(final FindApiKeyCriteria criteria);
+    ResultPage<HashedApiKey> find(final FindApiKeyCriteria criteria);
 
     /**
      * Fetch valid API Keys by their prefix. Keys will all be enabled and not expired.

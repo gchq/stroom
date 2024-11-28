@@ -17,10 +17,14 @@
 package stroom.cell.tickbox.shared;
 
 
+import java.util.Objects;
+import java.util.function.Function;
+
 public enum TickBoxState {
     TICK,
     HALF_TICK,
-    UNTICK;
+    UNTICK,
+    ;
 
     public static TickBoxState fromBoolean(final Boolean state) {
         if (state == null) {
@@ -36,5 +40,14 @@ public enum TickBoxState {
 
     public Boolean toBoolean() {
         return this.equals(TICK);
+    }
+
+    public static <T> Function<T, TickBoxState> createTickBoxFunc(
+            final Function<T, Boolean> booleanExtractor) {
+
+        return row -> {
+            final Boolean bool = Objects.requireNonNull(booleanExtractor).apply(row);
+            return TickBoxState.fromBoolean(bool);
+        };
     }
 }

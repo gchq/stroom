@@ -29,6 +29,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -84,7 +85,7 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
                         final TaskMonitorFactory taskMonitorFactory) {
         ConfirmEvent.fire(this,
                 "A deleted user already exists with the same name, " +
-                        "would you like to restore the existing user?",
+                "would you like to restore the existing user?",
                 ok -> {
                     if (ok) {
                         user.setEnabled(true);
@@ -112,7 +113,8 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
                 .exec();
     }
 
-    public interface CreateExternalUserView extends View, HasUiHandlers<DialogActionUiHandlers> {
+    public interface CreateExternalUserView
+            extends View, HasUiHandlers<DialogActionUiHandlers>, Focus {
 
         String getSubjectId();
 
@@ -120,6 +122,7 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
 
         String getFullName();
 
+        @Override
         void focus();
 
         void clear();

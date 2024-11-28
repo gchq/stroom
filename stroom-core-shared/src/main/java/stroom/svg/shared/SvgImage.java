@@ -582,34 +582,33 @@ public enum SvgImage {
             "svg4591\" width=\"512\" height=\"512\" viewBox=\"0 0 512 512\" sodipodi:docname=\"Dashbo" +
             "ard.svg\" inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\" xmlns:inkscap" +
             "e=\"http://www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi=\"http://sodipodi." +
-            "sourceforge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg" +
-            "=\"http://www.w3.org/2000/svg\"><defs id=\"defs4595\" /><sodipodi:namedview id=\"name" +
-            "dview4593\" pagecolor=\"var(--icon-colour__white)\" bordercolor=\"#666666\" borderopa" +
-            "city=\"1.0\" inkscape:showpageshadow=\"2\" inkscape:pageopacity=\"0.0\" inkscape:pagec" +
-            "heckerboard=\"0\" inkscape:deskcolor=\"#d1d1d1\" showgrid=\"false\" inkscape:zoom=\"0.3" +
-            "5458919\" inkscape:cx=\"530.191\" inkscape:cy=\"589.41447\" inkscape:window-width=\"25" +
-            "60\" inkscape:window-height=\"1403\" inkscape:window-x=\"2560\" inkscape:window-y=\"0\"" +
-            " inkscape:window-maximized=\"1\" inkscape:current-layer=\"g4597\" /><g inkscape:grou" +
-            "pmode=\"layer\" inkscape:label=\"Image\" id=\"g4597\"><rect style=\"fill:var(--icon-col" +
-            "our__orange);fill-opacity:1;stroke:var(--icon-colour__orange);stroke-width:18.00" +
-            "002425;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-o" +
-            "pacity:1;paint-order:fill markers stroke\" id=\"rect4655\" width=\"151.83469\" height" +
-            "=\"195.54515\" x=\"73.71109\" y=\"73.244606\" transform=\"matrix(1,0,-0.00232161,0.9999" +
-            "9731,0,0)\" /><rect style=\"fill:var(--icon-colour__yellow);fill-opacity:1;stroke:" +
-            "var(--icon-colour__yellow);stroke-width:18.00002425;stroke-linecap:round;stroke-" +
-            "linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers s" +
-            "troke\" id=\"rect4655-5\" width=\"151.83469\" height=\"195.54515\" x=\"287.34845\" y=\"243" +
-            ".71935\" transform=\"matrix(1,0,-0.00232161,0.99999731,0,0)\" /><rect style=\"fill:v" +
-            "ar(--icon-colour__green);fill-opacity:1;stroke:var(--icon-colour__green);stroke-" +
-            "width:18.00007497;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:no" +
-            "ne;stroke-opacity:1;paint-order:fill markers stroke\" id=\"rect4655-5-9\" width=\"15" +
-            "5.95563\" height=\"108.24628\" x=\"285.01883\" y=\"71.178368\" transform=\"matrix(1,0,-0" +
-            ".00408154,0.99999167,0,0)\" /><rect style=\"fill:var(--icon-colour__blue);fill-opa" +
-            "city:1;stroke:var(--icon-colour__blue);stroke-width:18.00007497;stroke-linecap:r" +
-            "ound;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fi" +
-            "ll markers stroke\" id=\"rect4655-5-9-2\" width=\"155.95563\" height=\"108.24628\" x=\"7" +
-            "2.821693\" y=\"331.08734\" transform=\"matrix(1,0,-0.00408154,0.99999167,0,0)\" /></g" +
-            "></svg> \n" +
+            "sourceforge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/svg\" ><defs id" +
+            "=\"defs4595\" /><sodipodi:namedview id=\"namedview4593\" pagecolor=\"var(--icon-colou" +
+            "r__white)\" bordercolor=\"#666666\" borderopacity=\"1.0\" inkscape:showpageshadow=\"2\"" +
+            " inkscape:pageopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" inkscape:deskcolor=\"#d" +
+            "1d1d1\" showgrid=\"false\" inkscape:zoom=\"0.35458919\" inkscape:cx=\"530.191\" inkscap" +
+            "e:cy=\"589.41447\" inkscape:window-width=\"2560\" inkscape:window-height=\"1403\" inks" +
+            "cape:window-x=\"2560\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inkscap" +
+            "e:current-layer=\"g4597\" /><g inkscape:groupmode=\"layer\" inkscape:label=\"Image\" i" +
+            "d=\"g4597\"><rect style=\"fill:var(--icon-colour__orange);fill-opacity:1;stroke:var" +
+            "(--icon-colour__orange);stroke-width:18.00002425;stroke-linecap:round;stroke-lin" +
+            "ejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stro" +
+            "ke\" id=\"rect4655\" width=\"151.83469\" height=\"195.54515\" x=\"73.71109\" y=\"73.244606" +
+            "\" transform=\"matrix(1,0,-0.00232161,0.99999731,0,0)\" /><rect style=\"fill:var(--i" +
+            "con-colour__yellow);fill-opacity:1;stroke:var(--icon-colour__yellow);stroke-widt" +
+            "h:18.00002425;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;s" +
+            "troke-opacity:1;paint-order:fill markers stroke\" id=\"rect4655-5\" width=\"151.8346" +
+            "9\" height=\"195.54515\" x=\"287.34845\" y=\"243.71935\" transform=\"matrix(1,0,-0.00232" +
+            "161,0.99999731,0,0)\" /><rect style=\"fill:var(--icon-colour__green);fill-opacity:" +
+            "1;stroke:var(--icon-colour__green);stroke-width:18.00007497;stroke-linecap:round" +
+            ";stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill m" +
+            "arkers stroke\" id=\"rect4655-5-9\" width=\"155.95563\" height=\"108.24628\" x=\"285.018" +
+            "83\" y=\"71.178368\" transform=\"matrix(1,0,-0.00408154,0.99999167,0,0)\" /><rect sty" +
+            "le=\"fill:var(--icon-colour__blue);fill-opacity:1;stroke:var(--icon-colour__blue)" +
+            ";stroke-width:18.00007497;stroke-linecap:round;stroke-linejoin:round;stroke-dash" +
+            "array:none;stroke-opacity:1;paint-order:fill markers stroke\" id=\"rect4655-5-9-2\"" +
+            " width=\"155.95563\" height=\"108.24628\" x=\"72.821693\" y=\"331.08734\" transform=\"mat" +
+            "rix(1,0,-0.00408154,0.99999167,0,0)\" /></g></svg> \n" +
             ""),
 
     DOCUMENT_DICTIONARY("document/Dictionary.svg", "svg-image__document-dictionary", "" +
@@ -4637,17 +4636,17 @@ public enum SvgImage {
 
     USERS("users.svg", "svg-image__users", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\"><path style=\"fill:currentColor\" d=\"M657 896q-162 5-265 128h-134q-82 0" +
-            "-138-40.5t-56-118.5q0-353 124-353 6 0 43.5 21t97.5 42.5 119 21.5q67 0 133-23-5 3" +
-            "7-5 66 0 139 81 256zm1071 637q0 120-73 189.5t-194 69.5h-874q-121 0-194-69.5t-73-" +
-            "189.5q0-53 3.5-103.5t14-109 26.5-108.5 43-97.5 62-81 85.5-53.5 111.5-20q10 0 43 " +
-            "21.5t73 48 107 48 135 21.5 135-21.5 107-48 73-48 43-21.5q61 0 111.5 20t85.5 53.5" +
-            " 62 81 43 97.5 26.5 108.5 14 109 3.5 103.5zm-1024-1277q0 106-75 181t-181 75-181-" +
-            "75-75-181 75-181 181-75 181 75 75 181zm704 384q0 159-112.5 271.5t-271.5 112.5-27" +
-            "1.5-112.5-112.5-271.5 112.5-271.5 271.5-112.5 271.5 112.5 112.5 271.5zm576 225q0" +
-            " 78-56 118.5t-138 40.5h-134q-103-123-265-128 81-117 81-256 0-29-5-66 66 23 133 2" +
-            "3 59 0 119-21.5t97.5-42.5 43.5-21q124 0 124 353zm-128-609q0 106-75 181t-181 75-1" +
-            "81-75-75-181 75-181 181-75 181 75 75 181z\"/></svg>\n" +
+            "1792 1792\"><path style=\"fill:var(--icon-colour__dirty-amber)\" d=\"M657 896q-162 5" +
+            "-265 128h-134q-82 0-138-40.5t-56-118.5q0-353 124-353 6 0 43.5 21t97.5 42.5 119 2" +
+            "1.5q67 0 133-23-5 37-5 66 0 139 81 256zm1071 637q0 120-73 189.5t-194 69.5h-874q-" +
+            "121 0-194-69.5t-73-189.5q0-53 3.5-103.5t14-109 26.5-108.5 43-97.5 62-81 85.5-53." +
+            "5 111.5-20q10 0 43 21.5t73 48 107 48 135 21.5 135-21.5 107-48 73-48 43-21.5q61 0" +
+            " 111.5 20t85.5 53.5 62 81 43 97.5 26.5 108.5 14 109 3.5 103.5zm-1024-1277q0 106-" +
+            "75 181t-181 75-181-75-75-181 75-181 181-75 181 75 75 181zm704 384q0 159-112.5 27" +
+            "1.5t-271.5 112.5-271.5-112.5-112.5-271.5 112.5-271.5 271.5-112.5 271.5 112.5 112" +
+            ".5 271.5zm576 225q0 78-56 118.5t-138 40.5h-134q-103-123-265-128 81-117 81-256 0-" +
+            "29-5-66 66 23 133 23 59 0 119-21.5t97.5-42.5 43.5-21q124 0 124 353zm-128-609q0 1" +
+            "06-75 181t-181 75-181-75-75-181 75-181 181-75 181 75 75 181z\"/></svg>\n" +
             ""),
 
     VOLUMES("volumes.svg", "svg-image__volumes", "" +

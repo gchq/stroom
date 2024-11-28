@@ -34,6 +34,7 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
@@ -43,7 +44,7 @@ import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
+import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -65,12 +66,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class DocumentUserPermissionsListPresenter
-        extends MyPresenterWidget<QuickFilterDialogView>
+        extends MyPresenterWidget<QuickFilterPageView>
         implements QuickFilterUiHandlers {
 
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
@@ -82,12 +82,11 @@ public class DocumentUserPermissionsListPresenter
     private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
     private final PagerView pagerView;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
-    private DocumentTypes documentTypes;
     private DocRef docRef;
 
     @Inject
     public DocumentUserPermissionsListPresenter(final EventBus eventBus,
-                                                final QuickFilterDialogView userListView,
+                                                final QuickFilterPageView userListView,
                                                 final PagerView pagerView,
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
@@ -95,10 +94,7 @@ public class DocumentUserPermissionsListPresenter
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
-        documentTypeCache.fetch(dt -> {
-            this.documentTypes = dt;
-            setupColumns(dt);
-        }, this);
+        documentTypeCache.fetch(this::setupColumns, this);
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -124,7 +120,7 @@ public class DocumentUserPermissionsListPresenter
                         false,
                         true),
                 new CriteriaFieldSort(
-                        UserFields.NAME.getFldName(),
+                        UserFields.UNIQUE_ID.getFldName(),
                         false,
                         true)));
     }
@@ -139,7 +135,7 @@ public class DocumentUserPermissionsListPresenter
         }
 
         final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
         builder.expression(expression);
         refresh();
     }
@@ -175,11 +171,6 @@ public class DocumentUserPermissionsListPresenter
         builder.docRef(docRef);
     }
 
-
-    public void setAllUsers(final boolean allUsers) {
-        builder.allUsers(allUsers);
-    }
-
     private void setupColumns(final DocumentTypes documentTypes) {
         // Icon
         final Column<DocumentUserPermissions, Preset> iconCol =
@@ -202,19 +193,11 @@ public class DocumentUserPermissionsListPresenter
                 new Column<DocumentUserPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final DocumentUserPermissions documentUserPermissions) {
-                        final UserRef userRef = documentUserPermissions.getUserRef();
-                        if (userRef.getDisplayName() != null) {
-                            if (!Objects.equals(userRef.getDisplayName(), userRef.getSubjectId())) {
-                                return userRef.getDisplayName() + " (" + userRef.getSubjectId() + ")";
-                            } else {
-                                return userRef.getDisplayName();
-                            }
-                        }
-                        return userRef.getSubjectId();
+                        return documentUserPermissions.getUserRef().getDisplayName();
                     }
                 };
         nameCol.setSortable(true);
-        dataGrid.addResizableColumn(nameCol, "User or Group", 400);
+        dataGrid.addResizableColumn(nameCol, "Display Name", 400);
 
         // Permission
         final Column<DocumentUserPermissions, SafeHtml> permissionCol =
@@ -225,7 +208,7 @@ public class DocumentUserPermissionsListPresenter
                         final DocumentPermission explicit = documentUserPermissions.getPermission();
                         final DocumentPermission inherited = documentUserPermissions.getInheritedPermission();
                         if (inherited != null) {
-                            if (explicit != null && explicit.isHigher(inherited)) {
+                            if (explicit != null && explicit.isEqualOrHigher(inherited)) {
                                 sb.addLine(explicit.getDisplayValue());
                             } else {
                                 sb.addLine(false, true, inherited.getDisplayValue());
@@ -250,7 +233,7 @@ public class DocumentUserPermissionsListPresenter
                             final Set<String> inherited = documentUserPermissions
                                     .getInheritedDocumentCreatePermissions();
                             if ((explicit != null && explicit.size() > 0) ||
-                                    (inherited != null && inherited.size() > 0)) {
+                                (inherited != null && inherited.size() > 0)) {
 
                                 if (explicit != null && explicit.size() == documentTypes.getTypes().size()) {
                                     sb.addLine(true, false, "All");
@@ -271,7 +254,7 @@ public class DocumentUserPermissionsListPresenter
                                             lastInherited = false;
                                             notEmpty = true;
                                         } else if (inherited != null &&
-                                                inherited.contains(documentType.getType())) {
+                                                   inherited.contains(documentType.getType())) {
                                             if (notEmpty) {
                                                 sb.addLine(false, lastInherited, ", ");
                                             }
@@ -313,7 +296,7 @@ public class DocumentUserPermissionsListPresenter
                                     !isAscending,
                                     true));
                             sortList.add(new CriteriaFieldSort(
-                                    UserFields.NAME.getFldName(),
+                                    UserFields.UNIQUE_ID.getFldName(),
                                     !isAscending,
                                     true));
                         }
@@ -341,5 +324,9 @@ public class DocumentUserPermissionsListPresenter
 
     public PagerView getPagerView() {
         return pagerView;
+    }
+
+    public void setShowLevel(final PermissionShowLevel showLevel) {
+        builder.showLevel(showLevel);
     }
 }

@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -36,13 +37,15 @@ public class ScyllaDbPresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public ScyllaDbPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<ScyllaDbSettingsPresenter> clusterSettingsPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final DocumentUserPermissionsTabProvider<ScyllaDbDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocumentEditTabProvider<>(clusterSettingsPresenterProvider::get));
@@ -63,6 +66,7 @@ public class ScyllaDbPresenter extends DocumentEditTabPresenter<LinkTabPanelView
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(SETTINGS);
     }
 

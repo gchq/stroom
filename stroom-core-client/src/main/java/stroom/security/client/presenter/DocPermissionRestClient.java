@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.DocumentUserPermissionsRequest;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
@@ -25,7 +26,8 @@ public class DocPermissionRestClient extends AbstractRestClient {
 
     public void getDocUserPermissionsReport(final DocRef docRef,
                                             final UserRef userRef,
-                                            final Consumer<DocumentUserPermissionsReport> consumer) {
+                                            final Consumer<DocumentUserPermissionsReport> consumer,
+                                            final TaskMonitorFactory taskMonitorFactory) {
         // Fetch permissions.
         final DocumentUserPermissionsRequest request = new DocumentUserPermissionsRequest(docRef, userRef);
         restFactory

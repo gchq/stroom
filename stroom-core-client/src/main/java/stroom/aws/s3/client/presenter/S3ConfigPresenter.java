@@ -29,6 +29,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -47,6 +48,7 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
     private static final S3ConfigResource S3_CONFIG_RESOURCE = GWT.create(S3ConfigResource.class);
     private static final TabData CONFIG = new TabDataImpl("Config");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ButtonView downloadButton;
     private final RestFactory restFactory;
@@ -59,6 +61,8 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
                              final LinkTabPanelView view,
                              final Provider<EditorPresenter> editorPresenterProvider,
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final DocumentUserPermissionsTabProvider<S3ConfigDoc>
+                                     documentUserPermissionsTabProvider,
                              final RestFactory restFactory,
                              final LocationManager locationManager) {
         super(eventBus, view);
@@ -114,6 +118,7 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(CONFIG);
     }
 

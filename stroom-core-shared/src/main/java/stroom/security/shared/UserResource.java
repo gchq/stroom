@@ -1,5 +1,6 @@
 package stroom.security.shared;
 
+import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -24,23 +26,30 @@ import java.util.List;
 @Path("/users" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface UserResource extends RestResource, DirectRestService {
+public interface UserResource extends RestResource, DirectRestService, FetchWithUuid<User> {
 
     @POST
     @Path("/find")
     @Operation(
             summary = "Find the user names matching the supplied criteria of users who belong to at least " +
-                    "one of the same groups as the current user. If the current user is admin or has " +
-                    "Manage Users permission then they can see all users.",
+                      "one of the same groups as the current user. If the current user is admin or has " +
+                      "Manage Users permission then they can see all users.",
             operationId = "findUsersByCriteria")
     ResultPage<User> find(@Parameter(description = "criteria", required = true) FindUserCriteria criteria);
 
-//    @GET
-//    @Path("/{userUuid}")
-//    @Operation(
-//            summary = "Fetches the user with the supplied UUID",
-//            operationId = "fetchUser")
-//    User fetch(@PathParam("userUuid") String userUuid);
+    @GET
+    @Path("/{userUuid}")
+    @Operation(
+            summary = "Fetches the user with the supplied UUID",
+            operationId = "fetchUser")
+    User fetch(@PathParam("userUuid") String userUuid);
+
+    @GET
+    @Path("/fetchBySubjectId/{subjectId}")
+    @Operation(
+            summary = "Fetches the user with the supplied subjectId (aka Unique ID)",
+            operationId = "fetchBySubjectId")
+    User fetchBySubjectId(@PathParam("subjectId") String subjectId);
 
     @POST
     @Path("/createGroup")
@@ -60,7 +69,7 @@ public interface UserResource extends RestResource, DirectRestService {
     @Path("/createUsers")
     @Operation(
             summary = "Creates a batch of users from a list of CSV entries. Each line is of the form " +
-                    "'id,displayName,fullName', where displayName and fullName are optional",
+                      "'id,displayName,fullName', where displayName and fullName are optional",
             operationId = "createUsers")
     List<User> createUsersFromCsv(@Parameter(description = "users", required = true) String usersCsvData);
 

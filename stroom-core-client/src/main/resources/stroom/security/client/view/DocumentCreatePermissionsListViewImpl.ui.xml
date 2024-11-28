@@ -1,8 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="200">
             <form:FormGroup label="Document Create Permission Details" addStyleNames="max">
@@ -12,9 +11,6 @@
         </g:south>
         <g:center>
             <g:FlowPanel styleName="max dock-container-vertical">
-                <form:FormGroup label="Apply Changes To All Descendants" addStyleNames="dock-min">
-                    <tickbox:CustomCheckBox ui:field="includeDescendants"/>
-                </form:FormGroup>
                 <form:FormGroup label="Document Create Permissions" addStyleNames="dock-max">
                     <g:SimplePanel ui:field="dataGrid" styleName="max form-control-border form-control-background"/>
                 </form:FormGroup>

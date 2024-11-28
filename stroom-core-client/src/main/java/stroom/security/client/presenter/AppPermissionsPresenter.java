@@ -18,48 +18,48 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
-import stroom.svg.client.SvgPresets;
+import stroom.security.shared.AppUserPermissionsReport;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserRef;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class AppPermissionsPresenter
         extends ContentTabPresenter<AppPermissionsView> {
 
-    private final Provider<AppPermissionsEditPresenter> appPermissionsChangePresenterProvider;
     private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
+    private final AppPermissionsEditPresenter appPermissionsEditPresenter;
 
-    private final ButtonView edit;
-    private final InlineSvgToggleButton explicitOnly;
+    private final SelectionBox<PermissionShowLevel> permissionVisibility;
 
     @Inject
     public AppPermissionsPresenter(
             final EventBus eventBus,
             final AppPermissionsView view,
             final AppUserPermissionsListPresenter appUserPermissionsListPresenter,
-            final Provider<AppPermissionsEditPresenter> appPermissionsChangePresenterProvider) {
+            final AppPermissionsEditPresenter appPermissionsEditPresenter) {
 
         super(eventBus, view);
-        this.appPermissionsChangePresenterProvider = appPermissionsChangePresenterProvider;
         this.appUserPermissionsListPresenter = appUserPermissionsListPresenter;
-        view.setPermissionsView(appUserPermissionsListPresenter.getView());
+        this.appPermissionsEditPresenter = appPermissionsEditPresenter;
+        view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());
+        view.setAppPermissionsEditView(appPermissionsEditPresenter.getView());
 
-        edit = appUserPermissionsListPresenter.addButton(SvgPresets.EDIT);
-
-        explicitOnly = new InlineSvgToggleButton();
-        explicitOnly.setSvg(SvgImage.EYE_OFF);
-        explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-        explicitOnly.setState(false);
-        appUserPermissionsListPresenter.addButton(explicitOnly);
-        appUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        permissionVisibility = getView().getPermissionVisibility();
+        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
+        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
     }
 
     @Override
@@ -67,37 +67,103 @@ public class AppPermissionsPresenter
         super.onBind();
 
         registerHandler(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
-            edit.setEnabled(appUserPermissionsListPresenter.getSelectionModel().getSelected() != null);
-            if (e.getSelectionType().isDoubleSelect()) {
-                editPermissions();
-            }
+            editPermissions();
         }));
-        registerHandler(edit.addClickHandler(e -> editPermissions()));
-        registerHandler(explicitOnly.addClickHandler(e -> {
-            if (explicitOnly.getState()) {
-                explicitOnly.setTitle("Show All Users");
-                explicitOnly.setSvg(SvgImage.EYE);
-            } else {
-                explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-                explicitOnly.setSvg(SvgImage.EYE_OFF);
-            }
-            appUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+            appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             appUserPermissionsListPresenter.refresh();
+        }));
+        registerHandler(appPermissionsEditPresenter.getSelectionModel()
+                .addSelectionHandler(e -> updateDetails()));
+        registerHandler(appPermissionsEditPresenter.addValueChangeHandler(e -> {
+            if (e.getValue().isRefreshUsers()) {
+                refresh();
+            }
+            if (e.getValue().isRefreshDetails()) {
+                updateDetails();
+            }
         }));
     }
 
+    public void setFilterInput(final String filterInput) {
+        appUserPermissionsListPresenter.setQuickFilter(filterInput);
+    }
+
+    public void showUser(final UserRef userRef) {
+        appUserPermissionsListPresenter.showUser(userRef);
+    }
+
     private void editPermissions() {
-        final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel().getSelected();
-        if (appUserPermissions != null) {
-            final AppPermissionsEditPresenter appPermissionsChangePresenter =
-                    appPermissionsChangePresenterProvider.get();
-            appPermissionsChangePresenter.show(appUserPermissions.getUserRef(),
-                    appUserPermissionsListPresenter::refresh);
-        }
+        final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel()
+                .getSelected();
+        final UserRef userRef = GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
+        appPermissionsEditPresenter.edit(userRef);
+        getView().setUserRef(userRef);
     }
 
     public void refresh() {
         appUserPermissionsListPresenter.refresh();
+    }
+
+    private void updateDetails() {
+        final SafeHtml details = getDetails();
+        getView().setDetails(details);
+    }
+
+    private SafeHtml getDetails() {
+        AppUserPermissionsReport currentPermissions = appPermissionsEditPresenter.getCurrentPermissions();
+        final DescriptionBuilder sb = new DescriptionBuilder();
+        final AppPermission permission = appPermissionsEditPresenter.getSelectionModel().getSelected();
+        if (permission != null) {
+            addPaths(
+                    currentPermissions.getExplicitPermissions().contains(permission),
+                    currentPermissions.getInheritedPermissions().get(permission),
+                    sb,
+                    "Explicit Permission",
+                    "Inherited From:");
+
+            // See if implied by administrator.
+            if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                addPaths(
+                        currentPermissions
+                                .getExplicitPermissions()
+                                .contains(AppPermission.ADMINISTRATOR),
+                        currentPermissions
+                                .getInheritedPermissions()
+                                .get(AppPermission.ADMINISTRATOR),
+                        sb,
+                        "Implied By Administrator",
+                        "Implied By Administrator Inherited From:");
+            }
+
+            if (sb.toSafeHtml().asString().isEmpty()) {
+                sb.addTitle("No Permission");
+            }
+        }
+
+        return sb.toSafeHtml();
+    }
+
+    private void addPaths(final boolean direct,
+                          final List<String> paths,
+                          final DescriptionBuilder sb,
+                          final String directTitle,
+                          final String inheritedTitle) {
+        if (direct) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle(directTitle);
+        }
+
+        if (GwtNullSafe.hasItems(paths)) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle(inheritedTitle);
+            for (final String path : paths) {
+                sb.addNewLine();
+                sb.addLine(path);
+            }
+        }
     }
 
     @Override
@@ -115,8 +181,20 @@ public class AppPermissionsPresenter
         return "ApplicationPermissions";
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface AppPermissionsView extends View {
 
-        void setPermissionsView(View view);
+        SelectionBox<PermissionShowLevel> getPermissionVisibility();
+
+        void setAppUserPermissionListView(View view);
+
+        void setAppPermissionsEditView(View view);
+
+        void setDetails(SafeHtml details);
+
+        void setUserRef(UserRef userRef);
     }
 }

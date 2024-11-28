@@ -43,7 +43,7 @@ import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
-import stroom.document.client.event.ShowPermissionsDialogEvent;
+import stroom.document.client.event.ShowDocumentPermissionsEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
@@ -1495,7 +1495,7 @@ public class DocumentPluginEventManager extends Plugin {
                                                final boolean enabled) {
         final Command command = () -> {
             if (docRef != null) {
-                ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, docRef);
+                ShowDocumentPermissionsEvent.fire(DocumentPluginEventManager.this, docRef);
             }
         };
 

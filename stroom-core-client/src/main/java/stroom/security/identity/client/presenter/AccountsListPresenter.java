@@ -2,138 +2,138 @@ package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResource;
-import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.AppPermission;
+import stroom.security.shared.QuickFilterExpressionParser;
+import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Selection;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class AccountsListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasDataSelectionHandlers<Selection<Integer>> {
+        extends MyPresenterWidget<QuickFilterPageView>
+        implements QuickFilterUiHandlers {
 
     private static final AccountResource ACCOUNT_RESOURCE = GWT.create(AccountResource.class);
+    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final ClientSecurityContext securityContext;
     private final Provider<EditAccountPresenter> editAccountPresenterProvider;
     private final MultiSelectionModelImpl<Account> selectionModel;
-    private final QuickFilterTimer timer = new QuickFilterTimer();
-    private final RestDataProvider<Account, AccountResultPage> dataProvider;
+    private RestDataProvider<Account, ResultPage<Account>> dataProvider;
     private final MyDataGrid<Account> dataGrid;
     private final InlineSvgButton addButton;
     private final InlineSvgButton editButton;
     private final InlineSvgButton deleteButton;
-    private String filter;
+    private final PagerView pagerView;
+    private final FindAccountRequest.Builder requestBuilder = new FindAccountRequest.Builder();
 
     private List<CriteriaFieldSort> sortList = Collections.singletonList(
-            new CriteriaFieldSort(FindAccountRequest.FIELD_NAME_USER_ID, false, true));
+            new CriteriaFieldSort(AccountFields.FIELD_NAME_USER_ID, false, true));
 
     @Inject
     public AccountsListPresenter(final EventBus eventBus,
-                                 final PagerView view,
+                                 final QuickFilterPageView view,
+                                 final PagerView pagerView,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final ClientSecurityContext securityContext,
-                                 final Provider<EditAccountPresenter> editAccountPresenterProvider) {
+                                 final Provider<EditAccountPresenter> editAccountPresenterProvider,
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
         this.dataGrid = new MyDataGrid<>(1000);
         this.selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        final DataGridSelectionEventManager<Account> selectionEventManager =
-                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<Account> selectionEventManager = new DataGridSelectionEventManager<>(
+                dataGrid, selectionModel, false);
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
-        view.setDataWidget(dataGrid);
+        pagerView.setDataWidget(dataGrid);
 
         addButton = new InlineSvgButton();
         editButton = new InlineSvgButton();
         deleteButton = new InlineSvgButton();
         initButtons();
         initTableColumns();
-        dataProvider = new RestDataProvider<Account, AccountResultPage>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<AccountResultPage> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                fetchData(range, dataConsumer, view);
-            }
-        };
-        dataProvider.addDataDisplay(dataGrid);
+
         selectionModel.addSelectionHandler(event -> {
             setButtonStates();
             if (event.getSelectionType().isDoubleSelect()) {
                 editSelectedAccount();
             }
         });
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                sortList = Collections.singletonList(
-                        new CriteriaFieldSort(
-                                orderByColumn.getField(),
-                                !event.isSortAscending(),
-                                orderByColumn.isIgnoreCase()));
-                dataProvider.refresh();
+
+        // Not easy to determine if we are dealing in users or groups at this point so just
+        // call it Quick Filter
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Accounts Quick Filter",
+                        AccountFields.FILTER_FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
             }
-        });
+        }, this);
+
+        view.setDataView(pagerView);
+        view.setUiHandlers(this);
     }
 
     private void initButtons() {
         addButton.setSvg(SvgImage.ADD);
         addButton.setTitle("Add new account");
         addButton.addClickHandler(event -> createNewAccount());
-        getView().addButton(addButton);
+        pagerView.addButton(addButton);
 
         editButton.setSvg(SvgImage.EDIT);
         editButton.setTitle("Edit account");
         editButton.addClickHandler(event -> editSelectedAccount());
-        getView().addButton(editButton);
+        pagerView.addButton(editButton);
 
         deleteButton.setSvg(SvgImage.DELETE);
         deleteButton.setTitle("Delete selected account");
         deleteButton.addClickHandler(event -> deleteSelectedAccount());
-        getView().addButton(deleteButton);
+        pagerView.addButton(deleteButton);
 
         setButtonStates();
     }
@@ -158,8 +158,8 @@ public class AccountsListPresenter
         final Account account = selectionModel.getSelected();
         if (account != null) {
             final String msg = "Are you sure you want to delete account '"
-                    + account.getUserId()
-                    + "'?";
+                               + account.getUserId()
+                               + "'?";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     restFactory
@@ -169,8 +169,9 @@ public class AccountsListPresenter
                                 selectionModel.clear();
                                 this.refresh();
                             })
-                            .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), this::refresh))
-                            .taskMonitorFactory(getView())
+                            .onFailure(e ->
+                                    AlertEvent.fireError(this, e.getMessage(), this::refresh))
+                            .taskMonitorFactory(pagerView)
                             .exec();
                 }
             });
@@ -178,113 +179,163 @@ public class AccountsListPresenter
     }
 
     private void initTableColumns() {
+
+        DataGridUtil.addColumnSortHandler(dataGrid, requestBuilder, this::refresh);
+
         // User Id
-        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
-            final Column<Account, String> userIdColumn = DataGridUtil.textColumnBuilder(
-                            Account::getUserId)
-                    .enabledWhen(Account::isEnabled)
-                    .withSorting(FindAccountRequest.FIELD_NAME_USER_ID)
-                    .build();
-            dataGrid.addResizableColumn(userIdColumn, "User Id", 250);
-        }
+        final Column<Account, CommandLink> userIdCol = DataGridUtil.commandLinkColumnBuilder(buildOpenUserCommandLink())
+                .enabledWhen(Account::isEnabled)
+                .withSorting(AccountFields.FIELD_NAME_USER_ID)
+                .build();
+        dataGrid.addResizableColumn(
+                userIdCol,
+                DataGridUtil.headingBuilder("User Id")
+                        .withToolTip("The unique identifier for both the account and the corresponding user.")
+                        .build(),
+                200);
+
+        dataGrid.getColumnSortList().push(userIdCol);
+
+        // First Name
+        final Column<Account, String> firstNameColumn = DataGridUtil.textColumnBuilder(Account::getFirstName)
+                .enabledWhen(Account::isEnabled)
+                .withSorting(AccountFields.FIELD_NAME_FIRST_NAME)
+                .build();
+        dataGrid.addResizableColumn(firstNameColumn, "First Name", 180);
+
+        // First Name
+        final Column<Account, String> lastNameColumn = DataGridUtil.textColumnBuilder(Account::getLastName)
+                .enabledWhen(Account::isEnabled)
+                .withSorting(AccountFields.FIELD_NAME_LAST_NAME)
+                .build();
+        dataGrid.addResizableColumn(lastNameColumn, "Last Name", 180);
 
         // Email
         final Column<Account, String> emailColumn = DataGridUtil.textColumnBuilder(Account::getEmail)
                 .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_EMAIL)
+                .withSorting(AccountFields.FIELD_NAME_EMAIL)
                 .build();
         dataGrid.addResizableColumn(emailColumn, "Email", 250);
 
         // Status
-        final Column<Account, String> statusColumn = DataGridUtil.textColumnBuilder(Account::getStatus)
-                .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_STATUS)
-                .build();
-        dataGrid.addColumn(statusColumn, "Status", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(Account::getStatus)
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(AccountFields.FIELD_NAME_STATUS)
+                        .build(),
+                DataGridUtil.headingBuilder("Status")
+                        .withToolTip("The status of the account. One of (Enabled|Disabled|Locked|Inactive).")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
 
         // Last Sign In
-        final Column<Account, String> lastSignInColumn = DataGridUtil.textColumnBuilder((Account account) ->
-                        dateTimeFormatter.format(account.getLastLoginMs()))
-                .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_LAST_LOGIN_MS)
-                .build();
-        dataGrid.addColumn(lastSignInColumn, "Last Sign In", ColumnSizeConstants.DATE_COL);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder((Account account) ->
+                                dateTimeFormatter.format(account.getLastLoginMs()))
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(AccountFields.FIELD_NAME_LAST_LOGIN_MS)
+                        .build(),
+                DataGridUtil.headingBuilder("Last Sign In")
+                        .withToolTip("The date/time the user last successfully signed in.")
+                        .build(),
+                ColumnSizeConstants.DATE_COL);
 
         // Sign In Failures
-        final Column<Account, String> signInFailuresColumn = DataGridUtil.textColumnBuilder((Account account) ->
-                        "" + account.getLoginFailures())
-                .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_LOGIN_FAILURES)
-                .build();
-        dataGrid.addColumn(signInFailuresColumn, "Sign In Failures", 130);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder((Account account) ->
+                                "" + account.getLoginFailures())
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(AccountFields.FIELD_NAME_LOGIN_FAILURES)
+                        .build(),
+                DataGridUtil.headingBuilder("Sign In Failures")
+                        .withToolTip("The number of login failures since the last successful login.")
+                        .build(),
+                130);
 
         // Comments
         final Column<Account, String> commentsColumn = DataGridUtil.textColumnBuilder(Account::getComments)
                 .enabledWhen(Account::isEnabled)
-                .withSorting(FindAccountRequest.FIELD_NAME_COMMENTS)
+                .withSorting(AccountFields.FIELD_NAME_COMMENTS)
                 .build();
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
+
+        dataGrid.getColumnSortList().push(userIdCol);
     }
 
-    private void fetchData(final Range range,
-                           final Consumer<AccountResultPage> dataConsumer,
-                           final TaskMonitorFactory taskMonitorFactory) {
-        final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-        final FindAccountRequest criteria = new FindAccountRequest(pageRequest, sortList, filter);
-        restFactory
-                .create(ACCOUNT_RESOURCE)
-                .method(res -> res.find(criteria))
-                .onSuccess(dataConsumer)
-                .onFailure(throwable ->
-                        AlertEvent.fireError(
-                                this,
-                                "Error fetching accounts: " + throwable.getMessage(),
-                                null))
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
+    private Function<Account, CommandLink> buildOpenUserCommandLink() {
+        return (Account account) -> {
+            if (account != null) {
+                final String userId = account.getUserId();
 
-    public void setQuickFilter(final String userInput) {
-        timer.setName(userInput);
-        timer.cancel();
-        timer.schedule(400);
+                return new CommandLink(
+                        userId,
+                        "Open account '" + userId + "' on the Users and Groups screen.",
+                        () -> {
+                            restFactory
+                                    .create(USER_RESOURCE)
+                                    .method(userResource ->
+                                            userResource.fetchBySubjectId(userId))
+                                    .onSuccess(user -> {
+                                        if (user != null) {
+                                            OpenUsersAndGroupsScreenEvent.fire(
+                                                    AccountsListPresenter.this,
+                                                    user.asRef());
+                                        }
+                                    })
+                                    .taskMonitorFactory(pagerView)
+                                    .exec();
+                        });
+            } else {
+                return null;
+            }
+        };
     }
 
     public void refresh() {
-        dataProvider.refresh();
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<Account, ResultPage<Account>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<Account>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    requestBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+                    restFactory
+                            .create(ACCOUNT_RESOURCE)
+                            .method(res -> res.find(requestBuilder.build()))
+                            .onSuccess(dataConsumer)
+                            .onFailure(throwable ->
+                                    AlertEvent.fireError(
+                                            this,
+                                            "Error fetching accounts: " + throwable.getMessage(),
+                                            null))
+                            .taskMonitorFactory(pagerView)
+                            .exec();
+                }
+            };
+            dataProvider.addDataDisplay(dataGrid);
+        } else {
+            dataProvider.refresh();
+        }
     }
 
     @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Selection<Integer>> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    public void onFilterChange(String text) {
+        if (text != null) {
+            text = text.trim();
+            if (text.isEmpty()) {
+                text = null;
+            }
+        }
+
+        final ExpressionOperator expression = QuickFilterExpressionParser
+                .parse(text, AccountFields.DEFAULT_FIELDS, AccountFields.ALL_FIELDS_MAP);
+        requestBuilder.expression(expression);
+        refresh();
     }
 
-    private class QuickFilterTimer extends Timer {
-
-        private String name;
-
-        @Override
-        public void run() {
-            String filter = name;
-            if (filter != null) {
-                filter = filter.trim();
-                if (filter.length() == 0) {
-                    filter = null;
-                }
-            }
-
-            if (!Objects.equals(filter, AccountsListPresenter.this.filter)) {
-
-                // This is a new filter so reset all the expander states
-                AccountsListPresenter.this.filter = filter;
-                refresh();
-            }
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
+    public void setQuickFilterText(final String filterInput) {
+        getView().setQuickFilterText(filterInput);
     }
 }

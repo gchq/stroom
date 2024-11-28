@@ -200,7 +200,10 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     private UserRef getUserRef(final String uuid) {
-        return userRefLookup.getByUuid(uuid).orElse(UserRef.builder().uuid(uuid).build());
+        return userRefLookup.getByUuid(uuid)
+                .orElse(UserRef.builder()
+                        .uuid(uuid)
+                        .build());
     }
 
     private Annotation mapToAnnotation(final Record record) {

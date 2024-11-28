@@ -30,6 +30,12 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.function.BiConsumer;
 
+/**
+ * A cell containing an icon (ellipses icon by default) that when clicked
+ * will execute an action. Useful for a simple
+ *
+ * @param <R>
+ */
 public class ActionCell<R> extends AbstractCell<R> {
 
     private final Preset svgPreset;

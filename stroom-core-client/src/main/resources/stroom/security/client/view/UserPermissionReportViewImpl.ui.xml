@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max default-min-sizes">
+        <form:FormGroup label="Permission Visibility" addStyleNames="form-padding">
+            <l:SelectionBox ui:field="permissionVisibility"/>
+        </form:FormGroup>
+        <form:FormGroup label="Users and Groups" addStyleNames="form-label-padding max">
+            <g:SimplePanel ui:field="permissionsList" styleName="max"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

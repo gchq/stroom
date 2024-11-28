@@ -52,6 +52,7 @@ public final class SvgPresets {
     public static final Preset HELP = enabled(SvgImage.HELP, "Help");
     public static final Preset HISTORY = disabled(SvgImage.HISTORY, "History");
     public static final Preset INFO = enabled(SvgImage.INFO, "Info");
+    public static final Preset KEY = enabled(SvgImage.KEY, "Key");
     public static final Preset MOVE = disabled(SvgImage.MOVE, "Move");
     public static final Preset NEW_ITEM = enabled(SvgImage.ADD, "New");
     public static final Preset OPEN = disabled(SvgImage.OPEN, "Open");
@@ -60,12 +61,13 @@ public final class SvgPresets {
     public static final Preset PROPERTIES = enabled(SvgImage.PROPERTIES, "Properties");
     public static final Preset REMOVE = disabled(SvgImage.REMOVE, "Remove");
     public static final Preset RUN = enabled(SvgImage.PLAY, "Run");
-    public static final Preset STOP = enabled(SvgImage.STOP, "Stop");
     public static final Preset SAVE = disabled(SvgImage.SAVE, "Save");
     public static final Preset SAVE_AS = disabled(SvgImage.SAVEAS, "Save As");
     public static final Preset SETTINGS = enabled(SvgImage.SETTINGS, "Settings");
     public static final Preset SETTINGS_BLUE = enabled(SvgImage.SETTINGS, "Settings");
+    public static final Preset SHIELD = enabled(SvgImage.SHIELD, "Shield");
     public static final Preset SHARD_FLUSH = disabled(SvgImage.SHARD_FLUSH, "Flush Selected Shards");
+    public static final Preset STOP = enabled(SvgImage.STOP, "Stop");
     public static final Preset TABLE = enabled(SvgImage.TABLE, "Table");
     public static final Preset TABLE_NESTED = enabled(SvgImage.TABLE_NESTED, "Nested Table");
     public static final Preset UNDO = disabled(SvgImage.UNDO, "Undo");

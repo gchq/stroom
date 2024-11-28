@@ -176,8 +176,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
         String currentText = textBox.getText();
         String newText = "";
-        if (value != null) {
-            newText = model.wrap(value).getLabel();
+        final I item = model.wrap(value);
+        if (item != null) {
+            newText = item.getLabel();
         }
 
         textBox.setValue(newText);

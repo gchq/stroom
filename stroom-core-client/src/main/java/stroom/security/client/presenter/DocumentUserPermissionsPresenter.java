@@ -17,39 +17,47 @@
 
 package stroom.security.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.docref.DocRef;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class DocumentUserPermissionsPresenter
-        extends MyPresenterWidget<DocumentUserPermissionsView> {
+        extends ContentTabPresenter<DocumentUserPermissionsView> {
 
     private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
+    private final DocPermissionRestClient docPermissionClient;
     private final ButtonView docEdit;
-    private final InlineSvgToggleButton explicitOnly;
+    private final SelectionBox<PermissionShowLevel> permissionVisibility;
     private DocRef docRef;
 
     @Inject
     public DocumentUserPermissionsPresenter(
             final EventBus eventBus,
+            final DocPermissionRestClient docPermissionClient,
             final DocumentUserPermissionsView view,
             final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
             final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
@@ -57,19 +65,18 @@ public class DocumentUserPermissionsPresenter
         super(eventBus, view);
         this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
-        view.setPermissionsView(documentUserPermissionsListPresenter.getView());
+        this.docPermissionClient = docPermissionClient;
+        view.setDocUserPermissionListView(documentUserPermissionsListPresenter.getView());
 
         docEdit = documentUserPermissionsListPresenter.addButton(new Preset(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected User",
                 false));
 
-        explicitOnly = new InlineSvgToggleButton();
-        explicitOnly.setSvg(SvgImage.EYE_OFF);
-        explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-        explicitOnly.setState(false);
-        documentUserPermissionsListPresenter.addButton(explicitOnly);
-        documentUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        permissionVisibility = getView().getPermissionVisibility();
+        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
+        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
     }
 
     @Override
@@ -78,6 +85,7 @@ public class DocumentUserPermissionsPresenter
         registerHandler(documentUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final DocumentUserPermissions selected =
                     documentUserPermissionsListPresenter.getSelectionModel().getSelected();
+            updateDetails();
             docEdit.setEnabled(selected != null);
             if (e.getSelectionType().isDoubleSelect()) {
                 onEdit();
@@ -88,15 +96,8 @@ public class DocumentUserPermissionsPresenter
                 onEdit();
             }
         }));
-        registerHandler(explicitOnly.addClickHandler(e -> {
-            if (explicitOnly.getState()) {
-                explicitOnly.setTitle("Show All Users");
-                explicitOnly.setSvg(SvgImage.EYE);
-            } else {
-                explicitOnly.setTitle("Only Show Users With Explicit Permissions");
-                explicitOnly.setSvg(SvgImage.EYE_OFF);
-            }
-            documentUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
+        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+            documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             documentUserPermissionsListPresenter.refresh();
         }));
     }
@@ -105,41 +106,131 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            documentUserPermissionsEditPresenterProvider.get().show(docRef, selected, () ->
-                    documentUserPermissionsListPresenter.refresh());
+            documentUserPermissionsEditPresenterProvider.get().show(
+                    docRef, selected, documentUserPermissionsListPresenter::refresh, this);
         }
     }
 
-    public void show(final DocRef docRef) {
+    public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
         documentUserPermissionsListPresenter.setDocRef(docRef);
         documentUserPermissionsListPresenter.refresh();
-
-        final PopupSize popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(1000)
-                        .min(1000)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(800)
-                        .min(800)
-                        .resizable(true)
-                        .build())
-                .build();
-
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Permissions For '" + docRef.getDisplayValue() + "'")
-                .modal()
-                .fire();
     }
+
+//    public void show(final DocRef docRef) {
+//        setDocRef(docRef);
+//
+//        final PopupSize popupSize = PopupSize.builder()
+//                .width(Size
+//                        .builder()
+//                        .initial(1000)
+//                        .min(1000)
+//                        .resizable(true)
+//                        .build())
+//                .height(Size
+//                        .builder()
+//                        .initial(800)
+//                        .min(800)
+//                        .resizable(true)
+//                        .build())
+//                .build();
+//
+//        ShowPopupEvent.builder(this)
+//                .popupType(PopupType.CLOSE_DIALOG)
+//                .popupSize(popupSize)
+//                .caption("Permissions For '" + docRef.getDisplayValue() + "'")
+//                .modal()
+//                .fire();
+//    }
+
+    private void updateDetails() {
+        final DocumentUserPermissions selection = documentUserPermissionsListPresenter
+                .getSelectionModel()
+                .getSelected();
+        // Fetch detailed permissions report.
+        if (selection != null) {
+            docPermissionClient.getDocUserPermissionsReport(docRef, selection.getUserRef(), response -> {
+                final SafeHtml details = getDetails(response);
+                getView().setUserRef(selection.getUserRef());
+                getView().setDetails(details);
+            }, this);
+        } else {
+            getView().setUserRef(null);
+            getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        }
+    }
+
+    private SafeHtml getDetails(final DocumentUserPermissionsReport permissions) {
+        DocumentPermission maxPermission = null;
+
+        DescriptionBuilder sb = new DescriptionBuilder();
+        if (permissions.getExplicitPermission() != null) {
+            sb.addTitle("Explicit Permission: " + permissions.getExplicitPermission().getDisplayValue());
+            maxPermission = permissions.getExplicitPermission();
+        }
+
+        if (permissions.getInheritedPermissionPaths() != null &&
+            permissions.getInheritedPermissionPaths().size() > 0) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle("Inherited Permissions:");
+            for (int i = DocumentPermission.LIST.size() - 1; i >= 0; i--) {
+                final DocumentPermission permission = DocumentPermission.LIST.get(i);
+                final List<String> paths = permissions.getInheritedPermissionPaths().get(permission);
+                if (paths != null) {
+                    if (maxPermission == null || permission.isHigher(maxPermission)) {
+                        maxPermission = permission;
+                    }
+
+                    for (final String path : paths) {
+                        sb.addNewLine();
+                        sb.addLine(permission.getDisplayValue());
+                        sb.addLine(": ");
+                        sb.addLine(path);
+                    }
+                }
+            }
+
+            final DescriptionBuilder sb2 = new DescriptionBuilder();
+            sb2.addTitle("Effective Permission: " + maxPermission.getDisplayValue());
+            sb2.addNewLine();
+            sb2.addNewLine();
+            sb2.append(sb.toSafeHtml());
+            sb = sb2;
+        }
+
+        if (maxPermission == null) {
+            sb.addTitle("No Permission");
+        }
+        return sb.toSafeHtml();
+    }
+
+    @Override
+    public SvgImage getIcon() {
+        return SvgImage.LOCKED;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Permissions For '" + docRef.getDisplayValue() + "'";
+    }
+
+    @Override
+    public String getType() {
+        return "DocumentPermissions";
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DocumentUserPermissionsView extends View {
 
-        void setPermissionsView(View view);
+        SelectionBox<PermissionShowLevel> getPermissionVisibility();
+
+        void setDocUserPermissionListView(View view);
+
+        void setDetails(SafeHtml details);
+
+        void setUserRef(UserRef userRef);
     }
 }

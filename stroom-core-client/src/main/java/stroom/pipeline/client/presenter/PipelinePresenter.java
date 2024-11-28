@@ -30,6 +30,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -46,6 +47,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     public static final TabData PROCESSORS = new TabDataImpl("Processors");
     public static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ProcessorPresenter processorPresenter;
 
@@ -60,6 +62,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
                              final ProcessorPresenter processorPresenter,
                              final Provider<ProcessorTaskPresenter> taskPresenterProvider,
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final DocumentUserPermissionsTabProvider<PipelineDoc> documentUserPermissionsTabProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.processorPresenter = processorPresenter;
@@ -148,6 +151,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(selectedTab);
     }
 

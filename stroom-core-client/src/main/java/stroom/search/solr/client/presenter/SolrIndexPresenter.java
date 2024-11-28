@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.solr.shared.SolrIndexDoc;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -37,13 +38,16 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
                               final Provider<SolrIndexSettingsPresenter> indexSettingsPresenterProvider,
                               final Provider<SolrIndexFieldListPresenter> indexFieldListPresenterProvider,
-                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                              final DocumentUserPermissionsTabProvider<SolrIndexDoc>
+                                      documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(FIELDS, new DocumentEditTabProvider<>(indexFieldListPresenterProvider::get));
@@ -65,6 +69,7 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(FIELDS);
     }
 

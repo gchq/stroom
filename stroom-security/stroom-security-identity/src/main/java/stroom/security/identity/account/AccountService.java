@@ -5,6 +5,7 @@ import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.identity.shared.UpdateAccountRequest;
+import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ public interface AccountService {
 
     AccountResultPage list();
 
-    AccountResultPage search(FindAccountRequest request);
+    ResultPage<Account> search(FindAccountRequest request);
 
     Account create(CreateAccountRequest request);
 

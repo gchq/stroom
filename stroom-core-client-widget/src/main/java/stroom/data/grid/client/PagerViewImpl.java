@@ -43,11 +43,13 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @UiField
     Pager pager;
     @UiField
-    ButtonPanel buttonPanel;
+    FlowPanel toolbarWidgets;
     @UiField
     SimplePanel listContainer;
 
     private int taskCount;
+    private ButtonPanel buttonPanel;
+    private boolean addedWidgets;
 
     private final Widget widget;
 
@@ -70,18 +72,36 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
 
     @Override
     public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+        return getButtonPanel().addButton(preset);
     }
 
     @Override
     public void addButton(final ButtonView buttonView) {
-        buttonPanel.addButton(buttonView);
+        getButtonPanel().addButton(buttonView);
     }
 
     @Override
     public ToggleButtonView addToggleButton(final Preset primaryPreset,
                                             final Preset secondaryPreset) {
-        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
+        return getButtonPanel().addToggleButton(primaryPreset, secondaryPreset);
+    }
+
+    @Override
+    public void addToolbarWidget(final Widget widget) {
+        if (!addedWidgets) {
+            addedWidgets = true;
+            toolbarWidgets.getElement().getStyle().setProperty("paddingLeft", "var(--control__gap--horizontal)");
+        }
+        toolbarWidgets.add(widget);
+    }
+
+    private ButtonPanel getButtonPanel() {
+        if (buttonPanel == null) {
+            buttonPanel = new ButtonPanel();
+            toolbarWidgets.add(buttonPanel);
+            addedWidgets = true;
+        }
+        return buttonPanel;
     }
 
     @Override

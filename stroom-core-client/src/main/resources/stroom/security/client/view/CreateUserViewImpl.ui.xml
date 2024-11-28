@@ -1,9 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:i="urn:import:stroom.item.client">
-    <g:FlowPanel styleName="form max dock-container-vertical">
-        <i:SelectionBox ui:field="createTypes" addStyleNames="dock-min w-100"/>
-        <g:SimplePanel ui:field="panel" addStyleNames="dock-max"/>
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="createUserViewImpl form max dock-container-vertical">
+        <form:FormGroup identity="createTypes"
+                        label="Action"
+                        helpText="Select the action to perform.">
+            <i:SelectionBox ui:field="createTypes" addStyleNames="createUserViewImpl-selection dock-min w-100"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="panel" addStyleNames="createUserViewImpl-panel dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

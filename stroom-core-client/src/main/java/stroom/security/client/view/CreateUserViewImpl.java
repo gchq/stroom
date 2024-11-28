@@ -62,6 +62,7 @@ public class CreateUserViewImpl
 
     @Override
     public void setCreateTypes(final List<CreateType> createTypes) {
+        this.createTypes.clear();
         this.createTypes.addItems(createTypes);
     }
 

@@ -66,7 +66,7 @@ public class QuickFilterExpressionParser {
                         final QueryField field = fieldMap.get(fieldName);
                         if (field == null) {
                             throw new RuntimeException("Unknown qualifier '" + fieldName
-                                    + "'. Valid qualifiers: " + fieldMap.keySet());
+                                                       + "'. Valid qualifiers: " + fieldMap.keySet());
                         }
                         builder.addTerm(fieldName, Condition.EQUALS, "");
 
@@ -77,7 +77,7 @@ public class QuickFilterExpressionParser {
                         final QueryField field = fieldMap.get(fieldName);
                         if (field == null) {
                             throw new RuntimeException("Unknown qualifier '" + fieldName
-                                    + "'. Valid qualifiers: " + fieldMap.keySet());
+                                                       + "'. Valid qualifiers: " + fieldMap.keySet());
                         }
                         final String fieldValue = subParts[1];
                         addTerm(builder, field, fieldValue);

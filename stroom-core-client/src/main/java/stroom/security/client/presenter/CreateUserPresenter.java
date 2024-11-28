@@ -26,12 +26,14 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -57,29 +59,41 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
         view.setUiHandlers(this);
     }
 
-    public void show(final Consumer<User> consumer) {
+    public void show(final Consumer<User> consumer, final boolean includeGroups) {
         // Only want to let user create a stroom user if they are using an external IDP.
         // If internal then all users are available to be picked from the account tbl.
         uiConfigCache.get(config -> {
             if (config != null && config.isExternalIdentityProvider()) {
                 getView().setCreateTypesVisible(true);
-                getView().setCreateTypes(List.of(CreateType.USER_GROUP,
-                        CreateType.IDP_USER,
-                        CreateType.MULTI_IDP_USERS));
-                getView().setCreateType(CreateType.USER_GROUP);
+                final List<CreateType> createTypes = new ArrayList<>();
+                final String label;
+                final Focus initialView;
+                if (includeGroups) {
+                    createTypes.add(CreateType.USER_GROUP);
+                    label = "Add User Group Or External User(s)";
+                    initialView = createNewGroupPresenter.getView();
+                } else {
+                    label = "Add External User(s)";
+                    initialView = createNewUserPresenter.getView();
+                }
+                createTypes.add(CreateType.IDP_USER);
+                createTypes.add(CreateType.MULTI_IDP_USERS);
+                getView().setCreateTypes(createTypes);
+                getView().setCreateType(createTypes.get(0));
                 final PopupSize popupSize = PopupSize.resizable(600, 600);
-                show("Add User Group Or External User", consumer, popupSize);
-            } else {
+                show(label, initialView, consumer, popupSize);
+            } else if (includeGroups) {
                 getView().setCreateTypesVisible(false);
                 getView().setCreateTypes(List.of(CreateType.USER_GROUP));
                 getView().setCreateType(CreateType.USER_GROUP);
                 final PopupSize popupSize = PopupSize.resizableX();
-                show("Add User Group", consumer, popupSize);
+                show("Add User Group", createNewGroupPresenter.getView(), consumer, popupSize);
             }
         }, this);
     }
 
     private void show(final String caption,
+                      final Focus initialView,
                       final Consumer<User> consumer,
                       final PopupSize popupSize) {
         onTypeChange();
@@ -98,7 +112,9 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
-                .onShow(e -> createNewGroupPresenter.getView().focus())
+                .onShow(e -> {
+                    initialView.focus();
+                })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         switch (getView().getCreateType()) {
@@ -140,6 +156,10 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum CreateType implements HasDisplayValue {
 
         USER_GROUP("Add User Group"),
@@ -158,6 +178,10 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
         }
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface CreateUserView extends View, HasUiHandlers<CreateUserUiHandlers> {
 

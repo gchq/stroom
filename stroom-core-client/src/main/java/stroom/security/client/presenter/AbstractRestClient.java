@@ -11,16 +11,11 @@ public abstract class AbstractRestClient implements HasHandlers {
 
     protected final EventBus eventBus;
     protected final RestFactory restFactory;
-    protected TaskMonitorFactory taskMonitorFactory;
 
     public AbstractRestClient(final EventBus eventBus,
                               final RestFactory restFactory) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-    }
-
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

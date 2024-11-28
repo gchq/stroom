@@ -113,6 +113,10 @@
     line-height: 1.5em;
 }
 
+.markdown ul li:not(:first-child),
+.markdown ol li:not(:first-child) {
+    margin-top: 0.3em;
+}
 
 /* Showdown renders task lists as disabled checkboxes. This makes them look a bit meh, so
 hide the standard control and replace it with something more fancy that we can colour */

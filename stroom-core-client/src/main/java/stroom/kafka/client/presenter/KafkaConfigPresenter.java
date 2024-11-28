@@ -29,6 +29,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -47,6 +48,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
     private static final TabData CONFIG = new TabDataImpl("Config");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ButtonView downloadButton;
     private final RestFactory restFactory;
@@ -59,6 +61,8 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
                                 final LinkTabPanelView view,
                                 final Provider<EditorPresenter> editorPresenterProvider,
                                 final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                final DocumentUserPermissionsTabProvider<KafkaConfigDoc>
+                                        documentUserPermissionsTabProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
         super(eventBus, view);
@@ -114,6 +118,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(CONFIG);
     }
 

@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -38,12 +39,14 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
 
     private static final TabData XSLT = new TabDataImpl("XSLT");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public XsltPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final Provider<EditorPresenter> editorPresenterProvider,
-                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                         final DocumentUserPermissionsTabProvider<XsltDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(XSLT, new AbstractTabProvider<XsltDoc, EditorPresenter>(eventBus) {
@@ -94,6 +97,7 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(XSLT);
     }
 

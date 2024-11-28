@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -40,13 +41,16 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     private static final TabData RULES = new TabDataImpl("Rules");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
                             final Provider<RuleSetSettingsPresenter> settingsPresenterProvider,
                             final Provider<FieldListPresenter> fieldListPresenterProvider,
-                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                            final DocumentUserPermissionsTabProvider<ReceiveDataRules>
+                                    documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(RULES, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
@@ -68,6 +72,7 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(RULES);
     }
 

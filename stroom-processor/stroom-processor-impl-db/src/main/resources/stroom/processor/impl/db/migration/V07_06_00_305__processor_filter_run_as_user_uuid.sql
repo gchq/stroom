@@ -43,10 +43,16 @@ BEGIN
 
         IF object_count = 1 THEN
             SET @sql_str = CONCAT(
-                'UPDATE processor_filter pf, doc_permission dp ',
-                'SET pf.run_as_user_uuid = dp.user_uuid ',
-                'WHERE pf.uuid = dp.doc_uuid ',
-                'AND dp.permission = "Owner"');
+                'UPDATE processor_filter pf ',
+                'INNER JOIN ( ',
+                '    SELECT DISTINCT ',
+                '        dp.doc_uuid, ',
+                '        FIRST_VALUE(dp.user_uuid) '
+                '            OVER (PARTITION BY dp.doc_uuid ORDER BY dp.id DESC) latest_owner_uuid ',
+                '    FROM doc_permission dp ',
+                '    WHERE dp.permission = "Owner" ',
+                ') as dpv on dpv.doc_uuid = pf.uuid ',
+                'SET pf.run_as_user_uuid = dpv.latest_owner_uuid; ');
             PREPARE stmt FROM @sql_str;
             EXECUTE stmt;
         END IF;

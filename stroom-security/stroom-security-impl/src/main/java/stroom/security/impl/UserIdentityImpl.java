@@ -41,12 +41,14 @@ public class UserIdentityImpl
                             final HttpSession httpSession,
                             final UpdatableToken updatableToken) {
         this.updatableToken = Objects.requireNonNull(updatableToken);
-        this.userRef = new UserRef(
-                Objects.requireNonNull(userUuid),
-                Objects.requireNonNull(subjectId),
-                displayName,
-                fullName,
-                false);
+        this.userRef = UserRef.builder()
+                .uuid(Objects.requireNonNull(userUuid))
+                .subjectId(Objects.requireNonNull(subjectId))
+                .displayName(displayName)
+                .fullName(fullName)
+                .user()
+                .enabled()
+                .build();
         this.httpSession = httpSession;
     }
 
@@ -162,10 +164,10 @@ public class UserIdentityImpl
     @Override
     public String toString() {
         return "UserIdentityImpl{" +
-                "updatableToken=" + updatableToken +
-                ", userRef='" + userRef + '\'' +
-                ", isInSession='" + isInSession() + '\'' +
-                '}';
+               "updatableToken=" + updatableToken +
+               ", userRef='" + userRef + '\'' +
+               ", isInSession='" + isInSession() + '\'' +
+               '}';
     }
 
     @Override

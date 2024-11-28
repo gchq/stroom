@@ -657,6 +657,7 @@ public final class SetupSampleDataBean {
         return optionalGroup.orElseGet(() -> {
             final User user = User.builder()
                     .subjectId(name)
+                    .displayName(name)
                     .uuid(UUID.randomUUID().toString())
                     .group(true)
                     .build();
@@ -673,6 +674,7 @@ public final class SetupSampleDataBean {
         return optional.orElseGet(() -> {
             final User user = User.builder()
                     .subjectId(name)
+                    .displayName(name)
                     .uuid(UUID.randomUUID().toString())
                     .group(false)
                     .build();

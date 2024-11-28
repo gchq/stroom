@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers>
@@ -70,15 +71,29 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
         data.setWidget(view.asWidget());
     }
 
+    @Override
+    public void setQuickFilterText(final String quickFilterText) {
+        final String currVal = quickFilter.getText();
+        quickFilter.setText(quickFilterText);
+        if (!Objects.equals(currVal, quickFilterText)) {
+            getUiHandlers().onFilterChange(quickFilterText);
+        }
+    }
+
     @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().onFilterChange(quickFilter.getText());
     }
 
+
     @Override
     public Widget asWidget() {
         return widget;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, QuickFilterPageViewImpl> {
 

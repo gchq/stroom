@@ -1,8 +1,10 @@
 package stroom.security.shared;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,7 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class AppUserPermissions {
+public class AppUserPermissions implements HasUserRef {
 
     @JsonProperty
     private final UserRef userRef;
@@ -49,6 +51,11 @@ public class AppUserPermissions {
 
     public void setInherited(final Set<AppPermission> inherited) {
         this.inherited = inherited;
+    }
+
+    @JsonIgnore
+    public boolean isUserEnabled() {
+        return GwtNullSafe.isTrue(userRef, UserRef::isEnabled);
     }
 
     @Override
