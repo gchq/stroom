@@ -144,11 +144,15 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         final List<SelectFieldOrAsterisk> selectFields = new ArrayList<>();
         selectFields.add(API_KEY.asterisk());
         // Only add it if we need it to save the cost of evaluating it
-        if (expressionOperator.containsField(FindApiKeyCriteria.HASH_ALGORITHM.getFldName())) {
-            selectFields.add(HASH_NAME);
+        final Condition exprCondition;
+        if (expressionOperator != null) {
+            if (expressionOperator.containsField(FindApiKeyCriteria.HASH_ALGORITHM.getFldName())) {
+                selectFields.add(HASH_NAME);
+            }
+            exprCondition = expressionMapper.apply(expressionOperator);
+        } else {
+            exprCondition = DSL.trueCondition();
         }
-
-        final Condition exprCondition = expressionMapper.apply(expressionOperator);
 
         final ResultPage<HashedApiKey> resultPage = JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select(selectFields)
