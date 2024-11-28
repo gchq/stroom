@@ -34,6 +34,7 @@ import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -439,16 +440,24 @@ class QueryServiceImpl implements QueryService {
                 // Modify result request to apply additional UI table preferences.
                 ResultRequest modified = addTablePreferences(resultRequest, searchRequest.getQueryTablePreferences());
 
+                // The vis needs all the data, rather than just a page worth
+                OffsetRange range = modified.getRequestedRange();
+                if (resultRequest.getResultStyle() != ResultStyle.QL_VIS) {
+                    range = searchRequest.getRequestedRange();
+                }
+
                 // Modify result request to open grouped rows and change result display range.
                 modified = modified
                         .copy()
                         .openGroups(searchRequest.getOpenGroups())
-                        .requestedRange(searchRequest.getRequestedRange())
+                        .requestedRange(range)
                         .build();
 
                 modifiedResultRequests.add(modified);
             }
-            mappedRequest = mappedRequest.copy().resultRequests(modifiedResultRequests).build();
+            mappedRequest = mappedRequest.copy()
+                    .resultRequests(modifiedResultRequests)
+                    .build();
         }
 
         return mappedRequest;

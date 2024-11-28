@@ -12,7 +12,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
+
+* Issue **#4612** : Fix stroomQL query not including all data points in the visualisation.
+
+* Issue **#4617** : Add debug to try to diagnose issue.
+
 * Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
+
 
 ## [v7.7-beta.4] - 2024-11-11
 

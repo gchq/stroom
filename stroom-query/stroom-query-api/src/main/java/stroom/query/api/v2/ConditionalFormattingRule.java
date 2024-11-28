@@ -105,13 +105,13 @@ public class ConditionalFormattingRule {
         }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
         return hide == that.hide &&
-                enabled == that.enabled &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(expression, that.expression) &&
-                Objects.equals(backgroundColor, that.backgroundColor) &&
-                Objects.equals(textColor, that.textColor) &&
-                Objects.equals(style, that.style) &&
-                Objects.equals(customStyle, that.customStyle);
+               enabled == that.enabled &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(expression, that.expression) &&
+               Objects.equals(backgroundColor, that.backgroundColor) &&
+               Objects.equals(textColor, that.textColor) &&
+               Objects.equals(style, that.style) &&
+               Objects.equals(customStyle, that.customStyle);
     }
 
     @Override
@@ -122,15 +122,15 @@ public class ConditionalFormattingRule {
     @Override
     public String toString() {
         return "ConditionalFormattingRule{" +
-                "id='" + id + '\'' +
-                ", expression=" + expression +
-                ", hide=" + hide +
-                ", backgroundColor='" + backgroundColor + '\'' +
-                ", textColor='" + textColor + '\'' +
-                ", enabled=" + enabled +
-                ", styleName=" + style +
-                ", customStyle=" + customStyle +
-                '}';
+               "id='" + id + '\'' +
+               ", expression=" + expression +
+               ", hide=" + hide +
+               ", backgroundColor='" + backgroundColor + '\'' +
+               ", textColor='" + textColor + '\'' +
+               ", enabled=" + enabled +
+               ", styleName=" + style +
+               ", customStyle=" + customStyle +
+               '}';
     }
 
     public static Builder builder() {

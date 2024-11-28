@@ -361,7 +361,10 @@ public class RulesPresenter
                     .copy()
                     .queryTablePreferences(queryTablePreferences)
                     .build();
-            return componentConfig.copy().settings(newSettings).build();
+            return componentConfig
+                    .copy()
+                    .settings(newSettings)
+                    .build();
         }
         throw new RuntimeException("Unexpected type");
     }
