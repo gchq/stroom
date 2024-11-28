@@ -147,11 +147,13 @@ public class DocumentUserPermissionsEditPresenter
         final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
                 expression, change);
         explorerClient.advancedFind(builder.build(), resultPage -> {
-            long docCount = 0;
+            final long docCount;
             if (resultPage != null &&
                 resultPage.getPageResponse() != null &&
                 resultPage.getPageResponse().getTotal() != null) {
                 docCount = resultPage.getPageResponse().getTotal();
+            } else {
+                docCount = 0;
             }
 
             if (docCount == 0) {

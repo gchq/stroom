@@ -132,10 +132,12 @@ public class BatchProcessorFilterEditPresenter
             }
         }
 
-        long docCount = 0;
+        final long docCount;
         if (currentResultPageResponse != null &&
             currentResultPageResponse.getTotal() != null) {
             docCount = currentResultPageResponse.getTotal();
+        } else {
+            docCount = 0;
         }
 
         if (docCount == 0) {

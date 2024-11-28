@@ -175,11 +175,13 @@ public class DocumentUserCreatePermissionsEditPresenter
         final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
                 expression, change);
         explorerClient.advancedFind(builder.build(), resultPage -> {
-            long docCount = 0;
+            final long docCount;
             if (resultPage != null &&
                 resultPage.getPageResponse() != null &&
                 resultPage.getPageResponse().getTotal() != null) {
                 docCount = resultPage.getPageResponse().getTotal();
+            } else {
+                docCount = 0;
             }
 
             if (docCount == 0) {
@@ -188,7 +190,12 @@ public class DocumentUserCreatePermissionsEditPresenter
                         "There are no descendant folders of this folder.",
                         null);
             } else {
-                final String details = getResultDetails(resultPage);
+                final String details = "Setting document create permissions for:\n" +
+                                       relatedUser.getDisplayName() +
+                                       "\n\nTo:\n" +
+                                       getPermissionChange() +
+                                       "\n\nOn:\n" +
+                                       getResultDetails(resultPage);
                 String message = "Are you sure you want to change permissions on this document?";
                 if (docCount > 1) {
                     message = "Are you sure you want to change permissions for " + docCount + " documents?";
@@ -236,6 +243,18 @@ public class DocumentUserCreatePermissionsEditPresenter
             return new AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions(
                     relatedUser,
                     explicitCreatePermissions);
+        }
+    }
+
+    private String getPermissionChange() {
+        final Set<String> explicitCreatePermissions =
+                documentCreatePermissionsListPresenter.getExplicitCreatePermissions();
+        if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
+            return "[ all ]";
+        } else if (explicitCreatePermissions.size() == 0) {
+            return "[ none ]";
+        } else {
+            return explicitCreatePermissions.stream().sorted().collect(Collectors.joining("\n"));
         }
     }
 
