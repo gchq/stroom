@@ -41,7 +41,7 @@ public class AppPermissionsPresenter
     private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
     private final AppPermissionsEditPresenter appPermissionsEditPresenter;
 
-    private final SelectionBox<PermissionShowLevel> showLevel = new SelectionBox<>();
+    private final SelectionBox<PermissionShowLevel> permissionVisibility;
 
     @Inject
     public AppPermissionsPresenter(
@@ -56,10 +56,10 @@ public class AppPermissionsPresenter
         view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());
         view.setAppPermissionsEditView(appPermissionsEditPresenter.getView());
 
-        showLevel.addItems(PermissionShowLevel.ITEMS);
-        showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        appUserPermissionsListPresenter.getPagerView().addToolbarWidget(showLevel);
-        appUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
+        permissionVisibility = getView().getPermissionVisibility();
+        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
+        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
     }
 
     @Override
@@ -69,8 +69,8 @@ public class AppPermissionsPresenter
         registerHandler(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             editPermissions();
         }));
-        registerHandler(showLevel.addValueChangeHandler(e -> {
-            appUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
+        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+            appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             appUserPermissionsListPresenter.refresh();
         }));
         registerHandler(appPermissionsEditPresenter.getSelectionModel()
@@ -186,6 +186,8 @@ public class AppPermissionsPresenter
 
 
     public interface AppPermissionsView extends View {
+
+        SelectionBox<PermissionShowLevel> getPermissionVisibility();
 
         void setAppUserPermissionListView(View view);
 

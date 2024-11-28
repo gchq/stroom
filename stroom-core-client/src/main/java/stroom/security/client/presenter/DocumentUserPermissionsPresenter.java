@@ -51,7 +51,7 @@ public class DocumentUserPermissionsPresenter
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final DocPermissionRestClient docPermissionClient;
     private final ButtonView docEdit;
-    private final SelectionBox<PermissionShowLevel> showLevel = new SelectionBox<>();
+    private final SelectionBox<PermissionShowLevel> permissionVisibility;
     private DocRef docRef;
 
     @Inject
@@ -73,10 +73,10 @@ public class DocumentUserPermissionsPresenter
                 "Edit Permissions For Selected User",
                 false));
 
-        showLevel.addItems(PermissionShowLevel.ITEMS);
-        showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        documentUserPermissionsListPresenter.getPagerView().addToolbarWidget(showLevel);
-        documentUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
+        permissionVisibility = getView().getPermissionVisibility();
+        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
+        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
     }
 
     @Override
@@ -96,8 +96,8 @@ public class DocumentUserPermissionsPresenter
                 onEdit();
             }
         }));
-        registerHandler(showLevel.addValueChangeHandler(e -> {
-            documentUserPermissionsListPresenter.setShowLevel(showLevel.getValue());
+        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+            documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             documentUserPermissionsListPresenter.refresh();
         }));
     }
@@ -117,31 +117,31 @@ public class DocumentUserPermissionsPresenter
         documentUserPermissionsListPresenter.refresh();
     }
 
-    public void show(final DocRef docRef) {
-        setDocRef(docRef);
-
-        final PopupSize popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(1000)
-                        .min(1000)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(800)
-                        .min(800)
-                        .resizable(true)
-                        .build())
-                .build();
-
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Permissions For '" + docRef.getDisplayValue() + "'")
-                .modal()
-                .fire();
-    }
+//    public void show(final DocRef docRef) {
+//        setDocRef(docRef);
+//
+//        final PopupSize popupSize = PopupSize.builder()
+//                .width(Size
+//                        .builder()
+//                        .initial(1000)
+//                        .min(1000)
+//                        .resizable(true)
+//                        .build())
+//                .height(Size
+//                        .builder()
+//                        .initial(800)
+//                        .min(800)
+//                        .resizable(true)
+//                        .build())
+//                .build();
+//
+//        ShowPopupEvent.builder(this)
+//                .popupType(PopupType.CLOSE_DIALOG)
+//                .popupSize(popupSize)
+//                .caption("Permissions For '" + docRef.getDisplayValue() + "'")
+//                .modal()
+//                .fire();
+//    }
 
     private void updateDetails() {
         final DocumentUserPermissions selection = documentUserPermissionsListPresenter
@@ -224,6 +224,8 @@ public class DocumentUserPermissionsPresenter
 
 
     public interface DocumentUserPermissionsView extends View {
+
+        SelectionBox<PermissionShowLevel> getPermissionVisibility();
 
         void setDocUserPermissionListView(View view);
 

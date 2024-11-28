@@ -5,7 +5,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.presenter.MonitoringPlugin;
-import stroom.document.client.event.ShowPermissionsDialogEvent;
+import stroom.document.client.event.ShowDocumentPermissionsEvent;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.query.api.v2.ExpressionOperator;
@@ -42,7 +42,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
         super(eventBus, contentManager, presenterProvider, securityContext);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
-        eventBus.addHandler(ShowPermissionsDialogEvent.getType(), event -> {
+        eventBus.addHandler(ShowDocumentPermissionsEvent.getType(), event -> {
             documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
                 @Override
                 public void onSuccess(final DocumentUserPermissionsPresenter presenter) {

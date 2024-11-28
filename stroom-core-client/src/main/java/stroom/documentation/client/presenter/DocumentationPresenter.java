@@ -26,6 +26,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -43,7 +44,9 @@ public class DocumentationPresenter
 
     private static final DocumentationResource DOCUMENTATION_RESOURCE = GWT.create(DocumentationResource.class);
 
-    private static final TabData DOCUMENTATION_TAB = new TabDataImpl("Documentation");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
     private final ButtonView downloadButton;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
@@ -54,6 +57,8 @@ public class DocumentationPresenter
     public DocumentationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                  final DocumentUserPermissionsTabProvider<DocumentationDoc>
+                                          documentUserPermissionsTabProvider,
                                   final RestFactory restFactory,
                                   final LocationManager locationManager) {
         super(eventBus, view);
@@ -63,7 +68,7 @@ public class DocumentationPresenter
         downloadButton = SvgButton.create(SvgPresets.DOWNLOAD);
         toolbar.addButton(downloadButton);
 
-        addTab(DOCUMENTATION_TAB, new MarkdownTabProvider<DocumentationDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<DocumentationDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
@@ -73,7 +78,7 @@ public class DocumentationPresenter
                 presenter.setReadOnly(readOnly);
                 // Select the tab here to ensure the markdown editor toolbar display state (based
                 // on the readOnly value) is updated.
-                selectTab(DOCUMENTATION_TAB);
+                selectTab(DOCUMENTATION);
             }
 
             @Override
@@ -83,7 +88,8 @@ public class DocumentationPresenter
                 return document;
             }
         });
-        selectTab(DOCUMENTATION_TAB);
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
+        selectTab(DOCUMENTATION);
     }
 
     @Override

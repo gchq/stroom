@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.PermissionShowLevel;
@@ -44,20 +45,21 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class UserPermissionReportPresenter
-        extends ContentTabPresenter<QuickFilterPageView>
+        extends ContentTabPresenter<UserPermissionReportView>
         implements QuickFilterUiHandlers {
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
     private final DocumentPermissionsListPresenter documentPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
-    private final SelectionBox<PermissionShowLevel> showLevel = new SelectionBox<>();
+    private final SelectionBox<PermissionShowLevel> permissionVisibility;
     private final ButtonView docEdit;
     private final ButtonView docFilter;
     private final ButtonView batchEdit;
@@ -69,7 +71,8 @@ public class UserPermissionReportPresenter
 
     @Inject
     public UserPermissionReportPresenter(final EventBus eventBus,
-                                         final QuickFilterPageView view,
+                                         final UserPermissionReportView view,
+                                         final QuickFilterPageView quickFilterPageView,
                                          final Provider<ExpressionPresenter> docFilterPresenterProvider,
                                          final DocumentPermissionsListPresenter documentPermissionsListPresenter,
                                          final Provider<DocumentUserPermissionsEditPresenter>
@@ -82,16 +85,17 @@ public class UserPermissionReportPresenter
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
-        view.setDataView(documentPermissionsListPresenter.getView());
-        getView().setUiHandlers(this);
+        view.setPermissionListView(quickFilterPageView);
+        quickFilterPageView.setDataView(documentPermissionsListPresenter.getView());
+        quickFilterPageView.setUiHandlers(this);
 
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
         quickFilterExpression = getShowAllExpression();
 
-        showLevel.addItems(PermissionShowLevel.ITEMS);
-        showLevel.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        documentPermissionsListPresenter.getView().addToolbarWidget(showLevel);
-        documentPermissionsListPresenter.getCriteriaBuilder().showLevel(showLevel.getValue());
+        permissionVisibility = view.getPermissionVisibility();
+        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
+        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
 
         docEdit = documentPermissionsListPresenter.getView().addButton(new Preset(
                 SvgImage.EDIT,
@@ -122,8 +126,8 @@ public class UserPermissionReportPresenter
                 onEdit();
             }
         }));
-        registerHandler(showLevel.addValueChangeHandler(e -> {
-            documentPermissionsListPresenter.getCriteriaBuilder().showLevel(showLevel.getValue());
+        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+            documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
             documentPermissionsListPresenter.refresh();
         }));
         registerHandler(docFilter.addClickHandler(e -> {
@@ -302,5 +306,12 @@ public class UserPermissionReportPresenter
     @Override
     public String getType() {
         return "DocumentPermissionReport";
+    }
+
+    public interface UserPermissionReportView extends View {
+
+        SelectionBox<PermissionShowLevel> getPermissionVisibility();
+
+        void setPermissionListView(View view);
     }
 }

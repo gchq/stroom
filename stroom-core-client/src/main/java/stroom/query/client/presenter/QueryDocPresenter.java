@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.query.shared.QueryDoc;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -40,13 +41,17 @@ public class QueryDocPresenter
 
     private static final TabData QUERY = new TabDataImpl("Query");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
     private final DocumentEditTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
 
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
                              final QueryDocEditPresenter queryDocEditPresenter,
-                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final DocumentUserPermissionsTabProvider<QueryDoc>
+                                     documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         queryDocEditPresenter.setTaskMonitorFactory(this);
@@ -71,6 +76,7 @@ public class QueryDocPresenter
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
     }
 
@@ -82,7 +88,7 @@ public class QueryDocPresenter
     @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
-                && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
 
             final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
             if (presenter instanceof QueryDocEditPresenter) {
@@ -90,7 +96,7 @@ public class QueryDocPresenter
             }
             return true;
         } else if (Action.CLOSE == action
-                && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+                   && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
 
             final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
             if (presenter instanceof QueryDocEditPresenter) {

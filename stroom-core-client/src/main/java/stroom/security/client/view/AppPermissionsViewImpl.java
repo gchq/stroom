@@ -16,7 +16,9 @@
 
 package stroom.security.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.form.client.FormGroup;
@@ -40,6 +42,8 @@ public final class AppPermissionsViewImpl
     private final Widget widget;
 
     @UiField
+    SelectionBox<PermissionShowLevel> permissionVisibility;
+    @UiField
     SimplePanel appUserPermissionsList;
 
     @UiField
@@ -61,6 +65,11 @@ public final class AppPermissionsViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public SelectionBox<PermissionShowLevel> getPermissionVisibility() {
+        return permissionVisibility;
     }
 
     @Override
