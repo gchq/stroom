@@ -10,6 +10,7 @@ dependencies {
     jooqGenerator libs.mysql_connector_java
 }
 
+
 // Configure jooq plugin to generate code
 jooq {
     version = versions.jooq
@@ -25,7 +26,8 @@ jooq {
                 logging = org.jooq.meta.jaxb.Logging.WARN
                 jdbc {
                     driver = 'com.mysql.cj.jdbc.Driver'
-                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
+                    // Parsed from local.yml
+                    url = jdbcUrl
                     user = 'stroomuser'
                     password = 'stroompassword1'
                 }
@@ -33,7 +35,10 @@ jooq {
                     name = 'org.jooq.codegen.JavaGenerator'
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
-                        inputSchema = 'stroom'
+                        // Parsed from local.yml
+                        inputSchema = dbSchema
+                        // The schema name to use in the genned classes, instead of inputSchema
+                        outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
                         includes = '' +
@@ -63,6 +68,13 @@ jooq {
                             }
                         }
                     }
+                    //generate {
+                        // TODO: When we upgrade to jooq 3.19 we may want this to stop warnings
+                        // relating to the self join in stroom_user_group as we don't use implicit joins
+                        // Implicit joind Seem like syntactic sugar that we don't need
+                        //implicitJoinPathsToOne = false
+                        //implicitJoinPathsToMany = false
+                    //}
                     target {
                         packageName = 'stroom.security.impl.db.jooq'
                         directory = 'src/main/java'

@@ -10,12 +10,12 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function12;
+import org.jooq.Function13;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row12;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -111,6 +111,11 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
      * The column <code>stroom.stroom_user.full_name</code>.
      */
     public final TableField<StroomUserRecord, String> FULL_NAME = createField(DSL.name("full_name"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.stroom_user.deleted</code>.
+     */
+    public final TableField<StroomUserRecord, Byte> DELETED = createField(DSL.name("deleted"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     private StroomUser(Name alias, Table<StroomUserRecord> aliased) {
         this(alias, aliased, null);
@@ -210,18 +215,18 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row12 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<Integer, Integer, Long, String, Long, String, String, String, Boolean, Boolean, String, String> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public Row13<Integer, Integer, Long, String, Long, String, String, String, Boolean, Boolean, String, String, Byte> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function12<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function13<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super String, ? super String, ? super Byte, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -229,7 +234,7 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function12<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function13<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super String, ? super String, ? super Byte, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
