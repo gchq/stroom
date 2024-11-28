@@ -406,7 +406,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         conditions.add(STROOM_USER.ENABLED.eq(true));
 
         // If we have a single doc then try to deliver more useful permissions.
-        final List<DocumentUserPermissions> list;
+        List<DocumentUserPermissions> list = Collections.emptyList();
         if (PermissionShowLevel.SHOW_ALL.equals(request.getShowLevel())) {
             list = JooqUtil.contextResult(securityDbConnProvider, context -> context
                             .select(
@@ -712,30 +712,51 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 });
             }
 
-        } else {
+        } else if (PermissionShowLevel.SHOW_EXPLICIT.equals(request.getShowLevel())) {
             if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                final Field<String> recPerms = DSL.field("perms", String.class);
+                final Field<String> recCreatePerms = DSL.field("create_perms", String.class);
+
                 conditions
                         .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
                                 .or(PERMISSION_DOC_CREATE.DOC_UUID.eq(docRef.getUuid())));
                 list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                                .selectDistinct(
-                                        PERMISSION_DOC.PERMISSION_ID,
+                                .select(
                                         STROOM_USER.UUID,
                                         STROOM_USER.NAME,
                                         STROOM_USER.DISPLAY_NAME,
                                         STROOM_USER.FULL_NAME,
-                                        STROOM_USER.IS_GROUP)
+                                        STROOM_USER.IS_GROUP,
+                                        DSL.groupConcatDistinct(PERMISSION_DOC.PERMISSION_ID).as("perms"),
+                                        DSL.groupConcatDistinct(PERMISSION_DOC_CREATE.DOC_TYPE_ID).as("create_perms"))
                                 .from(STROOM_USER)
                                 .leftOuterJoin(PERMISSION_DOC)
-                                .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                                .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
+                                        .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
                                 .leftOuterJoin(PERMISSION_DOC_CREATE)
-                                .on(PERMISSION_DOC_CREATE.USER_UUID.eq(STROOM_USER.UUID))
+                                .on(PERMISSION_DOC_CREATE.USER_UUID.eq(STROOM_USER.UUID)
+                                        .and(PERMISSION_DOC_CREATE.DOC_UUID.eq(docRef.getUuid())))
                                 .where(conditions)
+                                .groupBy(STROOM_USER.UUID)
                                 .orderBy(orderFields)
                                 .offset(offset)
                                 .limit(limit)
                                 .fetch())
-                        .map(r -> recordToDocumentUserPermissions(docRef, r));
+                        .map(r -> {
+                            final UserRef userRef = recordToUserRef(r);
+                            final String perms = r.get(recPerms);
+                            final DocumentPermission permission = getHighestDocPermission(perms);
+                            final DocumentPermission inherited = null;
+                            final String createPerms = r.get(recCreatePerms);
+                            final Set<String> documentCreatePermissions = getDocCreatePermissionSet(createPerms);
+                            final Set<String> inheritedDocumentCreatePermissions = null;
+                            return new DocumentUserPermissions(
+                                    userRef,
+                                    permission,
+                                    inherited,
+                                    documentCreatePermissions,
+                                    inheritedDocumentCreatePermissions);
+                        });
 
             } else {
                 conditions
@@ -750,7 +771,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                                         STROOM_USER.IS_GROUP)
                                 .from(STROOM_USER)
                                 .join(PERMISSION_DOC)
-                                .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                                .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
+                                        .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
                                 .where(conditions)
                                 .orderBy(orderFields)
                                 .offset(offset)
@@ -824,12 +846,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     private DocumentUserPermissions recordToDocumentUserPermissions(final DocRef docRef,
                                                                     final Record r) {
         final UserRef userRef = recordToUserRef(r);
-        final UByte value = r.get(PERMISSION_DOC.PERMISSION_ID);
-        DocumentPermission documentPermission = null;
-        if (value != null) {
-            documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
-                    .fromPrimitiveValue(value.byteValue());
-        }
+        DocumentPermission documentPermission = getDocumentUserPermission(r);
 
         Set<String> documentCreatePermissions = null;
         if (ExplorerConstants.isFolderOrSystem(docRef)) {
@@ -841,6 +858,16 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 userRef,
                 documentPermission,
                 documentCreatePermissions);
+    }
+
+    private DocumentPermission getDocumentUserPermission(final Record r) {
+        final UByte value = r.get(PERMISSION_DOC.PERMISSION_ID);
+        DocumentPermission documentPermission = null;
+        if (value != null) {
+            documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
+                    .fromPrimitiveValue(value.byteValue());
+        }
+        return documentPermission;
     }
 
     private UserRef recordToUserRef(final Record r) {
