@@ -99,9 +99,7 @@ public class DocumentUserCreatePermissionsEditPresenter
         final PopupSize popupSize;
         if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
             documentCreatePermissionsListPresenter = documentCreatePermissionsListPresenterProvider.get();
-            documentCreatePermissionsListPresenter.setDocPermissionClient(docPermissionClient);
-            documentCreatePermissionsListPresenter.setExplorerClient(explorerClient);
-            documentCreatePermissionsListPresenter.setup(relatedUser, relatedDoc, report);
+            documentCreatePermissionsListPresenter.setup(report);
             getView().setDocumentTypeView(documentCreatePermissionsListPresenter.getView());
             popupSize = PopupSize.builder()
                     .width(Size

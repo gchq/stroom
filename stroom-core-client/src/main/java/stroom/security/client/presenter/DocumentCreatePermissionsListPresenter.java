@@ -21,7 +21,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -34,7 +33,6 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.UserRef;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -58,15 +56,10 @@ public class DocumentCreatePermissionsListPresenter
     private final ClientSecurityContext securityContext;
     private final MyDataGrid<DocumentType> dataGrid;
     private final MultiSelectionModelImpl<DocumentType> selectionModel;
-    private final DataGridSelectionEventManager<DocumentType> selectionEventManager;
 
     private final DocumentTypeCache documentTypeCache;
 
     private DocumentUserPermissionsReport currentPermissions;
-    private UserRef relatedUser;
-    private DocRef relatedDoc;
-    private DocPermissionRestClient docPermissionClient;
-    private ExplorerClient explorerClient;
 
     private Set<String> explicitCreatePermissions;
 
@@ -81,7 +74,8 @@ public class DocumentCreatePermissionsListPresenter
 
         dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<DocumentType> selectionEventManager =
+                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setTable(dataGrid);
 
@@ -250,11 +244,9 @@ public class DocumentCreatePermissionsListPresenter
                 if (value.equals(TickBoxState.UNTICK)) {
                     explicitCreatePermissions.remove(ExplorerConstants.ALL_CREATE_PERMISSIONS);
                     refresh();
-//                    onChangeAll(false);
                 } else if (value.equals(TickBoxState.TICK)) {
                     explicitCreatePermissions.add(ExplorerConstants.ALL_CREATE_PERMISSIONS);
                     refresh();
-//                    onChangeAll(true);
                 }
             });
             selectionColumn.setFieldUpdater((index, permission, value) -> {
@@ -264,7 +256,6 @@ public class DocumentCreatePermissionsListPresenter
                     explicitCreatePermissions.remove(permission.getType());
                 }
                 refresh();
-//                onChange(permission, TickBoxState.TICK.equals(value));
             });
             dataGrid.addColumn(selectionColumn, header, ColumnSizeConstants.CHECKBOX_COL);
         } else {
@@ -314,54 +305,13 @@ public class DocumentCreatePermissionsListPresenter
         updateDetails();
     }
 
-    public void setup(final UserRef relatedUser,
-                      final DocRef relatedDoc,
-                      final DocumentUserPermissionsReport permissions) {
-        this.relatedUser = relatedUser;
-        this.relatedDoc = relatedDoc;
+    public void setup(final DocumentUserPermissionsReport permissions) {
         this.currentPermissions = permissions;
         explicitCreatePermissions = new HashSet<>();
         explicitCreatePermissions.addAll(permissions.getExplicitCreatePermissions());
 
         refresh();
     }
-
-//    private void refreshAll() {
-//        docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response ->
-//                setup(relatedUser, relatedDoc, response));
-//    }
-
-//    private void onChangeAll(final boolean selected) {
-//        onChangeAll(selected, ok -> refreshAll());
-//    }
-//
-//    private void onChangeAll(final boolean selected,
-//                             final Consumer<Boolean> consumer) {
-//        if (relatedUser != null) {
-//            final AbstractDocumentPermissionsChange change;
-//            if (selected) {
-//                change = new AbstractDocumentPermissionsChange
-//                        .AddAllDocumentCreatePermissions(relatedUser);
-//            } else {
-//                change = new AbstractDocumentPermissionsChange
-//                        .RemoveAllDocumentCreatePermissions(relatedUser);
-//            }
-//
-//            final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
-//                    createExpression(),
-//                    change);
-//            explorerClient.changeDocumentPermssions(request, consumer);
-//        } else {
-//            consumer.accept(false);
-//        }
-//    }
-//
-//    private void onChange(final DocumentType documentType,
-//                          final boolean selected) {
-//        onChange(documentType, selected, ok -> refreshAll());
-//    }
-//
-
 
     public Set<String> getExplicitCreatePermissions() {
         return explicitCreatePermissions;
@@ -374,18 +324,6 @@ public class DocumentCreatePermissionsListPresenter
             return null;
         }
     }
-
-    public void setDocPermissionClient(final DocPermissionRestClient docPermissionClient) {
-        this.docPermissionClient = docPermissionClient;
-    }
-
-    public void setExplorerClient(final ExplorerClient explorerClient) {
-        this.explorerClient = explorerClient;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface DocumentCreatePermissionsListView extends View {
 

@@ -107,7 +107,7 @@ public class UserPermissionReportPresenter
                 false));
 
 
-        documentPermissionsListPresenter.setCurrentResulthandler(resultPage -> {
+        documentPermissionsListPresenter.setCurrentResultHandler(resultPage -> {
             docs = resultPage;
             batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
         });

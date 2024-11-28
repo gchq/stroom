@@ -9,7 +9,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.event.FocusEvent;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest.Builder;
@@ -47,10 +46,9 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     private RestDataProvider<FindResultWithPermissions, ResultPage<FindResultWithPermissions>> dataProvider;
     private final Builder criteriaBuilder = new Builder();
 
-    private ExpressionCriteria currentQuery = criteriaBuilder.build();
     private ExpressionOperator lastFilter;
     private boolean focusText;
-    private Consumer<ResultPage<FindResultWithPermissions>> currentResulthandler;
+    private Consumer<ResultPage<FindResultWithPermissions>> currentResultHandler;
 
     @Inject
     public DocumentPermissionsListPresenter(final EventBus eventBus,
@@ -239,8 +237,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                             .create(EXPLORER_RESOURCE)
                             .method(res -> res.advancedFindWithPermissions(request))
                             .onSuccess(resultPage -> {
-                                if (currentResulthandler != null) {
-                                    currentResulthandler.accept(resultPage);
+                                if (currentResultHandler != null) {
+                                    currentResultHandler.accept(resultPage);
                                 }
                                 dataConsumer.accept(resultPage);
 
@@ -273,8 +271,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         return selectionModel;
     }
 
-    public void setCurrentResulthandler(final Consumer<ResultPage<FindResultWithPermissions>> currentResulthandler) {
-        this.currentResulthandler = currentResulthandler;
+    public void setCurrentResultHandler(final Consumer<ResultPage<FindResultWithPermissions>> currentResultHandler) {
+        this.currentResultHandler = currentResultHandler;
     }
 
     public void resetRange() {
