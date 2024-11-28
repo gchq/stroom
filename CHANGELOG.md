@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.37] - 2024-11-28
+
+* Issue **#4622** : Improve proxy logging and error handling.
+
+
 ## [v7.0.36] - 2024-09-06
 
 * Issue **#4437** : Fix proxy not handling input files larger than 4 GiB.
@@ -4896,7 +4901,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.36...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.37...HEAD
+[v7.0.37]: https://github.com/gchq/stroom/compare/v7.0.36...v7.0.37
 [v7.0.36]: https://github.com/gchq/stroom/compare/v7.0.35...v7.0.36
 [v7.0.35]: https://github.com/gchq/stroom/compare/v7.0.34...v7.0.35
 [v7.0.34]: https://github.com/gchq/stroom/compare/v7.0.33...v7.0.34
