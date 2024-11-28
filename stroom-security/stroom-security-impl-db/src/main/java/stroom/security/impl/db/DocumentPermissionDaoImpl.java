@@ -13,7 +13,6 @@ import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
-import stroom.security.shared.PermissionShowLevel;
 import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -406,403 +405,304 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         conditions.add(STROOM_USER.ENABLED.eq(true));
 
         // If we have a single doc then try to deliver more useful permissions.
-        List<DocumentUserPermissions> list = Collections.emptyList();
-        if (PermissionShowLevel.SHOW_ALL.equals(request.getShowLevel())) {
-            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                            .select(
-                                    PERMISSION_DOC.PERMISSION_ID,
-                                    STROOM_USER.UUID,
-                                    STROOM_USER.NAME,
-                                    STROOM_USER.DISPLAY_NAME,
-                                    STROOM_USER.FULL_NAME,
-                                    STROOM_USER.IS_GROUP)
-                            .from(STROOM_USER)
-                            .leftOuterJoin(PERMISSION_DOC)
-                            .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
-                                    .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
-                            .where(conditions)
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch())
-                    .map(r -> recordToDocumentUserPermissions(docRef, r));
+        final List<DocumentUserPermissions> list;
+        if (ExplorerConstants.isFolderOrSystem(docRef)) {
+            final StroomUser su = STROOM_USER.as("su");
+            final StroomUserGroup sug = STROOM_USER_GROUP.as("sug");
+            final PermissionDoc pd = PERMISSION_DOC.as("pd");
+            final PermissionDoc pdParent = PERMISSION_DOC.as("pd_parent");
+            final PermissionDocCreate pdc = PERMISSION_DOC_CREATE.as("pdc");
+            final PermissionDocCreate pdcParent = PERMISSION_DOC_CREATE.as("pdc_parent");
 
-        } else if (PermissionShowLevel.SHOW_EFFECTIVE.equals(request.getShowLevel())) {
-            if (ExplorerConstants.isFolderOrSystem(docRef)) {
-                final StroomUser su = STROOM_USER.as("su");
-                final StroomUserGroup sug = STROOM_USER_GROUP.as("sug");
-                final PermissionDoc pd = PERMISSION_DOC.as("pd");
-                final PermissionDoc pdParent = PERMISSION_DOC.as("pd_parent");
-                final PermissionDocCreate pdc = PERMISSION_DOC_CREATE.as("pdc");
-                final PermissionDocCreate pdcParent = PERMISSION_DOC_CREATE.as("pdc_parent");
+            final Name cte = DSL.name("cte");
+            final Field<String> cteUserUuid = DSL.field(cte.append("user_uuid"), String.class);
+            final Field<String> cteGroupUuid = DSL.field(cte.append("group_uuid"), String.class);
+            final Field<String> ctePerms = DSL.field(cte.append("perms"), String.class);
+            final Field<String> cteInheritedPerms = DSL.field(cte.append("inherited_perms"), String.class);
+            final Field<String> cteCreatePerms = DSL.field(cte.append("create_perms"), String.class);
+            final Field<String> cteInheritedCreatePerms = DSL.field(cte.append("inherited_create_perms"),
+                    String.class);
 
-                final Name cte = DSL.name("cte");
-                final Field<String> cteUserUuid = DSL.field(cte.append("user_uuid"), String.class);
-                final Field<String> cteGroupUuid = DSL.field(cte.append("group_uuid"), String.class);
-                final Field<String> ctePerms = DSL.field(cte.append("perms"), String.class);
-                final Field<String> cteInheritedPerms = DSL.field(cte.append("inherited_perms"), String.class);
-                final Field<String> cteCreatePerms = DSL.field(cte.append("create_perms"), String.class);
-                final Field<String> cteInheritedCreatePerms = DSL.field(cte.append("inherited_create_perms"),
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> {
+
+                // Create a select to group permissions and parent permissions for the doc.
+                final Select<?> select = context
+                        .select(
+                                su.UUID.as("user_uuid"),
+                                sug.GROUP_UUID,
+                                DSL.groupConcatDistinct(pd.PERMISSION_ID).as("perms"),
+                                DSL.groupConcatDistinct(pdParent.PERMISSION_ID).as("parent_perms"),
+                                DSL.groupConcatDistinct(pdc.DOC_TYPE_ID).as("create_perms"),
+                                DSL.groupConcatDistinct(pdcParent.DOC_TYPE_ID).as("parent_create_perms"))
+                        .from(su)
+                        .leftOuterJoin(sug)
+                        .on(sug.USER_UUID.eq(su.UUID))
+                        .leftOuterJoin(pd)
+                        .on(pd.USER_UUID.eq(su.UUID).and(pd.DOC_UUID.eq(docRef.getUuid())))
+                        .leftOuterJoin(pdParent)
+                        .on(pdParent.USER_UUID.eq(sug.GROUP_UUID).and(pdParent.DOC_UUID.eq(docRef.getUuid())))
+                        .leftOuterJoin(pdc)
+                        .on(pdc.USER_UUID.eq(su.UUID).and(pdc.DOC_UUID.eq(docRef.getUuid())))
+                        .leftOuterJoin(pdcParent)
+                        .on(pdcParent.USER_UUID.eq(sug.GROUP_UUID).and(pdcParent.DOC_UUID.eq(docRef.getUuid())))
+                        .groupBy(su.UUID, sug.GROUP_UUID);
+
+                final Table<?> v = select.asTable("v");
+                final Field<String> vUserUuid = v.field("user_uuid", String.class);
+                final Field<String> vGroupUuid = v.field("group_uuid", String.class);
+                final Field<String> vPerms = v.field("perms", String.class);
+                final Field<String> vParentPerms = v.field("parent_perms", String.class);
+                final Field<String> vCreatePerms = v.field("create_perms", String.class);
+                final Field<String> vParentCreatePerms = v.field("parent_create_perms", String.class);
+                assert vUserUuid != null;
+                assert vGroupUuid != null;
+                assert vPerms != null;
+                assert vParentPerms != null;
+                assert vCreatePerms != null;
+                assert vParentCreatePerms != null;
+
+                // Create a view to recursively aggregate parent permissions for users and groups so we can see all
+                // inherited permissions.
+                // Create common table expression to apply `with recursive`.
+                final CommonTableExpression<?> commonTableExpression = cte
+                        .as(context
+                                .select(
+                                        vUserUuid,
+                                        vGroupUuid,
+                                        vPerms,
+                                        vParentPerms.as("inherited_perms"),
+                                        vCreatePerms,
+                                        vParentCreatePerms.as("inherited_create_perms"))
+                                .from(v)
+                                .unionAll(
+                                        context.select(
+                                                        vUserUuid,
+                                                        vGroupUuid,
+                                                        vPerms,
+                                                        DSL.if_(cteInheritedPerms.isNull(),
+                                                                vParentPerms,
+                                                                DSL.if_(vParentPerms.isNull(),
+                                                                        cteInheritedPerms,
+                                                                        DSL.concat(
+                                                                                DSL.concat(cteInheritedPerms,
+                                                                                        ","),
+                                                                                vParentPerms))),
+                                                        vCreatePerms,
+                                                        DSL.if_(cteInheritedCreatePerms.isNull(),
+                                                                vParentCreatePerms,
+                                                                DSL.if_(vParentCreatePerms.isNull(),
+                                                                        cteInheritedCreatePerms,
+                                                                        DSL.concat(
+                                                                                DSL.concat(cteInheritedCreatePerms,
+                                                                                        ","),
+                                                                                vParentCreatePerms))))
+                                                .from(DSL.table(cte))
+                                                .join(v).on(vGroupUuid.eq(cteUserUuid))));
+
+                // Apply `with recursive`
+                final Table<?> recursive = context
+                        .withRecursive(commonTableExpression)
+                        .select(
+                                cteUserUuid,
+                                cteGroupUuid,
+                                DSL.groupConcatDistinct(ctePerms).as("perms"),
+                                DSL.groupConcatDistinct(cteInheritedPerms).as("inherited_perms"),
+                                DSL.groupConcatDistinct(cteCreatePerms).as("create_perms"),
+                                DSL.groupConcatDistinct(cteInheritedCreatePerms).as("inherited_create_perms"))
+                        .from(commonTableExpression)
+                        .groupBy(cteUserUuid, cteGroupUuid)
+                        .asTable();
+
+                final Field<String> recUserUuid = recursive.field("user_uuid", String.class);
+                final Field<String> recGroupUuid = recursive.field("group_uuid", String.class);
+                final Field<String> recPerms = recursive.field("perms", String.class);
+                final Field<String> recInheritedPerms = recursive.field("inherited_perms", String.class);
+                final Field<String> recCreatePerms = recursive.field("create_perms", String.class);
+                final Field<String> recInheritedCreatePerms = recursive.field("inherited_create_perms",
                         String.class);
+                assert recUserUuid != null;
+                assert recGroupUuid != null;
+                assert recPerms != null;
+                assert recInheritedPerms != null;
+                assert recCreatePerms != null;
+                assert recInheritedCreatePerms != null;
 
-                list = JooqUtil.contextResult(securityDbConnProvider, context -> {
+                // Add additional conditions if we want to just show effective or explicit permissions.
+                switch (request.getShowLevel()) {
+                    case SHOW_EFFECTIVE -> conditions.add(recPerms.isNotNull()
+                            .or(recInheritedPerms.isNotNull())
+                            .or(recCreatePerms.isNotNull())
+                            .or(recInheritedCreatePerms.isNotNull()));
+                    case SHOW_EXPLICIT -> conditions.add(recPerms.isNotNull()
+                            .or(recCreatePerms.isNotNull()));
+                }
 
-                    // Create a select to group permissions and parent permissions for the doc.
-                    final Select<?> select = context
-                            .select(
-                                    su.UUID.as("user_uuid"),
-                                    sug.GROUP_UUID,
-                                    DSL.groupConcatDistinct(pd.PERMISSION_ID).as("perms"),
-                                    DSL.groupConcatDistinct(pdParent.PERMISSION_ID).as("parent_perms"),
-                                    DSL.groupConcatDistinct(pdc.DOC_TYPE_ID).as("create_perms"),
-                                    DSL.groupConcatDistinct(pdcParent.DOC_TYPE_ID).as("parent_create_perms"))
-                            .from(su)
-                            .leftOuterJoin(sug)
-                            .on(sug.USER_UUID.eq(su.UUID))
-                            .leftOuterJoin(pd)
-                            .on(pd.USER_UUID.eq(su.UUID).and(pd.DOC_UUID.eq(docRef.getUuid())))
-                            .leftOuterJoin(pdParent)
-                            .on(pdParent.USER_UUID.eq(sug.GROUP_UUID).and(pdParent.DOC_UUID.eq(docRef.getUuid())))
-                            .leftOuterJoin(pdc)
-                            .on(pdc.USER_UUID.eq(su.UUID).and(pdc.DOC_UUID.eq(docRef.getUuid())))
-                            .leftOuterJoin(pdcParent)
-                            .on(pdcParent.USER_UUID.eq(sug.GROUP_UUID).and(pdcParent.DOC_UUID.eq(docRef.getUuid())))
-                            .groupBy(su.UUID, sug.GROUP_UUID);
+                // Join recursive select to user.
+                return context
+                        .select(STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP,
+                                recPerms,
+                                recInheritedPerms,
+                                recCreatePerms,
+                                recInheritedCreatePerms)
+                        .from(STROOM_USER)
+                        .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
 
-                    final Table<?> v = select.asTable("v");
-                    final Field<String> vUserUuid = v.field("user_uuid", String.class);
-                    final Field<String> vGroupUuid = v.field("group_uuid", String.class);
-                    final Field<String> vPerms = v.field("perms", String.class);
-                    final Field<String> vParentPerms = v.field("parent_perms", String.class);
-                    final Field<String> vCreatePerms = v.field("create_perms", String.class);
-                    final Field<String> vParentCreatePerms = v.field("parent_create_perms", String.class);
-                    assert vUserUuid != null;
-                    assert vGroupUuid != null;
-                    assert vPerms != null;
-                    assert vParentPerms != null;
-                    assert vCreatePerms != null;
-                    assert vParentCreatePerms != null;
+            }).map(r -> {
+                final UserRef userRef = recordToUserRef(r);
+                final String perms = r.get(ctePerms);
+                final String inheritedPerms = r.get(cteInheritedPerms);
+                final String createPerms = r.get(cteCreatePerms);
+                final String inheritedCreatePerms = r.get(cteInheritedCreatePerms);
+                final DocumentPermission permission = getHighestDocPermission(perms);
+                final DocumentPermission inherited = getHighestDocPermission(inheritedPerms);
+                final Set<String> documentCreatePermissions = getDocCreatePermissionSet(createPerms);
+                final Set<String> inheritedDocumentCreatePermissions = getDocCreatePermissionSet(
+                        inheritedCreatePerms);
+                return new DocumentUserPermissions(
+                        userRef,
+                        permission,
+                        inherited,
+                        documentCreatePermissions,
+                        inheritedDocumentCreatePermissions);
+            });
 
-                    // Create a view to recursively aggregate parent permissions for users and groups so we can see all
-                    // inherited permissions.
-                    // Create common table expression to apply `with recursive`.
-                    final CommonTableExpression<?> commonTableExpression = cte
-                            .as(context
-                                    .select(
-                                            vUserUuid,
-                                            vGroupUuid,
-                                            vPerms,
-                                            vParentPerms.as("inherited_perms"),
-                                            vCreatePerms,
-                                            vParentCreatePerms.as("inherited_create_perms"))
-                                    .from(v)
-                                    .unionAll(
-                                            context.select(
-                                                            vUserUuid,
-                                                            vGroupUuid,
-                                                            vPerms,
-                                                            DSL.if_(cteInheritedPerms.isNull(),
-                                                                    vParentPerms,
-                                                                    DSL.if_(vParentPerms.isNull(),
-                                                                            cteInheritedPerms,
-                                                                            DSL.concat(
-                                                                                    DSL.concat(cteInheritedPerms,
-                                                                                            ","),
-                                                                                    vParentPerms))),
-                                                            vCreatePerms,
-                                                            DSL.if_(cteInheritedCreatePerms.isNull(),
-                                                                    vParentCreatePerms,
-                                                                    DSL.if_(vParentCreatePerms.isNull(),
-                                                                            cteInheritedCreatePerms,
-                                                                            DSL.concat(
-                                                                                    DSL.concat(cteInheritedCreatePerms,
-                                                                                            ","),
-                                                                                    vParentCreatePerms))))
-                                                    .from(DSL.table(cte))
-                                                    .join(v).on(vGroupUuid.eq(cteUserUuid))));
+        } else {
+            final StroomUser su = STROOM_USER.as("su");
+            final StroomUserGroup sug = STROOM_USER_GROUP.as("sug");
+            final PermissionDoc pd = PERMISSION_DOC.as("pd");
+            final PermissionDoc pdParent = PERMISSION_DOC.as("pd_parent");
 
-                    // Apply `with recursive`
-                    final Table<?> recursive = context
-                            .withRecursive(commonTableExpression)
-                            .select(
-                                    cteUserUuid,
-                                    cteGroupUuid,
-                                    DSL.groupConcatDistinct(ctePerms).as("perms"),
-                                    DSL.groupConcatDistinct(cteInheritedPerms).as("inherited_perms"),
-                                    DSL.groupConcatDistinct(cteCreatePerms).as("create_perms"),
-                                    DSL.groupConcatDistinct(cteInheritedCreatePerms).as("inherited_create_perms"))
-                            .from(commonTableExpression)
-                            .groupBy(cteUserUuid, cteGroupUuid)
-                            .asTable();
+            final Name cte = DSL.name("cte");
+            final Field<String> cteUserUuid = DSL.field(cte.append("user_uuid"), String.class);
+            final Field<String> cteGroupUuid = DSL.field(cte.append("group_uuid"), String.class);
+            final Field<String> ctePerms = DSL.field(cte.append("perms"), String.class);
+            final Field<String> cteInheritedPerms = DSL.field(cte.append("inherited_perms"), String.class);
 
-                    final Field<String> recUserUuid = recursive.field("user_uuid", String.class);
-                    final Field<String> recGroupUuid = recursive.field("group_uuid", String.class);
-                    final Field<String> recPerms = recursive.field("perms", String.class);
-                    final Field<String> recInheritedPerms = recursive.field("inherited_perms", String.class);
-                    final Field<String> recCreatePerms = recursive.field("create_perms", String.class);
-                    final Field<String> recInheritedCreatePerms = recursive.field("inherited_create_perms",
-                            String.class);
-                    assert recUserUuid != null;
-                    assert recGroupUuid != null;
-                    assert recPerms != null;
-                    assert recInheritedPerms != null;
-                    assert recCreatePerms != null;
-                    assert recInheritedCreatePerms != null;
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> {
 
-                    // Join recursive select to user.
-                    return context
-                            .select(STROOM_USER.UUID,
-                                    STROOM_USER.NAME,
-                                    STROOM_USER.DISPLAY_NAME,
-                                    STROOM_USER.FULL_NAME,
-                                    STROOM_USER.IS_GROUP,
-                                    recPerms,
-                                    recInheritedPerms,
-                                    recCreatePerms,
-                                    recInheritedCreatePerms)
-                            .from(STROOM_USER)
-                            .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
-                            .where(conditions)
-                            .and(recPerms.isNotNull()
-                                    .or(recInheritedPerms.isNotNull())
-                                    .or(recCreatePerms.isNotNull())
-                                    .or(recInheritedCreatePerms.isNotNull()))
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch();
+                // Create a select to group permissions and parent permissions for the doc.
+                final Select<?> select = context
+                        .select(
+                                su.UUID.as("user_uuid"),
+                                sug.GROUP_UUID,
+                                DSL.groupConcatDistinct(pd.PERMISSION_ID).as("perms"),
+                                DSL.groupConcatDistinct(pdParent.PERMISSION_ID).as("parent_perms"))
+                        .from(su)
+                        .leftOuterJoin(sug)
+                        .on(sug.USER_UUID.eq(su.UUID))
+                        .leftOuterJoin(pd)
+                        .on(pd.USER_UUID.eq(su.UUID).and(pd.DOC_UUID.eq(docRef.getUuid())))
+                        .leftOuterJoin(pdParent)
+                        .on(pdParent.USER_UUID.eq(sug.GROUP_UUID).and(pdParent.DOC_UUID.eq(docRef.getUuid())))
+                        .groupBy(su.UUID, sug.GROUP_UUID);
 
-                }).map(r -> {
-                    final UserRef userRef = recordToUserRef(r);
-                    final String perms = r.get(ctePerms);
-                    final String inheritedPerms = r.get(cteInheritedPerms);
-                    final String createPerms = r.get(cteCreatePerms);
-                    final String inheritedCreatePerms = r.get(cteInheritedCreatePerms);
-                    final DocumentPermission permission = getHighestDocPermission(perms);
-                    final DocumentPermission inherited = getHighestDocPermission(inheritedPerms);
-                    final Set<String> documentCreatePermissions = getDocCreatePermissionSet(createPerms);
-                    final Set<String> inheritedDocumentCreatePermissions = getDocCreatePermissionSet(
-                            inheritedCreatePerms);
-                    return new DocumentUserPermissions(
-                            userRef,
-                            permission,
-                            inherited,
-                            documentCreatePermissions,
-                            inheritedDocumentCreatePermissions);
-                });
+                final Table<?> v = select.asTable("v");
+                final Field<String> vUserUuid = v.field("user_uuid", String.class);
+                final Field<String> vGroupUuid = v.field("group_uuid", String.class);
+                final Field<String> vPerms = v.field("perms", String.class);
+                final Field<String> vParentPerms = v.field("parent_perms", String.class);
+                assert vUserUuid != null;
+                assert vGroupUuid != null;
+                assert vPerms != null;
+                assert vParentPerms != null;
 
-            } else {
-                final StroomUser su = STROOM_USER.as("su");
-                final StroomUserGroup sug = STROOM_USER_GROUP.as("sug");
-                final PermissionDoc pd = PERMISSION_DOC.as("pd");
-                final PermissionDoc pdParent = PERMISSION_DOC.as("pd_parent");
-
-                final Name cte = DSL.name("cte");
-                final Field<String> cteUserUuid = DSL.field(cte.append("user_uuid"), String.class);
-                final Field<String> cteGroupUuid = DSL.field(cte.append("group_uuid"), String.class);
-                final Field<String> ctePerms = DSL.field(cte.append("perms"), String.class);
-                final Field<String> cteInheritedPerms = DSL.field(cte.append("inherited_perms"), String.class);
-
-                list = JooqUtil.contextResult(securityDbConnProvider, context -> {
-
-                    // Create a select to group permissions and parent permissions for the doc.
-                    final Select<?> select = context
-                            .select(
-                                    su.UUID.as("user_uuid"),
-                                    sug.GROUP_UUID,
-                                    DSL.groupConcatDistinct(pd.PERMISSION_ID).as("perms"),
-                                    DSL.groupConcatDistinct(pdParent.PERMISSION_ID).as("parent_perms"))
-                            .from(su)
-                            .leftOuterJoin(sug)
-                            .on(sug.USER_UUID.eq(su.UUID))
-                            .leftOuterJoin(pd)
-                            .on(pd.USER_UUID.eq(su.UUID).and(pd.DOC_UUID.eq(docRef.getUuid())))
-                            .leftOuterJoin(pdParent)
-                            .on(pdParent.USER_UUID.eq(sug.GROUP_UUID).and(pdParent.DOC_UUID.eq(docRef.getUuid())))
-                            .groupBy(su.UUID, sug.GROUP_UUID);
-
-                    final Table<?> v = select.asTable("v");
-                    final Field<String> vUserUuid = v.field("user_uuid", String.class);
-                    final Field<String> vGroupUuid = v.field("group_uuid", String.class);
-                    final Field<String> vPerms = v.field("perms", String.class);
-                    final Field<String> vParentPerms = v.field("parent_perms", String.class);
-                    assert vUserUuid != null;
-                    assert vGroupUuid != null;
-                    assert vPerms != null;
-                    assert vParentPerms != null;
-
-                    // Create a view to recursively aggregate parent permissions for users and groups so we can see all
-                    // inherited permissions.
-                    // Create common table expression to apply `with recursive`.
-                    final CommonTableExpression<?> commonTableExpression = cte
-                            .as(context
-                                    .select(
-                                            vUserUuid,
-                                            vGroupUuid,
-                                            vPerms,
-                                            vParentPerms.as("inherited_perms"))
-                                    .from(v)
-                                    .unionAll(
-                                            context.select(
-                                                            vUserUuid,
-                                                            vGroupUuid,
-                                                            vPerms,
-                                                            DSL.if_(cteInheritedPerms.isNull(), vParentPerms,
-                                                                    DSL.if_(vParentPerms.isNull(),
-                                                                            cteInheritedPerms,
-                                                                            DSL.concat(
-                                                                                    DSL.concat(cteInheritedPerms,
-                                                                                            ","),
-                                                                                    vParentPerms))))
-                                                    .from(DSL.table(cte))
-                                                    .join(v).on(vGroupUuid.eq(cteUserUuid))));
-
-                    // Apply `with recursive`
-                    final Table<?> recursive = context
-                            .withRecursive(commonTableExpression)
-                            .select(
-                                    cteUserUuid,
-                                    cteGroupUuid,
-                                    DSL.groupConcatDistinct(ctePerms).as("perms"),
-                                    DSL.groupConcatDistinct(cteInheritedPerms).as("inherited_perms"))
-                            .from(commonTableExpression)
-                            .groupBy(cteUserUuid, cteGroupUuid)
-                            .asTable();
-
-                    final Field<String> recUserUuid = recursive.field("user_uuid", String.class);
-                    final Field<String> recGroupUuid = recursive.field("group_uuid", String.class);
-                    final Field<String> recPerms = recursive.field("perms", String.class);
-                    final Field<String> recInheritedPerms = recursive.field("inherited_perms", String.class);
-                    assert recUserUuid != null;
-                    assert recGroupUuid != null;
-                    assert recPerms != null;
-                    assert recInheritedPerms != null;
-
-                    // Join recursive select to user.
-                    return context
-                            .select(STROOM_USER.UUID,
-                                    STROOM_USER.NAME,
-                                    STROOM_USER.DISPLAY_NAME,
-                                    STROOM_USER.FULL_NAME,
-                                    STROOM_USER.IS_GROUP,
-                                    recPerms,
-                                    recInheritedPerms)
-                            .from(STROOM_USER)
-                            .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
-                            .where(conditions)
-                            .and(recPerms.isNotNull()
-                                    .or(recInheritedPerms.isNotNull()))
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch();
-
-                }).map(r -> {
-                    final UserRef userRef = recordToUserRef(r);
-                    final String perms = r.get(ctePerms);
-                    final String inheritedPerms = r.get(cteInheritedPerms);
-                    final DocumentPermission permission = getHighestDocPermission(perms);
-                    final DocumentPermission inherited = getHighestDocPermission(inheritedPerms);
-                    return new DocumentUserPermissions(
-                            userRef,
-                            permission,
-                            inherited,
-                            Collections.emptySet(),
-                            Collections.emptySet());
-                });
-            }
-
-        } else if (PermissionShowLevel.SHOW_EXPLICIT.equals(request.getShowLevel())) {
-            if (ExplorerConstants.isFolderOrSystem(docRef)) {
-                final Field<String> recPerms = DSL.field("perms", String.class);
-                final Field<String> recCreatePerms = DSL.field("create_perms", String.class);
-
-                conditions
-                        .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
-                                .or(PERMISSION_DOC_CREATE.DOC_UUID.eq(docRef.getUuid())));
-                list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                // Create a view to recursively aggregate parent permissions for users and groups so we can see all
+                // inherited permissions.
+                // Create common table expression to apply `with recursive`.
+                final CommonTableExpression<?> commonTableExpression = cte
+                        .as(context
                                 .select(
-                                        STROOM_USER.UUID,
-                                        STROOM_USER.NAME,
-                                        STROOM_USER.DISPLAY_NAME,
-                                        STROOM_USER.FULL_NAME,
-                                        STROOM_USER.IS_GROUP,
-                                        DSL.groupConcatDistinct(PERMISSION_DOC.PERMISSION_ID).as("perms"),
-                                        DSL.groupConcatDistinct(PERMISSION_DOC_CREATE.DOC_TYPE_ID).as("create_perms"))
-                                .from(STROOM_USER)
-                                .leftOuterJoin(PERMISSION_DOC)
-                                .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
-                                        .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
-                                .leftOuterJoin(PERMISSION_DOC_CREATE)
-                                .on(PERMISSION_DOC_CREATE.USER_UUID.eq(STROOM_USER.UUID)
-                                        .and(PERMISSION_DOC_CREATE.DOC_UUID.eq(docRef.getUuid())))
-                                .where(conditions)
-                                .groupBy(STROOM_USER.UUID)
-                                .orderBy(orderFields)
-                                .offset(offset)
-                                .limit(limit)
-                                .fetch())
-                        .map(r -> {
-                            final UserRef userRef = recordToUserRef(r);
-                            final String perms = r.get(recPerms);
-                            final DocumentPermission permission = getHighestDocPermission(perms);
-                            final DocumentPermission inherited = null;
-                            final String createPerms = r.get(recCreatePerms);
-                            final Set<String> documentCreatePermissions = getDocCreatePermissionSet(createPerms);
-                            final Set<String> inheritedDocumentCreatePermissions = null;
-                            return new DocumentUserPermissions(
-                                    userRef,
-                                    permission,
-                                    inherited,
-                                    documentCreatePermissions,
-                                    inheritedDocumentCreatePermissions);
-                        });
+                                        vUserUuid,
+                                        vGroupUuid,
+                                        vPerms,
+                                        vParentPerms.as("inherited_perms"))
+                                .from(v)
+                                .unionAll(
+                                        context.select(
+                                                        vUserUuid,
+                                                        vGroupUuid,
+                                                        vPerms,
+                                                        DSL.if_(cteInheritedPerms.isNull(), vParentPerms,
+                                                                DSL.if_(vParentPerms.isNull(),
+                                                                        cteInheritedPerms,
+                                                                        DSL.concat(
+                                                                                DSL.concat(cteInheritedPerms,
+                                                                                        ","),
+                                                                                vParentPerms))))
+                                                .from(DSL.table(cte))
+                                                .join(v).on(vGroupUuid.eq(cteUserUuid))));
 
-            } else {
-                conditions
-                        .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
-                list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                                .select(
-                                        PERMISSION_DOC.PERMISSION_ID,
-                                        STROOM_USER.UUID,
-                                        STROOM_USER.NAME,
-                                        STROOM_USER.DISPLAY_NAME,
-                                        STROOM_USER.FULL_NAME,
-                                        STROOM_USER.IS_GROUP)
-                                .from(STROOM_USER)
-                                .join(PERMISSION_DOC)
-                                .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
-                                        .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .offset(offset)
-                                .limit(limit)
-                                .fetch())
-                        .map(r -> recordToDocumentUserPermissions(docRef, r));
-            }
+                // Apply `with recursive`
+                final Table<?> recursive = context
+                        .withRecursive(commonTableExpression)
+                        .select(
+                                cteUserUuid,
+                                cteGroupUuid,
+                                DSL.groupConcatDistinct(ctePerms).as("perms"),
+                                DSL.groupConcatDistinct(cteInheritedPerms).as("inherited_perms"))
+                        .from(commonTableExpression)
+                        .groupBy(cteUserUuid, cteGroupUuid)
+                        .asTable();
+
+                final Field<String> recUserUuid = recursive.field("user_uuid", String.class);
+                final Field<String> recGroupUuid = recursive.field("group_uuid", String.class);
+                final Field<String> recPerms = recursive.field("perms", String.class);
+                final Field<String> recInheritedPerms = recursive.field("inherited_perms", String.class);
+                assert recUserUuid != null;
+                assert recGroupUuid != null;
+                assert recPerms != null;
+                assert recInheritedPerms != null;
+
+                // Add additional conditions if we want to just show effective or explicit permissions.
+                switch (request.getShowLevel()) {
+                    case SHOW_EFFECTIVE -> conditions.add(recPerms.isNotNull()
+                            .or(recInheritedPerms.isNotNull()));
+                    case SHOW_EXPLICIT -> conditions.add(recPerms.isNotNull());
+                }
+
+                // Join recursive select to user.
+                return context
+                        .select(STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP,
+                                recPerms,
+                                recInheritedPerms)
+                        .from(STROOM_USER)
+                        .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
+
+            }).map(r -> {
+                final UserRef userRef = recordToUserRef(r);
+                final String perms = r.get(ctePerms);
+                final String inheritedPerms = r.get(cteInheritedPerms);
+                final DocumentPermission permission = getHighestDocPermission(perms);
+                final DocumentPermission inherited = getHighestDocPermission(inheritedPerms);
+                return new DocumentUserPermissions(
+                        userRef,
+                        permission,
+                        inherited,
+                        Collections.emptySet(),
+                        Collections.emptySet());
+            });
         }
 
         return ResultPage.createCriterialBasedList(list, request);
     }
-
-//    private Set<DocumentPermission> getDocPermissionSet(final String perms) {
-//        if (NullSafe.isBlankString(perms)) {
-//            return Collections.emptySet();
-//        }
-//
-//        final String[] parts = perms.split(",");
-//        final Set<DocumentPermission> permissions = new HashSet<>(parts.length);
-//        for (final String part : parts) {
-//            final String trimmed = part.trim();
-//            if (!trimmed.isEmpty()) {
-//                final int permissionId = Integer.parseInt(trimmed);
-//                final DocumentPermission documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
-//                        .fromPrimitiveValue((byte) permissionId);
-//                permissions.add(documentPermission);
-//            }
-//        }
-//        return permissions;
-//    }
 
     private DocumentPermission getHighestDocPermission(final String perms) {
         DocumentPermission permission = null;

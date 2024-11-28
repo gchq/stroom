@@ -349,15 +349,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
             final FetchDocumentUserPermissionsRequest request) {
         checkGetPermission(request.getDocRef());
-        final ResultPage<DocumentUserPermissions> resultPage =
-                documentPermissionDao.fetchDocumentUserPermissions(request);
-
-        // Add inherited permissions.
-        for (final DocumentUserPermissions permissions : resultPage.getValues()) {
-            addDeepPermissions(request.getDocRef(), permissions);
-        }
-
-        return resultPage;
+        return documentPermissionDao.fetchDocumentUserPermissions(request);
     }
 
     public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {
