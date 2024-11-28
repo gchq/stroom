@@ -15,6 +15,6 @@
             <l:SelectionBox ui:field="permission"/>
         </form:FormGroup>
         <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus Button--contained-primary" text="Apply To Descendants"/>
-        <b:Button ui:field="editCreatePermissions" addStyleNames="allow-focus Button--contained-primary" text="Choose Which Document Types Can Be Created"/>
+        <b:Button ui:field="editCreatePermissions" addStyleNames="allow-focus Button--contained-primary" text="Set Document Create Permissions"/>
     </g:FlowPanel>
 </ui:UiBinder> 

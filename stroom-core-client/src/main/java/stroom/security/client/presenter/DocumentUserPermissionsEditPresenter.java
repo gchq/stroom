@@ -95,24 +95,24 @@ public class DocumentUserPermissionsEditPresenter
                         final DocumentUserPermissionsReport report,
                         final Runnable onClose) {
         final PopupSize popupSize;
-        if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
-            popupSize = PopupSize.builder()
-                    .width(Size
-                            .builder()
-                            .initial(800)
-                            .min(400)
-                            .resizable(true)
-                            .build())
-                    .height(Size
-                            .builder()
-                            .initial(800)
-                            .min(400)
-                            .resizable(true)
-                            .build())
-                    .build();
-        } else {
+//        if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
+//            popupSize = PopupSize.builder()
+//                    .width(Size
+//                            .builder()
+//                            .initial(400)
+//                            .min(400)
+//                            .resizable(true)
+//                            .build())
+//                    .height(Size
+//                            .builder()
+//                            .initial(400)
+//                            .min(400)
+//                            .resizable(true)
+//                            .build())
+//                    .build();
+//        } else {
             popupSize = PopupSize.builder().build();
-        }
+//        }
 
         getView().setDocument(docRef);
         getView().setUser(userRef);
