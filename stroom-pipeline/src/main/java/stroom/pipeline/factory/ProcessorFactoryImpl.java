@@ -69,6 +69,10 @@ class ProcessorFactoryImpl implements ProcessorFactory {
         return new MultiWayProcessor(processors, executor, taskContextFactory, taskContext, errorReceiverProxy);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class MultiWayProcessor implements Processor {
 
         private final List<Processor> processors;

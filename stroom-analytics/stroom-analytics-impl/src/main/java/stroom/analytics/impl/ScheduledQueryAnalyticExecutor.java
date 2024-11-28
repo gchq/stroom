@@ -24,6 +24,7 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.IndexConstants;
@@ -204,9 +205,10 @@ public class ScheduledQueryAnalyticExecutor {
     private void execAnalytic(final AnalyticRuleDoc analytic,
                               final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
+        final DocRef analyticDocRef = analytic.asDocRef();
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
                 .builder()
-                .ownerDocRef(analytic.asDocRef())
+                .ownerDocRef(analyticDocRef)
                 .enabled(true)
                 .nodeName(StringMatch.equals(nodeInfo.getThisNodeName(), true))
                 .build();
@@ -218,6 +220,9 @@ public class ScheduledQueryAnalyticExecutor {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
                     // running within a new thread.
+                    LOGGER.debug(() -> LogUtil.message("analyticRuleDoc: {}, running as user: {}",
+                            analyticDocRef.toShortString(), executionSchedule.getRunAsUser()));
+
                     securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
                         boolean success = true;
                         while (success && !parentTaskContext.isTerminated()) {
@@ -255,7 +260,7 @@ public class ScheduledQueryAnalyticExecutor {
         return taskContextFactory.childContextResult(
                 parentTaskContext,
                 "Scheduled Query Analytic: " +
-                        AnalyticUtil.getAnalyticRuleIdentity(reloaded),
+                AnalyticUtil.getAnalyticRuleIdentity(reloaded),
                 taskContext -> execute(
                         reloaded,
                         schedule,
@@ -292,9 +297,9 @@ public class ScheduledQueryAnalyticExecutor {
 
         if (!effectiveExecutionTime.isAfter(executionTime) && !effectiveExecutionTime.isAfter(endTime)) {
             taskContext.info(() -> "Executing schedule '" +
-                    executionSchedule.getName() +
-                    "' with effective time: " +
-                    DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
+                                   executionSchedule.getName() +
+                                   "' with effective time: " +
+                                   DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
             final String errorFeedName = analyticHelper.getErrorFeedName(analytic);
             final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
             return analyticErrorWriter.exec(
@@ -318,6 +323,10 @@ public class ScheduledQueryAnalyticExecutor {
                             final Instant effectiveExecutionTime,
                             final ExecutionSchedule executionSchedule,
                             final ExecutionTracker currentTracker) {
+        LOGGER.debug(() -> LogUtil.message(
+                "Executing analytic: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
+                analytic.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
+
         boolean success = false;
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
         ExecutionResult executionResult = new ExecutionResult(null, null);

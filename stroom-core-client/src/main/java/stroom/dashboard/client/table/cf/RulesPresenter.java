@@ -74,6 +74,8 @@ public class RulesPresenter
                           final Provider<RulePresenter> editRulePresenterProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
+        // listPresenter can change the enabled/hide props, so we need to update the buttons accordingly
+        this.listPresenter.setDataChangeHandler(this::updateButtons);
         this.editRulePresenterProvider = editRulePresenterProvider;
 
         getView().setTableView(listPresenter.getView());
@@ -309,7 +311,9 @@ public class RulesPresenter
                 .copy()
                 .conditionalFormattingRules(rules)
                 .build();
-        return componentConfig.copy().settings(newSettings).build();
+        return componentConfig.copy()
+                .settings(newSettings)
+                .build();
     }
 
     @Override

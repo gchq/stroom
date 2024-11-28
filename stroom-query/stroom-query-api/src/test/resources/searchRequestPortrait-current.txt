@@ -175,8 +175,6 @@ class stroom.query.api.v2.ConditionalFormattingRule - public java.lang.String st
 class stroom.query.api.v2.ConditionalFormattingRule - public static stroom.query.api.v2.ConditionalFormattingRule$Builder stroom.query.api.v2.ConditionalFormattingRule.builder()
 class stroom.query.api.v2.ConditionalFormattingRule - public stroom.query.api.v2.ConditionalFormattingRule$Builder stroom.query.api.v2.ConditionalFormattingRule.copy()
 class stroom.query.api.v2.ConditionalFormattingRule - public stroom.query.api.v2.ExpressionOperator stroom.query.api.v2.ConditionalFormattingRule.getExpression()
-class stroom.query.api.v2.ConditionalFormattingRule - public void stroom.query.api.v2.ConditionalFormattingRule.setEnabled(boolean)
-class stroom.query.api.v2.ConditionalFormattingRule - public void stroom.query.api.v2.ConditionalFormattingRule.setHide(boolean)
 class stroom.query.api.v2.ConditionalFormattingRule$Builder - public boolean java.lang.Object.equals(java.lang.Object)
 class stroom.query.api.v2.ConditionalFormattingRule$Builder - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.ConditionalFormattingRule$Builder - public final native void java.lang.Object.notify()
