@@ -20,10 +20,10 @@ import stroom.data.zip.StreamProgressMonitor;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.BufferFactory;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  */
 public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyForwardingFileSetProcessor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyForwardingFileSetProcessor.class);
 
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
@@ -66,17 +66,15 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
 
     @Override
     public void process(final FileSet fileSet) {
-        if (fileSet.getFiles().size() > 0) {
+        final List<Path> files = fileSet.getFiles();
+        if (files.size() > 0) {
             final long thisPostId = proxyForwardId.incrementAndGet();
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("processFeedFiles() - proxyForwardId " + thisPostId + " " + fileSet);
-            }
+            LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + thisPostId + " " + fileSet);
 
             // Sort the files in the file set so there is some consistency to processing.
-            fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("process() - " + fileSet.getKey() + " " + fileSet.getFiles());
-            }
+            files.sort(Comparator.comparing(p -> p.getFileName().toString()));
+            LOGGER.debug(() -> "process() - " + fileSet);
+            LOGGER.trace(() -> "process() - " + fileSet + "{" + files + "}");
 
             final FileSetKey key = fileSet.getKey();
             final String feedName = key.getFeedName();
@@ -103,13 +101,22 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
                 }
 
                 long sequenceId = 1;
-                final StreamProgressMonitor streamProgress = new StreamProgressMonitor("ProxyRepositoryReader " + key);
+                final StreamProgressMonitor streamProgress =
+                        new StreamProgressMonitor("ProxyRepositoryReader " + key);
 
-                for (final Path file : fileSet.getFiles()) {
+                for (final Path file : files) {
                     // Send no more if told to finish
                     if (Thread.currentThread().isInterrupted()) {
-                        LOGGER.info("processFeedFiles() - Quitting early as we have been told to stop");
-                        break;
+                        final String message = "Quitting early as we have been told to stop.\n" +
+                                "Was processing " +
+                                fileSet +
+                                " file " +
+                                FileUtil.getCanonicalPath(file) +
+                                " sequence " +
+                                sequenceId + ".\n" +
+                                "Will attempt to send again after restart.";
+                        LOGGER.info(message);
+                        throw new RuntimeException(message);
                     }
 
                     sequenceId = proxyFileHandler.processFeedFile(handlers, file, streamProgress, sequenceId);
@@ -120,13 +127,11 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
                 }
 
                 // Delete all of the files we have processed and their parent directories if possible.
-                cleanup(fileSet.getFiles());
+                cleanup(files);
 
-            } catch (final IOException ex) {
-                LOGGER.warn("processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("processFeedFiles() - Debug trace " + key, ex);
-                }
+            } catch (final Throwable ex) {
+                LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + feedName + " ( " + ex + ")");
+                LOGGER.debug(() -> "processFeedFiles() - Debug trace " + key, ex);
                 for (final StreamHandler streamHandler : handlers) {
                     try {
                         streamHandler.handleError();
@@ -139,7 +144,9 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
     }
 
     private void cleanup(final List<Path> deleteList) {
+        LOGGER.debug(() -> "cleanup() " + deleteList);
         for (final Path file : deleteList) {
+            LOGGER.debug(() -> "Deleting file: " + FileUtil.getCanonicalPath(file));
             ErrorFileUtil.deleteFileAndErrors(file);
         }
 
@@ -147,9 +154,10 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
         final Set<Path> parentDirs = deleteList.stream().map(Path::getParent).collect(Collectors.toSet());
         parentDirs.forEach(p -> {
             try {
+                LOGGER.debug(() -> "Deleting dir: " + FileUtil.getCanonicalPath(p));
                 Files.deleteIfExists(p);
             } catch (final IOException e) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e::getMessage, e);
             }
         });
     }

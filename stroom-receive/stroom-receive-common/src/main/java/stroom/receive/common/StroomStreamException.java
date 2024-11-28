@@ -20,20 +20,21 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
-
-    private static final long serialVersionUID = 1L;
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomStreamException.class);
 
@@ -112,13 +113,11 @@ public class StroomStreamException extends RuntimeException {
     }
 
     public static int checkConnectionResponse(final HttpURLConnection connection, final AttributeMap attributeMap) {
-        int responseCode = -1;
-        int stroomStatus = -1;
+        final int responseCode;
         try {
             responseCode = connection.getResponseCode();
             final String responseMessage = connection.getResponseMessage();
-
-            stroomStatus = connection.getHeaderFieldInt(StandardHeaderArguments.STROOM_STATUS, -1);
+            final int stroomStatus = connection.getHeaderFieldInt(StandardHeaderArguments.STROOM_STATUS, -1);
 
             if (responseCode == 200) {
                 readAndCloseStream(connection.getInputStream());
@@ -143,15 +142,16 @@ public class StroomStreamException extends RuntimeException {
     }
 
     private static void readAndCloseStream(final InputStream inputStream) {
-        final byte[] buffer = new byte[1024];
         try {
             if (inputStream != null) {
-                while (inputStream.read(buffer) > 0) {
+                final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                try (inputStream; outputStream) {
+                    StreamUtil.streamToStream(inputStream, outputStream);
                 }
-                inputStream.close();
+                LOGGER.debug(() -> outputStream.toString(StandardCharsets.UTF_8));
             }
-        } catch (final IOException ioex) {
-            // TODO @AT Should we be swallowing this
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
         }
     }
 
