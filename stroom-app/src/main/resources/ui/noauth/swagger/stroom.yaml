@@ -7089,6 +7089,23 @@ paths:
       tags:
       - Authorisation
   /users/v1/{userUuid}:
+    delete:
+      operationId: delete
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      tags:
+      - Authorisation
     get:
       operationId: fetchUser
       parameters:

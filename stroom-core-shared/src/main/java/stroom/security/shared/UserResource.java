@@ -54,6 +54,9 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
 
     @DELETE
     @Path("{userUuid}")
+    @Operation(
+            summary = "Delete the user with the supplied UUID",
+            operationId = "deleteUser")
     @NotNull
     boolean delete(@PathParam("userUuid") String userUuid);
 
