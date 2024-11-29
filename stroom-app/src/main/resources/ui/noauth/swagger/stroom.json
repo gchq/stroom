@@ -11086,9 +11086,6 @@
       "AdvancedDocumentFindWithPermissionsRequest" : {
         "type" : "object",
         "properties" : {
-          "explicitPermission" : {
-            "type" : "boolean"
-          },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
@@ -11102,6 +11099,10 @@
               "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
+          },
+          "showLevel" : {
+            "type" : "string",
+            "enum" : [ "SHOW_EXPLICIT", "SHOW_EFFECTIVE", "SHOW_ALL" ]
           },
           "sort" : {
             "type" : "string",
@@ -14295,6 +14296,9 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -14376,6 +14380,9 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },

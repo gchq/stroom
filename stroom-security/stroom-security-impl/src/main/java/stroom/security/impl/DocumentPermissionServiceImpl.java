@@ -273,21 +273,22 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
             final FetchDocumentUserPermissionsRequest request) {
-        FetchDocumentUserPermissionsRequest modified = request;
-
-        // If the current user is not allowed to change permissions then only show them permissions for themselves.
-        if (!canUserChangePermission(request.getDocRef())) {
+        return securityContext.secureResult(() -> {
             final UserRef userRef = securityContext.getUserRef();
-            if (userRef == null) {
-                throw new PermissionException(userRef, "No user logged in");
-            }
-            modified = new FetchDocumentUserPermissionsRequest
-                    .Builder(request)
-                    .userRef(userRef)
-                    .build();
-        }
+            Objects.requireNonNull(userRef, "Null user");
 
-        return documentPermissionDao.fetchDocumentUserPermissions(modified);
+            FetchDocumentUserPermissionsRequest modified = request;
+
+            // If the current user is not allowed to change permissions then only show them permissions for themselves.
+            if (!canUserChangePermission(request.getDocRef())) {
+                modified = new FetchDocumentUserPermissionsRequest
+                        .Builder(request)
+                        .userRef(userRef)
+                        .build();
+            }
+
+            return documentPermissionDao.fetchDocumentUserPermissions(modified);
+        });
     }
 
     public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {

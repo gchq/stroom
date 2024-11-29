@@ -95,6 +95,7 @@ class TestAppPermissionDaoImpl {
                 PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
         assertThat(resultPage.size()).isOne();
@@ -116,6 +117,7 @@ class TestAppPermissionDaoImpl {
                 PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
         assertThat(resultPage.size()).isEqualTo(2);
@@ -141,6 +143,7 @@ class TestAppPermissionDaoImpl {
                 PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
         assertThat(resultPage.size()).isEqualTo(3);
@@ -165,6 +168,7 @@ class TestAppPermissionDaoImpl {
                 PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
         assertThat(resultPage.size()).isEqualTo(0);
@@ -190,6 +194,7 @@ class TestAppPermissionDaoImpl {
                 PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
         assertThat(resultPage.size()).isEqualTo(3);
@@ -220,6 +225,7 @@ class TestAppPermissionDaoImpl {
                 PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
+                null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
         final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
         assertThat(resultPage.size()).isEqualTo(2);
