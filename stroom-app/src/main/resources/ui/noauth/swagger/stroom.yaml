@@ -7090,7 +7090,7 @@ paths:
       - Authorisation
   /users/v1/{userUuid}:
     delete:
-      operationId: delete
+      operationId: deleteUser
       parameters:
       - in: path
         name: userUuid
@@ -7104,6 +7104,7 @@ paths:
               schema:
                 type: boolean
           description: default response
+      summary: Delete the user with the supplied UUID
       tags:
       - Authorisation
     get:

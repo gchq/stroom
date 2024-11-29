@@ -10331,7 +10331,7 @@
     },
     "/users/v1/{userUuid}" : {
       "delete" : {
-        "operationId" : "delete",
+        "operationId" : "deleteUser",
         "parameters" : [ {
           "in" : "path",
           "name" : "userUuid",
@@ -10352,6 +10352,7 @@
             "description" : "default response"
           }
         },
+        "summary" : "Delete the user with the supplied UUID",
         "tags" : [ "Authorisation" ]
       },
       "get" : {
