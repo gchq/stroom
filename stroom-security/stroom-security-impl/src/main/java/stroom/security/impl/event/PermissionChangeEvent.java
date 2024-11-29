@@ -53,6 +53,10 @@ public class PermissionChangeEvent {
         eventBus.fire(new PermissionChangeEvent(userRef, docRef));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler {
 
         void onChange(PermissionChangeEvent event);

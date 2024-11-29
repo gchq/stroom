@@ -59,6 +59,12 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
+    public boolean delete(final String userUuid) {
+        return userServiceProvider.get()
+                .delete(Objects.requireNonNull(userUuid));
+    }
+
+    @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public User createUser(final UserDesc userDesc) {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();

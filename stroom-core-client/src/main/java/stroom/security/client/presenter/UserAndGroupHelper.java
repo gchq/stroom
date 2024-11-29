@@ -131,11 +131,15 @@ public class UserAndGroupHelper {
                     getDescription(user) + "?",
                     ok -> {
                         if (ok) {
-                            user.setEnabled(false);
                             restFactory
                                     .create(USER_RESOURCE)
-                                    .method(res -> res.update(user))
-                                    .onSuccess(createAfterChangeConsumer(userListPresenter))
+                                    .method(resource -> resource.delete(user.getUuid()))
+                                    .onSuccess(didDelete -> {
+                                        if (didDelete) {
+                                            userListPresenter.getSelectionModel().clear(true);
+                                            userListPresenter.refresh();
+                                        }
+                                    })
                                     .taskMonitorFactory(userListPresenter.getPagerView())
                                     .exec();
                         }
@@ -179,10 +183,9 @@ public class UserAndGroupHelper {
         };
     }
 
-    public static String getDescription(final User user) {
-        return user.isGroup()
-                ? "group '" + user.asRef().toDisplayString() + "'"
-                : "user '" + user.asRef().toDisplayString() + "'";
+    private static String getDescription(final User user) {
+        return user.getType(CaseType.LOWER)
+               + " '" + user.asRef().toDisplayString() + "'";
     }
 
     public static <T extends HasUserRef> boolean selectUserIfShown(final UserRef userRef,

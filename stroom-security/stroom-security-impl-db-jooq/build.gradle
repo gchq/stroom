@@ -62,7 +62,8 @@ jooq {
                                 includeExpression = '' +
                                         '.*\\.api_key\\.enabled|' +
                                         '.*\\.stroom_user\\.is_group|' +
-                                        '.*\\.stroom_user\\.enabled'
+                                        '.*\\.stroom_user\\.enabled|' +
+                                        '.*\\.stroom_user\\.deleted'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

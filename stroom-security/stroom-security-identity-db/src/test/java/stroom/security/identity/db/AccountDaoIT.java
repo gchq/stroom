@@ -369,7 +369,8 @@ public class AccountDaoIT extends DatabaseIT {
         AccountDao accountDao = new AccountDaoImpl(
                 null,
                 new IdentityDbModule.DataSourceImpl(
-                        DbTestUtil.createTestDataSource(new CommonDbConfig(), "account-test", false)));
+                        DbTestUtil.createTestDataSource(new CommonDbConfig(), "account-test", false)),
+                null);
         // We're doing tests against elapsed time, so we need to be able to move the clock.
         final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
 

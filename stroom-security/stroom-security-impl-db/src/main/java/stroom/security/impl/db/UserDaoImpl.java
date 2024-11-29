@@ -81,6 +81,8 @@ public class UserDaoImpl implements UserDao {
     private static final Field<?> DEFAULT_SORT_FIELD = STROOM_USER.DISPLAY_NAME;
     private static final String DEFAULT_SORT_ID = UserFields.FIELD_DISPLAY_NAME;
 
+    private static final Condition IGNORE_DELETED_CONDITION = STROOM_USER.DELETED.isFalse();
+
     private final SecurityDbConnProvider securityDbConnProvider;
     private final ExpressionMapper expressionMapper;
 
@@ -178,6 +180,7 @@ public class UserDaoImpl implements UserDao {
                 .select()
                 .from(STROOM_USER)
                 .where(STROOM_USER.UUID.eq(uuid))
+                .and(IGNORE_DELETED_CONDITION)
                 .fetchOptional()
                 .map(RECORD_TO_USER_MAPPER);
         LOGGER.debug("getByUuid - uuid: {}, returning: {}", uuid, optUser);
@@ -190,6 +193,7 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(subjectId))
+                        .and(IGNORE_DELETED_CONDITION)
                         .and(STROOM_USER.IS_GROUP.eq(false))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
@@ -203,6 +207,7 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(groupName))
+                        .and(IGNORE_DELETED_CONDITION)
                         .and(STROOM_USER.IS_GROUP.eq(true))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
@@ -280,7 +285,7 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(condition)
-//                            .and(STROOM_USER.ENABLED.eq(true))
+                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -303,7 +308,7 @@ public class UserDaoImpl implements UserDao {
                         .from(STROOM_USER)
                         .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.USER_UUID.eq(STROOM_USER.UUID))
                         .where(condition)
-//                            .and(STROOM_USER.ENABLED.eq(true))
+                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -326,7 +331,7 @@ public class UserDaoImpl implements UserDao {
                         .from(STROOM_USER)
                         .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.GROUP_UUID.eq(STROOM_USER.UUID))
                         .where(condition)
-//                            .and(STROOM_USER.ENABLED.eq(true))
+                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -382,7 +387,7 @@ public class UserDaoImpl implements UserDao {
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
                         .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                         .and(condition)
-//                        .and(STROOM_USER.ENABLED.eq(true))
+                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -405,7 +410,7 @@ public class UserDaoImpl implements UserDao {
                         .join(STROOM_USER_GROUP)
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
                         .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
-//                        .and(STROOM_USER.ENABLED.eq(true))
+                        .and(IGNORE_DELETED_CONDITION)
                         .and(condition)
                         .orderBy(orderFields)
                         .offset(offset)
@@ -439,6 +444,17 @@ public class UserDaoImpl implements UserDao {
                 .and(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                 .execute());
         LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}", userUuid, groupUuid, count);
+    }
+
+    @Override
+    public boolean logicallyDelete(final String userUuid) {
+        final Integer count = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                .update(STROOM_USER)
+                .set(STROOM_USER.DELETED, true)
+                .where(STROOM_USER.UUID.eq(userUuid))
+                .execute());
+        LOGGER.debug("logicallyDelete - userUuid: {}, count: {}", userUuid, count);
+        return count > 0;
     }
 
     Condition getUserCondition(final ExpressionOperator expression) {

@@ -62,4 +62,9 @@ public interface UserService {
     Boolean addUserToGroup(String userUuid, String groupUuid);
 
     Boolean removeUserFromGroup(String userUuid, String groupUuid);
+
+    /**
+     * Logically delete a user
+     */
+    boolean delete(String userUuid);
 }

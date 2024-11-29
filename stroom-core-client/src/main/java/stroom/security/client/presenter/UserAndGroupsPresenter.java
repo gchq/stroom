@@ -117,7 +117,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             }
         }, this);
 
-        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete User"));
+        // You can only delete groups on this screen, UsersPresenter for user deletion
+        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete Group"));
 
         addMemberOfButton = parentsList.addButton(SvgPresets.ADD);
         removeMemberOfButton = parentsList.addButton(SvgPresets.REMOVE);
@@ -261,12 +262,14 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             if (selected.isGroup()) {
                 editButton.setTitle("Edit " + getDescription(selected));
                 editButton.setEnabled(true);
+                deleteButton.setTitle("Delete " + getDescription(selected));
+                deleteButton.setEnabled(true);
             } else {
-                editButton.setTitle("user editing is not supported");
+                editButton.setTitle("User editing is not supported");
                 editButton.setEnabled(false);
+                deleteButton.setTitle("Users can only be deleted on the Users screen");
+                deleteButton.setEnabled(false);
             }
-            deleteButton.setTitle("Delete " + getDescription(selected));
-            deleteButton.setEnabled(true);
             addMemberOfButton.setEnabled(true);
             addMembersInButton.setEnabled(selected.isGroup());
 
@@ -371,7 +374,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onCreateUserOrGroup() {
-        createUserPresenter.show(UserAndGroupHelper.createAfterChangeConsumer(userList), true);
+        createUserPresenter.show(
+                UserAndGroupHelper.createAfterChangeConsumer(userList),
+                true);
     }
 
     private void onEditUserOrGroup() {
@@ -382,10 +387,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         UserAndGroupHelper.onDelete(userList, restFactory, this);
     }
 
-    private String getDescription(final User user) {
-        return user.isGroup()
-                ? "group '" + user.asRef().toDisplayString() + "'"
-                : "user '" + user.asRef().toDisplayString() + "'";
+    private static String getDescription(final User user) {
+        return user.getType(CaseType.LOWER)
+               + " '" + user.asRef().toDisplayString() + "'";
     }
 
     public void refresh() {

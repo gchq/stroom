@@ -28,8 +28,8 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     private final Provider<CreateNewGroupPresenter> createNewGroupPresenterProvider;
 
     private ButtonView createButton = null;
-//    private ButtonView editButton = null;
-//    private ButtonView deleteButton = null;
+    //    private ButtonView editButton = null;
+    private ButtonView deleteButton = null;
 
     @Inject
     public UsersPresenter(final EventBus eventBus,
@@ -54,7 +54,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
         createButton = userList.addButton(SvgPresets.ADD.title("Create User"));
 //        editButton = userList.addButton(SvgPresets.EDIT.title("Edit User"));
-//        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete User"));
+        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete User"));
 
         /// Initialise state.
         onSelection();
@@ -73,11 +73,11 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 //                onEditUserOrGroup();
 //            }
 //        }));
-//        registerHandler(deleteButton.addClickHandler(e -> {
-//            if (MouseUtil.isPrimary(e)) {
-//                onDelete();
-//            }
-//        }));
+        registerHandler(deleteButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onDelete();
+            }
+        }));
         registerHandler(userList.getSelectionModel().addSelectionHandler(e -> {
             onSelection();
         }));
@@ -109,12 +109,12 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
         if (selected != null) {
 //            editButton.setTitle("Edit " + getDescription(selected));
 //            editButton.setEnabled(true);
-//            deleteButton.setTitle("Delete " + getDescription(selected));
+            deleteButton.setTitle("Delete " + getDescription(selected));
 //            deleteButton.setEnabled(true);
         } else {
 //            editButton.setTitle("No Selection");
 //            editButton.setEnabled(false);
-//            deleteButton.setTitle("No Selection");
+            deleteButton.setTitle("No Selection");
 //            deleteButton.setEnabled(false);
         }
     }

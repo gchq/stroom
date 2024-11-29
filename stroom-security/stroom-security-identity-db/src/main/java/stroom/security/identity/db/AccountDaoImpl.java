@@ -19,6 +19,7 @@
 package stroom.security.identity.db;
 
 import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.AccountDao;
@@ -179,11 +180,12 @@ class AccountDaoImpl implements AccountDao {
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
-    private final ExpressionMapper expressionMapper = null;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
     public AccountDaoImpl(final Provider<IdentityConfig> identityConfigProvider,
-                          final IdentityDbConnProvider identityDbConnProvider) {
+                          final IdentityDbConnProvider identityDbConnProvider,
+                          final ExpressionMapperFactory expressionMapperFactory) {
         this.identityConfigProvider = identityConfigProvider;
         this.identityDbConnProvider = identityDbConnProvider;
         genericDao = new GenericDao<>(
@@ -193,13 +195,13 @@ class AccountDaoImpl implements AccountDao {
                 ACCOUNT_TO_RECORD_MAPPER,
                 RECORD_TO_ACCOUNT_MAPPER);
 
-//        expressionMapper = expressionMapperFactory.create()
-//                .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
-//                .map(AccountFields.FIELD_FIRST_NAME, ACCOUNT.FIRST_NAME, String::valueOf)
-//                .map(AccountFields.FIELD_LAST_NAME, ACCOUNT.LAST_NAME, String::valueOf)
-//                .map(AccountFields.FIELD_EMAIL, ACCOUNT.EMAIL, String::valueOf)
-//                .map(AccountFields.FIELD_STATUS, ACCOUNT_STATUS, String::valueOf)
-//                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf);
+        expressionMapper = expressionMapperFactory.create()
+                .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
+                .map(AccountFields.FIELD_FIRST_NAME, ACCOUNT.FIRST_NAME, String::valueOf)
+                .map(AccountFields.FIELD_LAST_NAME, ACCOUNT.LAST_NAME, String::valueOf)
+                .map(AccountFields.FIELD_EMAIL, ACCOUNT.EMAIL, String::valueOf)
+                .map(AccountFields.FIELD_STATUS, ACCOUNT_STATUS, String::valueOf)
+                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf);
     }
 
     @Override
@@ -219,7 +221,10 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public ResultPage<Account> search(final FindAccountRequest request) {
         final Condition notProcessingUser = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
-        final Condition filterConditions = expressionMapper.apply(request.getExpression());
+        final Condition filterConditions = NullSafe.getOrElseGet(
+                expressionMapper,
+                mapper -> mapper.apply(request.getExpression()),
+                DSL::trueCondition);
         // Sort on user_id if no sort supplied
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request, ACCOUNT.USER_ID);
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);

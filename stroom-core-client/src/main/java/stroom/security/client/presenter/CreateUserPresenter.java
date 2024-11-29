@@ -60,36 +60,23 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
     }
 
     public void show(final Consumer<User> consumer, final boolean includeGroups) {
-        // Only want to let user create a stroom user if they are using an external IDP.
-        // If internal then all users are available to be picked from the account tbl.
-        uiConfigCache.get(config -> {
-            if (config != null && config.isExternalIdentityProvider()) {
-                getView().setCreateTypesVisible(true);
-                final List<CreateType> createTypes = new ArrayList<>();
-                final String label;
-                final Focus initialView;
-                if (includeGroups) {
-                    createTypes.add(CreateType.USER_GROUP);
-                    label = "Add User Group Or External User(s)";
-                    initialView = createNewGroupPresenter.getView();
-                } else {
-                    label = "Add External User(s)";
-                    initialView = createNewUserPresenter.getView();
-                }
-                createTypes.add(CreateType.IDP_USER);
-                createTypes.add(CreateType.MULTI_IDP_USERS);
-                getView().setCreateTypes(createTypes);
-                getView().setCreateType(createTypes.get(0));
-                final PopupSize popupSize = PopupSize.resizable(600, 600);
-                show(label, initialView, consumer, popupSize);
-            } else if (includeGroups) {
-                getView().setCreateTypesVisible(false);
-                getView().setCreateTypes(List.of(CreateType.USER_GROUP));
-                getView().setCreateType(CreateType.USER_GROUP);
-                final PopupSize popupSize = PopupSize.resizableX();
-                show("Add User Group", createNewGroupPresenter.getView(), consumer, popupSize);
-            }
-        }, this);
+        if (includeGroups) {
+            getView().setCreateTypesVisible(false);
+            getView().setCreateTypes(List.of(CreateType.USER_GROUP));
+            getView().setCreateType(CreateType.USER_GROUP);
+            final PopupSize popupSize = PopupSize.resizableX();
+            show("Add User Group", createNewGroupPresenter.getView(), consumer, popupSize);
+        } else {
+            getView().setCreateTypesVisible(true);
+            final List<CreateType> createTypes = new ArrayList<>();
+            final String label = "Add External User(s)";
+            createTypes.add(CreateType.IDP_USER);
+            createTypes.add(CreateType.MULTI_IDP_USERS);
+            getView().setCreateTypes(createTypes);
+            getView().setCreateType(createTypes.get(0));
+            final PopupSize popupSize = PopupSize.resizable(600, 600);
+            show(label, createNewUserPresenter.getView(), consumer, popupSize);
+        }
     }
 
     private void show(final String caption,

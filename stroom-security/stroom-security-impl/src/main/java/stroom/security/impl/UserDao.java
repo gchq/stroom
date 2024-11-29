@@ -35,4 +35,6 @@ public interface UserDao {
     void addUserToGroup(String userUuid, String groupUuid);
 
     void removeUserFromGroup(String userUuid, String groupUuid);
+
+    boolean logicallyDelete(String userUuid);
 }

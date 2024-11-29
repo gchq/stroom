@@ -210,6 +210,15 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         return true;
     }
 
+    @Override
+    public boolean delete(final String userUuid) {
+        securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            userDao.logicallyDelete(userUuid);
+            fireUserChangeEvent(userUuid);
+        });
+        return true;
+    }
+
     private void fireUserChangeEvent(final String userUuid) {
         PermissionChangeEvent.fire(permissionChangeEventBus, UserRef
                 .builder()
