@@ -153,14 +153,14 @@ public class ExpressionPredicateBuilder {
         }
 
         // Create a query based on the field type and condition.
-//        final FieldType fieldType = valueFunctionFactory.getFieldType();
-//        if (FieldType.DATE.equals(fieldType)) {
-//            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
-//        } else if (fieldType.isNumeric()) {
-//            return createNumericTermPredicate(term, valueFunctionFactory);
-//        } else {
-        return createGeneralTermPredicate(term, valueFunctionFactory, dateTimeSettings);
-//        }
+        final FieldType fieldType = valueFunctionFactory.getFieldType();
+        if (FieldType.DATE.equals(fieldType)) {
+            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+        } else if (fieldType.isNumeric()) {
+            return createNumericTermPredicate(term, valueFunctionFactory);
+        } else {
+            return createGeneralTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+        }
     }
 
     @SuppressWarnings("checkstyle:LineLength")

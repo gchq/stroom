@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.function.Function;
 
 public class ValFunctionFactory implements ValueFunctionFactory<Val[]> {
+
     private final Column column;
     private final int index;
 
@@ -34,7 +35,7 @@ public class ValFunctionFactory implements ValueFunctionFactory<Val[]> {
     public Function<Val[], Long> createDateExtractor() {
         return values -> {
             final Val val = values[index];
-            if (Type.LONG.equals(val.type()) ||                   Type.DATE.equals(val.type())) {
+            if (Type.LONG.equals(val.type()) || Type.DATE.equals(val.type())) {
                 return val.toLong();
             } else {
                 String string = val.toString();

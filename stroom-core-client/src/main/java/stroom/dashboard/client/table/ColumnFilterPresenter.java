@@ -79,7 +79,7 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
 
         ColumnFilter filter = null;
         if (expression != null) {
-            filter = new ColumnFilter(expression, false);
+            filter = new ColumnFilter(expression);
         }
         return filter;
     }

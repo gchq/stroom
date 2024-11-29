@@ -364,7 +364,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         ColumnFilter columnFilter = null;
         if (GwtNullSafe.isNonBlankString(valueFilter)) {
             // TODO : Add case sensitive option.
-            columnFilter = new ColumnFilter(valueFilter, false);
+            columnFilter = new ColumnFilter(valueFilter);
         }
 
         replaceColumn(column, column.copy().columnFilter(columnFilter).build());

@@ -49,8 +49,7 @@ public class SimpleStringExpressionParser {
             .toList();
 
     public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
-                                                      final String string,
-                                                      final boolean caseSensitive) {
+                                                      final String string) {
         if (GwtNullSafe.isBlankString(string)) {
             return Optional.empty();
         }
@@ -73,14 +72,13 @@ public class SimpleStringExpressionParser {
         tokens = Tokeniser.categorise(TokenType.STRING, tokens);
 
         final TokenGroup tokenGroup = StructureBuilder.create(tokens);
-        return Optional.of(processLogic(tokenGroup.getChildren(), fieldProvider, caseSensitive));
+        return Optional.of(processLogic(tokenGroup.getChildren(), fieldProvider));
     }
 
     private static ExpressionOperator processLogic(final List<AbstractToken> tokens,
-                                                   final FieldProvider fieldProvider,
-                                                   final boolean caseSensitive) {
+                                                   final FieldProvider fieldProvider) {
         // Replace all term tokens with expression items.
-        List<Object> out = gatherTerms(tokens, fieldProvider, caseSensitive);
+        List<Object> out = gatherTerms(tokens, fieldProvider);
 
         // Apply NOT operators.
         out = applyNotOperators(out);
@@ -114,22 +112,21 @@ public class SimpleStringExpressionParser {
 
 
     private static List<Object> gatherTerms(final List<AbstractToken> tokens,
-                                            final FieldProvider fieldProvider,
-                                            final boolean caseSensitive) {
+                                            final FieldProvider fieldProvider) {
         final List<Object> out = new ArrayList<>(tokens.size());
 
         // Gather terms.
         final List<AbstractToken> termTokens = new ArrayList<>();
         for (final AbstractToken token : tokens) {
             if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
-                out.add(processLogic(keywordGroup.getChildren(), fieldProvider, caseSensitive));
+                out.add(processLogic(keywordGroup.getChildren(), fieldProvider));
             } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
-                out.add(processLogic(tokenGroup.getChildren(), fieldProvider, caseSensitive));
+                out.add(processLogic(tokenGroup.getChildren(), fieldProvider));
             } else if (TokenType.AND.equals(token.getTokenType()) ||
                        TokenType.OR.equals(token.getTokenType()) ||
                        TokenType.NOT.equals(token.getTokenType())) {
                 if (!termTokens.isEmpty()) {
-                    createTerm(termTokens, fieldProvider, caseSensitive).ifPresent(out::add);
+                    createTerm(termTokens, fieldProvider).ifPresent(out::add);
                     termTokens.clear();
                 }
                 out.add(token);
@@ -138,7 +135,7 @@ public class SimpleStringExpressionParser {
             }
         }
         if (!termTokens.isEmpty()) {
-            createTerm(termTokens, fieldProvider, caseSensitive).ifPresent(out::add);
+            createTerm(termTokens, fieldProvider).ifPresent(out::add);
         }
 
         return out;
@@ -215,8 +212,7 @@ public class SimpleStringExpressionParser {
     }
 
     private static Optional<ExpressionItem> createTerm(final List<AbstractToken> tokens,
-                                                       final FieldProvider fieldProvider,
-                                                       final boolean caseSensitive) {
+                                                       final FieldProvider fieldProvider) {
         // Split tokens into whitespace separated groups and apply AND between them.
         final List<ExpressionItem> operators = new ArrayList<>();
         final List<AbstractToken> current = new ArrayList<>();

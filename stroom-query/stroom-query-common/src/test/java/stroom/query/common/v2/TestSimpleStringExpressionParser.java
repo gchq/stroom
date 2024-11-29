@@ -32,7 +32,7 @@ public class TestSimpleStringExpressionParser extends AbstractQueryTest {
                 List.of("defaultField"),
                 Map.of("field1", "field1", "field2", "field2"));
         return SimpleStringExpressionParser
-                .create(fieldProvider, string, false)
+                .create(fieldProvider, string)
                 .orElseThrow();
     }
 }
