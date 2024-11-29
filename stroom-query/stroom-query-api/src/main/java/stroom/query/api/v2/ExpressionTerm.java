@@ -34,9 +34,19 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-@JsonPropertyOrder({"field", "condition", "value", "docRef", "caseSensitive"})
+@JsonPropertyOrder({
+        "field",
+        "condition",
+        "value",
+        "docRef"
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef", "caseSensitive"})
+@XmlType(name = "ExpressionTerm", propOrder = {
+        "field",
+        "condition",
+        "value",
+        "docRef"
+})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionTerm",
         description = "A predicate term in a query expression tree")

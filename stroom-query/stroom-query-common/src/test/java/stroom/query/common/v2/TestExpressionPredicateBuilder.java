@@ -1,11 +1,11 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.filter.StringPredicateFactory;
 
@@ -14,14 +14,12 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,60 +31,10 @@ class TestExpressionPredicateBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionPredicateBuilder.class);
 
     private static final ValueFunctionFactories<String> TEXT_VALUE_FUNCTION_FACTORIES = fieldName ->
-            new ValueFunctionFactory<>() {
-                @Override
-                public Function<String, Boolean> createNullCheck() {
-                    return null;
-                }
-
-                @Override
-                public Function<String, String> createStringExtractor() {
-                    return string -> string;
-                }
-
-                @Override
-                public Function<String, Long> createDateExtractor() {
-                    return null;
-                }
-
-                @Override
-                public Function<String, BigDecimal> createNumberExtractor() {
-                    return null;
-                }
-
-                @Override
-                public FieldType getFieldType() {
-                    return FieldType.TEXT;
-                }
-            };
+            new StringValueFunctionFactory(QueryField.builder().fldName("test").fldType(FieldType.TEXT).build());
 
     private static final ValueFunctionFactories<String> DATE_VALUE_FUNCTION_FACTORIES = fieldName ->
-            new ValueFunctionFactory<>() {
-                @Override
-                public Function<String, Boolean> createNullCheck() {
-                    return null;
-                }
-
-                @Override
-                public Function<String, String> createStringExtractor() {
-                    return string -> string;
-                }
-
-                @Override
-                public Function<String, Long> createDateExtractor() {
-                    return DateUtil::parseNormalDateTimeString;
-                }
-
-                @Override
-                public Function<String, BigDecimal> createNumberExtractor() {
-                    return null;
-                }
-
-                @Override
-                public FieldType getFieldType() {
-                    return FieldType.DATE;
-                }
-            };
+            new StringValueFunctionFactory(QueryField.builder().fldName("test").fldType(FieldType.DATE).build());
 
     @TestFactory
     List<DynamicTest> textMatcherTestFactory() {

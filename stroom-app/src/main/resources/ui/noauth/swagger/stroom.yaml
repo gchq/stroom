@@ -8418,8 +8418,6 @@ components:
     ColumnFilter:
       type: object
       properties:
-        caseSensitive:
-          type: boolean
         filter:
           type: string
     ColumnRef:
@@ -10452,8 +10450,6 @@ components:
       - $ref: "#/components/schemas/ExpressionItem"
       - type: object
         properties:
-          caseSensitive:
-            type: boolean
           condition:
             type: string
             description: The condition of the predicate term
@@ -10477,6 +10473,11 @@ components:
             - IS_NOT_NULL
             - MATCHES_REGEX
             - WORD_BOUNDARY
+            - CONTAINS_CASE_SENSITIVE
+            - EQUALS_CASE_SENSITIVE
+            - STARTS_WITH_CASE_SENSITIVE
+            - ENDS_WITH_CASE_SENSITIVE
+            - MATCHES_REGEX_CASE_SENSITIVE
             - OF_DOC_REF
             - USER_HAS_PERM
             - USER_HAS_OWNER
@@ -10495,9 +10496,6 @@ components:
             description: The value that the field value is being evaluated against.
               Not required if a dictionary is supplied
       description: A predicate term in a query expression tree
-      required:
-      - condition
-      - field
     ExtendedUiConfig:
       type: object
       properties:
@@ -16426,6 +16424,11 @@ components:
           - IS_NOT_NULL
           - MATCHES_REGEX
           - WORD_BOUNDARY
+          - CONTAINS_CASE_SENSITIVE
+          - EQUALS_CASE_SENSITIVE
+          - STARTS_WITH_CASE_SENSITIVE
+          - ENDS_WITH_CASE_SENSITIVE
+          - MATCHES_REGEX_CASE_SENSITIVE
           - OF_DOC_REF
           - USER_HAS_PERM
           - USER_HAS_OWNER
