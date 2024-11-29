@@ -18,12 +18,35 @@ import stroom.util.shared.GwtNullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class SimpleStringExpressionParser {
+
+    // Add all supported conditions and sort them by longest operator string first so we can match longest prefixes
+    // first.
+    private static final List<Condition> SUPPORTED_CONDITIONS = Stream
+            .of(
+                    Condition.CONTAINS,
+                    Condition.EQUALS,
+                    Condition.STARTS_WITH,
+                    Condition.ENDS_WITH,
+                    Condition.GREATER_THAN,
+                    Condition.GREATER_THAN_OR_EQUAL_TO,
+                    Condition.LESS_THAN,
+                    Condition.LESS_THAN_OR_EQUAL_TO,
+                    Condition.MATCHES_REGEX,
+                    Condition.WORD_BOUNDARY,
+                    Condition.CONTAINS_CASE_SENSITIVE,
+                    Condition.EQUALS_CASE_SENSITIVE,
+                    Condition.STARTS_WITH_CASE_SENSITIVE,
+                    Condition.ENDS_WITH_CASE_SENSITIVE,
+                    Condition.MATCHES_REGEX_CASE_SENSITIVE)
+            .sorted(Comparator.comparingInt(c -> -c.getOperator().length()))
+            .toList();
 
     public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
                                                       final String string,
@@ -103,8 +126,8 @@ public class SimpleStringExpressionParser {
             } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
                 out.add(processLogic(tokenGroup.getChildren(), fieldProvider, caseSensitive));
             } else if (TokenType.AND.equals(token.getTokenType()) ||
-                    TokenType.OR.equals(token.getTokenType()) ||
-                    TokenType.NOT.equals(token.getTokenType())) {
+                       TokenType.OR.equals(token.getTokenType()) ||
+                       TokenType.NOT.equals(token.getTokenType())) {
                 if (!termTokens.isEmpty()) {
                     createTerm(termTokens, fieldProvider, caseSensitive).ifPresent(out::add);
                     termTokens.clear();
@@ -200,8 +223,7 @@ public class SimpleStringExpressionParser {
         for (final AbstractToken token : tokens) {
             if (TokenType.WHITESPACE.equals(token.getTokenType())) {
                 if (!current.isEmpty()) {
-                    final Optional<ExpressionItem> optional =
-                            createInnerTerm(current, fieldProvider, caseSensitive);
+                    final Optional<ExpressionItem> optional = createInnerTerm(current, fieldProvider);
                     optional.ifPresent(operators::add);
                     current.clear();
                 }
@@ -211,8 +233,7 @@ public class SimpleStringExpressionParser {
         }
         // Add remaining.
         if (!current.isEmpty()) {
-            final Optional<ExpressionItem> optional =
-                    createInnerTerm(current, fieldProvider, caseSensitive);
+            final Optional<ExpressionItem> optional = createInnerTerm(current, fieldProvider);
             optional.ifPresent(operators::add);
         }
 
@@ -227,7 +248,6 @@ public class SimpleStringExpressionParser {
 
     private static List<AbstractToken> collapseTokenGroups(final List<AbstractToken> tokens) {
         // Collapse remaining token groups.
-        AbstractToken lastToken;
         final List<AbstractToken> collapsed = new ArrayList<>();
         for (final AbstractToken token : tokens) {
             if (TokenType.isString(token)) {
@@ -271,8 +291,7 @@ public class SimpleStringExpressionParser {
     }
 
     private static Optional<ExpressionItem> createInnerTerm(final List<AbstractToken> in,
-                                                            final FieldProvider fieldProvider,
-                                                            final boolean caseSensitive) {
+                                                            final FieldProvider fieldProvider) {
         // Collapse remaining token groups.
         List<AbstractToken> tokens = collapseTokenGroups(in);
         tokens = mergeTokenGroups(tokens);
@@ -281,11 +300,14 @@ public class SimpleStringExpressionParser {
             return Optional.empty();
         }
 
-        Condition condition;
+        Condition condition = null;
         String value;
         final AbstractToken token = tokens.getFirst();
+
         if (TokenType.STRING.equals(token.getTokenType())) {
             final String string = token.getUnescapedText();
+
+            // See if the condition is negated.
             if (string.length() > 1 && string.startsWith("!")) {
                 final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
                 final Token t = new Token(TokenType.STRING, token.getChars(), token.getStart() + 1, token.getEnd());
@@ -293,7 +315,7 @@ public class SimpleStringExpressionParser {
                 remaining.add(t);
                 remaining.addAll(tokens.subList(1, tokens.size()));
 
-                final Optional<ExpressionItem> child = createInnerTerm(remaining, fieldProvider, caseSensitive);
+                final Optional<ExpressionItem> child = createInnerTerm(remaining, fieldProvider);
                 if (child.isEmpty()) {
                     return Optional.empty();
                 }
@@ -306,140 +328,81 @@ public class SimpleStringExpressionParser {
                 }
 
                 value = string;
-                if (string.startsWith("?")) {
-                    // Word boundary matching
-                    condition = Condition.WORD_BOUNDARY;
-                    value = string.substring(1);
 
-                } else if (string.startsWith("/")) {
-                    // Regex matching.
-                    condition = Condition.MATCHES_REGEX;
-                    value = string.substring(1);
+                for (Condition c : SUPPORTED_CONDITIONS) {
+                    final String operator = c.getOperator();
+                    if (string.startsWith(operator)) {
+                        condition = c;
+                        value = string.substring(operator.length());
+                        break;
+                    }
+                }
 
-                } else if (string.startsWith("^")) {
-                    // Starts with.
-                    condition = Condition.STARTS_WITH;
-                    value = string.substring(1);
-
-                } else if (string.startsWith("$")) {
-                    // Ends with.
-                    condition = Condition.ENDS_WITH;
-                    value = string.substring(1);
-
-                } else if (string.startsWith(">=")) {
-                    // Greater than or equal to numeric matching.
-                    condition = Condition.GREATER_THAN_OR_EQUAL_TO;
-                    value = string.substring(2).trim();
-
-                } else if (string.startsWith("<=")) {
-                    // Less than or equal to numeric matching.
-                    condition = Condition.LESS_THAN_OR_EQUAL_TO;
-                    value = string.substring(2).trim();
-
-                } else if (string.startsWith(">")) {
-                    // Greater than numeric matching.
-                    condition = Condition.GREATER_THAN;
-                    value = string.substring(1).trim();
-
-                } else if (string.startsWith("<")) {
-                    // Less than numeric matching.
-                    condition = Condition.LESS_THAN;
-                    value = string.substring(1).trim();
-
-                } else if (string.startsWith("~")) {
-                    // Characters Anywhere Matching.
-                    condition = Condition.MATCHES_REGEX;
-                    value = string.substring(1);
-                    char[] chars = value.toCharArray();
-                    final StringBuilder sb = new StringBuilder();
-                    for (final char c : chars) {
-                        sb.append(".*?");
-
-                        if (c == '*') {
-                            // TODO @AT Why is this * block here
+                if (condition == null) {
+                    if (string.startsWith("~")) {
+                        // Characters Anywhere Matching.
+                        condition = Condition.MATCHES_REGEX;
+                        value = string.substring(1);
+                        char[] chars = value.toCharArray();
+                        final StringBuilder sb = new StringBuilder();
+                        for (final char c : chars) {
                             sb.append(".*?");
-                        } else if (Character.isLetterOrDigit(c)) {
-                            sb.append(c);
-                        } else {
-                            // Might be a special char so escape it
-                            sb.append(Pattern.quote(String.valueOf(c)));
+
+                            if (c == '*') {
+                                // TODO @AT Why is this * block here
+                                sb.append(".*?");
+                            } else if (Character.isLetterOrDigit(c)) {
+                                sb.append(c);
+                            } else {
+                                // Might be a special char so escape it
+                                sb.append(Pattern.quote(String.valueOf(c)));
+                            }
                         }
-                    }
-                    value = sb.toString();
-
-                } else if (string.startsWith("=")) {
-                    // Equals.
-                    value = string.substring(1);
-                    final String possibleRegex = replaceWildcards(value);
-                    if (possibleRegex.equals(value)) {
-                        condition = Condition.EQUALS;
-                        value = possibleRegex;
+                        value = sb.toString();
                     } else {
-                        condition = Condition.MATCHES_REGEX;
-                        value = "^" + possibleRegex + "$";
-                    }
-
-                } else if (string.startsWith("\\")) {
-                    // Escaped contains.
-                    value = string.substring(1);
-                    final String possibleRegex = replaceWildcards(value);
-                    if (possibleRegex.equals(value)) {
+                        // Contains.
                         condition = Condition.CONTAINS;
-                    } else {
-                        condition = Condition.MATCHES_REGEX;
                     }
-                    value = possibleRegex;
+                }
 
+                // Get the field prefix.
+                final String fieldPrefix = getFieldPrefix(value);
+
+                // Resolve all fields.
+                List<String> fields;
+                String fieldName = fieldPrefix;
+                // Remove field prefix delimiter.
+                if (fieldName.endsWith(":")) {
+                    fieldName = fieldName.substring(0, fieldName.length() - 1);
+                }
+                if (fieldName.isEmpty()) {
+                    fields = fieldProvider.getDefaultFields();
                 } else {
-                    // Contains.
-                    final String possibleRegex = replaceWildcards(value);
-                    if (possibleRegex.equals(value)) {
-                        condition = Condition.CONTAINS;
-                    } else {
-                        condition = Condition.MATCHES_REGEX;
+                    final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
+                    if (qualifiedField.isEmpty()) {
+                        throw new RuntimeException("Unexpected field: " + fieldName);
                     }
-                    value = possibleRegex;
+                    fields = Collections.singletonList(qualifiedField.get());
                 }
+
+                // Resolve the field value.
+                String fieldValue = value.substring(fieldPrefix.length());
+                fieldValue = fieldValue + concatStringTokens(tokens.subList(1, tokens.size()));
+
+                return createExpressionItem(fields, condition, fieldValue);
             }
-
-            // Get the field prefix.
-            final String fieldPrefix = getFieldPrefix(value);
-
-            // Resolve all fields.
-            List<String> fields;
-            String fieldName = fieldPrefix;
-            // Remove field prefix delimiter.
-            if (fieldName.endsWith(":")) {
-                fieldName = fieldName.substring(0, fieldName.length() - 1);
-            }
-            if (fieldName.isEmpty()) {
-                fields = fieldProvider.getDefaultFields();
-            } else {
-                final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
-                if (qualifiedField.isEmpty()) {
-                    throw new RuntimeException("Unexpected field: " + fieldName);
-                }
-                fields = Collections.singletonList(qualifiedField.get());
-            }
-
-            // Resolve the field value.
-            String fieldValue = value.substring(fieldPrefix.length());
-            fieldValue = fieldValue + concatStringTokens(tokens.subList(1, tokens.size()));
-
-            return createExpressionItem(fields, condition, fieldValue, caseSensitive);
 
         } else {
             final List<String> fields = fieldProvider.getDefaultFields();
             final String fieldValue = concatStringTokens(tokens);
 
-            return createExpressionItem(fields, Condition.CONTAINS, fieldValue, caseSensitive);
+            return createExpressionItem(fields, Condition.CONTAINS, fieldValue);
         }
     }
 
     private static Optional<ExpressionItem> createExpressionItem(final List<String> fields,
                                                                  final Condition condition,
-                                                                 final String fieldValue,
-                                                                 final boolean caseSensitive) {
+                                                                 final String fieldValue) {
         if (fields.isEmpty()) {
             throw new RuntimeException("No fields");
         }
@@ -450,7 +413,6 @@ public class SimpleStringExpressionParser {
                     .field(fields.getFirst())
                     .condition(condition)
                     .value(fieldValue)
-                    .caseSensitive(caseSensitive)
                     .build());
         }
 
@@ -461,7 +423,6 @@ public class SimpleStringExpressionParser {
                     .field(field)
                     .condition(condition)
                     .value(fieldValue)
-                    .caseSensitive(caseSensitive)
                     .build());
         }
 
@@ -472,33 +433,6 @@ public class SimpleStringExpressionParser {
         final StringBuilder sb = new StringBuilder();
         for (final AbstractToken token : tokens) {
             sb.append(token.getUnescapedText());
-        }
-        return sb.toString();
-    }
-
-    private static String replaceWildcards(final String string) {
-        char[] chars = string.toCharArray();
-        final StringBuilder sb = new StringBuilder();
-        boolean escape = false;
-        for (final char c : chars) {
-            if (c == '\\') {
-                escape = !escape;
-                sb.append(c);
-
-            } else {
-                if (!escape) {
-                    if (c == '*') {
-                        sb.append(".*");
-                    } else if (c == '?') {
-                        sb.append(".");
-                    } else {
-                        sb.append(c);
-                    }
-                } else {
-                    sb.append(c);
-                }
-                escape = false;
-            }
         }
         return sb.toString();
     }
@@ -523,24 +457,6 @@ public class SimpleStringExpressionParser {
             }
         }
         return "";
-    }
-
-    private static String unescape(final String string) {
-        char[] chars = string.toCharArray();
-        final StringBuilder sb = new StringBuilder();
-        boolean escape = false;
-        for (final char c : chars) {
-            if (c == '\\') {
-                escape = !escape;
-                if (!escape) {
-                    sb.append(c);
-                }
-            } else {
-                sb.append(c);
-                escape = false;
-            }
-        }
-        return sb.toString();
     }
 
     public interface FieldProvider {

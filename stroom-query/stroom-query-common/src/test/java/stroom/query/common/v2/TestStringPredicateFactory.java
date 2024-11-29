@@ -31,17 +31,31 @@ class TestStringPredicateFactory {
 
     @TestFactory
     List<DynamicTest> fuzzyMatcherTestFactory() {
-        List<DynamicTest> tests = new ArrayList<>();
 
         // Each test is run in normal ("foorbar") and negated form ("!foorbar")
-        tests.addAll(List.of(
-
+        return new ArrayList<>(List.of(
                 makeFuzzyMatchTest("Contains",
                         "map",
                         List.of("map",
                                 "a map",
                                 "mapping"),
-                        List.of("my son is a plonker")), // contains m a p
+                        List.of("maap")),
+
+                makeFuzzyMatchTest("Contains with operator",
+                        "\\map",
+                        List.of("map",
+                                "a map",
+                                "mapping"),
+                        List.of("maap")),
+
+                makeFuzzyMatchTest("Contains with operator (case sensitive)",
+                        "=\\map",
+                        List.of("map",
+                                "a map",
+                                "mapping"),
+                        List.of("MAP",
+                                "A MAP",
+                                "MAAP")),
 
                 makeFuzzyMatchTest("Starts with",
                         "^this_",
@@ -50,6 +64,13 @@ class TestStringPredicateFactory {
                                 "THIS_IS_MY_FEED_TOO",
                                 "this_is_my_feed_too"),
                         List.of("NOT_THIS_IS_MY_FEED")),
+
+                makeFuzzyMatchTest("Starts with (case sensitive)",
+                        "=^this_",
+                        List.of("this_is_my_feed",
+                                "this_is_my_feed_too"),
+                        List.of("THIS_IS_MY_FEED",
+                                "THIS_IS_MY_FEED_TOO")),
 
                 makeFuzzyMatchTest("Starts with (caret)",
                         "^^this_",
@@ -67,6 +88,13 @@ class TestStringPredicateFactory {
                                 "so_is_this_is_my_feed"),
                         List.of("THIS_IS_MY_FEED_NOT")),
 
+                makeFuzzyMatchTest("Ends with (case sensitive)",
+                        "=$feed",
+                        List.of("this_is_my_feed",
+                                "so_is_this_is_my_feed"),
+                        List.of("THIS_IS_MY_FEED",
+                                "SO_IS_THIS_IS_MY_FEED")),
+
                 makeFuzzyMatchTest("Ends with (dollar)",
                         "$feed$",
                         List.of("THIS_IS_MY_FEED$",
@@ -81,11 +109,10 @@ class TestStringPredicateFactory {
                                 "this_is_my_feed"),
                         List.of("NOT_THIS_IS_MY_FEED", "NOT_THIS_IS_MY_FEED_NOT", "THIS_IS_MY_FEED_NOT")),
 
-                makeFuzzyMatchTest("Exact match (caret, dollar)",
-                        "=^this_is_my_feed$",
-                        List.of("^THIS_IS_MY_FEED$",
-                                "^this_is_my_feed$"),
-                        List.of("NOT_THIS_IS_MY_FEED")),
+                makeFuzzyMatchTest("Exact match (case sensitive)",
+                        "==this_is_my_feed",
+                        List.of("this_is_my_feed"),
+                        List.of("THIS_IS_MY_FEED")),
 
                 makeFuzzyMatchTest("Chars anywhere 1",
                         "~timf",
@@ -134,30 +161,6 @@ class TestStringPredicateFactory {
                                 "Events (XML) too",
                                 "(XML) Events"),
                         List.of("Events XML")),
-
-//                makeFuzzyMatchTest("Wild-carded 1",
-//                        "XML*EVENTS",
-//                        List.of("XML-EVENTS",
-//                                "XMLEVENTS",
-//                                "XML-XML-EVENTS",
-//                                "XML_DOG-EVENTS",
-//                                "XML_CAT-EVENTS"),
-//                        List.of("XML", "EVENTS", "xml-events", "FOO_XML-EVENTS", "XML-EVENTS-FOO")),
-//
-//                makeFuzzyMatchTest("Wild-carded 2",
-//                        "XML*",
-//                        List.of("XML",
-//                                "XML-FOO"),
-//                        List.of("FOO-XML", "xml")),
-//
-//                makeFuzzyMatchTest("Wild-carded 3",
-//                        "XML*EVENTS*",
-//                        List.of("XML-EVENTS",
-//                                "XMLEVENTS",
-//                                "XMLEVENTSFOO",
-//                                "XML_CAT-EVENTS",
-//                                "XML-EVENTS-FOO"),
-//                        List.of("XML", "EVENTS", "xml-events")),
 
                 makeFuzzyMatchTest("Word boundary match 1",
                         "?TIMF",
@@ -296,16 +299,11 @@ class TestStringPredicateFactory {
                         List.of("A", "ABCD", "abcd", "dcba"),
                         Arrays.asList("", null))
         ));
-
-        return tests;
     }
 
     @TestFactory
     List<DynamicTest> comparatorTestFactory() {
-        List<DynamicTest> tests = new ArrayList<>();
-
-        tests.addAll(List.of(
-
+        return new ArrayList<>(List.of(
                 makeComparatorTest("1",
                         "catmat",
                         List.of(
@@ -318,8 +316,6 @@ class TestStringPredicateFactory {
                                 "the cat sat on the mat"
                         ))
         ));
-
-        return tests;
     }
 
     private void doFuzzyMatchTest(final String userInput,

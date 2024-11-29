@@ -22,7 +22,6 @@ import stroom.docref.HasDisplayValue;
 import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -44,34 +43,29 @@ import java.util.function.Predicate;
 public final class ExpressionTerm extends ExpressionItem {
 
     @XmlElement
-    @Schema(description = "The name of the field that is being evaluated in this predicate term",
-            required = true)
+    @Schema(description = "The name of the field that is being evaluated in this predicate term")
     @JsonProperty
     private String field; // TODO : XML serialisation still requires no-arg constructor and mutable fields
 
     @XmlElement
-    @Schema(description = "The condition of the predicate term",
-            required = true)
+    @Schema(description = "The condition of the predicate term")
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private Condition condition;
 
     @XmlElement
     @Schema(description = "The value that the field value is being evaluated against. Not required if a " +
-            "dictionary is supplied")
+                          "dictionary is supplied")
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private String value;
 
     @XmlElement
     @Schema(description = "The DocRef that the field value is being evaluated against if the condition is " +
-            "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
+                          "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private DocRef docRef;
-
-    @JsonProperty
-    private Boolean caseSensitive;
 
     public ExpressionTerm() {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
@@ -114,14 +108,12 @@ public final class ExpressionTerm extends ExpressionItem {
                           @JsonProperty("field") final String field,
                           @JsonProperty("condition") final Condition condition,
                           @JsonProperty("value") final String value,
-                          @JsonProperty("docRef") final DocRef docRef,
-                          @JsonProperty("caseSensitive") Boolean caseSensitive) {
+                          @JsonProperty("docRef") final DocRef docRef) {
         super(enabled);
         this.field = field;
         this.condition = condition;
         this.value = value;
         this.docRef = docRef;
-        this.caseSensitive = caseSensitive;
     }
 
     public String getField() {
@@ -140,15 +132,6 @@ public final class ExpressionTerm extends ExpressionItem {
         return docRef;
     }
 
-    public Boolean getCaseSensitive() {
-        return caseSensitive;
-    }
-
-    @JsonIgnore
-    public boolean isCaseSensitive() {
-        return caseSensitive == Boolean.TRUE;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -162,15 +145,14 @@ public final class ExpressionTerm extends ExpressionItem {
         }
         ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
-                condition == that.condition &&
-                Objects.equals(value, that.value) &&
-                Objects.equals(docRef, that.docRef) &&
-                Objects.equals(caseSensitive, that.caseSensitive);
+               condition == that.condition &&
+               Objects.equals(value, that.value) &&
+               Objects.equals(docRef, that.docRef);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), field, condition, value, docRef, caseSensitive);
+        return Objects.hash(super.hashCode(), field, condition, value, docRef);
     }
 
     @Override
@@ -218,15 +200,33 @@ public final class ExpressionTerm extends ExpressionItem {
 
 
     public enum Condition implements HasDisplayValue {
-        CONTAINS("contains"), // No longer pick-able in TermEditor
-        EQUALS("="),
-        STARTS_WITH("starts with"),
-        ENDS_WITH("ends with"),
-        NOT_EQUALS("!="),
-        GREATER_THAN(">"),
-        GREATER_THAN_OR_EQUAL_TO(">="),
-        LESS_THAN("<"),
-        LESS_THAN_OR_EQUAL_TO("<="),
+        CONTAINS("\\",
+                "contains",
+                "contains"), // No longer pick-able in TermEditor
+        EQUALS("=",
+                "=",
+                "equals"),
+        STARTS_WITH("^",
+                "starts with",
+                "starts with"),
+        ENDS_WITH("$",
+                "ends with",
+                "ends with"),
+        NOT_EQUALS("!=",
+                "!=",
+                "not equals"),
+        GREATER_THAN(">",
+                ">",
+                "greater than"),
+        GREATER_THAN_OR_EQUAL_TO(">=",
+                ">=",
+                "greater than or equal to"),
+        LESS_THAN("<",
+                "<",
+                "less than"),
+        LESS_THAN_OR_EQUAL_TO("<=",
+                "<=",
+                "less than or equal to"),
         BETWEEN("between"),
         IN("in"),
         IN_DICTIONARY("in dictionary"),
@@ -235,8 +235,28 @@ public final class ExpressionTerm extends ExpressionItem {
         IS_USER_REF("is"),
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
-        MATCHES_REGEX("matches regex"),
-        WORD_BOUNDARY("word boundary"),
+        MATCHES_REGEX("/",
+                "matches regex",
+                "matches regex"),
+        WORD_BOUNDARY("?",
+                "word boundary",
+                "word boundary"),
+
+        CONTAINS_CASE_SENSITIVE("=\\",
+                "contains (case sensitive)",
+                "contains (case sensitive)"),
+        EQUALS_CASE_SENSITIVE("==",
+                "==",
+                "equals (case sensitive)"),
+        STARTS_WITH_CASE_SENSITIVE("=^",
+                "starts with (case sensitive)",
+                "starts with (case sensitive)"),
+        ENDS_WITH_CASE_SENSITIVE("=$",
+                "ends with (case sensitive)",
+                "ends with (case sensitive)"),
+        MATCHES_REGEX_CASE_SENSITIVE("=/",
+                "matches regex (case sensitive)",
+                "matches regex (case sensitive)"),
 
         // Permission related conditions.
         OF_DOC_REF("of"),
@@ -249,15 +269,33 @@ public final class ExpressionTerm extends ExpressionItem {
 
         public static final String IN_CONDITION_DELIMITER = ",";
 
+        private final String operator;
         private final String displayValue;
+        private final String description;
 
         Condition(final String displayValue) {
+            this.operator = displayValue;
             this.displayValue = displayValue;
+            this.description = displayValue;
+        }
+
+        Condition(final String operator, final String displayValue, final String description) {
+            this.operator = operator;
+            this.description = description;
+            this.displayValue = displayValue;
+        }
+
+        public String getOperator() {
+            return operator;
         }
 
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+
+        public String getDescription() {
+            return description;
         }
     }
 
@@ -282,7 +320,6 @@ public final class ExpressionTerm extends ExpressionItem {
         private Condition condition;
         private String value;
         private DocRef docRef;
-        private Boolean caseSensitive;
 
         private Builder() {
         }
@@ -293,7 +330,6 @@ public final class ExpressionTerm extends ExpressionItem {
             this.condition = expressionTerm.condition;
             this.value = expressionTerm.value;
             this.docRef = expressionTerm.docRef;
-            this.caseSensitive = expressionTerm.caseSensitive;
         }
 
         /**
@@ -359,23 +395,14 @@ public final class ExpressionTerm extends ExpressionItem {
                             .build());
         }
 
-        public Builder caseSensitive(final Boolean caseSensitive) {
-            this.caseSensitive = caseSensitive;
-            return this;
-        }
-
         @Override
         public ExpressionTerm build() {
             Boolean enabled = this.enabled;
             if (Boolean.TRUE.equals(enabled)) {
                 enabled = null;
             }
-            Boolean caseSensitive = this.caseSensitive;
-            if (Boolean.FALSE.equals(caseSensitive)) {
-                caseSensitive = null;
-            }
 
-            return new ExpressionTerm(enabled, field, condition, value, docRef, caseSensitive);
+            return new ExpressionTerm(enabled, field, condition, value, docRef);
         }
 
         @Override
