@@ -355,6 +355,10 @@ public class SimpleStringExpressionParser {
                             }
                         }
                         value = sb.toString();
+                    } else if (string.startsWith("\\")) {
+                        // Escaped contains
+                        condition = Condition.CONTAINS;
+                        value = string.substring(1);
                     } else {
                         // Contains.
                         condition = Condition.CONTAINS;

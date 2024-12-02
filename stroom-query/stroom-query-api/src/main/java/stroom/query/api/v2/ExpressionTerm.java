@@ -210,9 +210,9 @@ public final class ExpressionTerm extends ExpressionItem {
 
 
     public enum Condition implements HasDisplayValue {
-        CONTAINS("\\",
+        CONTAINS("+",
                 "contains",
-                "contains"), // No longer pick-able in TermEditor
+                "contains"),
         EQUALS("=",
                 "=",
                 "equals"),
