@@ -16,9 +16,6 @@
 
 package stroom.security.openid.api;
 
-import java.util.Set;
-import javax.ws.rs.core.UriBuilder;
-
 public class OpenId {
 
     public static final String AUTH_USER = "authuser";
@@ -27,6 +24,9 @@ public class OpenId {
     public static final String CODE = "code";
     public static final String GRANT_TYPE = "grant_type";
     public static final String NONCE = "nonce";
+    public static final String LOGIN_PROMPT = "login";
+
+    public static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
     public static final String PROMPT = "prompt";
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
@@ -40,38 +40,4 @@ public class OpenId {
     public static final String SCOPE__EMAIL = "email";
 
     public static final String ID_TOKEN = "id_token";
-
-    private static final Set<String> RESERVED_PARAMS = Set.of(
-            AUTH_USER,
-            CLIENT_ID,
-            CLIENT_SECRET,
-            CODE,
-            GRANT_TYPE,
-            NONCE,
-            PROMPT,
-            REDIRECT_URI,
-            RESPONSE_TYPE,
-            SCOPE,
-            STATE
-    );
-
-    public static String removeReservedParams(final String url) {
-        final UriBuilder uriBuilder = UriBuilder.fromUri(url);
-
-        // When the auth service has performed authentication it will redirect
-        // back to the current URL with some additional parameters (e.g.
-        // `state` and `accessCode`). It is important that these parameters are
-        // not provided by our redirect URL else the redirect URL that the
-        // authentication service redirects back to may end up with multiple
-        // copies of these parameters which will confuse Stroom as it will not
-        // know which one of the param values to use (i.e. which were on the
-        // original redirect request and which have been added by the
-        // authentication service). For this reason we will cleanse the URL of
-        // any reserved parameters here. The authentication service should do
-        // the same to the redirect URL before adding its additional
-        // parameters.
-        RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
-
-        return uriBuilder.build().toString();
-    }
 }

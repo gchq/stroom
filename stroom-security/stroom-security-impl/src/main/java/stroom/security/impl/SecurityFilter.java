@@ -181,7 +181,17 @@ class SecurityFilter implements Filter {
                         final String code = UrlUtils.getLastParam(request, OpenId.CODE);
                         final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
                         final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
-                        response.sendRedirect(redirectUri);
+//                        response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
+//                        response.sendRedirect(redirectUri);
+                        // HTTP 1.1.
+                        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                        // HTTP 1.0.
+                        response.setHeader("Pragma", "no-cache");
+                        // Proxies.
+                        response.setHeader("Expires", "0");
+
+                        response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
+                        response.setHeader("Location", redirectUri);
 
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
@@ -197,7 +207,7 @@ class SecurityFilter implements Filter {
     }
 
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
-        // We have a a new request so we're going to redirect with an AuthenticationRequest.
+        // We have a new request so we're going to redirect with an AuthenticationRequest.
         // Get the redirect URL for the auth service from the current request.
         final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
                 .map(queryStr -> "?" + queryStr)
