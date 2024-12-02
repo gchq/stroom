@@ -610,6 +610,7 @@ appConfig:
         jwksUri: null
         logoutEndpoint: null
         openIdConfigurationEndpoint: null
+        redirectUri: null
         requestScope: null
         tokenEndpoint: null
         useInternal: true

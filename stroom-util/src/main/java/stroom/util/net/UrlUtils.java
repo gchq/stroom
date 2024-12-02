@@ -14,11 +14,24 @@ public final class UrlUtils {
         // Utility class.
     }
 
+    /**
+     * Return the complete URL, including scheme, hostname, port and query string (if specified)
+     */
     public static String getFullUrl(final HttpServletRequest request) {
         if (request.getQueryString() == null) {
             return request.getRequestURL().toString();
         }
         return request.getRequestURL().toString() + "?" + request.getQueryString();
+    }
+
+    /**
+     * Return the URI plus the query string (if specified)
+     */
+    public static String getFullUri(final HttpServletRequest request) {
+        if (request.getQueryString() == null) {
+            return request.getRequestURI();
+        }
+        return request.getRequestURI() + "?" + request.getQueryString();
     }
 
     public static Map<String, String> createParamMap(final String url) {
