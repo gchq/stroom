@@ -19,7 +19,6 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
@@ -58,8 +57,6 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -74,7 +71,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 public class EmbeddedQueryPresenter
@@ -93,9 +89,6 @@ public class EmbeddedQueryPresenter
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
-
-    private static final TabData TABLE = new TabDataImpl("Table");
-    private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
     static final int TEN_SECONDS = 10000;
 
     private final RestFactory restFactory;
@@ -115,7 +108,7 @@ public class EmbeddedQueryPresenter
     private List<String> currentErrors;
     private boolean initialised;
     private Timer autoRefreshTimer;
-    private ExpressionOperator currentDecoration;
+    private ExpressionOperator currentSelectionQuery;
     private DocRef loadedQueryRef;
 
     @Inject
@@ -301,7 +294,12 @@ public class EmbeddedQueryPresenter
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                () -> getQuerySettings().getQueryTablePreferences());
+                () -> getQuerySettings()
+                        .getQueryTablePreferences()
+                        .copy()
+                        .selectionFilter(GwtNullSafe.get(currentTablePresenter,
+                                QueryResultTablePresenter::getCurrentSelectionFilter))
+                        .build());
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableResultConsumer);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, visResultConsumer);
         queryModel.addSearchStateListener(this);
@@ -357,20 +355,25 @@ public class EmbeddedQueryPresenter
 
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
-                final Component component = event.getComponent();
-                final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
-                        .create(component, getQuerySettings().getSelectionHandlers());
+                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
+                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                        .orElse(null);
 
-//                          this.params = params;
-//                          lastUsedQueryInfo = null;
+                if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
+                    currentSelectionQuery = selectionQuery;
+                    queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
+                    run(true, true, selectionQuery);
+                }
 
-                optional.ifPresent(selectionExpression -> {
-                    if (!Objects.equals(currentDecoration, selectionExpression)) {
-                        currentDecoration = selectionExpression;
-                        queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
-                        run(true, true, selectionExpression);
+                if (currentTablePresenter != null) {
+                    final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
+                            .create(components.getComponents(), getQuerySettings().getSelectionFilter())
+                            .orElse(null);
+                    if (!Objects.equals(currentTablePresenter.getCurrentSelectionFilter(), selectionFilter)) {
+                        currentTablePresenter.setCurrentSelectionFilter(selectionFilter);
+                        currentTablePresenter.onColumnFilterChange();
                     }
-                });
+                }
             }
 
 //            if (component instanceof HasAbstractFields) {
@@ -419,10 +422,14 @@ public class EmbeddedQueryPresenter
                     setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build()));
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
-            currentTablePresenter.update();
+            currentTablePresenter.updateQueryTablePreferences();
             tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> setDirty(true)));
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
                     .addSelectionHandler(event -> getComponents().fireComponentChangeEvent(this)));
+
+            if (currentVisPresenter != null) {
+                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+            }
         }
     }
 
@@ -446,6 +453,10 @@ public class EmbeddedQueryPresenter
             currentVisPresenter.setQueryModel(queryModel);
             currentVisPresenter.setTaskMonitorFactory(this);
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
+
+            if (currentTablePresenter != null) {
+                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+            }
         }
     }
 
@@ -453,6 +464,9 @@ public class EmbeddedQueryPresenter
         if (currentVisPresenter != null) {
             currentVisPresenter.onRemove();
             currentVisPresenter = null;
+            if (currentTablePresenter != null) {
+                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+            }
         }
     }
 
@@ -493,7 +507,7 @@ public class EmbeddedQueryPresenter
     private void run(final boolean incremental,
                      final boolean storeHistory) {
         // No point running the search if there is no query
-        run(incremental, storeHistory, currentDecoration);
+        run(incremental, storeHistory, currentSelectionQuery);
     }
 
     private void run(final boolean incremental,

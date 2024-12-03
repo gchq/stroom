@@ -493,6 +493,17 @@ class QueryServiceImpl implements QueryService {
                 builder.columns(modifiedColumns);
                 builder.applyValueFilters(queryTablePreferences.applyValueFilters());
 
+                // Combine row filters.
+                if (tableSettings.getAggregateFilter() == null) {
+                    builder.aggregateFilter(queryTablePreferences.getSelectionFilter());
+                } else if (queryTablePreferences.getSelectionFilter() != null) {
+                    builder.aggregateFilter(ExpressionOperator
+                            .builder()
+                            .addOperators(tableSettings.getAggregateFilter(),
+                                    queryTablePreferences.getSelectionFilter())
+                            .build());
+                }
+
                 builder.conditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
                 final List<TableSettings> mappings = new ArrayList<>(resultRequest.getMappings().size());
                 mappings.add(builder.build());

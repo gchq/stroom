@@ -268,7 +268,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tablePresenter.onColumnFilterChange();
         });
     }
 
@@ -367,10 +367,13 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             columnFilter = new ColumnFilter(valueFilter);
         }
 
-        replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-        tablePresenter.setFocused(false);
-        tablePresenter.setDirty(true);
-        tablePresenter.refresh();
+        if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            replaceColumn(column, column.copy().columnFilter(columnFilter).build());
+            tablePresenter.setFocused(false);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+            tablePresenter.onColumnFilterChange();
+        }
     }
 
     private List<Column> getColumns() {

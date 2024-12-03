@@ -36,6 +36,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -116,6 +117,8 @@ public class QueryResultTablePresenter
     private final QueryTableColumnsManager columnsManager;
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private List<Column> currentColumns = Collections.emptyList();
+    private QueryResultVisPresenter queryResultVisPresenter;
+    private ExpressionOperator currentSelectionFilter;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -304,6 +307,14 @@ public class QueryResultTablePresenter
             });
         } else {
             RefreshRequestEvent.fire(this);
+        }
+    }
+
+    public void onColumnFilterChange() {
+        refresh();
+        final QueryResultVisPresenter queryResultVisPresenter = this.queryResultVisPresenter;
+        if (queryResultVisPresenter != null) {
+            queryResultVisPresenter.refresh();
         }
     }
 
@@ -778,7 +789,7 @@ public class QueryResultTablePresenter
         this.queryTablePreferencesConsumer = queryTablePreferencesConsumer;
     }
 
-    public void update() {
+    public void updateQueryTablePreferences() {
         // Change value filter state.
         setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
         refresh();
@@ -791,6 +802,18 @@ public class QueryResultTablePresenter
 
     public void setDirty(final boolean dirty) {
         DirtyEvent.fire(this, dirty);
+    }
+
+    public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {
+        this.queryResultVisPresenter = queryResultVisPresenter;
+    }
+
+    public void setCurrentSelectionFilter(final ExpressionOperator currentSelectionFilter) {
+        this.currentSelectionFilter = currentSelectionFilter;
+    }
+
+    public ExpressionOperator getCurrentSelectionFilter() {
+        return currentSelectionFilter;
     }
 
     // --------------------------------------------------------------------------------

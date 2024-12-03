@@ -22,11 +22,14 @@ import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.shared.AbstractQueryComponentSettings;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ComponentSettings.AbstractBuilder;
+import stroom.dashboard.shared.HasSelectionFilter;
+import stroom.dashboard.shared.HasSelectionFilterBuilder;
+import stroom.dashboard.shared.HasSelectionQuery;
+import stroom.dashboard.shared.HasSelectionQueryBuilder;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
@@ -77,6 +80,8 @@ public class SelectionHandlersPresenter
     private boolean dirty;
     private List<Component> componentList;
     private FieldSelectionListModel fieldSelectionListModel;
+    // Determine if we are using this to set a filter or query selection handler.
+    private boolean useForFilter;
 
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
@@ -272,17 +277,8 @@ public class SelectionHandlersPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        if (componentConfig.getSettings() instanceof AbstractQueryComponentSettings) {
-            fieldSelectionListModel = dynamicFieldSelectionListModel;
-            final AbstractQueryComponentSettings settings =
-                    (AbstractQueryComponentSettings) componentConfig.getSettings();
-            if (settings.getSelectionHandlers() != null) {
-                this.selectionHandlers = settings.getSelectionHandlers();
-            } else {
-                this.selectionHandlers.clear();
-            }
-
-        } else if (componentConfig.getSettings() instanceof TableComponentSettings) {
+        // Get field list model.
+        if (componentConfig.getSettings() instanceof TableComponentSettings) {
             final TableComponentSettings settings =
                     (TableComponentSettings) componentConfig.getSettings();
             final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
@@ -298,6 +294,28 @@ public class SelectionHandlersPresenter
                     .collect(Collectors.toList());
             simpleFieldSelectionListModel.addItems(fields);
             fieldSelectionListModel = simpleFieldSelectionListModel;
+        } else {
+            fieldSelectionListModel = dynamicFieldSelectionListModel;
+        }
+
+        // Read selection handlers.
+        if (useForFilter) {
+            if (componentConfig.getSettings() instanceof HasSelectionFilter) {
+                final HasSelectionFilter hasSelectionFilter = (HasSelectionFilter) componentConfig.getSettings();
+                if (hasSelectionFilter.getSelectionFilter() != null) {
+                    this.selectionHandlers = hasSelectionFilter.getSelectionFilter();
+                } else {
+                    this.selectionHandlers.clear();
+                }
+            }
+        } else if (componentConfig.getSettings() instanceof HasSelectionQuery) {
+            final HasSelectionQuery hasSelectionQuery =
+                    (HasSelectionQuery) componentConfig.getSettings();
+            if (hasSelectionQuery.getSelectionQuery() != null) {
+                this.selectionHandlers = hasSelectionQuery.getSelectionQuery();
+            } else {
+                this.selectionHandlers.clear();
+            }
         }
 
         componentList = getComponents()
@@ -313,28 +331,22 @@ public class SelectionHandlersPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        if (componentConfig.getSettings() instanceof AbstractQueryComponentSettings) {
-            final AbstractQueryComponentSettings oldSettings =
-                    (AbstractQueryComponentSettings) componentConfig.getSettings();
-            final AbstractBuilder<?, ?> builder = oldSettings.copy();
-            if (builder instanceof AbstractQueryComponentSettings.AbstractBuilder<?, ?>) {
-                final AbstractQueryComponentSettings.AbstractBuilder<?, ?> abstractBuilder =
-                        (AbstractQueryComponentSettings.AbstractBuilder<?, ?>) builder;
-                abstractBuilder.selectionHandlers(selectionHandlers);
-            }
-            final ComponentSettings newSettings = builder.build();
-            return componentConfig.copy().settings(newSettings).build();
+        final AbstractBuilder<?, ?> builder = componentConfig.getSettings().copy();
 
-        } else if (componentConfig.getSettings() instanceof TableComponentSettings) {
-            final TableComponentSettings oldSettings =
-                    (TableComponentSettings) componentConfig.getSettings();
-            final TableComponentSettings.Builder builder = oldSettings.copy();
-            builder.selectionHandlers(selectionHandlers);
-            final ComponentSettings newSettings = builder.build();
-            return componentConfig.copy().settings(newSettings).build();
+        if (useForFilter) {
+            if (builder instanceof HasSelectionFilterBuilder<?, ?>) {
+                final HasSelectionFilterBuilder<?, ?> hasSelectionFilter = (HasSelectionFilterBuilder<?, ?>) builder;
+                hasSelectionFilter.selectionFilter(selectionHandlers);
+            }
+        } else {
+            if (builder instanceof HasSelectionQueryBuilder<?, ?>) {
+                final HasSelectionQueryBuilder<?, ?> hasSelectionQuery = (HasSelectionQueryBuilder<?, ?>) builder;
+                hasSelectionQuery.selectionQuery(selectionHandlers);
+            }
         }
 
-        return componentConfig;
+        final ComponentSettings newSettings = builder.build();
+        return componentConfig.copy().settings(newSettings).build();
     }
 
     @Override
@@ -386,6 +398,10 @@ public class SelectionHandlersPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setUseForFilter(final boolean useForFilter) {
+        this.useForFilter = useForFilter;
     }
 
     public interface SelectionHandlersView extends View {

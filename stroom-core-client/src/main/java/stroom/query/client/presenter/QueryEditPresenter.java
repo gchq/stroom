@@ -258,6 +258,7 @@ public class QueryEditPresenter
         currentVisPresenter = visPresenterProvider.get();
         currentVisPresenter.setQueryModel(queryModel);
         currentVisPresenter.setTaskMonitorFactory(this);
+        queryResultPresenter.setQueryResultVisPresenter(currentVisPresenter);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
@@ -431,6 +432,7 @@ public class QueryEditPresenter
     public void read(final QueryTablePreferences queryTablePreferences) {
         if (queryTablePreferences != null) {
             this.queryTablePreferences = queryTablePreferences;
+            queryResultPresenter.updateQueryTablePreferences();
         }
     }
 

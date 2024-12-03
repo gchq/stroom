@@ -162,7 +162,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
-    private ExpressionOperator currentSelectionExpression;
+    private ExpressionOperator currentSelectionFilter;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -339,15 +339,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setComponents(components);
 
         registerHandler(components.addComponentChangeHandler(event -> {
-            final Component component = event.getComponent();
-            final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
-                    .create(component, getTableComponentSettings().getSelectionHandlers());
-            optional.ifPresent(selectionExpression -> {
-                if (!Objects.equals(currentSelectionExpression, selectionExpression)) {
-                    currentSelectionExpression = selectionExpression;
-                    refresh();
-                }
-            });
+            final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
+                    .create(components.getComponents(), getTableComponentSettings().getSelectionFilter())
+                    .orElse(null);
+            if (!Objects.equals(currentSelectionFilter, selectionFilter)) {
+                currentSelectionFilter = selectionFilter;
+                onColumnFilterChange();
+            }
         }));
     }
 
@@ -997,11 +995,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return tableResultRequest.copy().tableSettings(getTableSettings()).fetch(fetch).build();
     }
 
-    private TableSettings getTableSettings() {
+    public TableSettings getTableSettings() {
         TableSettings tableSettings = getTableComponentSettings()
                 .copy()
                 .buildTableSettings();
-        return tableSettings.copy().aggregateFilter(currentSelectionExpression).build();
+        return tableSettings.copy().aggregateFilter(currentSelectionFilter).build();
     }
 
     @Override
@@ -1034,6 +1032,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void refresh() {
         refresh(() -> {
         });
+    }
+
+    void onColumnFilterChange() {
+        refresh();
+        getComponents().fireComponentChangeEvent(this);
     }
 
     public TableSectionElement getTableHeadElement() {

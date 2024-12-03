@@ -240,7 +240,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
             replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
 //            tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tablePresenter.onColumnFilterChange();
         });
     }
 
@@ -288,10 +288,12 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
             columnFilter = new ColumnFilter(valueFilter);
         }
 
-        replaceColumn(column, column.copy().columnFilter(columnFilter).build());
+        if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            replaceColumn(column, column.copy().columnFilter(columnFilter).build());
 //        tablePresenter.setDirty(true);
-        tablePresenter.setFocused(false);
-        tablePresenter.refresh();
+            tablePresenter.setFocused(false);
+            tablePresenter.onColumnFilterChange();
+        }
     }
 
     private List<Column> getColumns() {

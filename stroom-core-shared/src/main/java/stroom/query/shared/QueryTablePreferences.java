@@ -16,9 +16,9 @@
 
 package stroom.query.shared;
 
-import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.shared.AbstractBuilder;
 
@@ -40,7 +40,7 @@ import java.util.Objects;
         "pageSize",
         "conditionalFormattingRules",
         "applyValueFilters",
-        "selectionHandlers"})
+        "selectionFilter"})
 @JsonInclude(Include.NON_NULL)
 public class QueryTablePreferences {
 
@@ -54,7 +54,7 @@ public class QueryTablePreferences {
     @JsonProperty
     private final Boolean applyValueFilters;
     @JsonProperty
-    private final List<ComponentSelectionHandler> selectionHandlers;
+    private final ExpressionOperator selectionFilter;
 
     @JsonCreator
     public QueryTablePreferences(
@@ -63,12 +63,12 @@ public class QueryTablePreferences {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
             @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
-            @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
+            @JsonProperty("selectionFilter") final ExpressionOperator selectionFilter) {
         this.columns = columns;
         this.pageSize = pageSize;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.applyValueFilters = applyValueFilters;
-        this.selectionHandlers = selectionHandlers;
+        this.selectionFilter = selectionFilter;
     }
 
     public List<Column> getColumns() {
@@ -91,8 +91,8 @@ public class QueryTablePreferences {
         return applyValueFilters == Boolean.TRUE;
     }
 
-    public List<ComponentSelectionHandler> getSelectionHandlers() {
-        return selectionHandlers;
+    public ExpressionOperator getSelectionFilter() {
+        return selectionFilter;
     }
 
     @Override
@@ -108,7 +108,7 @@ public class QueryTablePreferences {
                Objects.equals(pageSize, that.pageSize) &&
                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                Objects.equals(applyValueFilters, that.applyValueFilters) &&
-               Objects.equals(selectionHandlers, that.selectionHandlers);
+               Objects.equals(selectionFilter, that.selectionFilter);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class QueryTablePreferences {
                 pageSize,
                 conditionalFormattingRules,
                 applyValueFilters,
-                selectionHandlers);
+                selectionFilter);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class QueryTablePreferences {
                ", pageSize=" + pageSize +
                ", conditionalFormattingRules=" + conditionalFormattingRules +
                ", applyValueFilters='" + applyValueFilters + '\'' +
-               ", selectionHandlers='" + selectionHandlers + '\'' +
+               ", selectionFilter='" + selectionFilter + '\'' +
                '}';
     }
 
@@ -157,7 +157,7 @@ public class QueryTablePreferences {
         private Integer pageSize;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private Boolean applyValueFilters;
-        private List<ComponentSelectionHandler> selectionHandlers;
+        private ExpressionOperator selectionFilter;
 
         private Builder() {
         }
@@ -171,7 +171,7 @@ public class QueryTablePreferences {
                     ? null
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.applyValueFilters = tableSettings.applyValueFilters;
-            this.selectionHandlers = tableSettings.selectionHandlers;
+            this.selectionFilter = tableSettings.selectionFilter;
         }
 
         public Builder columns(final List<Column> columns) {
@@ -217,8 +217,8 @@ public class QueryTablePreferences {
             return self();
         }
 
-        public Builder selectionHandlers(final List<ComponentSelectionHandler> selectionHandlers) {
-            this.selectionHandlers = selectionHandlers;
+        public Builder selectionFilter(final ExpressionOperator selectionFilter) {
+            this.selectionFilter = selectionFilter;
             return self();
         }
 
@@ -234,7 +234,7 @@ public class QueryTablePreferences {
                     pageSize,
                     conditionalFormattingRules,
                     applyValueFilters,
-                    selectionHandlers);
+                    selectionFilter);
         }
     }
 }

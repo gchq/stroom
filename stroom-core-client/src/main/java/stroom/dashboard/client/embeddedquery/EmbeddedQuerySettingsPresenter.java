@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
 
@@ -44,12 +45,13 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
                                           final LinkTabsLayoutView view,
                                           final BasicEmbeddedQuerySettingsPresenter basicSettingsPresenter,
                                           final RulesPresenter rulesPresenter,
-                                          final SelectionHandlersPresenter selectionHandlersPresenter,
+                                          final SelectionHandlersPresenter selectionQueryPresenter,
+                                          final SelectionHandlersPresenter selectionFilterPresenter,
                                           final RestFactory restFactory) {
         super(eventBus, view);
         getView().asWidget().addStyleName("settingsPresenter");
 
-        selectionHandlersPresenter.setDataSourceRefConsumer(consumer -> {
+        final Consumer<Consumer<DocRef>> dataSourceRefConsumer = consumer -> {
             final DocRef queryDocRef = GwtNullSafe
                     .get(basicSettingsPresenter, BasicEmbeddedQuerySettingsPresenter::getQuery);
             if (Objects.equals(queryDocRef, currentQueryReference)) {
@@ -73,10 +75,16 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
                         .taskMonitorFactory(this)
                         .exec();
             }
-        });
+        };
+
+        selectionQueryPresenter.setDataSourceRefConsumer(dataSourceRefConsumer);
+
+        selectionFilterPresenter.setUseForFilter(true);
+        selectionFilterPresenter.setDataSourceRefConsumer(dataSourceRefConsumer);
 
         addTab("Basic", basicSettingsPresenter);
         addTab("Conditional Formatting", rulesPresenter);
-        addTab("Selection Handlers", selectionHandlersPresenter);
+        addTab("Selection Query", selectionQueryPresenter);
+        addTab("Selection Filter", selectionFilterPresenter);
     }
 }
