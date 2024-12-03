@@ -173,8 +173,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final IncludeExcludeFilterPresenter includeExcludeFilterPresenter,
-                          final ColumnFilterPresenter columnFilterPresenter,
+                          final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
@@ -230,8 +229,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
-                includeExcludeFilterPresenter,
-                columnFilterPresenter);
+                tableFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get(result -> {
@@ -310,16 +308,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> {
-            final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
-            setSettings(getTableComponentSettings()
-                    .copy()
-                    .applyValueFilters(applyValueFilters)
-                    .build());
-            setDirty(true);
-            refresh();
-            setApplyValueFilters(applyValueFilters);
-        }));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -347,6 +336,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 onColumnFilterChange();
             }
         }));
+    }
+
+    public void toggleApplyValueFilters() {
+        final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
+        setSettings(getTableComponentSettings()
+                .copy()
+                .applyValueFilters(applyValueFilters)
+                .build());
+        setDirty(true);
+        refresh();
+        setApplyValueFilters(applyValueFilters);
     }
 
     private void setApplyValueFilters(final boolean applyValueFilters) {

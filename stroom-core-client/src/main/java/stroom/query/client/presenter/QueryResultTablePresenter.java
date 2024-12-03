@@ -259,14 +259,16 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> {
-            final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
-            final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
-            setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
-            setDirty(true);
-            refresh();
-            setApplyValueFilters(applyValueFilters);
-        }));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+    }
+
+    public void toggleApplyValueFilters() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
+        setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
+        setDirty(true);
+        refresh();
+        setApplyValueFilters(applyValueFilters);
     }
 
     private void setApplyValueFilters(final boolean applyValueFilters) {

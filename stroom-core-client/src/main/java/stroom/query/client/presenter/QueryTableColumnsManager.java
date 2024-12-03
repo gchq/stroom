@@ -236,6 +236,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
     }
 
     private void filterColumn(final Column column) {
+        columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         columnFilterPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
@@ -289,6 +290,14 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         }
 
         if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            if (columnFilter != null &&
+                GwtNullSafe.isNonBlankString(columnFilter.getFilter())) {
+                if (tablePresenter.getQueryTablePreferences() != null &&
+                    !tablePresenter.getQueryTablePreferences().applyValueFilters()) {
+                    tablePresenter.toggleApplyValueFilters();
+                }
+            }
+
             replaceColumn(column, column.copy().columnFilter(columnFilter).build());
 //        tablePresenter.setDirty(true);
             tablePresenter.setFocused(false);
@@ -566,7 +575,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
                 .priority(5)
                 .icon(SvgImage.FILTER)
                 .disabledIcon(SvgImage.FILTER)
-                .text("Value Filter")
+                .text("Filter")
                 .command(() -> filterColumn(column))
                 .highlight(column.getColumnFilter() != null
                            && ((column.getColumnFilter().getFilter() != null
@@ -581,7 +590,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
                 .text("Format")
                 .command(() -> showFormat(column))
                 .highlight(column.getFormat() != null && column.getFormat().getSettings() != null
-                        && !column.getFormat().getSettings().isDefault())
+                           && !column.getFormat().getSettings().isDefault())
                 .build();
     }
 

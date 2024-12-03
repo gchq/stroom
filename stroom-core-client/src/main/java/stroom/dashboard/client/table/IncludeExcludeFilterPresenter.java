@@ -17,19 +17,13 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
-import stroom.query.api.v2.Column;
 import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.function.BiConsumer;
 
 public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcludeFilterView> {
 
@@ -38,44 +32,24 @@ public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcl
         super(eventBus, view);
     }
 
-    public void show(final Column column,
-                     final BiConsumer<Column, Column> columnChangeConsumer) {
+    public void setFilter(final IncludeExcludeFilter filter) {
         String includes = "";
         String excludes = "";
 
-        if (column.getFilter() != null) {
-            if (column.getFilter().getIncludes() != null) {
-                includes = column.getFilter().getIncludes();
+        if (filter != null) {
+            if (filter.getIncludes() != null) {
+                includes = filter.getIncludes();
             }
-            if (column.getFilter().getExcludes() != null) {
-                excludes = column.getFilter().getExcludes();
+            if (filter.getExcludes() != null) {
+                excludes = filter.getExcludes();
             }
         }
 
         getView().setIncludes(includes);
         getView().setExcludes(excludes);
-
-        final PopupSize popupSize = PopupSize.resizable(400, 500);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Filter '" + column.getName() + "'")
-                .modal(true)
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final IncludeExcludeFilter filter = getFilter();
-                        if ((filter == null && column.getFilter() != null)
-                            || (filter != null && !filter.equals(column.getFilter()))) {
-                            columnChangeConsumer.accept(column, column.copy().filter(filter).build());
-                        }
-                    }
-                    e.hide();
-                })
-                .fire();
     }
 
-    private IncludeExcludeFilter getFilter() {
+    public IncludeExcludeFilter getFilter() {
         String includes = null;
         String excludes = null;
         if (getView().getIncludes() != null && getView().getIncludes().trim().length() > 0) {
