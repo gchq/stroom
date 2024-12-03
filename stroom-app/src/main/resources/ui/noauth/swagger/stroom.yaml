@@ -9813,6 +9813,10 @@ components:
             $ref: "#/components/schemas/DocRef"
           queryTablePreferences:
             $ref: "#/components/schemas/QueryTablePreferences"
+          selectionFilter:
+            type: array
+            items:
+              $ref: "#/components/schemas/ComponentSelectionHandler"
           selectionHandlers:
             type: array
             items:
@@ -14036,10 +14040,8 @@ components:
         pageSize:
           type: integer
           format: int32
-        selectionHandlers:
-          type: array
-          items:
-            $ref: "#/components/schemas/ComponentSelectionHandler"
+        selectionFilter:
+          $ref: "#/components/schemas/ExpressionOperator"
     RangeInteger:
       type: object
       properties:
@@ -14620,12 +14622,6 @@ components:
           - QL_VIS
         timeFilter:
           $ref: "#/components/schemas/TimeFilter"
-      required:
-      - componentId
-      - mappings
-      - openGroups
-      - requestedRange
-      - resultStyle
     ResultStoreInfo:
       type: object
       properties:
@@ -16108,51 +16104,54 @@ components:
             format: int64
     TableComponentSettings:
       type: object
-      properties:
-        applyValueFilters:
-          type: boolean
-        dataSourceRef:
-          $ref: "#/components/schemas/DocRef"
-        extractValues:
-          type: boolean
-          description: TODO
-        extractionPipeline:
-          $ref: "#/components/schemas/DocRef"
-        fields:
-          type: array
-          items:
-            $ref: "#/components/schemas/Column"
-        maxResults:
-          type: array
-          description: "Defines the maximum number of results to return at each grouping\
-            \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
-            \ 1 and 1 at level 2. In the absence of this field system defaults will\
-            \ apply"
-          example: "1000,10,1"
-          items:
-            type: integer
-            format: int64
+      allOf:
+      - $ref: "#/components/schemas/ComponentSettings"
+      - type: object
+        properties:
+          applyValueFilters:
+            type: boolean
+          dataSourceRef:
+            $ref: "#/components/schemas/DocRef"
+          extractValues:
+            type: boolean
+            description: TODO
+          extractionPipeline:
+            $ref: "#/components/schemas/DocRef"
+          fields:
+            type: array
+            items:
+              $ref: "#/components/schemas/Column"
+          maxResults:
+            type: array
             description: "Defines the maximum number of results to return at each\
               \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
               \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
               \ defaults will apply"
-        pageSize:
-          type: integer
-          format: int32
-          description: Defines the maximum number of rows to display in the table
-            at once (default 100).
-          example: 100
-        queryId:
-          type: string
-          description: TODO
-        selectionHandlers:
-          type: array
-          items:
-            $ref: "#/components/schemas/ComponentSelectionHandler"
-        showDetail:
-          type: boolean
-        useDefaultExtractionPipeline:
-          type: boolean
+            example: "1000,10,1"
+            items:
+              type: integer
+              format: int64
+              description: "Defines the maximum number of results to return at each\
+                \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
+                \ 0, 10 at level 1 and 1 at level 2. In the absence of this field\
+                \ system defaults will apply"
+          pageSize:
+            type: integer
+            format: int32
+            description: Defines the maximum number of rows to display in the table
+              at once (default 100).
+            example: 100
+          queryId:
+            type: string
+            description: TODO
+          selectionHandlers:
+            type: array
+            items:
+              $ref: "#/components/schemas/ComponentSelectionHandler"
+          showDetail:
+            type: boolean
+          useDefaultExtractionPipeline:
+            type: boolean
     TableCoprocessorSettings:
       type: object
       allOf:
@@ -16796,8 +16795,6 @@ components:
             type: string
           tableId:
             type: string
-          tableSettings:
-            $ref: "#/components/schemas/TableComponentSettings"
           visualisation:
             $ref: "#/components/schemas/DocRef"
     VisResult:
@@ -16819,10 +16816,14 @@ components:
       - $ref: "#/components/schemas/ComponentResultRequest"
       - type: object
         properties:
+          json:
+            type: string
           requestedRange:
             $ref: "#/components/schemas/OffsetRange"
-          visDashboardSettings:
-            $ref: "#/components/schemas/VisComponentSettings"
+          tableSettings:
+            $ref: "#/components/schemas/TableSettings"
+          visualisation:
+            $ref: "#/components/schemas/DocRef"
       required:
       - componentId
     VisualisationDoc:
