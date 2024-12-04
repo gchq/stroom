@@ -42,7 +42,7 @@ public final class ValString implements Val {
             ValString.class,
             ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR,
             ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
-    private static final Pattern FORWARD_SLASH_PATTERN = Pattern.compile("\\\\");
+    private static final Pattern BACK_SLASH_PATTERN = Pattern.compile("\\\\");
     private static final Pattern SINGLE_QUOTE_PATTERN = Pattern.compile("'");
 
     public static final Type TYPE = Type.STRING;
@@ -175,7 +175,7 @@ public final class ValString implements Val {
     @Override
     public void appendString(final StringBuilder sb) {
         String val = value;
-        val = FORWARD_SLASH_PATTERN.matcher(val).replaceAll("\\\\\\\\");
+        val = BACK_SLASH_PATTERN.matcher(val).replaceAll("\\\\\\\\");
         val = SINGLE_QUOTE_PATTERN.matcher(val).replaceAll("\\\\'");
 
         // Assume that strings are single quoted even though they may actually be double quoted in source.
