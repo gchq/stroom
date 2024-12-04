@@ -28,6 +28,7 @@ import com.google.common.math.DoubleMath;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public final class ValString implements Val {
 
@@ -41,6 +42,8 @@ public final class ValString implements Val {
             ValString.class,
             ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR,
             ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
+    private static final Pattern FORWARD_SLASH_PATTERN = Pattern.compile("\\\\");
+    private static final Pattern SINGLE_QUOTE_PATTERN = Pattern.compile("'");
 
     public static final Type TYPE = Type.STRING;
     public static final ValString EMPTY = new ValString("");
@@ -56,7 +59,7 @@ public final class ValString implements Val {
             // We should not be allowing null values, but not sure that we can risk a null check in case
             // it breaks existing content
             LOGGER.warn("null passed to ValString.create, code should be using ValNull. " +
-                    "Enable DEBUG to see stack trace.");
+                        "Enable DEBUG to see stack trace.");
             if (LOGGER.isDebugEnabled()) {
                 LogUtil.logStackTrace(
                         "null passed to ValString.create, should be using ValNull, stack trace:",
@@ -171,9 +174,13 @@ public final class ValString implements Val {
 
     @Override
     public void appendString(final StringBuilder sb) {
+        String val = value;
+        val = FORWARD_SLASH_PATTERN.matcher(val).replaceAll("\\\\\\\\");
+        val = SINGLE_QUOTE_PATTERN.matcher(val).replaceAll("\\\\'");
+
         // Assume that strings are single quoted even though they may actually be double quoted in source.
         sb.append("'");
-        sb.append(value.replaceAll("'", "\\\\'"));
+        sb.append(val);
         sb.append("'");
     }
 
@@ -195,8 +202,7 @@ public final class ValString implements Val {
     @Override
     public boolean hasNumericValue() {
         // Even if it has fractional parts, toLong will tell us if it is numeric
-        return value != null
-                && (toLong() != null || toDouble() != null);
+        return value != null && (toLong() != null || toDouble() != null);
     }
 
     @Override
