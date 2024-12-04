@@ -174,7 +174,7 @@ public class EmbeddedQueryPresenter
                         start = false;
                     }
 
-                    if (tableResult != null && tableResult.getRows() != null && tableResult.getRows().size() > 0) {
+                    if (tableResult.getRows() != null && tableResult.getRows().size() > 0) {
                         hasData = true;
                     }
 
@@ -408,6 +408,7 @@ public class EmbeddedQueryPresenter
     private void updateVisibleResult() {
         if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
             getView().setResultView(currentVisPresenter.getView());
+            currentVisPresenter.refresh();
         } else if (currentTablePresenter != null) {
             getView().setResultView(currentTablePresenter.getView());
         }
