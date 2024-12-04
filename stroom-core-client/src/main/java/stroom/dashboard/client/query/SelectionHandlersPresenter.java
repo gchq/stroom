@@ -18,6 +18,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
@@ -37,10 +38,14 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.Format;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -56,6 +61,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -277,25 +283,25 @@ public class SelectionHandlersPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
+
         // Get field list model.
+        fieldSelectionListModel = dynamicFieldSelectionListModel;
         if (componentConfig.getSettings() instanceof TableComponentSettings) {
             final TableComponentSettings settings =
                     (TableComponentSettings) componentConfig.getSettings();
-            final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
-            final List<QueryField> fields = settings
-                    .getColumns()
-                    .stream()
-                    .map(column -> QueryField
-                            .builder()
-                            .fldName(column.getName())
-                            .fldType(FieldType.TEXT)
-                            .queryable(true)
-                            .build())
-                    .collect(Collectors.toList());
-            simpleFieldSelectionListModel.addItems(fields);
-            fieldSelectionListModel = simpleFieldSelectionListModel;
-        } else {
-            fieldSelectionListModel = dynamicFieldSelectionListModel;
+            fieldSelectionListModel = createSelectionListModelFromColumns(settings.getColumns());
+        } else if (useForFilter) {
+            final Component component = getComponents().get(componentConfig.getId());
+            if (component instanceof EmbeddedQueryPresenter) {
+                List<Column> columns = Collections.emptyList();
+                final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
+                final QueryResultTablePresenter queryResultTablePresenter =
+                        embeddedQueryPresenter.getCurrentTablePresenter();
+                if (queryResultTablePresenter != null) {
+                    columns = GwtNullSafe.list(queryResultTablePresenter.getCurrentColumns());
+                }
+                fieldSelectionListModel = createSelectionListModelFromColumns(columns);
+            }
         }
 
         // Read selection handlers.
@@ -327,6 +333,36 @@ public class SelectionHandlersPresenter
         listPresenter.getSelectionModel().clear();
         setDirty(false);
         update();
+    }
+
+    private FieldSelectionListModel createSelectionListModelFromColumns(final List<Column> columns) {
+        final List<QueryField> fields = columns
+                .stream()
+                .map(column -> QueryField
+                        .builder()
+                        .fldName(column.getName())
+                        .fldType(getFieldType(column))
+                        .queryable(true)
+                        .build())
+                .collect(Collectors.toList());
+        final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
+        simpleFieldSelectionListModel.addItems(fields);
+        return simpleFieldSelectionListModel;
+    }
+
+    private FieldType getFieldType(final Column column) {
+        final Format format = column.getFormat();
+        if (format != null && format.getType() != null) {
+            switch (format.getType()) {
+                case NUMBER: {
+                    return FieldType.LONG;
+                }
+                case DATE_TIME: {
+                    return FieldType.DATE;
+                }
+            }
+        }
+        return FieldType.TEXT;
     }
 
     @Override

@@ -567,10 +567,10 @@ public class EmbeddedQueryPresenter
     }
 
     private void loadEmbeddedQuery() {
-        initialised = false;
         final EmbeddedQueryComponentSettings settings = getQuerySettings();
         final DocRef queryRef = settings.getQueryRef();
         if (queryRef != null && !Objects.equals(queryRef, loadedQueryRef)) {
+            initialised = false;
             loadedQueryRef = queryRef;
             restFactory
                     .create(QUERY_RESOURCE)
@@ -778,6 +778,10 @@ public class EmbeddedQueryPresenter
     @Override
     public String getType() {
         return TAB_TYPE;
+    }
+
+    public QueryResultTablePresenter getCurrentTablePresenter() {
+        return currentTablePresenter;
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {
