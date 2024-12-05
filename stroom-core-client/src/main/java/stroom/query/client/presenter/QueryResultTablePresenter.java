@@ -119,6 +119,7 @@ public class QueryResultTablePresenter
     private List<Column> currentColumns = Collections.emptyList();
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
+    private final TableRowStyles tableRowStyles = new TableRowStyles();
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -139,6 +140,7 @@ public class QueryResultTablePresenter
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
+        dataGrid.setRowStyles(tableRowStyles);
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
         final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
@@ -517,6 +519,8 @@ public class QueryResultTablePresenter
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                    tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
+                            .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
@@ -653,15 +657,12 @@ public class QueryResultTablePresenter
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getFormattingType(),
-                    row.getFormattingStyle(),
-                    row.getCustomStyle()));
+                    row.getMatchingRule()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
-        dataGrid.setRowStyles(new TableRowStyles());
 
         return processed;
     }

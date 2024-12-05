@@ -3,6 +3,9 @@ package stroom.dashboard.client.table.cf;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.query.api.v2.ConditionalFormattingType;
+import stroom.query.api.v2.CustomConditionalFormattingStyle;
+import stroom.query.api.v2.TextAttributes;
+import stroom.security.client.presenter.ClassNameBuilder;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.safecss.shared.SafeStylesHostedModeUtils;
@@ -11,48 +14,79 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class ConditionalFormattingSwatchUtil {
 
+    public static final String CF_COLOUR_SWATCH = "cf-colour-swatch";
+    public static final String CF_TEXT = "cf-text";
+    public static final String CF_BOLD = "cf-bold";
+    public static final String CF_ITALIC = "cf-italic";
+
     public static SafeHtml createTableCell(final ConditionalFormattingRule rule) {
-        if (rule.getFormattingType() == null || ConditionalFormattingType.CUSTOM.equals(rule.getFormattingType())) {
-            final String styleName = ConditionalFormattingDynamicStyles.create(rule.getCustomStyle());
+        return createSwatch(
+                rule.getFormattingType(),
+                rule.getFormattingStyle(),
+                rule.getCustomStyle(),
+                rule.getTextAttributes());
+    }
+
+    public static SafeHtml createSwatch(final ConditionalFormattingType formattingType,
+                                        final ConditionalFormattingStyle formattingStyle,
+                                        final CustomConditionalFormattingStyle customStyle,
+                                        final TextAttributes textAttributes) {
+        if (formattingType == null || ConditionalFormattingType.CUSTOM.equals(formattingType)) {
+            final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
+            classNameBuilder.addClassName(CF_COLOUR_SWATCH);
+            classNameBuilder.addClassName(ConditionalFormattingDynamicStyles.create(customStyle));
+            classNameBuilder.addClassName(getTextAttributeClassNames(textAttributes));
+
             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            sb.appendHtmlConstant("<div class=\"cf-colour-swatch " + styleName + "\"");
-            sb.appendHtmlConstant("\">");
+            sb.appendHtmlConstant("<div");
+            sb.appendHtmlConstant(classNameBuilder.buildClassAttribute());
+            sb.appendHtmlConstant(">");
             sb.appendEscaped("Custom");
             sb.appendHtmlConstant("</div>");
             return sb.toSafeHtml();
         } else {
-            return createSwatch(rule.getFormattingType(), rule.getFormattingStyle());
+            return createSwatch(formattingType, formattingStyle, textAttributes);
         }
     }
 
     public static SafeHtml createSwatch(final ConditionalFormattingType formattingType,
-                                        final ConditionalFormattingStyle formattingStyle) {
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        String div = "<div class=\"cf-colour-swatch";
+                                        final ConditionalFormattingStyle formattingStyle,
+                                        final TextAttributes textAttributes) {
+        final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
+        classNameBuilder.addClassName(CF_COLOUR_SWATCH);
         if (formattingStyle != null) {
             if (ConditionalFormattingType.TEXT.equals(formattingType)) {
-                div += " cf-text";
+                classNameBuilder.addClassName(CF_TEXT);
             }
-            div += " ";
-            div += formattingStyle.getCssClassName();
+            classNameBuilder.addClassName(formattingStyle.getCssClassName());
         }
-        div += "\">";
-        sb.appendHtmlConstant(div);
+        classNameBuilder.addClassName(getTextAttributeClassNames(textAttributes));
 
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.appendHtmlConstant("<div");
+        sb.appendHtmlConstant(classNameBuilder.buildClassAttribute());
+        sb.appendHtmlConstant(">");
         if (formattingStyle == null) {
             sb.appendEscaped("None");
         } else {
             sb.appendEscaped(formattingStyle.getDisplayValue());
         }
-
         sb.appendHtmlConstant("</div>");
+
         return sb.toSafeHtml();
     }
 
     public static SafeHtml createCustomSwatch(final String backgroundColour,
-                                              final String textColour) {
+                                              final String textColour,
+                                              final TextAttributes textAttributes) {
+        final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
+        classNameBuilder.addClassName(CF_COLOUR_SWATCH);
+        classNameBuilder.addClassName(getTextAttributeClassNames(textAttributes));
+
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        sb.appendHtmlConstant("<div class=\"cf-colour-swatch\" style=\"");
+        sb.appendHtmlConstant("<div");
+        sb.appendHtmlConstant(classNameBuilder.buildClassAttribute());
+        sb.appendHtmlConstant(" style=\"");
         if (GwtNullSafe.isNonBlankString(backgroundColour) &&
             SafeStylesHostedModeUtils.isValidStyleValue(backgroundColour) == null) {
             sb.appendHtmlConstant("background-color:");
@@ -67,5 +101,18 @@ public class ConditionalFormattingSwatchUtil {
         sb.appendEscaped("Custom");
         sb.appendHtmlConstant("</div>");
         return sb.toSafeHtml();
+    }
+
+    public static String getTextAttributeClassNames(final TextAttributes textAttributes) {
+        final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
+        if (textAttributes != null) {
+            if (textAttributes.isBold()) {
+                classNameBuilder.addClassName(CF_BOLD);
+            }
+            if (textAttributes.isItalic()) {
+                classNameBuilder.addClassName(CF_ITALIC);
+            }
+        }
+        return classNameBuilder.build();
     }
 }

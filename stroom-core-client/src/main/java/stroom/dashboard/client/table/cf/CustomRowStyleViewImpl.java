@@ -17,6 +17,8 @@
 
 package stroom.dashboard.client.table.cf;
 
+import stroom.query.api.v2.TextAttributes;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -44,6 +46,8 @@ public class CustomRowStyleViewImpl extends ViewImpl implements CustomRowStylePr
     TextBox darkTextColour;
     @UiField
     SimplePanel darkExample;
+
+    private TextAttributes textAttributes;
 
     @Inject
     public CustomRowStyleViewImpl(final Binder binder) {
@@ -100,6 +104,11 @@ public class CustomRowStyleViewImpl extends ViewImpl implements CustomRowStylePr
     }
 
     @Override
+    public void setTextAttributes(final TextAttributes textAttributes) {
+        this.textAttributes = textAttributes;
+    }
+
+    @Override
     public void focus() {
         lightBackgroundColour.setFocus(true);
     }
@@ -107,14 +116,20 @@ public class CustomRowStyleViewImpl extends ViewImpl implements CustomRowStylePr
     private void updateLightSwatch() {
         lightExample.getElement().setInnerHTML(
                 ConditionalFormattingSwatchUtil
-                        .createCustomSwatch(lightBackgroundColour.getValue(), lightTextColour.getValue())
+                        .createCustomSwatch(
+                                lightBackgroundColour.getValue(),
+                                lightTextColour.getValue(),
+                                textAttributes)
                         .asString());
     }
 
     private void updateDarkSwatch() {
         darkExample.getElement().setInnerHTML(
                 ConditionalFormattingSwatchUtil
-                        .createCustomSwatch(darkBackgroundColour.getValue(), darkTextColour.getValue())
+                        .createCustomSwatch(
+                                darkBackgroundColour.getValue(),
+                                darkTextColour.getValue(),
+                                textAttributes)
                         .asString());
     }
 

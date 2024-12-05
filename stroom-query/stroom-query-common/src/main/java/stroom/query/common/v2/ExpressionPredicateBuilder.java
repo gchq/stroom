@@ -177,6 +177,7 @@ public class ExpressionPredicateBuilder {
                 return switch (term.getCondition()) {
                     case EQUALS -> StringEquals.create(term, stringExtractor);
                     case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
+                    case NOT_EQUALS -> StringNotEquals.create(term, stringExtractor);
                     case CONTAINS -> StringContains.create(term, stringExtractor);
                     case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
                     case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
@@ -887,6 +888,27 @@ public class ExpressionPredicateBuilder {
         @Override
         public boolean test(final T values) {
             return string.equalsIgnoreCase(extractionFunction.apply(values));
+        }
+    }
+
+    private static class StringNotEquals<T> extends StringExpressionTermPredicate<T> {
+
+        private StringNotEquals(final ExpressionTerm term,
+                                final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new StringNotEquals<>(term, extractionFunction));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            return !string.equalsIgnoreCase(extractionFunction.apply(values));
         }
     }
 

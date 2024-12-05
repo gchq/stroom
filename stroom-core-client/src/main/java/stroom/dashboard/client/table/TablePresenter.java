@@ -163,6 +163,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
     private ExpressionOperator currentSelectionFilter;
+    private final TableRowStyles tableRowStyles = new TableRowStyles();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -198,6 +199,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
+        dataGrid.setRowStyles(tableRowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -547,6 +549,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                    tableRowStyles.setConditionalFormattingRules(getTableSettings()
+                            .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
@@ -661,15 +665,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getFormattingType(),
-                    row.getFormattingStyle(),
-                    row.getCustomStyle()));
+                    row.getMatchingRule()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
-        dataGrid.setRowStyles(new TableRowStyles());
 
         return processed;
     }
@@ -973,6 +974,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         setQueryId(tableComponentSettings.getQueryId());
         updatePageSize();
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(getTableSettings().getConditionalFormattingRules());
+        dataGrid.redraw();
     }
 
     private void updatePageSize() {

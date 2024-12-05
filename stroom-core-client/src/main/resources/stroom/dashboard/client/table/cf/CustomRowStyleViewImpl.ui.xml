@@ -33,7 +33,7 @@
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfLightExample"
                         label="Light Example">
-            <g:SimplePanel ui:field="lightExample"/>
+            <g:SimplePanel ui:field="lightExample" width="200px"/>
         </form:FormGroup>
 
 
@@ -66,7 +66,7 @@
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfDarkExample"
                         label="Dark Example">
-            <g:SimplePanel ui:field="darkExample"/>
+            <g:SimplePanel ui:field="darkExample" width="200px"/>
         </form:FormGroup>
 
     </g:FlowPanel>

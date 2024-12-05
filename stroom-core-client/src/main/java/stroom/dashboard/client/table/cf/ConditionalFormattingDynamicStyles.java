@@ -18,6 +18,10 @@ public class ConditionalFormattingDynamicStyles {
     private static Element styleElement;
 
     public static String create(final CustomConditionalFormattingStyle formattingStyle) {
+        if (formattingStyle == null) {
+            return "";
+        }
+
         if (styleElement == null) {
             styleElement = DOM.createElement("style");
             RootPanel.getBodyElement().appendChild(styleElement);

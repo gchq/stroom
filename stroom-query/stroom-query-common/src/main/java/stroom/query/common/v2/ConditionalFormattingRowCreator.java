@@ -3,7 +3,6 @@ package stroom.query.common.v2;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
@@ -136,20 +135,12 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
             try {
                 if (matchingRule != null) {
                     if (!matchingRule.isHide()) {
-                        final Row.Builder builder = Row.builder()
+                        row = Row.builder()
                                 .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                                 .values(stringValues)
-                                .depth(item.getKey().getDepth());
-
-                        if (matchingRule.getFormattingType() == null ||
-                            ConditionalFormattingType.CUSTOM.equals(matchingRule.getFormattingType())) {
-                            builder.customStyle(matchingRule.getCustomStyle());
-                        } else {
-                            builder.formattingType(matchingRule.getFormattingType());
-                            builder.formattingStyle(matchingRule.getFormattingStyle());
-                        }
-
-                        row = builder.build();
+                                .depth(item.getKey().getDepth())
+                                .matchingRule(matchingRule.getId())
+                                .build();
                     }
                 } else {
                     row = Row.builder()

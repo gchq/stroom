@@ -22,6 +22,7 @@ import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.api.v2.CustomConditionalFormattingStyle;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.TextAttributes;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 
@@ -57,10 +58,12 @@ public class RulePresenter
     @Override
     public void onEditCustomStyle() {
         final CustomRowStylePresenter customRowStylePresenter = customRowStylePresenterProvider.get();
-        customRowStylePresenter.read(customConditionalFormattingStyle);
+        final TextAttributes textAttributes = writeTextAttributes();
+        customRowStylePresenter.read(customConditionalFormattingStyle, textAttributes);
         customRowStylePresenter.show(e -> {
             if (e.isOk()) {
                 customConditionalFormattingStyle = customRowStylePresenter.write();
+                getView().setCustomConditionalFormattingStyle(customConditionalFormattingStyle);
             }
             e.hide();
         });
@@ -83,6 +86,13 @@ public class RulePresenter
         getView().setFormattingStyle(rule.getFormattingStyle());
         getView().setEnabled(rule.isEnabled());
         customConditionalFormattingStyle = rule.getCustomStyle();
+        getView().setCustomConditionalFormattingStyle(customConditionalFormattingStyle);
+
+        final TextAttributes textAttributes = rule.getTextAttributes();
+        if (textAttributes != null) {
+            getView().setTextBold(textAttributes.isBold());
+            getView().setTextItalic(textAttributes.isItalic());
+        }
     }
 
     ConditionalFormattingRule write() {
@@ -93,6 +103,7 @@ public class RulePresenter
             id = RandomId.createId(5);
         }
 
+        final TextAttributes textAttributes = writeTextAttributes();
         final ExpressionOperator expression = editExpressionPresenter.write();
         return ConditionalFormattingRule
                 .builder()
@@ -102,8 +113,21 @@ public class RulePresenter
                 .formattingType(getView().getFormattingType())
                 .formattingStyle(getView().getFormattingStyle())
                 .customStyle(customConditionalFormattingStyle)
+                .textAttributes(textAttributes)
                 .enabled(getView().isEnabled())
                 .build();
+    }
+
+    private TextAttributes writeTextAttributes() {
+        TextAttributes textAttributes = null;
+        if (getView().isTextBold() || getView().isTextItalic()) {
+            textAttributes = TextAttributes
+                    .builder()
+                    .bold(getView().isTextBold())
+                    .italic(getView().isTextItalic())
+                    .build();
+        }
+        return textAttributes;
     }
 
     @Override
@@ -127,8 +151,18 @@ public class RulePresenter
 
         ConditionalFormattingStyle getFormattingStyle();
 
+        boolean isTextBold();
+
+        void setTextBold(boolean bold);
+
+        boolean isTextItalic();
+
+        void setTextItalic(boolean italic);
+
         boolean isEnabled();
 
         void setEnabled(boolean enabled);
+
+        void setCustomConditionalFormattingStyle(CustomConditionalFormattingStyle customConditionalFormattingStyle);
     }
 }

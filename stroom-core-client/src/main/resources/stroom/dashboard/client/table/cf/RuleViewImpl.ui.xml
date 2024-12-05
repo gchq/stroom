@@ -15,6 +15,13 @@
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleEnabledState"
+                        label="Rule Enabled State"
+                        helpText="Enables or disables this rule. When disabled this rule will be ignored.">
+            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
                         label="Hide Matching Rows"
                         helpText="When checked, prevents matching rows from appearing in the table.">
             <tickbox:CustomCheckBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
@@ -28,22 +35,37 @@
 
         <form:FormGroup ui:field="styleGroup"
                         identity="cfStyle"
-                        label="Formatting Style"
+                        label="Style"
                         helpText="Choose an standard style to apply to matching rows.">
             <l:SelectionBox ui:field="formattingStyle"/>
         </form:FormGroup>
 
-        <form:FormGroup identity="cfCustomStyle"
+        <form:FormGroup ui:field="customStyleGroup"
+                        identity="cfCustomStyle"
                         label="Custom Style"
                         helpText="Provide a custom style for the matched rows.">
-            <b:Button ui:field="editCustomStyle" text="Edit Custom Style" addStyleNames="allow-focus Button--contained-primary"/>
+            <b:Button ui:field="editCustomStyle" text="Set Custom Style" width="200px"
+                      addStyleNames="allow-focus Button--contained-primary"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
-                        identity="cfRuleEnabledState"
-                        label="Rule Enabled State"
-                        helpText="Enables or disables this rule. When disabled this rule will be ignored.">
-            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
+                        identity="cfRuleTextBold"
+                        label="Make Text Bold"
+                        helpText="Makes the text bold.">
+            <tickbox:CustomCheckBox ui:field="textBold" identity="cfRuleTextBold" label="Bold"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfRuleTextItalic"
+                        label="Make Text Italic"
+                        helpText="Makes the text italic.">
+            <tickbox:CustomCheckBox ui:field="textItalic" identity="cfRuleTextItalic" label="Italic"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfExample"
+                        label="Example">
+            <g:SimplePanel ui:field="example" width="200px"/>
         </form:FormGroup>
 
     </g:FlowPanel>

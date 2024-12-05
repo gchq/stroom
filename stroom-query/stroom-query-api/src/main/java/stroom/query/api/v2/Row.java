@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -30,9 +31,8 @@ import java.util.Objects;
         "groupKey",
         "values",
         "depth",
-        "formattingType",
-        "formattingStyle",
-        "customStyle"})
+        "matchingRule"
+})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A row of data in a result set")
 public final class Row {
@@ -52,25 +52,18 @@ public final class Row {
     private final Integer depth;
 
     @JsonProperty
-    private final ConditionalFormattingType formattingType;
-    @JsonProperty
-    private final ConditionalFormattingStyle formattingStyle;
-    @JsonProperty
-    private final CustomConditionalFormattingStyle customStyle;
+    @JsonPropertyDescription("The id of a matching conditional formatting rule or null if none matched.")
+    private final String matchingRule;
 
     @JsonCreator
     public Row(@JsonProperty("groupKey") final String groupKey,
                @JsonProperty("values") final List<String> values,
                @JsonProperty("depth") final Integer depth,
-               @JsonProperty("formattingType") final ConditionalFormattingType formattingType,
-               @JsonProperty("formattingStyle") final ConditionalFormattingStyle formattingStyle,
-               @JsonProperty("customStyle") final CustomConditionalFormattingStyle customStyle) {
+               @JsonProperty("matchingRule") final String matchingRule) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
-        this.formattingType = formattingType;
-        this.formattingStyle = formattingStyle;
-        this.customStyle = customStyle;
+        this.matchingRule = matchingRule;
     }
 
     public String getGroupKey() {
@@ -85,16 +78,8 @@ public final class Row {
         return depth;
     }
 
-    public ConditionalFormattingType getFormattingType() {
-        return formattingType;
-    }
-
-    public ConditionalFormattingStyle getFormattingStyle() {
-        return formattingStyle;
-    }
-
-    public CustomConditionalFormattingStyle getCustomStyle() {
-        return customStyle;
+    public String getMatchingRule() {
+        return matchingRule;
     }
 
     @Override
@@ -109,14 +94,12 @@ public final class Row {
         return Objects.equals(groupKey, row.groupKey) &&
                Objects.equals(values, row.values) &&
                Objects.equals(depth, row.depth) &&
-               Objects.equals(formattingType, row.formattingType) &&
-               Objects.equals(formattingStyle, row.formattingStyle) &&
-               Objects.equals(customStyle, row.customStyle);
+               Objects.equals(matchingRule, row.matchingRule);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey, values, depth, formattingType, formattingStyle, customStyle);
+        return Objects.hash(groupKey, values, depth, matchingRule);
     }
 
     @Override
@@ -125,9 +108,7 @@ public final class Row {
                "groupKey='" + groupKey + '\'' +
                ", values=" + values +
                ", depth=" + depth +
-               ", formattingType='" + formattingType + '\'' +
-               ", formattingStyle='" + formattingStyle + '\'' +
-               ", customStyle='" + customStyle + '\'' +
+               ", matchingRule='" + matchingRule + '\'' +
                '}';
     }
 
@@ -147,9 +128,7 @@ public final class Row {
         private String groupKey;
         private List<String> values;
         private Integer depth = 0;
-        private ConditionalFormattingType formattingType;
-        private ConditionalFormattingStyle formattingStyle;
-        private CustomConditionalFormattingStyle customStyle;
+        private String matchingRule;
 
         private Builder() {
         }
@@ -158,9 +137,7 @@ public final class Row {
             groupKey = row.groupKey;
             values = row.values;
             depth = row.depth;
-            formattingType = row.formattingType;
-            formattingStyle = row.formattingStyle;
-            customStyle = row.customStyle;
+            matchingRule = row.matchingRule;
         }
 
         /**
@@ -191,23 +168,19 @@ public final class Row {
             return this;
         }
 
-        public Builder formattingType(final ConditionalFormattingType formattingType) {
-            this.formattingType = formattingType;
-            return this;
-        }
-
-        public Builder formattingStyle(final ConditionalFormattingStyle formattingStyle) {
-            this.formattingStyle = formattingStyle;
-            return this;
-        }
-
-        public Builder customStyle(final CustomConditionalFormattingStyle customStyle) {
-            this.customStyle = customStyle;
+        /**
+         * The id of a matching conditional formatting rule.
+         *
+         * @param matchingRule The id of a matching conditional formatting rule.
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder matchingRule(final String matchingRule) {
+            this.matchingRule = matchingRule;
             return this;
         }
 
         public Row build() {
-            return new Row(groupKey, values, depth, formattingType, formattingStyle, customStyle);
+            return new Row(groupKey, values, depth, matchingRule);
         }
     }
 }

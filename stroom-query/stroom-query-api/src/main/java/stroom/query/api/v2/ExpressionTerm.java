@@ -252,7 +252,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 "word boundary",
                 "word boundary"),
 
-        CONTAINS_CASE_SENSITIVE("=\\",
+        CONTAINS_CASE_SENSITIVE("=+",
                 "contains (case sensitive)",
                 "contains (case sensitive)"),
         EQUALS_CASE_SENSITIVE("==",

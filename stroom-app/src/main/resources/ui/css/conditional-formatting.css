@@ -444,6 +444,14 @@
 
 
 
+.cf-bold,
+.cf-bold * {
+    font-weight: bold;
+}
+.cf-italic,
+.cf-italic * {
+    font-style: italic;
+}
 
 
 

@@ -20,7 +20,10 @@ package stroom.dashboard.client.table.cf;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.query.api.v2.ConditionalFormattingType;
+import stroom.query.api.v2.CustomConditionalFormattingStyle;
+import stroom.query.api.v2.TextAttributes;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -39,7 +42,13 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     private final Widget widget;
 
     @UiField
+    FormGroup styleGroup;
+    @UiField
+    FormGroup customStyleGroup;
+    @UiField
     SimplePanel expression;
+    @UiField
+    CustomCheckBox enabled;
     @UiField
     CustomCheckBox hide;
     @UiField
@@ -47,9 +56,15 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     @UiField
     SelectionBox<ConditionalFormattingStyle> formattingStyle;
     @UiField
-    Button editCustomStyle;
+    CustomCheckBox textBold;
     @UiField
-    CustomCheckBox enabled;
+    CustomCheckBox textItalic;
+    @UiField
+    SimplePanel example;
+    @UiField
+    Button editCustomStyle;
+
+    private CustomConditionalFormattingStyle customConditionalFormattingStyle;
 
     @Inject
     public RuleViewImpl(final Binder binder) {
@@ -59,7 +74,7 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
         formattingType.addStyleName("conditionalFormatTypeSelection");
 
         formattingStyle.setRenderFunction(style -> ConditionalFormattingSwatchUtil
-                .createSwatch(formattingType.getValue(), style));
+                .createSwatch(formattingType.getValue(), style, getTextAttributes()));
         formattingStyle.addItems(ConditionalFormattingStyle.LIST);
         formattingStyle.addStyleName("conditionalFormatStyleSelection");
     }
@@ -88,6 +103,7 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     public void setFormattingType(final ConditionalFormattingType formattingType) {
         this.formattingType.setValue(formattingType);
         updateVisibility();
+        updateExampleSwatch();
     }
 
     @Override
@@ -98,11 +114,36 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     @Override
     public void setFormattingStyle(final ConditionalFormattingStyle formattingStyle) {
         this.formattingStyle.setValue(formattingStyle);
+        updateExampleSwatch();
     }
 
     @Override
     public ConditionalFormattingStyle getFormattingStyle() {
         return formattingStyle.getValue();
+    }
+
+    @Override
+    public boolean isTextBold() {
+        return textBold.getValue();
+    }
+
+    @Override
+    public void setTextBold(final boolean bold) {
+        this.textBold.setValue(bold);
+        updateVisibility();
+        updateExampleSwatch();
+    }
+
+    @Override
+    public boolean isTextItalic() {
+        return textItalic.getValue();
+    }
+
+    @Override
+    public void setTextItalic(final boolean italic) {
+        this.textItalic.setValue(italic);
+        updateVisibility();
+        updateExampleSwatch();
     }
 
     @Override
@@ -123,18 +164,65 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
 
         final ConditionalFormattingType type = formattingType.getValue();
         final boolean custom = type == null || ConditionalFormattingType.CUSTOM.equals(type);
-        formattingStyle.setEnabled(!custom);
-        editCustomStyle.setEnabled(custom);
+        styleGroup.setVisible(!custom);
+        customStyleGroup.setVisible(custom);
+    }
+
+    private TextAttributes getTextAttributes() {
+        TextAttributes textAttributes = null;
+        if (textBold.getValue() || textItalic.getValue()) {
+            textAttributes = TextAttributes
+                    .builder()
+                    .bold(textBold.getValue())
+                    .italic(textItalic.getValue())
+                    .build();
+        }
+        return textAttributes;
     }
 
     @UiHandler("formattingType")
     public void onFormattingType(final ValueChangeEvent<ConditionalFormattingType> e) {
         updateVisibility();
+        updateExampleSwatch();
+    }
+
+    @UiHandler("formattingStyle")
+    public void onFormattingStyle(final ValueChangeEvent<ConditionalFormattingStyle> e) {
+        updateExampleSwatch();
     }
 
     @UiHandler("editCustomStyle")
     public void onEditCustomStyle(final ClickEvent e) {
         getUiHandlers().onEditCustomStyle();
+    }
+
+    @UiHandler("textBold")
+    public void onTextBold(final ValueChangeEvent<Boolean> e) {
+        updateVisibility();
+        updateExampleSwatch();
+    }
+
+    @UiHandler("textItalic")
+    public void onTextItalic(final ValueChangeEvent<Boolean> e) {
+        updateVisibility();
+        updateExampleSwatch();
+    }
+
+    private void updateExampleSwatch() {
+        example.getElement().setInnerHTML(
+                ConditionalFormattingSwatchUtil
+                        .createSwatch(
+                                formattingType.getValue(),
+                                formattingStyle.getValue(),
+                                customConditionalFormattingStyle,
+                                getTextAttributes())
+                        .asString());
+    }
+
+    @Override
+    public void setCustomConditionalFormattingStyle(final CustomConditionalFormattingStyle customConditionalFormattingStyle) {
+        this.customConditionalFormattingStyle = customConditionalFormattingStyle;
+        updateExampleSwatch();
     }
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {

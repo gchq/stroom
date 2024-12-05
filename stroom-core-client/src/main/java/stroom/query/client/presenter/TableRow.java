@@ -1,9 +1,6 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
-import stroom.query.api.v2.ConditionalFormattingStyle;
-import stroom.query.api.v2.ConditionalFormattingType;
-import stroom.query.api.v2.CustomConditionalFormattingStyle;
 import stroom.util.shared.Expander;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -21,22 +18,16 @@ public class TableRow {
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
-    private final ConditionalFormattingType formattingType;
-    private final ConditionalFormattingStyle formattingStyle;
-    private final CustomConditionalFormattingStyle customStyle;
+    private final String matchingRule;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Map<String, Cell> cells,
-                    final ConditionalFormattingType formattingType,
-                    final ConditionalFormattingStyle formattingStyle,
-                    final CustomConditionalFormattingStyle customStyle) {
+                    final String matchingRule) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
-        this.formattingType = formattingType;
-        this.formattingStyle = formattingStyle;
-        this.customStyle = customStyle;
+        this.matchingRule = matchingRule;
     }
 
     public Expander getExpander() {
@@ -57,16 +48,8 @@ public class TableRow {
         }
     }
 
-    public ConditionalFormattingType getFormattingType() {
-        return formattingType;
-    }
-
-    public ConditionalFormattingStyle getFormattingStyle() {
-        return formattingStyle;
-    }
-
-    public CustomConditionalFormattingStyle getCustomStyle() {
-        return customStyle;
+    public String getMatchingRule() {
+        return matchingRule;
     }
 
     private SafeHtml decorateValue(final Cell cell) {
@@ -177,10 +160,10 @@ public class TableRow {
     @Override
     public String toString() {
         return "TableRow{" +
-                "expander=" + expander +
-                ", groupKey='" + groupKey + '\'' +
-                ", cells=" + cells +
-                '}';
+               "expander=" + expander +
+               ", groupKey='" + groupKey + '\'' +
+               ", cells=" + cells +
+               '}';
     }
 
     @Override

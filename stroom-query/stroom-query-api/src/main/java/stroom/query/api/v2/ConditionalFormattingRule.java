@@ -17,7 +17,9 @@ import java.util.Objects;
         "enabled",
         "formattingType",
         "formattingStyle",
-        "customStyle"})
+        "customStyle",
+        "textAttributes"
+})
 @JsonInclude(Include.NON_NULL)
 public class ConditionalFormattingRule {
 
@@ -28,10 +30,10 @@ public class ConditionalFormattingRule {
     @JsonProperty("hide")
     private final boolean hide;
     @JsonProperty("backgroundColor")
-    @Deprecated
+    @Deprecated // moved to CustomConditionalFormattingStyle kept for serialisation backward compatibility.
     private final String backgroundColor;
     @JsonProperty("textColor")
-    @Deprecated
+    @Deprecated // moved to CustomConditionalFormattingStyle kept for serialisation backward compatibility.
     private final String textColor;
     @JsonProperty("enabled")
     private final boolean enabled;
@@ -42,6 +44,8 @@ public class ConditionalFormattingRule {
     private final ConditionalFormattingStyle formattingStyle;
     @JsonProperty("customStyle")
     private final CustomConditionalFormattingStyle customStyle;
+    @JsonProperty("textAttributes")
+    private final TextAttributes textAttributes;
 
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
@@ -53,7 +57,8 @@ public class ConditionalFormattingRule {
 
                                      @JsonProperty("formattingType") final ConditionalFormattingType formattingType,
                                      @JsonProperty("formattingStyle") final ConditionalFormattingStyle formattingStyle,
-                                     @JsonProperty("customStyle") final CustomConditionalFormattingStyle customStyle) {
+                                     @JsonProperty("customStyle") final CustomConditionalFormattingStyle customStyle,
+                                     @JsonProperty("textAttributes") final TextAttributes textAttributes) {
         this.id = id;
         this.expression = expression;
         this.hide = hide;
@@ -62,6 +67,7 @@ public class ConditionalFormattingRule {
         this.enabled = enabled;
         this.formattingType = formattingType;
         this.formattingStyle = formattingStyle;
+        this.textAttributes = textAttributes;
 
         if (customStyle == null && (backgroundColor != null && textColor != null)) {
             final CustomRowStyle customRowStyle = CustomRowStyle
@@ -69,12 +75,11 @@ public class ConditionalFormattingRule {
                     .backgroundColour(backgroundColor)
                     .textColour(textColor)
                     .build();
-            final CustomConditionalFormattingStyle customConditionalFormattingStyle = CustomConditionalFormattingStyle
+            this.customStyle = CustomConditionalFormattingStyle
                     .builder()
                     .light(customRowStyle)
                     .dark(customRowStyle)
                     .build();
-            this.customStyle = customConditionalFormattingStyle;
         } else {
             this.customStyle = customStyle;
         }
@@ -108,6 +113,10 @@ public class ConditionalFormattingRule {
         return customStyle;
     }
 
+    public TextAttributes getTextAttributes() {
+        return textAttributes;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -123,12 +132,21 @@ public class ConditionalFormattingRule {
                Objects.equals(expression, that.expression) &&
                Objects.equals(formattingType, that.formattingType) &&
                Objects.equals(formattingStyle, that.formattingStyle) &&
-               Objects.equals(customStyle, that.customStyle);
+               Objects.equals(customStyle, that.customStyle) &&
+               Objects.equals(textAttributes, that.textAttributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, expression, hide, enabled, formattingType, formattingStyle, customStyle);
+        return Objects.hash(
+                id,
+                expression,
+                hide,
+                enabled,
+                formattingType,
+                formattingStyle,
+                customStyle,
+                textAttributes);
     }
 
     @Override
@@ -141,6 +159,7 @@ public class ConditionalFormattingRule {
                ", formattingType=" + formattingType +
                ", formattingStyle=" + formattingStyle +
                ", customStyle=" + customStyle +
+               ", textAttributes=" + textAttributes +
                '}';
     }
 
@@ -165,6 +184,7 @@ public class ConditionalFormattingRule {
         private ConditionalFormattingType formattingType;
         private ConditionalFormattingStyle formattingStyle;
         private CustomConditionalFormattingStyle customStyle;
+        private TextAttributes textAttributes;
 
         private Builder() {
         }
@@ -214,6 +234,11 @@ public class ConditionalFormattingRule {
             return this;
         }
 
+        public Builder textAttributes(final TextAttributes textAttributes) {
+            this.textAttributes = textAttributes;
+            return this;
+        }
+
         public ConditionalFormattingRule build() {
             if (id == null) {
                 throw new NullPointerException("Null rule id");
@@ -228,7 +253,8 @@ public class ConditionalFormattingRule {
                     enabled,
                     formattingType,
                     formattingStyle,
-                    customStyle);
+                    customStyle,
+                    textAttributes);
         }
     }
 }

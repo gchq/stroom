@@ -19,6 +19,7 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.query.api.v2.CustomConditionalFormattingStyle;
 import stroom.query.api.v2.CustomRowStyle;
+import stroom.query.api.v2.TextAttributes;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -51,7 +52,9 @@ public class CustomRowStylePresenter
                 .fire();
     }
 
-    void read(final CustomConditionalFormattingStyle customStyle) {
+    void read(final CustomConditionalFormattingStyle customStyle,
+              final TextAttributes textAttributes) {
+        getView().setTextAttributes(textAttributes);
         if (customStyle != null) {
             if (customStyle.getLight() != null) {
                 getView().setLightBackgroundColour(customStyle.getLight().getBackgroundColour());
@@ -99,5 +102,7 @@ public class CustomRowStylePresenter
         String getDarkTextColour();
 
         void setDarkTextColour(String textColour);
+
+        void setTextAttributes(TextAttributes textAttributes);
     }
 }
