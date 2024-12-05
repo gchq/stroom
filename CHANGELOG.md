@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.5] - 2024-12-05
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+* Issue **#4596** : Add case-sensitive value filter conditions.
+
+* Issue **#4596** : Drive visualisations using table quick filters and selection handlers.
+
+* Issue **#4596** : Merge include/exclude and column value filter dialogs.
+
+* Issue **#4596** : Change conditional formatting to allow custom light and dark colours.
+
+* Issue **#4596** : Turn off conditional formatting with user preferences.
+
 * Issue **#4627** : Fix StroomQL function character escaping.
 
 * Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
@@ -1004,7 +1018,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.5...HEAD
+[v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
 [v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
 [v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
 [v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
