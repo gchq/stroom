@@ -8418,8 +8418,6 @@ components:
     ColumnFilter:
       type: object
       properties:
-        caseSensitive:
-          type: boolean
         filter:
           type: string
     ColumnRef:
@@ -8551,16 +8549,12 @@ components:
         backgroundColor:
           type: string
         customStyle:
-          type: boolean
+          $ref: "#/components/schemas/CustomConditionalFormattingStyle"
         enabled:
           type: boolean
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
-        hide:
-          type: boolean
-        id:
-          type: string
-        style:
+        formattingStyle:
           type: string
           enum:
           - RED
@@ -8582,6 +8576,18 @@ components:
           - BROWN
           - GREY
           - BLUE_GREY
+        formattingType:
+          type: string
+          enum:
+          - BACKGROUND
+          - TEXT
+          - CUSTOM
+        hide:
+          type: boolean
+        id:
+          type: string
+        textAttributes:
+          $ref: "#/components/schemas/TextAttributes"
         textColor:
           type: string
     ConfigProperty:
@@ -8776,6 +8782,13 @@ components:
           type: string
         ignoreCase:
           type: boolean
+    CustomConditionalFormattingStyle:
+      type: object
+      properties:
+        dark:
+          $ref: "#/components/schemas/CustomRowStyle"
+        light:
+          $ref: "#/components/schemas/CustomRowStyle"
     CustomRollUpMask:
       type: object
       properties:
@@ -8799,6 +8812,13 @@ components:
             type: integer
             format: int32
           uniqueItems: true
+    CustomRowStyle:
+      type: object
+      properties:
+        backgroundColour:
+          type: string
+        textColour:
+          type: string
     DBTableStatus:
       type: object
       properties:
@@ -9815,6 +9835,10 @@ components:
             $ref: "#/components/schemas/DocRef"
           queryTablePreferences:
             $ref: "#/components/schemas/QueryTablePreferences"
+          selectionFilter:
+            type: array
+            items:
+              $ref: "#/components/schemas/ComponentSelectionHandler"
           selectionHandlers:
             type: array
             items:
@@ -10452,8 +10476,6 @@ components:
       - $ref: "#/components/schemas/ExpressionItem"
       - type: object
         properties:
-          caseSensitive:
-            type: boolean
           condition:
             type: string
             description: The condition of the predicate term
@@ -10477,6 +10499,11 @@ components:
             - IS_NOT_NULL
             - MATCHES_REGEX
             - WORD_BOUNDARY
+            - CONTAINS_CASE_SENSITIVE
+            - EQUALS_CASE_SENSITIVE
+            - STARTS_WITH_CASE_SENSITIVE
+            - ENDS_WITH_CASE_SENSITIVE
+            - MATCHES_REGEX_CASE_SENSITIVE
             - OF_DOC_REF
             - USER_HAS_PERM
             - USER_HAS_OWNER
@@ -10495,9 +10522,6 @@ components:
             description: The value that the field value is being evaluated against.
               Not required if a dictionary is supplied
       description: A predicate term in a query expression tree
-      required:
-      - condition
-      - field
     ExtendedUiConfig:
       type: object
       properties:
@@ -13617,7 +13641,7 @@ components:
           - "'is', '=', '!='"
           - '''between'''
           - "'=', '!=', 'in'"
-          - "'=', '!=', 'in'"
+          - "'contains', '=', '!=', 'matches regex', 'in'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'is'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
@@ -14038,10 +14062,8 @@ components:
         pageSize:
           type: integer
           format: int32
-        selectionHandlers:
-          type: array
-          items:
-            $ref: "#/components/schemas/ComponentSelectionHandler"
+        selectionFilter:
+          $ref: "#/components/schemas/ExpressionOperator"
     RangeInteger:
       type: object
       properties:
@@ -14622,12 +14644,6 @@ components:
           - QL_VIS
         timeFilter:
           $ref: "#/components/schemas/TimeFilter"
-      required:
-      - componentId
-      - mappings
-      - openGroups
-      - requestedRange
-      - resultStyle
     ResultStoreInfo:
       type: object
       properties:
@@ -14670,8 +14686,6 @@ components:
       type: object
       description: A row of data in a result set
       properties:
-        backgroundColor:
-          type: string
         depth:
           type: integer
           format: int32
@@ -14680,29 +14694,7 @@ components:
           example: 0
         groupKey:
           type: string
-        style:
-          type: string
-          enum:
-          - RED
-          - PINK
-          - PURPLE
-          - DEEP_PURPLE
-          - INDIGO
-          - BLUE
-          - LIGHT_BLUE
-          - CYAN
-          - TEAL
-          - GREEN
-          - LIGHT_GREEN
-          - LIME
-          - YELLOW
-          - AMBER
-          - ORANGE
-          - DEEP_ORANGE
-          - BROWN
-          - GREY
-          - BLUE_GREY
-        textColor:
+        matchingRule:
           type: string
         values:
           type: array
@@ -16110,51 +16102,54 @@ components:
             format: int64
     TableComponentSettings:
       type: object
-      properties:
-        applyValueFilters:
-          type: boolean
-        dataSourceRef:
-          $ref: "#/components/schemas/DocRef"
-        extractValues:
-          type: boolean
-          description: TODO
-        extractionPipeline:
-          $ref: "#/components/schemas/DocRef"
-        fields:
-          type: array
-          items:
-            $ref: "#/components/schemas/Column"
-        maxResults:
-          type: array
-          description: "Defines the maximum number of results to return at each grouping\
-            \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
-            \ 1 and 1 at level 2. In the absence of this field system defaults will\
-            \ apply"
-          example: "1000,10,1"
-          items:
-            type: integer
-            format: int64
+      allOf:
+      - $ref: "#/components/schemas/ComponentSettings"
+      - type: object
+        properties:
+          applyValueFilters:
+            type: boolean
+          dataSourceRef:
+            $ref: "#/components/schemas/DocRef"
+          extractValues:
+            type: boolean
+            description: TODO
+          extractionPipeline:
+            $ref: "#/components/schemas/DocRef"
+          fields:
+            type: array
+            items:
+              $ref: "#/components/schemas/Column"
+          maxResults:
+            type: array
             description: "Defines the maximum number of results to return at each\
               \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
               \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
               \ defaults will apply"
-        pageSize:
-          type: integer
-          format: int32
-          description: Defines the maximum number of rows to display in the table
-            at once (default 100).
-          example: 100
-        queryId:
-          type: string
-          description: TODO
-        selectionHandlers:
-          type: array
-          items:
-            $ref: "#/components/schemas/ComponentSelectionHandler"
-        showDetail:
-          type: boolean
-        useDefaultExtractionPipeline:
-          type: boolean
+            example: "1000,10,1"
+            items:
+              type: integer
+              format: int64
+              description: "Defines the maximum number of results to return at each\
+                \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
+                \ 0, 10 at level 1 and 1 at level 2. In the absence of this field\
+                \ system defaults will apply"
+          pageSize:
+            type: integer
+            format: int32
+            description: Defines the maximum number of rows to display in the table
+              at once (default 100).
+            example: 100
+          queryId:
+            type: string
+            description: TODO
+          selectionHandlers:
+            type: array
+            items:
+              $ref: "#/components/schemas/ComponentSelectionHandler"
+          showDetail:
+            type: boolean
+          useDefaultExtractionPipeline:
+            type: boolean
     TableCoprocessorSettings:
       type: object
       allOf:
@@ -16312,6 +16307,13 @@ components:
       properties:
         criteria:
           $ref: "#/components/schemas/FindTaskCriteria"
+    TextAttributes:
+      type: object
+      properties:
+        bold:
+          type: boolean
+        italic:
+          type: boolean
     TextComponentSettings:
       type: object
       allOf:
@@ -16426,6 +16428,11 @@ components:
           - IS_NOT_NULL
           - MATCHES_REGEX
           - WORD_BOUNDARY
+          - CONTAINS_CASE_SENSITIVE
+          - EQUALS_CASE_SENSITIVE
+          - STARTS_WITH_CASE_SENSITIVE
+          - ENDS_WITH_CASE_SENSITIVE
+          - MATCHES_REGEX_CASE_SENSITIVE
           - OF_DOC_REF
           - USER_HAS_PERM
           - USER_HAS_OWNER
@@ -16658,6 +16665,8 @@ components:
           type: string
         fontSize:
           type: string
+        hideConditionalStyles:
+          type: boolean
         theme:
           type: string
         timeZone:
@@ -16793,8 +16802,6 @@ components:
             type: string
           tableId:
             type: string
-          tableSettings:
-            $ref: "#/components/schemas/TableComponentSettings"
           visualisation:
             $ref: "#/components/schemas/DocRef"
     VisResult:
@@ -16816,10 +16823,14 @@ components:
       - $ref: "#/components/schemas/ComponentResultRequest"
       - type: object
         properties:
+          json:
+            type: string
           requestedRange:
             $ref: "#/components/schemas/OffsetRange"
-          visDashboardSettings:
-            $ref: "#/components/schemas/VisComponentSettings"
+          tableSettings:
+            $ref: "#/components/schemas/TableSettings"
+          visualisation:
+            $ref: "#/components/schemas/DocRef"
       required:
       - componentId
     VisualisationDoc:
