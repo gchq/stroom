@@ -17,13 +17,14 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -33,31 +34,26 @@ import java.util.function.BiConsumer;
 
 public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
 
+    private final EditorPresenter editorPresenter;
+
     @Inject
-    public ColumnFilterPresenter(final EventBus eventBus, final ColumnFilterView view) {
+    public ColumnFilterPresenter(final EventBus eventBus,
+                                 final ColumnFilterView view,
+                                 final EditorPresenter editorPresenter) {
         super(eventBus, view);
+        this.editorPresenter = editorPresenter;
+        view.setEditor(editorPresenter.getView());
     }
 
     public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
-
-        String expression = "";
-
-        if (column.getColumnFilter() != null) {
-            if (column.getColumnFilter().getFilter() != null) {
-                expression = column.getColumnFilter().getFilter();
-            }
-        }
-
-        getView().setFilter(expression);
-
         final PopupSize popupSize = PopupSize.resizable(600, 300);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Filter '" + column.getName() + "'")
                 .modal(true)
-                .onShow(e -> getView().focus())
+                .onShow(e -> editorPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ColumnFilter filter = getColumnFilter();
@@ -71,23 +67,31 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
                 .fire();
     }
 
-    private ColumnFilter getColumnFilter() {
-        String expression = null;
-        if (getView().getFilter() != null && getView().getFilter().trim().length() > 0) {
-            expression = getView().getFilter().trim();
+    public void setColumnFilter(final ColumnFilter columnFilter) {
+        String expression = "";
+
+        if (columnFilter != null) {
+            if (columnFilter.getFilter() != null) {
+                expression = columnFilter.getFilter();
+            }
         }
 
+        editorPresenter.setText(expression);
+    }
+
+    public ColumnFilter getColumnFilter() {
         ColumnFilter filter = null;
-        if (expression != null) {
-            filter = new ColumnFilter(expression, false);
+
+        String expression = editorPresenter.getText().trim();
+        if (expression.length() > 0) {
+            filter = new ColumnFilter(expression);
         }
+
         return filter;
     }
 
-    public interface ColumnFilterView extends View, Focus {
+    public interface ColumnFilterView extends View {
 
-        String getFilter();
-
-        void setFilter(String filter);
+        void setEditor(final EditorView editor);
     }
 }

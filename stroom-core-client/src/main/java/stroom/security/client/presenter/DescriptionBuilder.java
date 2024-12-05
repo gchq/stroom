@@ -23,7 +23,7 @@ public class DescriptionBuilder {
             classNameBuilder.addClassName("bold");
         }
 
-        sb.appendHtmlConstant("<span" + classNameBuilder.build() + ">");
+        sb.appendHtmlConstant("<span" + classNameBuilder.buildClassAttribute() + ">");
         sb.appendEscaped(text);
         sb.appendHtmlConstant("</span>");
         written = true;

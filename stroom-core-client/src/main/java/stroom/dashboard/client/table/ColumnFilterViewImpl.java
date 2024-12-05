@@ -17,9 +17,11 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
+import stroom.editor.client.presenter.EditorView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -28,8 +30,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class ColumnFilterViewImpl extends ViewImpl implements ColumnFilterView {
 
     private final Widget widget;
+
     @UiField
-    TextArea filter;
+    SimplePanel editorContainer;
 
     @Inject
     public ColumnFilterViewImpl(final Binder binder) {
@@ -42,18 +45,8 @@ public class ColumnFilterViewImpl extends ViewImpl implements ColumnFilterView {
     }
 
     @Override
-    public void focus() {
-        filter.setFocus(true);
-    }
-
-    @Override
-    public String getFilter() {
-        return filter.getText();
-    }
-
-    @Override
-    public void setFilter(final String filter) {
-        this.filter.setText(filter);
+    public void setEditor(final EditorView editor) {
+        this.editorContainer.setWidget(editor.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, ColumnFilterViewImpl> {

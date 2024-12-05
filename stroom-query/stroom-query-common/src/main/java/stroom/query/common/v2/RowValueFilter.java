@@ -32,8 +32,7 @@ public class RowValueFilter {
             if (column.getColumnFilter() != null) {
                 final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
                         new SingleFieldProvider(column.getId()),
-                        column.getColumnFilter().getFilter(),
-                        column.getColumnFilter().isCaseSensitive());
+                        column.getColumnFilter().getFilter());
                 operator.ifPresent(valueFilterBuilder::addOperator);
             }
         });

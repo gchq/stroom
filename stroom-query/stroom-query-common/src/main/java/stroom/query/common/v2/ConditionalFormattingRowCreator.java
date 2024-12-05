@@ -71,10 +71,10 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                                 ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
                     } catch (final RuntimeException e) {
                         throw new RuntimeException("Error evaluating conditional formatting rule: " +
-                                rule.getExpression() +
-                                " (" +
-                                e.getMessage() +
-                                ")", e);
+                                                   rule.getExpression() +
+                                                   " (" +
+                                                   e.getMessage() +
+                                                   ")", e);
                     }
                 }
 
@@ -120,9 +120,9 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                 } catch (final RuntimeException e) {
                     final RuntimeException exception = new RuntimeException(
                             "Error applying conditional formatting rule: " +
-                                    ruleAndMatcher.rule.toString() +
-                                    " - " +
-                                    e.getMessage());
+                            ruleAndMatcher.rule.toString() +
+                            " - " +
+                            e.getMessage());
                     LOGGER.debug(exception.getMessage(), exception);
                     errorConsumer.add(exception);
                 }
@@ -135,19 +135,12 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
             try {
                 if (matchingRule != null) {
                     if (!matchingRule.isHide()) {
-                        final Row.Builder builder = Row.builder()
+                        row = Row.builder()
                                 .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                                 .values(stringValues)
-                                .depth(item.getKey().getDepth());
-
-                        if (matchingRule.isCustomStyle()) {
-                            builder.backgroundColor(matchingRule.getBackgroundColor());
-                            builder.textColor(matchingRule.getTextColor());
-                        } else {
-                            builder.style(matchingRule.getStyle());
-                        }
-
-                        row = builder.build();
+                                .depth(item.getKey().getDepth())
+                                .matchingRule(matchingRule.getId())
+                                .build();
                     }
                 } else {
                     row = Row.builder()

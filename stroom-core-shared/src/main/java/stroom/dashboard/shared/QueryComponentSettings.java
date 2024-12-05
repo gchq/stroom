@@ -105,7 +105,9 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
     }
 
     public static final class Builder
-            extends AbstractBuilder<QueryComponentSettings, QueryComponentSettings.Builder> {
+            extends AbstractBuilder<QueryComponentSettings, QueryComponentSettings.Builder>
+            implements
+            HasSelectionQueryBuilder<QueryComponentSettings, Builder> {
 
         private DocRef dataSource;
         private ExpressionOperator expression;
@@ -142,7 +144,7 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
                     dataSource,
                     expression,
                     automate,
-                    selectionHandlers,
+                    selectionQuery,
                     lastQueryKey,
                     lastQueryNode);
         }

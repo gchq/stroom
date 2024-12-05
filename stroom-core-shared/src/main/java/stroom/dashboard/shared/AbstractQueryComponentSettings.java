@@ -20,13 +20,14 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class AbstractQueryComponentSettings implements ComponentSettings {
+public abstract class AbstractQueryComponentSettings implements ComponentSettings, HasSelectionQuery {
 
     @JsonProperty
     private final Automate automate;
@@ -53,6 +54,13 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
         return automate;
     }
 
+    @JsonIgnore
+    @Override
+    public List<ComponentSelectionHandler> getSelectionQuery() {
+        return selectionHandlers;
+    }
+
+    @Deprecated
     public List<ComponentSelectionHandler> getSelectionHandlers() {
         return selectionHandlers;
     }
@@ -75,9 +83,9 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
         }
         final AbstractQueryComponentSettings that = (AbstractQueryComponentSettings) o;
         return Objects.equals(automate, that.automate) &&
-                Objects.equals(selectionHandlers, that.selectionHandlers) &&
-                Objects.equals(lastQueryKey, that.lastQueryKey) &&
-                Objects.equals(lastQueryNode, that.lastQueryNode);
+               Objects.equals(selectionHandlers, that.selectionHandlers) &&
+               Objects.equals(lastQueryKey, that.lastQueryKey) &&
+               Objects.equals(lastQueryNode, that.lastQueryNode);
     }
 
     @Override
@@ -88,11 +96,11 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
     @Override
     public String toString() {
         return "AbstractQueryComponentSettings{" +
-                "automate=" + automate +
-                ", selectionHandlers=" + selectionHandlers +
-                ", lastQueryKey=" + lastQueryKey +
-                ", lastQueryNode='" + lastQueryNode + '\'' +
-                '}';
+               "automate=" + automate +
+               ", selectionHandlers=" + selectionHandlers +
+               ", lastQueryKey=" + lastQueryKey +
+               ", lastQueryNode='" + lastQueryNode + '\'' +
+               '}';
     }
 
     /**
@@ -100,10 +108,11 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
      */
     public abstract static class AbstractBuilder
             <T extends ComponentSettings, B extends ComponentSettings.AbstractBuilder<T, ?>>
-            extends ComponentSettings.AbstractBuilder<T, B> {
+            extends ComponentSettings.AbstractBuilder<T, B>
+            implements HasSelectionQueryBuilder<T, B> {
 
         Automate automate;
-        List<ComponentSelectionHandler> selectionHandlers;
+        List<ComponentSelectionHandler> selectionQuery;
         QueryKey lastQueryKey;
         String lastQueryNode;
 
@@ -114,7 +123,7 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
             this.automate = settings.automate == null
                     ? null
                     : settings.automate.copy().build();
-            this.selectionHandlers = settings.selectionHandlers == null
+            this.selectionQuery = settings.selectionHandlers == null
                     ? null
                     : new ArrayList<>(settings.selectionHandlers);
             this.lastQueryKey = settings.lastQueryKey;
@@ -126,16 +135,9 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
             return self();
         }
 
-        public B selectionHandlers(final List<ComponentSelectionHandler> selectionHandlers) {
-            this.selectionHandlers = selectionHandlers;
-            return self();
-        }
-
-        public B addSelectionHandler(final ComponentSelectionHandler selectionHandler) {
-            if (this.selectionHandlers == null) {
-                this.selectionHandlers = new ArrayList<>();
-            }
-            this.selectionHandlers.add(selectionHandler);
+        @Override
+        public B selectionQuery(final List<ComponentSelectionHandler> selectionQuery) {
+            this.selectionQuery = selectionQuery;
             return self();
         }
 

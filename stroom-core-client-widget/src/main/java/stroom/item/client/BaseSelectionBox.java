@@ -176,6 +176,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         this.isEnabled = enabled;
         textBox.setEnabled(enabled);
         svgIconBox.setReadonly(!enabled);
+        renderBox.getElement().getStyle().setOpacity(enabled ? 1 : 0.2);
         updatePointer();
     }
 

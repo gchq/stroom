@@ -27,18 +27,22 @@ test
 ~test and (field1:test  or field2:test)
 ----- Contains
 map
+----- Equals
+=this_is_my_feed
+----- Equals (case sensitive)
+==this_is_my_feed
+----- Not Equals
+!=this_is_my_feed
+----- Not Equals (case sensitive)
+!==this_is_my_feed
 ----- Starts with
 ^this_
------ Starts with (caret)
-^^this_
+----- Starts with (case sensitive)
+=^this_is_my_feed
 ----- Ends with
 $feed
------ Ends with (dollar)
-$feed$
------ Exact match
-=this_is_my_feed
------ Exact match (caret, dollar)
-=^this_is_my_feed$
+----- Ends with (case sensitive)
+=$feed
 ----- Chars anywhere 1
 ~timf
 ----- Chars anywhere 1 (upper case)
@@ -51,12 +55,6 @@ $feed$
 ~99
 ----- Chars anywhere (special chars)
 ~(xml)
------ Wild-carded 1
-XML*EVENTS
------ Wild-carded 2
-XML*
------ Wild-carded 3
-XML*EVENTS*
 ----- Word boundary match 1
 ?TIMF
 ----- Word boundary match 2
@@ -91,6 +89,14 @@ B
 /(wo?man$
 ----- Regex with null values
 /^man
+----- Regex partial match (case sensitive)
+=/(wo)?man$
+----- Regex full match (case sensitive)
+=/^(wo)?man$
+----- Invalid Regex, nothing will match (case sensitive)
+=/(wo?man$
+----- Regex with null values (case sensitive)
+=/^man
 ----- No user input
 
 ----- Null/empty items

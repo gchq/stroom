@@ -37,16 +37,15 @@ import java.util.Set;
                       "e.g. sorted, grouped, limited, etc.")
 public final class ResultRequest {
 
-    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
-            required = true)
+    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest")
     @JsonProperty
     private final String componentId;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
     private final List<TableSettings> mappings;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
     private final OffsetRange requestedRange;
 
@@ -54,14 +53,12 @@ public final class ResultRequest {
     @JsonProperty
     private final TimeFilter timeFilter;
 
-    @Schema(description = "A set of group keys of parent rows we want to display children for",
-            required = true)
+    @Schema(description = "A set of group keys of parent rows we want to display children for")
     @JsonProperty
     private final Set<String> openGroups;
 
     @Schema(description = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
-                          "provide a TableResult object",
-            required = true)
+                          "provide a TableResult object")
     @JsonProperty
     private final ResultStyle resultStyle;
 

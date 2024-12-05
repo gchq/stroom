@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="filter" label="Filter" addStyleNames="dock-max">
-            <g:TextArea ui:field="filter" styleName="max"/>
+            <g:SimplePanel ui:field="editorContainer" styleName="dock-max form-control-border form-control-background"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

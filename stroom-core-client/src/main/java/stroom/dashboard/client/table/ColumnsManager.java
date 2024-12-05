@@ -56,8 +56,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
-    private final IncludeExcludeFilterPresenter includeExcludeFilterPresenter;
-    private final ColumnFilterPresenter columnFilterPresenter;
+    private final TableFilterPresenter tableFilterPresenter;
     private int columnsStartIndex;
     private int currentColIndex = -1;
     private boolean ignoreNext;
@@ -66,14 +65,12 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final IncludeExcludeFilterPresenter includeExcludeFilterPresenter,
-                          final ColumnFilterPresenter columnFilterPresenter) {
+                          final TableFilterPresenter tableFilterPresenter) {
         this.tablePresenter = tablePresenter;
         this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
-        this.includeExcludeFilterPresenter = includeExcludeFilterPresenter;
-        this.columnFilterPresenter = columnFilterPresenter;
+        this.tableFilterPresenter = tableFilterPresenter;
     }
 
     @Override
@@ -254,21 +251,20 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         });
     }
 
-    private void includeExcludeFilterColumn(final Column column) {
-        includeExcludeFilterPresenter.show(column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
-            tablePresenter.refresh();
-        });
-    }
-
     private void filterColumn(final Column column) {
-        columnFilterPresenter.show(column, (oldField, newField) -> {
+        tableFilterPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
+
+            if (newField.getColumnFilter() != null &&
+                GwtNullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
+                if (!tablePresenter.getTableSettings().applyValueFilters()) {
+                    tablePresenter.toggleApplyValueFilters();
+                }
+            }
+
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tablePresenter.onColumnFilterChange();
         });
     }
 
@@ -364,13 +360,16 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         ColumnFilter columnFilter = null;
         if (GwtNullSafe.isNonBlankString(valueFilter)) {
             // TODO : Add case sensitive option.
-            columnFilter = new ColumnFilter(valueFilter, false);
+            columnFilter = new ColumnFilter(valueFilter);
         }
 
-        replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-        tablePresenter.setFocused(false);
-        tablePresenter.setDirty(true);
-        tablePresenter.refresh();
+        if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            replaceColumn(column, column.copy().columnFilter(columnFilter).build());
+            tablePresenter.setFocused(false);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+            tablePresenter.onColumnFilterChange();
+        }
     }
 
     private List<Column> getColumns() {
@@ -442,8 +441,6 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         menuItems.add(createGroupByMenu(column));
         // Create format menu.
         menuItems.add(createFormatMenu(column));
-        // Add include/exclude filter menu item.
-        menuItems.add(createIncludeExcludeFilterMenu(column));
         // Add column filter menu item.
         menuItems.add(createColumnFilterMenu(column));
 
@@ -638,37 +635,27 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         return depths.size();
     }
 
-    private Item createIncludeExcludeFilterMenu(final Column column) {
+    private Item createColumnFilterMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(4)
                 .icon(SvgImage.FILTER)
                 .disabledIcon(SvgImage.FILTER)
-                .text("Include/Exclude Filter")
-                .command(() -> includeExcludeFilterColumn(column))
-                .highlight(column.getFilter() != null
+                .text("Filter")
+                .command(() -> filterColumn(column))
+                .highlight((column.getFilter() != null
                            && ((column.getFilter().getIncludes() != null
                                 && column.getFilter().getIncludes().trim().length() > 0)
                                || (column.getFilter().getExcludes() != null
-                                   && column.getFilter().getExcludes().trim().length() > 0)))
-                .build();
-    }
-
-    private Item createColumnFilterMenu(final Column column) {
-        return new IconMenuItem.Builder()
-                .priority(5)
-                .icon(SvgImage.FILTER)
-                .disabledIcon(SvgImage.FILTER)
-                .text("Value Filter")
-                .command(() -> filterColumn(column))
-                .highlight(column.getColumnFilter() != null
+                                   && column.getFilter().getExcludes().trim().length() > 0))) ||
+                               (column.getColumnFilter() != null
                            && ((column.getColumnFilter().getFilter() != null
-                                && column.getColumnFilter().getFilter().trim().length() > 0)))
+                                && column.getColumnFilter().getFilter().trim().length() > 0))))
                 .build();
     }
 
     private Item createFormatMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(6)
+                .priority(5)
                 .icon(SvgImage.FIELDS_FORMAT)
                 .text("Format")
                 .command(() -> showFormat(column))
@@ -679,7 +666,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
     private Item createMoveFirstMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(7)
+                .priority(6)
                 .icon(SvgImage.STEP_BACKWARD)
                 .text("Move First")
                 .command(() -> moveFirst(column))
@@ -688,7 +675,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
     private Item createMoveLastMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(8)
+                .priority(7)
                 .icon(SvgImage.STEP_FORWARD)
                 .text("Move Last")
                 .command(() -> moveLast(column))
@@ -697,7 +684,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
     private Item createDuplicateMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(9)
+                .priority(8)
                 .icon(SvgImage.COPY)
                 .text("Duplicate")
                 .command(() -> duplicateColumn(column))
@@ -706,7 +693,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
     private Item createHideMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(10)
+                .priority(9)
                 .icon(SvgImage.HIDE)
                 .text("Hide")
                 .command(() -> hideColumn(column))
@@ -734,7 +721,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(11)
+                .priority(10)
                 .icon(SvgImage.SHOW)
                 .text("Show")
                 .children(menuItems)
@@ -743,7 +730,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
     private Item createRemoveMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(12)
+                .priority(11)
                 .icon(SvgImage.DELETE)
                 .text("Remove")
                 .command(() -> deleteColumn(column))

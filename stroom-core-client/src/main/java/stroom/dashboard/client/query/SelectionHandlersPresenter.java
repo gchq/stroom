@@ -18,15 +18,19 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.shared.AbstractQueryComponentSettings;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ComponentSettings.AbstractBuilder;
+import stroom.dashboard.shared.HasSelectionFilter;
+import stroom.dashboard.shared.HasSelectionFilterBuilder;
+import stroom.dashboard.shared.HasSelectionQuery;
+import stroom.dashboard.shared.HasSelectionQueryBuilder;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
@@ -34,10 +38,14 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.Format;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -53,6 +61,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -77,6 +86,8 @@ public class SelectionHandlersPresenter
     private boolean dirty;
     private List<Component> componentList;
     private FieldSelectionListModel fieldSelectionListModel;
+    // Determine if we are using this to set a filter or query selection handler.
+    private boolean useForFilter;
 
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
@@ -272,32 +283,45 @@ public class SelectionHandlersPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        if (componentConfig.getSettings() instanceof AbstractQueryComponentSettings) {
-            fieldSelectionListModel = dynamicFieldSelectionListModel;
-            final AbstractQueryComponentSettings settings =
-                    (AbstractQueryComponentSettings) componentConfig.getSettings();
-            if (settings.getSelectionHandlers() != null) {
-                this.selectionHandlers = settings.getSelectionHandlers();
+
+        // Get field list model.
+        fieldSelectionListModel = dynamicFieldSelectionListModel;
+        if (componentConfig.getSettings() instanceof TableComponentSettings) {
+            final TableComponentSettings settings =
+                    (TableComponentSettings) componentConfig.getSettings();
+            fieldSelectionListModel = createSelectionListModelFromColumns(settings.getColumns());
+        } else if (useForFilter) {
+            final Component component = getComponents().get(componentConfig.getId());
+            if (component instanceof EmbeddedQueryPresenter) {
+                List<Column> columns = Collections.emptyList();
+                final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
+                final QueryResultTablePresenter queryResultTablePresenter =
+                        embeddedQueryPresenter.getCurrentTablePresenter();
+                if (queryResultTablePresenter != null) {
+                    columns = GwtNullSafe.list(queryResultTablePresenter.getCurrentColumns());
+                }
+                fieldSelectionListModel = createSelectionListModelFromColumns(columns);
+            }
+        }
+
+        // Read selection handlers.
+        if (useForFilter) {
+            if (componentConfig.getSettings() instanceof HasSelectionFilter) {
+                final HasSelectionFilter hasSelectionFilter = (HasSelectionFilter) componentConfig.getSettings();
+                if (hasSelectionFilter.getSelectionFilter() != null) {
+                    this.selectionHandlers = hasSelectionFilter.getSelectionFilter();
+                } else {
+                    this.selectionHandlers.clear();
+                }
+            }
+        } else if (componentConfig.getSettings() instanceof HasSelectionQuery) {
+            final HasSelectionQuery hasSelectionQuery =
+                    (HasSelectionQuery) componentConfig.getSettings();
+            if (hasSelectionQuery.getSelectionQuery() != null) {
+                this.selectionHandlers = hasSelectionQuery.getSelectionQuery();
             } else {
                 this.selectionHandlers.clear();
             }
-
-        } else if (componentConfig.getSettings() instanceof TableComponentSettings) {
-            final TableComponentSettings settings =
-                    (TableComponentSettings) componentConfig.getSettings();
-            final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
-            final List<QueryField> fields = settings
-                    .getColumns()
-                    .stream()
-                    .map(column -> QueryField
-                            .builder()
-                            .fldName(column.getName())
-                            .fldType(FieldType.TEXT)
-                            .queryable(true)
-                            .build())
-                    .collect(Collectors.toList());
-            simpleFieldSelectionListModel.addItems(fields);
-            fieldSelectionListModel = simpleFieldSelectionListModel;
         }
 
         componentList = getComponents()
@@ -311,30 +335,54 @@ public class SelectionHandlersPresenter
         update();
     }
 
+    private FieldSelectionListModel createSelectionListModelFromColumns(final List<Column> columns) {
+        final List<QueryField> fields = columns
+                .stream()
+                .map(column -> QueryField
+                        .builder()
+                        .fldName(column.getName())
+                        .fldType(getFieldType(column))
+                        .queryable(true)
+                        .build())
+                .collect(Collectors.toList());
+        final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
+        simpleFieldSelectionListModel.addItems(fields);
+        return simpleFieldSelectionListModel;
+    }
+
+    private FieldType getFieldType(final Column column) {
+        final Format format = column.getFormat();
+        if (format != null && format.getType() != null) {
+            switch (format.getType()) {
+                case NUMBER: {
+                    return FieldType.LONG;
+                }
+                case DATE_TIME: {
+                    return FieldType.DATE;
+                }
+            }
+        }
+        return FieldType.TEXT;
+    }
+
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        if (componentConfig.getSettings() instanceof AbstractQueryComponentSettings) {
-            final AbstractQueryComponentSettings oldSettings =
-                    (AbstractQueryComponentSettings) componentConfig.getSettings();
-            final AbstractBuilder<?, ?> builder = oldSettings.copy();
-            if (builder instanceof AbstractQueryComponentSettings.AbstractBuilder<?, ?>) {
-                final AbstractQueryComponentSettings.AbstractBuilder<?, ?> abstractBuilder =
-                        (AbstractQueryComponentSettings.AbstractBuilder<?, ?>) builder;
-                abstractBuilder.selectionHandlers(selectionHandlers);
-            }
-            final ComponentSettings newSettings = builder.build();
-            return componentConfig.copy().settings(newSettings).build();
+        final AbstractBuilder<?, ?> builder = componentConfig.getSettings().copy();
 
-        } else if (componentConfig.getSettings() instanceof TableComponentSettings) {
-            final TableComponentSettings oldSettings =
-                    (TableComponentSettings) componentConfig.getSettings();
-            final TableComponentSettings.Builder builder = oldSettings.copy();
-            builder.selectionHandlers(selectionHandlers);
-            final ComponentSettings newSettings = builder.build();
-            return componentConfig.copy().settings(newSettings).build();
+        if (useForFilter) {
+            if (builder instanceof HasSelectionFilterBuilder<?, ?>) {
+                final HasSelectionFilterBuilder<?, ?> hasSelectionFilter = (HasSelectionFilterBuilder<?, ?>) builder;
+                hasSelectionFilter.selectionFilter(selectionHandlers);
+            }
+        } else {
+            if (builder instanceof HasSelectionQueryBuilder<?, ?>) {
+                final HasSelectionQueryBuilder<?, ?> hasSelectionQuery = (HasSelectionQueryBuilder<?, ?>) builder;
+                hasSelectionQuery.selectionQuery(selectionHandlers);
+            }
         }
 
-        return componentConfig;
+        final ComponentSettings newSettings = builder.build();
+        return componentConfig.copy().settings(newSettings).build();
     }
 
     @Override
@@ -386,6 +434,10 @@ public class SelectionHandlersPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setUseForFilter(final boolean useForFilter) {
+        this.useForFilter = useForFilter;
     }
 
     public interface SelectionHandlersView extends View {

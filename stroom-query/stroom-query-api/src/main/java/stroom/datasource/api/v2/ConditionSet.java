@@ -139,8 +139,10 @@ public enum ConditionSet {
 
     // Basic.
     BASIC_TEXT(
+            Condition.CONTAINS,
             Condition.EQUALS,
             Condition.NOT_EQUALS,
+            Condition.MATCHES_REGEX,
             Condition.IN),
 
     // UI Defaults.

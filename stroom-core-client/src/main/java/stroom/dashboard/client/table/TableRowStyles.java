@@ -1,35 +1,63 @@
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.client.table.DynamicStyles.DynamicStyle;
+import stroom.dashboard.client.table.cf.ConditionalFormattingDynamicStyles;
+import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
+import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.ConditionalFormattingType;
+import stroom.query.api.v2.TextAttributes;
 import stroom.query.client.presenter.TableRow;
-import stroom.util.shared.GwtNullSafe;
+import stroom.security.client.presenter.ClassNameBuilder;
 
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.user.cellview.client.RowStyles;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TableRowStyles implements RowStyles<TableRow> {
 
+    private final UserPreferencesManager userPreferencesManager;
+    private Map<String, ConditionalFormattingRule> conditionalFormattingRules = new HashMap<>();
+
+    public TableRowStyles(final UserPreferencesManager userPreferencesManager) {
+        this.userPreferencesManager = userPreferencesManager;
+    }
+
     @Override
     public String getStyleNames(final TableRow row, final int rowIndex) {
-        // Fixed styles.
-        if (row.getStyle() != null) {
-            return row.getStyle().getCssClassName();
+        final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
+        if (row.getMatchingRule() != null && !userPreferencesManager.isHideConditionalStyles()) {
+            ConditionalFormattingRule rule = conditionalFormattingRules.get(row.getMatchingRule());
+            if (rule != null) {
+                // Fixed styles.
+                if (rule.getFormattingType() == null ||
+                    ConditionalFormattingType.CUSTOM.equals(rule.getFormattingType())) {
+                    classNameBuilder.addClassName(ConditionalFormattingDynamicStyles.create(rule.getCustomStyle()));
+                } else if (ConditionalFormattingType.TEXT.equals(rule.getFormattingType())) {
+                    classNameBuilder.addClassName(ConditionalFormattingSwatchUtil.CF_TEXT);
+                    classNameBuilder.addClassName(rule.getFormattingStyle().getCssClassName());
+                } else if (ConditionalFormattingType.BACKGROUND.equals(rule.getFormattingType())) {
+                    classNameBuilder.addClassName(rule.getFormattingStyle().getCssClassName());
+                }
+
+                final TextAttributes textAttributes = rule.getTextAttributes();
+                classNameBuilder.addClassName(ConditionalFormattingSwatchUtil
+                        .getTextAttributeClassNames(textAttributes));
+            }
         }
 
-        // Custom row styles.
-        if (GwtNullSafe.isNonBlankString(row.getBackgroundColor()) ||
-                GwtNullSafe.isNonBlankString(row.getTextColor())) {
-            final SafeStylesBuilder rowStyle = new SafeStylesBuilder();
-            if (GwtNullSafe.isNonBlankString(row.getBackgroundColor())) {
-                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
-            }
-            if (GwtNullSafe.isNonBlankString(row.getTextColor())) {
-                rowStyle.trustedColor(row.getTextColor());
-            }
-            final DynamicStyle dynamicStyle = DynamicStyles.create(rowStyle.toSafeStyles().asString());
-            return dynamicStyle.getName();
-        }
+        return classNameBuilder.build();
+    }
 
-        return "";
+    public void setConditionalFormattingRules(final List<ConditionalFormattingRule> rules) {
+        if (rules == null) {
+            conditionalFormattingRules = new HashMap<>();
+        } else {
+            conditionalFormattingRules = rules
+                    .stream()
+                    .collect(Collectors.toMap(ConditionalFormattingRule::getId, c -> c));
+        }
     }
 }

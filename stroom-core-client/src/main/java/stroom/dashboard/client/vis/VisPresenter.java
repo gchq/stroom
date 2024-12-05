@@ -41,6 +41,7 @@ import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.VisResult;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
@@ -90,13 +91,13 @@ public class VisPresenter
     static {
         final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(
                 "{" +
-                        "\"values\": []," +
-                        "\"min\": []," +
-                        "\"max\": []," +
-                        "\"sum\": []," +
-                        "\"types\": []," +
-                        "\"sortDirections\": []" +
-                        "}"));
+                "\"values\": []," +
+                "\"min\": []," +
+                "\"max\": []," +
+                "\"sum\": []," +
+                "\"types\": []," +
+                "\"sortDirections\": []" +
+                "}"));
         EMPTY_DATA = dataObject.getJavaScriptObject();
     }
 
@@ -117,8 +118,7 @@ public class VisPresenter
     private long nextUpdate;
     private Timer updateTimer;
     private JavaScriptObject lastData;
-    //    private double opacity = 0;
-    private TablePresenter linkedTablePresenter;
+    private TableSettings currentLinkedTableSettings;
 
     private final VisSelectionModel visSelectionModel;
     private boolean pause;
@@ -238,23 +238,30 @@ public class VisPresenter
     }
 
     private void updateTableId(final String tableId) {
-        final VisComponentSettings.Builder builder = getVisSettings().copy();
+        final VisComponentSettings visComponentSettings = getVisSettings();
+        final VisComponentSettings.Builder builder = visComponentSettings.copy();
 
         builder.tableId(tableId);
 
-        linkedTablePresenter = null;
         final Component component = getComponents().get(getVisSettings().getTableId());
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            linkedTablePresenter = tablePresenter;
 
-            final TableComponentSettings tableSettings = tablePresenter.getTableComponentSettings();
-            builder.tableSettings(tableSettings);
-            final String queryId = tableSettings.getQueryId();
+            final TableComponentSettings tableComponentSettings = tablePresenter
+                    .getTableComponentSettings();
+            final String queryId = tableComponentSettings.getQueryId();
             setQueryId(queryId);
 
+            final TableSettings tableSettings = tablePresenter.getTableSettings();
+
+            // Refresh if the linked table settings have changed.
+            if (!Objects.equals(currentLinkedTableSettings, tableSettings)) {
+                currentLinkedTableSettings = tableSettings;
+                refresh();
+            }
+
         } else {
-            builder.tableSettings(null);
+            currentLinkedTableSettings = null;
             setQueryId(null);
         }
 
@@ -445,7 +452,7 @@ public class VisPresenter
                             }
                         } catch (final RuntimeException e) {
                             failure(function, "Unable to parse settings for visualisation: "
-                                    + getVisSettings().getVisualisation());
+                                              + getVisSettings().getVisualisation());
                         }
 
                         function.setFunctionName(result.getFunctionName());
@@ -632,12 +639,15 @@ public class VisPresenter
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
+        final VisComponentSettings visComponentSettings = getVisSettings();
+
         // Update table settings.
-        updateLinkedTableSettings();
         return VisResultRequest
                 .builder()
                 .componentId(getId())
-                .visDashboardSettings(getVisSettings())
+                .visualisation(visComponentSettings.getVisualisation())
+                .json(visComponentSettings.getJson())
+                .tableSettings(currentLinkedTableSettings)
 //                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(fetch)
                 .build();
@@ -645,27 +655,18 @@ public class VisPresenter
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
+        final VisComponentSettings visComponentSettings = getVisSettings();
+
         // Update table settings.
-        updateLinkedTableSettings();
         return VisResultRequest
                 .builder()
                 .componentId(getId())
-                .visDashboardSettings(getVisSettings())
+                .visualisation(visComponentSettings.getVisualisation())
+                .json(visComponentSettings.getJson())
+                .tableSettings(currentLinkedTableSettings)
 //                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(Fetch.ALL)
                 .build();
-    }
-
-    private void updateLinkedTableSettings() {
-        // Update table settings.
-        TableComponentSettings tableComponentSettings = null;
-        if (linkedTablePresenter != null) {
-            tableComponentSettings = linkedTablePresenter.getTableComponentSettings();
-        }
-        setSettings(getVisSettings()
-                .copy()
-                .tableSettings(tableComponentSettings)
-                .build());
     }
 
     private JSONObject combineSettings(final JSONObject possibleSettings, final JSONObject dynamicSettings) {

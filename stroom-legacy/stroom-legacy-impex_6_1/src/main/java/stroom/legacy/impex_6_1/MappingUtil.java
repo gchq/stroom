@@ -225,6 +225,8 @@ public final class MappingUtil {
                 value.getTextColor(),
                 value.isEnabled(),
                 null,
+                null,
+                null,
                 null);
     }
 
@@ -236,8 +238,7 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.VisComponentSettings(
                 value.getTableId(),
                 map(value.getVisualisation()),
-                value.getJSON(),
-                map(value.getTableSettings()));
+                value.getJSON());
     }
 
     public static stroom.dashboard.shared.TextComponentSettings map(stroom.legacy.model_6_1.TextComponentSettings value) {

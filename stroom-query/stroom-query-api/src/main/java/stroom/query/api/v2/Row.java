@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -30,9 +31,8 @@ import java.util.Objects;
         "groupKey",
         "values",
         "depth",
-        "backgroundColor",
-        "textColor",
-        "style"})
+        "matchingRule"
+})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A row of data in a result set")
 public final class Row {
@@ -41,7 +41,7 @@ public final class Row {
     private final String groupKey;
 
     @Schema(description = "The value for this row of data. The values in the list are in the same order as the " +
-            "fields in the ResultRequest"
+                          "fields in the ResultRequest"
     )
     @JsonProperty
     private final List<String> values;
@@ -52,25 +52,18 @@ public final class Row {
     private final Integer depth;
 
     @JsonProperty
-    private final String backgroundColor;
-    @JsonProperty
-    private final String textColor;
-    @JsonProperty
-    private final ConditionalFormattingStyle style;
+    @JsonPropertyDescription("The id of a matching conditional formatting rule or null if none matched.")
+    private final String matchingRule;
 
     @JsonCreator
     public Row(@JsonProperty("groupKey") final String groupKey,
                @JsonProperty("values") final List<String> values,
                @JsonProperty("depth") final Integer depth,
-               @JsonProperty("backgroundColor") final String backgroundColor,
-               @JsonProperty("textColor") final String textColor,
-               @JsonProperty("style") final ConditionalFormattingStyle style) {
+               @JsonProperty("matchingRule") final String matchingRule) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
-        this.backgroundColor = backgroundColor;
-        this.textColor = textColor;
-        this.style = style;
+        this.matchingRule = matchingRule;
     }
 
     public String getGroupKey() {
@@ -85,16 +78,8 @@ public final class Row {
         return depth;
     }
 
-    public String getBackgroundColor() {
-        return backgroundColor;
-    }
-
-    public String getTextColor() {
-        return textColor;
-    }
-
-    public ConditionalFormattingStyle getStyle() {
-        return style;
+    public String getMatchingRule() {
+        return matchingRule;
     }
 
     @Override
@@ -107,28 +92,24 @@ public final class Row {
         }
         final Row row = (Row) o;
         return Objects.equals(groupKey, row.groupKey) &&
-                Objects.equals(values, row.values) &&
-                Objects.equals(depth, row.depth) &&
-                Objects.equals(backgroundColor, row.backgroundColor) &&
-                Objects.equals(textColor, row.textColor) &&
-                Objects.equals(style, row.style);
+               Objects.equals(values, row.values) &&
+               Objects.equals(depth, row.depth) &&
+               Objects.equals(matchingRule, row.matchingRule);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey, values, depth, backgroundColor, textColor, style);
+        return Objects.hash(groupKey, values, depth, matchingRule);
     }
 
     @Override
     public String toString() {
         return "Row{" +
-                "groupKey='" + groupKey + '\'' +
-                ", values=" + values +
-                ", depth=" + depth +
-                ", backgroundColor='" + backgroundColor + '\'' +
-                ", textColor='" + textColor + '\'' +
-                ", style='" + style + '\'' +
-                '}';
+               "groupKey='" + groupKey + '\'' +
+               ", values=" + values +
+               ", depth=" + depth +
+               ", matchingRule='" + matchingRule + '\'' +
+               '}';
     }
 
     public static Builder builder() {
@@ -147,9 +128,7 @@ public final class Row {
         private String groupKey;
         private List<String> values;
         private Integer depth = 0;
-        private String backgroundColor;
-        private String textColor;
-        private ConditionalFormattingStyle style;
+        private String matchingRule;
 
         private Builder() {
         }
@@ -158,9 +137,7 @@ public final class Row {
             groupKey = row.groupKey;
             values = row.values;
             depth = row.depth;
-            backgroundColor = row.backgroundColor;
-            textColor = row.textColor;
-            style = row.style;
+            matchingRule = row.matchingRule;
         }
 
         /**
@@ -191,23 +168,19 @@ public final class Row {
             return this;
         }
 
-        public Builder backgroundColor(final String backgroundColor) {
-            this.backgroundColor = backgroundColor;
-            return this;
-        }
-
-        public Builder textColor(final String textColor) {
-            this.textColor = textColor;
-            return this;
-        }
-
-        public Builder style(final ConditionalFormattingStyle style) {
-            this.style = style;
+        /**
+         * The id of a matching conditional formatting rule.
+         *
+         * @param matchingRule The id of a matching conditional formatting rule.
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder matchingRule(final String matchingRule) {
+            this.matchingRule = matchingRule;
             return this;
         }
 
         public Row build() {
-            return new Row(groupKey, values, depth, backgroundColor, textColor, style);
+            return new Row(groupKey, values, depth, matchingRule);
         }
     }
 }

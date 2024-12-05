@@ -28,6 +28,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.client.SvgPresets;
@@ -201,7 +202,7 @@ public class RulesPresenter
         final ConditionalFormattingRule newRule = ConditionalFormattingRule
                 .builder()
                 .id(RandomId.createId(5))
-                .customStyle(false)
+                .formattingType(ConditionalFormattingType.BACKGROUND)
                 .enabled(true)
                 .build();
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
