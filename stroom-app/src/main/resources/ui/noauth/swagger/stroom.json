@@ -21452,6 +21452,9 @@
           "fontSize" : {
             "type" : "string"
           },
+          "hideConditionalStyles" : {
+            "type" : "boolean"
+          },
           "theme" : {
             "type" : "string"
           },

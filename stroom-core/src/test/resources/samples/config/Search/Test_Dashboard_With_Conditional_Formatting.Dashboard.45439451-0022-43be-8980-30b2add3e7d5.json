@@ -108,9 +108,15 @@
           } ]
         },
         "hide" : false,
-        "backgroundColor" : "",
-        "textColor" : "red",
-        "enabled" : true
+        "enabled" : true,
+        "customStyle" : {
+          "light" : {
+            "textColour" : "red"
+          },
+          "dark" : {
+            "textColour" : "red"
+          }
+        }
       }, {
         "id" : "LMM30",
         "expression" : {
@@ -123,9 +129,15 @@
           } ]
         },
         "hide" : false,
-        "backgroundColor" : "",
-        "textColor" : "green",
-        "enabled" : true
+        "enabled" : true,
+        "customStyle" : {
+          "light" : {
+            "textColour" : "green"
+          },
+          "dark" : {
+            "textColour" : "green"
+          }
+        }
       }, {
         "id" : "VIK5Y",
         "expression" : {
@@ -138,9 +150,15 @@
           } ]
         },
         "hide" : false,
-        "backgroundColor" : "pink",
-        "textColor" : "",
-        "enabled" : true
+        "enabled" : true,
+        "customStyle" : {
+          "light" : {
+            "backgroundColour" : "pink"
+          },
+          "dark" : {
+            "backgroundColour" : "pink"
+          }
+        }
       } ]
     }
   }, {
