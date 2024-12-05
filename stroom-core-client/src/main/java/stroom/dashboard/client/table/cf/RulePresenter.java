@@ -19,28 +19,51 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ConditionalFormattingStyle;
+import stroom.query.api.v2.ConditionalFormattingType;
+import stroom.query.api.v2.CustomConditionalFormattingStyle;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> implements Focus {
+public class RulePresenter
+        extends MyPresenterWidget<RulePresenter.RuleView>
+        implements RuleUiHandlers, Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
+    private final Provider<CustomRowStylePresenter> customRowStylePresenterProvider;
+    private CustomConditionalFormattingStyle customConditionalFormattingStyle;
     private ConditionalFormattingRule originalRule;
 
     @Inject
     public RulePresenter(final EventBus eventBus,
                          final RuleView view,
-                         final EditExpressionPresenter editExpressionPresenter) {
+                         final EditExpressionPresenter editExpressionPresenter,
+                         final Provider<CustomRowStylePresenter> customRowStylePresenterProvider) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
+        this.customRowStylePresenterProvider = customRowStylePresenterProvider;
         view.setExpressionView(editExpressionPresenter.getView());
+        view.setUiHandlers(this);
+    }
+
+    @Override
+    public void onEditCustomStyle() {
+        final CustomRowStylePresenter customRowStylePresenter = customRowStylePresenterProvider.get();
+        customRowStylePresenter.read(customConditionalFormattingStyle);
+        customRowStylePresenter.show(e -> {
+            if (e.isOk()) {
+                customConditionalFormattingStyle = customRowStylePresenter.write();
+            }
+            e.hide();
+        });
     }
 
     void read(final ConditionalFormattingRule rule,
@@ -54,11 +77,12 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
             editExpressionPresenter.read(rule.getExpression());
         }
         getView().setHide(rule.isHide());
-        getView().setCustomStyle(rule.isCustomStyle());
-        getView().setStyle(rule.getStyle());
-        getView().setBackgroundColor(rule.getBackgroundColor());
-        getView().setTextColor(rule.getTextColor());
+        getView().setFormattingType(rule.getFormattingType() == null
+                ? ConditionalFormattingType.CUSTOM
+                : rule.getFormattingType());
+        getView().setFormattingStyle(rule.getFormattingStyle());
         getView().setEnabled(rule.isEnabled());
+        customConditionalFormattingStyle = rule.getCustomStyle();
     }
 
     ConditionalFormattingRule write() {
@@ -75,10 +99,9 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
                 .id(id)
                 .expression(expression)
                 .hide(getView().isHide())
-                .customStyle(getView().isCustomStyle())
-                .style(getView().getStyle())
-                .backgroundColor(getView().getBackgroundColor())
-                .textColor(getView().getTextColor())
+                .formattingType(getView().getFormattingType())
+                .formattingStyle(getView().getFormattingStyle())
+                .customStyle(customConditionalFormattingStyle)
                 .enabled(getView().isEnabled())
                 .build();
     }
@@ -88,11 +111,7 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
         editExpressionPresenter.focus();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface RuleView extends View {
+    public interface RuleView extends View, HasUiHandlers<RuleUiHandlers> {
 
         void setExpressionView(View view);
 
@@ -100,21 +119,13 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> imp
 
         void setHide(boolean hide);
 
-        void setCustomStyle(boolean customStyle);
+        void setFormattingType(ConditionalFormattingType type);
 
-        boolean isCustomStyle();
+        ConditionalFormattingType getFormattingType();
 
-        void setStyle(ConditionalFormattingStyle styleName);
+        void setFormattingStyle(ConditionalFormattingStyle styleName);
 
-        ConditionalFormattingStyle getStyle();
-
-        String getBackgroundColor();
-
-        void setBackgroundColor(String backgroundColor);
-
-        String getTextColor();
-
-        void setTextColor(String textColor);
+        ConditionalFormattingStyle getFormattingStyle();
 
         boolean isEnabled();
 

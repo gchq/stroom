@@ -225,6 +225,7 @@ public final class MappingUtil {
                 value.getTextColor(),
                 value.isEnabled(),
                 null,
+                null,
                 null);
     }
 

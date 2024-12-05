@@ -2,6 +2,8 @@ package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
 import stroom.query.api.v2.ConditionalFormattingStyle;
+import stroom.query.api.v2.ConditionalFormattingType;
+import stroom.query.api.v2.CustomConditionalFormattingStyle;
 import stroom.util.shared.Expander;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -19,22 +21,22 @@ public class TableRow {
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
-    private final String backgroundColor;
-    private final String textColor;
-    private final ConditionalFormattingStyle style;
+    private final ConditionalFormattingType formattingType;
+    private final ConditionalFormattingStyle formattingStyle;
+    private final CustomConditionalFormattingStyle customStyle;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Map<String, Cell> cells,
-                    final String backgroundColor,
-                    final String textColor,
-                    final ConditionalFormattingStyle style) {
+                    final ConditionalFormattingType formattingType,
+                    final ConditionalFormattingStyle formattingStyle,
+                    final CustomConditionalFormattingStyle customStyle) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
-        this.backgroundColor = backgroundColor;
-        this.textColor = textColor;
-        this.style = style;
+        this.formattingType = formattingType;
+        this.formattingStyle = formattingStyle;
+        this.customStyle = customStyle;
     }
 
     public Expander getExpander() {
@@ -55,16 +57,16 @@ public class TableRow {
         }
     }
 
-    public String getBackgroundColor() {
-        return backgroundColor;
+    public ConditionalFormattingType getFormattingType() {
+        return formattingType;
     }
 
-    public String getTextColor() {
-        return textColor;
+    public ConditionalFormattingStyle getFormattingStyle() {
+        return formattingStyle;
     }
 
-    public ConditionalFormattingStyle getStyle() {
-        return style;
+    public CustomConditionalFormattingStyle getCustomStyle() {
+        return customStyle;
     }
 
     private SafeHtml decorateValue(final Cell cell) {

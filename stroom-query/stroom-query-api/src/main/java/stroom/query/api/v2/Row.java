@@ -30,9 +30,9 @@ import java.util.Objects;
         "groupKey",
         "values",
         "depth",
-        "backgroundColor",
-        "textColor",
-        "style"})
+        "formattingType",
+        "formattingStyle",
+        "customStyle"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A row of data in a result set")
 public final class Row {
@@ -41,7 +41,7 @@ public final class Row {
     private final String groupKey;
 
     @Schema(description = "The value for this row of data. The values in the list are in the same order as the " +
-            "fields in the ResultRequest"
+                          "fields in the ResultRequest"
     )
     @JsonProperty
     private final List<String> values;
@@ -52,25 +52,25 @@ public final class Row {
     private final Integer depth;
 
     @JsonProperty
-    private final String backgroundColor;
+    private final ConditionalFormattingType formattingType;
     @JsonProperty
-    private final String textColor;
+    private final ConditionalFormattingStyle formattingStyle;
     @JsonProperty
-    private final ConditionalFormattingStyle style;
+    private final CustomConditionalFormattingStyle customStyle;
 
     @JsonCreator
     public Row(@JsonProperty("groupKey") final String groupKey,
                @JsonProperty("values") final List<String> values,
                @JsonProperty("depth") final Integer depth,
-               @JsonProperty("backgroundColor") final String backgroundColor,
-               @JsonProperty("textColor") final String textColor,
-               @JsonProperty("style") final ConditionalFormattingStyle style) {
+               @JsonProperty("formattingType") final ConditionalFormattingType formattingType,
+               @JsonProperty("formattingStyle") final ConditionalFormattingStyle formattingStyle,
+               @JsonProperty("customStyle") final CustomConditionalFormattingStyle customStyle) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
-        this.backgroundColor = backgroundColor;
-        this.textColor = textColor;
-        this.style = style;
+        this.formattingType = formattingType;
+        this.formattingStyle = formattingStyle;
+        this.customStyle = customStyle;
     }
 
     public String getGroupKey() {
@@ -85,16 +85,16 @@ public final class Row {
         return depth;
     }
 
-    public String getBackgroundColor() {
-        return backgroundColor;
+    public ConditionalFormattingType getFormattingType() {
+        return formattingType;
     }
 
-    public String getTextColor() {
-        return textColor;
+    public ConditionalFormattingStyle getFormattingStyle() {
+        return formattingStyle;
     }
 
-    public ConditionalFormattingStyle getStyle() {
-        return style;
+    public CustomConditionalFormattingStyle getCustomStyle() {
+        return customStyle;
     }
 
     @Override
@@ -107,28 +107,28 @@ public final class Row {
         }
         final Row row = (Row) o;
         return Objects.equals(groupKey, row.groupKey) &&
-                Objects.equals(values, row.values) &&
-                Objects.equals(depth, row.depth) &&
-                Objects.equals(backgroundColor, row.backgroundColor) &&
-                Objects.equals(textColor, row.textColor) &&
-                Objects.equals(style, row.style);
+               Objects.equals(values, row.values) &&
+               Objects.equals(depth, row.depth) &&
+               Objects.equals(formattingType, row.formattingType) &&
+               Objects.equals(formattingStyle, row.formattingStyle) &&
+               Objects.equals(customStyle, row.customStyle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey, values, depth, backgroundColor, textColor, style);
+        return Objects.hash(groupKey, values, depth, formattingType, formattingStyle, customStyle);
     }
 
     @Override
     public String toString() {
         return "Row{" +
-                "groupKey='" + groupKey + '\'' +
-                ", values=" + values +
-                ", depth=" + depth +
-                ", backgroundColor='" + backgroundColor + '\'' +
-                ", textColor='" + textColor + '\'' +
-                ", style='" + style + '\'' +
-                '}';
+               "groupKey='" + groupKey + '\'' +
+               ", values=" + values +
+               ", depth=" + depth +
+               ", formattingType='" + formattingType + '\'' +
+               ", formattingStyle='" + formattingStyle + '\'' +
+               ", customStyle='" + customStyle + '\'' +
+               '}';
     }
 
     public static Builder builder() {
@@ -147,9 +147,9 @@ public final class Row {
         private String groupKey;
         private List<String> values;
         private Integer depth = 0;
-        private String backgroundColor;
-        private String textColor;
-        private ConditionalFormattingStyle style;
+        private ConditionalFormattingType formattingType;
+        private ConditionalFormattingStyle formattingStyle;
+        private CustomConditionalFormattingStyle customStyle;
 
         private Builder() {
         }
@@ -158,9 +158,9 @@ public final class Row {
             groupKey = row.groupKey;
             values = row.values;
             depth = row.depth;
-            backgroundColor = row.backgroundColor;
-            textColor = row.textColor;
-            style = row.style;
+            formattingType = row.formattingType;
+            formattingStyle = row.formattingStyle;
+            customStyle = row.customStyle;
         }
 
         /**
@@ -191,23 +191,23 @@ public final class Row {
             return this;
         }
 
-        public Builder backgroundColor(final String backgroundColor) {
-            this.backgroundColor = backgroundColor;
+        public Builder formattingType(final ConditionalFormattingType formattingType) {
+            this.formattingType = formattingType;
             return this;
         }
 
-        public Builder textColor(final String textColor) {
-            this.textColor = textColor;
+        public Builder formattingStyle(final ConditionalFormattingStyle formattingStyle) {
+            this.formattingStyle = formattingStyle;
             return this;
         }
 
-        public Builder style(final ConditionalFormattingStyle style) {
-            this.style = style;
+        public Builder customStyle(final CustomConditionalFormattingStyle customStyle) {
+            this.customStyle = customStyle;
             return this;
         }
 
         public Row build() {
-            return new Row(groupKey, values, depth, backgroundColor, textColor, style);
+            return new Row(groupKey, values, depth, formattingType, formattingStyle, customStyle);
         }
     }
 }

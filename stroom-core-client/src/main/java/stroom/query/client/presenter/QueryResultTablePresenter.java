@@ -653,9 +653,9 @@ public class QueryResultTablePresenter
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getBackgroundColor(),
-                    row.getTextColor(),
-                    row.getStyle()));
+                    row.getFormattingType(),
+                    row.getFormattingStyle(),
+                    row.getCustomStyle()));
         }
 
         // Set the expander column width.

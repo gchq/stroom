@@ -41,6 +41,8 @@ import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
+import stroom.dashboard.client.table.cf.CustomRowStylePresenter;
+import stroom.dashboard.client.table.cf.CustomRowStyleViewImpl;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.client.table.cf.EditExpressionViewImpl;
 import stroom.dashboard.client.table.cf.RulePresenter;
@@ -83,5 +85,9 @@ public class TableModule extends AbstractPresenterModule {
                 EditExpressionViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
+        bindPresenterWidget(
+                CustomRowStylePresenter.class,
+                CustomRowStylePresenter.CustomRowStyleView.class,
+                CustomRowStyleViewImpl.class);
     }
 }

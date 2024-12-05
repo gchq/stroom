@@ -1,10 +1,9 @@
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.client.table.DynamicStyles.DynamicStyle;
+import stroom.dashboard.client.table.cf.ConditionalFormattingDynamicStyles;
+import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.client.presenter.TableRow;
-import stroom.util.shared.GwtNullSafe;
 
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.user.cellview.client.RowStyles;
 
 public class TableRowStyles implements RowStyles<TableRow> {
@@ -12,22 +11,12 @@ public class TableRowStyles implements RowStyles<TableRow> {
     @Override
     public String getStyleNames(final TableRow row, final int rowIndex) {
         // Fixed styles.
-        if (row.getStyle() != null) {
-            return row.getStyle().getCssClassName();
-        }
-
-        // Custom row styles.
-        if (GwtNullSafe.isNonBlankString(row.getBackgroundColor()) ||
-                GwtNullSafe.isNonBlankString(row.getTextColor())) {
-            final SafeStylesBuilder rowStyle = new SafeStylesBuilder();
-            if (GwtNullSafe.isNonBlankString(row.getBackgroundColor())) {
-                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
-            }
-            if (GwtNullSafe.isNonBlankString(row.getTextColor())) {
-                rowStyle.trustedColor(row.getTextColor());
-            }
-            final DynamicStyle dynamicStyle = DynamicStyles.create(rowStyle.toSafeStyles().asString());
-            return dynamicStyle.getName();
+        if (row.getFormattingStyle() == null || ConditionalFormattingType.CUSTOM.equals(row.getFormattingStyle())) {
+            return ConditionalFormattingDynamicStyles.create(row.getCustomStyle());
+        } else  if (ConditionalFormattingType.TEXT.equals(row.getFormattingType())) {
+            return "textOnly " + row.getFormattingStyle().getCssClassName();
+        } else if (ConditionalFormattingType.BACKGROUND.equals(row.getFormattingType())) {
+            return row.getFormattingStyle().getCssClassName();
         }
 
         return "";

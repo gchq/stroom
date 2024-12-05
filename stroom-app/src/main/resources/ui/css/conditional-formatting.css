@@ -17,8 +17,9 @@
     padding: 2px;
 }
 
-
-
+/**
+ LIGHT MODE BACKGROUND COLOURS
+**/
 .cf-red {
     background-color: var(--red-200);
     color: var(--black);
@@ -114,6 +115,127 @@
     color: var(--black);
 }
 
+/**
+ LIGHT MODE TEXT ONLY COLOURS
+**/
+.cf-text.cf-red {
+    background-color: transparent;
+    color: var(--red-900);
+}
+
+.cf-text.cf-pink {
+    background-color: transparent;
+    color: var(--pink-900);
+}
+
+.cf-text.cf-purple {
+    background-color: transparent;
+    color: var(--purple-900);
+}
+
+.cf-text.cf-deep-purple {
+    background-color: transparent;
+    color: var(--deep-purple-900);
+}
+
+.cf-text.cf-indigo {
+    background-color: transparent;
+    color: var(--indigo-900);
+}
+
+.cf-text.cf-blue {
+    background-color: transparent;
+    color: var(--blue-900);
+}
+
+.cf-text.cf-light-blue {
+    background-color: transparent;
+    color: var(--light-blue-900);
+}
+
+.cf-text.cf-cyan {
+    background-color: transparent;
+    color: var(--cyan-900);
+}
+
+.cf-text.cf-teal {
+    background-color: transparent;
+    color: var(--teal-900);
+}
+
+.cf-text.cf-green {
+    background-color: transparent;
+    color: var(--green-900);
+}
+
+.cf-text.cf-light-green {
+    background-color: transparent;
+    color: var(--light-green-900);
+}
+
+.cf-text.cf-lime {
+    background-color: transparent;
+    color: var(--lime-900);
+}
+
+.cf-text.cf-yellow {
+    background-color: transparent;
+    color: var(--yellow-900);
+}
+
+.cf-text.cf-amber {
+    background-color: transparent;
+    color: var(--amber-900);
+}
+
+.cf-text.cf-orange {
+    background-color: transparent;
+    color: var(--orange-900);
+}
+
+.cf-text.cf-deep-orange {
+    background-color: transparent;
+    color: var(--deep-orange-900);
+}
+
+.cf-text.cf-brown {
+    background-color: transparent;
+    color: var(--brown-900);
+}
+
+.cf-text.cf-grey {
+    background-color: transparent;
+    color: var(--grey-900);
+}
+
+.cf-text.cf-blue-grey {
+    background-color: transparent;
+    color: var(--blue-grey-900);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -123,7 +245,9 @@
 }
 
 
-
+/**
+ DARK MODE BACKGROUND COLOURS
+**/
 .stroom-theme-dark .cf-red {
     background-color: var(--red-900);
     color: var(--red-50);
@@ -218,6 +342,120 @@
     background-color: var(--blue-grey-900);
     color: var(--blue-grey-50);
 }
+
+/**
+ DARK MODE TEXT COLOURS
+**/
+.stroom-theme-dark .cf-text.cf-red {
+    background-color: transparent;
+    color: var(--red-500);
+}
+
+.stroom-theme-dark .cf-text.cf-pink {
+    background-color: transparent;
+    color: var(--pink-500);
+}
+
+.stroom-theme-dark .cf-text.cf-purple {
+    background-color: transparent;
+    color: var(--purple-500);
+}
+
+.stroom-theme-dark .cf-text.cf-deep-purple {
+    background-color: transparent;
+    color: var(--deep-purple-500);
+}
+
+.stroom-theme-dark .cf-text.cf-indigo {
+    background-color: transparent;
+    color: var(--indigo-500);
+}
+
+.stroom-theme-dark .cf-text.cf-blue {
+    background-color: transparent;
+    color: var(--blue-500);
+}
+
+.stroom-theme-dark .cf-text.cf-light-blue {
+    background-color: transparent;
+    color: var(--light-blue-500);
+}
+
+.stroom-theme-dark .cf-text.cf-cyan {
+    background-color: transparent;
+    color: var(--cyan-500);
+}
+
+.stroom-theme-dark .cf-text.cf-teal {
+    background-color: transparent;
+    color: var(--teal-500);
+}
+
+.stroom-theme-dark .cf-text.cf-green {
+    background-color: transparent;
+    color: var(--green-500);
+}
+
+.stroom-theme-dark .cf-text.cf-light-green {
+    background-color: transparent;
+    color: var(--light-green-500);
+}
+
+.stroom-theme-dark .cf-text.cf-lime {
+    background-color: transparent;
+    color: var(--lime-500);
+}
+
+.stroom-theme-dark .cf-text.cf-yellow {
+    background-color: transparent;
+    color: var(--yellow-500);
+}
+
+.stroom-theme-dark .cf-text.cf-amber {
+    background-color: transparent;
+    color: var(--amber-500);
+}
+
+.stroom-theme-dark .cf-text.cf-orange {
+    background-color: transparent;
+    color: var(--orange-500);
+}
+
+.stroom-theme-dark .cf-text.cf-deep-orange {
+    background-color: transparent;
+    color: var(--deep-orange-500);
+}
+
+.stroom-theme-dark .cf-text.cf-brown {
+    background-color: transparent;
+    color: var(--brown-500);
+}
+
+.stroom-theme-dark .cf-text.cf-grey {
+    background-color: transparent;
+    color: var(--grey-500);
+}
+
+.stroom-theme-dark .cf-text.cf-blue-grey {
+    background-color: transparent;
+    color: var(--blue-grey-500);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Styles for the drop down selection box */
 .conditionalFormatStyleSelection .SelectionBox-renderBox {
