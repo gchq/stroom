@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4627** : Fix StroomQL function character escaping.
+
 * Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
 
 * Issue **#4612** : Fix stroomQL query not including all data points in the visualisation.
