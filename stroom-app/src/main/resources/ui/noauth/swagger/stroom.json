@@ -12258,7 +12258,7 @@
             "type" : "string"
           },
           "customStyle" : {
-            "type" : "boolean"
+            "$ref" : "#/components/schemas/CustomConditionalFormattingStyle"
           },
           "enabled" : {
             "type" : "boolean"
@@ -12266,15 +12266,22 @@
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
+          "formattingStyle" : {
+            "type" : "string",
+            "enum" : [ "RED", "PINK", "PURPLE", "DEEP_PURPLE", "INDIGO", "BLUE", "LIGHT_BLUE", "CYAN", "TEAL", "GREEN", "LIGHT_GREEN", "LIME", "YELLOW", "AMBER", "ORANGE", "DEEP_ORANGE", "BROWN", "GREY", "BLUE_GREY" ]
+          },
+          "formattingType" : {
+            "type" : "string",
+            "enum" : [ "BACKGROUND", "TEXT", "CUSTOM" ]
+          },
           "hide" : {
             "type" : "boolean"
           },
           "id" : {
             "type" : "string"
           },
-          "style" : {
-            "type" : "string",
-            "enum" : [ "RED", "PINK", "PURPLE", "DEEP_PURPLE", "INDIGO", "BLUE", "LIGHT_BLUE", "CYAN", "TEAL", "GREEN", "LIGHT_GREEN", "LIME", "YELLOW", "AMBER", "ORANGE", "DEEP_ORANGE", "BROWN", "GREY", "BLUE_GREY" ]
+          "textAttributes" : {
+            "$ref" : "#/components/schemas/TextAttributes"
           },
           "textColor" : {
             "type" : "string"
@@ -12553,6 +12560,17 @@
           }
         }
       },
+      "CustomConditionalFormattingStyle" : {
+        "type" : "object",
+        "properties" : {
+          "dark" : {
+            "$ref" : "#/components/schemas/CustomRowStyle"
+          },
+          "light" : {
+            "$ref" : "#/components/schemas/CustomRowStyle"
+          }
+        }
+      },
       "CustomRollUpMask" : {
         "type" : "object",
         "properties" : {
@@ -12583,6 +12601,17 @@
               "format" : "int32"
             },
             "uniqueItems" : true
+          }
+        }
+      },
+      "CustomRowStyle" : {
+        "type" : "object",
+        "properties" : {
+          "backgroundColour" : {
+            "type" : "string"
+          },
+          "textColour" : {
+            "type" : "string"
           }
         }
       },
@@ -17721,7 +17750,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -18859,9 +18888,6 @@
         "type" : "object",
         "description" : "A row of data in a result set",
         "properties" : {
-          "backgroundColor" : {
-            "type" : "string"
-          },
           "depth" : {
             "type" : "integer",
             "format" : "int32",
@@ -18871,11 +18897,7 @@
           "groupKey" : {
             "type" : "string"
           },
-          "style" : {
-            "type" : "string",
-            "enum" : [ "RED", "PINK", "PURPLE", "DEEP_PURPLE", "INDIGO", "BLUE", "LIGHT_BLUE", "CYAN", "TEAL", "GREEN", "LIGHT_GREEN", "LIME", "YELLOW", "AMBER", "ORANGE", "DEEP_ORANGE", "BROWN", "GREY", "BLUE_GREY" ]
-          },
-          "textColor" : {
+          "matchingRule" : {
             "type" : "string"
           },
           "values" : {
@@ -20969,6 +20991,17 @@
         "properties" : {
           "criteria" : {
             "$ref" : "#/components/schemas/FindTaskCriteria"
+          }
+        }
+      },
+      "TextAttributes" : {
+        "type" : "object",
+        "properties" : {
+          "bold" : {
+            "type" : "boolean"
+          },
+          "italic" : {
+            "type" : "boolean"
           }
         }
       },

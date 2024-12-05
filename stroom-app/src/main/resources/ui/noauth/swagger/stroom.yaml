@@ -8549,16 +8549,12 @@ components:
         backgroundColor:
           type: string
         customStyle:
-          type: boolean
+          $ref: "#/components/schemas/CustomConditionalFormattingStyle"
         enabled:
           type: boolean
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
-        hide:
-          type: boolean
-        id:
-          type: string
-        style:
+        formattingStyle:
           type: string
           enum:
           - RED
@@ -8580,6 +8576,18 @@ components:
           - BROWN
           - GREY
           - BLUE_GREY
+        formattingType:
+          type: string
+          enum:
+          - BACKGROUND
+          - TEXT
+          - CUSTOM
+        hide:
+          type: boolean
+        id:
+          type: string
+        textAttributes:
+          $ref: "#/components/schemas/TextAttributes"
         textColor:
           type: string
     ConfigProperty:
@@ -8774,6 +8782,13 @@ components:
           type: string
         ignoreCase:
           type: boolean
+    CustomConditionalFormattingStyle:
+      type: object
+      properties:
+        dark:
+          $ref: "#/components/schemas/CustomRowStyle"
+        light:
+          $ref: "#/components/schemas/CustomRowStyle"
     CustomRollUpMask:
       type: object
       properties:
@@ -8797,6 +8812,13 @@ components:
             type: integer
             format: int32
           uniqueItems: true
+    CustomRowStyle:
+      type: object
+      properties:
+        backgroundColour:
+          type: string
+        textColour:
+          type: string
     DBTableStatus:
       type: object
       properties:
@@ -13619,7 +13641,7 @@ components:
           - "'is', '=', '!='"
           - '''between'''
           - "'=', '!=', 'in'"
-          - "'=', '!=', 'in'"
+          - "'contains', '=', '!=', 'matches regex', 'in'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'is'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
@@ -14664,8 +14686,6 @@ components:
       type: object
       description: A row of data in a result set
       properties:
-        backgroundColor:
-          type: string
         depth:
           type: integer
           format: int32
@@ -14674,29 +14694,7 @@ components:
           example: 0
         groupKey:
           type: string
-        style:
-          type: string
-          enum:
-          - RED
-          - PINK
-          - PURPLE
-          - DEEP_PURPLE
-          - INDIGO
-          - BLUE
-          - LIGHT_BLUE
-          - CYAN
-          - TEAL
-          - GREEN
-          - LIGHT_GREEN
-          - LIME
-          - YELLOW
-          - AMBER
-          - ORANGE
-          - DEEP_ORANGE
-          - BROWN
-          - GREY
-          - BLUE_GREY
-        textColor:
+        matchingRule:
           type: string
         values:
           type: array
@@ -16309,6 +16307,13 @@ components:
       properties:
         criteria:
           $ref: "#/components/schemas/FindTaskCriteria"
+    TextAttributes:
+      type: object
+      properties:
+        bold:
+          type: boolean
+        italic:
+          type: boolean
     TextComponentSettings:
       type: object
       allOf:

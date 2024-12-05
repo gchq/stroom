@@ -220,7 +220,8 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     }
 
     @Override
-    public void setCustomConditionalFormattingStyle(final CustomConditionalFormattingStyle customConditionalFormattingStyle) {
+    public void setCustomConditionalFormattingStyle(final CustomConditionalFormattingStyle
+                                                            customConditionalFormattingStyle) {
         this.customConditionalFormattingStyle = customConditionalFormattingStyle;
         updateExampleSwatch();
     }
