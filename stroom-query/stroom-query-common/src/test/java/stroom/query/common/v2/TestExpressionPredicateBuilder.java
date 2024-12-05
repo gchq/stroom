@@ -49,14 +49,14 @@ class TestExpressionPredicateBuilder {
                         List.of("maap")),
 
                 makeStringMatchTest("Contains with operator",
-                        "\\map",
+                        "+map",
                         List.of("map",
                                 "a map",
                                 "mapping"),
                         List.of("maap")),
 
                 makeStringMatchTest("Contains with operator (case sensitive)",
-                        "=\\map",
+                        "=+map",
                         List.of("map",
                                 "a map",
                                 "mapping"),

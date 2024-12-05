@@ -163,7 +163,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles = new TableRowStyles();
+    private final TableRowStyles tableRowStyles;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -194,6 +194,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.userPreferencesManager = userPreferencesManager;
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
+        tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(this);
 

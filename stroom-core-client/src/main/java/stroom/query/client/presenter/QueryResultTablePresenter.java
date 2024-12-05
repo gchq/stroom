@@ -34,6 +34,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -119,7 +120,7 @@ public class QueryResultTablePresenter
     private List<Column> currentColumns = Collections.emptyList();
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles = new TableRowStyles();
+    private final TableRowStyles tableRowStyles;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -131,11 +132,13 @@ public class QueryResultTablePresenter
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
-                                     final ColumnFilterPresenter columnFilterPresenter) {
+                                     final ColumnFilterPresenter columnFilterPresenter,
+                                     final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
+        tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();

@@ -2,6 +2,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.cf.ConditionalFormattingDynamicStyles;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.api.v2.TextAttributes;
@@ -17,12 +18,17 @@ import java.util.stream.Collectors;
 
 public class TableRowStyles implements RowStyles<TableRow> {
 
+    private final UserPreferencesManager userPreferencesManager;
     private Map<String, ConditionalFormattingRule> conditionalFormattingRules = new HashMap<>();
+
+    public TableRowStyles(final UserPreferencesManager userPreferencesManager) {
+        this.userPreferencesManager = userPreferencesManager;
+    }
 
     @Override
     public String getStyleNames(final TableRow row, final int rowIndex) {
         final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
-        if (row.getMatchingRule() != null) {
+        if (row.getMatchingRule() != null && !userPreferencesManager.isHideConditionalStyles()) {
             ConditionalFormattingRule rule = conditionalFormattingRules.get(row.getMatchingRule());
             if (rule != null) {
                 // Fixed styles.
