@@ -52,6 +52,8 @@ public class CustomRowStyleViewImpl extends ViewImpl implements CustomRowStylePr
     @Inject
     public CustomRowStyleViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        updateLightSwatch();
+        updateDarkSwatch();
     }
 
     @Override

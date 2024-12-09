@@ -29,7 +29,7 @@ public class ConditionalFormattingDynamicStyles {
 
         return styles.computeIfAbsent(formattingStyle, k -> {
             final String dynamicName = "cfDynamic" + (styles.size() + 1);
-            final String lightCss = makeCss(dynamicName, "", k.getLight());
+            final String lightCss = makeCss(dynamicName, ".stroom-theme-light ", k.getLight());
             final String darkCss = makeCss(dynamicName, ".stroom-theme-dark ", k.getDark());
             styleElement.setInnerHTML(styleElement.getInnerHTML() + lightCss + darkCss);
             return dynamicName;
@@ -39,6 +39,9 @@ public class ConditionalFormattingDynamicStyles {
     private static String makeCss(final String dynamicName,
                                   final String cssPrefix,
                                   final CustomRowStyle customRowStyle) {
+        if (customRowStyle == null) {
+            return "";
+        }
         final String declarations = makeStyleDeclarations(customRowStyle);
         if (declarations == null) {
             return "";
