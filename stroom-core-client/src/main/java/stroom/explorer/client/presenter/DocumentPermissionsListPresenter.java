@@ -62,7 +62,6 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         getView().setDataWidget(dataGrid);
-
         addColumns();
     }
 
@@ -223,19 +222,17 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 
     public void refresh() {
         if (dataProvider == null) {
-
             dataProvider = new RestDataProvider<FindResultWithPermissions, ResultPage<FindResultWithPermissions>>(
                     getEventBus()) {
                 @Override
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<FindResultWithPermissions>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                    criteriaBuilder.pageRequest(pageRequest);
 
+                    criteriaBuilder.pageRequest(new PageRequest(range.getStart(), range.getLength()));
                     final AdvancedDocumentFindWithPermissionsRequest request = criteriaBuilder.build();
                     final ExpressionOperator filter = request.getExpression();
-                    final boolean filterChange = !Objects.equals(lastFilter, filter);
+                    final boolean isFilterChange = !Objects.equals(lastFilter, filter);
                     lastFilter = filter;
 
                     restFactory
@@ -247,14 +244,13 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                                 }
                                 dataConsumer.accept(resultPage);
 
-                                if (filterChange) {
-                                    if (resultPage.size() > 0) {
+                                if (isFilterChange) {
+                                    if (!resultPage.isEmpty()) {
                                         selectionModel.setSelected(resultPage.getValues().get(0));
                                     } else {
                                         selectionModel.clear();
                                     }
                                 }
-
                                 resetFocus();
                             })
                             .onFailure(errorHandler)
@@ -279,5 +275,9 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 
     public void setCurrentResulthandler(final Consumer<ResultPage<FindResultWithPermissions>> currentResulthandler) {
         this.currentResulthandler = currentResulthandler;
+    }
+
+    public void resetRange() {
+        dataGrid.setVisibleRange(new Range(0, PageRequest.DEFAULT_PAGE_LENGTH));
     }
 }

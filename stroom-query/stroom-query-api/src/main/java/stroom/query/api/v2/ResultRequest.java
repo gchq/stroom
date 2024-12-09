@@ -34,19 +34,18 @@ import java.util.Set;
 @JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
-        "e.g. sorted, grouped, limited, etc.")
+                      "e.g. sorted, grouped, limited, etc.")
 public final class ResultRequest {
 
-    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
-            required = true)
+    @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest")
     @JsonProperty
     private final String componentId;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
     private final List<TableSettings> mappings;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
     private final OffsetRange requestedRange;
 
@@ -54,19 +53,17 @@ public final class ResultRequest {
     @JsonProperty
     private final TimeFilter timeFilter;
 
-    @Schema(description = "A set of group keys of parent rows we want to display children for",
-            required = true)
+    @Schema(description = "A set of group keys of parent rows we want to display children for")
     @JsonProperty
     private final Set<String> openGroups;
 
     @Schema(description = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
-            "provide a TableResult object",
-            required = true)
+                          "provide a TableResult object")
     @JsonProperty
     private final ResultStyle resultStyle;
 
     @JsonPropertyDescription("The fetch mode for the query. NONE means fetch no data, ALL means fetch all known " +
-            "results, CHANGES means fetch only those records not see in previous requests")
+                             "results, CHANGES means fetch only those records not see in previous requests")
     @JsonProperty
     private final Fetch fetch;
 
@@ -135,12 +132,12 @@ public final class ResultRequest {
         }
         ResultRequest that = (ResultRequest) o;
         return Objects.equals(componentId, that.componentId) &&
-                Objects.equals(mappings, that.mappings) &&
-                Objects.equals(requestedRange, that.requestedRange) &&
-                Objects.equals(timeFilter, that.timeFilter) &&
-                Objects.equals(openGroups, that.openGroups) &&
-                resultStyle == that.resultStyle &&
-                fetch == that.fetch;
+               Objects.equals(mappings, that.mappings) &&
+               Objects.equals(requestedRange, that.requestedRange) &&
+               Objects.equals(timeFilter, that.timeFilter) &&
+               Objects.equals(openGroups, that.openGroups) &&
+               resultStyle == that.resultStyle &&
+               fetch == that.fetch;
     }
 
     @Override
@@ -151,19 +148,23 @@ public final class ResultRequest {
     @Override
     public String toString() {
         return "ResultRequest{" +
-                "componentId='" + componentId + '\'' +
-                ", mappings=" + mappings +
-                ", requestedRange=" + requestedRange +
-                ", timeFilter=" + timeFilter +
-                ", openGroups=" + openGroups +
-                ", resultStyle=" + resultStyle +
-                ", fetch=" + fetch +
-                '}';
+               "componentId='" + componentId + '\'' +
+               ", mappings=" + mappings +
+               ", requestedRange=" + requestedRange +
+               ", timeFilter=" + timeFilter +
+               ", openGroups=" + openGroups +
+               ", resultStyle=" + resultStyle +
+               ", fetch=" + fetch +
+               '}';
     }
 
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum ResultStyle {
         FLAT,
@@ -172,11 +173,19 @@ public final class ResultRequest {
         QL_VIS
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Fetch {
         NONE,
         CHANGES,
         ALL
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link ResultRequest}

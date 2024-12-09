@@ -39,12 +39,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
 
     public static final String TAGS_DELIMITER = " ";
     public static final String TAG_PATTERN_STR = "^[a-z0-9-]+$";
+    public static final String NODE_PATH_STRING_DELIMITER = " / ";
 
     @JsonProperty
     private final String type;
@@ -299,6 +301,28 @@ public class ExplorerNode implements HasDisplayValue {
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    public static String buildDocRefPathString(final Collection<DocRef> path) {
+        if (GwtNullSafe.isEmptyCollection(path)) {
+            return "";
+        } else {
+            return path.stream()
+                    .filter(Objects::nonNull)
+                    .map(DocRef::getDisplayValue)
+                    .collect(Collectors.joining(NODE_PATH_STRING_DELIMITER));
+        }
+    }
+
+    public static String buildNodePathString(final Collection<ExplorerNode> path) {
+        if (GwtNullSafe.isEmptyCollection(path)) {
+            return "";
+        } else {
+            return path.stream()
+                    .filter(Objects::nonNull)
+                    .map(ExplorerNode::getDisplayValue)
+                    .collect(Collectors.joining(NODE_PATH_STRING_DELIMITER));
+        }
     }
 
 
@@ -632,7 +656,7 @@ public class ExplorerNode implements HasDisplayValue {
             }
             final NodeInfo nodeInfo = (NodeInfo) o;
             return severity == nodeInfo.severity
-                    && Objects.equals(description, nodeInfo.description);
+                   && Objects.equals(description, nodeInfo.description);
         }
 
         @Override

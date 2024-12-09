@@ -98,7 +98,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     protected FolderRootPresenter createEditor() {
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
-                securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
+            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 
@@ -151,7 +151,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     @Override
     public String getType() {
-        return ExplorerConstants.SYSTEM;
+        return ExplorerConstants.SYSTEM_TYPE;
     }
 
     @Override

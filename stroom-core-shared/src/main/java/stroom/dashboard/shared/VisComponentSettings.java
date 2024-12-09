@@ -26,7 +26,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"tableId", "visualisation", "json", "tableSettings"})
+@JsonPropertyOrder({
+        "tableId",
+        "visualisation",
+        "json"})
 @JsonInclude(Include.NON_NULL)
 public class VisComponentSettings implements ComponentSettings {
 
@@ -36,18 +39,14 @@ public class VisComponentSettings implements ComponentSettings {
     private final DocRef visualisation;
     @JsonProperty
     private final String json;
-    @JsonProperty
-    private final TableComponentSettings tableSettings;
 
     @JsonCreator
     public VisComponentSettings(@JsonProperty("tableId") final String tableId,
                                 @JsonProperty("visualisation") final DocRef visualisation,
-                                @JsonProperty("json") final String json,
-                                @JsonProperty("tableSettings") TableComponentSettings tableSettings) {
+                                @JsonProperty("json") final String json) {
         this.tableId = tableId;
         this.visualisation = visualisation;
         this.json = json;
-        this.tableSettings = tableSettings;
     }
 
     public String getTableId() {
@@ -62,10 +61,6 @@ public class VisComponentSettings implements ComponentSettings {
         return json;
     }
 
-    public TableComponentSettings getTableSettings() {
-        return tableSettings;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -76,24 +71,22 @@ public class VisComponentSettings implements ComponentSettings {
         }
         final VisComponentSettings that = (VisComponentSettings) o;
         return Objects.equals(tableId, that.tableId) &&
-                Objects.equals(visualisation, that.visualisation) &&
-                Objects.equals(json, that.json) &&
-                Objects.equals(tableSettings, that.tableSettings);
+               Objects.equals(visualisation, that.visualisation) &&
+               Objects.equals(json, that.json);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableId, visualisation, json, tableSettings);
+        return Objects.hash(tableId, visualisation, json);
     }
 
     @Override
     public String toString() {
         return "VisComponentSettings{" +
-                "tableId='" + tableId + '\'' +
-                ", visualisation=" + visualisation +
-                ", json='" + json + '\'' +
-                ", tableSettings=" + tableSettings +
-                '}';
+               "tableId='" + tableId + '\'' +
+               ", visualisation=" + visualisation +
+               ", json='" + json + '\'' +
+               '}';
     }
 
     public static Builder builder() {
@@ -111,7 +104,6 @@ public class VisComponentSettings implements ComponentSettings {
         private String tableId;
         private DocRef visualisation;
         private String json;
-        private TableComponentSettings tableSettings;
 
         private Builder() {
         }
@@ -120,9 +112,6 @@ public class VisComponentSettings implements ComponentSettings {
             this.tableId = visComponentSettings.tableId;
             this.visualisation = visComponentSettings.visualisation;
             this.json = visComponentSettings.json;
-            this.tableSettings = visComponentSettings.tableSettings == null
-                    ? null
-                    : visComponentSettings.tableSettings.copy().build();
         }
 
         public Builder tableId(final String tableId) {
@@ -140,11 +129,6 @@ public class VisComponentSettings implements ComponentSettings {
             return self();
         }
 
-        public Builder tableSettings(final TableComponentSettings tableSettings) {
-            this.tableSettings = tableSettings;
-            return self();
-        }
-
         @Override
         protected Builder self() {
             return this;
@@ -152,7 +136,7 @@ public class VisComponentSettings implements ComponentSettings {
 
         @Override
         public VisComponentSettings build() {
-            return new VisComponentSettings(tableId, visualisation, json, tableSettings);
+            return new VisComponentSettings(tableId, visualisation, json);
         }
     }
 }

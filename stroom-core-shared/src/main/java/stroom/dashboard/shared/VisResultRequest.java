@@ -16,8 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,28 +32,46 @@ import java.util.Objects;
 @JsonPropertyOrder({
         "componentId",
         "fetch",
-        "visDashboardSettings",
+        "visualisation",
+        "json",
+        "tableSettings",
         "requestedRange"})
 @JsonInclude(Include.NON_NULL)
 public class VisResultRequest extends ComponentResultRequest {
 
     @JsonProperty
-    private final VisComponentSettings visDashboardSettings;
+    private final DocRef visualisation;
+    @JsonProperty
+    private final String json;
+    @JsonProperty
+    private final TableSettings tableSettings;
     @JsonProperty
     private final OffsetRange requestedRange;
 
     @JsonCreator
     public VisResultRequest(@JsonProperty("componentId") final String componentId,
                             @JsonProperty("fetch") final Fetch fetch,
-                            @JsonProperty("visDashboardSettings") final VisComponentSettings visDashboardSettings,
+                            @JsonProperty("visualisation") final DocRef visualisation,
+                            @JsonProperty("json") final String json,
+                            @JsonProperty("tableSettings") TableSettings tableSettings,
                             @JsonProperty("requestedRange") final OffsetRange requestedRange) {
         super(componentId, fetch);
-        this.visDashboardSettings = visDashboardSettings;
+        this.visualisation = visualisation;
+        this.json = json;
+        this.tableSettings = tableSettings;
         this.requestedRange = requestedRange;
     }
 
-    public VisComponentSettings getVisDashboardSettings() {
-        return visDashboardSettings;
+    public DocRef getVisualisation() {
+        return visualisation;
+    }
+
+    public String getJson() {
+        return json;
+    }
+
+    public TableSettings getTableSettings() {
+        return tableSettings;
     }
 
     public OffsetRange getRequestedRange() {
@@ -67,21 +87,15 @@ public class VisResultRequest extends ComponentResultRequest {
             return false;
         }
         final VisResultRequest that = (VisResultRequest) o;
-        return Objects.equals(visDashboardSettings, that.visDashboardSettings) &&
-                Objects.equals(requestedRange, that.requestedRange);
+        return Objects.equals(visualisation, that.visualisation) &&
+               Objects.equals(json, that.json) &&
+               Objects.equals(tableSettings, that.tableSettings) &&
+               Objects.equals(requestedRange, that.requestedRange);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(visDashboardSettings, requestedRange);
-    }
-
-    @Override
-    public String toString() {
-        return "VisResultRequest{" +
-                "visDashboardSettings=" + visDashboardSettings +
-                ", requestedRange=" + requestedRange +
-                '}';
+        return Objects.hash(visualisation, json, tableSettings, requestedRange);
     }
 
     public static Builder builder() {
@@ -96,7 +110,9 @@ public class VisResultRequest extends ComponentResultRequest {
 
         private String componentId;
         private Fetch fetch;
-        private VisComponentSettings visDashboardSettings;
+        private DocRef visualisation;
+        private String json;
+        private TableSettings tableSettings;
         private OffsetRange requestedRange;
 
         private Builder() {
@@ -105,7 +121,9 @@ public class VisResultRequest extends ComponentResultRequest {
         private Builder(final VisResultRequest visResultRequest) {
             this.componentId = visResultRequest.getComponentId();
             this.fetch = visResultRequest.getFetch();
-            this.visDashboardSettings = visResultRequest.visDashboardSettings;
+            this.visualisation = visResultRequest.visualisation;
+            this.json = visResultRequest.json;
+            this.tableSettings = visResultRequest.tableSettings;
             this.requestedRange = visResultRequest.requestedRange;
         }
 
@@ -119,8 +137,18 @@ public class VisResultRequest extends ComponentResultRequest {
             return this;
         }
 
-        public Builder visDashboardSettings(final VisComponentSettings visDashboardSettings) {
-            this.visDashboardSettings = visDashboardSettings;
+        public Builder visualisation(final DocRef visualisation) {
+            this.visualisation = visualisation;
+            return this;
+        }
+
+        public Builder json(final String json) {
+            this.json = json;
+            return this;
+        }
+
+        public Builder tableSettings(final TableSettings tableSettings) {
+            this.tableSettings = tableSettings;
             return this;
         }
 
@@ -130,7 +158,13 @@ public class VisResultRequest extends ComponentResultRequest {
         }
 
         public VisResultRequest build() {
-            return new VisResultRequest(componentId, fetch, visDashboardSettings, requestedRange);
+            return new VisResultRequest(
+                    componentId,
+                    fetch,
+                    visualisation,
+                    json,
+                    tableSettings,
+                    requestedRange);
         }
     }
 }

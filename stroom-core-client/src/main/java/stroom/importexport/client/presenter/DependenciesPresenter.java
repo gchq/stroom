@@ -42,6 +42,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -75,7 +76,6 @@ public class DependenciesPresenter
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    public static final int DEFAULT_PAGE_SIZE = 100;
 
     private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
@@ -386,7 +386,7 @@ public class DependenciesPresenter
     }
 
     private void resetRange() {
-        dataGrid.setVisibleRange(new Range(0, DEFAULT_PAGE_SIZE));
+        dataGrid.setVisibleRange(new Range(0, PageRequest.DEFAULT_PAGE_LENGTH));
     }
 
     void refresh() {

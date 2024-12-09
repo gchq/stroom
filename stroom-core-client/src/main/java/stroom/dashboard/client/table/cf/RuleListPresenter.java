@@ -33,6 +33,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,6 +42,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class RuleListPresenter extends MyPresenterWidget<PagerView> implements HasDirtyHandlers {
 
@@ -76,7 +78,10 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build(),
                 200);
         // Style.
-        dataGrid.addColumn(DataGridUtil.htmlColumnBuilder(ConditionalFormattingSwatchUtil::createTableCell)
+        // Had to put this here as GWT wasn't happy. I think it sometimes gets confused if generic types aren't
+        // explicitly declared.
+        final Function<ConditionalFormattingRule, SafeHtml> function = ConditionalFormattingSwatchUtil::createTableCell;
+        dataGrid.addColumn(DataGridUtil.htmlColumnBuilder(function)
                         .enabledWhen(ConditionalFormattingRule::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Style")
@@ -97,7 +102,10 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build();
 
         enabledColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            replaceRow(row, row.copy().enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean())).build());
+            replaceRow(row, row
+                    .copy()
+                    .enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                    .build());
         });
 
         dataGrid.addColumn(
@@ -116,7 +124,10 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build();
 
         hideColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            replaceRow(row, row.copy().hide(GwtNullSafe.isTrue(tickBoxState.toBoolean())).build());
+            replaceRow(row, row
+                    .copy()
+                    .hide(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                    .build());
         });
 
         dataGrid.addColumn(hideColumn,
@@ -126,7 +137,8 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                 70);
     }
 
-    private void replaceRow(final ConditionalFormattingRule oldRow, final ConditionalFormattingRule newRow) {
+    private void replaceRow(final ConditionalFormattingRule oldRow,
+                            final ConditionalFormattingRule newRow) {
         final int i = currentData.indexOf(oldRow);
         if (i != -1) {
             currentData.set(i, newRow);

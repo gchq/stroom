@@ -267,7 +267,7 @@ public class QueryResultVisPresenter
         }
     }
 
-    private void refresh() {
+    public void refresh() {
         getView().getRefreshButton().setRefreshing(true);
         currentSearchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
             try {

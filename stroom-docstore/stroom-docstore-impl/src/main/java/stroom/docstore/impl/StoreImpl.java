@@ -64,6 +64,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class StoreImpl<D extends AbstractDoc> implements Store<D> {
@@ -162,12 +163,12 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         Objects.requireNonNull(name);
         final D document = read(docRef);
 
-        final DocRef oldDocRef = document.asDocRef();
-
         // Only update the document if the name has actually changed.
         if (!Objects.equals(document.getName(), name)) {
             document.setName(name);
-            final D updated = update(document.getVersion(), document, oldDocRef);
+            final String expectedVersion = document.getVersion();
+            document.setVersion(UUID.randomUUID().toString());
+            final D updated = update(expectedVersion, document, document.asDocRef());
             return updated.asDocRef();
         }
 
@@ -179,9 +180,9 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         Objects.requireNonNull(docRef);
         // Check that the user has permission to delete this item.
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
-            throw new PermissionException(
-                    securityContext.getUserRef(),
-                    "You are not authorised to delete this item");
+            throwPermissionException(
+                    "You are not authorised to delete this item",
+                    () -> "document: " + toDocRefDisplayString(docRef));
         }
 
         persistence.getLockFactory().lock(docRef.getUuid(), () -> {
@@ -276,6 +277,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
     public D createDocument() {
         try {
             final D document = clazz.getDeclaredConstructor(new Class[0]).newInstance();
+            document.setName("Untitled");
             document.setUuid(UUID.randomUUID().toString());
             // Add audit data.
             stampAuditData(document);
@@ -303,7 +305,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         } else {
             final String expectedVersion = document.getVersion();
             document.setVersion(UUID.randomUUID().toString());
-            return update(expectedVersion, document);
+            return update(expectedVersion, document, document.asDocRef());
         }
     }
 
@@ -368,8 +370,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                     } else {
                         docRef = docRef.copy().name(existingDocument.getName()).build();
                         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
-                            throw new PermissionException(
-                                    securityContext.getUserRef(),
+                            throwPermissionException(
                                     "You are not authorised to update " + toDocRefDisplayString(docRef));
                         }
 
@@ -388,8 +389,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                     if (existingDocument != null) {
                         docRef = docRef.copy().name(existingDocument.getName()).build();
                         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
-                            throw new PermissionException(
-                                    securityContext.getUserRef(),
+                            throwPermissionException(
                                     "You are not authorised to update " + toDocRefDisplayString(docRef));
                         }
                     }
@@ -419,10 +419,6 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                     newDocument.setUniqueName(existingDocument.getUniqueName());
                     newDocument.setCreateTimeMs(existingDocument.getCreateTimeMs());
                     newDocument.setCreateUser(existingDocument.getCreateUser());
-
-                    // If we don't copy the existing doc version onto the doc we are importing then the update will
-                    // fail as we can only update a doc if the version matches.
-                    newDocument.setVersion(existingDocument.getVersion());
                 }
 
                 // Ensure we have a unique name.
@@ -525,10 +521,8 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                 return readDocument(docRef);
             }
         } catch (final PermissionException e) {
-            throw new PermissionException(
-                    securityContext.getUserRef(),
-                    "The document being imported exists but you are not authorised to read "
-                    + toDocRefDisplayString(docRef));
+            throwPermissionException("The document being imported exists but you are not authorised to read "
+                                     + toDocRefDisplayString(docRef));
         } catch (final RuntimeException e) {
             // Ignore.
             LOGGER.debug(e.getMessage(), e);
@@ -545,9 +539,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         try {
             // Check that the user has permission to read this item.
             if (!canRead(docRef)) {
-                throw new PermissionException(
-                        securityContext.getUserRef(),
-                        "You are not authorised to read " + toDocRefDisplayString(docRef));
+                throwPermissionException("You are not authorised to read " + toDocRefDisplayString(docRef));
             } else {
                 D document = read(docRef);
                 document = filter.apply(document);
@@ -621,10 +613,8 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         checkType(docRef);
         // Check that the user has permission to read this item.
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-            throw new PermissionException(
-                    securityContext.getUserRef(),
-                    LogUtil.message("You are not authorised to read {}",
-                            toDocRefDisplayString(docRef)));
+            throwPermissionException(LogUtil.message("You are not authorised to read {}",
+                    toDocRefDisplayString(docRef)));
         }
 
         final Optional<DocumentData> optional = persistence.getLockFactory().lockResult(uuid, () -> {
@@ -660,8 +650,31 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         }
     }
 
-    private D update(String expectedVersion, final D document) {
-        return update(expectedVersion, document, null);
+    private void throwPermissionException(final String msg) {
+        throwPermissionException(msg, null);
+    }
+
+    private void throwPermissionException(final String msg,
+                                          final Supplier<String> additionalDebugMsgSupplier)
+            throws PermissionException {
+
+        // The exception messages are purposefully vague so add some debug, so if it is a recurring problem
+        // we can find out the who and what.
+        LOGGER.debug(() -> LogUtil.message("Throwing PermissionException '{}', userIdentity: {}. {}",
+                msg,
+                securityContext.getUserIdentity(),
+                NullSafe.getOrElse(additionalDebugMsgSupplier, Supplier::get, "")));
+
+        throw new PermissionException(securityContext.getUserRef(), msg);
+    }
+
+    private void checkType(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
+        if (!Objects.equals(type, docRef.getType())) {
+            throw new RuntimeException(LogUtil.message(
+                    "Invalid docRef type, found: '{}', expecting: '{}'",
+                    docRef.getType(), type));
+        }
     }
 
     private D update(String expectedVersion, final D document, final DocRef oldDocRef) {
@@ -672,16 +685,16 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
 
         // Check that the user has permission to update this item.
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
-            throw new PermissionException(
-                    securityContext.getUserRef(),
-                    "You are not authorised to update " + toDocRefDisplayString(docRef));
+            throwPermissionException("You are not authorised to update " + toDocRefDisplayString(docRef));
         }
+
+        // Add audit data.
+        stampAuditData(document);
 
         persistence.getLockFactory().lock(document.getUuid(), () -> {
             try {
                 final DocumentData updated = persistence.update(expectedVersion, documentData);
                 document.setUniqueName(updated.getUniqueName());
-                document.setVersion(updated.getVersion());
                 EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
@@ -689,15 +702,6 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         });
 
         return document;
-    }
-
-    private void checkType(final DocRef docRef) {
-        Objects.requireNonNull(docRef);
-        if (!Objects.equals(type, docRef.getType())) {
-            throw new RuntimeException(LogUtil.message(
-                    "Invalid docRef type, found: '{}', expecting: '{}'",
-                    docRef.getType(), type));
-        }
     }
 
     @Override

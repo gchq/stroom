@@ -10,10 +10,10 @@ import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,16 +70,20 @@ public class SetupDevEnv {
             .toAbsolutePath()
             .normalize();
 
-    private static final Set<String> CONFIG_FILE_NAMES = Set.of(
-            "local.yml",
-            "local2.yml",
-            "local3.yml");
+    private static final Map<String, FileType> CONFIG_FILE_NAMES = Map.of(
+            "local.yml", FileType.STROOM,
+            "local2.yml", FileType.STROOM,
+            "local3.yml", FileType.STROOM,
+            "proxy-local.yml", FileType.PROXY);
+
     // e.g. 'stroom' in 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
     private static final Pattern DB_NAME_IN_URL_PATTERN = Pattern.compile("(?<=/)[a-zA-Z0-9_-]+(?=\\?|$)");
     private static final Pattern YES_NO_PATTERN = Pattern.compile("^(y|n|yes|no)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern YES_PATTERN = Pattern.compile("^(y|yes)$", Pattern.CASE_INSENSITIVE);
     private static final String STROOM_HOME_BASE = "~/.stroom/";
     private static final String STROOM_TMP_BASE = "/tmp/stroom/";
+    private static final String PROXY_HOME_BASE = "~/.stroom-proxy/";
+    private static final String PROXY_TMP_BASE = "/tmp/stroom-proxy/";
     private static final String YES_NO_OPTION_STR = ConsoleColour.green("(y/n/yes/no)");
 
     public static void main(String[] args) throws IOException {
@@ -92,23 +96,24 @@ public class SetupDevEnv {
 
         log("Enter the name for this environment, e.g. '7.5', or 'master' (blank for un-named):");
         final String envName = inputScanner.nextLine();
-        final String dbName = buildDbName(envName);
+        final String stroomEnvName = buildDbName(envName);
+        final String proxyEnvName = stroomEnvName.replace("stroom", "stroom-proxy");
 
         Boolean isConfirmed = null;
         do {
-            log("Do you wish to continue with the environment name '{}'? {}",
-                    ConsoleColour.cyan(dbName), YES_NO_OPTION_STR);
+            log("Do you wish to continue with the environment names '{}' and '{}'? {}",
+                    ConsoleColour.cyan(stroomEnvName),
+                    ConsoleColour.cyan(proxyEnvName),
+                    YES_NO_OPTION_STR);
             isConfirmed = userInputToBoolean(inputScanner.nextLine());
         } while (isConfirmed == null);
         if (!isConfirmed) {
             System.exit(1);
         }
 
-        final String username = ConnectionConfig.DEFAULT_JDBC_DRIVER_USERNAME;
-        final String password = ConnectionConfig.DEFAULT_JDBC_DRIVER_PASSWORD;
-        final String url = makeJdbcUrl(dbName);
-        logWithColouredArgs("DB name: {}, username: '{}', password: '{}', url: '{}'",
-                dbName, username, password, url);
+        final String url = makeJdbcUrl(stroomEnvName);
+        logWithColouredArgs("DB name: {}, url: '{}'",
+                stroomEnvName, url);
 
         final Set<String> dbNames = DbTestUtil.getWithRootConnection(ThrowingFunction.unchecked(rootConn -> {
             try (final Statement statement = rootConn.createStatement()) {
@@ -121,29 +126,47 @@ public class SetupDevEnv {
             }
         }));
 
-        final boolean shouldCreateDb = shouldCreateDb(dbNames, dbName, inputScanner, username);
+        final String username = ConnectionConfig.DEFAULT_JDBC_DRIVER_USERNAME;
+        final String password = ConnectionConfig.DEFAULT_JDBC_DRIVER_PASSWORD;
+        final boolean shouldCreateDb = shouldCreateDb(dbNames, stroomEnvName, inputScanner, username);
         if (shouldCreateDb) {
-            logWithColouredArgs("Creating database '{}' and user '{}'", dbName, username);
+            logWithColouredArgs("Creating database '{}' and user '{}'", stroomEnvName, username);
             // Create the db, user and grants
             DbTestUtil.doWithRootConnection(ThrowingConsumer.unchecked(rootConn ->
-                    DbTestUtil.createStroomDatabaseAndUser(rootConn, dbName, username, password)));
+                    DbTestUtil.createStroomDatabaseAndUser(rootConn, stroomEnvName, username, password)));
         }
 
-        final String stroomHomeDbBase = STROOM_HOME_BASE + dbName;
-        final String stroomTempDbBase = STROOM_TMP_BASE + dbName;
+        final String stroomHomeEnvBase = STROOM_HOME_BASE + stroomEnvName;
+        final String stroomTempEnvBase = STROOM_TMP_BASE + stroomEnvName;
+        final String proxyHomeEnvBase = PROXY_HOME_BASE + proxyEnvName;
+        final String proxyTempEnvBase = PROXY_TMP_BASE + proxyEnvName;
 
-        final Boolean shouldClearDirs = shouldClearDirs(stroomHomeDbBase, stroomTempDbBase, inputScanner);
+        final Boolean shouldClearDirs = shouldClearDirs(
+                inputScanner,
+                stroomHomeEnvBase,
+                stroomTempEnvBase,
+                proxyHomeEnvBase,
+                proxyTempEnvBase);
 
-        ensureAndClearDir(stroomHomeDbBase, shouldClearDirs);
-        ensureAndClearDir(stroomTempDbBase, shouldClearDirs);
+        ensureAndClearDir(stroomHomeEnvBase, shouldClearDirs);
+        ensureAndClearDir(stroomTempEnvBase, shouldClearDirs);
+        ensureAndClearDir(proxyHomeEnvBase, shouldClearDirs);
+        ensureAndClearDir(proxyTempEnvBase, shouldClearDirs);
 
         final AtomicInteger count = new AtomicInteger();
         try (Stream<Path> fileStream = Files.list(REPO_ROOT_PATH)) {
             fileStream.filter(file ->
-                            CONFIG_FILE_NAMES.contains(file.getFileName().toString()))
+                            CONFIG_FILE_NAMES.containsKey(file.getFileName().toString()))
                     .forEach(configFile -> {
+                        final FileType fileType = getFileType(configFile);
+                        final String homeDirBase = fileType == FileType.STROOM
+                                ? stroomHomeEnvBase
+                                : proxyHomeEnvBase;
+                        final String tempDirBase = fileType == FileType.STROOM
+                                ? stroomTempEnvBase
+                                : proxyTempEnvBase;
                         modifyConfigFile(
-                                configFile, url, username, password, stroomHomeDbBase, stroomTempDbBase);
+                                configFile, url, username, password, homeDirBase, tempDirBase);
                         count.incrementAndGet();
                     });
         }
@@ -153,6 +176,11 @@ public class SetupDevEnv {
             log("Modified {} YAML files", count);
         }
         log("Done");
+    }
+
+    private FileType getFileType(final Path configFile) {
+        Objects.requireNonNull(configFile);
+        return CONFIG_FILE_NAMES.get(configFile.getFileName().toString());
     }
 
     private boolean shouldCreateDb(final Set<String> dbNames,
@@ -179,13 +207,14 @@ public class SetupDevEnv {
         return shouldCreateDb;
     }
 
-    private Boolean shouldClearDirs(final String stroomHomeDbBase,
-                                    final String stroomTempDbBase,
-                                    final Scanner inputScanner) {
+    private Boolean shouldClearDirs(final Scanner inputScanner,
+                                    final String... dirs) {
         Boolean shouldClearDirs;
-        if (dirExists(stroomHomeDbBase) || dirExists(stroomTempDbBase)) {
-            logWithColouredArgs("One of these dirs ('{}', '{}') already exists.",
-                    stroomHomeDbBase, stroomTempDbBase);
+        final boolean anyExist = NullSafe.stream(dirs)
+                .anyMatch(this::dirExists);
+
+        if (anyExist) {
+            logWithColouredArgs("One or more directories already exist for this environment.");
             do {
                 log("Do you want to clear all their contents? {}", YES_NO_OPTION_STR);
                 shouldClearDirs = userInputToBoolean(inputScanner.nextLine());
@@ -264,69 +293,19 @@ public class SetupDevEnv {
         try {
             final File file = configFile.toFile();
             String yamlStr = Files.readString(configFile);
-            final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+            // Parse the YAML into a map, so we can get the current values to make the
+            // string replace a bit more robust
+            final ObjectMapper objectMapper = YamlUtil.getVanillaObjectMapper();
             final Map<String, Object> map = objectMapper.readValue(file, new TypeReference<>() {
             });
-            // Get the current values to make the string replace a bit more robust
-            //noinspection unchecked
-            final Map<String, Object> connMap = (Map<String, Object>) NullSafe.get(
-                    map.get("appConfig"),
-                    obj -> ((Map<String, Object>) obj).get("commonDbDetails"),
-                    obj -> ((Map<String, Object>) obj).get("connection"));
-
-            Objects.requireNonNull(connMap, () ->
-                    LogUtil.message(
-                            "Can't find path appConfig.commonDbDetails.connection in '{}'",
-                            configFile.toAbsolutePath()));
-
-            log("  Setting DB connection properties:");
-            yamlStr = replaceProp(
-                    yamlStr,
-                    connMap,
-                    ConnectionConfig.PROP_NAME_JDBC_DRIVER_URL,
-                    "${STROOM_JDBC_DRIVER_URL:-" + url + "}");
-            yamlStr = replaceProp(
-                    yamlStr,
-                    connMap,
-                    ConnectionConfig.PROP_NAME_JDBC_DRIVER_USERNAME,
-                    "${STROOM_JDBC_DRIVER_USERNAME:-" + username + "}");
-            yamlStr = replaceProp(
-                    yamlStr,
-                    connMap,
-                    ConnectionConfig.PROP_NAME_JDBC_DRIVER_PASSWORD,
-                    "${STROOM_JDBC_DRIVER_PASSWORD:-" + password + "}");
-
-            //noinspection unchecked
-            final String nodeName = (String) NullSafe.get(
-                    map.get("appConfig"),
-                    obj -> ((Map<String, Object>) obj).get("node"),
-                    obj -> ((Map<String, Object>) obj).get("name"));
-            Objects.requireNonNull(nodeName, () ->
-                    LogUtil.message("Can't find path appConfig.node.name in '{}'", configFile.toAbsolutePath()));
-
-            logWithColouredArgs("  Node name is '{}'", nodeName);
-            final String stroomHome = stroomHomeDbBase + "/" + nodeName;
-            final String stroomTemp = stroomTempDbBase + "/" + nodeName;
-
-            //noinspection unchecked
-            final Map<String, Object> pathMap = (Map<String, Object>) NullSafe.get(
-                    map.get("appConfig"),
-                    obj -> ((Map<String, Object>) obj).get("path"));
-
-            Objects.requireNonNull(pathMap, () ->
-                    LogUtil.message("Can't find path appConfig.path in '{}'", configFile.toAbsolutePath()));
-
-            log("  Setting path properties:");
-            yamlStr = replaceProp(
-                    yamlStr,
-                    pathMap,
-                    PathConfig.PROP_NAME_HOME,
-                    "${STROOM_HOME:-" + stroomHome + "}");
-            yamlStr = replaceProp(
-                    yamlStr,
-                    pathMap,
-                    PathConfig.PROP_NAME_TEMP,
-                    "${STROOM_TEMP:-" + stroomTemp + "}");
+            final FileType fileType = getFileType(configFile);
+            if (fileType == FileType.STROOM) {
+                yamlStr = modifyStroomConfig(
+                        configFile, url, username, password, stroomHomeDbBase, stroomTempDbBase, map, yamlStr);
+            } else {
+                yamlStr = modifyProxyConfig(
+                        configFile, stroomHomeDbBase, stroomTempDbBase, map, yamlStr);
+            }
 
             // write YAML file back out
             Files.writeString(configFile, yamlStr, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -334,6 +313,104 @@ public class SetupDevEnv {
             LOGGER.error("Error parsing/writing yaml file '{}': {}", configFile.toAbsolutePath(), e.getMessage(), e);
             throw new RuntimeException(e);
         }
+    }
+
+    private String modifyStroomConfig(final Path configFile,
+                                      final String url,
+                                      final String username,
+                                      final String password,
+                                      final String stroomHomeEnvBase,
+                                      final String stroomTempEnvBase,
+                                      final Map<String, Object> map,
+                                      String yamlStr) {
+
+        //noinspection unchecked
+        final Map<String, Object> connMap = (Map<String, Object>) NullSafe.get(
+                map.get("appConfig"),
+                obj -> ((Map<String, Object>) obj).get("commonDbDetails"),
+                obj -> ((Map<String, Object>) obj).get("connection"));
+
+        Objects.requireNonNull(connMap, () ->
+                LogUtil.message(
+                        "Can't find path appConfig.commonDbDetails.connection in '{}'",
+                        configFile.toAbsolutePath()));
+
+        log("  Setting DB connection properties:");
+        yamlStr = replaceProp(
+                yamlStr,
+                connMap,
+                ConnectionConfig.PROP_NAME_JDBC_DRIVER_URL,
+                "${STROOM_JDBC_DRIVER_URL:-" + url + "}");
+        yamlStr = replaceProp(
+                yamlStr,
+                connMap,
+                ConnectionConfig.PROP_NAME_JDBC_DRIVER_USERNAME,
+                "${STROOM_JDBC_DRIVER_USERNAME:-" + username + "}");
+        yamlStr = replaceProp(
+                yamlStr,
+                connMap,
+                ConnectionConfig.PROP_NAME_JDBC_DRIVER_PASSWORD,
+                "${STROOM_JDBC_DRIVER_PASSWORD:-" + password + "}");
+
+        //noinspection unchecked
+        final String nodeName = (String) NullSafe.get(
+                map.get("appConfig"),
+                obj -> ((Map<String, Object>) obj).get("node"),
+                obj -> ((Map<String, Object>) obj).get("name"));
+        Objects.requireNonNull(nodeName, () ->
+                LogUtil.message("Can't find path appConfig.node.name in '{}'", configFile.toAbsolutePath()));
+
+        logWithColouredArgs("  Node name is '{}'", nodeName);
+        final String stroomHome = stroomHomeEnvBase + "/" + nodeName;
+        final String stroomTemp = stroomTempEnvBase + "/" + nodeName;
+
+        //noinspection unchecked
+        final Map<String, Object> pathMap = (Map<String, Object>) NullSafe.get(
+                map.get("appConfig"),
+                obj -> ((Map<String, Object>) obj).get("path"));
+
+        Objects.requireNonNull(pathMap, () ->
+                LogUtil.message("Can't find path appConfig.path in '{}'", configFile.toAbsolutePath()));
+
+        log("  Setting path properties:");
+        yamlStr = replaceProp(
+                yamlStr,
+                pathMap,
+                PathConfig.PROP_NAME_HOME,
+                "${STROOM_HOME:-" + stroomHome + "}");
+        yamlStr = replaceProp(
+                yamlStr,
+                pathMap,
+                PathConfig.PROP_NAME_TEMP,
+                "${STROOM_TEMP:-" + stroomTemp + "}");
+        return yamlStr;
+    }
+
+    private String modifyProxyConfig(final Path configFile,
+                                     final String stroomHomeEnvBase,
+                                     final String stroomTempEnvBase,
+                                     final Map<String, Object> map,
+                                     String yamlStr) {
+        //noinspection unchecked
+        final Map<String, Object> pathMap = (Map<String, Object>) NullSafe.get(
+                map.get("proxyConfig"),
+                obj -> ((Map<String, Object>) obj).get("path"));
+
+        Objects.requireNonNull(pathMap, () ->
+                LogUtil.message("Can't find path proxyConfig.path in '{}'", configFile.toAbsolutePath()));
+
+        log("  Setting path properties:");
+        yamlStr = replaceProp(
+                yamlStr,
+                pathMap,
+                PathConfig.PROP_NAME_HOME,
+                "${STROOM_PROXY_HOME:-" + stroomHomeEnvBase + "}");
+        yamlStr = replaceProp(
+                yamlStr,
+                pathMap,
+                PathConfig.PROP_NAME_TEMP,
+                "${STROOM_PROXY_TEMP:-" + stroomTempEnvBase + "}");
+        return yamlStr;
     }
 
     /**
@@ -397,5 +474,15 @@ public class SetupDevEnv {
                     .toArray(Object[]::new);
             System.out.println(LogUtil.message(msg, colouredArgs));
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum FileType {
+        STROOM,
+        PROXY,
+        ;
     }
 }

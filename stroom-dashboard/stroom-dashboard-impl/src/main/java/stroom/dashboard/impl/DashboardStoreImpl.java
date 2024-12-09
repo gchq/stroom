@@ -239,11 +239,6 @@ class DashboardStoreImpl implements DashboardStore {
 
         builder.visualisation(dependencyRemapper.remap(visComponentSettings.getVisualisation()));
 
-        if (visComponentSettings.getTableSettings() != null) {
-            builder.tableSettings(remapTableComponentSettings(visComponentSettings.getTableSettings(),
-                    dependencyRemapper));
-        }
-
         return builder.build();
     }
 

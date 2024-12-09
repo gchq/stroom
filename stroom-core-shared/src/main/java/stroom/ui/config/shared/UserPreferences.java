@@ -70,7 +70,7 @@ public class UserPreferences {
     private final String fontSize;
 
     @Schema(description = "A date time formatting pattern string conforming to the specification of " +
-            "java.time.format.DateTimeFormatter")
+                          "java.time.format.DateTimeFormatter")
     @JsonProperty
     private final String dateTimePattern;
 
@@ -79,6 +79,9 @@ public class UserPreferences {
 
     @JsonProperty
     private final Boolean enableTransparency;
+
+    @JsonProperty
+    private final Boolean hideConditionalStyles;
 
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
@@ -90,7 +93,8 @@ public class UserPreferences {
                            @JsonProperty("fontSize") final String fontSize,
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
                            @JsonProperty("timeZone") final UserTimeZone timeZone,
-                           @JsonProperty("enableTransparency") final Boolean enableTransparency) {
+                           @JsonProperty("enableTransparency") final Boolean enableTransparency,
+                           @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = GwtNullSafe.requireNonNullElse(
@@ -103,6 +107,7 @@ public class UserPreferences {
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
         this.enableTransparency = GwtNullSafe.requireNonNullElse(enableTransparency, true);
+        this.hideConditionalStyles = hideConditionalStyles;
     }
 
     public String getTheme() {
@@ -145,6 +150,10 @@ public class UserPreferences {
         return enableTransparency;
     }
 
+    public Boolean getHideConditionalStyles() {
+        return hideConditionalStyles;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -154,16 +163,17 @@ public class UserPreferences {
             return false;
         }
         final UserPreferences that = (UserPreferences) o;
-        return Objects.equals(theme, that.theme)
-                && Objects.equals(editorTheme, that.editorTheme)
-                && Objects.equals(editorKeyBindings, that.editorKeyBindings)
-                && Objects.equals(editorLiveAutoCompletion, that.editorLiveAutoCompletion)
-                && Objects.equals(density, that.density)
-                && Objects.equals(font, that.font)
-                && Objects.equals(fontSize, that.fontSize)
-                && Objects.equals(dateTimePattern, that.dateTimePattern)
-                && Objects.equals(timeZone, that.timeZone)
-                && Objects.equals(enableTransparency, that.enableTransparency);
+        return Objects.equals(theme, that.theme) &&
+               Objects.equals(editorTheme, that.editorTheme) &&
+               Objects.equals(editorKeyBindings, that.editorKeyBindings) &&
+               Objects.equals(editorLiveAutoCompletion, that.editorLiveAutoCompletion) &&
+               Objects.equals(density, that.density) &&
+               Objects.equals(font, that.font) &&
+               Objects.equals(fontSize, that.fontSize) &&
+               Objects.equals(dateTimePattern, that.dateTimePattern) &&
+               Objects.equals(timeZone, that.timeZone) &&
+               Objects.equals(enableTransparency, that.enableTransparency) &&
+               Objects.equals(hideConditionalStyles, that.hideConditionalStyles);
     }
 
     @Override
@@ -177,23 +187,25 @@ public class UserPreferences {
                 fontSize,
                 dateTimePattern,
                 timeZone,
-                enableTransparency);
+                enableTransparency,
+                hideConditionalStyles);
     }
 
     @Override
     public String toString() {
         return "UserPreferences{" +
-                "theme='" + theme + '\'' +
-                ", editorTheme='" + editorTheme + '\'' +
-                ", editorKeyBindings='" + editorKeyBindings + '\'' +
-                ", editorLiveAutoCompletion='" + editorLiveAutoCompletion + '\'' +
-                ", density='" + density + '\'' +
-                ", font='" + font + '\'' +
-                ", fontSize='" + fontSize + '\'' +
-                ", dateTimePattern='" + dateTimePattern + '\'' +
-                ", timeZone=" + timeZone +
-                ", enableTransparency=" + enableTransparency +
-                '}';
+               "theme='" + theme + '\'' +
+               ", editorTheme='" + editorTheme + '\'' +
+               ", editorKeyBindings='" + editorKeyBindings + '\'' +
+               ", editorLiveAutoCompletion='" + editorLiveAutoCompletion + '\'' +
+               ", density='" + density + '\'' +
+               ", font='" + font + '\'' +
+               ", fontSize='" + fontSize + '\'' +
+               ", dateTimePattern='" + dateTimePattern + '\'' +
+               ", timeZone=" + timeZone +
+               ", enableTransparency=" + enableTransparency +
+               ", hideConditionalStyles=" + hideConditionalStyles +
+               '}';
     }
 
     public static Builder builder() {
@@ -260,6 +272,7 @@ public class UserPreferences {
         private String dateTimePattern;
         private UserTimeZone timeZone;
         private Boolean enableTransparency;
+        private Boolean hideConditionalStyles;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -285,6 +298,7 @@ public class UserPreferences {
             this.dateTimePattern = userPreferences.dateTimePattern;
             this.timeZone = userPreferences.timeZone;
             this.enableTransparency = userPreferences.enableTransparency;
+            this.hideConditionalStyles = userPreferences.hideConditionalStyles;
         }
 
         public Builder theme(final String theme) {
@@ -337,6 +351,11 @@ public class UserPreferences {
             return this;
         }
 
+        public Builder hideConditionalStyles(final Boolean hideConditionalStyles) {
+            this.hideConditionalStyles = hideConditionalStyles;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -348,7 +367,8 @@ public class UserPreferences {
                     fontSize,
                     dateTimePattern,
                     timeZone,
-                    enableTransparency);
+                    enableTransparency,
+                    hideConditionalStyles);
         }
     }
 

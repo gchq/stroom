@@ -37,10 +37,13 @@ import java.util.Objects;
         "lastQueryKey",
         "lastQueryNode",
         "showTable",
-        "queryTablePreferences"
+        "queryTablePreferences",
+        "selectionFilter"
 })
 @JsonInclude(Include.NON_NULL)
-public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettings {
+public class EmbeddedQueryComponentSettings
+        extends AbstractQueryComponentSettings
+        implements HasSelectionQuery, HasSelectionFilter {
 
     @JsonProperty
     private final DocRef queryRef;
@@ -48,6 +51,8 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
     private final Boolean showTable;
     @JsonProperty
     private final QueryTablePreferences queryTablePreferences;
+    @JsonProperty
+    private final List<ComponentSelectionHandler> selectionFilter;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
@@ -57,11 +62,13 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
                                           @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
                                           @JsonProperty("lastQueryNode") final String lastQueryNode,
                                           @JsonProperty("showTable") final Boolean showTable,
-                                          @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
+                                          @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
+                                          @JsonProperty("selectionFilter") final List<ComponentSelectionHandler> selectionFilter) {
         super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
         this.queryRef = queryRef;
         this.showTable = showTable;
         this.queryTablePreferences = queryTablePreferences;
+        this.selectionFilter = selectionFilter;
     }
 
     public DocRef getQueryRef() {
@@ -77,6 +84,11 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
     }
 
     @Override
+    public List<ComponentSelectionHandler> getSelectionFilter() {
+        return selectionFilter;
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -89,13 +101,14 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
         }
         final EmbeddedQueryComponentSettings that = (EmbeddedQueryComponentSettings) o;
         return Objects.equals(queryRef, that.queryRef) &&
-                Objects.equals(showTable, that.showTable) &&
-                Objects.equals(queryTablePreferences, that.queryTablePreferences);
+               Objects.equals(showTable, that.showTable) &&
+               Objects.equals(queryTablePreferences, that.queryTablePreferences) &&
+               Objects.equals(selectionFilter, that.selectionFilter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), queryRef, showTable, queryTablePreferences);
+        return Objects.hash(super.hashCode(), queryRef, showTable, queryTablePreferences, selectionFilter);
     }
 
     public static Builder builder() {
@@ -111,11 +124,15 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
      * Builder for constructing a {@link TableSettings tableSettings}
      */
     public static final class Builder
-            extends AbstractBuilder<EmbeddedQueryComponentSettings, EmbeddedQueryComponentSettings.Builder> {
+            extends AbstractBuilder<EmbeddedQueryComponentSettings, EmbeddedQueryComponentSettings.Builder>
+            implements
+            HasSelectionQueryBuilder<EmbeddedQueryComponentSettings, Builder>,
+            HasSelectionFilterBuilder<EmbeddedQueryComponentSettings, Builder> {
 
         private DocRef queryRef;
         private Boolean showTable;
         private QueryTablePreferences queryTablePreferences;
+        private List<ComponentSelectionHandler> selectionFilter;
 
         private Builder() {
             super();
@@ -126,6 +143,7 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
             this.queryRef = settings.queryRef;
             this.showTable = settings.showTable;
             this.queryTablePreferences = settings.queryTablePreferences;
+            this.selectionFilter = settings.selectionFilter;
         }
 
         public Builder queryRef(final DocRef queryRef) {
@@ -144,6 +162,12 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
         }
 
         @Override
+        public Builder selectionFilter(final List<ComponentSelectionHandler> selectionFilter) {
+            this.selectionFilter = selectionFilter;
+            return self();
+        }
+
+        @Override
         protected Builder self() {
             return this;
         }
@@ -153,11 +177,12 @@ public class EmbeddedQueryComponentSettings extends AbstractQueryComponentSettin
             return new EmbeddedQueryComponentSettings(
                     queryRef,
                     automate,
-                    selectionHandlers,
+                    selectionQuery,
                     lastQueryKey,
                     lastQueryNode,
                     showTable,
-                    queryTablePreferences);
+                    queryTablePreferences,
+                    selectionFilter);
         }
     }
 }

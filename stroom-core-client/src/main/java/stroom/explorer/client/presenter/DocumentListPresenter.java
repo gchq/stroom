@@ -107,7 +107,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
                             dataConsumer.accept(resultPage);
 
                             if (filterChange) {
-                                if (resultPage.size() > 0) {
+                                if (!resultPage.isEmpty()) {
                                     selectionModel.setSelected(resultPage.getValues().get(0));
                                 } else {
                                     selectionModel.clear();

@@ -34,6 +34,7 @@ import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -275,10 +276,16 @@ class QueryServiceImpl implements QueryService {
                                 searchResponseCreatorManager.search(requestAndStore, resultCreatorMap);
                                 totalRowCount += searchResultWriter.getRowCount();
 
+                            } catch (final Exception e) {
+                                LOGGER.debug(e::getMessage, e);
+                                throw e;
                             } finally {
                                 target.endTable();
                             }
                         }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e::getMessage, e);
+                        throw e;
                     } finally {
                         target.end();
                     }
@@ -438,16 +445,24 @@ class QueryServiceImpl implements QueryService {
                 // Modify result request to apply additional UI table preferences.
                 ResultRequest modified = addTablePreferences(resultRequest, searchRequest.getQueryTablePreferences());
 
+                // The vis needs all the data, rather than just a page worth
+                OffsetRange range = modified.getRequestedRange();
+                if (resultRequest.getResultStyle() != ResultStyle.QL_VIS) {
+                    range = searchRequest.getRequestedRange();
+                }
+
                 // Modify result request to open grouped rows and change result display range.
                 modified = modified
                         .copy()
                         .openGroups(searchRequest.getOpenGroups())
-                        .requestedRange(searchRequest.getRequestedRange())
+                        .requestedRange(range)
                         .build();
 
                 modifiedResultRequests.add(modified);
             }
-            mappedRequest = mappedRequest.copy().resultRequests(modifiedResultRequests).build();
+            mappedRequest = mappedRequest.copy()
+                    .resultRequests(modifiedResultRequests)
+                    .build();
         }
 
         return mappedRequest;
@@ -482,6 +497,17 @@ class QueryServiceImpl implements QueryService {
 
                 builder.columns(modifiedColumns);
                 builder.applyValueFilters(queryTablePreferences.applyValueFilters());
+
+                // Combine row filters.
+                if (tableSettings.getAggregateFilter() == null) {
+                    builder.aggregateFilter(queryTablePreferences.getSelectionFilter());
+                } else if (queryTablePreferences.getSelectionFilter() != null) {
+                    builder.aggregateFilter(ExpressionOperator
+                            .builder()
+                            .addOperators(tableSettings.getAggregateFilter(),
+                                    queryTablePreferences.getSelectionFilter())
+                            .build());
+                }
 
                 builder.conditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
                 final List<TableSettings> mappings = new ArrayList<>(resultRequest.getMappings().size());
@@ -720,8 +746,8 @@ class QueryServiceImpl implements QueryService {
                         .collect(Collectors.toSet());
                 final boolean includeStructure = !keywordsValidAfter.isEmpty();
                 if (lastKeyword != null
-                        && keywordsSeen.contains(TokenType.FROM)
-                        && tokens.size() >= 4) {
+                    && keywordsSeen.contains(TokenType.FROM)
+                    && tokens.size() >= 4) {
                     types.addAll(getHelpTypes(lastKeyword, lastKeywordSequence, includeStructure));
                 }
             }
@@ -792,7 +818,7 @@ class QueryServiceImpl implements QueryService {
             } else if (lastToken == TokenType.COMMENT || lastToken == TokenType.BLOCK_COMMENT) {
                 doRemove = true;
             } else if (lastToken == TokenType.COMMA
-                    || TokenType.haveSeenLast(lastKeywordSequence, TokenType.COMMA, TokenType.WHITESPACE)) {
+                       || TokenType.haveSeenLast(lastKeywordSequence, TokenType.COMMA, TokenType.WHITESPACE)) {
                 doRemove = true;
             } else if (TokenType.ALL_CONDITIONS.contains(lastToken)) {
                 doRemove = true;
@@ -840,14 +866,14 @@ class QueryServiceImpl implements QueryService {
 
     private boolean includeDataSources(final List<TokenType> lastKeywordSequence) {
         return isAtIndex(lastKeywordSequence, TokenType.FROM, 0)
-                && isAtIndex(lastKeywordSequence, TokenType.WHITESPACE, 1)
-                && lastKeywordSequence.size() <= 3;
+               && isAtIndex(lastKeywordSequence, TokenType.WHITESPACE, 1)
+               && lastKeywordSequence.size() <= 3;
     }
 
     private boolean isAtIndex(final List<TokenType> tokenTypes, final TokenType tokenType, final int idx) {
         return tokenTypes != null
-                && tokenTypes.size() > idx
-                && tokenTypes.get(idx) == tokenType;
+               && tokenTypes.size() > idx
+               && tokenTypes.get(idx) == tokenType;
     }
 
     private boolean seenInDictionary(final List<Token> tokens) {
@@ -862,7 +888,7 @@ class QueryServiceImpl implements QueryService {
                     TokenType.WHITESPACE,
                     TokenType.DICTIONARY,
                     TokenType.WHITESPACE)
-                    || containsTailElements(
+                   || containsTailElements(
                     tokens,
                     Token::getTokenType,
                     TokenType.IN,

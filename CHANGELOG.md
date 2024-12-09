@@ -12,6 +12,88 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.7-beta.5] - 2024-12-05
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+* Issue **#4596** : Add case-sensitive value filter conditions.
+
+* Issue **#4596** : Drive visualisations using table quick filters and selection handlers.
+
+* Issue **#4596** : Merge include/exclude and column value filter dialogs.
+
+* Issue **#4596** : Change conditional formatting to allow custom light and dark colours.
+
+* Issue **#4596** : Turn off conditional formatting with user preferences.
+
+* Issue **#4627** : Fix StroomQL function character escaping.
+
+* Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
+
+* Issue **#4612** : Fix stroomQL query not including all data points in the visualisation.
+
+* Issue **#4617** : Add debug to try to diagnose issue.
+
+* Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
+
+
+## [v7.7-beta.4] - 2024-11-11
+
+* Issue **#4601** : Add null handling and better error logging to Excel download.
+
+
+## [v7.7-beta.3] - 2024-11-11
+
+* Issue **#4597** : Fix NPE when opening the Document Permissions Report screen for a user.
+
+* Change the code that counts expression terms and gets all fields/values from an expression tree to no longer ignore NOT operators.
+
+* Issue **#4596** : Fix demo bugs.
+
+* Issue **#4596** : Add table value filter dialog option.
+
+
+## [v7.7-beta.2] - 2024-11-06
+
+* Change the permission filtering to use a LinkedHashSet for children of and descendants of terms.
+
+* Fix error when creating a document as a user without `Administrator` or `Manager Users`.
+
+* Issue **#4588** : Fix the API allowing documents to be moved with only VIEW permission. The UI requires EDIT permission. The API is now in line with that.
+
+* Fix the `Copy As` menu item for ancestor folders that the user does not have VIEW permission on. For these cases, the `Copy As` sub menu now only displays the `Copy as name` entry.
+
+* Change the explorer context menu to include the entries for `Dependencies` and `Dependants` if the user has at least VIEW permission. Previously required OWNER.
+
+* Issue **#4586** : Fix error when changing filter on Document Permissions Report.
+
+
+## [v7.7-beta.1] - 2024-11-04
+
+* Issue **#4523** : Embed queries in dashboards.
+
+* Issue **#4504** : Add column value filters.
+
+* Issue **#4546** : Remove redundant dashboard tab options.
+
+* Issue **#4547** : Add selection handlers to dashboard tables to quick filter based on component selection.
+
+* Issue **#4071** : Add preset theme compatible styles for conditional formatting.
+
+* Issue **#4157** : Fix copy of conditional formatting rules.
+
+
+## [v7.6-beta.4] - 2024-11-04
+
+* Issue **#4550** : Fix datasource already in use issue.
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.5_11-jdk-alpine`.
+
+* Issue **#4580** : Auto add a permission user when an account is created.
+
+* Issue **#4582** : Show all users by default and not just ones with explicit permissions.
+
 * Issue **#4562** : Use Zip64 compatibility mode.
 
 * Issue **#4564** : Use expression as column name.
@@ -936,7 +1018,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.5...HEAD
+[v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
+[v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
+[v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
+[v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
+[v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
+[v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
 [v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
 [v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
 [v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1

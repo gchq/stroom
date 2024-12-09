@@ -30,12 +30,14 @@ public class TableSettingsPresenter extends SettingsPresenter {
     public TableSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                   final BasicTableSettingsPresenter basicSettingsPresenter,
                                   final RulesPresenter rulesPresenter,
-                                  final SelectionHandlersPresenter selectionHandlersPresenter) {
+                                  final SelectionHandlersPresenter selectionFilterPresenter) {
         super(eventBus, view);
         getView().asWidget().addStyleName("settingsPresenter");
 
+        selectionFilterPresenter.setUseForFilter(true);
+
         addTab("Basic", basicSettingsPresenter);
         addTab("Conditional Formatting", rulesPresenter);
-        addTab("Selection Handlers", selectionHandlersPresenter);
+        addTab("Selection Filter", selectionFilterPresenter);
     }
 }

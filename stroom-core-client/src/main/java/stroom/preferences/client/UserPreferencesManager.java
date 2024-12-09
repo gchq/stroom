@@ -173,6 +173,10 @@ public class UserPreferencesManager {
         return ThemeCssUtil.getCurrentPreferenceClasses(currentUserPreferences);
     }
 
+    public boolean isHideConditionalStyles() {
+        return GwtNullSafe.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
+    }
+
     public List<String> getThemes() {
         return Theme.getThemeNames();
     }
@@ -197,9 +201,9 @@ public class UserPreferencesManager {
 
     public boolean isUtc() {
         if (currentUserPreferences != null &&
-                currentUserPreferences.getTimeZone() != null &&
-                currentUserPreferences.getTimeZone().getUse() != null &&
-                currentUserPreferences.getTimeZone().getUse() != Use.UTC) {
+            currentUserPreferences.getTimeZone() != null &&
+            currentUserPreferences.getTimeZone().getUse() != null &&
+            currentUserPreferences.getTimeZone().getUse() != Use.UTC) {
             return false;
         }
         return true;

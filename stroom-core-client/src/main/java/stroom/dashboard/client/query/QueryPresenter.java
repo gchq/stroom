@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
@@ -90,7 +89,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class QueryPresenter
         extends AbstractComponentPresenter<QueryPresenter.QueryView>
@@ -130,7 +128,7 @@ public class QueryPresenter
     private Timer autoRefreshTimer;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
-    private ExpressionOperator currentDecoration;
+    private ExpressionOperator currentSelectionQuery;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -294,20 +292,14 @@ public class QueryPresenter
 
         registerHandler(components.addComponentChangeHandler(event -> {
             if (initialised) {
-                final Component component = event.getComponent();
-                final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
-                        .create(component, getQuerySettings().getSelectionHandlers());
-
-//                          this.params = params;
-//                          lastUsedQueryInfo = null;
-
-                optional.ifPresent(selectionExpression -> {
-                    if (!Objects.equals(currentDecoration, selectionExpression)) {
-                        currentDecoration = selectionExpression;
-                        searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
-                        run(true, true, selectionExpression);
-                    }
-                });
+                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
+                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                        .orElse(null);
+                if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
+                    currentSelectionQuery = selectionQuery;
+                    searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
+                    run(true, true, selectionQuery);
+                }
             }
 
 //            if (component instanceof HasAbstractFields) {
@@ -546,7 +538,7 @@ public class QueryPresenter
             final String msg = currentErrors.size() == 1
                     ? ("The following warning was created while running this search:")
                     : ("The following " + currentErrors.size()
-                            + " warnings have been created while running this search:");
+                       + " warnings have been created while running this search:");
             final String errors = String.join("\n", currentErrors);
             AlertEvent.fireWarn(this, msg, errors, null);
         }

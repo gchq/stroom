@@ -1,7 +1,6 @@
 package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,8 +15,11 @@ import java.util.Objects;
         "backgroundColor",
         "textColor",
         "enabled",
-        "style",
-        "customStyle"})
+        "formattingType",
+        "formattingStyle",
+        "customStyle",
+        "textAttributes"
+})
 @JsonInclude(Include.NON_NULL)
 public class ConditionalFormattingRule {
 
@@ -28,34 +30,59 @@ public class ConditionalFormattingRule {
     @JsonProperty("hide")
     private final boolean hide;
     @JsonProperty("backgroundColor")
+    @Deprecated // moved to CustomConditionalFormattingStyle kept for serialisation backward compatibility.
     private final String backgroundColor;
     @JsonProperty("textColor")
+    @Deprecated // moved to CustomConditionalFormattingStyle kept for serialisation backward compatibility.
     private final String textColor;
     @JsonProperty("enabled")
     private final boolean enabled;
 
-    @JsonProperty("style")
-    private final ConditionalFormattingStyle style;
+    @JsonProperty("formattingType")
+    private final ConditionalFormattingType formattingType;
+    @JsonProperty("formattingStyle")
+    private final ConditionalFormattingStyle formattingStyle;
     @JsonProperty("customStyle")
-    private final Boolean customStyle;
+    private final CustomConditionalFormattingStyle customStyle;
+    @JsonProperty("textAttributes")
+    private final TextAttributes textAttributes;
 
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
                                      @JsonProperty("expression") final ExpressionOperator expression,
                                      @JsonProperty("hide") final boolean hide,
-                                     @JsonProperty("backgroundColor") final String backgroundColor,
-                                     @JsonProperty("textColor") final String textColor,
+                                     @Deprecated @JsonProperty("backgroundColor") final String backgroundColor,
+                                     @Deprecated @JsonProperty("textColor") final String textColor,
                                      @JsonProperty("enabled") final boolean enabled,
-                                     @JsonProperty("style") final ConditionalFormattingStyle style,
-                                     @JsonProperty("customStyle") final Boolean customStyle) {
+
+                                     @JsonProperty("formattingType") final ConditionalFormattingType formattingType,
+                                     @JsonProperty("formattingStyle") final ConditionalFormattingStyle formattingStyle,
+                                     @JsonProperty("customStyle") final CustomConditionalFormattingStyle customStyle,
+                                     @JsonProperty("textAttributes") final TextAttributes textAttributes) {
         this.id = id;
         this.expression = expression;
         this.hide = hide;
-        this.backgroundColor = backgroundColor;
-        this.textColor = textColor;
+        this.backgroundColor = null;
+        this.textColor = null;
         this.enabled = enabled;
-        this.style = style;
-        this.customStyle = customStyle;
+        this.formattingType = formattingType;
+        this.formattingStyle = formattingStyle;
+        this.textAttributes = textAttributes;
+
+        if (customStyle == null && (backgroundColor != null && textColor != null)) {
+            final CustomRowStyle customRowStyle = CustomRowStyle
+                    .builder()
+                    .backgroundColour(backgroundColor)
+                    .textColour(textColor)
+                    .build();
+            this.customStyle = CustomConditionalFormattingStyle
+                    .builder()
+                    .light(customRowStyle)
+                    .dark(customRowStyle)
+                    .build();
+        } else {
+            this.customStyle = customStyle;
+        }
     }
 
     public String getId() {
@@ -70,29 +97,24 @@ public class ConditionalFormattingRule {
         return hide;
     }
 
-    public String getBackgroundColor() {
-        return backgroundColor;
-    }
-
-    public String getTextColor() {
-        return textColor;
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
 
-    public ConditionalFormattingStyle getStyle() {
-        return style;
+    public ConditionalFormattingType getFormattingType() {
+        return formattingType;
     }
 
-    public Boolean getCustomStyle() {
+    public ConditionalFormattingStyle getFormattingStyle() {
+        return formattingStyle;
+    }
+
+    public CustomConditionalFormattingStyle getCustomStyle() {
         return customStyle;
     }
 
-    @JsonIgnore
-    public boolean isCustomStyle() {
-        return customStyle != Boolean.FALSE;
+    public TextAttributes getTextAttributes() {
+        return textAttributes;
     }
 
     @Override
@@ -105,32 +127,40 @@ public class ConditionalFormattingRule {
         }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
         return hide == that.hide &&
-                enabled == that.enabled &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(expression, that.expression) &&
-                Objects.equals(backgroundColor, that.backgroundColor) &&
-                Objects.equals(textColor, that.textColor) &&
-                Objects.equals(style, that.style) &&
-                Objects.equals(customStyle, that.customStyle);
+               enabled == that.enabled &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(expression, that.expression) &&
+               Objects.equals(formattingType, that.formattingType) &&
+               Objects.equals(formattingStyle, that.formattingStyle) &&
+               Objects.equals(customStyle, that.customStyle) &&
+               Objects.equals(textAttributes, that.textAttributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, expression, hide, backgroundColor, textColor, enabled, style, customStyle);
+        return Objects.hash(
+                id,
+                expression,
+                hide,
+                enabled,
+                formattingType,
+                formattingStyle,
+                customStyle,
+                textAttributes);
     }
 
     @Override
     public String toString() {
         return "ConditionalFormattingRule{" +
-                "id='" + id + '\'' +
-                ", expression=" + expression +
-                ", hide=" + hide +
-                ", backgroundColor='" + backgroundColor + '\'' +
-                ", textColor='" + textColor + '\'' +
-                ", enabled=" + enabled +
-                ", styleName=" + style +
-                ", customStyle=" + customStyle +
-                '}';
+               "id='" + id + '\'' +
+               ", expression=" + expression +
+               ", hide=" + hide +
+               ", enabled=" + enabled +
+               ", formattingType=" + formattingType +
+               ", formattingStyle=" + formattingStyle +
+               ", customStyle=" + customStyle +
+               ", textAttributes=" + textAttributes +
+               '}';
     }
 
     public static Builder builder() {
@@ -150,12 +180,11 @@ public class ConditionalFormattingRule {
         private String id;
         private ExpressionOperator expression;
         private boolean hide;
-        private String backgroundColor;
-        private String textColor;
         private boolean enabled;
-        private ConditionalFormattingStyle style;
-        private Boolean customStyle;
-
+        private ConditionalFormattingType formattingType;
+        private ConditionalFormattingStyle formattingStyle;
+        private CustomConditionalFormattingStyle customStyle;
+        private TextAttributes textAttributes;
 
         private Builder() {
         }
@@ -164,10 +193,9 @@ public class ConditionalFormattingRule {
             this.id = rule.id;
             this.expression = rule.expression;
             this.hide = rule.hide;
-            this.backgroundColor = rule.backgroundColor;
-            this.textColor = rule.textColor;
             this.enabled = rule.enabled;
-            this.style = rule.style;
+            this.formattingType = rule.formattingType;
+            this.formattingStyle = rule.formattingStyle;
             this.customStyle = rule.customStyle;
         }
 
@@ -186,40 +214,28 @@ public class ConditionalFormattingRule {
             return this;
         }
 
-        public Builder backgroundColor(final String backgroundColor) {
-            if (backgroundColor.trim().length() == 0) {
-                this.backgroundColor = null;
-            } else {
-                this.backgroundColor = backgroundColor.trim();
-            }
-            return this;
-        }
-
-        public Builder textColor(final String textColor) {
-            if (textColor.trim().length() == 0) {
-                this.textColor = null;
-            } else {
-                this.textColor = textColor.trim();
-            }
-            return this;
-        }
-
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
             return this;
         }
 
-        public Builder style(final ConditionalFormattingStyle style) {
-            this.style = style;
+        public Builder formattingType(final ConditionalFormattingType formattingType) {
+            this.formattingType = formattingType;
             return this;
         }
 
-        public Builder customStyle(final Boolean customStyle) {
-            if (customStyle != Boolean.FALSE) {
-                this.customStyle = null;
-            } else {
-                this.customStyle = false;
-            }
+        public Builder formattingStyle(final ConditionalFormattingStyle formattingStyle) {
+            this.formattingStyle = formattingStyle;
+            return this;
+        }
+
+        public Builder customStyle(final CustomConditionalFormattingStyle customStyle) {
+            this.customStyle = customStyle;
+            return this;
+        }
+
+        public Builder textAttributes(final TextAttributes textAttributes) {
+            this.textAttributes = textAttributes;
             return this;
         }
 
@@ -232,11 +248,13 @@ public class ConditionalFormattingRule {
                     id,
                     expression,
                     hide,
-                    backgroundColor,
-                    textColor,
+                    null,
+                    null,
                     enabled,
-                    style,
-                    customStyle);
+                    formattingType,
+                    formattingStyle,
+                    customStyle,
+                    textAttributes);
         }
     }
 }

@@ -53,11 +53,11 @@ public class UserPermissionReportPresenter
         implements QuickFilterUiHandlers {
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
-    private final DocumentPermissionsListPresenter documentListPresenter;
+    private final DocumentPermissionsListPresenter documentPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
     private final ButtonView docEdit;
-    private final InlineSvgToggleButton showAllToggleButton;
+    private final InlineSvgToggleButton explicitOnly;
     private final ButtonView docFilter;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
@@ -70,43 +70,44 @@ public class UserPermissionReportPresenter
     public UserPermissionReportPresenter(final EventBus eventBus,
                                          final QuickFilterPageView view,
                                          final Provider<ExpressionPresenter> docFilterPresenterProvider,
-                                         final DocumentPermissionsListPresenter documentListPresenter,
+                                         final DocumentPermissionsListPresenter documentPermissionsListPresenter,
                                          final Provider<DocumentUserPermissionsEditPresenter>
                                                  documentUserPermissionsEditPresenterProvider,
                                          final Provider<BatchDocumentPermissionsEditPresenter>
                                                  batchDocumentPermissionsEditPresenterProvider) {
         super(eventBus, view);
-        this.documentListPresenter = documentListPresenter;
+        this.documentPermissionsListPresenter = documentPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
-        view.setDataView(documentListPresenter.getView());
+        view.setDataView(documentPermissionsListPresenter.getView());
         getView().setUiHandlers(this);
 
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
         quickFilterExpression = getShowAllExpression();
 
-        docEdit = documentListPresenter.getView().addButton(new Preset(
+        docEdit = documentPermissionsListPresenter.getView().addButton(new Preset(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
                 false));
-        showAllToggleButton = new InlineSvgToggleButton();
-        showAllToggleButton.setSvg(SvgImage.EYE);
-        showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
-        showAllToggleButton.setState(false);
-        documentListPresenter.getView().addButton(showAllToggleButton);
-        docFilter = documentListPresenter.getView().addButton(new Preset(
+        explicitOnly = new InlineSvgToggleButton();
+        explicitOnly.setSvg(SvgImage.EYE_OFF);
+        explicitOnly.setTitle("Only Show Documents With Explicit Permissions");
+        explicitOnly.setState(false);
+        documentPermissionsListPresenter.getView().addButton(explicitOnly);
+        documentPermissionsListPresenter.getCriteriaBuilder().explicitPermission(explicitOnly.getState());
+        docFilter = documentPermissionsListPresenter.getView().addButton(new Preset(
                 SvgImage.FILTER,
                 "Filter Documents To Apply Permissions Changes On",
                 true));
-        batchEdit = documentListPresenter.getView().addButton(new Preset(
+        batchEdit = documentPermissionsListPresenter.getView().addButton(new Preset(
                 SvgImage.GENERATE,
                 "Batch Edit Permissions For Filtered Documents",
                 false));
 
 
-        documentListPresenter.setCurrentResulthandler(resultPage -> {
+        documentPermissionsListPresenter.setCurrentResulthandler(resultPage -> {
             docs = resultPage;
             batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
@@ -121,16 +122,16 @@ public class UserPermissionReportPresenter
                 onEdit();
             }
         }));
-        registerHandler(showAllToggleButton.addClickHandler(e -> {
-            if (showAllToggleButton.getState()) {
-                showAllToggleButton.setTitle("Hide Documents Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE_OFF);
+        registerHandler(explicitOnly.addClickHandler(e -> {
+            if (explicitOnly.getState()) {
+                explicitOnly.setTitle("Show All Documents");
+                explicitOnly.setSvg(SvgImage.EYE);
             } else {
-                showAllToggleButton.setTitle("Show Documents Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE);
+                explicitOnly.setTitle("Only Show Documents With Explicit Permissions");
+                explicitOnly.setSvg(SvgImage.EYE_OFF);
             }
-            documentListPresenter.getCriteriaBuilder().explicitPermission(!showAllToggleButton.getState());
-            documentListPresenter.refresh();
+            documentPermissionsListPresenter.getCriteriaBuilder().explicitPermission(explicitOnly.getState());
+            documentPermissionsListPresenter.refresh();
         }));
         registerHandler(docFilter.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
@@ -142,8 +143,9 @@ public class UserPermissionReportPresenter
                 onBatchEdit();
             }
         }));
-        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
-            final FindResultWithPermissions selected = documentListPresenter.getSelectionModel().getSelected();
+        registerHandler(documentPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+            final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel()
+                    .getSelected();
             docEdit.setEnabled(selected != null);
             if (selected != null && e.getSelectionType().isDoubleSelect()) {
                 onEdit();
@@ -159,6 +161,7 @@ public class UserPermissionReportPresenter
         final HidePopupRequestEvent.Handler handler = e -> {
             if (e.isOk()) {
                 filterExpression = presenter.write();
+                documentPermissionsListPresenter.resetRange();
                 refresh();
             }
             e.hide();
@@ -180,12 +183,12 @@ public class UserPermissionReportPresenter
     }
 
     private void onEdit() {
-        final FindResultWithPermissions selected = documentListPresenter.getSelectionModel().getSelected();
+        final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
             final DocumentUserPermissionsEditPresenter presenter = documentUserPermissionsEditPresenterProvider.get();
-            presenter.show(selected.getFindResult().getDocRef(), selected.getPermissions(), () -> {
-                documentListPresenter.refresh();
-            });
+            presenter.show(selected.getFindResult().getDocRef(),
+                    selected.getPermissions(),
+                    documentPermissionsListPresenter::refresh);
         }
     }
 
@@ -193,8 +196,9 @@ public class UserPermissionReportPresenter
         final BatchDocumentPermissionsEditPresenter presenter =
                 batchDocumentPermissionsEditPresenterProvider.get();
         presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
-        presenter.show(combinedExpression, GwtNullSafe.get(docs, ResultPage::getPageResponse), () ->
-                documentListPresenter.refresh());
+        presenter.show(combinedExpression,
+                GwtNullSafe.get(docs, ResultPage::getPageResponse),
+                documentPermissionsListPresenter::refresh);
     }
 
     private void refresh() {
@@ -207,8 +211,8 @@ public class UserPermissionReportPresenter
         }
 
         combinedExpression = builder.build();
-        documentListPresenter.getCriteriaBuilder().expression(combinedExpression);
-        documentListPresenter.refresh();
+        documentPermissionsListPresenter.getCriteriaBuilder().expression(combinedExpression);
+        documentPermissionsListPresenter.refresh();
     }
 
     private ExpressionOperator getShowAllExpression() {
@@ -231,6 +235,7 @@ public class UserPermissionReportPresenter
         } else {
             quickFilterExpression = getShowAllExpression();
         }
+        documentPermissionsListPresenter.resetRange();
         refresh();
     }
 //
@@ -285,11 +290,11 @@ public class UserPermissionReportPresenter
 
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
-        documentListPresenter.getCriteriaBuilder().userRef(userRef);
+        documentPermissionsListPresenter.getCriteriaBuilder().userRef(userRef);
 
         // We only want to see documents tha the current user is effectively the owner of as they can't change
         // permissions on anything else.
-        documentListPresenter.getCriteriaBuilder().requiredPermissions(Set.of(DocumentPermission.VIEW));
+        documentPermissionsListPresenter.getCriteriaBuilder().requiredPermissions(Set.of(DocumentPermission.VIEW));
         refresh();
     }
 

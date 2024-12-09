@@ -153,14 +153,14 @@ public class ExpressionPredicateBuilder {
         }
 
         // Create a query based on the field type and condition.
-//        final FieldType fieldType = valueFunctionFactory.getFieldType();
-//        if (FieldType.DATE.equals(fieldType)) {
-//            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
-//        } else if (fieldType.isNumeric()) {
-//            return createNumericTermPredicate(term, valueFunctionFactory);
-//        } else {
-        return createGeneralTermPredicate(term, valueFunctionFactory, dateTimeSettings);
-//        }
+        final FieldType fieldType = valueFunctionFactory.getFieldType();
+        if (FieldType.DATE.equals(fieldType)) {
+            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+        } else if (fieldType.isNumeric()) {
+            return createNumericTermPredicate(term, valueFunctionFactory);
+        } else {
+            return createGeneralTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+        }
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -176,11 +176,16 @@ public class ExpressionPredicateBuilder {
                 final Function<T, String> stringExtractor = valueFunctionFactory.createStringExtractor();
                 return switch (term.getCondition()) {
                     case EQUALS -> StringEquals.create(term, stringExtractor);
+                    case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
                     case NOT_EQUALS -> StringNotEquals.create(term, stringExtractor);
                     case CONTAINS -> StringContains.create(term, stringExtractor);
+                    case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
                     case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
+                    case STARTS_WITH_CASE_SENSITIVE -> StringStartsWithCaseSensitive.create(term, stringExtractor);
                     case ENDS_WITH -> StringEndsWith.create(term, stringExtractor);
+                    case ENDS_WITH_CASE_SENSITIVE -> StringEndsWithCaseSensitive.create(term, stringExtractor);
                     case MATCHES_REGEX -> StringRegex.create(term, stringExtractor);
+                    case MATCHES_REGEX_CASE_SENSITIVE -> StringRegexCaseSensitive.create(term, stringExtractor);
                     case WORD_BOUNDARY -> StringWordBoundary.create(term, stringExtractor);
                     case IN -> StringIn.create(term, stringExtractor);
                     default -> throw e2;
@@ -204,10 +209,10 @@ public class ExpressionPredicateBuilder {
             case BETWEEN -> DateBetween.create(term, dateExtractor, dateTimeSettings);
             case IN -> DateIn.create(term, dateExtractor, dateTimeSettings);
             default -> throw new MatchException("Unexpected condition '" +
-                    term.getCondition().getDisplayValue() +
-                    "' for " +
-                    valueFunctionFactory.getFieldType() +
-                    " field type");
+                                                term.getCondition().getDisplayValue() +
+                                                "' for " +
+                                                valueFunctionFactory.getFieldType() +
+                                                " field type");
         };
     }
 
@@ -225,10 +230,10 @@ public class ExpressionPredicateBuilder {
             case BETWEEN -> NumericBetween.create(term, numExtractor);
             case IN -> NumericIn.create(term, numExtractor);
             default -> throw new MatchException("Unexpected condition '" +
-                    term.getCondition().getDisplayValue() +
-                    "' for " +
-                    valueFunctionFactory.getFieldType() +
-                    " field type");
+                                                term.getCondition().getDisplayValue() +
+                                                "' for " +
+                                                valueFunctionFactory.getFieldType() +
+                                                " field type");
         };
     }
 
@@ -240,7 +245,7 @@ public class ExpressionPredicateBuilder {
         } catch (final NumberFormatException e) {
             throw new MatchException(
                     "Expected a numeric value for field \"" + term.getField() +
-                            "\" but was given string \"" + value + "\"");
+                    "\" but was given string \"" + value + "\"");
         }
     }
 
@@ -257,19 +262,19 @@ public class ExpressionPredicateBuilder {
             } catch (final NumberFormatException e) {
                 throw new MatchException(
                         "Unable to parse a date/time from value for field \"" +
-                                term.getField() +
-                                "\" but was given string \"" +
-                                value +
-                                "\"");
+                        term.getField() +
+                        "\" but was given string \"" +
+                        value +
+                        "\"");
             }
         } else {
             throw new MatchException(
                     "Expected a string value for field \"" +
-                            term.getField() +
-                            "\" but was given \"" +
-                            value +
-                            "\" of type " +
-                            value.getClass().getName());
+                    term.getField() +
+                    "\" but was given \"" +
+                    value +
+                    "\" of type " +
+                    value.getClass().getName());
         }
     }
 
@@ -601,7 +606,7 @@ public class ExpressionPredicateBuilder {
         public boolean test(final T values) {
             final BigDecimal val = extractionFunction.apply(values);
             return CompareUtil.compareBigDecimal(val, between[0]) >= 0
-                    && CompareUtil.compareBigDecimal(val, between[1]) <= 0;
+                   && CompareUtil.compareBigDecimal(val, between[1]) <= 0;
         }
     }
 
@@ -811,7 +816,7 @@ public class ExpressionPredicateBuilder {
         public boolean test(final T values) {
             final Long val = extractionFunction.apply(values);
             return CompareUtil.compareLong(val, between[0]) >= 0
-                    && CompareUtil.compareLong(val, between[1]) <= 0;
+                   && CompareUtil.compareLong(val, between[1]) <= 0;
         }
     }
 
@@ -877,25 +882,7 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
-
-            if (term.isCaseSensitive()) {
-                return Optional.of(new StringEquals<>(term, extractionFunction));
-            } else {
-                return Optional.of(new StringEqualsIgnoreCase<>(term, extractionFunction));
-            }
-        }
-
-        @Override
-        public boolean test(final T values) {
-            return string.equals(extractionFunction.apply(values));
-        }
-    }
-
-    private static class StringEqualsIgnoreCase<T> extends StringExpressionTermPredicate<T> {
-
-        private StringEqualsIgnoreCase(final ExpressionTerm term,
-                                       final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            return Optional.of(new StringEquals<>(term, extractionFunction));
         }
 
         @Override
@@ -906,32 +893,56 @@ public class ExpressionPredicateBuilder {
 
     private static class StringNotEquals<T> extends StringExpressionTermPredicate<T> {
 
-        private final Predicate<T> predicate;
-
         private StringNotEquals(final ExpressionTerm term,
-                                final Function<T, String> extractionFunction,
-                                final Predicate<T> predicate) {
+                                final Function<T, String> extractionFunction) {
             super(term, extractionFunction);
-            this.predicate = predicate;
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            final Optional<Predicate<T>> predicate = StringEquals.create(term, extractionFunction);
-            return predicate.map(valuesPredicate -> new StringNotEquals<>(term, extractionFunction, valuesPredicate));
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new StringNotEquals<>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
-            return !predicate.test(values);
+            return !string.equalsIgnoreCase(extractionFunction.apply(values));
         }
     }
 
-    private static class StringContains<T> extends StringExpressionTermPredicate<T> {
+    private static class StringEqualsCaseSensitive<T> extends StringExpressionTermPredicate<T> {
+
+        private StringEqualsCaseSensitive(final ExpressionTerm term,
+                                          final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new StringEqualsCaseSensitive<>(term, extractionFunction));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            return string.equals(extractionFunction.apply(values));
+        }
+    }
+
+    private static class StringContains<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, String> extractionFunction;
+        private final String string;
 
         private StringContains(final ExpressionTerm term,
                                final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            super(term);
+            this.extractionFunction = extractionFunction;
+            string = term.getValue().toLowerCase();
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
@@ -940,34 +951,7 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
-
-            if (term.isCaseSensitive()) {
-                return Optional.of(new StringContains<>(term, extractionFunction));
-            } else {
-                return Optional.of(new StringContainsIgnoreCase<>(term, extractionFunction));
-            }
-        }
-
-        @Override
-        public boolean test(final T values) {
-            final String val = extractionFunction.apply(values);
-            if (val == null) {
-                return false;
-            }
-            return val.contains(string);
-        }
-    }
-
-    private static class StringContainsIgnoreCase<T> extends ExpressionTermPredicate<T> {
-
-        private final Function<T, String> extractionFunction;
-        private final String string;
-
-        private StringContainsIgnoreCase(final ExpressionTerm term,
-                                         final Function<T, String> extractionFunction) {
-            super(term);
-            this.extractionFunction = extractionFunction;
-            string = term.getValue().toLowerCase();
+            return Optional.of(new StringContains<>(term, extractionFunction));
         }
 
         @Override
@@ -980,10 +964,10 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class StringStartsWith<T> extends StringExpressionTermPredicate<T> {
+    private static class StringContainsCaseSensitive<T> extends StringExpressionTermPredicate<T> {
 
-        private StringStartsWith(final ExpressionTerm term,
-                                 final Function<T, String> extractionFunction) {
+        private StringContainsCaseSensitive(final ExpressionTerm term,
+                                            final Function<T, String> extractionFunction) {
             super(term, extractionFunction);
         }
 
@@ -993,12 +977,7 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
-
-            if (term.isCaseSensitive()) {
-                return Optional.of(new StringStartsWith<>(term, extractionFunction));
-            } else {
-                return Optional.of(new StringStartsWithIgnoreCase<>(term, extractionFunction));
-            }
+            return Optional.of(new StringContainsCaseSensitive<>(term, extractionFunction));
         }
 
         @Override
@@ -1007,20 +986,30 @@ public class ExpressionPredicateBuilder {
             if (val == null) {
                 return false;
             }
-            return val.startsWith(string);
+            return val.contains(string);
         }
     }
 
-    private static class StringStartsWithIgnoreCase<T> extends ExpressionTermPredicate<T> {
+
+    private static class StringStartsWith<T> extends ExpressionTermPredicate<T> {
 
         private final Function<T, String> extractionFunction;
         private final String string;
 
-        private StringStartsWithIgnoreCase(final ExpressionTerm term,
-                                           final Function<T, String> extractionFunction) {
+        private StringStartsWith(final ExpressionTerm term,
+                                 final Function<T, String> extractionFunction) {
             super(term);
             this.extractionFunction = extractionFunction;
             string = term.getValue().toLowerCase();
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            // If the term value is null or empty then always match.
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new StringStartsWith<>(term, extractionFunction));
         }
 
         @Override
@@ -1033,10 +1022,10 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class StringEndsWith<T> extends StringExpressionTermPredicate<T> {
+    private static class StringStartsWithCaseSensitive<T> extends StringExpressionTermPredicate<T> {
 
-        private StringEndsWith(final ExpressionTerm term,
-                               final Function<T, String> extractionFunction) {
+        private StringStartsWithCaseSensitive(final ExpressionTerm term,
+                                              final Function<T, String> extractionFunction) {
             super(term, extractionFunction);
         }
 
@@ -1046,12 +1035,64 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
+            return Optional.of(new StringStartsWithCaseSensitive<>(term, extractionFunction));
+        }
 
-            if (term.isCaseSensitive()) {
-                return Optional.of(new StringEndsWith<>(term, extractionFunction));
-            } else {
-                return Optional.of(new StringEndsWithIgnoreCase<>(term, extractionFunction));
+        @Override
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
+                return false;
             }
+            return val.startsWith(string);
+        }
+    }
+
+    private static class StringEndsWith<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, String> extractionFunction;
+        private final String string;
+
+        private StringEndsWith(final ExpressionTerm term,
+                               final Function<T, String> extractionFunction) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            string = term.getValue().toLowerCase();
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            // If the term value is null or empty then always match.
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new StringEndsWith<>(term, extractionFunction));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
+                return false;
+            }
+            return val.toLowerCase(Locale.ROOT).endsWith(string);
+        }
+    }
+
+    private static class StringEndsWithCaseSensitive<T> extends StringExpressionTermPredicate<T> {
+
+        private StringEndsWithCaseSensitive(final ExpressionTerm term,
+                                            final Function<T, String> extractionFunction) {
+            super(term, extractionFunction);
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            // If the term value is null or empty then always match.
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new StringEndsWithCaseSensitive<>(term, extractionFunction));
         }
 
         @Override
@@ -1064,27 +1105,6 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class StringEndsWithIgnoreCase<T> extends ExpressionTermPredicate<T> {
-
-        private final Function<T, String> extractionFunction;
-        private final String string;
-
-        private StringEndsWithIgnoreCase(final ExpressionTerm term,
-                                         final Function<T, String> extractionFunction) {
-            super(term);
-            this.extractionFunction = extractionFunction;
-            string = term.getValue().toLowerCase();
-        }
-
-        @Override
-        public boolean test(final T values) {
-            final String val = extractionFunction.apply(values);
-            if (val == null) {
-                return false;
-            }
-            return val.toLowerCase(Locale.ROOT).endsWith(string);
-        }
-    }
 
     private static class StringRegex<T> extends ExpressionTermPredicate<T> {
 
@@ -1105,12 +1125,41 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
-            int flags = 0;
-            if (!term.isCaseSensitive()) {
-                flags = Pattern.CASE_INSENSITIVE;
-            }
-            final Pattern pattern = Pattern.compile(term.getValue(), flags);
+            final Pattern pattern = Pattern.compile(term.getValue(), Pattern.CASE_INSENSITIVE);
             return Optional.of(new StringRegex<>(term, extractionFunction, pattern));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final String val = extractionFunction.apply(values);
+            if (val == null) {
+                return false;
+            }
+            return pattern.matcher(val).find();
+        }
+    }
+
+    private static class StringRegexCaseSensitive<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, String> extractionFunction;
+        private final Pattern pattern;
+
+        private StringRegexCaseSensitive(final ExpressionTerm term,
+                                         final Function<T, String> extractionFunction,
+                                         final Pattern pattern) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            this.pattern = pattern;
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction) {
+            // If the term value is null or empty then always match.
+            if (NullSafe.isBlankString(term.getValue())) {
+                return Optional.empty();
+            }
+            final Pattern pattern = Pattern.compile(term.getValue());
+            return Optional.of(new StringRegexCaseSensitive<>(term, extractionFunction, pattern));
         }
 
         @Override
@@ -1176,9 +1225,9 @@ public class ExpressionPredicateBuilder {
                         .field(term.getField())
                         .condition(Condition.EQUALS)
                         .value(str)
-                        .caseSensitive(term.getCaseSensitive())
                         .build();
-                final Optional<Predicate<T>> subPredicate = StringEquals.create(subTerm, extractionFunction);
+                final Optional<Predicate<T>> subPredicate = StringEqualsCaseSensitive.create(subTerm,
+                        extractionFunction);
                 subPredicate.ifPresent(subPredicates::add);
             }
             if (subPredicates.isEmpty()) {

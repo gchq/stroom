@@ -18,8 +18,6 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.AppUserPermissions;
 import stroom.svg.client.SvgPresets;
@@ -36,37 +34,32 @@ import javax.inject.Provider;
 public class AppPermissionsPresenter
         extends ContentTabPresenter<AppPermissionsView> {
 
-    private final RestFactory restFactory;
     private final Provider<AppPermissionsEditPresenter> appPermissionsChangePresenterProvider;
     private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
-    private final Provider<DocSelectionPopup> docSelectionPopupProvider;
 
     private final ButtonView edit;
-    private final InlineSvgToggleButton showAllToggleButton;
+    private final InlineSvgToggleButton explicitOnly;
 
     @Inject
     public AppPermissionsPresenter(
             final EventBus eventBus,
             final AppPermissionsView view,
-            final RestFactory restFactory,
             final AppUserPermissionsListPresenter appUserPermissionsListPresenter,
-            final Provider<AppPermissionsEditPresenter> appPermissionsChangePresenterProvider,
-            final Provider<DocSelectionPopup> docSelectionPopupProvider) {
+            final Provider<AppPermissionsEditPresenter> appPermissionsChangePresenterProvider) {
 
         super(eventBus, view);
-        this.restFactory = restFactory;
         this.appPermissionsChangePresenterProvider = appPermissionsChangePresenterProvider;
         this.appUserPermissionsListPresenter = appUserPermissionsListPresenter;
-        this.docSelectionPopupProvider = docSelectionPopupProvider;
         view.setPermissionsView(appUserPermissionsListPresenter.getView());
 
         edit = appUserPermissionsListPresenter.addButton(SvgPresets.EDIT);
 
-        showAllToggleButton = new InlineSvgToggleButton();
-        showAllToggleButton.setSvg(SvgImage.EYE);
-        showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
-        showAllToggleButton.setState(false);
-        appUserPermissionsListPresenter.addButton(showAllToggleButton);
+        explicitOnly = new InlineSvgToggleButton();
+        explicitOnly.setSvg(SvgImage.EYE_OFF);
+        explicitOnly.setTitle("Only Show Users With Explicit Permissions");
+        explicitOnly.setState(false);
+        appUserPermissionsListPresenter.addButton(explicitOnly);
+        appUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
     }
 
     @Override
@@ -80,15 +73,15 @@ public class AppPermissionsPresenter
             }
         }));
         registerHandler(edit.addClickHandler(e -> editPermissions()));
-        registerHandler(showAllToggleButton.addClickHandler(e -> {
-            if (showAllToggleButton.getState()) {
-                showAllToggleButton.setTitle("Hide Users Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE_OFF);
+        registerHandler(explicitOnly.addClickHandler(e -> {
+            if (explicitOnly.getState()) {
+                explicitOnly.setTitle("Show All Users");
+                explicitOnly.setSvg(SvgImage.EYE);
             } else {
-                showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
-                showAllToggleButton.setSvg(SvgImage.EYE);
+                explicitOnly.setTitle("Only Show Users With Explicit Permissions");
+                explicitOnly.setSvg(SvgImage.EYE_OFF);
             }
-            appUserPermissionsListPresenter.setAllUsers(showAllToggleButton.getState());
+            appUserPermissionsListPresenter.setAllUsers(!explicitOnly.getState());
             appUserPermissionsListPresenter.refresh();
         }));
     }
@@ -98,8 +91,8 @@ public class AppPermissionsPresenter
         if (appUserPermissions != null) {
             final AppPermissionsEditPresenter appPermissionsChangePresenter =
                     appPermissionsChangePresenterProvider.get();
-            appPermissionsChangePresenter.show(appUserPermissions.getUserRef(), () ->
-                    appUserPermissionsListPresenter.refresh());
+            appPermissionsChangePresenter.show(appUserPermissions.getUserRef(),
+                    appUserPermissionsListPresenter::refresh);
         }
     }
 

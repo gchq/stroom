@@ -38,7 +38,7 @@ public class DocumentTypes {
 
     public static final String[] FOLDER_TYPES = new String[]{
             ExplorerConstants.SYSTEM,
-            ExplorerConstants.FOLDER
+            ExplorerConstants.FOLDER_TYPE
     };
 
     public static final Set<String> FOLDER_TYPES_SET = Collections.unmodifiableSet(Arrays.stream(FOLDER_TYPES)
@@ -82,6 +82,6 @@ public class DocumentTypes {
     }
 
     public static boolean isSystem(final String type) {
-        return ExplorerConstants.SYSTEM.equals(type);
+        return ExplorerConstants.SYSTEM_TYPE.equals(type);
     }
 }

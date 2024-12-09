@@ -308,7 +308,9 @@ public class FlexLayout extends Composite {
         final double y = event.getClientY();
 
         if (selectedSplitter != null) {
-            stopSplitResize(x, y);
+            if (startPos != null) {
+                stopSplitResize(x, y);
+            }
 
         } else if (selection != null) {
             if (draggingTab) {

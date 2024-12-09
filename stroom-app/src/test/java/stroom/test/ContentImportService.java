@@ -8,9 +8,9 @@ import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
 import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import jakarta.inject.Inject;
 
 import java.nio.file.Path;
@@ -80,7 +80,7 @@ public class ContentImportService {
 
     public void importFromDefinitionYaml(final Path definitionYaml) {
         try {
-            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
             final ContentPackCollection contentPacks = mapper.readValue(
                     definitionYaml.toFile(),
                     ContentPackCollection.class);

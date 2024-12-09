@@ -56,7 +56,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
     private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
-    private final FilterPresenter filterPresenter;
+    private final TableFilterPresenter tableFilterPresenter;
     private int columnsStartIndex;
     private int currentColIndex = -1;
     private boolean ignoreNext;
@@ -65,12 +65,12 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final FilterPresenter filterPresenter) {
+                          final TableFilterPresenter tableFilterPresenter) {
         this.tablePresenter = tablePresenter;
         this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
-        this.filterPresenter = filterPresenter;
+        this.tableFilterPresenter = tableFilterPresenter;
     }
 
     @Override
@@ -251,12 +251,20 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         });
     }
 
-    private void filterField(final Column column) {
-        filterPresenter.show(tablePresenter, column, (oldField, newField) -> {
+    private void filterColumn(final Column column) {
+        tableFilterPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
+
+            if (newField.getColumnFilter() != null &&
+                GwtNullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
+                if (!tablePresenter.getTableSettings().applyValueFilters()) {
+                    tablePresenter.toggleApplyValueFilters();
+                }
+            }
+
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tablePresenter.onColumnFilterChange();
         });
     }
 
@@ -352,13 +360,16 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         ColumnFilter columnFilter = null;
         if (GwtNullSafe.isNonBlankString(valueFilter)) {
             // TODO : Add case sensitive option.
-            columnFilter = new ColumnFilter(valueFilter, false);
+            columnFilter = new ColumnFilter(valueFilter);
         }
 
-        replaceColumn(column, column.copy().columnFilter(columnFilter).build());
-        tablePresenter.setFocused(false);
-        tablePresenter.setDirty(true);
-        tablePresenter.refresh();
+        if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            replaceColumn(column, column.copy().columnFilter(columnFilter).build());
+            tablePresenter.setFocused(false);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+            tablePresenter.onColumnFilterChange();
+        }
     }
 
     private List<Column> getColumns() {
@@ -430,8 +441,8 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         menuItems.add(createGroupByMenu(column));
         // Create format menu.
         menuItems.add(createFormatMenu(column));
-        // Add filter menu item.
-        menuItems.add(createFilterMenu(column));
+        // Add column filter menu item.
+        menuItems.add(createColumnFilterMenu(column));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
@@ -624,18 +635,21 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         return depths.size();
     }
 
-    private Item createFilterMenu(final Column column) {
+    private Item createColumnFilterMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(4)
                 .icon(SvgImage.FILTER)
                 .disabledIcon(SvgImage.FILTER)
                 .text("Filter")
-                .command(() -> filterField(column))
-                .highlight(column.getFilter() != null
-                        && ((column.getFilter().getIncludes() != null
-                        && column.getFilter().getIncludes().trim().length() > 0)
-                        || (column.getFilter().getExcludes() != null
-                        && column.getFilter().getExcludes().trim().length() > 0)))
+                .command(() -> filterColumn(column))
+                .highlight((column.getFilter() != null
+                           && ((column.getFilter().getIncludes() != null
+                                && column.getFilter().getIncludes().trim().length() > 0)
+                               || (column.getFilter().getExcludes() != null
+                                   && column.getFilter().getExcludes().trim().length() > 0))) ||
+                               (column.getColumnFilter() != null
+                           && ((column.getColumnFilter().getFilter() != null
+                                && column.getColumnFilter().getFilter().trim().length() > 0))))
                 .build();
     }
 
@@ -646,7 +660,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 .text("Format")
                 .command(() -> showFormat(column))
                 .highlight(column.getFormat() != null && column.getFormat().getSettings() != null
-                        && !column.getFormat().getSettings().isDefault())
+                           && !column.getFormat().getSettings().isDefault())
                 .build();
     }
 

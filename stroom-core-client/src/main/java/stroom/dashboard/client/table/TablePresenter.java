@@ -162,7 +162,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
-    private ExpressionOperator currentSelectionExpression;
+    private ExpressionOperator currentSelectionFilter;
+    private final TableRowStyles tableRowStyles;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -173,7 +174,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final FilterPresenter filterPresenter,
+                          final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
@@ -193,11 +194,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.userPreferencesManager = userPreferencesManager;
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
+        tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
+        dataGrid.setRowStyles(tableRowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -229,7 +232,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
-                filterPresenter);
+                tableFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get(result -> {
@@ -296,7 +299,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (currentSearchModel.isPolling()) {
                     ConfirmEvent.fire(TablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
-                                    "Note that these may be incomplete.",
+                            "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -308,16 +311,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> {
-            final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
-            setSettings(getTableComponentSettings()
-                    .copy()
-                    .applyValueFilters(applyValueFilters)
-                    .build());
-            setDirty(true);
-            refresh();
-            setApplyValueFilters(applyValueFilters);
-        }));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -337,16 +331,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setComponents(components);
 
         registerHandler(components.addComponentChangeHandler(event -> {
-            final Component component = event.getComponent();
-            final Optional<ExpressionOperator> optional = SelectionHandlerExpressionBuilder
-                    .create(component, getTableComponentSettings().getSelectionHandlers());
-            optional.ifPresent(selectionExpression -> {
-                if (!Objects.equals(currentSelectionExpression, selectionExpression)) {
-                    currentSelectionExpression = selectionExpression;
-                    refresh();
-                }
-            });
+            final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
+                    .create(components.getComponents(), getTableComponentSettings().getSelectionFilter())
+                    .orElse(null);
+            if (!Objects.equals(currentSelectionFilter, selectionFilter)) {
+                currentSelectionFilter = selectionFilter;
+                onColumnFilterChange();
+            }
         }));
+    }
+
+    public void toggleApplyValueFilters() {
+        final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
+        setSettings(getTableComponentSettings()
+                .copy()
+                .applyValueFilters(applyValueFilters)
+                .build());
+        setDirty(true);
+        refresh();
+        setApplyValueFilters(applyValueFilters);
     }
 
     private void setApplyValueFilters(final boolean applyValueFilters) {
@@ -547,6 +550,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                    tableRowStyles.setConditionalFormattingRules(getTableSettings()
+                            .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
@@ -632,8 +637,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 // Wrap
                 if (column.getFormat() != null &&
-                        column.getFormat().getWrap() != null &&
-                        column.getFormat().getWrap()) {
+                    column.getFormat().getWrap() != null &&
+                    column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
@@ -661,15 +666,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getBackgroundColor(),
-                    row.getTextColor(),
-                    row.getStyle()));
+                    row.getMatchingRule()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
-        dataGrid.setRowStyles(new TableRowStyles());
 
         return processed;
     }
@@ -701,7 +703,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
             if (getTableComponentSettings() != null &&
-                    getTableComponentSettings().getConditionalFormattingRules() != null) {
+                getTableComponentSettings().getConditionalFormattingRules() != null) {
                 final AtomicBoolean wasModified = new AtomicBoolean(false);
                 getTableComponentSettings().getConditionalFormattingRules().stream()
                         .map(ConditionalFormattingRule::getExpression)
@@ -973,6 +975,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         setQueryId(tableComponentSettings.getQueryId());
         updatePageSize();
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(getTableSettings().getConditionalFormattingRules());
+        dataGrid.redraw();
     }
 
     private void updatePageSize() {
@@ -995,11 +1001,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return tableResultRequest.copy().tableSettings(getTableSettings()).fetch(fetch).build();
     }
 
-    private TableSettings getTableSettings() {
+    public TableSettings getTableSettings() {
         TableSettings tableSettings = getTableComponentSettings()
                 .copy()
                 .buildTableSettings();
-        return tableSettings.copy().aggregateFilter(currentSelectionExpression).build();
+        return tableSettings.copy().aggregateFilter(currentSelectionFilter).build();
     }
 
     @Override
@@ -1032,6 +1038,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void refresh() {
         refresh(() -> {
         });
+    }
+
+    void onColumnFilterChange() {
+        refresh();
+        getComponents().fireComponentChangeEvent(this);
     }
 
     public TableSectionElement getTableHeadElement() {
@@ -1115,8 +1126,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public Set<String> getHighlights() {
         if (currentSearchModel != null
-                && currentSearchModel.getCurrentResponse() != null
-                && currentSearchModel.getCurrentResponse().getHighlights() != null) {
+            && currentSearchModel.getCurrentResponse() != null
+            && currentSearchModel.getCurrentResponse().getHighlights() != null) {
             return currentSearchModel.getCurrentResponse().getHighlights();
         }
 

@@ -190,7 +190,6 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create visualisation.
         final VisComponentSettings visSettings = VisComponentSettings.builder()
                 .tableId("table-1234")
-                .tableSettings(tableSettings)
                 .visualisation(visNode != null
                         ? visNode.getDocRef()
                         : null)

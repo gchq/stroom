@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "queryId",
@@ -49,7 +50,7 @@ import java.util.Objects;
         "applyValueFilters",
         "selectionHandlers"})
 @JsonInclude(Include.NON_NULL)
-public class TableComponentSettings implements ComponentSettings {
+public class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
 
     public static final long[] DEFAULT_MAX_RESULTS = {};
 
@@ -75,11 +76,11 @@ public class TableComponentSettings implements ComponentSettings {
     private final DocRef extractionPipeline;
 
     @Schema(description = "Defines the maximum number of results to return at each grouping level, e.g. " +
-            "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
-            "In the absence of this field system defaults will apply", example = "1000,10,1")
+                          "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
+                          "In the absence of this field system defaults will apply", example = "1000,10,1")
     @JsonPropertyDescription("Defines the maximum number of results to return at each grouping level, e.g. " +
-            "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
-            "In the absence of this field system defaults will apply")
+                             "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
+                             "In the absence of this field system defaults will apply")
     @JsonProperty
     private final List<Long> maxResults;
 
@@ -90,8 +91,8 @@ public class TableComponentSettings implements ComponentSettings {
     private final Integer pageSize;
 
     @JsonPropertyDescription("When grouping is used a value of true indicates that the results will include the full " +
-            "detail of any results aggregated into a group as well as their aggregates. A value of " +
-            "false will only include the aggregated values for each group. Defaults to false.")
+                             "detail of any results aggregated into a group as well as their aggregates. A value of " +
+                             "false will only include the aggregated values for each group. Defaults to false.")
     @JsonProperty
     private final Boolean showDetail;
 
@@ -123,6 +124,12 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
             @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
 
+        // TODO all List props should be set like this
+        //  this.fields = GwtNullSafe.unmodifiableList(fields);
+        //  so that we can ensure the obj is immutable, however some code is mutating
+        //  these lists, e.g.
+        //  getTableSettings().getColumns().removeIf(Column::isSpecial);
+        //  Too dangerous to fix in 7.5, so best done in 7.7
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
         this.fields = fields;
@@ -208,7 +215,14 @@ public class TableComponentSettings implements ComponentSettings {
         return applyValueFilters == Boolean.TRUE;
     }
 
+    @Deprecated
     public List<ComponentSelectionHandler> getSelectionHandlers() {
+        return selectionHandlers;
+    }
+
+    @JsonIgnore
+    @Override
+    public List<ComponentSelectionHandler> getSelectionFilter() {
         return selectionHandlers;
     }
 
@@ -222,18 +236,18 @@ public class TableComponentSettings implements ComponentSettings {
         }
         final TableComponentSettings that = (TableComponentSettings) o;
         return Objects.equals(queryId, that.queryId) &&
-                Objects.equals(dataSourceRef, that.dataSourceRef) &&
-                Objects.equals(fields, that.fields) &&
-                Objects.equals(extractValues, that.extractValues) &&
-                Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline) &&
-                Objects.equals(extractionPipeline, that.extractionPipeline) &&
-                Objects.equals(maxResults, that.maxResults) &&
-                Objects.equals(pageSize, that.pageSize) &&
-                Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion) &&
-                Objects.equals(applyValueFilters, that.applyValueFilters) &&
-                Objects.equals(selectionHandlers, that.selectionHandlers);
+               Objects.equals(dataSourceRef, that.dataSourceRef) &&
+               Objects.equals(fields, that.fields) &&
+               Objects.equals(extractValues, that.extractValues) &&
+               Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline) &&
+               Objects.equals(extractionPipeline, that.extractionPipeline) &&
+               Objects.equals(maxResults, that.maxResults) &&
+               Objects.equals(pageSize, that.pageSize) &&
+               Objects.equals(showDetail, that.showDetail) &&
+               Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+               Objects.equals(modelVersion, that.modelVersion) &&
+               Objects.equals(applyValueFilters, that.applyValueFilters) &&
+               Objects.equals(selectionHandlers, that.selectionHandlers);
     }
 
     @Override
@@ -257,20 +271,20 @@ public class TableComponentSettings implements ComponentSettings {
     @Override
     public String toString() {
         return "TableSettings{" +
-                "queryId='" + queryId + '\'' +
-                ", dataSourceRef=" + dataSourceRef +
-                ", columns=" + fields +
-                ", extractValues=" + extractValues +
-                ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
-                ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + maxResults +
-                ", pageSize=" + pageSize +
-                ", showDetail=" + showDetail +
-                ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", modelVersion='" + modelVersion + '\'' +
-                ", applyValueFilters='" + applyValueFilters + '\'' +
-                ", selectionHandlers='" + selectionHandlers + '\'' +
-                '}';
+               "queryId='" + queryId + '\'' +
+               ", dataSourceRef=" + dataSourceRef +
+               ", columns=" + fields +
+               ", extractValues=" + extractValues +
+               ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
+               ", extractionPipeline=" + extractionPipeline +
+               ", maxResults=" + maxResults +
+               ", pageSize=" + pageSize +
+               ", showDetail=" + showDetail +
+               ", conditionalFormattingRules=" + conditionalFormattingRules +
+               ", modelVersion='" + modelVersion + '\'' +
+               ", applyValueFilters='" + applyValueFilters + '\'' +
+               ", selectionHandlers='" + selectionHandlers + '\'' +
+               '}';
     }
 
     public static Builder builder() {
@@ -282,11 +296,16 @@ public class TableComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
-    public static final class Builder extends ComponentSettings
-            .AbstractBuilder<TableComponentSettings, TableComponentSettings.Builder> {
+    public static final class Builder
+            extends ComponentSettings.AbstractBuilder<TableComponentSettings, TableComponentSettings.Builder>
+            implements HasSelectionFilterBuilder<TableComponentSettings, Builder> {
 
         private String queryId;
         private DocRef dataSourceRef;
@@ -300,7 +319,7 @@ public class TableComponentSettings implements ComponentSettings {
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
         private Boolean applyValueFilters;
-        private List<ComponentSelectionHandler> selectionHandlers;
+        private List<ComponentSelectionHandler> selectionFilter;
 
         private Builder() {
         }
@@ -324,7 +343,20 @@ public class TableComponentSettings implements ComponentSettings {
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
             this.applyValueFilters = tableSettings.applyValueFilters;
-            this.selectionHandlers = tableSettings.selectionHandlers;
+            this.selectionFilter = tableSettings.selectionHandlers;
+        }
+
+        private List<ConditionalFormattingRule> copyConditionalFormattingRules(
+                final List<ConditionalFormattingRule> rules) {
+
+            if (rules == null) {
+                return null;
+            } else {
+                return rules.stream()
+                        .map(col -> col.copy()
+                                .build())
+                        .collect(Collectors.toCollection(ArrayList::new));
+            }
         }
 
         /**
@@ -412,7 +444,11 @@ public class TableComponentSettings implements ComponentSettings {
         public Builder extractionPipeline(final String type,
                                           final String uuid,
                                           final String name) {
-            return self().extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
+            return self().extractionPipeline(DocRef.builder()
+                    .type(type)
+                    .uuid(uuid)
+                    .name(name)
+                    .build());
         }
 
         public Builder maxResults(final List<Long> maxResults) {
@@ -451,8 +487,8 @@ public class TableComponentSettings implements ComponentSettings {
             return self();
         }
 
-        public Builder selectionHandlers(final List<ComponentSelectionHandler> selectionHandlers) {
-            this.selectionHandlers = selectionHandlers;
+        public Builder selectionFilter(final List<ComponentSelectionHandler> selectionFilter) {
+            this.selectionFilter = selectionFilter;
             return self();
         }
 
@@ -476,7 +512,7 @@ public class TableComponentSettings implements ComponentSettings {
                     conditionalFormattingRules,
                     modelVersion,
                     applyValueFilters,
-                    selectionHandlers);
+                    selectionFilter);
         }
 
         public TableSettings buildTableSettings() {

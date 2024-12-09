@@ -9,7 +9,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -28,7 +31,9 @@ class TestYamlUtil {
 
         final ImmutablePojo immutablePojoDefault = new ImmutablePojo();
 
-        final ObjectMapper yamlObjectMapper = YamlUtil.createYamlObjectMapper();
+        final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory())
+                .registerModule(new Jdk8Module())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         final String defaultYaml = yamlObjectMapper.writeValueAsString(immutablePojoDefault);
 
@@ -75,7 +80,7 @@ class TestYamlUtil {
     @Test
     void testMergeYamlNodeTrees_noChange() throws JsonProcessingException {
         final ImmutablePojo immutablePojoDefault = new ImmutablePojo();
-        final ObjectMapper yamlObjectMapper = YamlUtil.createYamlObjectMapper();
+        final ObjectMapper yamlObjectMapper = YamlUtil.getMapper();
         // sparse is identical to default
         final String sparseYaml = yamlObjectMapper.writeValueAsString(immutablePojoDefault);
 
@@ -144,7 +149,7 @@ class TestYamlUtil {
                                      final BiConsumer<T, T> objectsConsumer)
             throws JsonProcessingException {
         final T defaultObject = defaultObjectSupplier.get();
-        final ObjectMapper yamlObjectMapper = YamlUtil.createYamlObjectMapper();
+        final ObjectMapper yamlObjectMapper = YamlUtil.getMapper();
 
         LOGGER.debug("default yaml:\n{}", yamlObjectMapper.writeValueAsString(defaultObject));
 
@@ -245,13 +250,13 @@ class TestYamlUtil {
         @Override
         public String toString() {
             return "ImmutablePojo{" +
-                    "myTrueBoolean=" + myTrueBoolean +
-                    ", myFalseBoolean=" + myFalseBoolean +
-                    ", myInt=" + myInt +
-                    ", myString='" + myString + '\'' +
-                    ", immutableChild=" + immutableChild +
-                    ", nonPublicString='" + nonPublicString + '\'' +
-                    '}';
+                   "myTrueBoolean=" + myTrueBoolean +
+                   ", myFalseBoolean=" + myFalseBoolean +
+                   ", myInt=" + myInt +
+                   ", myString='" + myString + '\'' +
+                   ", immutableChild=" + immutableChild +
+                   ", nonPublicString='" + nonPublicString + '\'' +
+                   '}';
         }
 
         @Override
@@ -264,11 +269,11 @@ class TestYamlUtil {
             }
             final ImmutablePojo that = (ImmutablePojo) o;
             return myTrueBoolean == that.myTrueBoolean
-                    && myFalseBoolean == that.myFalseBoolean
-                    && myInt == that.myInt
-                    && Objects.equals(myString, that.myString)
-                    && Objects.equals(immutableChild, that.immutableChild)
-                    && Objects.equals(nonPublicString, that.nonPublicString);
+                   && myFalseBoolean == that.myFalseBoolean
+                   && myInt == that.myInt
+                   && Objects.equals(myString, that.myString)
+                   && Objects.equals(immutableChild, that.immutableChild)
+                   && Objects.equals(nonPublicString, that.nonPublicString);
         }
 
         @Override
@@ -341,11 +346,11 @@ class TestYamlUtil {
         @Override
         public String toString() {
             return "ImmutableChildPojo{" +
-                    "myBoolean=" + myBoolean +
-                    ", myInt=" + myInt +
-                    ", myString='" + myString + '\'' +
-                    ", grandChild=" + immutableGrandChild +
-                    '}';
+                   "myBoolean=" + myBoolean +
+                   ", myInt=" + myInt +
+                   ", myString='" + myString + '\'' +
+                   ", grandChild=" + immutableGrandChild +
+                   '}';
         }
 
         @Override
@@ -417,10 +422,10 @@ class TestYamlUtil {
         @Override
         public String toString() {
             return "ImmutableChildPojo{" +
-                    "myBoolean=" + myBoolean +
-                    ", myInt=" + myInt +
-                    ", myString='" + myString + '\'' +
-                    '}';
+                   "myBoolean=" + myBoolean +
+                   ", myInt=" + myInt +
+                   ", myString='" + myString + '\'' +
+                   '}';
         }
 
         @Override

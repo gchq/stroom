@@ -82,36 +82,44 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
     @Override
     public void end() throws IOException {
-        // Write the workbook to the output stream.
-        workbook.write(outputStream);
-        outputStream.close();
+        if (workbook != null) {
+            // Write the workbook to the output stream.
+            workbook.write(outputStream);
+            outputStream.close();
 
-        // Close the workbook.
-        workbook.close();
+            // Close the workbook.
+            workbook.close();
 
-        // Dispose of temporary files backing workbook on disk.
-        workbook.dispose();
+            // Dispose of temporary files backing workbook on disk.
+            workbook.dispose();
+        }
     }
 
     @Override
     public void startTable(final String tableName) {
-        sheet = workbook.createSheet(tableName);
-        rowNum = 0;
-        colNum = 0;
+        if (workbook != null) {
+            sheet = workbook.createSheet(tableName);
+            rowNum = 0;
+            colNum = 0;
+        }
     }
 
     @Override
     public void endTable() {
-        // Auto-size tracked columns
-        for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
-            sheet.autoSizeColumn(columnIndex);
+        if (workbook != null && sheet != null) {
+            // Auto-size tracked columns
+            for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+                sheet.autoSizeColumn(columnIndex);
+            }
         }
     }
 
     @Override
     public void startLine() {
-        row = sheet.createRow(rowNum++);
-        colNum = 0;
+        if (workbook != null && sheet != null) {
+            row = sheet.createRow(rowNum++);
+            colNum = 0;
+        }
     }
 
     @Override
@@ -121,30 +129,34 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
     @Override
     public void writeHeading(final int fieldIndex, final Column column, final String heading) {
-        final Cell cell = row.createCell(colNum++);
-        cell.setCellValue(heading);
-        cell.setCellStyle(headingStyle);
+        if (workbook != null && sheet != null) {
+            final Cell cell = row.createCell(colNum++);
+            cell.setCellValue(heading);
+            cell.setCellStyle(headingStyle);
 
-        // Auto-size datetime and numeric columns
-        if (column.getFormat() != null) {
-            final Format.Type fieldType = column.getFormat().getType();
-            if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER) {
-                sheet.trackColumnForAutoSizing(fieldIndex);
+            // Auto-size datetime and numeric columns
+            if (column.getFormat() != null) {
+                final Format.Type fieldType = column.getFormat().getType();
+                if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER) {
+                    sheet.trackColumnForAutoSizing(fieldIndex);
+                }
             }
         }
     }
 
     @Override
     public void writeValue(final Column column, final String value) {
-        if (value == null) {
-            colNum++;
-        } else {
-            final Cell cell = row.createCell(colNum++);
-            setCellValue(workbook, cell, column, value);
+        if (workbook != null && sheet != null) {
+            if (value == null) {
+                colNum++;
+            } else {
+                final Cell cell = row.createCell(colNum++);
+                setCellValue(cell, column, value);
+            }
         }
     }
 
-    private void setCellValue(final SXSSFWorkbook workbook, final Cell cell, final Column column, final String value) {
+    private void setCellValue(final Cell cell, final Column column, final String value) {
         if (value != null) {
             if (column == null) {
                 general(cell, value);
@@ -266,7 +278,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
                             sb.append("#");
                         }
                         if (numberFormatSettings.getDecimalPlaces() != null
-                                && numberFormatSettings.getDecimalPlaces() > 0) {
+                            && numberFormatSettings.getDecimalPlaces() > 0) {
                             sb.append(".");
                             for (int i = 0; i < numberFormatSettings.getDecimalPlaces(); i++) {
                                 sb.append("0");
@@ -286,7 +298,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
                     if (settings instanceof DateTimeFormatSettings) {
                         final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
                         if (dateTimeFormatSettings.getPattern() != null
-                                && dateTimeFormatSettings.getPattern().trim().length() > 0) {
+                            && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                             pattern = dateTimeFormatSettings.getPattern();
                             pattern = pattern.replaceAll("'", "");
                             pattern = pattern.replaceAll("\\.SSS.*$", "");

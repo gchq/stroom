@@ -1,7 +1,6 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
-import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.util.shared.Expander;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -19,22 +18,16 @@ public class TableRow {
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
-    private final String backgroundColor;
-    private final String textColor;
-    private final ConditionalFormattingStyle style;
+    private final String matchingRule;
 
     public TableRow(final Expander expander,
                     final String groupKey,
                     final Map<String, Cell> cells,
-                    final String backgroundColor,
-                    final String textColor,
-                    final ConditionalFormattingStyle style) {
+                    final String matchingRule) {
         this.expander = expander;
         this.groupKey = groupKey;
         this.cells = cells;
-        this.backgroundColor = backgroundColor;
-        this.textColor = textColor;
-        this.style = style;
+        this.matchingRule = matchingRule;
     }
 
     public Expander getExpander() {
@@ -55,16 +48,8 @@ public class TableRow {
         }
     }
 
-    public String getBackgroundColor() {
-        return backgroundColor;
-    }
-
-    public String getTextColor() {
-        return textColor;
-    }
-
-    public ConditionalFormattingStyle getStyle() {
-        return style;
+    public String getMatchingRule() {
+        return matchingRule;
     }
 
     private SafeHtml decorateValue(final Cell cell) {
@@ -175,10 +160,10 @@ public class TableRow {
     @Override
     public String toString() {
         return "TableRow{" +
-                "expander=" + expander +
-                ", groupKey='" + groupKey + '\'' +
-                ", cells=" + cells +
-                '}';
+               "expander=" + expander +
+               ", groupKey='" + groupKey + '\'' +
+               ", cells=" + cells +
+               '}';
     }
 
     @Override

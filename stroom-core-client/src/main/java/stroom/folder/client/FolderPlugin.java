@@ -59,7 +59,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     @Override
     protected MyPresenterWidget<?> createEditor() {
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
-                securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
+            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 
@@ -114,6 +114,6 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
 
     @Override
     public String getType() {
-        return ExplorerConstants.FOLDER;
+        return ExplorerConstants.FOLDER_TYPE;
     }
 }

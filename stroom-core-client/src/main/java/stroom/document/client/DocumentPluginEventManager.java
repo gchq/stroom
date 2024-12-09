@@ -478,7 +478,7 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
 
-            if (selectedItems.size() > 0 && !ExplorerConstants.isFavouritesNode(primarySelection)) {
+            if (!selectedItems.isEmpty() && !ExplorerConstants.isFavouritesNode(primarySelection)) {
                 showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
             }
         }));
@@ -549,8 +549,8 @@ public class DocumentPluginEventManager extends Plugin {
         if (!dirtyList.isEmpty()) {
             final DocRef docRef = dirtyList.get(0).getDocRef();
             AlertEvent.fireWarn(this, "You must save changes to " + docRef.getType() + " '"
-                    + docRef.getDisplayValue()
-                    + "' before it can be renamed.", null);
+                                      + docRef.getDisplayValue()
+                                      + "' before it can be renamed.", null);
         } else if (!cleanList.isEmpty()) {
             ShowRenameDocumentDialogEvent.fire(DocumentPluginEventManager.this, cleanList);
         }
@@ -777,9 +777,9 @@ public class DocumentPluginEventManager extends Plugin {
                     : "Document";
 
             return prefix +
-                    " " +
-                    displayName +
-                    " doesn't exist or you do not have permission to open it.";
+                   " " +
+                   displayName +
+                   " doesn't exist or you do not have permission to open it.";
         } else {
             return null;
         }
@@ -810,7 +810,21 @@ public class DocumentPluginEventManager extends Plugin {
         final List<ExplorerNode> list = new ArrayList<>();
         for (final Map.Entry<ExplorerNode, ExplorerNodePermissions> entry : documentPermissionMap.entrySet()) {
             if ((includeSystemNodes || !DocumentTypes.isSystem(entry.getKey().getType()))
-                    && entry.getValue().hasDocumentPermission(permission)) {
+                && entry.getValue().hasDocumentPermission(permission)) {
+                list.add(entry.getKey());
+            }
+        }
+
+        list.sort(Comparator.comparing(HasDisplayValue::getDisplayValue));
+        return list;
+    }
+
+    private List<ExplorerNode> getExplorerNodeList(
+            final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
+            final boolean includeSystemNodes) {
+        final List<ExplorerNode> list = new ArrayList<>();
+        for (final Map.Entry<ExplorerNode, ExplorerNodePermissions> entry : documentPermissionMap.entrySet()) {
+            if ((includeSystemNodes || !DocumentTypes.isSystem(entry.getKey().getType()))) {
                 list.add(entry.getKey());
             }
         }
@@ -1049,6 +1063,7 @@ public class DocumentPluginEventManager extends Plugin {
     private void addModifyMenuItems(final List<Item> menuItems,
                                     final boolean singleSelection,
                                     final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap) {
+        final List<ExplorerNode> allItems = getExplorerNodeList(documentPermissionMap, false);
         final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap,
                 DocumentPermission.VIEW,
                 false);
@@ -1075,8 +1090,8 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Feeds are a special case so can't be renamed, see https://github.com/gchq/stroom/issues/2912
         final boolean isRenameEnabled = singleSelection
-                && allowUpdate
-                && !hasFeed;
+                                        && allowUpdate
+                                        && !hasFeed;
 
         // Feeds are a special case so can't be copied, see https://github.com/gchq/stroom/issues/3048
         final boolean isCopyEnabled = allowRead && !hasFeed;
@@ -1092,9 +1107,7 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(createRemoveTagsMenuItem(updatableItems, 22, isRemoveTagsEnabled));
         }
         menuItems.add(createCopyMenuItem(readableItems, 23, isCopyEnabled));
-
-        menuItems.add(createCopyAsMenuItem(readableItems, 24));
-
+        menuItems.add(createCopyAsMenuItem(allItems, readableItems, 24));
         menuItems.add(createMoveMenuItem(updatableItems, 25, allowUpdate));
         menuItems.add(createRenameMenuItem(updatableItems, 26, isRenameEnabled));
         menuItems.add(createDeleteMenuItem(deletableItems, 27, allowDelete));
@@ -1106,16 +1119,21 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(createExportMenuItem(29, readableItems));
         }
 
-        // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
+            if (readableItems.size() == 1) {
+                // Only need VIEW to see the deps
+                final DocRef docRef = readableItems.get(0).getDocRef();
+                menuItems.add(new Separator(30));
+                menuItems.add(createShowDependenciesFromMenuItem(docRef, 31));
+                menuItems.add(createShowDependantsMenuItem(docRef, 32));
+            }
+
             final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap,
                     DocumentPermission.OWNER,
                     true);
             if (ownedItems.size() == 1) {
+                // Only allow users to change permissions if they have a single item selected.
                 final DocRef docRef = ownedItems.get(0).getDocRef();
-                menuItems.add(new Separator(30));
-                menuItems.add(createShowDependenciesFromMenuItem(docRef, 31));
-                menuItems.add(createShowDependantsMenuItem(docRef, 32));
                 menuItems.add(new Separator(33));
                 menuItems.add(createPermissionsMenuItem(docRef, 34, true));
             }
@@ -1345,9 +1363,10 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createCopyAsMenuItem(final List<ExplorerNode> explorerNodes,
+    private MenuItem createCopyAsMenuItem(final List<ExplorerNode> allNodes,
+                                          final List<ExplorerNode> readableNodes,
                                           final int priority) {
-        List<Item> children = createCopyAsChildMenuItems(explorerNodes);
+        List<Item> children = createCopyAsChildMenuItems(allNodes, readableNodes);
 
         return new IconParentMenuItem.Builder()
                 .priority(priority)
@@ -1358,62 +1377,68 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private List<Item> createCopyAsChildMenuItems(final List<ExplorerNode> explorerNodes) {
-        final List<Item> children = new ArrayList<>();
-        final int count = explorerNodes.size();
+    private List<Item> createCopyAsChildMenuItems(final List<ExplorerNode> allNodes,
+                                                  final List<ExplorerNode> readableNodes) {
+        // If a user has VIEW on a doc they will also see (but not have VIEW) all ancestor
+        // docs, so we need to only allow 'copy name' for these 'see but not view' cases.
+        // Thus, totalCount may be bigger than readableCount
+        final List<Item> childMenuItems = new ArrayList<>();
+        final int totalCount = GwtNullSafe.size(allNodes);
+        final int readableCount = GwtNullSafe.size(readableNodes);
         int priority = 1;
-        if (count == 1) {
-            children.add(new IconMenuItem.Builder()
+        if (totalCount == 1) {
+            childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
                     .text("Copy Name to Clipboard")
                     .enabled(true)
-                    .command(() -> copyAs(explorerNodes, ExplorerNode::getName, "\n"))
+                    .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
 
-            children.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.COPY)
-                    .text("Copy UUID to Clipboard")
-                    .enabled(true)
-                    .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid, "\n"))
-                    .build());
-        } else if (count > 1) {
-            children.add(new IconMenuItem.Builder()
+            if (readableCount > 0) {
+                childMenuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.COPY)
+                        .text("Copy UUID to Clipboard")
+                        .enabled(true)
+                        .command(() -> copyAs(allNodes, ExplorerNode::getUuid, "\n"))
+                        .build());
+                childMenuItems.add(createCopyLinkMenuItem(allNodes.get(0), priority++));
+            }
+        } else if (totalCount > 1) {
+            childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
                     .text("Copy Names to Clipboard (lines)")
                     .enabled(true)
-                    .command(() -> copyAs(explorerNodes, ExplorerNode::getName, "\n"))
+                    .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
-            children.add(new IconMenuItem.Builder()
+            childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
                     .text("Copy Names to Clipboard (comma delimited)")
                     .enabled(true)
-                    .command(() -> copyAs(explorerNodes, ExplorerNode::getName, ","))
+                    .command(() -> copyAs(allNodes, ExplorerNode::getName, ","))
                     .build());
-            children.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.COPY)
-                    .text("Copy UUIDs to Clipboard (lines)")
-                    .enabled(true)
-                    .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid, "\n"))
-                    .build());
-            children.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.COPY)
-                    .text("Copy UUIDs to Clipboard (comma delimited)")
-                    .enabled(true)
-                    .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid, ","))
-                    .build());
-        }
 
-        if (explorerNodes.size() == 1) {
-            children.add(createCopyLinkMenuItem(explorerNodes.get(0), priority++));
+            if (readableCount > 0) {
+                childMenuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.COPY)
+                        .text("Copy UUIDs to Clipboard (lines)")
+                        .enabled(true)
+                        .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, "\n"))
+                        .build());
+                childMenuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.COPY)
+                        .text("Copy UUIDs to Clipboard (comma delimited)")
+                        .enabled(true)
+                        .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, ","))
+                        .build());
+            }
         }
-
-        return children;
+        return childMenuItems;
     }
 
     private void copyAs(final List<ExplorerNode> nodes,

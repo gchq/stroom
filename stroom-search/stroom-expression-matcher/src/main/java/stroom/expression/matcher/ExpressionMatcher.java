@@ -94,27 +94,26 @@ public class ExpressionMatcher {
             return true;
         } else {
             final List<ExpressionItem> enabledChildren = operator.getEnabledChildren();
-            switch (operator.op()) {
-                case AND:
+            return switch (operator.op()) {
+                case AND -> {
                     for (final ExpressionItem child : enabledChildren) {
                         if (!matchItem(attributeMap, child)) {
-                            return false;
+                            yield false;
                         }
                     }
-                    return true;
-                case OR:
+                    yield true;
+                }
+                case OR -> {
                     for (final ExpressionItem child : enabledChildren) {
                         if (matchItem(attributeMap, child)) {
-                            return true;
+                            yield true;
                         }
                     }
-                    return false;
-                case NOT:
-                    return enabledChildren.size() == 1
+                    yield false;
+                }
+                case NOT -> enabledChildren.size() == 1
                             && !matchItem(attributeMap, enabledChildren.get(0));
-                default:
-                    throw new MatchException("Unexpected operator type");
-            }
+            };
         }
     }
 
@@ -145,9 +144,9 @@ public class ExpressionMatcher {
 
         // Ensure an appropriate termValue has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition) ||
-                Condition.IN_FOLDER.equals(condition) ||
-                Condition.IS_DOC_REF.equals(condition) ||
-                Condition.OF_DOC_REF.equals(condition)) {
+            Condition.IN_FOLDER.equals(condition) ||
+            Condition.IS_DOC_REF.equals(condition) ||
+            Condition.OF_DOC_REF.equals(condition)) {
             if (docRef == null || docRef.getUuid() == null) {
                 throw new MatchException("DocRef not set for field: " + termField);
             }
@@ -222,7 +221,7 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getFldType() + " field type");
+                                             + field.getFldType() + " field type");
             }
         } else if (FieldType.DATE.equals(field.getFldType())) {
             switch (condition) {
@@ -275,7 +274,7 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getFldType() + " field type");
+                                             + field.getFldType() + " field type");
             }
         } else {
             switch (condition) {
@@ -296,7 +295,7 @@ public class ExpressionMatcher {
                         return termMatcher.match(field, condition, termValue, docRef);
                     }
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getFldType() + " field type");
+                                             + field.getFldType() + " field type");
                 }
             }
         }
@@ -420,7 +419,7 @@ public class ExpressionMatcher {
             // Trying to compare a string to a docRef so assume the string is EITHER the uuid or the name
             // In theory a 'uuid' could match a name but as we use proper uuids it will be fine.
             return Objects.equals(docRef.getName(), attribute)
-                    || Objects.equals(docRef.getUuid(), attribute);
+                   || Objects.equals(docRef.getUuid(), attribute);
         }
 
         return false;

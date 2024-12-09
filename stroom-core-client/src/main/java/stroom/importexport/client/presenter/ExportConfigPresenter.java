@@ -102,7 +102,7 @@ public class ExportConfigPresenter
         view.setUiHandlers(this);
 
         // Only show the System node at the root for export
-        treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM);
+        treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
     }
 
     @Override

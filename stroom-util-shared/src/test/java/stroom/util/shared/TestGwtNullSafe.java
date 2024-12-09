@@ -1124,6 +1124,26 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testUnmodifiableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        GwtNullSafe.unmodifiableList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
@@ -1347,6 +1367,26 @@ class TestGwtNullSafe {
                 .withSimpleEqualityAssertion()
                 .addCase(nonNullRunnable, true)
                 .addCase(null, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testToString() {
+        final Object obj = new Object() {
+            @Override
+            public String toString() {
+                return "foo";
+            }
+        };
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Object.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(GwtNullSafe::toString)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase("foo", "foo")
+                .addCase(obj, "foo")
                 .build();
     }
 

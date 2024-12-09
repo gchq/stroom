@@ -172,9 +172,17 @@ public class QueryResultTableSplitPresenter
         tablePresenter.setQueryTablePreferencesConsumer(queryTablePreferencesConsumer);
     }
 
+    public void updateQueryTablePreferences() {
+        tablePresenter.updateQueryTablePreferences();
+    }
+
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return tablePresenter.addDirtyHandler(handler);
+    }
+
+    public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {
+        tablePresenter.setQueryResultVisPresenter(queryResultVisPresenter);
     }
 
     public interface QueryResultTableSplitView extends View {

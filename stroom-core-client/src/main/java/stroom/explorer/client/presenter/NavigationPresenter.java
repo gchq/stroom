@@ -239,7 +239,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         KeyBinding.addCommand(Action.CREATE_FEED, () ->
                 CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
         KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
-                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER));
+                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER_TYPE));
         KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
                 CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
         KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
@@ -323,8 +323,9 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     event.getSelectionType()));
             final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
             final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
-                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
-                    !ExplorerConstants.isSystemNode(selectedNode);
+                                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
+                                    !ExplorerConstants.isSystemNode(selectedNode);
+            add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));

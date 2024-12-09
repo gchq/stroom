@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
@@ -33,8 +34,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -115,6 +118,9 @@ public class QueryResultTablePresenter
     private final QueryTableColumnsManager columnsManager;
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private List<Column> currentColumns = Collections.emptyList();
+    private QueryResultVisPresenter queryResultVisPresenter;
+    private ExpressionOperator currentSelectionFilter;
+    private final TableRowStyles tableRowStyles;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -125,15 +131,19 @@ public class QueryResultTablePresenter
                                      final DownloadPresenter downloadPresenter,
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
-                                     final Provider<RulesPresenter> rulesPresenterProvider) {
+                                     final Provider<RulesPresenter> rulesPresenterProvider,
+                                     final ColumnFilterPresenter columnFilterPresenter,
+                                     final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
+        tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
+        dataGrid.setRowStyles(tableRowStyles);
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
         final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
@@ -145,7 +155,8 @@ public class QueryResultTablePresenter
         columnsManager = new QueryTableColumnsManager(
                 this,
                 formatPresenter,
-                rulesPresenterProvider);
+                rulesPresenterProvider,
+                columnFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
 
@@ -241,7 +252,7 @@ public class QueryResultTablePresenter
                 if (currentSearchModel.isSearching()) {
                     ConfirmEvent.fire(QueryResultTablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
-                                    "Note that these may be incomplete.",
+                            "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -253,14 +264,16 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> {
-            final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
-            final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
-            setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
-            setDirty(true);
-            refresh();
-            setApplyValueFilters(applyValueFilters);
-        }));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+    }
+
+    public void toggleApplyValueFilters() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
+        setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
+        setDirty(true);
+        refresh();
+        setApplyValueFilters(applyValueFilters);
     }
 
     private void setApplyValueFilters(final boolean applyValueFilters) {
@@ -301,6 +314,14 @@ public class QueryResultTablePresenter
             });
         } else {
             RefreshRequestEvent.fire(this);
+        }
+    }
+
+    public void onColumnFilterChange() {
+        refresh();
+        final QueryResultVisPresenter queryResultVisPresenter = this.queryResultVisPresenter;
+        if (queryResultVisPresenter != null) {
+            queryResultVisPresenter.refresh();
         }
     }
 
@@ -427,7 +448,7 @@ public class QueryResultTablePresenter
                 // Get result columns.
                 List<Column> columns = tableResult.getColumns();
 
-                if (columns != null && queryTablePreferences.getColumns() != null) {
+                if (columns != null && queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
 
                     // Create a map of the result columns by id and remember the order that the result has them in.
                     final Map<String, ColAndPosition> mapped = new HashMap<>();
@@ -501,6 +522,8 @@ public class QueryResultTablePresenter
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                    tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
+                            .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
@@ -608,8 +631,8 @@ public class QueryResultTablePresenter
 
                 // Wrap
                 if (column.getFormat() != null &&
-                        column.getFormat().getWrap() != null &&
-                        column.getFormat().getWrap()) {
+                    column.getFormat().getWrap() != null &&
+                    column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
@@ -637,15 +660,12 @@ public class QueryResultTablePresenter
                     expander,
                     row.getGroupKey(),
                     cellsMap,
-                    row.getBackgroundColor(),
-                    row.getTextColor(),
-                    row.getStyle()));
+                    row.getMatchingRule()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
-        dataGrid.setRowStyles(new TableRowStyles());
 
         return processed;
     }
@@ -775,7 +795,7 @@ public class QueryResultTablePresenter
         this.queryTablePreferencesConsumer = queryTablePreferencesConsumer;
     }
 
-    public void update() {
+    public void updateQueryTablePreferences() {
         // Change value filter state.
         setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
         refresh();
@@ -788,6 +808,18 @@ public class QueryResultTablePresenter
 
     public void setDirty(final boolean dirty) {
         DirtyEvent.fire(this, dirty);
+    }
+
+    public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {
+        this.queryResultVisPresenter = queryResultVisPresenter;
+    }
+
+    public void setCurrentSelectionFilter(final ExpressionOperator currentSelectionFilter) {
+        this.currentSelectionFilter = currentSelectionFilter;
+    }
+
+    public ExpressionOperator getCurrentSelectionFilter() {
+        return currentSelectionFilter;
     }
 
     // --------------------------------------------------------------------------------

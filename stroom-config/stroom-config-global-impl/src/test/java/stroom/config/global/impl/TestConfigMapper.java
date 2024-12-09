@@ -780,18 +780,6 @@ class TestConfigMapper {
 //        configMapper.refreshConfig(appConfig);
 //    }
 
-    private static ObjectMapper createYamlObjectMapper() {
-        final YAMLFactory yamlFactory = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yamlFactory);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-//        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
-    }
-
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);

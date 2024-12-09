@@ -38,6 +38,10 @@ public class UnmodifiableTreeModel {
         return treeModel.getNode(nodeKey);
     }
 
+    public ExplorerNode getNode(final DocRef docRef) {
+        return treeModel.getNode(docRef);
+    }
+
     public ExplorerNode getNode(final ExplorerNode node) {
         return treeModel.getNode(node);
     }

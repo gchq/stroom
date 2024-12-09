@@ -11,6 +11,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
 
-    private static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final String FOLDER = ExplorerConstants.FOLDER_TYPE;
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.STRUCTURE,
             FolderExplorerActionHandler.FOLDER,
@@ -59,11 +60,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to read (" + FOLDER + ")");
+                    "You do not have permission to copy (" + FOLDER + ")");
         }
 
         String folderName = name;
-        if (folderName == null || folderName.trim().length() == 0) {
+        if (NullSafe.isBlankString(folderName)) {
             folderName = explorerTreeNode.getName();
         }
 
@@ -78,9 +79,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to move");
         }
 
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to read (" + FOLDER + ")");
+                    "You do not have permission to move (" + FOLDER + ")");
         }
         return explorerTreeNode.getDocRef();
     }
@@ -93,7 +94,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to update (" + FOLDER + ")");
+                    "You do not have permission to rename (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
         explorerTreeNode.setName(name);
