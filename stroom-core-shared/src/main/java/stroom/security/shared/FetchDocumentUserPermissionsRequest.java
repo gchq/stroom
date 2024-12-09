@@ -85,17 +85,17 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
 
         public Builder docRef(final DocRef docRef) {
             this.docRef = docRef;
-            return this;
+            return self();
         }
 
         public Builder userRef(final UserRef userRef) {
             this.userRef = userRef;
-            return this;
+            return self();
         }
 
         public Builder showLevel(final PermissionShowLevel showLevel) {
             this.showLevel = showLevel;
-            return this;
+            return self();
         }
 
         @Override

@@ -7089,6 +7089,24 @@ paths:
       tags:
       - Authorisation
   /users/v1/{userUuid}:
+    delete:
+      operationId: deleteUser
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete the user with the supplied UUID
+      tags:
+      - Authorisation
     get:
       operationId: fetchUser
       parameters:
@@ -7645,8 +7663,6 @@ components:
     AdvancedDocumentFindWithPermissionsRequest:
       type: object
       properties:
-        explicitPermission:
-          type: boolean
         expression:
           $ref: '#/components/schemas/ExpressionOperator'
         pageRequest:
@@ -7662,6 +7678,12 @@ components:
             - VIEW
             - USE
           uniqueItems: true
+        showLevel:
+          type: string
+          enum:
+          - SHOW_EXPLICIT
+          - SHOW_EFFECTIVE
+          - SHOW_ALL
         sort:
           type: string
           writeOnly: true
@@ -10503,6 +10525,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     FetchDataRequest:
       type: object
       properties:
@@ -10571,6 +10595,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     FetchExplorerNodeResult:
       type: object
       properties:
