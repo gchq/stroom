@@ -30,10 +30,9 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
@@ -115,13 +114,11 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void test(final boolean skipVisCreation, final boolean skipVisExport, final boolean update) {
         deleteAllAndCheck();
 
-        final ExplorerNode folder1 = explorerService.create(
-                ExplorerConstants.FOLDER,
+        final ExplorerNode folder1 = explorerService.createFolder(
                 "Group1",
                 null,
                 null);
-        final ExplorerNode folder2 = explorerService.create(
-                ExplorerConstants.FOLDER,
+        final ExplorerNode folder2 = explorerService.createFolder(
                 "Group2",
                 null,
                 null);
@@ -131,49 +128,37 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         ExplorerNode visNode = null;
         if (!skipVisCreation) {
-            final ExplorerNode scriptNode = explorerService.create(ScriptDoc.DOCUMENT_TYPE,
-                    "Test Script",
-                    folder2,
-                    null);
-            ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
+            ScriptDoc script = scriptStore.createDocument();
+            script.setName("Test Script");
             script.setData("Test Data");
-            scriptStore.writeDocument(script);
+            script = scriptStore.writeDocument(script);
+            explorerService.create(script.asDocRef(), folder2, null);
             assertThat(scriptStore.list().size()).isEqualTo(1);
 
-            visNode = explorerService.create(
-                    VisualisationDoc.DOCUMENT_TYPE,
-                    "Test Vis",
-                    folder2,
-                    null);
-            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef());
-            vis.setScriptRef(scriptNode.getDocRef());
-            visualisationStore.writeDocument(vis);
+            VisualisationDoc vis = visualisationStore.createDocument();
+            vis.setName("Test Vis");
+            vis.setScriptRef(script.asDocRef());
+            vis = visualisationStore.writeDocument(vis);
+            visNode = explorerService.create(vis.asDocRef(), folder2, null);
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
 
-        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
-                "Test Pipeline",
-                folder1,
-                null);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
-        pipelineStore.writeDocument(pipelineDoc);
+        PipelineDoc pipelineDoc = pipelineStore.createDocument();
+        pipelineDoc.setName("Test Pipeline");
+        pipelineDoc = pipelineStore.writeDocument(pipelineDoc);
+        final ExplorerNode pipelineNode = explorerService.create(pipelineDoc.asDocRef(), folder1, null);
         assertThat(pipelineStore.list().size()).isEqualTo(1);
 
-        final ExplorerNode indexNode = explorerService.create(
-                LuceneIndexDoc.DOCUMENT_TYPE,
-                "Test Index",
-                folder1,
-                null);
-        final LuceneIndexDoc index = indexStore.readDocument(indexNode.getDocRef());
-        indexStore.writeDocument(index);
+        LuceneIndexDoc index = indexStore.createDocument();
+        index.setName("Test Index");
+        index = indexStore.writeDocument(index);
+        final ExplorerNode indexNode = explorerService.create(index.asDocRef(), folder1, null);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
-        final ExplorerNode dictionaryNode = explorerService.create(DictionaryDoc.DOCUMENT_TYPE,
-                "Test Dictionary",
-                folder1,
-                null);
-        final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryNode.getDocRef());
-        dictionaryStore.writeDocument(dictionary);
+        DictionaryDoc dictionary = dictionaryStore.createDocument();
+        dictionary.setName("Test Dictionary");
+        dictionary = dictionaryStore.writeDocument(dictionary);
+        final ExplorerNode dictionaryNode = explorerService.create(dictionary.asDocRef(), folder1, null);
         assertThat(dictionaryStore.list().size()).isEqualTo(1);
 
         // Create query.
@@ -228,14 +213,11 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DashboardConfig dashboardData = new DashboardConfig();
         dashboardData.setComponents(components);
 
-        final ExplorerNode dashboardNode = explorerService.create(
-                DashboardDoc.DOCUMENT_TYPE,
-                "Test Dashboard",
-                folder1,
-                null);
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef());
+        DashboardDoc dashboard = dashboardStore.createDocument();
+        dashboard.setName("Test Dashboard");
         dashboard.setDashboardConfig(dashboardData);
         dashboard = dashboardStore.writeDocument(dashboard);
+        final ExplorerNode dashboardNode = explorerService.create(dashboard.asDocRef(), folder1, null);
         assertThat(dashboardStore.list().size()).isEqualTo(1);
 
         int startVisualisationSize = visualisationStore.list().size();
@@ -317,7 +299,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
     }
 
-    private <T extends Doc> T first(final DocumentStore<T> store) {
+    private <T extends AbstractDoc> T first(final DocumentStore<T> store) {
         final Set<DocRef> set = store.listDocuments();
         if (set != null && set.size() > 0) {
             return store.readDocument(set.iterator().next());

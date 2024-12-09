@@ -43,6 +43,13 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface PipelineResource extends RestResource, DirectRestService, FetchWithUuid<PipelineDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a pipeline doc",
+            operationId = "createPipeline")
+    PipelineDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

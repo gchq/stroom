@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "083159de-8db5-483a-b7b4-dee6e8c27047",
   "name" : "TEST_REFERENCE_DATA-EVENTS",
+  "uniqueName" : "feed:test-reference-data-events",
   "version" : "d18eb9e8-2d35-49b7-ac40-b7097e4996ee",
   "description" : "TEST_REFERENCE_DATA-EVENTS",
   "encoding" : "UTF-8",

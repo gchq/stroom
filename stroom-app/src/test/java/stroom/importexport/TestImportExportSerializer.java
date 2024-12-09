@@ -104,13 +104,11 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testExport() throws IOException {
-        final ExplorerNode testNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
-                FileSystemTestUtil.getUniqueTestString(),
-                null,
-                null);
-        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef());
+        FeedDoc eventFeed = feedStore.createDocument();
+        eventFeed.setName(FileSystemTestUtil.getUniqueTestString());
         eventFeed.setDescription("Original Description");
-        feedStore.writeDocument(eventFeed);
+        eventFeed = feedStore.writeDocument(eventFeed);
+        final ExplorerNode testNode = explorerService.create(eventFeed.asDocRef(), null, null);
 
         commonTestControl.createRequiredXMLSchemas();
 
@@ -181,17 +179,15 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipelineWithProcessorFilter() {
-        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder = explorerService.createFolder(
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
-                "TestPipeline",
-                folder,
-                null);
 
-        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineNode.getDocRef());
-
+        PipelineDoc pipeline = pipelineStore.createDocument();
+        pipeline.setName("TestPipeline");
+        pipeline = pipelineStore.writeDocument(pipeline);
+        final ExplorerNode pipelineNode = explorerService.create(pipeline.asDocRef(), folder, null);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
@@ -228,22 +224,20 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipeline() throws IOException {
-        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder = explorerService.createFolder(
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        final ExplorerNode parentPipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
-                "Parent",
-                folder,
-                null);
-        final ExplorerNode childPipelineNode = explorerService.create(
-                PipelineDoc.DOCUMENT_TYPE,
-                "Child",
-                folder,
-                null);
-        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef());
-        childPipeline.setParentPipeline(parentPipelineNode.getDocRef());
-        pipelineStore.writeDocument(childPipeline);
+        PipelineDoc parentPipeline = pipelineStore.createDocument();
+        parentPipeline.setName("Parent");
+        parentPipeline = pipelineStore.writeDocument(parentPipeline);
+        explorerService.create(parentPipeline.asDocRef(), folder, null);
+
+        PipelineDoc childPipeline = pipelineStore.createDocument();
+        childPipeline.setName("Child");
+        childPipeline.setParentPipeline(parentPipeline.asDocRef());
+        childPipeline = pipelineStore.writeDocument(childPipeline);
+        explorerService.create(childPipeline.asDocRef(), folder, null);
 
         assertThat(pipelineStore.list().size()).isEqualTo(2);
 
@@ -254,7 +248,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
 
-        final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineNode.getDocRef());
+        final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipeline.asDocRef());
         final String fileName = fileNamePrefix + ".meta";
         final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
         final String childJson = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);

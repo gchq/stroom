@@ -65,6 +65,19 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
     }
 
     @Override
+    public void create(final Consumer<DocumentationDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(DOCUMENTATION_RESOURCE)
+                .method(DocumentationResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<DocumentationDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

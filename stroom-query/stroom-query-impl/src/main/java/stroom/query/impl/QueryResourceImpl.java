@@ -87,6 +87,11 @@ class QueryResourceImpl implements QueryResource {
     }
 
     @Override
+    public QueryDoc create() {
+        return queryServiceProvider.get().create();
+    }
+
+    @Override
     public QueryDoc fetch(final String uuid) {
         return queryServiceProvider.get().read(getDocRef(uuid));
     }

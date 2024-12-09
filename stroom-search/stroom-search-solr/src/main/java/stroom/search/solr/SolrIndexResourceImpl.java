@@ -24,7 +24,6 @@ import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
@@ -41,7 +40,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @AutoLogged
-class SolrIndexResourceImpl implements SolrIndexResource, FetchWithUuid<SolrIndexDoc> {
+class SolrIndexResourceImpl implements SolrIndexResource {
 
     private final Provider<SolrIndexStore> solrIndexStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -51,6 +50,11 @@ class SolrIndexResourceImpl implements SolrIndexResource, FetchWithUuid<SolrInde
                           final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.solrIndexStoreProvider = solrIndexStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+    }
+
+    @Override
+    public SolrIndexDoc create() {
+        return solrIndexStoreProvider.get().createDocument();
     }
 
     @Override

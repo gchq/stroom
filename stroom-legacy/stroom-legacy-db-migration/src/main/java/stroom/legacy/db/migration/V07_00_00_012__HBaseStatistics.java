@@ -77,7 +77,6 @@ public class V07_00_00_012__HBaseStatistics extends BaseJavaMigration {
                     final String dat = resultSet.getString(12);
 
                     final StroomStatsStoreDoc document = new StroomStatsStoreDoc();
-                    document.setType(StroomStatsStoreDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

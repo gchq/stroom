@@ -67,6 +67,11 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @Override
+    public PipelineDoc create() {
+        return pipelineStore.createDocument();
+    }
+
+    @Override
     public PipelineDoc fetch(final String uuid) {
         return documentResourceHelper.read(pipelineStore, getDocRef(uuid));
     }

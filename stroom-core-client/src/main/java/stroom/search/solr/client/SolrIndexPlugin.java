@@ -65,6 +65,19 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
     }
 
     @Override
+    public void create(final Consumer<SolrIndexDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(SOLR_INDEX_RESOURCE)
+                .method(SolrIndexResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<SolrIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

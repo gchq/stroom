@@ -19,7 +19,6 @@ package stroom.pipeline.xml.converter;
 
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
-import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
@@ -100,8 +99,7 @@ public class SchemaFilterFactory {
                                final String fileName) {
         final Path schemaFile = getSchemaFile(contentPack, fileName);
 
-        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
-        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
+        final XmlSchemaDoc xmlSchema = xmlSchemaStore.createDocument();
         xmlSchema.setSchemaGroup(schemaGroup);
         xmlSchema.setName(schemaName);
         xmlSchema.setNamespaceURI(namespaceURI);

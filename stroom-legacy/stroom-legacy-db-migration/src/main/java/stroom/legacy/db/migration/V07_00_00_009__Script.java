@@ -71,7 +71,6 @@ public class V07_00_00_009__Script extends BaseJavaMigration {
                     final String dat = resultSet.getString(9);
 
                     final ScriptDoc document = new ScriptDoc();
-                    document.setType(ScriptDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

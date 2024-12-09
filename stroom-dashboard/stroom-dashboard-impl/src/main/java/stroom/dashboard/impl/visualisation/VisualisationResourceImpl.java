@@ -40,6 +40,11 @@ class VisualisationResourceImpl implements VisualisationResource {
     }
 
     @Override
+    public VisualisationDoc create() {
+        return visualisationStoreProvider.get().createDocument();
+    }
+
+    @Override
     public VisualisationDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(visualisationStoreProvider.get(), getDocRef(uuid));
     }

@@ -20,7 +20,7 @@ class TestDocRefUtil {
         final String uuid = UUID.randomUUID().toString();
         final String type = "TEST_TYPE";
 
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid);
         final DocRef docRef = DocRef.builder()
                 .uuid(uuid)
                 .type(type)
@@ -35,9 +35,7 @@ class TestDocRefUtil {
     void isSameDocument_different1() {
 
         final String uuid = UUID.randomUUID().toString();
-        final String type = "TEST_TYPE";
-
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid);
         final DocRef docRef = DocRef.builder()
                 .uuid(uuid)
                 .type("foo")
@@ -54,7 +52,7 @@ class TestDocRefUtil {
         final String uuid = UUID.randomUUID().toString();
         final String type = "TEST_TYPE";
 
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid);
         final DocRef docRef = DocRef.builder()
                 .uuid("foo")
                 .type(type)
@@ -68,8 +66,7 @@ class TestDocRefUtil {
     @Test
     void name() {
         final String uuid = UUID.randomUUID().toString();
-        final String type = "TEST_TYPE";
-        final Doc doc = buildDoc(uuid, type);
+        final AbstractDoc doc = buildDoc(uuid);
         final DocRef docRef = DocRefUtil.create(doc);
 
         Assertions.assertThat(docRef.getName())
@@ -88,14 +85,9 @@ class TestDocRefUtil {
                 .withTestFunction(testCase ->
                         DocRefUtil.createSimpleDocRefString(testCase.getInput()))
                 .withSimpleEqualityAssertion()
-                .addCase(PipelineDoc.buildDocRef()
-                                .uuid("3b573762-3f9b-4eaf-bb19-26344598abaf")
-                                .build(),
+                .addCase(new DocRef(PipelineDoc.DOCUMENT_TYPE, "3b573762-3f9b-4eaf-bb19-26344598abaf"),
                         "3b573762-3f9b-4eaf-bb19-26344598abaf")
-                .addCase(PipelineDoc.buildDocRef()
-                                .uuid("55ea911e-d1a2-4278-9bd7-8222b54c9f4b")
-                                .name("foo")
-                                .build(),
+                .addCase(new DocRef(PipelineDoc.DOCUMENT_TYPE, "55ea911e-d1a2-4278-9bd7-8222b54c9f4b", "foo"),
                         "foo {55ea911e-d1a2-4278-9bd7-8222b54c9f4b}")
                 .build();
     }
@@ -108,29 +100,19 @@ class TestDocRefUtil {
                 .withTestFunction(testCase ->
                         DocRefUtil.createTypedDocRefString(testCase.getInput()))
                 .withSimpleEqualityAssertion()
-                .addCase(PipelineDoc.buildDocRef()
-                                .uuid("3b573762-3f9b-4eaf-bb19-26344598abaf")
-                                .build(),
+                .addCase(new DocRef(PipelineDoc.DOCUMENT_TYPE, "3b573762-3f9b-4eaf-bb19-26344598abaf"),
                         "Pipeline 3b573762-3f9b-4eaf-bb19-26344598abaf")
-                .addCase(PipelineDoc.buildDocRef()
-                                .uuid("55ea911e-d1a2-4278-9bd7-8222b54c9f4b")
-                                .name("foo")
-                                .build(),
+                .addCase(new DocRef(PipelineDoc.DOCUMENT_TYPE, "55ea911e-d1a2-4278-9bd7-8222b54c9f4b", "foo"),
                         "Pipeline 'foo' {55ea911e-d1a2-4278-9bd7-8222b54c9f4b}")
                 .build();
     }
 
-    private Doc buildDoc(final String uuid, final String type) {
-        return new Doc() {
+    private AbstractDoc buildDoc(final String uuid) {
+        return new AbstractDoc(uuid, "test") {
 
             @Override
             public String getType() {
-                return type;
-            }
-
-            @Override
-            public String getUuid() {
-                return uuid;
+                return "TEST_TYPE";
             }
         };
     }

@@ -1,7 +1,7 @@
 {
-  "type" : "StroomStatsStore",
   "uuid" : "9dd0e94a-dded-42d2-9d25-94f2b8434436",
   "name" : "Imp_exp_test_stroom_stats",
+  "uniqueName" : "stroomstatsstore:imp-exp-test-stroom-stats",
   "version" : "9f1e053b-b986-4e46-b32b-751906223500",
   "description" : "My Description",
   "statisticType" : "COUNT",

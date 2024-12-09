@@ -1,7 +1,7 @@
 {
-  "type" : "Pipeline",
   "uuid" : "5ab7ec67-1444-46ea-89c6-d46d84b9d012",
   "name" : "BITMAP-REFERENCE",
+  "uniqueName" : "pipeline:bitmap-reference",
   "version" : "318f7978-30d8-4450-a5bf-b82f08838719",
   "parentPipeline" : {
     "type" : "Pipeline",

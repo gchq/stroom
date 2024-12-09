@@ -10,7 +10,7 @@ select
     v.id,
     v.uuid,
     v.name,
-    v.content_extension,
+    v.entry,
     json_value(v.meta_data, '$.type') doc_type,
     json_value(v.meta_data, '$.version') version,
     from_unixtime(json_value(v.meta_data, '$.createTimeMs') / 1000) create_time,
@@ -30,17 +30,18 @@ select
     v.content_data
 from
     (select
-        dm.id,
-        dm.uuid,
-        dm.name,
-        dd.ext content_extension,
+        d.id,
+        d.uuid,
+        d.name,
+        dc.entry entry,
         convert(dm.data using UTF8MB4) meta_data,
-        convert(dd.data using UTF8MB4) content_data
-    from doc dm
-    left join doc dd
-        on dm.uuid = dd.uuid
-        and dd.ext != dm.ext
-    where dm.ext = 'meta') v;
+        convert(dc.data using UTF8MB4) content_data
+    from doc d
+    left join document_entry dm
+        on (d.id = dm.fk_document_id and dm.entry = 'doc.meta')
+    left join document_entry dc
+        on (d.id = dc.fk_document_id and dc.entry != 'doc.meta')
+    ) v;
 
 -- A view for just feed docs, extracting all the json keys to columns
 create or replace view v_feed_doc as

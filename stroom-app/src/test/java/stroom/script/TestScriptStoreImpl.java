@@ -19,7 +19,6 @@ package stroom.script;
 
 
 import stroom.dashboard.impl.script.ScriptStore;
-import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 
@@ -40,14 +39,14 @@ class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
         final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, " +
                 "d3_radians = π / 180, d3_degrees = 180 / π;";
 
-        final DocRef docRef = scriptStore.createDocument("test");
-        final ScriptDoc script = scriptStore.readDocument(docRef);
+        ScriptDoc script = scriptStore.createDocument();
+        script.setName("test");
         script.setData(data);
-        scriptStore.writeDocument(script);
-        final ScriptDoc loaded = scriptStore.readDocument(docRef);
+        script = scriptStore.writeDocument(script);
+        final ScriptDoc loaded = scriptStore.readDocument(script.asDocRef());
 
         assertThat(loaded.getData()).isEqualTo(data);
-        List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(docRef, null);
+        List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(script.asDocRef(), null);
         assertThat(linkedScripts).hasSize(1);
     }
 }

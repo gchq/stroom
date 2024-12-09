@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.query.common.v2.ResultStoreManager;
@@ -72,14 +71,15 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
      */
     @Test
     void testStatisticsDataSource() {
-        final ExplorerNode statNode = explorerService.create(StatisticStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef());
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName("StatName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setConfig(new StatisticsDataSourceData());
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
+        explorerService.create(statisticsDataSource.asDocRef(), null, null);
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(1);
 
@@ -114,8 +114,8 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
 
     @Test
     void testDeSerialiseOnLoad() {
-        final DocRef docRef = statisticStoreStore.createDocument("StatName1");
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName("StatName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
 
@@ -123,9 +123,9 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
 
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
-        final DocRef statisticStoreRef = statisticStoreStore.list().get(0);
+        final DocRef statisticStoreRef = statisticStoreStore.list().getFirst();
         final StatisticStoreDoc statisticsDataSource2 = statisticStoreStore.readDocument(statisticStoreRef);
         assertThat(statisticsDataSource2).isNotNull();
 

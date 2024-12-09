@@ -7,7 +7,7 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.importexport.api.ImportConverter;
 import stroom.security.api.SecurityContext;
@@ -33,7 +33,7 @@ class TestDocStoreModule {
     @Mock
     private SecurityContext securityContextMock;
     @Mock
-    private Doc docMock;
+    private AbstractDoc docMock;
 
     @Inject
     StoreFactory storeFactory;
@@ -62,7 +62,11 @@ class TestDocStoreModule {
         Store<MyDoc> store2 = storeFactory.createStore(serialiser, "MyDocType", MyDoc.class);
     }
 
-    private static class MyDoc extends Doc {
+    private static class MyDoc extends AbstractDoc {
 
+        @Override
+        public String getType() {
+            return "MyDocType";
+        }
     }
 }

@@ -75,6 +75,19 @@ public class S3ConfigPlugin extends DocumentPlugin<S3ConfigDoc> {
     }
 
     @Override
+    public void create(final Consumer<S3ConfigDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(S3_CONFIG_RESOURCE)
+                .method(S3ConfigResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<S3ConfigDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

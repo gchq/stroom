@@ -64,7 +64,6 @@ public class V07_00_00_005__TextConverter extends BaseJavaMigration {
                     final String dat = resultSet.getString(9);
 
                     final TextConverterDoc document = new TextConverterDoc();
-                    document.setType(TextConverterDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

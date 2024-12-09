@@ -2,21 +2,21 @@ package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
+import stroom.docstore.impl.DocumentData;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.UniqueNameUtil;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
-import stroom.util.string.EncodingUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
@@ -41,16 +42,11 @@ public class FSPersistence implements Persistence, Clearable {
 
     private final RWLockFactory lockFactory = new StripedLockFactory();
     private final Path dir;
-    private final ObjectMapper objectMapper;
 
     @Inject
     public FSPersistence(final FSPersistenceConfig config, final PathCreator pathCreator) {
         this(pathCreator.toAppPath(config.getPath()));
     }
-
-//    public FSPersistence(final String dir, final PathCreator pathCreator) {
-//        this(pathCreator.toAppPath(dir));
-//    }
 
     public FSPersistence(final Path absoluteDir) {
         try {
@@ -60,10 +56,7 @@ public class FSPersistence implements Persistence, Clearable {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-
-        objectMapper = JsonUtil.getNoIndentMapper();
     }
-
 
     @Override
     public boolean exists(final DocRef docRef) {
@@ -72,53 +65,103 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) throws IOException {
-        final Map<String, byte[]> data = new HashMap<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
-                docRef.getUuid() + ".*")) {
-            stream.forEach(file -> {
-                try {
-                    final String fileName = file.getFileName().toString();
-                    final int index = fileName.indexOf(".");
-//                    final String uuid = fileName.substring(0, index);
-                    final String ext = fileName.substring(index + 1);
+    public DocumentData create(final DocumentData documentData) throws IOException {
+        validate(documentData);
 
-                    final byte[] bytes = Files.readAllBytes(file);
-                    data.put(ext, bytes);
-
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+        final Path filePath = getPath(documentData.getDocRef(), META);
+        if (Files.isRegularFile(filePath)) {
+            throw new RuntimeException("Document already exists: " + documentData);
         }
 
-        if (data.size() == 0) {
-            return null;
-        }
-
-        return data;
-    }
-
-    @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
-        final Path filePath = getPath(docRef, META);
-        if (update) {
-            if (!Files.isRegularFile(filePath)) {
-                throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
-            }
-        } else if (Files.isRegularFile(filePath)) {
-            throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
-        }
-
-        data.forEach((ext, bytes) -> {
+        documentData.getData().forEach((ext, bytes) -> {
             try {
-                Files.write(getPath(docRef, ext), bytes);
+                Files.write(getPath(documentData.getDocRef(), ext), bytes);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         });
+
+        return documentData;
+    }
+
+    @Override
+    public Optional<DocumentData> read(final DocRef docRef) throws IOException {
+        final Path metaPath = getPath(docRef, META);
+        final Optional<AbstractDoc> optional = getDoc(metaPath);
+        return optional.map(doc -> {
+            final Map<String, byte[]> data = new HashMap<>();
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(
+                    getPathForType(docRef.getType()),
+                    docRef.getUuid() + ".*")) {
+                stream.forEach(file -> {
+                    try {
+                        final String fileName = file.getFileName().toString();
+                        final int index = fileName.indexOf(".");
+                        final String ext = fileName.substring(index + 1);
+
+                        final byte[] bytes = Files.readAllBytes(file);
+                        data.put(ext, bytes);
+
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+
+            return DocumentData
+                    .builder()
+                    .docRef(docRef)
+                    .uniqueName(doc.getUniqueName() != null
+                            ? doc.getUniqueName()
+                            : UniqueNameUtil.createDefault(docRef))
+                    .version(doc.getVersion())
+                    .data(data)
+                    .build();
+        });
+    }
+
+    @Override
+    public DocumentData update(final String expectedVersion, final DocumentData documentData) throws IOException {
+        Objects.requireNonNull(expectedVersion, "Expected version is null");
+        validate(documentData);
+
+        // Read existing data.
+        final Path metaPath = getPath(documentData.getDocRef(), META);
+        final Optional<AbstractDoc> optional = getDoc(metaPath);
+        final AbstractDoc doc = optional.orElseThrow(() ->
+                new RuntimeException("Document does not exist: " + documentData));
+
+        // Check version.
+        if (!expectedVersion.equals(doc.getVersion())) {
+            throw new RuntimeException("Unable to update document due to version mismatch: " + documentData);
+        }
+
+        documentData.getData().forEach((ext, bytes) -> {
+            try {
+                Files.write(getPath(documentData.getDocRef(), ext), bytes);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+
+        return documentData;
+    }
+
+    private void validate(final DocumentData documentData) {
+        Objects.requireNonNull(documentData, "Document data is null");
+        Objects.requireNonNull(documentData.getDocRef(), "DocRef is null: " + documentData);
+        NullSafe.requireNonBlank(documentData.getDocRef().getType(), () ->
+                "Type not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getDocRef().getUuid(), () ->
+                "UUID not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getDocRef().getName(), () ->
+                "Name not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getVersion(), () ->
+                "Version not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getUniqueName(), () ->
+                "Unique name not set on document: " + documentData);
     }
 
     @Override
@@ -141,12 +184,21 @@ public class FSPersistence implements Persistence, Clearable {
     public List<DocRef> list(final String type) {
         final List<DocRef> list = new ArrayList<>();
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(type), "*." + META)) {
-            stream.forEach(file -> {
-                final String fileName = file.getFileName().toString();
-                final int index = fileName.indexOf(".");
-                final String uuid = fileName.substring(0, index);
-                final Optional<String> name = getName(file);
-                list.add(new DocRef(type, uuid, name.orElse(null)));
+            stream.forEach(metaPath -> {
+                final Optional<AbstractDoc> optional = getDoc(metaPath);
+                optional.ifPresent(doc -> {
+
+
+//                    final String fileName = file.getFileName().toString();
+//                    final int index = fileName.indexOf(".");
+//                    final String uuid = fileName.substring(0, index);
+//
+//                    final Optional<String> name = getName(file);
+//                    list.add(new DocRef(type, uuid, name.orElse(null)));
+
+                    list.add(new DocRef(doc.getType(), doc.getUuid(), doc.getName()));
+
+                });
             });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -211,21 +263,22 @@ public class FSPersistence implements Persistence, Clearable {
         }
     }
 
-    private Optional<String> getName(final Path metaFile) {
+    private Optional<AbstractDoc> getDoc(final Path metaFile) {
         try {
-            final byte[] data = Files.readAllBytes(metaFile);
-            final GenericDoc genericDoc = objectMapper.readValue(new StringReader(EncodingUtil.asString(data)),
-                    GenericDoc.class);
-            return Optional.ofNullable(genericDoc.getName());
-
-        } catch (final IOException | RuntimeException e) {
+            final GenericDoc doc = JsonUtil.readValue(metaFile, GenericDoc.class);
+            return Optional.ofNullable(doc);
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
         return Optional.empty();
     }
 
-    private static class GenericDoc extends Doc {
+    private static class GenericDoc extends AbstractDoc {
 
+        @Override
+        public String getType() {
+            return "GenericDoc";
+        }
     }
 }

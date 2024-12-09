@@ -58,11 +58,6 @@ class XsltStoreImpl implements XsltStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -127,6 +122,11 @@ class XsltStoreImpl implements XsltStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public XsltDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public XsltDoc readDocument(final DocRef docRef) {

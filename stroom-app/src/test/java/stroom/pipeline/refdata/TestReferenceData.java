@@ -45,6 +45,7 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.api.SecurityContext;
@@ -190,10 +191,21 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Test
     void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_1");
-            final DocRef feed2Ref = feedStore.createDocument("TEST_FEED_2");
-            final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
-            final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
+            final FeedDoc feed1 = feedStore.createDocument();
+            feed1.setName("TEST_FEED_1");
+            final DocRef feed1Ref = feedStore.writeDocument(feed1).asDocRef();
+
+            final FeedDoc feed2 = feedStore.createDocument();
+            feed2.setName("TEST_FEED_2");
+            final DocRef feed2Ref = feedStore.writeDocument(feed2).asDocRef();
+
+            final PipelineDoc pipeline1 = pipelineStore.createDocument();
+            pipeline1.setName("TEST_PIPELINE_1");
+            final DocRef pipeline1Ref = pipelineStore.writeDocument(pipeline1).asDocRef();
+
+            final PipelineDoc pipeline2 = pipelineStore.createDocument();
+            pipeline2.setName("TEST_PIPELINE_2");
+            final DocRef pipeline2Ref = pipelineStore.writeDocument(pipeline2).asDocRef();
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(new PipelineReference(pipeline1Ref, feed1Ref, StreamTypeNames.REFERENCE));
@@ -299,8 +311,13 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Test
     void testMissingMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_1");
-            final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
+            final FeedDoc feed1 = feedStore.createDocument();
+            feed1.setName("TEST_FEED_1");
+            final DocRef feed1Ref = feedStore.writeDocument(feed1).asDocRef();
+
+            final PipelineDoc pipeline1 = pipelineStore.createDocument();
+            pipeline1.setName("TEST_PIPELINE_1");
+            final DocRef pipeline1Ref = pipelineStore.writeDocument(pipeline1).asDocRef();
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(new PipelineReference(pipeline1Ref, feed1Ref, StreamTypeNames.REFERENCE));
@@ -552,12 +569,15 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Test
     void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
-            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
-            feedDoc.setReference(true);
-            feedStore.writeDocument(feedDoc);
+            final FeedDoc feed1 = feedStore.createDocument();
+            feed1.setName("TEST_FEED_1");
+            feed1.setReference(true);
+            final DocRef feed1Ref = feedStore.writeDocument(feed1).asDocRef();
 
-            final DocRef pipelineRef = pipelineStore.createDocument("12345");
+            final PipelineDoc pipeline1 = pipelineStore.createDocument();
+            pipeline1.setName("12345");
+            final DocRef pipelineRef = pipelineStore.writeDocument(pipeline1).asDocRef();
+
             final PipelineReference pipelineReference = new PipelineReference(pipelineRef,
                     feed1Ref,
                     StreamTypeNames.REFERENCE);
@@ -635,12 +655,15 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Test
     void testRange() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
-            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
-            feedDoc.setReference(true);
-            feedStore.writeDocument(feedDoc);
+            final FeedDoc feed1 = feedStore.createDocument();
+            feed1.setName("TEST_FEED_V1");
+            feed1.setReference(true);
+            final DocRef feed1Ref = feedStore.writeDocument(feed1).asDocRef();
 
-            final DocRef pipelineRef = pipelineStore.createDocument("12345");
+            final PipelineDoc pipeline1 = pipelineStore.createDocument();
+            pipeline1.setName("12345");
+            final DocRef pipelineRef = pipelineStore.writeDocument(pipeline1).asDocRef();
+
             final PipelineReference pipelineReference = new PipelineReference(pipelineRef,
                     feed1Ref,
                     StreamTypeNames.REFERENCE);

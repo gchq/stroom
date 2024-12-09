@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "6dcb59c4-5f1d-4a63-becc-ec88c6315f77",
   "name" : "XML_FRAGMENT-EVENTS",
+  "uniqueName" : "feed:xml-fragment-events",
   "version" : "777daece-cc98-49dc-be16-e4ea34836032",
   "description" : "XML_FRAGMENT-EVENTS",
   "encoding" : "UTF-8",

@@ -328,11 +328,11 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     private void createStore(final Path data, final Path reference, final Path xslt) {
         try {
             // Add imported XSLT.
-            final DocRef xsltRef = xsltStore.createDocument("imported.xsl");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+            XsltDoc xsltDoc = xsltStore.createDocument();
+            xsltDoc.setName("imported.xsl");
             xsltDoc.setDescription("Imported XSLT");
             xsltDoc.setData(StreamUtil.fileToString(IMPORTED_XSLT));
-            xsltStore.writeDocument(xsltDoc);
+            xsltDoc = xsltStore.writeDocument(xsltDoc);
 
             DocRef hostNameToIP = null;
 

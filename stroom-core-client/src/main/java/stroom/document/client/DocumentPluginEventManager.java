@@ -71,7 +71,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerServiceCopyRequest;
-import stroom.explorer.shared.ExplorerServiceCreateRequest;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
@@ -639,17 +638,17 @@ public class DocumentPluginEventManager extends Plugin {
                        final Consumer<ExplorerNode> consumer,
                        final TaskMonitorFactory taskMonitorFactory,
                        final HidePopupRequestEvent hidePopupRequestEvent) {
-        restFactory
-                .create(EXPLORER_RESOURCE)
-                .method(res -> res.create(new ExplorerServiceCreateRequest(
-                        docType,
-                        docName,
-                        destinationFolder,
-                        permissionInheritance)))
-                .onSuccess(consumer)
-                .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
+//        restFactory
+//                .create(EXPLORER_RESOURCE)
+//                .method(res -> res.create(new ExplorerServiceCreateDocRequest(
+//                        docType,
+//                        docName,
+//                        destinationFolder,
+//                        permissionInheritance)))
+//                .onSuccess(consumer)
+//                .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
     }
 
     private void copy(final List<ExplorerNode> explorerNodes,
@@ -999,23 +998,38 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void fireShowCreateDocumentDialogEvent(final DocumentType documentType,
                                                    final ExplorerNode explorerNode) {
-        final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
-            final DocRef docRef = newDocNode.getDocRef();
-            // Open the document in the content pane.
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
-            if (plugin != null) {
-                plugin.open(docRef, true, false, new DefaultTaskMonitorFactory(this));
-            }
-        };
+        final DocumentPlugin<?> plugin = documentPluginRegistry.get(documentType.getType());
+        if (plugin != null) {
+            if (DocumentTypes.isFolder(documentType.getType())) {
+                final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
+                    final DocRef docRef = newDocNode.getDocRef();
+                    // Open the document in the content pane.
+                    plugin.open(docRef, true, false, new DefaultTaskMonitorFactory(this));
+                };
 
-        ShowCreateDocumentDialogEvent.fire(
-                DocumentPluginEventManager.this,
-                "New " + documentType.getDisplayType(),
-                explorerNode,
-                documentType.getType(),
-                "",
-                true,
-                newDocumentConsumer);
+                ShowCreateDocumentDialogEvent.fire(
+                        DocumentPluginEventManager.this,
+                        "New " + documentType.getDisplayType(),
+                        explorerNode,
+                        documentType.getType(),
+                        "",
+                        true,
+                        newDocumentConsumer);
+            } else {
+                // Create the document in the content pane.
+
+                plugin.create(false, new DefaultTaskMonitorFactory(this));
+            }
+
+            //            CreateDocumentEvent.fire(
+            //                    DocumentPluginEventManager.this,
+            //                    null,
+            //                    documentType.getType(),
+            //                    "Untitled",
+            //                    null,
+            //                    null,
+            //                    newDocumentConsumer);
+        }
     }
 
     private IconMenuItem createIconMenuItemFromDocumentType(

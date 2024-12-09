@@ -120,9 +120,9 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     }
 
     protected DocRef writeRule(final AnalyticRuleDoc sample) {
-        final DocRef alertRuleDocRef = analyticRuleStore.createDocument("Analytic Rule");
-        AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(alertRuleDocRef);
+        AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.createDocument();
         analyticRuleDoc = analyticRuleDoc.copy()
+                .name("Analytic Rule")
                 .languageVersion(sample.getLanguageVersion())
                 .query(sample.getQuery())
                 .analyticProcessType(sample.getAnalyticProcessType())
@@ -133,9 +133,9 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         analyticRuleStore.writeDocument(analyticRuleDoc);
 
         assertThat(analyticHelper.getRules().size()).isOne();
-        assertThat(analyticHelper.getRules().getFirst().getUuid()).isEqualTo(alertRuleDocRef.getUuid());
+        assertThat(analyticHelper.getRules().getFirst().getUuid()).isEqualTo(analyticRuleDoc.getUuid());
 
-        return alertRuleDocRef;
+        return analyticRuleDoc.asDocRef();
     }
 
     protected void testDetectionsStream(final int expectedStreams,

@@ -15,9 +15,7 @@ public class ScyllaDbSerialiser implements DocumentSerialiser2<ScyllaDbDoc> {
     private final Serialiser2<ScyllaDbDoc> delegate;
 
     @Inject
-    ScyllaDbSerialiser(
-            final Serialiser2Factory serialiser2Factory
-    ) {
+    ScyllaDbSerialiser(final Serialiser2Factory serialiser2Factory) {
         this.delegate = serialiser2Factory.createSerialiser(ScyllaDbDoc.class);
     }
 

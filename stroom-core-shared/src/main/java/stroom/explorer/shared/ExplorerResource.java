@@ -46,11 +46,19 @@ import java.util.Set;
 public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
+    @Path("/createFolder")
+    @Operation(
+            summary = "Create explorer item",
+            operationId = "createExplorerItem")
+    ExplorerNode createFolder(@Parameter(description = "request", required = true)
+                              ExplorerServiceCreateFolderRequest request);
+
+    @POST
     @Path("/create")
     @Operation(
             summary = "Create explorer item",
             operationId = "createExplorerItem")
-    ExplorerNode create(@Parameter(description = "request", required = true) ExplorerServiceCreateRequest request);
+    ExplorerNode create(@Parameter(description = "request", required = true) ExplorerServiceCreateDocRequest request);
 
     @DELETE
     @Path("/delete")

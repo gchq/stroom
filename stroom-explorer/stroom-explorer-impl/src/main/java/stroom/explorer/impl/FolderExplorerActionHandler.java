@@ -41,11 +41,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         this.explorerTreeDao = explorerTreeDao;
     }
 
-    @Override
-    public DocRef createDocument(final String name) {
-        NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
-        return new DocRef(FOLDER, UUID.randomUUID().toString(), name);
-    }
+//    @Override
+//    public DocRef createDocument(final String name) {
+//        NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
+//        return new DocRef(FOLDER, UUID.randomUUID().toString(), name);
+//    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,

@@ -26,7 +26,6 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
@@ -35,7 +34,7 @@ import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 
 @AutoLogged
-class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<ElasticIndexDoc> {
+class ElasticIndexResourceImpl implements ElasticIndexResource {
 
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
     private final Provider<ElasticIndexStore> elasticIndexStoreProvider;
@@ -47,12 +46,16 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
             final Provider<ElasticClusterStore> elasticClusterStoreProvider,
             final Provider<ElasticIndexStore> elasticIndexStoreProvider,
             final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-            final Provider<ElasticConfig> elasticConfigProvider
-    ) {
+            final Provider<ElasticConfig> elasticConfigProvider) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.elasticConfigProvider = elasticConfigProvider;
+    }
+
+    @Override
+    public ElasticIndexDoc create() {
+        return elasticIndexStoreProvider.get().createDocument();
     }
 
     @Override

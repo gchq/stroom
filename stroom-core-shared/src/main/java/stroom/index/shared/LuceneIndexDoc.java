@@ -19,10 +19,11 @@ package stroom.index.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -52,9 +53,9 @@ import java.util.Objects;
                 "[Lucene Indexes]({{< relref \"docs/user-guide/indexing/lucene\" >}})" +
                 "{{% /see-also %}}")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -71,7 +72,7 @@ import java.util.Objects;
         "volumeGroupName",
         "defaultExtractionPipeline"})
 @JsonInclude(Include.NON_NULL)
-public class LuceneIndexDoc extends Doc {
+public class LuceneIndexDoc extends AbstractDoc {
 
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
@@ -112,9 +113,9 @@ public class LuceneIndexDoc extends Doc {
     }
 
     @JsonCreator
-    public LuceneIndexDoc(@JsonProperty("type") final String type,
-                          @JsonProperty("uuid") final String uuid,
+    public LuceneIndexDoc(@JsonProperty("uuid") final String uuid,
                           @JsonProperty("name") final String name,
+                          @JsonProperty("uniqueName") final String uniqueName,
                           @JsonProperty("version") final String version,
                           @JsonProperty("createTimeMs") final Long createTimeMs,
                           @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -130,7 +131,7 @@ public class LuceneIndexDoc extends Doc {
                           @JsonProperty("timeField") final String timeField,
                           @JsonProperty("volumeGroupName") final String volumeGroupName,
                           @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.maxDocsPerShard = maxDocsPerShard;
         this.partitionBy = partitionBy;
@@ -156,20 +157,10 @@ public class LuceneIndexDoc extends Doc {
         }
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

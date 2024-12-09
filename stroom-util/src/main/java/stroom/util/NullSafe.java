@@ -308,8 +308,8 @@ public class NullSafe {
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.contains(subStr);
+               && subStr != null
+               && str.contains(subStr);
     }
 
     /**
@@ -318,8 +318,8 @@ public class NullSafe {
      */
     public static boolean containsIgnoringCase(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.toLowerCase().contains(subStr.toLowerCase());
+               && subStr != null
+               && str.toLowerCase().contains(subStr.toLowerCase());
     }
 
     /**
@@ -784,6 +784,36 @@ public class NullSafe {
     }
 
     /**
+     * Require that the supplied string is non null and non blank.
+     * Throws a null pointer exception if either condition is true.
+     * If the supplied string is valid then return the string.
+     *
+     * @throws NullPointerException
+     */
+    public static String requireNonBlank(final String value,
+                                         final Supplier<String> messageSupplier) {
+        if (isBlankString(value)) {
+            throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
+        }
+        return value;
+    }
+
+    /**
+     * Require that the supplied string is non null and non empty.
+     * Throws a null pointer exception if either condition is true.
+     * If the supplied string is valid then return the string.
+     *
+     * @throws NullPointerException
+     */
+    public static String requireNonEmpty(final String value,
+                                         final Supplier<String> messageSupplier) {
+        if (isEmptyString(value)) {
+            throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
+        }
+        return value;
+    }
+
+    /**
      * If runnable is non-null run it.
      */
     public static void run(final Runnable runnable) {
@@ -869,8 +899,8 @@ public class NullSafe {
             final R result = Objects.requireNonNull(getter)
                     .apply(value);
             return result != null
-                    && Objects.requireNonNull(predicate)
-                    .test(result);
+                   && Objects.requireNonNull(predicate)
+                           .test(result);
         }
     }
 
@@ -1081,8 +1111,8 @@ public class NullSafe {
             } else {
                 final R result = Objects.requireNonNull(getter2).apply(value2);
                 return result != null
-                        && Objects.requireNonNull(predicate)
-                        .test(result);
+                       && Objects.requireNonNull(predicate)
+                               .test(result);
             }
         }
     }
@@ -1216,8 +1246,8 @@ public class NullSafe {
                 } else {
                     final R result = Objects.requireNonNull(getter3).apply(value3);
                     return result != null
-                            && Objects.requireNonNull(predicate)
-                            .test(result);
+                           && Objects.requireNonNull(predicate)
+                                   .test(result);
                 }
             }
         }
@@ -1410,13 +1440,13 @@ public class NullSafe {
     private static String buildNullValueMsg(final String variableName,
                                             final Supplier<String> messageSupplier) {
         return messageSupplier.get()
-                + LogUtil.message(" (Value of argument {} is null)", variableName);
+               + LogUtil.message(" (Value of argument {} is null)", variableName);
     }
 
     private static String buildNullGetterResultMsg(final int getterNo,
                                                    final Supplier<String> messageSupplier) {
         return messageSupplier.get()
-                + LogUtil.message(" (Result of applying getter{} is null)",
+               + LogUtil.message(" (Result of applying getter{} is null)",
                 (getterNo == 0
                         ? ""
                         : getterNo));

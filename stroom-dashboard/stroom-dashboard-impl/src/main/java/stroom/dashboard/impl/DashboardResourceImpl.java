@@ -52,6 +52,11 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
+    public DashboardDoc create() {
+        return dashboardServiceProvider.get().create();
+    }
+
+    @Override
     public DashboardDoc fetch(final String uuid) {
         return dashboardServiceProvider.get().read(getDocRef(uuid));
     }

@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "c3280267-6507-447d-aa1b-2a28b0960eba",
   "name" : "RAW_STREAMING_READER_FORK-EVENTS",
+  "uniqueName" : "feed:raw-streaming-reader-fork-events",
   "version" : "22a86c6c-1d95-44a9-96aa-3a31c6dfb0c5",
   "description" : "RAW_STREAMING_READER_FORK-EVENTS",
   "encoding" : "UTF-8",

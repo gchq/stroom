@@ -38,7 +38,6 @@ class XmlSchemaDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldXmlSchema, dataMap);
 
                 final XmlSchemaDoc document = new XmlSchemaDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

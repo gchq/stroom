@@ -162,7 +162,9 @@ class TestExpressionMatcher {
 
     @Test
     void testInDictionary() {
-        final DocRef docRef = DictionaryDoc.buildDocRef()
+        final DocRef docRef = DocRef
+                .builder()
+                .type(DictionaryDoc.DOCUMENT_TYPE)
                 .randomUuid()
                 .name("foo")
                 .build();

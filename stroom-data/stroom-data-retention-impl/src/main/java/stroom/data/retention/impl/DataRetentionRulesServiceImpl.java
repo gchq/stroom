@@ -76,11 +76,6 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -141,7 +136,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     private BiConsumer<DataRetentionRules, DependencyRemapper> createMapper() {
         return (doc, dependencyRemapper) -> {
             final List<DataRetentionRule> rules = doc.getRules();
-            if (rules != null && rules.size() > 0) {
+            if (rules != null && !rules.isEmpty()) {
                 rules.forEach(receiveDataRule -> {
                     if (receiveDataRule.getExpression() != null) {
                         dependencyRemapper.remapExpression(receiveDataRule.getExpression());
@@ -158,6 +153,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public DataRetentionRules createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public DataRetentionRules readDocument(final DocRef docRef) {
@@ -230,7 +230,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                     .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
                     .collect(Collectors.toSet());
 
-            if (filtered.size() > 0) {
+            if (!filtered.isEmpty()) {
                 if (filtered.size() > 1) {
                     LOGGER.warn("Found more than one matching set of data retention rules.");
                 }
@@ -239,7 +239,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                 return readDocument(docRef);
             }
 
-            if (docRefs.size() > 0) {
+            if (!docRefs.isEmpty()) {
                 if (docRefs.size() > 1) {
                     LOGGER.warn("Found more than one matching set of data retention rules.");
                 }
@@ -248,8 +248,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
                 return readDocument(docRef);
             }
 
-            final DocRef docRef = createDocument(POLICY_NAME);
-            return readDocument(docRef);
+            return createDocument();
         });
     }
 

@@ -45,7 +45,6 @@ class StatisticDataMapConverter implements DataMapConverter {
                 oldStatisticStore = marshaller.unmarshal(oldStatisticStore);
 
                 final StatisticStoreDoc document = new StatisticStoreDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

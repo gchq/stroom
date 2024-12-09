@@ -18,12 +18,13 @@ package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,14 +37,14 @@ import java.util.Objects;
 
 @Description(
         "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
-                "The criteria is defined using a StroomQL query.\n" +
-                "The analytic can be processed in different ways:\n\n" +
-                "* Streaming\n" +
-                "* Table Builder\n" +
-                "* Scheduled Query")
+        "The criteria is defined using a StroomQL query.\n" +
+        "The analytic can be processed in different ways:\n\n" +
+        "* Streaming\n" +
+        "* Table Builder\n" +
+        "* Scheduled Query")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class AnalyticRuleDoc extends Doc {
+public class AnalyticRuleDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "AnalyticRule";
     public static final SvgImage ICON = SvgImage.DOCUMENT_ANALYTIC_RULE;
@@ -100,9 +101,9 @@ public class AnalyticRuleDoc extends Doc {
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AnalyticRuleDoc(@JsonProperty("type") final String type,
-                           @JsonProperty("uuid") final String uuid,
+    public AnalyticRuleDoc(@JsonProperty("uuid") final String uuid,
                            @JsonProperty("name") final String name,
+                           @JsonProperty("uniqueName") final String uniqueName,
                            @JsonProperty("version") final String version,
                            @JsonProperty("createTimeMs") final Long createTimeMs,
                            @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -121,7 +122,7 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.parameters = parameters;
@@ -152,20 +153,10 @@ public class AnalyticRuleDoc extends Doc {
         }
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {
@@ -241,17 +232,17 @@ public class AnalyticRuleDoc extends Doc {
         }
         final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
         return rememberNotifications == that.rememberNotifications &&
-                suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
-                Objects.equals(description, that.description) &&
-                languageVersion == that.languageVersion &&
-                Objects.equals(parameters, that.parameters) &&
-                Objects.equals(timeRange, that.timeRange) &&
-                Objects.equals(query, that.query) &&
-                analyticProcessType == that.analyticProcessType &&
-                Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
-                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
-                Objects.equals(notifications, that.notifications) &&
-                Objects.equals(errorFeed, that.errorFeed);
+               suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
+               Objects.equals(description, that.description) &&
+               languageVersion == that.languageVersion &&
+               Objects.equals(parameters, that.parameters) &&
+               Objects.equals(timeRange, that.timeRange) &&
+               Objects.equals(query, that.query) &&
+               analyticProcessType == that.analyticProcessType &&
+               Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
+               Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
+               Objects.equals(notifications, that.notifications) &&
+               Objects.equals(errorFeed, that.errorFeed);
     }
 
     @Override
@@ -274,19 +265,19 @@ public class AnalyticRuleDoc extends Doc {
     @Override
     public String toString() {
         return "AnalyticRuleDoc{" +
-                "description='" + description + '\'' +
-                ", languageVersion=" + languageVersion +
-                ", parameters=" + parameters +
-                ", timeRange=" + timeRange +
-                ", query='" + query + '\'' +
-                ", analyticProcessType=" + analyticProcessType +
-                ", analyticProcessConfig=" + analyticProcessConfig +
-                ", analyticNotificationConfig=" + analyticNotificationConfig +
-                ", notifications=" + notifications +
-                ", errorFeed=" + errorFeed +
-                ", rememberNotifications=" + rememberNotifications +
-                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
-                '}';
+               "description='" + description + '\'' +
+               ", languageVersion=" + languageVersion +
+               ", parameters=" + parameters +
+               ", timeRange=" + timeRange +
+               ", query='" + query + '\'' +
+               ", analyticProcessType=" + analyticProcessType +
+               ", analyticProcessConfig=" + analyticProcessConfig +
+               ", analyticNotificationConfig=" + analyticNotificationConfig +
+               ", notifications=" + notifications +
+               ", errorFeed=" + errorFeed +
+               ", rememberNotifications=" + rememberNotifications +
+               ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
+               '}';
     }
 
     public static Builder builder() {
@@ -385,9 +376,9 @@ public class AnalyticRuleDoc extends Doc {
         @Override
         public AnalyticRuleDoc build() {
             return new AnalyticRuleDoc(
-                    type,
                     uuid,
                     name,
+                    uniqueName,
                     version,
                     createTimeMs,
                     updateTimeMs,

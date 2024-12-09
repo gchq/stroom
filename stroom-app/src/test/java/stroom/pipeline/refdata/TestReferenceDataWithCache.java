@@ -23,6 +23,7 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
@@ -111,17 +112,27 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed1 = feedStore.createDocument("TEST_FEED_1");
-            final DocRef feed2 = feedStore.createDocument("TEST_FEED_2");
+            final FeedDoc feed1 = feedStore.createDocument();
+            feed1.setName("TEST_FEED_1");
+            final DocRef feed1Ref = feedStore.writeDocument(feed1).asDocRef();
 
-            final DocRef pipeline1Ref = pipelineStore.createDocument(TEST_PIPELINE_1);
-            final DocRef pipeline2Ref = pipelineStore.createDocument(TEST_PIPELINE_2);
+            final FeedDoc feed2 = feedStore.createDocument();
+            feed2.setName("TEST_FEED_2");
+            final DocRef feed2Ref = feedStore.writeDocument(feed2).asDocRef();
+
+            final PipelineDoc pipeline1 = pipelineStore.createDocument();
+            pipeline1.setName(TEST_PIPELINE_1);
+            final DocRef pipeline1Ref = pipelineStore.writeDocument(pipeline1).asDocRef();
+
+            final PipelineDoc pipeline2 = pipelineStore.createDocument();
+            pipeline2.setName(TEST_PIPELINE_2);
+            final DocRef pipeline2Ref = pipelineStore.writeDocument(pipeline2).asDocRef();
 
             final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref,
-                    feed1,
+                    feed1Ref,
                     StreamTypeNames.REFERENCE);
             final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref,
-                    feed2,
+                    feed2Ref,
                     StreamTypeNames.REFERENCE);
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
@@ -130,7 +141,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
             final Map<String, EffectiveMetaSet> effectiveMetasByFeed = new HashMap<>();
 
-            for (final DocRef feedDocRef : List.of(feed1, feed2)) {
+            for (final DocRef feedDocRef : List.of(feed1Ref, feed2Ref)) {
                 final EffectiveMetaSet streamSet = EffectiveMetaSet.builder(feedDocRef.getName(), DUMMY_TYPE)
                         .add(
                                 createMeta(feedDocRef.getName()).getId(),
@@ -271,9 +282,14 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feedRef = feedStore.createDocument("TEST_FEED_V3");
+            final FeedDoc feed = feedStore.createDocument();
+            feed.setName("TEST_FEED_V3");
+            final DocRef feedRef = feedStore.writeDocument(feed).asDocRef();
 
-            final DocRef pipelineRef = pipelineStore.createDocument(TEST_PIPELINE_1);
+            final PipelineDoc pipeline = pipelineStore.createDocument();
+            pipeline.setName(TEST_PIPELINE_1);
+            final DocRef pipelineRef = pipelineStore.writeDocument(pipeline).asDocRef();
+
             final PipelineReference pipelineReference = new PipelineReference(
                     pipelineRef, feedRef, StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = new ArrayList<>();

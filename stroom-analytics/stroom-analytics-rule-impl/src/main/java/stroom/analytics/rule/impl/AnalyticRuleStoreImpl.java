@@ -34,7 +34,6 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestFactory;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -48,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 @Singleton
@@ -61,7 +61,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
             AnalyticRuleDoc.ICON);
 
     private final Store<AnalyticRuleDoc> store;
-    private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
     private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
@@ -69,12 +68,10 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
-                          final SecurityContext securityContext,
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
-        this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
@@ -85,61 +82,79 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final AnalyticRuleDoc analyticRuleDoc = store.readDocument(docRef);
-            store.writeDocument(analyticRuleDoc);
-        });
-        return docRef;
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         final AnalyticRuleDoc document = store.readDocument(docRef);
-        return store.createDocument(newName,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
-                    final Builder builder = document
-                            .copy()
-                            .type(type)
-                            .uuid(uuid)
-                            .name(docName)
-                            .version(version)
-                            .createTimeMs(createTime)
-                            .updateTimeMs(updateTime)
-                            .createUser(createUser)
-                            .updateUser(updateUser);
 
-                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
-                    if (analyticProcessConfig != null) {
+        final Builder builder = document
+                .copy()
+                .uuid(UUID.randomUUID().toString())
+                .name(newName)
+                .version(UUID.randomUUID().toString());
+
+        final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
+        if (analyticProcessConfig != null) {
 //                        if (analyticProcessConfig instanceof
 //                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
 //                            builder.analyticProcessConfig(
 //                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
 //                        } else
-                        if (analyticProcessConfig instanceof
-                                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-                            builder.analyticProcessConfig(
-                                    tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
-                        }
+            if (analyticProcessConfig instanceof
+                    final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                builder.analyticProcessConfig(
+                        tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
+            }
 //                        } else if (analyticProcessConfig instanceof
 //                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
 ////                            builder.analyticProcessConfig(
 ////                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
 //                        }
 
-                        builder.analyticProcessConfig(analyticProcessConfig);
-                    }
+            builder.analyticProcessConfig(analyticProcessConfig);
+        }
 
-                    return builder.build();
-                });
+        return store.writeDocument(builder.build()).asDocRef();
+
+
+//        return store.createDocument(newName,
+//                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+//                    final Builder builder = document
+//                            .copy()
+//                            .type(type)
+//                            .uuid(uuid)
+//                            .name(docName)
+//                            .version(version)
+//                            .createTimeMs(createTime)
+//                            .updateTimeMs(updateTime)
+//                            .createUser(createUser)
+//                            .updateUser(updateUser);
+//
+//                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
+//                    if (analyticProcessConfig != null) {
+////                        if (analyticProcessConfig instanceof
+////                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+////                            builder.analyticProcessConfig(
+////                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
+////                        } else
+//                        if (analyticProcessConfig instanceof
+//                                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+//                            builder.analyticProcessConfig(
+//                                    tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
+//                        }
+////                        } else if (analyticProcessConfig instanceof
+////                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+//////                            builder.analyticProcessConfig(
+//////                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
+////                        }
+//
+//                        builder.analyticProcessConfig(analyticProcessConfig);
+//                    }
+//
+//                    return builder.build();
+//                });
     }
 
     @Override
@@ -211,13 +226,13 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
-                                                !remapped.getName().isBlank() &&
-                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
                                             query = query.replaceFirst(docRef.getName(), remapped.getName());
                                         }
                                         if (remapped.getUuid() != null &&
-                                                !remapped.getUuid().isBlank() &&
-                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
                                         doc.setQuery(query);
@@ -242,6 +257,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public AnalyticRuleDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public AnalyticRuleDoc readDocument(final DocRef docRef) {

@@ -75,11 +75,6 @@ public class PipelineStoreImpl implements PipelineStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -187,6 +182,11 @@ public class PipelineStoreImpl implements PipelineStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public PipelineDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public PipelineDoc readDocument(final DocRef docRef) {

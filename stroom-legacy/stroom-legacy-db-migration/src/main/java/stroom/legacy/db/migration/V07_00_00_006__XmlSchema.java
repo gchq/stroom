@@ -69,7 +69,6 @@ public class V07_00_00_006__XmlSchema extends BaseJavaMigration {
                     final String systemId = resultSet.getString(12);
 
                     final XmlSchemaDoc document = new XmlSchemaDoc();
-                    document.setType(XmlSchemaDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

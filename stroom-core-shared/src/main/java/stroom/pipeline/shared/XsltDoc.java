@@ -18,11 +18,12 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,9 +37,9 @@ import java.util.Objects;
                 "This Document is used by the {{< pipe-elm \"XSLTFilter\" >}} pipeline element."
 )
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -47,7 +48,7 @@ import java.util.Objects;
         "description",
         "data"})
 @JsonInclude(Include.NON_NULL)
-public class XsltDoc extends Doc implements HasData {
+public class XsltDoc extends AbstractDoc implements HasData {
 
     public static final String DOCUMENT_TYPE = "XSLT";
     public static final SvgImage ICON = SvgImage.DOCUMENT_XSLT;
@@ -61,9 +62,9 @@ public class XsltDoc extends Doc implements HasData {
     }
 
     @JsonCreator
-    public XsltDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public XsltDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
+                   @JsonProperty("uniqueName") final String uniqueName,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -71,25 +72,15 @@ public class XsltDoc extends Doc implements HasData {
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
                    @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

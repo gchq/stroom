@@ -1,6 +1,7 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.TestUtil;
 
@@ -31,9 +32,15 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        pipe1 = pipelineStore.createDocument(PIPE_1_NAME);
-        pipe2 = pipelineStore.createDocument(PIPE_2_NAME);
-        pipe3 = pipelineStore.createDocument(PIPE_3_NAME);
+        pipe1 = create(PIPE_1_NAME);
+        pipe2 = create(PIPE_2_NAME);
+        pipe3 = create(PIPE_3_NAME);
+    }
+
+    private DocRef create(final String name) {
+        PipelineDoc pipe1 = pipelineStore.createDocument();
+        pipe1.setName(name);
+        return pipelineStore.writeDocument(pipe1).asDocRef();
     }
 
     @TestFactory

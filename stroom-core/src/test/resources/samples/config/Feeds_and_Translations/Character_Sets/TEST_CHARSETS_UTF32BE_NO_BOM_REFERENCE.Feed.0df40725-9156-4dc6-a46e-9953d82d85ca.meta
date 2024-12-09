@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "0df40725-9156-4dc6-a46e-9953d82d85ca",
   "name" : "TEST_CHARSETS_UTF32BE_NO_BOM-REFERENCE",
+  "uniqueName" : "feed:test-charsets-utf32be-no-bom-reference",
   "version" : "1055a3d1-f598-4c70-962a-086136181dc6",
   "description" : "",
   "classification" : "",

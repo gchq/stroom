@@ -73,7 +73,6 @@ public class V07_00_00_004__Dictionary extends BaseJavaMigration {
                     dictionaryDoc.setUpdateTimeMs(document.getUpdateTime());
                     dictionaryDoc.setCreateUser(document.getCreateUser());
                     dictionaryDoc.setUpdateUser(document.getUpdateUser());
-                    dictionaryDoc.setType(document.getType());
                     dictionaryDoc.setUuid(document.getUuid());
                     dictionaryDoc.setName(document.getName());
                     dictionaryDoc.setDescription(document.getDescription());

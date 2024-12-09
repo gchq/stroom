@@ -39,6 +39,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ScyllaDbDocResource extends RestResource, DirectRestService, FetchWithUuid<ScyllaDbDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a new ScyllaDb config doc",
+            operationId = "createScyllaDB")
+    ScyllaDbDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

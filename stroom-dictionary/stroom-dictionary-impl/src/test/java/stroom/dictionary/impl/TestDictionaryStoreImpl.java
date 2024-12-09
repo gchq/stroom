@@ -55,7 +55,7 @@ class TestDictionaryStoreImpl {
                    three   \s
                 four
 
-                   """, "foo");
+                   """, "22");
 
         final String[] words = getDictionaryStore().getWords(docRef);
         assertThat(words)
@@ -79,7 +79,7 @@ class TestDictionaryStoreImpl {
                    three    \r
                 four\r
                 \r
-                """, "foo");
+                """, "33");
 
         final String[] words = getDictionaryStore().getWords(docRef);
         assertThat(words)
@@ -96,7 +96,7 @@ class TestDictionaryStoreImpl {
                 one
                 two
                 three""";
-        final DocRef docRef = createDoc(data, "foo");
+        final DocRef docRef = createDoc(data, "44");
 
         final String combinedData = getDictionaryStore().getCombinedData(docRef);
 
@@ -116,8 +116,8 @@ class TestDictionaryStoreImpl {
                 five
                 six""";
 
-        final DocRef docRef1 = createDoc(data1, "doc1");
-        final DocRef docRef2 = createDoc(data2, "doc2", docRef1);
+        final DocRef docRef1 = createDoc(data1, "doc123");
+        final DocRef docRef2 = createDoc(data2, "doc234", docRef1);
 
         final String combinedData = getDictionaryStore().getCombinedData(docRef2);
 
@@ -171,9 +171,9 @@ class TestDictionaryStoreImpl {
                 eight
                 nine""";
 
-        final DocRef docRef1 = createDoc(data1, "doc1");
-        final DocRef docRef2 = createDoc(data2, "doc2", docRef1);
-        final DocRef docRef3 = createDoc(data3, "doc3", docRef2);
+        final DocRef docRef1 = createDoc(data1, "doc111");
+        final DocRef docRef2 = createDoc(data2, "doc222", docRef1);
+        final DocRef docRef3 = createDoc(data3, "doc333", docRef2);
 
         final String combinedData = getDictionaryStore().getCombinedData(docRef3);
 
@@ -185,7 +185,7 @@ class TestDictionaryStoreImpl {
     @Test
     void emptyDict() {
         final DocRef docRef1 = createDoc("""
-                """, "doc1");
+                """, "doc1666");
 
         final String[] words = getDictionaryStore().getWords(docRef1);
 
@@ -200,7 +200,7 @@ class TestDictionaryStoreImpl {
                      \t
 
                 \t
-                """, "doc1");
+                """, "doc1777");
 
         final String[] words = getDictionaryStore().getWords(docRef1);
 
@@ -211,18 +211,15 @@ class TestDictionaryStoreImpl {
 
     @Test
     void nullWords() {
-        final String[] words = getDictionaryStore().getWords(DictionaryDoc.buildDocRef().randomUuid().build());
+        final String[] words = getDictionaryStore().getWords(DocRef.createRandom(DictionaryDoc.DOCUMENT_TYPE));
         Assertions.assertThat(words.length).isZero();
     }
 
     private DocRef createDoc(final String data, final String name, final DocRef... imports) {
-        final DocRef docRef = DictionaryDoc.buildDocRef()
-                .randomUuid()
-                .name(name)
-                .build();
+        final DocRef docRef = DocRef.createRandom(DictionaryDoc.DOCUMENT_TYPE);
         final DictionaryDoc dictionaryDoc = new DictionaryDoc();
         dictionaryDoc.setUuid(docRef.getUuid());
-        dictionaryDoc.setName(docRef.getName());
+        dictionaryDoc.setName(name);
         dictionaryDoc.setData(data);
         if (imports != null && imports.length > 0) {
             dictionaryDoc.setImports(Arrays.asList(imports));

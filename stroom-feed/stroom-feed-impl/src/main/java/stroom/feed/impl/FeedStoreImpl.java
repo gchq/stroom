@@ -83,29 +83,29 @@ public class FeedStoreImpl implements FeedStore {
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public DocRef createDocument(final String name) {
-        feedNameValidator.validateName(name);
-
-        // Check a feed doesn't already exist with this name.
-        if (checkDuplicateName(name, null)) {
-            throw new EntityServiceException("A feed named '" + name + "' already exists");
-        }
-
-        final DocRef created = store.createDocument(name);
-
-        // Double check the feed wasn't created elsewhere at the same time.
-        if (checkDuplicateName(name, created)) {
-            // Delete the newly created document as the name is duplicated.
-
-            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
-            // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created));
-            throw new EntityServiceException("A feed named '" + name + "' already exists");
-        }
-
-        return created;
-    }
+//    @Override
+//    public DocRef createDocument(final String name) {
+//        feedNameValidator.validateName(name);
+//
+//        // Check a feed doesn't already exist with this name.
+//        if (checkDuplicateName(name, null)) {
+//            throw new EntityServiceException("A feed named '" + name + "' already exists");
+//        }
+//
+//        final DocRef created = store.createDocument(name);
+//
+//        // Double check the feed wasn't created elsewhere at the same time.
+//        if (checkDuplicateName(name, created)) {
+//            // Delete the newly created document as the name is duplicated.
+//
+//            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
+//            // permissions added to them until after they are created in the store.
+//            securityContext.asProcessingUser(() -> store.deleteDocument(created));
+//            throw new EntityServiceException("A feed named '" + name + "' already exists");
+//        }
+//
+//        return created;
+//    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -186,12 +186,41 @@ public class FeedStoreImpl implements FeedStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public FeedDoc createDocument() {
+        return store.createDocument();
+    }
+
+    @Override
     public FeedDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
     public FeedDoc writeDocument(final FeedDoc document) {
+
+        if (document.getVersion() == null) {
+            final String name = document.getName();
+            feedNameValidator.validateName(name);
+
+//            // Check a feed doesn't already exist with this name.
+//            if (checkDuplicateName(document.getName(), null)) {
+//                throw new EntityServiceException("A feed named '" + name + "' already exists");
+//            }
+//
+//            final DocRef created = store.createDocument();
+//
+//            // TODO : gh-4633 FIX DUPLICATE NAMES
+//            // Double check the feed wasn't created elsewhere at the same time.
+//            if (checkDuplicateName(name, created)) {
+//                // Delete the newly created document as the name is duplicated.
+//
+//                // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
+//                // permissions added to them until after they are created in the store.
+//                securityContext.asProcessingUser(() -> store.deleteDocument(created));
+//                throw new EntityServiceException("A feed named '" + name + "' already exists");
+//            }
+        }
+
         return store.writeDocument(document);
     }
 
@@ -306,7 +335,7 @@ public class FeedStoreImpl implements FeedStore {
         final List<DocRef> list = list();
         for (final DocRef docRef : list) {
             if (name.equals(docRef.getName()) &&
-                    (whitelistUuid == null || !whitelistUuid.equals(docRef))) {
+                (whitelistUuid == null || !whitelistUuid.equals(docRef))) {
                 return true;
             }
         }

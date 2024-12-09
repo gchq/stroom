@@ -40,6 +40,11 @@ class XsltResourceImpl implements XsltResource {
     }
 
     @Override
+    public XsltDoc create() {
+        return xsltStoreProvider.get().createDocument();
+    }
+
+    @Override
     public XsltDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(xsltStoreProvider.get(), getDocRef(uuid));
     }

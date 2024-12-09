@@ -572,7 +572,7 @@ class TestMetaDaoImpl {
                 .builder()
                 .field(MetaFields.PIPELINE.getFldName())
                 .condition(Condition.IS_DOC_REF)
-                .docRef(PipelineDoc.buildDocRef().uuid(pipelineUuid).build())
+                .docRef(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid))
                 .enabled(enabled)
                 .build();
     }

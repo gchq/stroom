@@ -45,16 +45,21 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void setup() {
-        refIndex = indexStore.createDocument("Ref index");
-        testIndex = indexStore.createDocument("Test index");
+        LuceneIndexDoc refIndex = indexStore.createDocument();
+        refIndex.setName("Ref index");
+        this.refIndex = indexStore.writeDocument(refIndex).asDocRef();
+
+        LuceneIndexDoc index = indexStore.createDocument();
+        index.setName("Test index");
+
 
         final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(LuceneIndexField.createDateField("TimeCreated"));
         indexFields.add(LuceneIndexField.createField("User"));
 
-        final LuceneIndexDoc index = indexStore.readDocument(testIndex);
         index.setFields(indexFields);
-        indexStore.writeDocument(index);
+        index = indexStore.writeDocument(index);
+        testIndex = index.asDocRef();
     }
 
     @Test

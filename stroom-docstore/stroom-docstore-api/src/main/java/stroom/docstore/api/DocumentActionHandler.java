@@ -22,9 +22,9 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.util.shared.Document;
 
-import java.util.Objects;
-
 public interface DocumentActionHandler<D extends Document> {
+
+    D createDocument();
 
     D readDocument(DocRef docRef);
 
@@ -42,22 +42,4 @@ public interface DocumentActionHandler<D extends Document> {
      * @return The Audit information about the given DocRef.
      */
     DocRefInfo info(DocRef docRef);
-
-    static DocRefInfo getDocRefInfo(final Document document) {
-
-        Objects.requireNonNull(document);
-
-        return DocRefInfo
-                .builder()
-                .docRef(DocRef.builder()
-                        .type(document.getType())
-                        .uuid(document.getUuid())
-                        .name(document.getName())
-                        .build())
-                .createTime(document.getCreateTimeMs())
-                .createUser(document.getCreateUser())
-                .updateTime(document.getUpdateTimeMs())
-                .updateUser(document.getUpdateUser())
-                .build();
-    }
 }

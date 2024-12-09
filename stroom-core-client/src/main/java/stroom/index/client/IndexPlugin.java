@@ -48,6 +48,19 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
     }
 
     @Override
+    public void create(final Consumer<LuceneIndexDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(INDEX_RESOURCE)
+                .method(IndexResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

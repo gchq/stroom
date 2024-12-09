@@ -24,7 +24,6 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -40,7 +39,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 @AutoLogged
-class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<DocumentationDoc> {
+class DocumentationResourceImpl implements DocumentationResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentationResourceImpl.class);
 
@@ -55,6 +54,11 @@ class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<
         this.documentationStoreProvider = documentationStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
+    }
+
+    @Override
+    public DocumentationDoc create() {
+        return documentationStoreProvider.get().createDocument();
     }
 
     @Override

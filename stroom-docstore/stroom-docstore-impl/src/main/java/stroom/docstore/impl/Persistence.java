@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,11 +19,13 @@ public interface Persistence {
 
     boolean exists(DocRef docRef);
 
+    DocumentData create(DocumentData documentData) throws IOException;
+
+    Optional<DocumentData> read(DocRef docRef) throws IOException;
+
+    DocumentData update(String expectedVersion, DocumentData documentData) throws IOException;
+
     void delete(DocRef docRef);
-
-    Map<String, byte[]> read(DocRef docRef) throws IOException;
-
-    void write(DocRef docRef, boolean update, Map<String, byte[]> data) throws IOException;
 
     List<DocRef> list(String type);
 

@@ -106,6 +106,12 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     }
 
     @Override
+    public void create(final Consumer<DocRef> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,

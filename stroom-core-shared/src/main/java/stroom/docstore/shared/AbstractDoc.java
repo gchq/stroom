@@ -29,24 +29,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-// TODO Ought to be renamed AbstractDoc, job for master branch
-public abstract class Doc implements Document {
+public abstract class AbstractDoc implements Document {
 
-    @JsonProperty
-    private String type;
     @JsonProperty
     private String uuid;
     @JsonProperty
     private String name;
+    @JsonProperty
+    private String uniqueName;
     @JsonProperty
     private String version;
     @JsonProperty
@@ -58,112 +57,120 @@ public abstract class Doc implements Document {
     @JsonProperty
     private String updateUser;
 
-    public Doc() {
+    public AbstractDoc() {
     }
 
-    public Doc(final String type, final String uuid, final String name) {
-        this.type = type;
+    public AbstractDoc(final String uuid, final String name) {
         this.uuid = uuid;
         this.name = name;
     }
 
     @JsonCreator
-    public Doc(@JsonProperty("type") final String type,
-               @JsonProperty("uuid") final String uuid,
-               @JsonProperty("name") final String name,
-               @JsonProperty("version") final String version,
-               @JsonProperty("createTimeMs") final Long createTimeMs,
-               @JsonProperty("updateTimeMs") final Long updateTimeMs,
-               @JsonProperty("createUser") final String createUser,
-               @JsonProperty("updateUser") final String updateUser) {
-        this.type = type;
+    public AbstractDoc(@JsonProperty("uuid") final String uuid,
+                       @JsonProperty("name") final String name,
+                       @JsonProperty("uniqueName") final String uniqueName,
+                       @JsonProperty("version") final String version,
+                       @JsonProperty("createTimeMs") final Long createTimeMs,
+                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                       @JsonProperty("createUser") final String createUser,
+                       @JsonProperty("updateUser") final String updateUser) {
         this.uuid = uuid;
         this.name = name;
+        this.uniqueName = uniqueName;
         this.version = version;
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
+
+        if (uniqueName == null && getType() != null && name != null) {
+            this.uniqueName = UniqueNameUtil.createDefault(getType(), name);
+        }
     }
 
-    public DocRef asDocRef() {
+    public final DocRef asDocRef() {
         return DocRef.builder()
-                .type(type)
+                .type(getType())
                 .name(name)
                 .uuid(uuid)
                 .build();
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
-    }
+    public abstract String getType();
 
     @Override
-    public String getUuid() {
+    public final String getUuid() {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
+    public final void setUuid(final String uuid) {
         this.uuid = uuid;
     }
 
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
-    public void setName(final String name) {
+    public final void setName(final String name) {
         this.name = name;
+        if (uniqueName == null && getType() != null && name != null) {
+            uniqueName = UniqueNameUtil.createDefault(getType(), name);
+        }
     }
 
-    public String getVersion() {
+    public final String getUniqueName() {
+        return uniqueName;
+    }
+
+    public final void setUniqueName(final String uniqueName) {
+        this.uniqueName = uniqueName;
+    }
+
+    public final String getVersion() {
         return version;
     }
 
-    public void setVersion(final String version) {
+    public final void setVersion(final String version) {
         this.version = version;
     }
 
     @Override
-    public Long getCreateTimeMs() {
+    public final Long getCreateTimeMs() {
         return createTimeMs;
     }
 
     @Override
-    public void setCreateTimeMs(final Long createTime) {
+    public final void setCreateTimeMs(final Long createTime) {
         this.createTimeMs = createTime;
     }
 
     @Override
-    public Long getUpdateTimeMs() {
+    public final Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
     @Override
-    public void setUpdateTimeMs(final Long updateTime) {
+    public final void setUpdateTimeMs(final Long updateTime) {
         this.updateTimeMs = updateTime;
     }
 
     @Override
-    public String getCreateUser() {
+    public final String getCreateUser() {
         return createUser;
     }
 
     @Override
-    public void setCreateUser(final String createUser) {
+    public final void setCreateUser(final String createUser) {
         this.createUser = createUser;
     }
 
     @Override
-    public String getUpdateUser() {
+    public final String getUpdateUser() {
         return updateUser;
     }
 
     @Override
-    public void setUpdateUser(final String updateUser) {
+    public final void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
     }
 
@@ -172,43 +179,52 @@ public abstract class Doc implements Document {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Doc)) {
+        if (!(o instanceof AbstractDoc)) {
             return false;
         }
-        final Doc doc = (Doc) o;
-        return Objects.equals(type, doc.type) &&
-                Objects.equals(uuid, doc.uuid) &&
-                Objects.equals(name, doc.name) &&
-                Objects.equals(version, doc.version) &&
-                Objects.equals(createTimeMs, doc.createTimeMs) &&
-                Objects.equals(updateTimeMs, doc.updateTimeMs) &&
-                Objects.equals(createUser, doc.createUser) &&
-                Objects.equals(updateUser, doc.updateUser);
+        final AbstractDoc doc = (AbstractDoc) o;
+        return Objects.equals(getType(), doc.getType()) &&
+               Objects.equals(uuid, doc.uuid) &&
+               Objects.equals(name, doc.name) &&
+               Objects.equals(uniqueName, doc.uniqueName) &&
+               Objects.equals(version, doc.version) &&
+               Objects.equals(createTimeMs, doc.createTimeMs) &&
+               Objects.equals(updateTimeMs, doc.updateTimeMs) &&
+               Objects.equals(createUser, doc.createUser) &&
+               Objects.equals(updateUser, doc.updateUser);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        return Objects.hash(getType(),
+                uuid,
+                name,
+                uniqueName,
+                version,
+                createTimeMs,
+                updateTimeMs,
+                createUser,
+                updateUser);
     }
 
     @Override
     public String toString() {
         return "DocRef{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "type='" + getType() + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends Doc, B extends AbstractBuilder<T, ?>> {
+    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>> {
 
-        protected String type;
         protected String uuid;
         protected String name;
+        protected String uniqueName;
         protected String version;
         protected Long createTimeMs;
         protected Long updateTimeMs;
@@ -218,20 +234,15 @@ public abstract class Doc implements Document {
         public AbstractBuilder() {
         }
 
-        public AbstractBuilder(final Doc doc) {
-            this.type = doc.type;
+        public AbstractBuilder(final AbstractDoc doc) {
             this.uuid = doc.uuid;
             this.name = doc.name;
+            this.uniqueName = doc.uniqueName;
             this.version = doc.version;
             this.createTimeMs = doc.createTimeMs;
             this.updateTimeMs = doc.updateTimeMs;
             this.createUser = doc.createUser;
             this.updateUser = doc.updateUser;
-        }
-
-        public B type(final String type) {
-            this.type = type;
-            return self();
         }
 
         public B uuid(final String uuid) {
@@ -241,6 +252,11 @@ public abstract class Doc implements Document {
 
         public B name(final String name) {
             this.name = name;
+            return self();
+        }
+
+        public B uniqueName(final String uniqueName) {
+            this.uniqueName = uniqueName;
             return self();
         }
 

@@ -65,6 +65,19 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
     }
 
     @Override
+    public void create(final Consumer<XmlSchemaDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(XML_SCHEMA_RESOURCE)
+                .method(XmlSchemaResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

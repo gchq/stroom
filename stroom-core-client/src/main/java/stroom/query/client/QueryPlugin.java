@@ -65,6 +65,19 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
     }
 
     @Override
+    public void create(final Consumer<QueryDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(QueryResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<QueryDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

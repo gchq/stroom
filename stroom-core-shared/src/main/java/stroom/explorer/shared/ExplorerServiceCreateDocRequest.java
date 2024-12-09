@@ -17,68 +17,42 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class ExplorerServiceCreateRequest {
+public class ExplorerServiceCreateDocRequest {
 
     @JsonProperty
-    private String docType;
+    private final DocRef docRef;
     @JsonProperty
-    private String docName;
+    private final ExplorerNode destinationFolder;
     @JsonProperty
-    private ExplorerNode destinationFolder;
-    @JsonProperty
-    private PermissionInheritance permissionInheritance;
-
-    public ExplorerServiceCreateRequest() {
-    }
+    private final PermissionInheritance permissionInheritance;
 
     @JsonCreator
-    public ExplorerServiceCreateRequest(
-            @JsonProperty("docType") final String docType,
-            @JsonProperty("docName") final String docName,
+    public ExplorerServiceCreateDocRequest(
+            @JsonProperty("docRef") final DocRef docRef,
             @JsonProperty("destinationFolder") final ExplorerNode destinationFolder,
             @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
-
-        this.docType = docType;
-        this.docName = docName;
+        this.docRef = docRef;
         this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
     }
 
-    public String getDocType() {
-        return docType;
-    }
-
-    public void setDocType(final String docType) {
-        this.docType = docType;
-    }
-
-    public String getDocName() {
-        return docName;
-    }
-
-    public void setDocName(final String docName) {
-        this.docName = docName;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     public ExplorerNode getDestinationFolder() {
         return destinationFolder;
     }
 
-    public void setDestinationFolder(final ExplorerNode destinationFolder) {
-        this.destinationFolder = destinationFolder;
-    }
-
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
-    }
-
-    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
-        this.permissionInheritance = permissionInheritance;
     }
 }

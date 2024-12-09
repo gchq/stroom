@@ -47,6 +47,11 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
     }
 
     @Override
+    public AnalyticRuleDoc create() {
+        return analyticRuleStoreProvider.get().createDocument();
+    }
+
+    @Override
     public AnalyticRuleDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(analyticRuleStoreProvider.get(), getDocRef(uuid));
     }

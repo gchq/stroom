@@ -35,7 +35,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Message;
@@ -70,17 +69,14 @@ class DashboardStoreImpl implements DashboardStore {
 
     private final Store<DashboardDoc> store;
     private final DashboardSerialiser serialiser;
-    private final SecurityContext securityContext;
 
     private DashboardConfig template;
 
     @Inject
     DashboardStoreImpl(final StoreFactory storeFactory,
-                       final DashboardSerialiser serialiser,
-                       final SecurityContext securityContext) {
+                       final DashboardSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.class);
         this.serialiser = serialiser;
-        this.securityContext = securityContext;
     }
 
     private DashboardConfig getTemplate() {
@@ -105,22 +101,6 @@ class DashboardStoreImpl implements DashboardStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
-
-        // Create a dashboard from a template.
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final DashboardDoc dashboardDoc = store.readDocument(docRef);
-            dashboardDoc.setDashboardConfig(getTemplate());
-            store.writeDocument(dashboardDoc);
-        });
-        return docRef;
-    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -281,6 +261,13 @@ class DashboardStoreImpl implements DashboardStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public DashboardDoc createDocument() {
+        final DashboardDoc doc = store.createDocument();
+        doc.setDashboardConfig(getTemplate());
+        return doc;
+    }
 
     @Override
     public DashboardDoc readDocument(final DocRef docRef) {

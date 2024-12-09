@@ -102,10 +102,10 @@ public class CreateEntryRequest {
     @Override
     public String toString() {
         return "CreateEntryRequest{" +
-                "annotation=" + annotation +
-                ", type='" + type + '\'' +
-                ", entryValue='" + entryValue + '\'' +
-                ", linkedEvents=" + linkedEvents +
-                '}';
+               "annotation=" + annotation +
+               ", type='" + type + '\'' +
+               ", entryValue='" + entryValue + '\'' +
+               ", linkedEvents=" + linkedEvents +
+               '}';
     }
 }

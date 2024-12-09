@@ -1,7 +1,7 @@
 {
-  "type" : "Pipeline",
   "uuid" : "2a3d088b-a513-4a42-b190-9dceea7e82fb",
   "name" : "BROADBAND_SPEED_TESTS-INDEX",
+  "uniqueName" : "pipeline:broadband-speed-tests-index",
   "version" : "37a5ffa8-7eb9-49c9-8f74-eac79a9928b3",
   "parentPipeline" : {
     "type" : "Pipeline",

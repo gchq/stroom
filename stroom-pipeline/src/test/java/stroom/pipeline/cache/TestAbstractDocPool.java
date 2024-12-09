@@ -5,7 +5,7 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.cache.impl.CacheManagerService;
 import stroom.cache.impl.CacheManagerServiceImpl;
 import stroom.cache.impl.FindCacheInfoCriteria;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.cache.CacheConfig;
@@ -192,7 +192,7 @@ class TestAbstractDocPool {
         }
     }
 
-    private static class MyDoc extends Doc {
+    private static class MyDoc extends AbstractDoc {
 
         private final String content;
 
@@ -202,6 +202,11 @@ class TestAbstractDocPool {
 
         public String getContent() {
             return content;
+        }
+
+        @Override
+        public String getType() {
+            return "MyDoc";
         }
     }
 }

@@ -24,6 +24,8 @@ import java.util.List;
 
 public interface PipelineService {
 
+    PipelineDoc create();
+
     PipelineDoc fetch(final String uuid);
 
     PipelineDoc update(final String uuid, final PipelineDoc doc);

@@ -16,9 +16,8 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,9 +36,9 @@ import java.util.Set;
         "The Stroom-Stats Store Document is deprecated and should not be used."
 )
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -52,7 +51,7 @@ import java.util.Set;
         "enabled",
         "config"})
 @JsonInclude(Include.NON_NULL)
-public class StroomStatsStoreDoc extends Doc {
+public class StroomStatsStoreDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "StroomStatsStore";
     public static final SvgImage ICON = SvgImage.DOCUMENT_STROOM_STATS_STORE;
@@ -79,9 +78,9 @@ public class StroomStatsStoreDoc extends Doc {
     }
 
     @JsonCreator
-    public StroomStatsStoreDoc(@JsonProperty("type") final String type,
-                               @JsonProperty("uuid") final String uuid,
+    public StroomStatsStoreDoc(@JsonProperty("uuid") final String uuid,
                                @JsonProperty("name") final String name,
+                               @JsonProperty("uniqueName") final String uniqueName,
                                @JsonProperty("version") final String version,
                                @JsonProperty("createTimeMs") final Long createTimeMs,
                                @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -93,7 +92,7 @@ public class StroomStatsStoreDoc extends Doc {
                                @JsonProperty("precision") final EventStoreTimeIntervalEnum precision,
                                @JsonProperty("enabled") final boolean enabled,
                                @JsonProperty("config") final StroomStatsStoreEntityData config) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
         this.rollUpType = rollUpType;
@@ -112,20 +111,10 @@ public class StroomStatsStoreDoc extends Doc {
         }
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {
@@ -214,11 +203,11 @@ public class StroomStatsStoreDoc extends Doc {
         }
         final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
         return Objects.equals(description, that.description) &&
-                statisticType == that.statisticType &&
-                rollUpType == that.rollUpType &&
-                precision == that.precision &&
-                Objects.equals(enabled, that.enabled) &&
-                Objects.equals(config, that.config);
+               statisticType == that.statisticType &&
+               rollUpType == that.rollUpType &&
+               precision == that.precision &&
+               Objects.equals(enabled, that.enabled) &&
+               Objects.equals(config, that.config);
     }
 
     @Override

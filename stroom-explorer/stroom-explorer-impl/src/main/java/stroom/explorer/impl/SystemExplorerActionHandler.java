@@ -41,11 +41,6 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef createDocument(final String name) {
-        throw new PermissionException(securityContext.getUserRef(), "You cannot create the System node");
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,

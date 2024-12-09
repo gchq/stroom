@@ -45,6 +45,13 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
 
     String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V2;
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a new rules doc",
+            operationId = "createReceiveDataRules")
+    ReceiveDataRules create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

@@ -42,6 +42,11 @@ class StatsStoreResourceImpl implements StatsStoreResource {
     }
 
     @Override
+    public StroomStatsStoreDoc create() {
+        return stroomStatsStoreStoreProvider.get().createDocument();
+    }
+
+    @Override
     public StroomStatsStoreDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(stroomStatsStoreStoreProvider.get(), getDocRef(uuid));
     }

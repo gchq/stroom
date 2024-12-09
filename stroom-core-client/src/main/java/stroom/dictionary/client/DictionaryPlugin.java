@@ -65,6 +65,19 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     }
 
     @Override
+    public void create(final Consumer<DictionaryDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(DICTIONARY_RESOURCE)
+                .method(DictionaryResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<DictionaryDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

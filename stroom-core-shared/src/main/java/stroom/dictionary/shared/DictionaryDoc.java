@@ -18,10 +18,11 @@ package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,9 +38,9 @@ import java.util.Objects;
                 "Dictionaries also support inheritance so one dictionary can import the contents of other " +
                 "dictionaries.")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -49,7 +50,7 @@ import java.util.Objects;
         "data",
         "imports"})
 @JsonInclude(Include.NON_NULL)
-public class DictionaryDoc extends Doc {
+public class DictionaryDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "Dictionary";
     public static final SvgImage ICON = SvgImage.DOCUMENT_DICTIONARY;
@@ -65,9 +66,9 @@ public class DictionaryDoc extends Doc {
     }
 
     @JsonCreator
-    public DictionaryDoc(@JsonProperty("type") final String type,
-                         @JsonProperty("uuid") final String uuid,
+    public DictionaryDoc(@JsonProperty("uuid") final String uuid,
                          @JsonProperty("name") final String name,
+                         @JsonProperty("uniqueName") final String uniqueName,
                          @JsonProperty("version") final String version,
                          @JsonProperty("createTimeMs") final Long createTimeMs,
                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -76,26 +77,16 @@ public class DictionaryDoc extends Doc {
                          @JsonProperty("description") final String description,
                          @JsonProperty("data") final String data,
                          @JsonProperty("imports") final List<DocRef> imports) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
         this.imports = imports;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

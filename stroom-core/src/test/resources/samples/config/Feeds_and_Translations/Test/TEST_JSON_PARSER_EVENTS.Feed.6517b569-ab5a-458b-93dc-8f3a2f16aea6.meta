@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "6517b569-ab5a-458b-93dc-8f3a2f16aea6",
   "name" : "TEST_JSON_PARSER-EVENTS",
+  "uniqueName" : "feed:test-json-parser-events",
   "version" : "d18eb9e8-2d35-49b7-ac40-b7097e4996ee",
   "description" : "TEST_JSON_PARSER-EVENTS",
   "encoding" : "UTF-8",

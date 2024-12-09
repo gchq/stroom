@@ -18,7 +18,7 @@ package stroom.search.solr.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
 
@@ -43,9 +43,9 @@ import java.util.Objects;
                 "{{% /see-also %}}"
 )
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -62,7 +62,7 @@ import java.util.Objects;
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
-public class SolrIndexDoc extends Doc {
+public class SolrIndexDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "SolrIndex";
     public static final SvgImage ICON = SvgImage.DOCUMENT_SOLR_INDEX;
@@ -102,9 +102,9 @@ public class SolrIndexDoc extends Doc {
     }
 
     @JsonCreator
-    public SolrIndexDoc(@JsonProperty("type") final String type,
-                        @JsonProperty("uuid") final String uuid,
+    public SolrIndexDoc(@JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
+                        @JsonProperty("uniqueName") final String uniqueName,
                         @JsonProperty("version") final String version,
                         @JsonProperty("createTimeMs") final Long createTimeMs,
                         @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -119,7 +119,7 @@ public class SolrIndexDoc extends Doc {
                         @JsonProperty("deletedFields") final List<SolrIndexField> deletedFields,
                         @JsonProperty("solrSynchState") final SolrSynchState solrSynchState,
                         @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.collection = collection;
         this.solrConnectionConfig = solrConnectionConfig;
@@ -141,20 +141,10 @@ public class SolrIndexDoc extends Doc {
         }
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {
@@ -230,11 +220,6 @@ public class SolrIndexDoc extends Doc {
 
     public void setRetentionExpression(final ExpressionOperator retentionExpression) {
         this.retentionExpression = retentionExpression;
-    }
-
-    @JsonIgnore
-    public final String getType() {
-        return DOCUMENT_TYPE;
     }
 
     @Override

@@ -47,6 +47,11 @@ class ViewResourceImpl implements ViewResource {
     }
 
     @Override
+    public ViewDoc create() {
+        return viewStoreProvider.get().createDocument();
+    }
+
+    @Override
     public ViewDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(viewStoreProvider.get(), getDocRef(uuid));
     }

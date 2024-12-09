@@ -28,7 +28,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
@@ -50,34 +49,16 @@ class ViewStoreImpl implements ViewStore {
             ViewDoc.DOCUMENT_TYPE,
             ViewDoc.ICON);
     private final Store<ViewDoc> store;
-    private final SecurityContext securityContext;
 
     @Inject
     ViewStoreImpl(final StoreFactory storeFactory,
-                  final ViewSerialiser serialiser,
-                  final SecurityContext securityContext) {
+                  final ViewSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, ViewDoc.DOCUMENT_TYPE, ViewDoc.class);
-        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
-
-        // Create a dashboard from a template.
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final ViewDoc dashboardDoc = store.readDocument(docRef);
-            store.writeDocument(dashboardDoc);
-        });
-        return docRef;
-    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -155,6 +136,11 @@ class ViewStoreImpl implements ViewStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public ViewDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public ViewDoc readDocument(final DocRef docRef) {

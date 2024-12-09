@@ -113,6 +113,7 @@ include 'stroom-docref'
 include 'stroom-docstore:stroom-docstore-api'
 include 'stroom-docstore:stroom-docstore-impl'
 include 'stroom-docstore:stroom-docstore-impl-db'
+include 'stroom-docstore:stroom-docstore-impl-db-jooq'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
 

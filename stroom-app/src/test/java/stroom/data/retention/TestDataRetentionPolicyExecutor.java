@@ -85,13 +85,13 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         final Set<DocRef> docs = dataRetentionRulesService.listDocuments();
         DataRetentionRules dataRetentionRules = null;
-        if (docs.size() > 0) {
+        if (!docs.isEmpty()) {
             dataRetentionRules = dataRetentionRulesService.readDocument(docs.iterator().next());
         }
 
         if (dataRetentionRules == null) {
-            final DocRef docRef = dataRetentionRulesService.createDocument("test");
-            dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+            dataRetentionRules = dataRetentionRulesService.createDocument();
+            dataRetentionRules.setName("test");
         }
 
         dataRetentionRules.setRules(List.of(rule1, rule2));

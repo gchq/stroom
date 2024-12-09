@@ -238,7 +238,6 @@ public class V07_00_00_3000__retention extends BaseJavaMigration {
         if (dataRetentionRules == null) {
             final long now = System.currentTimeMillis();
             dataRetentionRules = new DataRetentionRules();
-            dataRetentionRules.setType(DataRetentionRules.DOCUMENT_TYPE);
             dataRetentionRules.setUuid(UUID.randomUUID().toString());
             dataRetentionRules.setName(DATA_RETENTION);
             dataRetentionRules.setVersion(UUID.randomUUID().toString());

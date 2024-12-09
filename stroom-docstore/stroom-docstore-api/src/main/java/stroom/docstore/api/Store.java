@@ -3,7 +3,7 @@ package stroom.docstore.api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -14,13 +14,13 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface Store<D extends Doc>
+public interface Store<D extends AbstractDoc>
         extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    DocRef createDocument(String name);
+//    DocRef createDocument(String name);
 
     DocRef copyDocument(String originalUuid,
                         String newName);
@@ -51,12 +51,12 @@ public interface Store<D extends Doc>
     // END OF HasDependencies
     ////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Creates the named document, using the supplied {@link DocumentCreator} to
-     * provide the initial document skeleton. This allows doc store implementors
-     * to provide custom skeleton content.
-     */
-    DocRef createDocument(final String name, final DocumentCreator<D> documentCreator);
+//    /**
+//     * Creates the named document, using the supplied {@link DocumentCreator} to
+//     * provide the initial document skeleton. This allows doc store implementors
+//     * to provide custom skeleton content.
+//     */
+//    DocRef createDocument(final String name, final DocumentCreator<D> documentCreator);
 
     boolean exists(DocRef docRef);
 
@@ -97,7 +97,7 @@ public interface Store<D extends Doc>
 //    List<DocRef> findByNames(final List<String> name,
 //                             final boolean allowWildCards);
 
-    interface DocumentCreator<D extends Doc> {
+    interface DocumentCreator<D extends AbstractDoc> {
 
         D create(final String type,
                  final String uuid,

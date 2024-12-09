@@ -19,7 +19,7 @@ package stroom.docstore.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
@@ -44,8 +44,8 @@ public class LoggingDocumentResourceHelperImpl implements DocumentResourceHelper
     }
 
     @Override
-    public <D extends Doc> D read(final DocumentActionHandler<D> documentActionHandler,
-                                  final DocRef docRef) {
+    public <D extends AbstractDoc> D read(final DocumentActionHandler<D> documentActionHandler,
+                                          final DocRef docRef) {
         return securityContext.secureResult(() ->
                 securityContext.useAsReadResult(() -> {
                     try {
@@ -69,7 +69,7 @@ public class LoggingDocumentResourceHelperImpl implements DocumentResourceHelper
     }
 
     @Override
-    public <D extends Doc> D update(final DocumentActionHandler<D> documentActionHandler, final D doc) {
+    public <D extends AbstractDoc> D update(final DocumentActionHandler<D> documentActionHandler, final D doc) {
         return securityContext.secureResult(() -> {
             final DocRef docRef = DocRefUtil.create(doc);
             try {

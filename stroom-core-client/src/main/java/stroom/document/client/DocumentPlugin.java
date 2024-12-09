@@ -96,6 +96,89 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //        });
 //    }
 
+
+    /**
+     * 4. This method will open a document and show it in the content pane.
+     */
+    public MyPresenterWidget<?> create(final boolean fullScreen,
+                                       final TaskMonitorFactory taskMonitorFactory) {
+        MyPresenterWidget<?> presenter = null;
+        final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
+        final Task task = new SimpleTask("Creating: " + getType());
+        try {
+            // Start spinning.
+            taskMonitor.onStart(task);
+
+            // If the item isn't already open but we are forcing it open then,
+            // create a new presenter and register it as open.
+            final MyPresenterWidget<?> documentEditPresenter = createEditor();
+            presenter = documentEditPresenter;
+
+            if (documentEditPresenter instanceof HasTaskMonitorFactory) {
+                ((HasTaskMonitorFactory) documentEditPresenter).setTaskMonitorFactory(taskMonitorFactory);
+            }
+
+            if (documentEditPresenter instanceof DocumentTabData) {
+                final DocumentTabData tabData = (DocumentTabData) documentEditPresenter;
+
+                // Load the document and show the tab.
+                final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
+                createAndShowDocument(documentEditPresenter, closeHandler, tabData, fullScreen, taskMonitorFactory);
+            }
+
+        } finally {
+            // Stop spinning.
+            taskMonitor.onEnd(task);
+        }
+
+        return presenter;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    protected void createAndShowDocument(final MyPresenterWidget<?> documentEditPresenter,
+                                         final CloseContentEvent.Handler closeHandler,
+                                         final DocumentTabData tabData,
+                                         final boolean fullScreen,
+                                         final TaskMonitorFactory taskMonitorFactory) {
+        final RestErrorHandler errorHandler = caught ->
+                AlertEvent.fireError(
+                        DocumentPlugin.this,
+                        "Unable to create document " + getType(), caught.getMessage(),
+                        null);
+
+        final Consumer<D> loadConsumer = doc -> {
+            if (doc == null) {
+                AlertEvent.fireError(DocumentPlugin.this, "Unable to create document " + getType(), null);
+            } else {
+                // Read the newly created document.
+                if (documentEditPresenter instanceof HasDocumentRead) {
+                    ((HasDocumentRead<D>) documentEditPresenter).read(
+                            getDocRef(doc),
+                            doc,
+                            false);
+                    // Open the tab.
+                    if (fullScreen) {
+                        showFullScreen(documentEditPresenter);
+                    } else {
+                        contentManager.open(closeHandler, tabData, documentEditPresenter);
+                    }
+                } else {
+                    // Open the tab.
+                    if (fullScreen) {
+                        showFullScreen(documentEditPresenter);
+                    } else {
+                        contentManager.open(closeHandler, tabData, documentEditPresenter);
+                    }
+                }
+            }
+        };
+
+        // Create the document and show the tab.
+        create(loadConsumer, errorHandler, taskMonitorFactory);
+    }
+
+
     /**
      * 4. This method will open a document and show it in the content pane.
      */
@@ -530,6 +613,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     protected abstract MyPresenterWidget<?> createEditor();
 
+    public abstract void create(final Consumer<D> resultConsumer,
+                                final RestErrorHandler errorHandler,
+                                final TaskMonitorFactory taskMonitorFactory);
+
     public abstract void load(final DocRef docRef,
                               final Consumer<D> resultConsumer,
                               final RestErrorHandler errorHandler,
@@ -569,7 +656,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                             final DocRef docRef = getDocRef(presenter.getEntity());
                             ConfirmEvent.fire(DocumentPlugin.this,
                                     docRef.getType() + " '" + docRef.getName()
-                                            + "' has unsaved changes. Are you sure you want to close this item?",
+                                    + "' has unsaved changes. Are you sure you want to close this item?",
                                     result ->
                                             actuallyClose(tabData, event.getCallback(), presenter, result));
                         } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {

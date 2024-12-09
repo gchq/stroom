@@ -23,6 +23,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
@@ -99,9 +100,9 @@ class TestMetaService extends StroomIntegrationTest {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);
 
-            final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
-            final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
-            final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
+            final DocRef docref1 = createFeed(FEED_NO_PERMISSION);
+            final DocRef docref2 = createFeed(FEED_USE_PERMISSION);
+            final DocRef docref3 = createFeed(FEED_READ_PERMISSION);
 
             documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
             documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
@@ -151,7 +152,7 @@ class TestMetaService extends StroomIntegrationTest {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);
 
-            final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
+            final DocRef docref1 = createFeed(FEED_NO_PERMISSION);
 
 //            documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionEnum.USE);
 //            documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionEnum.READ);
@@ -185,9 +186,9 @@ class TestMetaService extends StroomIntegrationTest {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);
 
-            final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
-            final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
-            final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
+            final DocRef docref1 = createFeed(FEED_NO_PERMISSION);
+            final DocRef docref2 = createFeed(FEED_USE_PERMISSION);
+            final DocRef docref3 = createFeed(FEED_READ_PERMISSION);
 
             documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
             documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
@@ -241,8 +242,8 @@ class TestMetaService extends StroomIntegrationTest {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);
 
-            final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
-            final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
+            final DocRef feedNoPermission = createFeed(FEED_NO_PERMISSION);
+            final DocRef feedReadPermission = createFeed(FEED_READ_PERMISSION);
             documentPermissionService.setPermission(feedReadPermission, user.asRef(), DocumentPermission.VIEW);
 
             securityContext.asUser(user.asRef(), () -> {
@@ -285,8 +286,8 @@ class TestMetaService extends StroomIntegrationTest {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);
 
-            final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
-            final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
+            final DocRef feedNoPermission = createFeed(FEED_NO_PERMISSION);
+            final DocRef feedReadPermission = createFeed(FEED_READ_PERMISSION);
             documentPermissionService.setPermission(feedReadPermission,
                     user.asRef(),
                     DocumentPermission.VIEW);
@@ -346,5 +347,12 @@ class TestMetaService extends StroomIntegrationTest {
                 .typeName(typeName)
                 .createMs(now)
                 .build();
+    }
+
+    private DocRef createFeed(final String name) {
+        FeedDoc doc = feedStore.createDocument();
+        doc.setName(name);
+        doc = feedStore.writeDocument(doc);
+        return doc.asDocRef();
     }
 }

@@ -52,6 +52,13 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     String SEARCH_PATH_PART = "/search";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a query doc",
+            operationId = "createQuery")
+    QueryDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

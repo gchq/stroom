@@ -45,25 +45,23 @@ public final class PipelineTestUtil {
 
     public static DocRef createTestPipeline(final PipelineStore pipelineStore, final String name,
                                             final String description, final String data) {
-        final DocRef docRef = pipelineStore.createDocument(name);
-        return createTestPipeline(pipelineStore, docRef, name, description, data);
+        final PipelineDoc pipelineDoc = pipelineStore.createDocument();
+        pipelineDoc.setName(name);
+        return createTestPipeline(pipelineStore, pipelineDoc, name, description, data);
     }
 
     public static DocRef createTestPipeline(final PipelineStore pipelineStore,
-                                            final DocRef docRef,
+                                            final PipelineDoc pipelineDoc,
                                             final String name,
                                             final String description,
                                             final String data) {
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
         pipelineDoc.setName(name);
         pipelineDoc.setDescription(description);
         if (data != null) {
             final PipelineData pipelineData = SERIALISER.getPipelineDataFromXml(data);
             pipelineDoc.setPipelineData(pipelineData);
         }
-        pipelineStore.writeDocument(pipelineDoc);
-        return docRef;
-
+        return pipelineStore.writeDocument(pipelineDoc).asDocRef();
     }
 
 }

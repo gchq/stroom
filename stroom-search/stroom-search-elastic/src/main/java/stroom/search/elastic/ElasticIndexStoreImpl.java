@@ -62,11 +62,6 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -107,6 +102,11 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public ElasticIndexDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {

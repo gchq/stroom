@@ -47,7 +47,9 @@ class WordListResourceImpl implements WordListResource {
     @Override
     public WordList getWords(final String uuid) {
         try {
-            final DocRef dictDocRef = DictionaryDoc.buildDocRef()
+            final DocRef dictDocRef = DocRef
+                    .builder()
+                    .type(DictionaryDoc.DOCUMENT_TYPE)
                     .uuid(uuid)
                     .build();
 

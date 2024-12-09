@@ -40,7 +40,6 @@ class ScriptDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldScript, dataMap);
 
                 final ScriptDoc document = new ScriptDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

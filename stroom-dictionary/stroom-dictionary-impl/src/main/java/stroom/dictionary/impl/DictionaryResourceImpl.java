@@ -27,7 +27,6 @@ import stroom.resource.api.ResourceStore;
 import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -44,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @AutoLogged
-class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<DictionaryDoc> {
+class DictionaryResourceImpl implements DictionaryResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryResourceImpl.class);
 
@@ -62,6 +61,11 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+    }
+
+    @Override
+    public DictionaryDoc create() {
+        return dictionaryStoreProvider.get().createDocument();
     }
 
     @Override

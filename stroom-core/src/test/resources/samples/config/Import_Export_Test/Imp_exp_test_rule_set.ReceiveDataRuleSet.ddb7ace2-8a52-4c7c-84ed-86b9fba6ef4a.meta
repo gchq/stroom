@@ -1,7 +1,7 @@
 {
-  "type" : "ReceiveDataRuleSet",
   "uuid" : "ddb7ace2-8a52-4c7c-84ed-86b9fba6ef4a",
   "name" : "Imp_exp_test_rule_set",
+  "uniqueName" : "receivedataruleset:imp-exp-test-rule-set",
   "version" : "b2954372-49aa-44c8-9bca-2609051dd954",
   "fields" : [ {
     "fldName" : "One",

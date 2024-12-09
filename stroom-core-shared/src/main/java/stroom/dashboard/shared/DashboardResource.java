@@ -46,6 +46,13 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     String SEARCH_PATH_PART = "/search";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a dashboard doc",
+            operationId = "createDashboard")
+    DashboardDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

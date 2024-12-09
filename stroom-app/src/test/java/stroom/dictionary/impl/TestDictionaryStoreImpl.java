@@ -41,64 +41,64 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void test() {
         // Create a dictionary and save it.
-        final DocRef docRef = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary = dictionaryStore.readDocument(docRef);
+        DictionaryDoc dictionary = dictionaryStore.createDocument();
+        dictionary.setName("TEST");
         dictionary.setData("This\nis\na\nlist\nof\nwords");
-        dictionaryStore.writeDocument(dictionary);
+        dictionary = dictionaryStore.writeDocument(dictionary);
 
         // Make sure we can get it back.
-        final DictionaryDoc loaded = dictionaryStore.readDocument(docRef);
+        final DictionaryDoc loaded = dictionaryStore.readDocument(dictionary.asDocRef());
         assertThat(loaded).isNotNull();
         assertThat(loaded.getData()).isEqualTo(dictionary.getData());
-        assertThat(wordListProvider.getCombinedData(docRef)).isEqualTo(dictionary.getData());
+        assertThat(wordListProvider.getCombinedData(dictionary.asDocRef())).isEqualTo(dictionary.getData());
     }
 
     @Test
     void testImport() {
         // Create a dictionary and save it.
-        final DocRef docRef1 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
+        DictionaryDoc dictionary1 = dictionaryStore.createDocument();
+        dictionary1.setName("TEST1");
         dictionary1.setData("dic1");
-        dictionaryStore.writeDocument(dictionary1);
+        dictionary1 = dictionaryStore.writeDocument(dictionary1);
 
         // Create a dictionary and save it.
-        final DocRef docRef2 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2);
+        DictionaryDoc dictionary2 = dictionaryStore.createDocument();
+        dictionary2.setName("TEST2");
         dictionary2.setData("dic2");
-        dictionary2.setImports(Collections.singletonList(docRef1));
-        dictionaryStore.writeDocument(dictionary2);
+        dictionary2.setImports(Collections.singletonList(dictionary1.asDocRef()));
+        dictionary2 = dictionaryStore.writeDocument(dictionary2);
 
         // Create a dictionary and save it.
-        final DocRef docRef3 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary3 = dictionaryStore.readDocument(docRef3);
+        DictionaryDoc dictionary3 = dictionaryStore.createDocument();
+        dictionary3.setName("TEST3");
         dictionary3.setData("dic3");
-        dictionary3.setImports(Collections.singletonList(docRef2));
+        dictionary3.setImports(Collections.singletonList(dictionary2.asDocRef()));
         dictionaryStore.writeDocument(dictionary3);
 
         // Make sure we can get it back.
-        assertThat(wordListProvider.getCombinedData(docRef1)).isEqualTo("dic1");
-        assertThat(wordListProvider.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
-        assertThat(wordListProvider.getCombinedData(docRef3)).isEqualTo("dic1\ndic2\ndic3");
+        assertThat(wordListProvider.getCombinedData(dictionary1.asDocRef())).isEqualTo("dic1");
+        assertThat(wordListProvider.getCombinedData(dictionary2.asDocRef())).isEqualTo("dic1\ndic2");
+        assertThat(wordListProvider.getCombinedData(dictionary3.asDocRef())).isEqualTo("dic1\ndic2\ndic3");
     }
 
     @Test
     void testFindByName() {
         // Create a dictionary and save it.
-        final DocRef docRef1 = dictionaryStore.createDocument("dic1_name");
-        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
+        DictionaryDoc dictionary1 = dictionaryStore.createDocument();
+        dictionary1.setName("dic1_name");
         dictionary1.setData("dic1");
-        dictionaryStore.writeDocument(dictionary1);
+        dictionary1 = dictionaryStore.writeDocument(dictionary1);
 
         // Create a dictionary and save it.
-        final DocRef docRef2 = dictionaryStore.createDocument("dic2_name");
-        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2);
+        DictionaryDoc dictionary2 = dictionaryStore.createDocument();
+        dictionary2.setName("dic2_name");
         dictionary2.setData("dic2");
-        dictionary2.setImports(Collections.singletonList(docRef1));
-        dictionaryStore.writeDocument(dictionary2);
+        dictionary2.setImports(Collections.singletonList(dictionary1.asDocRef()));
+        dictionary2 = dictionaryStore.writeDocument(dictionary2);
 
         // Make sure we can get it back.
-        assertThat(wordListProvider.getCombinedData(docRef1)).isEqualTo("dic1");
-        assertThat(wordListProvider.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
+        assertThat(wordListProvider.getCombinedData(dictionary1.asDocRef())).isEqualTo("dic1");
+        assertThat(wordListProvider.getCombinedData(dictionary2.asDocRef())).isEqualTo("dic1\ndic2");
 
         List<DocRef> dictionary1Results = wordListProvider.findByName("dic1_name");
         assertThat(dictionary1Results.size()).isOne();

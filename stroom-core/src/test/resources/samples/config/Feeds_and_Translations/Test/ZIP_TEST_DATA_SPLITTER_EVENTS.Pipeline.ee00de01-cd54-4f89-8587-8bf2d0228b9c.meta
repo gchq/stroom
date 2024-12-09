@@ -1,7 +1,7 @@
 {
-  "type" : "Pipeline",
   "uuid" : "ee00de01-cd54-4f89-8587-8bf2d0228b9c",
   "name" : "ZIP_TEST-DATA_SPLITTER-EVENTS",
+  "uniqueName" : "pipeline:zip-test-data-splitter-events",
   "version" : "660a23e5-a8a4-4223-8629-dd4804e568e6",
   "parentPipeline" : {
     "type" : "Pipeline",

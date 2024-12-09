@@ -64,11 +64,6 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -133,6 +128,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public XmlSchemaDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public XmlSchemaDoc readDocument(final DocRef docRef) {

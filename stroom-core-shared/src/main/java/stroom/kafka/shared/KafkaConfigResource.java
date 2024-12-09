@@ -41,6 +41,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface KafkaConfigResource extends RestResource, DirectRestService, FetchWithUuid<KafkaConfigDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a kafkaConfig doc",
+            operationId = "createKafkaConfig")
+    KafkaConfigDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

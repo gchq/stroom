@@ -75,6 +75,19 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     }
 
     @Override
+    public void create(final Consumer<KafkaConfigDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(KAFKA_CONFIG_RESOURCE)
+                .method(KafkaConfigResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

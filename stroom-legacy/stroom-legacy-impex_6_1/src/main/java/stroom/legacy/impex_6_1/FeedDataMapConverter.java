@@ -47,7 +47,6 @@ class FeedDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldFeed, dataMap);
 
                 final FeedDoc document = new FeedDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

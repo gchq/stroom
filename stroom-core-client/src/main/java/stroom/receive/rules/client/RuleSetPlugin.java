@@ -67,6 +67,19 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
     }
 
     @Override
+    public void create(final Consumer<ReceiveDataRules> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RULES_RESOURCE)
+                .method(ReceiveDataRuleSetResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final RestErrorHandler errorHandler,

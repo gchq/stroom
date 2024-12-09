@@ -61,4 +61,7 @@ cd -
 cd stroom-query/stroom-query-datasource-impl-db-jooq
 ../../gradlew generateJooq
 cd -
+cd stroom-docstore/stroom-docstore-impl-db-jooq
+../../gradlew generateJooq
+cd -
 

@@ -60,10 +60,7 @@ class TestMetaSecurityFilterImpl {
     private void setupFeedStoreMock() {
         Mockito.when(mockFeedStore.list())
                 .thenReturn(FEEDS.stream()
-                        .map(feed -> FeedDoc.buildDocRef()
-                                .uuid(feed + UUID_SUFFIX)
-                                .name(feed)
-                                .build())
+                        .map(feed -> new DocRef(FeedDoc.DOCUMENT_TYPE, feed + UUID_SUFFIX, feed))
                         .collect(Collectors.toList()));
     }
 

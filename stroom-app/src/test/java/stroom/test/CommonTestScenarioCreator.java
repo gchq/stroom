@@ -104,17 +104,14 @@ public class CommonTestScenarioCreator {
     }
 
     public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields, final int maxDocsPerShard) {
-        // Create a test index.
-        final DocRef indexRef = indexStore.createDocument(name);
-        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
-
-        // Update the index
+        LuceneIndexDoc index = indexStore.createDocument();
+        index.setName(name);
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setFields(indexFields);
         index.setVolumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP);
-        indexStore.writeDocument(index);
+        index = indexStore.writeDocument(index);
         assertThat(index).isNotNull();
-        return indexRef;
+        return index.asDocRef();
     }
 
     public List<LuceneIndexField> createIndexFields() {

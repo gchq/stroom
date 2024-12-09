@@ -121,13 +121,12 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         // only need a null check on the engine name as the rest will never be
         // null
         if (!prevType.equals(writtenEntity.getStatisticType())
-                || !prevRollUpType.equals(writtenEntity.getRollUpType())
-                || !prevInterval.equals(writtenEntity.getPrecision())
-                || !prevFieldList.equals(writtenEntity.getStatisticFields())
-                || !prevMaskSet.equals(writtenEntity.getCustomRollUpMasks())) {
-            ConfirmEvent.fireWarn(
-                    this,
-                    SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
+            || !prevRollUpType.equals(writtenEntity.getRollUpType())
+            || !prevInterval.equals(writtenEntity.getPrecision())
+            || !prevFieldList.equals(writtenEntity.getStatisticFields())
+            || !prevMaskSet.equals(writtenEntity.getCustomRollUpMasks())) {
+            ConfirmEvent.fireWarn(this, SafeHtmlUtils.fromTrustedString(
+                            "Changes to the following attributes of a statistic data " +
                             "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
                             "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
                             "existing statistics data. Please ensure you understand the full consequences of the " +
@@ -155,6 +154,19 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 throwable -> {
                 },
                 taskMonitorFactory);
+    }
+
+    @Override
+    public void create(final Consumer<StatisticStoreDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(STATISTIC_RESOURCE)
+                .method(StatisticResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

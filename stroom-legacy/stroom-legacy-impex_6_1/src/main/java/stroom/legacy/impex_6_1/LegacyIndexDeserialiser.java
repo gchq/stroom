@@ -19,7 +19,6 @@ public class LegacyIndexDeserialiser {
         LegacyXmlSerialiser.performImport(oldIndex, dataMap);
 
         final LuceneIndexDoc document = new LuceneIndexDoc();
-        document.setType(docRef.getType());
         document.setUuid(docRef.getUuid());
         document.setName(docRef.getName());
         document.setVersion(UUID.randomUUID().toString());

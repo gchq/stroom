@@ -39,7 +39,6 @@ class PipelineDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldPipeline, dataMap);
 
                 final PipelineDoc document = new PipelineDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

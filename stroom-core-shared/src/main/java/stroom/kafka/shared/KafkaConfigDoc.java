@@ -16,13 +16,13 @@
 
 package stroom.kafka.shared;
 
-import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,12 +33,12 @@ import java.util.Objects;
 
 @Description(
         "Defines the connection details for a single Kafka cluster.\n" +
-                "This Kafka Configuration Document can then be used by one or more " +
-                "{{< pipe-elm \"StandardKafkaProducer\" >}} pipeline elements.")
+        "This Kafka Configuration Document can then be used by one or more " +
+        "{{< pipe-elm \"StandardKafkaProducer\" >}} pipeline elements.")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -47,7 +47,7 @@ import java.util.Objects;
         "description",
         "data"})
 @JsonInclude(Include.NON_EMPTY)
-public class KafkaConfigDoc extends Doc implements HasData {
+public class KafkaConfigDoc extends AbstractDoc implements HasData {
 
     public static final String DOCUMENT_TYPE = "KafkaConfig";
     public static final SvgImage ICON = SvgImage.DOCUMENT_KAFKA_CONFIG;
@@ -61,14 +61,14 @@ public class KafkaConfigDoc extends Doc implements HasData {
     public KafkaConfigDoc() {
     }
 
-    public KafkaConfigDoc(final String type, final String uuid, final String name) {
-        super(type, uuid, name);
+    public KafkaConfigDoc(final String uuid, final String name) {
+        super(uuid, name);
     }
 
     @JsonCreator
-    public KafkaConfigDoc(@JsonProperty("type") final String type,
-                          @JsonProperty("uuid") final String uuid,
+    public KafkaConfigDoc(@JsonProperty("uuid") final String uuid,
                           @JsonProperty("name") final String name,
+                          @JsonProperty("uniqueName") final String uniqueName,
                           @JsonProperty("version") final String version,
                           @JsonProperty("createTimeMs") final Long createTimeMs,
                           @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -76,25 +76,15 @@ public class KafkaConfigDoc extends Doc implements HasData {
                           @JsonProperty("updateUser") final String updateUser,
                           @JsonProperty("description") final String description,
                           @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {
@@ -129,7 +119,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
         }
         final KafkaConfigDoc other = (KafkaConfigDoc) o;
         return Objects.equals(description, other.description) &&
-                Objects.equals(data, other.data);
+               Objects.equals(data, other.data);
     }
 
     @Override

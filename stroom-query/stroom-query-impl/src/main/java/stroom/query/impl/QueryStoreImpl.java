@@ -31,7 +31,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.shared.QueryDoc;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -58,18 +57,15 @@ class QueryStoreImpl implements QueryStore {
             QueryDoc.ICON);
 
     private final Store<QueryDoc> store;
-    private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
 
     @Inject
     QueryStoreImpl(final StoreFactory storeFactory,
                    final QuerySerialiser serialiser,
-                   final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(serialiser, QueryDoc.DOCUMENT_TYPE, QueryDoc.class);
-        this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
     }
@@ -77,21 +73,6 @@ class QueryStoreImpl implements QueryStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
-
-        // Create a dashboard from a template.
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final QueryDoc dashboardDoc = store.readDocument(docRef);
-            store.writeDocument(dashboardDoc);
-        });
-        return docRef;
-    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -170,13 +151,13 @@ class QueryStoreImpl implements QueryStore {
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
-                                                !remapped.getName().isBlank() &&
-                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
                                             query = query.replaceFirst(docRef.getName(), remapped.getName());
                                         }
                                         if (remapped.getUuid() != null &&
-                                                !remapped.getUuid().isBlank() &&
-                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
                                         doc.setQuery(query);
@@ -201,6 +182,11 @@ class QueryStoreImpl implements QueryStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public QueryDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public QueryDoc readDocument(final DocRef docRef) {

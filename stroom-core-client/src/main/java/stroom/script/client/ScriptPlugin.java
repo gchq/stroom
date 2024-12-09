@@ -65,6 +65,19 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     }
 
     @Override
+    public void create(final Consumer<ScriptDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(SCRIPT_RESOURCE)
+                .method(ScriptResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<ScriptDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

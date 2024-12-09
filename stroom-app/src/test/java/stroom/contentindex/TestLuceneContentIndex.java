@@ -18,7 +18,6 @@ package stroom.contentindex;
 
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
-import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
@@ -78,14 +77,13 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
     private XsltStore xsltStore;
 
     private XsltDoc xsltDoc;
-    private DocRef docRef;
 
     @BeforeEach
     void setup() {
-        docRef = xsltStore.createDocument("Test");
-        xsltDoc = xsltStore.readDocument(docRef);
+        xsltDoc = xsltStore.createDocument();
+        xsltDoc.setName("Test");
         xsltDoc.setData(TEXT);
-        xsltStore.writeDocument(xsltDoc);
+        xsltDoc = xsltStore.writeDocument(xsltDoc);
     }
 
     @Test
@@ -127,7 +125,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         assertThat(highlights.getHighlights().size()).isEqualTo(expectedHighlightCount);
         assertThat(TEXT.substring(highlights.getHighlights().getFirst().getOffset(),
                 highlights.getHighlights().getFirst().getOffset() +
-                        highlights.getHighlights().getFirst().getLength())).isEqualTo(expectedFirstHightlight);
+                highlights.getHighlights().getFirst().getLength())).isEqualTo(expectedFirstHightlight);
     }
 
     private DocContentHighlights test(final StringMatch stringMatch) {

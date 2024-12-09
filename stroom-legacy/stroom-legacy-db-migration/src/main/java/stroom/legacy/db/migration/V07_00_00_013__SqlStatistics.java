@@ -77,7 +77,6 @@ public class V07_00_00_013__SqlStatistics extends BaseJavaMigration {
                     final String dat = resultSet.getString(12);
 
                     final StatisticStoreDoc document = new StatisticStoreDoc();
-                    document.setType(StatisticStoreDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

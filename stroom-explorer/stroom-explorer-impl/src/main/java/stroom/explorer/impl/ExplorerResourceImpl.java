@@ -43,7 +43,8 @@ import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerServiceCopyRequest;
-import stroom.explorer.shared.ExplorerServiceCreateRequest;
+import stroom.explorer.shared.ExplorerServiceCreateDocRequest;
+import stroom.explorer.shared.ExplorerServiceCreateFolderRequest;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
@@ -128,12 +129,18 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public ExplorerNode create(final ExplorerServiceCreateRequest request) {
-        return explorerServiceProvider.get().create(
-                request.getDocType(),
-                request.getDocName(),
-                request.getDestinationFolder(),
-                request.getPermissionInheritance());
+    public ExplorerNode createFolder(final ExplorerServiceCreateFolderRequest request) {
+        return null;
+    }
+
+    @Override
+    public ExplorerNode create(final ExplorerServiceCreateDocRequest request) {
+        return null;
+//        return explorerServiceProvider.get().create(
+//                request.getDocType(),
+//                request.getDocName(),
+//                request.getDestinationFolder(),
+//                request.getPermissionInheritance());
     }
 
     @Override

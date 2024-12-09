@@ -29,6 +29,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.EffectiveMetaSet;
@@ -134,10 +135,12 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
      */
     private DocRef setupFeed(final String feedName) {
         List<DocRef> docRefs = feedService.findByName(feedName);
-        if (docRefs != null && docRefs.size() > 0) {
-            return docRefs.get(0);
+        if (docRefs != null && !docRefs.isEmpty()) {
+            return docRefs.getFirst();
         }
-        return feedService.createDocument(feedName);
+        final FeedDoc doc = feedService.createDocument();
+        doc.setName(feedName);
+        return feedService.writeDocument(doc).asDocRef();
     }
 
     @Test

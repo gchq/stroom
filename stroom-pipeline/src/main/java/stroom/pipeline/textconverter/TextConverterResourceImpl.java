@@ -40,6 +40,11 @@ class TextConverterResourceImpl implements TextConverterResource {
     }
 
     @Override
+    public TextConverterDoc create() {
+        return textConverterStoreProvider.get().createDocument();
+    }
+
+    @Override
     public TextConverterDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(textConverterStoreProvider.get(), getDocRef(uuid));
     }

@@ -61,11 +61,6 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -106,6 +101,11 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public StatisticStoreDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public StatisticStoreDoc readDocument(final DocRef docRef) {

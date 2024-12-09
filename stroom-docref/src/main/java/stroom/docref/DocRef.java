@@ -43,8 +43,9 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, HasUuid, HasNameMutable {
 
-    public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
-            "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";
+    public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom. " +
+                                            "A 'document' is an entity in stroom such as a data source dictionary or " +
+                                            "pipeline.";
 
     @Schema(description = "The type of the 'document' that this DocRef refers to",
             example = "StroomStatsStore")
@@ -91,6 +92,14 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         this.type = type;
         this.uuid = uuid;
         this.name = name;
+    }
+
+    /**
+     * @param type The type of the 'document' that this docRef points to an instance of. Supported types are defined
+     *             outside of this documentation.
+     */
+    public static DocRef createRandom(final String type) {
+        return new DocRef(type, UUID.randomUUID().toString(), null);
     }
 
     /**
@@ -210,10 +219,10 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         //  if we have any code that relies on the format.
 //        return "{" + name + ":" + type + ":" + uuid + "}";
         return "DocRef{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "type='" + type + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
     /**
@@ -239,8 +248,8 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
             return false;
         } else {
             return Objects.equals(docRef1.type, docRef2.type) &&
-                    Objects.equals(docRef1.uuid, docRef2.uuid) &&
-                    Objects.equals(docRef1.name, docRef2.name);
+                   Objects.equals(docRef1.uuid, docRef2.uuid) &&
+                   Objects.equals(docRef1.name, docRef2.name);
         }
     }
 
@@ -356,16 +365,6 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
          */
         public TypedBuilder uuid(final String value) {
             this.uuid = value;
-            return this;
-        }
-
-        /**
-         * Generate a new random UUID and set it as the uuid.
-         *
-         * @return The {@link Builder}, enabling method chaining
-         */
-        public TypedBuilder randomUuid() {
-            this.uuid = UUID.randomUUID().toString();
             return this;
         }
 

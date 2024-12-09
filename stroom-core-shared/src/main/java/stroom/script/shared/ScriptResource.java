@@ -41,6 +41,13 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ScriptResource extends RestResource, DirectRestService, FetchWithUuid<ScriptDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a script doc",
+            operationId = "createScript")
+    ScriptDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

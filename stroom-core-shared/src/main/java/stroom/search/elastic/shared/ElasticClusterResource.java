@@ -39,6 +39,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ElasticClusterResource extends RestResource, DirectRestService, FetchWithUuid<ElasticClusterDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create an Elasticsearch cluster doc",
+            operationId = "createElasticCluster")
+    ElasticClusterDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

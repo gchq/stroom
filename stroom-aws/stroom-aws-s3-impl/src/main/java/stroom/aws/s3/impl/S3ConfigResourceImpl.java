@@ -8,7 +8,6 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -24,7 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 @AutoLogged
-public class S3ConfigResourceImpl implements S3ConfigResource, FetchWithUuid<S3ConfigDoc> {
+public class S3ConfigResourceImpl implements S3ConfigResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3ConfigResourceImpl.class);
 
@@ -39,6 +38,11 @@ public class S3ConfigResourceImpl implements S3ConfigResource, FetchWithUuid<S3C
         this.s3ConfigStoreProvider = s3ConfigStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
+    }
+
+    @Override
+    public S3ConfigDoc create() {
+        return s3ConfigStoreProvider.get().createDocument();
     }
 
     @Override

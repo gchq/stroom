@@ -49,6 +49,11 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
+    public ReceiveDataRules create() {
+        return ruleSetServiceProvider.get().createDocument();
+    }
+
+    @Override
     public ReceiveDataRules fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), getDocRef(uuid));
     }

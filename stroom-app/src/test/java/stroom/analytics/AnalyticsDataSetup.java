@@ -8,6 +8,7 @@ import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -121,8 +122,8 @@ public class AnalyticsDataSetup {
                 resourcePath.resolve("dynamic-index.xsl"));
 
         // Add view.
-        final DocRef viewDocRef = viewStore.createDocument("index_view");
-        ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
+        final ViewDoc viewDoc = viewStore.createDocument();
+        viewDoc.setName("index_view");
         viewDoc.setDataSource(indexDocRef);
         viewDoc.setPipeline(searchResultPipeline);
         viewDoc.setFilter(ExpressionOperator.builder()
@@ -131,7 +132,9 @@ public class AnalyticsDataSetup {
         viewStore.writeDocument(viewDoc);
 
         // Create somewhere to put the alerts.
-        detections = feedStore.createDocument("DETECTIONS");
+        FeedDoc feedDoc = feedStore.createDocument();
+        feedDoc.setName("DETECTIONS");
+        detections = feedStore.writeDocument(feedDoc).asDocRef();
     }
 
     public void addData() {

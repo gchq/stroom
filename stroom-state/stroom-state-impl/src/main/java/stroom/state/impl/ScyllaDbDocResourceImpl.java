@@ -24,7 +24,6 @@ import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.ScyllaDbDocResource;
 import stroom.state.shared.ScyllaDbTestResponse;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -32,7 +31,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 @AutoLogged
-class ScyllaDbDocResourceImpl implements ScyllaDbDocResource, FetchWithUuid<ScyllaDbDoc> {
+class ScyllaDbDocResourceImpl implements ScyllaDbDocResource {
 
     private final Provider<ScyllaDbDocStore> scyllaDbStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -43,6 +42,11 @@ class ScyllaDbDocResourceImpl implements ScyllaDbDocResource, FetchWithUuid<Scyl
             final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.scyllaDbStoreProvider = scyllaDbStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+    }
+
+    @Override
+    public ScyllaDbDoc create() {
+        return scyllaDbStoreProvider.get().createDocument();
     }
 
     @Override

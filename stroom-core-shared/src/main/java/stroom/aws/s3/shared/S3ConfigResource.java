@@ -44,6 +44,13 @@ public interface S3ConfigResource extends RestResource, DirectRestService, Fetch
 
     String BASE_PATH = "/s3" + ResourcePaths.V1;
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create an S3 config doc",
+            operationId = "createS3Config")
+    S3ConfigDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

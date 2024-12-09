@@ -28,12 +28,14 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -85,6 +87,17 @@ public final class JsonUtil {
         } catch (final IOException e) {
             throw new UncheckedIOException(String.format("Error writing json to file %s",
                     outputFile.toAbsolutePath()), e);
+        }
+    }
+
+    public static <T> T readValue(final Path path, Class<T> valueType) {
+        Preconditions.checkNotNull(path);
+        Preconditions.checkNotNull(valueType);
+        try {
+            return getMapper().readValue(path.toFile(), valueType);
+        } catch (final IOException e) {
+            throw new RuntimeException(String.format("Error deserialising object %s %s",
+                    path, e.getMessage()), e);
         }
     }
 

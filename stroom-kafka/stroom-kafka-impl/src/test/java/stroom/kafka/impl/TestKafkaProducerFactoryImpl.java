@@ -223,7 +223,6 @@ public class TestKafkaProducerFactoryImpl {
     @NotNull
     private KafkaConfigDoc createKafkaConfigDoc(final String name, final String version) {
         final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc(
-                KafkaConfigDoc.DOCUMENT_TYPE,
                 UUID.randomUUID().toString(),
                 name);
         kafkaConfigDoc.setVersion(version);

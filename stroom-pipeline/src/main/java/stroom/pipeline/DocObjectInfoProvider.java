@@ -17,7 +17,7 @@
 
 package stroom.pipeline;
 
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 import event.logging.BaseObject;
@@ -26,7 +26,7 @@ import event.logging.OtherObject;
 class DocObjectInfoProvider implements ObjectInfoProvider {
     @Override
     public BaseObject createBaseObject(final Object obj) {
-        final Doc doc = (Doc) obj;
+        final AbstractDoc doc = (AbstractDoc) obj;
 
         return OtherObject.builder()
                 .withId(doc.getUuid())

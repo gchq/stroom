@@ -59,32 +59,27 @@ class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
         criteria.setNamespaceURI("event-logging:3");
         list = xmlSchemaStore.find(criteria).getValues();
 
-        assertThat(list)
-                .isNotNull();
+        assertThat(list).isNotNull();
 
         LOGGER.info("Schemas:\n{}", list.stream()
                 .map(xmlSchemaDoc ->
-                        xmlSchemaDoc.getNamespaceURI() + " "
-                                + xmlSchemaDoc.getSystemId() + " "
-                                + xmlSchemaDoc.getSchemaGroup())
+                        xmlSchemaDoc.getNamespaceURI() + " " +
+                        xmlSchemaDoc.getSystemId() + " " +
+                        xmlSchemaDoc.getSchemaGroup())
                 .collect(Collectors.joining("\n")));
 
-        assertThat(list.size())
-                .isEqualTo(6);
+        assertThat(list.size()).isEqualTo(7);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
         list = xmlSchemaStore.find(criteria).getValues();
-        assertThat(list)
-                .isNotNull();
-        assertThat(list.size())
-                .isEqualTo(1);
+        assertThat(list).isNotNull();
+        assertThat(list.size()).isEqualTo(1);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSchemaGroup("EVENTS");
         list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
-        assertThat(list.size())
-                .isEqualTo(6);
+        assertThat(list.size()).isEqualTo(7);
     }
 }

@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -38,10 +39,17 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface XmlSchemaResource extends RestResource, DirectRestService, FetchWithUuid<XmlSchemaDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create an xml schema doc",
+            operationId = "createXmlSchema")
+    XmlSchemaDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(
-            summary = "Fetch a xml schema doc by its UUID",
+            summary = "Fetch an xml schema doc by its UUID",
             operationId = "fetchXmlSchema")
     XmlSchemaDoc fetch(
             @PathParam("uuid") String uuid);
@@ -49,7 +57,7 @@ public interface XmlSchemaResource extends RestResource, DirectRestService, Fetc
     @PUT
     @Path("/{uuid}")
     @Operation(
-            summary = "Update a xml schema doc",
+            summary = "Update an xml schema doc",
             operationId = "updateXmlSchema")
     XmlSchemaDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) XmlSchemaDoc doc);

@@ -18,7 +18,7 @@ package stroom.state.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.TimeUnit;
 
@@ -33,9 +33,9 @@ import java.util.Objects;
 
 @Description("Defines a place to store state")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -53,7 +53,7 @@ import java.util.Objects;
 
 })
 @JsonInclude(Include.NON_NULL)
-public class StateDoc extends Doc {
+public class StateDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "StateStore";
     public static final SvgImage ICON = SvgImage.DOCUMENT_STATE_STORE;
@@ -84,25 +84,24 @@ public class StateDoc extends Doc {
     }
 
     @JsonCreator
-    public StateDoc(
-            @JsonProperty("type") final String type,
-            @JsonProperty("uuid") final String uuid,
-            @JsonProperty("name") final String name,
-            @JsonProperty("version") final String version,
-            @JsonProperty("createTimeMs") final Long createTimeMs,
-            @JsonProperty("updateTimeMs") final Long updateTimeMs,
-            @JsonProperty("createUser") final String createUser,
-            @JsonProperty("updateUser") final String updateUser,
-            @JsonProperty("description") final String description,
-            @JsonProperty("scyllaDbRef") final DocRef scyllaDbRef,
-            @JsonProperty("stateType") final StateType stateType,
-            @JsonProperty("condense") final boolean condense,
-            @JsonProperty("condenseAge") final int condenseAge,
-            @JsonProperty("condenseTimeUnit") final TimeUnit condenseTimeUnit,
-            @JsonProperty("retainForever") final boolean retainForever,
-            @JsonProperty("retainAge") final int retainAge,
-            @JsonProperty("retainTimeUnit") final TimeUnit retainTimeUnit) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+    public StateDoc(@JsonProperty("uuid") final String uuid,
+                    @JsonProperty("name") final String name,
+                    @JsonProperty("uniqueName") final String uniqueName,
+                    @JsonProperty("version") final String version,
+                    @JsonProperty("createTimeMs") final Long createTimeMs,
+                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("description") final String description,
+                    @JsonProperty("scyllaDbRef") final DocRef scyllaDbRef,
+                    @JsonProperty("stateType") final StateType stateType,
+                    @JsonProperty("condense") final boolean condense,
+                    @JsonProperty("condenseAge") final int condenseAge,
+                    @JsonProperty("condenseTimeUnit") final TimeUnit condenseTimeUnit,
+                    @JsonProperty("retainForever") final boolean retainForever,
+                    @JsonProperty("retainAge") final int retainAge,
+                    @JsonProperty("retainTimeUnit") final TimeUnit retainTimeUnit) {
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.scyllaDbRef = scyllaDbRef;
         this.stateType = stateType;
@@ -114,20 +113,10 @@ public class StateDoc extends Doc {
         this.retainTimeUnit = retainTimeUnit;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {
@@ -202,12 +191,6 @@ public class StateDoc extends Doc {
         this.retainTimeUnit = retainTimeUnit;
     }
 
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return DOCUMENT_TYPE;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -221,14 +204,14 @@ public class StateDoc extends Doc {
         }
         final StateDoc doc = (StateDoc) o;
         return condense == doc.condense &&
-                condenseAge == doc.condenseAge &&
-                retainForever == doc.retainForever &&
-                retainAge == doc.retainAge &&
-                Objects.equals(scyllaDbRef, doc.scyllaDbRef) &&
-                Objects.equals(description, doc.description) &&
-                stateType == doc.stateType &&
-                condenseTimeUnit == doc.condenseTimeUnit &&
-                retainTimeUnit == doc.retainTimeUnit;
+               condenseAge == doc.condenseAge &&
+               retainForever == doc.retainForever &&
+               retainAge == doc.retainAge &&
+               Objects.equals(scyllaDbRef, doc.scyllaDbRef) &&
+               Objects.equals(description, doc.description) &&
+               stateType == doc.stateType &&
+               condenseTimeUnit == doc.condenseTimeUnit &&
+               retainTimeUnit == doc.retainTimeUnit;
     }
 
     @Override
@@ -248,15 +231,15 @@ public class StateDoc extends Doc {
     @Override
     public String toString() {
         return "StateDoc{" +
-                "scyllaDbRef=" + scyllaDbRef +
-                ", description='" + description + '\'' +
-                ", stateType=" + stateType +
-                ", condense=" + condense +
-                ", condenseAge=" + condenseAge +
-                ", condenseTimeUnit=" + condenseTimeUnit +
-                ", retainForever=" + retainForever +
-                ", retainAge=" + retainAge +
-                ", retainTimeUnit=" + retainTimeUnit +
-                '}';
+               "scyllaDbRef=" + scyllaDbRef +
+               ", description='" + description + '\'' +
+               ", stateType=" + stateType +
+               ", condense=" + condense +
+               ", condenseAge=" + condenseAge +
+               ", condenseTimeUnit=" + condenseTimeUnit +
+               ", retainForever=" + retainForever +
+               ", retainAge=" + retainAge +
+               ", retainTimeUnit=" + retainTimeUnit +
+               '}';
     }
 }

@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -40,6 +41,13 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ViewResource extends RestResource, DirectRestService, FetchWithUuid<ViewDoc> {
+
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a view doc",
+            operationId = "createView")
+    ViewDoc create();
 
     @GET
     @Path("/{uuid}")

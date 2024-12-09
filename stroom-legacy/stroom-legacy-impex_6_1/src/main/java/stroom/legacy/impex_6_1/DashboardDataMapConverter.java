@@ -42,7 +42,6 @@ class DashboardDataMapConverter implements DataMapConverter {
                 oldDashboard = marshaller.unmarshal(oldDashboard);
 
                 final DashboardDoc document = new DashboardDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

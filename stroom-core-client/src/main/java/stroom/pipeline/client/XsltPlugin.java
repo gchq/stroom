@@ -65,6 +65,19 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     }
 
     @Override
+    public void create(final Consumer<XsltDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(XSLT_RESOURCE)
+                .method(XsltResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<XsltDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

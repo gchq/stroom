@@ -95,18 +95,18 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
 
             // Setup the text converter.
             final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FORMAT);
-            final DocRef textConverterRef = textConverterStore.createDocument("Test Text Converter");
-            final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
+            TextConverterDoc textConverter = textConverterStore.createDocument();
+            textConverter.setName("Test Text Converter");
             textConverter.setConverterType(TextConverterType.DATA_SPLITTER);
             textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-            textConverterStore.writeDocument(textConverter);
+            textConverter = textConverterStore.writeDocument(textConverter);
 
             // Setup the XSLT.
             final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_LOCATION);
-            final DocRef xsltRef = xsltStore.createDocument("Test");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+            XsltDoc xsltDoc = xsltStore.createDocument();
+            xsltDoc.setName("Test");
             xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
-            xsltStore.writeDocument(xsltDoc);
+            xsltDoc = xsltStore.writeDocument(xsltDoc);
 
             final Path testDir = getCurrentTestDir();
 
@@ -125,9 +125,11 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
                     StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             pipelineDoc.getPipelineData().addProperty(
-                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
+                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
+                            textConverter.asDocRef()));
             pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt",
+                            xsltDoc.asDocRef()));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

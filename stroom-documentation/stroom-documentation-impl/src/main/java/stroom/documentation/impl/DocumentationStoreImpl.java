@@ -45,11 +45,6 @@ public class DocumentationStoreImpl implements DocumentationStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -116,6 +111,11 @@ public class DocumentationStoreImpl implements DocumentationStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public DocumentationDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public DocumentationDoc readDocument(final DocRef docRef) {

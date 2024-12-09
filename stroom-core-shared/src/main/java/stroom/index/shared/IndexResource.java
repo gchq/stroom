@@ -47,10 +47,17 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create an index doc",
+            operationId = "createIndex")
+    LuceneIndexDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(
-            summary = "Fetch a index doc by its UUID",
+            summary = "Fetch an index doc by its UUID",
             operationId = "fetchIndex")
     LuceneIndexDoc fetch(@PathParam("uuid") String uuid);
 

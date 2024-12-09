@@ -46,7 +46,6 @@ class StroomStatsDataMapConverter implements DataMapConverter {
                 oldStroomStatsStore = marshaller.unmarshal(oldStroomStatsStore);
 
                 final StroomStatsStoreDoc document = new StroomStatsStoreDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

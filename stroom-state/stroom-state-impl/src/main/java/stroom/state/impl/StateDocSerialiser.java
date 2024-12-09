@@ -15,9 +15,7 @@ public class StateDocSerialiser implements DocumentSerialiser2<StateDoc> {
     private final Serialiser2<StateDoc> delegate;
 
     @Inject
-    StateDocSerialiser(
-            final Serialiser2Factory serialiser2Factory
-    ) {
+    StateDocSerialiser(final Serialiser2Factory serialiser2Factory) {
         this.delegate = serialiser2Factory.createSerialiser(StateDoc.class);
     }
 

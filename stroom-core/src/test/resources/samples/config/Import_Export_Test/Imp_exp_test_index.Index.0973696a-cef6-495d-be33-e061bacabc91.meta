@@ -1,7 +1,7 @@
 {
-  "type" : "Index",
   "uuid" : "0973696a-cef6-495d-be33-e061bacabc91",
   "name" : "Imp_exp_test_index",
+  "uniqueName" : "index:imp-exp-test-index",
   "version" : "28cd4b03-d018-44bd-a89f-936a14ffa83a",
   "maxDocsPerShard" : 1000000000,
   "partitionBy" : "MONTH",

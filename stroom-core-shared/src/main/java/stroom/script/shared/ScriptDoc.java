@@ -18,11 +18,12 @@ package stroom.script.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,9 +37,9 @@ import java.util.Objects;
                 "[visualisation]({{< relref \"#visualisation\" >}}) Document.\n" +
                 "Scripts can have dependencies on other Script Documents, e.g. to allow re-use of common code.")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -48,7 +49,7 @@ import java.util.Objects;
         "dependencies",
         "data"})
 @JsonInclude(Include.NON_NULL)
-public class ScriptDoc extends Doc implements HasData {
+public class ScriptDoc extends AbstractDoc implements HasData {
 
     public static final String DOCUMENT_TYPE = "Script";
     public static final SvgImage ICON = SvgImage.DOCUMENT_SCRIPT;
@@ -64,9 +65,9 @@ public class ScriptDoc extends Doc implements HasData {
     }
 
     @JsonCreator
-    public ScriptDoc(@JsonProperty("type") final String type,
-                     @JsonProperty("uuid") final String uuid,
+    public ScriptDoc(@JsonProperty("uuid") final String uuid,
                      @JsonProperty("name") final String name,
+                     @JsonProperty("uniqueName") final String uniqueName,
                      @JsonProperty("version") final String version,
                      @JsonProperty("createTimeMs") final Long createTimeMs,
                      @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -75,26 +76,16 @@ public class ScriptDoc extends Doc implements HasData {
                      @JsonProperty("description") final String description,
                      @JsonProperty("dependencies") final List<DocRef> dependencies,
                      @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dependencies = dependencies;
         this.data = data;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

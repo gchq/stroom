@@ -54,6 +54,11 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
+    public LuceneIndexDoc create() {
+        return indexStoreProvider.get().createDocument();
+    }
+
+    @Override
     public LuceneIndexDoc fetch(final String uuid) {
         return indexStoreProvider.get().readDocument(getDocRef(uuid));
     }

@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -65,11 +66,6 @@ class ScriptStoreImpl implements ScriptStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -147,6 +143,11 @@ class ScriptStoreImpl implements ScriptStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public ScriptDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public ScriptDoc readDocument(final DocRef docRef) {
@@ -227,11 +228,7 @@ class ScriptStoreImpl implements ScriptStore {
                 final List<ScriptDoc> scripts = new ArrayList<>();
 
                 final Set<DocRef> uiLoadedScripts;
-                if (loadedScripts == null) {
-                    uiLoadedScripts = new HashSet<>();
-                } else {
-                    uiLoadedScripts = loadedScripts;
-                }
+                uiLoadedScripts = Objects.requireNonNullElseGet(loadedScripts, HashSet::new);
 
                 // Load the script and it's dependencies.
                 loadScripts(script, uiLoadedScripts, new HashSet<>(), scripts);

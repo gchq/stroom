@@ -63,29 +63,6 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        // create the document with some configurable skeleton content
-        return store.createDocument(
-                name,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
-
-                    final String skeletonConfigText = s3ConfigProvider.get().getSkeletonConfigContent();
-
-                    return new S3ConfigDoc(
-                            type,
-                            uuid,
-                            docName,
-                            version,
-                            createTime,
-                            updateTime,
-                            createUser,
-                            updateUser,
-                            "",
-                            skeletonConfigText);
-                });
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -150,6 +127,14 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public S3ConfigDoc createDocument() {
+        final S3ConfigDoc doc = store.createDocument();
+        final String skeletonConfigText = s3ConfigProvider.get().getSkeletonConfigContent();
+        doc.setData(skeletonConfigText);
+        return doc;
+    }
 
     @Override
     public S3ConfigDoc readDocument(final DocRef docRef) {

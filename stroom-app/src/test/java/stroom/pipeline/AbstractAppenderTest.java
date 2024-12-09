@@ -134,22 +134,22 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                                        final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
-        final DocRef textConverterRef = textConverterStore.createDocument(name);
-        TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
+        TextConverterDoc textConverter = textConverterStore.createDocument();
+        textConverter.setName(name);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverterStore.writeDocument(textConverter);
-        return textConverterRef;
+        textConverter = textConverterStore.writeDocument(textConverter);
+        return textConverter.asDocRef();
     }
 
     private DocRef createXSLT(final String xsltPath, final String name) {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
-        final DocRef xsltRef = xsltStore.createDocument(name);
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        XsltDoc xsltDoc = xsltStore.createDocument();
+        xsltDoc.setName(name);
         xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
-        xsltStore.writeDocument(xsltDoc);
-        return xsltRef;
+        xsltDoc = xsltStore.writeDocument(xsltDoc);
+        return xsltDoc.asDocRef();
     }
 
     // TODO This method is 80% the same in a whole bunch of test classes -

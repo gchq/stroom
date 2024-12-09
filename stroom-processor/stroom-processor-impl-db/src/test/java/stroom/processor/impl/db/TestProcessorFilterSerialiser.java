@@ -1,5 +1,6 @@
 package stroom.processor.impl.db;
 
+import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -24,7 +25,8 @@ class TestProcessorFilterSerialiser {
     @Test
     void testMarshall() throws JAXBException {
         final QueryData queryData = new QueryData();
-        queryData.setDataSource(LuceneIndexDoc.buildDocRef()
+        queryData.setDataSource(DocRef.builder()
+                .type(LuceneIndexDoc.DOCUMENT_TYPE)
                 .randomUuid()
                 .name("Some idx")
                 .build());

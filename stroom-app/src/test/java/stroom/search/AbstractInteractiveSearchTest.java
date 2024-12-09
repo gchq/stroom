@@ -313,17 +313,17 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
      */
     @Test
     void dictionaryTest1() {
-        final DocRef docRef = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic = dictionaryStore.readDocument(docRef);
+        DictionaryDoc dic = dictionaryStore.createDocument();
+        dic.setName("users");
         dic.setData("user1\nuser2\nuser5");
-        dictionaryStore.writeDocument(dic);
+        dic = dictionaryStore.writeDocument(dic);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
 
         test(and, 15);
 
-        dictionaryStore.deleteDocument(docRef);
+        dictionaryStore.deleteDocument(dic.asDocRef());
     }
 
     /**
@@ -331,24 +331,24 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
      */
     @Test
     void dictionaryTest2() {
-        final DocRef docRef1 = dictionaryStore.createDocument("users");
-        DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
+        DictionaryDoc dic1 = dictionaryStore.createDocument();
+        dic1.setName("users");
         dic1.setData("user1\nuser2\nuser5");
-        dictionaryStore.writeDocument(dic1);
+        dic1 = dictionaryStore.writeDocument(dic1);
 
-        final DocRef docRef2 = dictionaryStore.createDocument("command");
-        DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
+        DictionaryDoc dic2 = dictionaryStore.createDocument();
+        dic2.setName("command");
         dic2.setData("msg");
-        dictionaryStore.writeDocument(dic2);
+        dic2 = dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
-        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
-        and.addDocRefTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
+        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, dic1.asDocRef());
+        and.addDocRefTerm("Command", Condition.IN_DICTIONARY, dic2.asDocRef());
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(docRef1);
-        dictionaryStore.deleteDocument(docRef2);
+        dictionaryStore.deleteDocument(dic1.asDocRef());
+        dictionaryStore.deleteDocument(dic2.asDocRef());
     }
 
     /**
@@ -356,24 +356,24 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
      */
     @Test
     void dictionaryTest3() {
-        final DocRef docRef1 = dictionaryStore.createDocument("users");
-        DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
+        DictionaryDoc dic1 = dictionaryStore.createDocument();
+        dic1.setName("users");
         dic1.setData("user1\nuser2\nuser5");
-        dictionaryStore.writeDocument(dic1);
+        dic1 = dictionaryStore.writeDocument(dic1);
 
-        final DocRef docRef2 = dictionaryStore.createDocument("command");
-        DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
+        DictionaryDoc dic2 = dictionaryStore.createDocument();
+        dic2.setName("command");
         dic2.setData("msg foo bar");
-        dictionaryStore.writeDocument(dic2);
+        dic2 = dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
-        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
-        and.addDocRefTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
+        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, dic1.asDocRef());
+        and.addDocRefTerm("Command", Condition.IN_DICTIONARY, dic2.asDocRef());
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(docRef1);
-        dictionaryStore.deleteDocument(docRef2);
+        dictionaryStore.deleteDocument(dic1.asDocRef());
+        dictionaryStore.deleteDocument(dic2.asDocRef());
     }
 
     /**
@@ -413,8 +413,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 } else {
                     // Make sure we got what we expected.
                     Row firstResult = null;
-                    if (values != null && values.size() > 0) {
-                        firstResult = values.get(0);
+                    if (values != null && !values.isEmpty()) {
+                        firstResult = values.getFirst();
                     }
                     assertThat(firstResult).as("No results found").isNotNull();
 
@@ -455,7 +455,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 .as("Check indexStore is not empty")
                 .isNotEmpty();
 
-        final DocRef indexRef = indexStore.list().get(0);
+        final DocRef indexRef = indexStore.list().getFirst();
         assertThat(indexRef).as("Index is null").isNotNull();
 
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());

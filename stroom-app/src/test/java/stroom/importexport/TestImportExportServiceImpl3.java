@@ -18,6 +18,7 @@
 package stroom.importexport;
 
 import stroom.explorer.api.ExplorerService;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
@@ -43,16 +44,17 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     private ImportExportService importExportService;
     @Inject
     private ExplorerService explorerService;
+    @Inject
+    private FeedStore feedStore;
 
     @Test
     void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            explorerService.create(
-                    FeedDoc.DOCUMENT_TYPE,
-                    FileSystemTestUtil.getUniqueTestString(),
-                    null,
-                    null);
+            FeedDoc feedDoc = feedStore.createDocument();
+            feedDoc.setName(FileSystemTestUtil.getUniqueTestString());
+            feedDoc = feedStore.writeDocument(feedDoc);
+            explorerService.create(feedDoc.asDocRef(), null, null);
         }
         final List<Message> msgList = new ArrayList<>();
 

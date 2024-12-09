@@ -26,7 +26,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.security.api.SecurityContext;
 import stroom.state.shared.StateDoc;
 import stroom.state.shared.StateType;
 import stroom.util.logging.LambdaLogger;
@@ -56,47 +55,44 @@ public class StateDocStoreImpl implements StateDocStore {
             StateDoc.ICON);
     private final Store<StateDoc> store;
     private final Provider<CqlSessionCache> cqlSessionCacheProvider;
-    private final SecurityContext securityContext;
 
     @Inject
     public StateDocStoreImpl(
             final StoreFactory storeFactory,
             final StateDocSerialiser serialiser,
-            final Provider<CqlSessionCache> cqlSessionCacheProvider,
-            final SecurityContext securityContext) {
+            final Provider<CqlSessionCache> cqlSessionCacheProvider) {
         this.store = storeFactory.createStore(serialiser, StateDoc.DOCUMENT_TYPE, StateDoc.class);
         this.cqlSessionCacheProvider = cqlSessionCacheProvider;
-        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public DocRef createDocument(final String name) {
-        validateName(name);
-
-        final DocRef created = store.createDocument(name);
-
-        // Double-check the feed wasn't created elsewhere at the same time.
-        if (checkDuplicateName(name, created)) {
-            // Delete the newly created document as the name is duplicated.
-
-            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
-            // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created));
-            throwNameException(name);
-        }
-
-        // Set the default keyspace.
-        StateDoc doc = store.readDocument(created);
-        doc.setStateType(StateType.TEMPORAL_STATE);
-        doc.setRetainForever(true);
-        store.writeDocument(doc);
-
-        return created;
-    }
+//    @Override
+//    public DocRef createDocument(final String name) {
+//        validateName(name);
+//
+//        final DocRef created = store.createDocument(name);
+//
+//        // Double-check the feed wasn't created elsewhere at the same time.
+//        if (checkDuplicateName(name, created)) {
+//            // Delete the newly created document as the name is duplicated.
+//
+//            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
+//            // permissions added to them until after they are created in the store.
+//            securityContext.asProcessingUser(() -> store.deleteDocument(created));
+//            throwNameException(name);
+//        }
+//
+//        // Set the default keyspace.
+//        StateDoc doc = store.readDocument(created);
+//        doc.setStateType(StateType.TEMPORAL_STATE);
+//        doc.setRetainForever(true);
+//        store.writeDocument(doc);
+//
+//        return created;
+//    }
 
     private void validateName(final String name) {
         if (!ScyllaDbNameValidator.isValidName(name)) {
@@ -230,13 +226,58 @@ public class StateDocStoreImpl implements StateDocStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public StateDoc createDocument() {
+        final StateDoc stateDoc = store.createDocument();
+        // Set the default keyspace.
+        stateDoc.setStateType(StateType.TEMPORAL_STATE);
+        stateDoc.setRetainForever(true);
+        return stateDoc;
+    }
+
+    @Override
     public StateDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
     public StateDoc writeDocument(final StateDoc document) {
+//        validateName(document.getName());
+
+
+
+
+
+
+
+
+
         validateName(document.getName());
+
+        // TODO : gh-4633 FIX DUPLICATE NAMES
+//        if (document.getVersion() == null) {
+//            final DocRef created = store.createDocument(name);
+//
+//            // Double-check the feed wasn't created elsewhere at the same time.
+//            if (checkDuplicateName(name, created)) {
+//                // Delete the newly created document as the name is duplicated.
+//
+//                // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
+//                // permissions added to them until after they are created in the store.
+//                securityContext.asProcessingUser(() -> store.deleteDocument(created));
+//                throwNameException(name);
+//            }
+//        }
+
+
+
+
+
+
+
+
+
+
+
         return store.writeDocument(document);
     }
 

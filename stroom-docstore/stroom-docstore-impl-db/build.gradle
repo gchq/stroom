@@ -6,11 +6,13 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-db-jooq')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     
     implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
+    implementation libs.jooq
     implementation libs.slf4j_api
 }

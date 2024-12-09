@@ -18,7 +18,7 @@ package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
 
@@ -35,16 +35,16 @@ import java.util.Objects;
 
 @Description(
         "Defines an index that exists within an Elasticsearch cluster.\n" +
-                "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
-                "pipeline element.\n" +
-                "\n" +
-                "{{% see-also %}}" +
-                "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
-                "{{% /see-also %}}")
+        "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
+        "pipeline element.\n" +
+        "\n" +
+        "{{% see-also %}}" +
+        "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
+        "{{% /see-also %}}")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -61,7 +61,7 @@ import java.util.Objects;
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
-public class ElasticIndexDoc extends Doc {
+public class ElasticIndexDoc extends AbstractDoc {
 
     public static final int DEFAULT_SEARCH_SLICES = 1;
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
@@ -122,9 +122,9 @@ public class ElasticIndexDoc extends Doc {
 
     @JsonCreator
     public ElasticIndexDoc(
-            @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
+            @JsonProperty("uniqueName") final String uniqueName,
             @JsonProperty("version") final String version,
             @JsonProperty("createTimeMs") final Long createTimeMs,
             @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -139,7 +139,7 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("timeField") final String timeField,
             @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
         this.indexName = indexName;
@@ -161,20 +161,10 @@ public class ElasticIndexDoc extends Doc {
         }
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {
@@ -253,12 +243,6 @@ public class ElasticIndexDoc extends Doc {
         this.retentionExpression = retentionExpression;
     }
 
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return DOCUMENT_TYPE;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -272,13 +256,13 @@ public class ElasticIndexDoc extends Doc {
         }
         final ElasticIndexDoc elasticIndex = (ElasticIndexDoc) o;
         return Objects.equals(description, elasticIndex.description) &&
-                Objects.equals(clusterRef, elasticIndex.clusterRef) &&
-                Objects.equals(indexName, elasticIndex.indexName) &&
-                Objects.equals(searchSlices, elasticIndex.searchSlices) &&
-                Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
-                Objects.equals(fields, elasticIndex.fields) &&
-                Objects.equals(timeField, elasticIndex.timeField) &&
-                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
+               Objects.equals(clusterRef, elasticIndex.clusterRef) &&
+               Objects.equals(indexName, elasticIndex.indexName) &&
+               Objects.equals(searchSlices, elasticIndex.searchSlices) &&
+               Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
+               Objects.equals(fields, elasticIndex.fields) &&
+               Objects.equals(timeField, elasticIndex.timeField) &&
+               Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
     @Override
@@ -298,14 +282,14 @@ public class ElasticIndexDoc extends Doc {
     @Override
     public String toString() {
         return "ElasticIndex{" +
-                "description='" + description + '\'' +
-                ", clusterRef='" + clusterRef + '\'' +
-                ", indexName='" + indexName + '\'' +
-                ", searchSlices=" + searchSlices +
-                ", searchScrollSize=" + searchScrollSize +
-                ", fields=" + fields +
-                ", timeField=" + timeField +
-                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
-                '}';
+               "description='" + description + '\'' +
+               ", clusterRef='" + clusterRef + '\'' +
+               ", indexName='" + indexName + '\'' +
+               ", searchSlices=" + searchSlices +
+               ", searchScrollSize=" + searchScrollSize +
+               ", fields=" + fields +
+               ", timeField=" + timeField +
+               ", defaultExtractionPipeline=" + defaultExtractionPipeline +
+               '}';
     }
 }

@@ -140,22 +140,22 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                                        final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
-        final DocRef docRef = textConverterStore.createDocument(name);
-        final TextConverterDoc doc = textConverterStore.readDocument(docRef);
+        TextConverterDoc doc = textConverterStore.createDocument();
+        doc.setName(name);
         doc.setConverterType(textConverterType);
         doc.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverterStore.writeDocument(doc);
-        return docRef;
+        doc = textConverterStore.writeDocument(doc);
+        return doc.asDocRef();
     }
 
     private DocRef createXSLT(final String xsltPath, final String name) {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
-        final DocRef docRef = xsltStore.createDocument(name);
-        final XsltDoc doc = xsltStore.readDocument(docRef);
+        XsltDoc doc = xsltStore.createDocument();
+        doc.setName(name);
         doc.setData(StreamUtil.streamToString(xsltInputStream));
-        xsltStore.writeDocument(doc);
-        return docRef;
+        doc = xsltStore.writeDocument(doc);
+        return doc.asDocRef();
     }
 
     private void test(final DocRef pipelineRef, final String dir, final String inputStem,

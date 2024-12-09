@@ -18,11 +18,12 @@ package stroom.view.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,6 +41,7 @@ import java.util.Objects;
         "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -50,7 +52,7 @@ import java.util.Objects;
         "filter",
         "pipeline"})
 @JsonInclude(Include.NON_NULL)
-public class ViewDoc extends Doc {
+public class ViewDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "View";
     public static final SvgImage ICON = SvgImage.DOCUMENT_VIEW;
@@ -68,9 +70,9 @@ public class ViewDoc extends Doc {
     }
 
     @JsonCreator
-    public ViewDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public ViewDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
+                   @JsonProperty("uniqueName") final String uniqueName,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -80,27 +82,17 @@ public class ViewDoc extends Doc {
                    @JsonProperty("dataSource") DocRef dataSource,
                    @JsonProperty("filter") ExpressionOperator filter,
                    @JsonProperty("pipeline") final DocRef pipeline) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dataSource = dataSource;
         this.filter = filter;
         this.pipeline = pipeline;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

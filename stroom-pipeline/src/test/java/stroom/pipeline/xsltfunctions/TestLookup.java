@@ -1,6 +1,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
@@ -86,7 +87,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         // Should call this once with the combined messages for the lookup
         final LogArgs logArgs = verifySingleLogCall();
         Assertions.assertThat(logArgs.getSeverity())
-                                .isEqualTo(Severity.ERROR);
+                .isEqualTo(Severity.ERROR);
         Assertions.assertThat(logArgs.getMessage())
                 .containsIgnoringCase("no reference loaders");
 
@@ -95,13 +96,17 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
+    private List<PipelineReference> createRefs() {
+        return List.of(
+                new PipelineReference(
+                        DocRef.builder().type(PipelineDoc.DOCUMENT_TYPE).randomUuid().name("MyPipe").build(),
+                        DocRef.builder().type(FeedDoc.DOCUMENT_TYPE).randomUuid().name("MY_FEED").build(),
+                        StreamTypeNames.REFERENCE));
+    }
+
     @Test
     void doLookup_onePipeRef_noEffStrms() throws XPathException {
-        pipelineReferences = List.of(
-                new PipelineReference(
-                        PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
-                        FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
-                        StreamTypeNames.REFERENCE));
+        pipelineReferences = createRefs();
 
         initSequenceMaker(false, false);
 
@@ -128,11 +133,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
 
     @Test
     void doLookup_onePipeRef_mapNotInEffStrms() throws Exception {
-        pipelineReferences = List.of(
-                new PipelineReference(
-                        PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
-                        FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
-                        StreamTypeNames.REFERENCE));
+        pipelineReferences = createRefs();
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -168,11 +169,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
 
     @Test
     void doLookup_onePipeRef_lookupNoValue() throws Exception {
-        pipelineReferences = List.of(
-                new PipelineReference(
-                        PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
-                        FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
-                        StreamTypeNames.REFERENCE));
+        pipelineReferences = createRefs();
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -214,11 +211,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
 
     @Test
     void doLookup_onePipeRef_lookupSuccess() throws Exception {
-        pipelineReferences = List.of(
-                new PipelineReference(
-                        PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
-                        FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
-                        StreamTypeNames.REFERENCE));
+        pipelineReferences = createRefs();
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -260,11 +253,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
 
     @Test
     void doLookup_onePipeRef_lookupSuccess_noTrace() throws Exception {
-        pipelineReferences = List.of(
-                new PipelineReference(
-                        PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
-                        FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
-                        StreamTypeNames.REFERENCE));
+        pipelineReferences = createRefs();
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),

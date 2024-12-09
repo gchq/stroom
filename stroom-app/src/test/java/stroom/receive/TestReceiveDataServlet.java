@@ -21,6 +21,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.mock.MockStore;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;
@@ -72,7 +73,9 @@ class TestReceiveDataServlet {
         store.clear();
 
         if (feedStore.list().isEmpty()) {
-            feedStore.createDocument("TEST-FEED");
+            final FeedDoc doc = feedStore.createDocument();
+            doc.setName("TEST-FEED");
+            feedStore.writeDocument(doc);
         }
     }
 

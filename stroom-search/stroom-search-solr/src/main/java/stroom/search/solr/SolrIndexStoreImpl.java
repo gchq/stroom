@@ -31,7 +31,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrSynchState;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -73,27 +72,19 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
             SolrIndexDoc.ICON);
 
     private final Store<SolrIndexDoc> store;
-    private final SecurityContext securityContext;
     private final SolrIndexClientCache solrIndexClientCache;
 
     @Inject
     SolrIndexStoreImpl(final StoreFactory storeFactory,
-                       final SecurityContext securityContext,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, SolrIndexDoc.DOCUMENT_TYPE, SolrIndexDoc.class);
-        this.securityContext = securityContext;
         this.solrIndexClientCache = solrIndexClientCache;
     }
 
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -160,6 +151,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public SolrIndexDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public SolrIndexDoc readDocument(final DocRef docRef) {
@@ -242,7 +238,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
                                     final String message = "Failed to delete field '" + field.getFldName() +
-                                            "' - " + e.getMessage();
+                                                           "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
                                 }

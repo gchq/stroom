@@ -51,8 +51,14 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public ExplorerNode create(final String docType,
-                               final String docName,
+    public ExplorerNode createFolder(final String name,
+                                     final ExplorerNode destinationFolder,
+                                     final PermissionInheritance permissionInheritance) {
+        return null;
+    }
+
+    @Override
+    public ExplorerNode create(final DocRef docRef,
                                final ExplorerNode destinationFolder,
                                final PermissionInheritance permissionInheritance) {
         return null;

@@ -582,6 +582,25 @@
         "tags" : [ "AnalyticProcess" ]
       }
     },
+    "/analyticRule/v1" : {
+      "post" : {
+        "operationId" : "createAnalyticRule",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalyticRuleDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an analytic rule doc",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/analyticRule/v1/sendTestEmail" : {
       "post" : {
         "operationId" : "testEmailTemplates",
@@ -2116,6 +2135,25 @@
         "tags" : [ "Content" ]
       }
     },
+    "/dashboard/v1" : {
+      "post" : {
+        "operationId" : "createDashboard",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a dashboard doc",
+        "tags" : [ "Dashboards" ]
+      }
+    },
     "/dashboard/v1/downloadQuery" : {
       "post" : {
         "operationId" : "downloadDashboardQuery",
@@ -2831,6 +2869,25 @@
         "tags" : [ "Database Status" ]
       }
     },
+    "/dictionary/v1" : {
+      "post" : {
+        "operationId" : "createDictionary",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DictionaryDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a dictionary doc",
+        "tags" : [ "Dictionaries (v1)" ]
+      }
+    },
     "/dictionary/v1/download" : {
       "post" : {
         "operationId" : "downloadDictionary",
@@ -2920,6 +2977,25 @@
         },
         "summary" : "Update a dictionary doc",
         "tags" : [ "Dictionaries (v1)" ]
+      }
+    },
+    "/documentation/v1" : {
+      "post" : {
+        "operationId" : "createDocumentation",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentationDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a documentation doc",
+        "tags" : [ "Documentation (v1)" ]
       }
     },
     "/documentation/v1/download" : {
@@ -3073,6 +3149,25 @@
         "tags" : [ "DuplicateCheck" ]
       }
     },
+    "/elasticCluster/v1" : {
+      "post" : {
+        "operationId" : "createElasticCluster",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticClusterDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an Elasticsearch cluster doc",
+        "tags" : [ "Elastic Clusters" ]
+      }
+    },
     "/elasticCluster/v1/testCluster" : {
       "post" : {
         "operationId" : "testElasticCluster",
@@ -3164,6 +3259,25 @@
         },
         "summary" : "Update an Elasticsearch cluster doc",
         "tags" : [ "Elastic Clusters" ]
+      }
+    },
+    "/elasticIndex/v1" : {
+      "post" : {
+        "operationId" : "createElasticIndex",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticIndexDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an Elasticsearch index doc",
+        "tags" : [ "Elastic Indices" ]
       }
     },
     "/elasticIndex/v1/testIndex" : {
@@ -3630,7 +3744,37 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ExplorerServiceCreateRequest"
+                "$ref" : "#/components/schemas/ExplorerServiceCreateDocRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExplorerNode"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create explorer item",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/createFolder" : {
+      "post" : {
+        "operationId" : "createExplorerItem_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExplorerServiceCreateFolderRequest"
               }
             }
           },
@@ -4277,6 +4421,25 @@
         "tags" : [ "Expressions" ]
       }
     },
+    "/feed/v1" : {
+      "post" : {
+        "operationId" : "createFeed",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a feed doc",
+        "tags" : [ "Feeds" ]
+      }
+    },
     "/feed/v1/fetchSupportedEncodings" : {
       "get" : {
         "operationId" : "fetchSupportedEncodings",
@@ -4766,6 +4929,25 @@
         "tags" : [ "Data Volume Groups" ]
       }
     },
+    "/index/v2" : {
+      "post" : {
+        "operationId" : "createIndex",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LuceneIndexDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an index doc",
+        "tags" : [ "Indexes (v2)" ]
+      }
+    },
     "/index/v2/shard/delete" : {
       "post" : {
         "operationId" : "deleteIndexShards",
@@ -4895,7 +5077,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch a index doc by its UUID",
+        "summary" : "Fetch an index doc by its UUID",
         "tags" : [ "Indexes (v2)" ]
       },
       "put" : {
@@ -5630,6 +5812,25 @@
         },
         "summary" : "Sets the task limit for the job node",
         "tags" : [ "Jobs (Node)" ]
+      }
+    },
+    "/kafkaConfig/v1" : {
+      "post" : {
+        "operationId" : "createKafkaConfig",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/KafkaConfigDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a kafkaConfig doc",
+        "tags" : [ "Kafka Config" ]
       }
     },
     "/kafkaConfig/v1/download" : {
@@ -6465,6 +6666,25 @@
         "tags" : [ "Doc Permissions" ]
       }
     },
+    "/pipeline/v1" : {
+      "post" : {
+        "operationId" : "createPipeline",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PipelineDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a pipeline doc",
+        "tags" : [ "Pipelines" ]
+      }
+    },
     "/pipeline/v1/fetchPipelineData" : {
       "post" : {
         "operationId" : "fetchPipelineData",
@@ -7287,6 +7507,25 @@
         },
         "summary" : "Finds processor task summaries",
         "tags" : [ "Processor Tasks" ]
+      }
+    },
+    "/query/v1" : {
+      "post" : {
+        "operationId" : "createQuery",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueryDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a query doc",
+        "tags" : [ "Queries" ]
       }
     },
     "/query/v1/downloadSearchResults" : {
@@ -8194,6 +8433,25 @@
         "tags" : [ "ResultStore" ]
       }
     },
+    "/ruleset/v2" : {
+      "post" : {
+        "operationId" : "createReceiveDataRules",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReceiveDataRules"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a new rules doc",
+        "tags" : [ "Rule Set" ]
+      }
+    },
     "/ruleset/v2/export" : {
       "post" : {
         "operationId" : "exportReceiveDataRules",
@@ -8340,6 +8598,25 @@
         "tags" : [ "Rule Set" ]
       }
     },
+    "/s3/v1" : {
+      "post" : {
+        "operationId" : "createS3Config",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/S3ConfigDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an S3 config doc",
+        "tags" : [ "S3" ]
+      }
+    },
     "/s3/v1/download" : {
       "post" : {
         "operationId" : "downloadS3Config",
@@ -8463,6 +8740,25 @@
         "tags" : [ "Scheduled Time" ]
       }
     },
+    "/script/v1" : {
+      "post" : {
+        "operationId" : "createScript",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ScriptDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a script doc",
+        "tags" : [ "Scripts" ]
+      }
+    },
     "/script/v1/fetchLinkedScripts" : {
       "post" : {
         "operationId" : "fetchLinkedScripts",
@@ -8557,6 +8853,25 @@
         },
         "summary" : "Update a script doc",
         "tags" : [ "Scripts" ]
+      }
+    },
+    "/scyllaDB/v1" : {
+      "post" : {
+        "operationId" : "createScyllaDB",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ScyllaDbDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a new ScyllaDb config doc",
+        "tags" : [ "ScyllaDB Instances" ]
       }
     },
     "/scyllaDB/v1/testCluster" : {
@@ -8811,6 +9126,25 @@
         "tags" : [ "Session Info" ]
       }
     },
+    "/solrIndex/v1" : {
+      "post" : {
+        "operationId" : "createSolrIndex",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SolrIndexDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a solr index doc",
+        "tags" : [ "Solr Indices" ]
+      }
+    },
     "/solrIndex/v1/fetchSolrTypes" : {
       "post" : {
         "operationId" : "fetchSolrTypes",
@@ -8997,6 +9331,25 @@
         "tags" : [ "Sql Statistics Query" ]
       }
     },
+    "/stateStore/v1" : {
+      "post" : {
+        "operationId" : "createStateStore",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StateDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a state store doc",
+        "tags" : [ "State Stores" ]
+      }
+    },
     "/stateStore/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchStateStore",
@@ -9020,7 +9373,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch an state store doc by its UUID",
+        "summary" : "Fetch a state store doc by its UUID",
         "tags" : [ "State Stores" ]
       },
       "put" : {
@@ -9056,7 +9409,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update an state store doc",
+        "summary" : "Update a state store doc",
         "tags" : [ "State Stores" ]
       }
     },
@@ -9159,6 +9512,25 @@
         },
         "summary" : "Change fields",
         "tags" : [ "SQL Statistics RollUps" ]
+      }
+    },
+    "/statistic/v1" : {
+      "post" : {
+        "operationId" : "createStatisticStore",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatisticStoreDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a statistic doc",
+        "tags" : [ "SQL Statistics Stores" ]
       }
     },
     "/statistic/v1/{uuid}" : {
@@ -9317,6 +9689,25 @@
         },
         "summary" : "Change fields",
         "tags" : [ "Stroom Stats RollUps" ]
+      }
+    },
+    "/statsStore/v1" : {
+      "post" : {
+        "operationId" : "createStroomStatsStore",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StroomStatsStoreDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a store doc doc",
+        "tags" : [ "Stroom Stats Stores" ]
       }
     },
     "/statsStore/v1/{uuid}" : {
@@ -10084,6 +10475,25 @@
         "tags" : [ "Tasks" ]
       }
     },
+    "/textConverter/v1" : {
+      "post" : {
+        "operationId" : "createTextConverter",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TextConverterDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a text converter doc",
+        "tags" : [ "Text Converters" ]
+      }
+    },
     "/textConverter/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchTextConverter",
@@ -10396,6 +10806,25 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/view/v1" : {
+      "post" : {
+        "operationId" : "createView",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ViewDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a view doc",
+        "tags" : [ "Views" ]
+      }
+    },
     "/view/v1/list" : {
       "get" : {
         "operationId" : "listViews",
@@ -10479,6 +10908,25 @@
         },
         "summary" : "Update a view doc",
         "tags" : [ "Views" ]
+      }
+    },
+    "/visualisation/v1" : {
+      "post" : {
+        "operationId" : "createVisualisation",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisualisationDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a visualisation doc",
+        "tags" : [ "Visualisations" ]
       }
     },
     "/visualisation/v1/{uuid}" : {
@@ -10590,6 +11038,25 @@
         "tags" : [ "Word List (v1)" ]
       }
     },
+    "/xmlSchema/v1" : {
+      "post" : {
+        "operationId" : "createXmlSchema",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/XmlSchemaDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an xml schema doc",
+        "tags" : [ "XML Schemas" ]
+      }
+    },
     "/xmlSchema/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchXmlSchema",
@@ -10613,7 +11080,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch a xml schema doc by its UUID",
+        "summary" : "Fetch an xml schema doc by its UUID",
         "tags" : [ "XML Schemas" ]
       },
       "put" : {
@@ -10649,8 +11116,27 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update a xml schema doc",
+        "summary" : "Update an xml schema doc",
         "tags" : [ "XML Schemas" ]
+      }
+    },
+    "/xslt/v1" : {
+      "post" : {
+        "operationId" : "createXslt",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/XsltDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an xslt doc",
+        "tags" : [ "XSLTs" ]
       }
     },
     "/xslt/v1/{uuid}" : {
@@ -11200,7 +11686,7 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -12669,7 +13155,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -12907,7 +13393,7 @@
               "$ref" : "#/components/schemas/DataRetentionRule"
             }
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -13089,7 +13575,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -13146,7 +13632,7 @@
       },
       "DocRef" : {
         "type" : "object",
-        "description" : "A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline.",
+        "description" : "A class for describing a unique reference to a 'document' in stroom. A 'document' is an entity in stroom such as a data source dictionary or pipeline.",
         "properties" : {
           "name" : {
             "type" : "string",
@@ -13365,7 +13851,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -13491,7 +13977,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -13592,7 +14078,7 @@
           "timeField" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -14069,16 +14555,28 @@
           }
         }
       },
-      "ExplorerServiceCreateRequest" : {
+      "ExplorerServiceCreateDocRequest" : {
         "type" : "object",
         "properties" : {
           "destinationFolder" : {
             "$ref" : "#/components/schemas/ExplorerNode"
           },
-          "docName" : {
-            "type" : "string"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
-          "docType" : {
+          "permissionInheritance" : {
+            "type" : "string",
+            "enum" : [ "NONE", "SOURCE", "DESTINATION", "COMBINED" ]
+          }
+        }
+      },
+      "ExplorerServiceCreateFolderRequest" : {
+        "type" : "object",
+        "properties" : {
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
+          },
+          "name" : {
             "type" : "string"
           },
           "permissionInheritance" : {
@@ -14334,7 +14832,7 @@
           "streamType" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -15986,7 +16484,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -16228,7 +16726,7 @@
           "timeField" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -16799,7 +17297,7 @@
           "pipelineData" : {
             "$ref" : "#/components/schemas/PipelineData"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -17699,7 +18197,7 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -18096,7 +18594,7 @@
               "$ref" : "#/components/schemas/ReceiveDataRule"
             }
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -18983,7 +19481,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -19146,7 +19644,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -19189,7 +19687,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -19794,7 +20292,7 @@
           "timeField" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -20061,7 +20559,7 @@
             "type" : "string",
             "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -20121,7 +20619,7 @@
             "type" : "string",
             "enum" : [ "COUNT", "VALUE" ]
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -20478,7 +20976,7 @@
             "type" : "string",
             "enum" : [ "COUNT", "VALUE" ]
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -21041,7 +21539,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -21571,7 +22069,7 @@
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -21671,7 +22169,7 @@
           "settings" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -21798,7 +22296,7 @@
           "systemId" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {
@@ -21835,7 +22333,7 @@
           "name" : {
             "type" : "string"
           },
-          "type" : {
+          "uniqueName" : {
             "type" : "string"
           },
           "updateTimeMs" : {

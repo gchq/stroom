@@ -211,18 +211,22 @@ public final class StoreCreationTool {
                               final Path textConverterLocation, final Path xsltLocation) {
         DocRef docRef;
         final List<DocRef> docRefs = feedStore.findByName(feedName);
-        if (docRefs.size() > 0) {
-            docRef = docRefs.get(0);
+        if (!docRefs.isEmpty()) {
+            docRef = docRefs.getFirst();
 
         } else {
             // Setup the feeds in mock feed configuration manager.
-            docRef = createFeed(feedName);
-//            docRef = feedStore.createDocument(feedName);
-            final FeedDoc feedDoc = feedStore.readDocument(docRef);
+            FeedDoc feedDoc = feedStore.createDocument();
+            feedDoc.setName(feedName);
             feedDoc.setReference(true);
             feedDoc.setDescription("Description " + feedName);
             feedDoc.setStatus(FeedStatus.RECEIVE);
-            feedStore.writeDocument(feedDoc);
+            feedDoc = feedStore.writeDocument(feedDoc);
+            explorerService.create(
+                    feedDoc.asDocRef(),
+                    ExplorerConstants.SYSTEM_NODE,
+                    PermissionInheritance.DESTINATION);
+            docRef = feedDoc.asDocRef();
 
             // Setup the pipeline.
             final DocRef pipelineRef = getReferencePipeline(feedName, textConverterType,
@@ -250,61 +254,49 @@ public final class StoreCreationTool {
         return docRef;
     }
 
-    private DocRef createFeed(final String feedName) {
-        ExplorerNode feedNode;
-        feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
-                feedName,
-                ExplorerConstants.SYSTEM_NODE,
-                PermissionInheritance.DESTINATION);
-        if (feedNode == null) {
-            // allow for a mocked explorer service
-            return feedStore.createDocument(feedName);
-        } else {
-            return feedNode.getDocRef();
-        }
-    }
-
-    private DocRef createTextConverter(final String name) {
-        ExplorerNode textConverterNode;
-        textConverterNode = explorerService.create(TextConverterDoc.DOCUMENT_TYPE,
-                name,
-                ExplorerConstants.SYSTEM_NODE,
-                PermissionInheritance.DESTINATION);
-        if (textConverterNode == null) {
-            // allow for a mocked explorer service
-            return textConverterStore.createDocument(name);
-        } else {
-            return textConverterNode.getDocRef();
-        }
-    }
-
-    private DocRef createXslt(final String name) {
-        ExplorerNode xsltNode;
-        xsltNode = explorerService.create(XsltDoc.DOCUMENT_TYPE,
-                name,
-                ExplorerConstants.SYSTEM_NODE,
-                PermissionInheritance.DESTINATION);
-        if (xsltNode == null) {
-            // allow for a mocked explorer service
-            return xsltStore.createDocument(name);
-        } else {
-            return xsltNode.getDocRef();
-        }
-    }
-
-    private DocRef createPipeline(final String name) {
-        ExplorerNode pipelineNode;
-        pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
-                name,
-                ExplorerConstants.SYSTEM_NODE,
-                PermissionInheritance.DESTINATION);
-        if (pipelineNode == null) {
-            // allow for a mocked explorer service
-            return pipelineStore.createDocument(name);
-        } else {
-            return pipelineNode.getDocRef();
-        }
-    }
+//    private DocRef createTextConverter(final String name) {
+//        ExplorerNode textConverterNode;
+//        textConverterNode = explorerService.create(TextConverterDoc.DOCUMENT_TYPE,
+//                name,
+//                ExplorerConstants.SYSTEM_NODE,
+//                PermissionInheritance.DESTINATION);
+//        if (textConverterNode == null) {
+//            // allow for a mocked explorer service
+//            final TextConverterDoc doc = textConverterStore.createDocument();
+//            doc.setName(name);
+//            return textConverterStore.writeDocument(doc).asDocRef();
+//        } else {
+//            return textConverterNode.getDocRef();
+//        }
+//    }
+//
+//    private DocRef createXslt(final String name) {
+//        ExplorerNode xsltNode;
+//        xsltNode = explorerService.create(XsltDoc.DOCUMENT_TYPE,
+//                name,
+//                ExplorerConstants.SYSTEM_NODE,
+//                PermissionInheritance.DESTINATION);
+//        if (xsltNode == null) {
+//            // allow for a mocked explorer service
+//            return xsltStore.createDocument(name);
+//        } else {
+//            return xsltNode.getDocRef();
+//        }
+//    }
+//
+//    private DocRef createPipeline(final String name) {
+//        ExplorerNode pipelineNode;
+//        pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+//                name,
+//                ExplorerConstants.SYSTEM_NODE,
+//                PermissionInheritance.DESTINATION);
+//        if (pipelineNode == null) {
+//            // allow for a mocked explorer service
+//            return pipelineStore.createDocument(name);
+//        } else {
+//            return pipelineNode.getDocRef();
+//        }
+//    }
 
     private DocRef getReferencePipeline(final String feedName,
                                         final TextConverterType textConverterType,
@@ -449,16 +441,21 @@ public final class StoreCreationTool {
 
         DocRef docRef;
         final List<DocRef> docRefs = feedStore.findByName(feedName);
-        if (docRefs.size() > 0) {
-            docRef = docRefs.get(0);
+        if (!docRefs.isEmpty()) {
+            docRef = docRefs.getFirst();
         } else {
             // Setup the feeds in mock feed configuration manager.
-//            docRef = feedStore.createDocument(feedName);
-            docRef = createFeed(feedName);
-            FeedDoc feedDoc = feedStore.readDocument(docRef);
-            feedDoc.setDescription("Description " + feedName);
-            feedDoc.setStatus(FeedStatus.RECEIVE);
-            feedStore.writeDocument(feedDoc);
+            FeedDoc doc = feedStore.createDocument();
+            doc.setName(feedName);
+            doc.setDescription("Description " + feedName);
+            doc.setStatus(FeedStatus.RECEIVE);
+            doc = feedStore.writeDocument(doc);
+            docRef = doc.asDocRef();
+
+            explorerService.create(
+                    doc.asDocRef(),
+                    ExplorerConstants.SYSTEM_NODE,
+                    PermissionInheritance.DESTINATION);
         }
         return docRef;
     }
@@ -731,14 +728,19 @@ public final class StoreCreationTool {
 
         // Create a new text converter entity.
         if (data != null) {
-//            final DocRef textConverterRef = textConverterStore.createDocument(name);
-            final DocRef textConverterRef = createTextConverter(name);
-            final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
-            textConverter.setDescription("Description " + name);
-            textConverter.setConverterType(textConverterType);
-            textConverter.setData(data);
-            textConverterStore.writeDocument(textConverter);
-            return textConverterRef;
+            TextConverterDoc doc = textConverterStore.createDocument();
+            doc.setName(name);
+            doc.setDescription("Description " + name);
+            doc.setConverterType(textConverterType);
+            doc.setData(data);
+            doc = textConverterStore.writeDocument(doc);
+
+            explorerService.create(
+                    doc.asDocRef(),
+                    ExplorerConstants.SYSTEM_NODE,
+                    PermissionInheritance.DESTINATION);
+
+            return doc.asDocRef();
         }
 
         return null;
@@ -765,13 +767,18 @@ public final class StoreCreationTool {
 
         // Create the new XSLT entity.
         if (data != null) {
-            final DocRef docRef = createXslt(name);
-//            final DocRef docRef = xsltStore.createDocument(name);
-            final XsltDoc document = xsltStore.readDocument(docRef);
-            document.setDescription("Description " + name);
-            document.setData(data);
-            xsltStore.writeDocument(document);
-            return docRef;
+            XsltDoc doc = xsltStore.createDocument();
+            doc.setName(name);
+            doc.setDescription("Description " + name);
+            doc.setData(data);
+            doc = xsltStore.writeDocument(doc);
+
+            explorerService.create(
+                    doc.asDocRef(),
+                    ExplorerConstants.SYSTEM_NODE,
+                    PermissionInheritance.DESTINATION);
+
+            return doc.asDocRef();
         }
         return null;
     }
@@ -799,12 +806,20 @@ public final class StoreCreationTool {
         // Try to find an existing one first.
         return getPipeline(name)
                 .orElseGet(() -> {
-                    final DocRef docRef = createPipeline(name);
+                    PipelineDoc doc = pipelineStore.createDocument();
+                    doc.setName(name);
+                    doc = pipelineStore.writeDocument(doc);
+
+                    explorerService.create(
+                            doc.asDocRef(),
+                            ExplorerConstants.SYSTEM_NODE,
+                            PermissionInheritance.DESTINATION);
+
                     final String data = StreamUtil.fileToString(pathOfPipelineToCopy);
                     LOGGER.info("Creating pipeline {} based on file {}", name, pathOfPipelineToCopy);
                     return PipelineTestUtil.createTestPipeline(
                             pipelineStore,
-                            docRef,
+                            doc,
                             name,
                             "Description " + name,
                             data);
@@ -830,14 +845,11 @@ public final class StoreCreationTool {
 
         final PipelineDoc sourcePipeline = pipelineStore.readDocument(sourcePipelineDocRef);
 
-        final ExplorerNode newNode = explorerService.create(
-                PipelineDoc.DOCUMENT_TYPE,
-                newName,
+        final DocRef newDocRef = pipelineStore.copyDocument(sourcePipeline.asDocRef(), newName, true, null);
+        explorerService.create(
+                newDocRef,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
-        final DocRef newDocRef = newNode != null
-                ? newNode.getDocRef()
-                : pipelineStore.createDocument(newName);
         final PipelineDoc newPipeline = pipelineStore.readDocument(newDocRef);
 
         newPipeline.setName(newName);
@@ -1031,24 +1043,24 @@ public final class StoreCreationTool {
         }
     }
 
-    public DocRef createFeed(final String feedName,
-                             final DocRef folder,
-                             final String streamType,
-                             final String encoding,
-                             final boolean isReference) {
-        LOGGER.info("Creating feed {} in {} with type {} encoding {}");
-        ExplorerNode feedNode;
-        feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE, feedName,
-                ExplorerConstants.SYSTEM_NODE,
-                PermissionInheritance.DESTINATION);
-        final DocRef feedDocRef = feedNode != null
-                ? feedNode.getDocRef()
-                : feedStore.createDocument(feedName);
-        FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
-        feedDoc.setReference(isReference);
-        feedDoc.setEncoding(encoding);
-        feedDoc.setStreamType(streamType);
-        feedStore.writeDocument(feedDoc);
-        return feedDocRef;
-    }
+//    public DocRef createFeed(final String feedName,
+//                             final DocRef folder,
+//                             final String streamType,
+//                             final String encoding,
+//                             final boolean isReference) {
+//        LOGGER.info("Creating feed {} in {} with type {} encoding {}");
+//        ExplorerNode feedNode;
+//        feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE, feedName,
+//                ExplorerConstants.SYSTEM_NODE,
+//                PermissionInheritance.DESTINATION);
+//        final DocRef feedDocRef = feedNode != null
+//                ? feedNode.getDocRef()
+//                : feedStore.createDocument(feedName);
+//        FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
+//        feedDoc.setReference(isReference);
+//        feedDoc.setEncoding(encoding);
+//        feedDoc.setStreamType(streamType);
+//        feedStore.writeDocument(feedDoc);
+//        return feedDocRef;
+//    }
 }

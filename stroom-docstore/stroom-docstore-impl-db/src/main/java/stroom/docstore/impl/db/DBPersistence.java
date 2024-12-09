@@ -16,107 +16,40 @@
 
 package stroom.docstore.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
+import stroom.docstore.impl.DocumentData;
 import stroom.docstore.impl.Persistence;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Record6;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
+
+import static stroom.docstore.impl.db.jooq.tables.Document.DOCUMENT;
+import static stroom.docstore.impl.db.jooq.tables.DocumentEntry.DOCUMENT_ENTRY;
 
 @Singleton
 public class DBPersistence implements Persistence {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DBPersistence.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DBPersistence.class);
 
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
-
-    private static final String SELECT_BY_TYPE_UUID_SQL = """
-            SELECT
-              ext,
-              data
-            FROM doc
-            WHERE type = ?
-            AND uuid = ?""";
-
-    private static final String DELETE_BY_UUID_SQL = """
-            DELETE FROM doc
-            WHERE type = ?
-            AND uuid = ?""";
-
-    private static final String LIST_BY_TYPE_SQL = """
-            SELECT DISTINCT
-              uuid,
-              name
-            FROM doc
-            WHERE type = ?
-            ORDER BY uuid""";
-
-    private static final String SELECT_BY_TYPE_NAME_EQUALS_SQL = """
-            SELECT DISTINCT
-              uuid,
-              name
-            FROM doc
-            WHERE type = ?
-            AND name = ?
-            ORDER BY uuid""";
-
-    private static final String SELECT_BY_TYPE_NAME_WILDCARD_SQL = """
-            SELECT DISTINCT
-              uuid,
-              name
-            FROM doc
-            WHERE type = ?
-            AND name like ?
-            ORDER BY uuid""";
-
-    private static final String SELECT_ID_BY_TYPE_UUID_SQL = """
-            SELECT
-              id
-            FROM doc
-            WHERE type = ?
-            AND uuid = ?
-            LIMIT 1""";
-
-    private static final String UPDATE_SQL = """
-            UPDATE doc
-            SET
-              type = ?,
-              uuid = ?,
-              name = ?,
-              ext = ?,
-              data = ?
-            WHERE id = ?""";
-
-    private static final String INSERT_SQL = """
-            INSERT INTO doc (
-              type,
-              uuid,
-              name,
-              ext,
-              data)
-            VALUES (?, ?, ?, ?, ?)""";
-
-    private static final String SELECT_ID_BY_TYPE_UUID_EXT_SQL = """
-            SELECT
-            id
-            FROM doc
-            WHERE type = ?
-            AND uuid = ?
-            AND ext = ?""";
 
     private final DataSource dataSource;
 
@@ -127,163 +60,173 @@ public class DBPersistence implements Persistence {
 
     @Override
     public boolean exists(final DocRef docRef) {
-        try (final Connection connection = dataSource.getConnection()) {
-            final Long id = getId(connection, docRef);
-            return id != null;
-        } catch (final SQLException e) {
+        try {
+            return JooqUtil.contextResult(dataSource, context -> getDocumentId(context, docRef)).isPresent();
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
         }
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) {
-        final Map<String, byte[]> data = new HashMap<>();
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_BY_TYPE_UUID_SQL)) {
-                preparedStatement.setString(1, docRef.getType());
-                preparedStatement.setString(2, docRef.getUuid());
-
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        data.put(resultSet.getString(1), resultSet.getBytes(2));
-                    }
-                }
-            }
-        } catch (final SQLException e) {
+    public DocumentData create(final DocumentData documentData) throws IOException {
+        try {
+            validate(documentData);
+            return JooqUtil.transactionResult(dataSource, context -> insert(context, documentData));
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
         }
-
-        if (data.isEmpty()) {
-            throw new DocumentNotFoundException(docRef);
-        }
-
-        return data;
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
-        try (final Connection connection = dataSource.getConnection()) {
-            // Get the auto commit status.
-            final boolean autoCommit = connection.getAutoCommit();
+    public Optional<DocumentData> read(final DocRef docRef) throws IOException {
+        try {
+            return JooqUtil.transactionResult(dataSource, context -> {
+                final Optional<Record6<Long, String, String, String, String, String>> optionalRecord = context
+                        .select(DOCUMENT.ID,
+                                DOCUMENT.TYPE,
+                                DOCUMENT.UUID,
+                                DOCUMENT.NAME,
+                                DOCUMENT.UNIQUE_NAME,
+                                DOCUMENT.VERSION)
+                        .from(DOCUMENT)
+                        .where(DOCUMENT.UUID.eq(docRef.getUuid()))
+                        .fetchOptional();
 
-            // Turn auto commit off.
-            connection.setAutoCommit(false);
+                return optionalRecord.map(record -> {
+                    final long id = record.get(DOCUMENT.ID);
+                    final String type = record.get(DOCUMENT.TYPE);
+                    final String uuid = record.get(DOCUMENT.UUID);
+                    final String name = record.get(DOCUMENT.NAME);
+                    final String uniqueName = record.get(DOCUMENT.UNIQUE_NAME);
+                    final String version = record.get(DOCUMENT.VERSION);
+                    final Map<String, byte[]> data = context
+                            .select(DOCUMENT_ENTRY.ENTRY, DOCUMENT_ENTRY.DATA)
+                            .from(DOCUMENT_ENTRY)
+                            .where(DOCUMENT_ENTRY.FK_DOCUMENT_ID.eq(id))
+                            .fetch()
+                            .collect(Collectors.toMap(
+                                    r -> r.get(DOCUMENT_ENTRY.ENTRY),
+                                    r -> r.get(DOCUMENT_ENTRY.DATA)));
 
-            try {
-                final boolean exists = getId(connection, docRef) != null;
-                if (update) {
-                    if (!exists) {
-                        throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
-                    }
-                } else if (exists) {
-                    throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
-                }
-
-                data.forEach((ext, bytes) -> {
-                    if (update) {
-                        final Long existingId = getId(connection, docRef, ext);
-                        if (existingId != null) {
-                            update(connection, existingId, docRef, ext, bytes);
-                        } else {
-                            save(connection, docRef, ext, bytes);
-                        }
-                    } else {
-                        save(connection, docRef, ext, bytes);
-                    }
+                    final DocRef ref = DocRef.builder().type(type).uuid(uuid).name(name).build();
+                    return DocumentData
+                            .builder()
+                            .docRef(ref)
+                            .version(version)
+                            .uniqueName(uniqueName)
+                            .data(data)
+                            .build();
                 });
-
-                // Commit all of the changes.
-                connection.commit();
-
-            } catch (final RuntimeException e) {
-                // Rollback any changes.
-                connection.rollback();
-
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            } finally {
-                // Turn auto commit back on.
-                connection.setAutoCommit(autoCommit);
-            }
-        } catch (final SQLException e) {
+            });
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
         }
+    }
+
+    @Override
+    public DocumentData update(final String expectedVersion,
+                               final DocumentData documentData) throws IOException {
+        try {
+            Objects.requireNonNull(expectedVersion, "Expected version is null");
+            validate(documentData);
+            return JooqUtil.transactionResult(dataSource, context -> update(context, expectedVersion, documentData));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void validate(final DocumentData documentData) {
+        Objects.requireNonNull(documentData, "Document data is null");
+        Objects.requireNonNull(documentData.getDocRef(), "DocRef is null: " + documentData);
+        NullSafe.requireNonBlank(documentData.getDocRef().getType(), () ->
+                "Type not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getDocRef().getUuid(), () ->
+                "UUID not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getDocRef().getName(), () ->
+                "Name not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getVersion(), () ->
+                "Version not set on document: " + documentData);
+        NullSafe.requireNonBlank(documentData.getUniqueName(), () ->
+                "Unique name not set on document: " + documentData);
     }
 
     @Override
     public void delete(final DocRef docRef) {
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(DELETE_BY_UUID_SQL)) {
-                preparedStatement.setString(1, docRef.getType());
-                preparedStatement.setString(2, docRef.getUuid());
-
-                preparedStatement.execute();
-            }
-        } catch (final SQLException e) {
+        try {
+            JooqUtil.transaction(dataSource, context -> {
+                final Optional<Long> optional = getDocumentId(context, docRef);
+                optional.ifPresent(id -> {
+                    context
+                            .deleteFrom(DOCUMENT_ENTRY)
+                            .where(DOCUMENT_ENTRY.FK_DOCUMENT_ID.eq(id))
+                            .execute();
+                    context
+                            .deleteFrom(DOCUMENT)
+                            .where(DOCUMENT.ID.eq(id))
+                            .execute();
+                });
+            });
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
         }
     }
 
     @Override
     public List<DocRef> list(final String type) {
-        final List<DocRef> list = new ArrayList<>();
-
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(LIST_BY_TYPE_SQL)) {
-                preparedStatement.setString(1, type);
-
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final String uuid = resultSet.getString(1);
-                        final String name = resultSet.getString(2);
-                        list.add(new DocRef(type, uuid, name));
-                    }
-                }
-            }
-        } catch (final SQLException e) {
+        try {
+            return JooqUtil.contextResult(dataSource, context -> context
+                            .select(DOCUMENT.TYPE, DOCUMENT.UUID, DOCUMENT.NAME)
+                            .from(DOCUMENT)
+                            .where(DOCUMENT.TYPE.eq(type))
+                            .orderBy(DOCUMENT.UUID)
+                            .fetch())
+                    .map(r -> new DocRef(
+                            r.get(DOCUMENT.TYPE),
+                            r.get(DOCUMENT.UUID),
+                            r.get(DOCUMENT.NAME)));
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
         }
-
-        return list;
     }
 
     @Override
     public List<DocRef> find(final String type,
                              final String nameFilter,
                              final boolean allowWildCards) {
-        final List<DocRef> list = new ArrayList<>();
-
         final String nameFilterSqlValue = allowWildCards
                 ? PatternUtil.createSqlLikeStringFromWildCardFilter(nameFilter)
                 : nameFilter;
-        final String sql = allowWildCards
-                ? SELECT_BY_TYPE_NAME_WILDCARD_SQL
-                : SELECT_BY_TYPE_NAME_EQUALS_SQL;
 
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, type);
-                preparedStatement.setString(2, nameFilterSqlValue);
-
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final String uuid = resultSet.getString(1);
-                        final String name = resultSet.getString(2);
-                        list.add(new DocRef(type, uuid, name));
-                    }
-                }
-            }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+        final Condition condition;
+        if (allowWildCards) {
+            condition = DOCUMENT.TYPE.eq(type)
+                    .and(DOCUMENT.NAME.like(nameFilterSqlValue));
+        } else {
+            condition = DOCUMENT.TYPE.eq(type)
+                    .and(DOCUMENT.NAME.eq(nameFilterSqlValue));
         }
 
-        return list;
+        try {
+            return JooqUtil.contextResult(dataSource, context -> context
+                            .select(DOCUMENT.TYPE, DOCUMENT.UUID, DOCUMENT.NAME)
+                            .from(DOCUMENT)
+                            .where(condition)
+                            .orderBy(DOCUMENT.UUID)
+                            .fetch())
+                    .map(r -> new DocRef(
+                            r.get(DOCUMENT.TYPE),
+                            r.get(DOCUMENT.UUID),
+                            r.get(DOCUMENT.NAME)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
@@ -291,75 +234,134 @@ public class DBPersistence implements Persistence {
         return LOCK_FACTORY;
     }
 
-    private Long getId(final Connection connection, final DocRef docRef) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_SQL)) {
-            preparedStatement.setString(1, docRef.getType());
-            preparedStatement.setString(2, docRef.getUuid());
+    private Optional<Long> getDocumentId(final DSLContext context, final DocRef docRef) {
+        try {
+            return context
+                    .select(DOCUMENT.ID)
+                    .from(DOCUMENT)
+                    .where(DOCUMENT.UUID.eq(docRef.getUuid()))
+                    .fetchOptional(DOCUMENT.ID);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
 
-            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getLong(1);
-                }
+    private DocumentData update(final DSLContext context,
+                                final String expectedVersion,
+                                final DocumentData documentData) {
+        try {
+            final Optional<Long> optionalDocumentId = getDocumentId(context, documentData.getDocRef());
+            if (optionalDocumentId.isEmpty()) {
+                throw new DocumentNotFoundException(documentData.getDocRef());
             }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
 
-        return null;
+            final long id = optionalDocumentId.get();
+            final DocumentData updatedDocument = updateDocument(
+                    context,
+                    optionalDocumentId.get(),
+                    expectedVersion,
+                    documentData);
+            // Delete existing entries.
+            context.deleteFrom(DOCUMENT_ENTRY).where(DOCUMENT_ENTRY.FK_DOCUMENT_ID.eq(id)).execute();
+            // Insert new entries.
+            insertDocumentEntries(context, id, documentData);
+            return updatedDocument;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
-    private Long getId(final Connection connection, final DocRef docRef, final String ext) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_EXT_SQL)) {
-            preparedStatement.setString(1, docRef.getType());
-            preparedStatement.setString(2, docRef.getUuid());
-            preparedStatement.setString(3, ext);
+    private DocumentData updateDocument(final DSLContext context,
+                                        final long id,
+                                        final String expectedVersion,
+                                        final DocumentData documentData) {
+        try {
+            final int updatedRows = context
+                    .update(DOCUMENT)
+                    .set(DOCUMENT.NAME, documentData.getDocRef().getName())
+                    .set(DOCUMENT.UNIQUE_NAME, documentData.getUniqueName())
+                    .set(DOCUMENT.VERSION, documentData.getVersion())
+                    .where(DOCUMENT.ID.eq(id))
+                    .and(DOCUMENT.VERSION.eq(expectedVersion))
+                    .execute();
 
-            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getLong(1);
-                }
+            if (updatedRows == 0) {
+                throw new RuntimeException("Unable to update document: " + documentData);
             }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
 
-        return null;
-    }
-
-    private void save(final Connection connection, final DocRef docRef, final String ext, final byte[] bytes) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(INSERT_SQL)) {
-            preparedStatement.setString(1, docRef.getType());
-            preparedStatement.setString(2, docRef.getUuid());
-            preparedStatement.setString(3, docRef.getName());
-            preparedStatement.setString(4, ext);
-            preparedStatement.setBytes(5, bytes);
-
-            preparedStatement.execute();
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            return documentData;
+        } catch (final RuntimeException e) {
+            LOGGER.trace(e.getMessage(), e);
+            throw e;
         }
     }
 
-    private void update(final Connection connection,
-                        final Long id,
-                        final DocRef docRef,
-                        final String ext,
-                        final byte[] bytes) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-            preparedStatement.setString(1, docRef.getType());
-            preparedStatement.setString(2, docRef.getUuid());
-            preparedStatement.setString(3, docRef.getName());
-            preparedStatement.setString(4, ext);
-            preparedStatement.setBytes(5, bytes);
-            preparedStatement.setLong(6, id);
-
-            preparedStatement.execute();
-        } catch (final SQLException e) {
+    private DocumentData insert(final DSLContext context,
+                                final DocumentData documentData) {
+        try {
+            final Optional<Long> optional = insertDocument(context, documentData);
+            optional.ifPresent(id -> insertDocumentEntries(context, id, documentData));
+            return documentData;
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private Optional<Long> insertDocument(final DSLContext context,
+                                          final DocumentData documentData) {
+        try {
+            return context
+                    .insertInto(DOCUMENT)
+                    .columns(DOCUMENT.TYPE,
+                            DOCUMENT.UUID,
+                            DOCUMENT.NAME,
+                            DOCUMENT.UNIQUE_NAME,
+                            DOCUMENT.VERSION)
+                    .values(documentData.getDocRef().getType(),
+                            documentData.getDocRef().getUuid(),
+                            documentData.getDocRef().getName(),
+                            documentData.getUniqueName(),
+                            documentData.getVersion())
+                    .returning(DOCUMENT.ID)
+                    .fetchOptional(DOCUMENT.ID);
+        } catch (final RuntimeException e) {
+            LOGGER.trace(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void insertDocumentEntries(final DSLContext context,
+                                       final Long id,
+                                       final DocumentData documentData) {
+        try {
+            documentData.getEntries().forEach(entry -> {
+                final byte[] data = documentData.getData(entry);
+                insertDocumentEntry(context, id, entry, data);
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void insertDocumentEntry(final DSLContext context,
+                                     final Long documentId,
+                                     final String entry,
+                                     final byte[] data) {
+        try {
+            context
+                    .insertInto(DOCUMENT_ENTRY)
+                    .columns(DOCUMENT_ENTRY.FK_DOCUMENT_ID, DOCUMENT_ENTRY.ENTRY, DOCUMENT_ENTRY.DATA)
+                    .values(documentId, entry, data)
+                    .onDuplicateKeyUpdate()
+                    .set(DOCUMENT_ENTRY.DATA, data)
+                    .execute();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
         }
     }
 }

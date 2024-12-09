@@ -73,11 +73,6 @@ public class IndexStoreImpl implements IndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -142,6 +137,11 @@ public class IndexStoreImpl implements IndexStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public LuceneIndexDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public LuceneIndexDoc readDocument(final DocRef docRef) {

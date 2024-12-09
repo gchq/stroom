@@ -74,7 +74,6 @@ public class V07_00_00_016__Feed extends BaseJavaMigration {
                     final boolean reference = resultSet.getBoolean(14);
 
                     final FeedDoc document = new FeedDoc();
-                    document.setType(FeedDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

@@ -18,7 +18,7 @@ package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,9 +34,9 @@ import java.util.Objects;
         "Defines the connection details for a single Elasticsearch cluster.\n" +
                 "This Elastic Cluster Document can then be used by one or more Elastic Index Documents.")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -45,7 +45,7 @@ import java.util.Objects;
         "description",
         "connection"})
 @JsonInclude(Include.NON_NULL)
-public class ElasticClusterDoc extends Doc {
+public class ElasticClusterDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "ElasticCluster";
     public static final SvgImage ICON = SvgImage.DOCUMENT_ELASTIC_CLUSTER;
@@ -61,9 +61,9 @@ public class ElasticClusterDoc extends Doc {
     }
 
     @JsonCreator
-    public ElasticClusterDoc(@JsonProperty("type") final String type,
-                             @JsonProperty("uuid") final String uuid,
+    public ElasticClusterDoc(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
+                             @JsonProperty("uniqueName") final String uniqueName,
                              @JsonProperty("version") final String version,
                              @JsonProperty("createTimeMs") final Long createTimeMs,
                              @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -71,18 +71,15 @@ public class ElasticClusterDoc extends Doc {
                              @JsonProperty("updateUser") final String updateUser,
                              @JsonProperty("description") final String description,
                              @JsonProperty("connection") final ElasticConnectionConfig connection) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     /**
@@ -106,12 +103,6 @@ public class ElasticClusterDoc extends Doc {
 
     public void setConnection(final ElasticConnectionConfig connection) {
         this.connection = connection;
-    }
-
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return DOCUMENT_TYPE;
     }
 
     @Override

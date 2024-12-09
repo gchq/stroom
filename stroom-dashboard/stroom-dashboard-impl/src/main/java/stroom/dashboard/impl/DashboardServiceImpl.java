@@ -143,6 +143,11 @@ class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    public DashboardDoc create() {
+        return dashboardStore.createDocument();
+    }
+
+    @Override
     public DashboardDoc read(final DocRef docRef) {
         return documentResourceHelper.read(dashboardStore, docRef);
     }

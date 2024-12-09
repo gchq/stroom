@@ -21,7 +21,6 @@ package stroom.receive;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.data.zip.StroomZipFileType;
-import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.api.VolumeGroupNameProvider;
@@ -67,8 +66,8 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
         streamStore.clear();
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final DocRef feedRef = feedStore.createDocument(feedName);
-        final FeedDoc feedDoc = feedStore.readDocument(feedRef);
+        final FeedDoc feedDoc = feedStore.createDocument();
+        feedDoc.setName(feedName);
         feedDoc.setReference(true);
         feedStore.writeDocument(feedDoc);
 

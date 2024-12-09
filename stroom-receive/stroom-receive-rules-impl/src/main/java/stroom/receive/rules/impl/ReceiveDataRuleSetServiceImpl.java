@@ -65,11 +65,6 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -147,6 +142,11 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public ReceiveDataRules createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public ReceiveDataRules readDocument(final DocRef docRef) {

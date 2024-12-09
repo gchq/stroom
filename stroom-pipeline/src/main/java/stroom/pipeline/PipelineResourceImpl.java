@@ -25,7 +25,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.util.shared.FetchWithUuid;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @AutoLogged
-class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDoc> {
+class PipelineResourceImpl implements PipelineResource {
 
     private final Provider<ElementRegistryFactory> elementRegistryFactoryProvider;
     private final Provider<PipelineService> pipelineServiceProvider;
@@ -44,6 +43,11 @@ class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDo
                          final Provider<ElementRegistryFactory> elementRegistryFactoryProvider) {
         this.pipelineServiceProvider = pipelineServiceProvider;
         this.elementRegistryFactoryProvider = elementRegistryFactoryProvider;
+    }
+
+    @Override
+    public PipelineDoc create() {
+        return pipelineServiceProvider.get().create();
     }
 
     @Override

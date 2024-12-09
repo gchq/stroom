@@ -39,7 +39,6 @@ class XsltDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldXslt, dataMap);
 
                 final XsltDoc document = new XsltDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

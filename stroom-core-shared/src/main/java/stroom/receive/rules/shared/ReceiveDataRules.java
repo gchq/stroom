@@ -19,10 +19,11 @@ package stroom.receive.rules.shared;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,9 +33,9 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -44,7 +45,7 @@ import java.util.Objects;
         "fields",
         "rules"})
 @JsonInclude(Include.NON_NULL)
-public class ReceiveDataRules extends Doc {
+public class ReceiveDataRules extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
     public static final SvgImage ICON = SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
@@ -60,9 +61,9 @@ public class ReceiveDataRules extends Doc {
     }
 
     @JsonCreator
-    public ReceiveDataRules(@JsonProperty("type") final String type,
-                            @JsonProperty("uuid") final String uuid,
+    public ReceiveDataRules(@JsonProperty("uuid") final String uuid,
                             @JsonProperty("name") final String name,
+                            @JsonProperty("uniqueName") final String uniqueName,
                             @JsonProperty("version") final String version,
                             @JsonProperty("createTimeMs") final Long createTimeMs,
                             @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -71,26 +72,16 @@ public class ReceiveDataRules extends Doc {
                             @JsonProperty("description") final String description,
                             @JsonProperty("fields") final List<QueryField> fields,
                             @JsonProperty("rules") final List<ReceiveDataRule> rules) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.fields = fields;
         this.rules = rules;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

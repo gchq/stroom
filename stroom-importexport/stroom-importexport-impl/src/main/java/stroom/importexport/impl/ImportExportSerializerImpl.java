@@ -463,10 +463,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 // Remove root node.
 
                 final ExplorerNode root = explorerNodeService.getRoot();
-                if (nodes.get(0).equals(root)) {
-                    nodes.remove(0);
+                if (nodes.getFirst().equals(root)) {
+                    nodes.removeFirst();
                 }
-                if (nodes.size() > 0) {
+                if (!nodes.isEmpty()) {
                     final String rootPath = getParentPath(nodes);
                     result = createPath(rootPath, path);
                 }
@@ -487,7 +487,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         // Create a set of all entities that we are going to try and export.
         final Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs);
 
-        if (expandedDocRefs.size() == 0) {
+        if (expandedDocRefs.isEmpty()) {
             throw new EntityServiceException("No documents were found that could be exported");
         }
 
@@ -516,11 +516,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final String[] elements = path.split("/");
 
         for (final String element : elements) {
-            if (element.length() > 0) {
+            if (!element.isEmpty()) {
                 List<ExplorerNode> nodes = explorerNodeService.getNodesByName(parent, element);
-                nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).collect(Collectors.toList());
+                nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).toList();
 
-                if (nodes.size() == 0) {
+                if (nodes.isEmpty()) {
                     // No parent node can be found for this element so create one if possible.
                     final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
                     if (!securityContext.hasDocumentCreatePermission(folderRef, FOLDER)) {
@@ -531,15 +531,14 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Go and create the folder if we are actually importing now.
                     if (create) {
                         // Go and create the folder.
-                        parent = explorerService.create(
-                                FOLDER,
+                        parent = explorerService.createFolder(
                                 element,
                                 parent,
                                 PermissionInheritance.DESTINATION);
                     }
 
                 } else {
-                    parent = nodes.get(0);
+                    parent = nodes.getFirst();
                 }
             }
         }

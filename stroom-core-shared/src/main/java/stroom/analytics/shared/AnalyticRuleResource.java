@@ -41,6 +41,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 public interface AnalyticRuleResource
         extends RestResource, DirectRestService, FetchWithUuid<AnalyticRuleDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create an analytic rule doc",
+            operationId = "createAnalyticRule")
+    AnalyticRuleDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

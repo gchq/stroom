@@ -146,7 +146,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         add.setSvg(SvgImage.ADD);
         add.getElement().addClassName("navigation-header-button add");
         add.setTitle("New");
-        add.setEnabled(false);
 
         delete = new InlineSvgButton();
         delete.setSvg(SvgImage.DELETE);
@@ -326,7 +325,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
                     !ExplorerConstants.isFavouritesNode(selectedNode) &&
                     !ExplorerConstants.isSystemNode(selectedNode);
-            add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));

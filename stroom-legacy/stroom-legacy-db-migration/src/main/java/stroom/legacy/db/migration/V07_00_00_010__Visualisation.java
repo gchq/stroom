@@ -69,7 +69,6 @@ public class V07_00_00_010__Visualisation extends BaseJavaMigration {
                     final String script = resultSet.getString(10);
 
                     final VisualisationDoc document = new VisualisationDoc();
-                    document.setType(VisualisationDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

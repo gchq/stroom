@@ -39,7 +39,6 @@ class TextConverterDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldTextConverter, dataMap);
 
                 final TextConverterDoc document = new TextConverterDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

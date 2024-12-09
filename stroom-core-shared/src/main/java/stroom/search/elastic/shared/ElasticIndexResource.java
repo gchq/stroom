@@ -39,6 +39,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ElasticIndexResource extends RestResource, DirectRestService, FetchWithUuid<ElasticIndexDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create an Elasticsearch index doc",
+            operationId = "createElasticIndex")
+    ElasticIndexDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

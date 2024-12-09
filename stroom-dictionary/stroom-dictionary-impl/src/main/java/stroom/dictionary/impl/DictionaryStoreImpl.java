@@ -82,11 +82,6 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -166,9 +161,13 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public DictionaryDoc createDocument() {
+        return store.createDocument();
+    }
+
+    @Override
     public DictionaryDoc readDocument(final DocRef docRef) {
-        final DictionaryDoc dictionaryDoc = store.readDocument(docRef);
-        return dictionaryDoc;
+        return store.readDocument(docRef);
     }
 
     @Override

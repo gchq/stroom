@@ -18,7 +18,7 @@ package stroom.statistics.impl.sql.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,9 +49,9 @@ import java.util.Set;
                 "It is used by the {{< pipe-elm \"StatisticsFilter\" >}} pipeline element."
 )
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -64,7 +64,7 @@ import java.util.Set;
         "enabled",
         "config"})
 @JsonInclude(Include.NON_NULL)
-public class StatisticStoreDoc extends Doc implements StatisticStore {
+public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
 
     public static final String DOCUMENT_TYPE = "StatisticStore";
     public static final SvgImage ICON = SvgImage.DOCUMENT_STATISTIC_STORE;
@@ -97,9 +97,9 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     }
 
     @JsonCreator
-    public StatisticStoreDoc(@JsonProperty("type") final String type,
-                             @JsonProperty("uuid") final String uuid,
+    public StatisticStoreDoc(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
+                             @JsonProperty("uniqueName") final String uniqueName,
                              @JsonProperty("version") final String version,
                              @JsonProperty("createTimeMs") final Long createTimeMs,
                              @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -111,7 +111,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
                              @JsonProperty("precision") final Long precision,
                              @JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("config") final StatisticsDataSourceData config) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
         this.rollUpType = rollUpType;
@@ -130,20 +130,10 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         }
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

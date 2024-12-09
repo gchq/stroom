@@ -17,7 +17,6 @@
 package stroom.pipeline.xml;
 
 
-import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -127,17 +126,17 @@ public class F2XTestUtil {
 //        metaHolder, streamProcessorService, pipelineStore));
 
         // Persist the text converter.
-        final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");
-        final TextConverterDoc textConverterDoc = textConverterStore.readDocument(textConverterRef);
+        TextConverterDoc textConverterDoc = textConverterStore.createDocument();
+        textConverterDoc.setName("TEST_TRANSLATION");
         textConverterDoc.setConverterType(textConverterType);
         textConverterDoc.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverterStore.writeDocument(textConverterDoc);
+        textConverterDoc = textConverterStore.writeDocument(textConverterDoc);
 
         // Persist the XSLT.
-        final DocRef xsltRef = xsltStore.createDocument("TEST_TRANSLATION");
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        XsltDoc xsltDoc = xsltStore.createDocument();
+        xsltDoc.setName("TEST_TRANSLATION");
         xsltDoc.setData(StroomPipelineTestFileUtil.getString(xsltLocation));
-        xsltStore.writeDocument(xsltDoc);
+        xsltDoc = xsltStore.writeDocument(xsltDoc);
 
         // Setup the error receiver.
         final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
@@ -152,7 +151,8 @@ public class F2XTestUtil {
         // final PropertyType textConverterPropertyType = new PropertyType(
         // parserElementType, "textConverter", "TextConverter", false);
         pipelineData.addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
+                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
+                        textConverterDoc.asDocRef()));
 
         if (feed.isReference()) {
             // final ElementType schemaFilterElementType = new ElementType(
@@ -171,12 +171,13 @@ public class F2XTestUtil {
         // ElementType("XSLTFilter");
         // final PropertyType xsltPropertyType = new PropertyType(
         // xsltFilterElementType, "xslt", "XSLT", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
+        pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt",
+                xsltDoc.asDocRef()));
 
         final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
         final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-        final TestAppender testAppender = filters.get(0);
+        final TestAppender testAppender = filters.getFirst();
         testAppender.setOutputStream(out);
 
         pipeline.process(dataStream);
@@ -214,11 +215,11 @@ public class F2XTestUtil {
                              final InputStream inputStream) {
         return taskContextFactory.contextResult("F2XTestUtil", taskContext -> {
             // Persist the text converter.
-            final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
-            TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
+            TextConverterDoc textConverter = textConverterStore.createDocument();
+            textConverter.setName("TEST_TRANSLATION");
             textConverter.setConverterType(textConverterType);
             textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-            textConverterStore.writeDocument(textConverter);
+            textConverter = textConverterStore.writeDocument(textConverter);
 
             // Setup the error receiver.
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
@@ -233,7 +234,8 @@ public class F2XTestUtil {
             // final PropertyType textConverterPropertyType = new PropertyType(
             // parserElementType, "textConverter", "TextConverter", false);
             pipelineData.addProperty(
-                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
+                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
+                            textConverter.asDocRef()));
 
             // final ElementType schemaFilterElementType = new ElementType(
             // "SchemaFilter");
@@ -248,7 +250,7 @@ public class F2XTestUtil {
             final Pipeline pipeline = pipelineFactory.create(mergedPipelineData, taskContext);
 
             final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-            final TestAppender testAppender = filters.get(0);
+            final TestAppender testAppender = filters.getFirst();
             testAppender.setOutputStream(out);
 
             pipeline.process(inputStream);

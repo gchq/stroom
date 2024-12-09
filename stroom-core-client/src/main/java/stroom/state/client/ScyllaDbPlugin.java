@@ -67,6 +67,19 @@ public class ScyllaDbPlugin extends DocumentPlugin<ScyllaDbDoc> {
     }
 
     @Override
+    public void create(final Consumer<ScyllaDbDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(SCYLLA_DB_RESOURCE)
+                .method(ScyllaDbDocResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<ScyllaDbDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

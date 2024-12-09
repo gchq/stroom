@@ -1,7 +1,7 @@
 {
-  "type" : "Pipeline",
   "uuid" : "fe116dc3-d937-45f3-ac74-fb718d5d5644",
   "name" : "TEST_CHARSETS_BOM",
+  "uniqueName" : "pipeline:test-charsets-bom",
   "version" : "5237c328-5797-4074-9c88-d6ce9a8d3f72",
   "parentPipeline" : {
     "type" : "Pipeline",

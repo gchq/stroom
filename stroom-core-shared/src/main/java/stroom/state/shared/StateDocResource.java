@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -38,17 +39,24 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface StateDocResource extends RestResource, DirectRestService, FetchWithUuid<StateDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a state store doc",
+            operationId = "createStateStore")
+    StateDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(
-            summary = "Fetch an state store doc by its UUID",
+            summary = "Fetch a state store doc by its UUID",
             operationId = "fetchStateStore")
     StateDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
     @Operation(
-            summary = "Update an state store doc",
+            summary = "Update a state store doc",
             operationId = "updateStateStore")
     StateDoc update(
             @PathParam("uuid") String uuid,

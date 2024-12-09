@@ -60,11 +60,6 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -105,6 +100,11 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public ElasticClusterDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public ElasticClusterDoc readDocument(final DocRef docRef) {

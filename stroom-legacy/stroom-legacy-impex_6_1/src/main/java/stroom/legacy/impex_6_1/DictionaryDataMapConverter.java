@@ -50,7 +50,6 @@ class DictionaryDataMapConverter implements DataMapConverter {
                     final OldDictionaryDoc oldDocument = oldSerialiser.read(dataMap);
 
                     final DictionaryDoc document = new DictionaryDoc();
-                    document.setType(docRef.getType());
                     document.setUuid(docRef.getUuid());
                     document.setName(docRef.getName());
                     document.setVersion(oldDocument.getVersion());
@@ -69,7 +68,6 @@ class DictionaryDataMapConverter implements DataMapConverter {
                     final long now = System.currentTimeMillis();
 
                     final DictionaryDoc document = new DictionaryDoc();
-                    document.setType(docRef.getType());
                     document.setUuid(docRef.getUuid());
                     document.setName(docRef.getName());
                     document.setVersion(UUID.randomUUID().toString());

@@ -1,7 +1,7 @@
 {
-  "type" : "Script",
   "uuid" : "2afe73dd-264f-4e07-856a-84f64a8c52fc",
   "name" : "Imp_exp_test_script_1",
+  "uniqueName" : "script:imp-exp-test-script-1",
   "version" : "8d239f48-c844-4205-93b9-09959bfa5b92",
   "description" : "My Description",
   "dependencies" : [ {

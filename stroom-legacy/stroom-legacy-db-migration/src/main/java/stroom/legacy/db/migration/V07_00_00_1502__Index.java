@@ -408,7 +408,6 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                                         .orElse(null);
 
                         final LuceneIndexDoc document = new LuceneIndexDoc();
-                        document.setType(LuceneIndexDoc.DOCUMENT_TYPE);
                         document.setUuid(uuid);
                         document.setName(name);
                         document.setVersion(UUID.randomUUID().toString());

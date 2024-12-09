@@ -10,6 +10,8 @@ import stroom.util.shared.ResourceGeneration;
 
 public interface DashboardService {
 
+    DashboardDoc create();
+
     DashboardDoc read(DocRef docRef);
 
     DashboardDoc update(DashboardDoc doc);
@@ -21,6 +23,4 @@ public interface DashboardService {
     ResourceGeneration downloadSearchResults(DownloadSearchResultsRequest request);
 
     DashboardSearchResponse search(DashboardSearchRequest request);
-
-//    Boolean destroy(DestroySearchRequest request);
 }

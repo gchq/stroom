@@ -22,13 +22,12 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.state.shared.StateDoc;
 import stroom.state.shared.StateDocResource;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 @AutoLogged
-class StateDocResourceImpl implements StateDocResource, FetchWithUuid<StateDoc> {
+class StateDocResourceImpl implements StateDocResource {
 
     private final Provider<StateDocStore> elasticIndexStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -38,6 +37,11 @@ class StateDocResourceImpl implements StateDocResource, FetchWithUuid<StateDoc> 
                          final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+    }
+
+    @Override
+    public StateDoc create() {
+        return elasticIndexStoreProvider.get().createDocument();
     }
 
     @Override

@@ -65,6 +65,19 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     }
 
     @Override
+    public void create(final Consumer<FeedDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(FEED_RESOURCE)
+                .method(FeedResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<FeedDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

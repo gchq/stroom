@@ -164,6 +164,11 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
+    public QueryDoc create() {
+        return queryStore.createDocument();
+    }
+
+    @Override
     public QueryDoc read(final DocRef docRef) {
         return documentResourceHelper.read(queryStore, docRef);
     }

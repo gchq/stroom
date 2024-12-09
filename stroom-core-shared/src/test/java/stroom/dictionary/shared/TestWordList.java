@@ -30,18 +30,9 @@ class TestWordList {
     @Test
     void testAdd_deDup() {
 
-        final DocRef petsRef = DictionaryDoc.buildDocRef()
-                .uuid("200")
-                .name("Pets")
-                .build();
-        final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("100")
-                .name("Farm Animals")
-                .build();
-        final DocRef wildAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("300")
-                .name("Wild Animals")
-                .build();
+        final DocRef petsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "200", "Pets");
+        final DocRef farmAnimalsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "100", "Farm Animals");
+        final DocRef wildAnimalsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "300", "Wild Animals");
 
         final WordList wordList = WordList.builder(true)
                 .addWord("cat", petsRef)
@@ -111,18 +102,9 @@ class TestWordList {
     @Test
     void testAdd_noDeDup() {
 
-        final DocRef petsRef = DictionaryDoc.buildDocRef()
-                .uuid("pets-uuid")
-                .name("Pets")
-                .build();
-        final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("farm-uuid")
-                .name("Farm Animals")
-                .build();
-        final DocRef wildAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("wild-uuid")
-                .name("Wild Animals")
-                .build();
+        final DocRef petsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "pets-uuid", "Pets");
+        final DocRef farmAnimalsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "farm-uuid", "Farm Animals");
+        final DocRef wildAnimalsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "wild-uuid", "Wild Animals");
 
         final WordList wordList = WordList.builder(false)
                 .addWord("cat", petsRef)
@@ -194,14 +176,8 @@ class TestWordList {
     @Test
     void testGetSource() {
 
-        final DocRef petsRef = DictionaryDoc.buildDocRef()
-                .uuid("200")
-                .name("Pets")
-                .build();
-        final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
-                .uuid("100")
-                .name("Farm Animals")
-                .build();
+        final DocRef petsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "200", "Pets");
+        final DocRef farmAnimalsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "100", "Farm Animals");
 
         final WordList wordList = WordList.builder(false)
                 .addWord("cat", petsRef)
@@ -217,10 +193,7 @@ class TestWordList {
 
     @Test
     void testNullsAndBlanks() {
-        final DocRef petsRef = DictionaryDoc.buildDocRef()
-                .uuid("200")
-                .name("Pets")
-                .build();
+        final DocRef petsRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "200", "Pets");
         final WordList wordList = WordList.builder(false)
                 .addWord("cat", petsRef)
                 .addWord(null, petsRef)

@@ -39,7 +39,6 @@ class VisualisationDataMapConverter implements DataMapConverter {
                 LegacyXmlSerialiser.performImport(oldVisualisation, dataMap);
 
                 final VisualisationDoc document = new VisualisationDoc();
-                document.setType(docRef.getType());
                 document.setUuid(docRef.getUuid());
                 document.setName(docRef.getName());
                 document.setVersion(UUID.randomUUID().toString());

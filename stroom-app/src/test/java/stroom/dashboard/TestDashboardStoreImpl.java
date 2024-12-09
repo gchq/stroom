@@ -29,7 +29,6 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -52,9 +51,6 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void test() {
         final VisComponentSettings visSettings = getVisSettings();
-
-        final DocRef dashboardRef = dashboardStore.createDocument("Test Dashboard");
-
 
         final List<ComponentConfig> components = new ArrayList<>();
 
@@ -96,29 +92,29 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         dashboardData.setComponents(components);
         dashboardData.setLayout(down);
 
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
+        DashboardDoc dashboard = dashboardStore.createDocument();
+        dashboard.setName("Test Dashboard");
         dashboard.setDashboardConfig(dashboardData);
-
         dashboard = dashboardStore.writeDocument(dashboard);
 
         System.out.println(dashboard.getDashboardConfig());
 
-        dashboardStore.readDocument(dashboardRef);
+        dashboardStore.readDocument(dashboard.asDocRef());
     }
 
     private VisComponentSettings getVisSettings() {
-        final DocRef scriptRef = scriptStore.createDocument("Test");
-        final ScriptDoc script = scriptStore.readDocument(scriptRef);
+        ScriptDoc script = scriptStore.createDocument();
+        script.setName("Test");
         script.setData("Test");
-        scriptStore.writeDocument(script);
+        script = scriptStore.writeDocument(script);
 
-        final DocRef visRef = visualisationStore.createDocument("Test");
-        final VisualisationDoc vis = visualisationStore.readDocument(visRef);
-        vis.setScriptRef(scriptRef);
-        visualisationStore.writeDocument(vis);
+        VisualisationDoc vis = visualisationStore.createDocument();
+        vis.setName("Test");
+        vis.setScriptRef(script.asDocRef());
+        vis = visualisationStore.writeDocument(vis);
 
         return VisComponentSettings.builder()
-                .visualisation(visRef)
+                .visualisation(vis.asDocRef())
                 .build();
     }
 }

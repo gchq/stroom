@@ -19,7 +19,7 @@ package stroom.app.docs;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docs.shared.Description;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.pipeline.factory.Element;
@@ -81,7 +81,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     void generateDocumentsReference(final ScanResult scanResult) {
 
         final Map<String, ClassInfo> typeToDocClassMap =
-                scanResult.getSubclasses(Doc.class)
+                scanResult.getSubclasses(AbstractDoc.class)
                         .parallelStream()
                         .filter(classInfo -> !classInfo.isPrivate())
                         .map(this::mapDocClass)
@@ -120,7 +120,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
     private Entry<String, ClassInfo> mapDocClass(final ClassInfo classInfo) {
         if (classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
-            final Class<? extends Doc> clazz = (Class<? extends Doc>) classInfo.loadClass();
+            final Class<? extends AbstractDoc> clazz = (Class<? extends AbstractDoc>) classInfo.loadClass();
 
             String type = null;
             try {

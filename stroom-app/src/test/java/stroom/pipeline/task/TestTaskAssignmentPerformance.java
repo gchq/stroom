@@ -1,9 +1,9 @@
 package stroom.pipeline.task;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.job.impl.DistributedTaskFetcher;
 import stroom.job.impl.FindJobCriteria;
 import stroom.job.impl.JobBootstrap;
@@ -22,6 +22,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.DataProcessorTaskFactory;
@@ -199,8 +200,12 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         jobNodeDao.update(jobNode);
 
         final String feedName = "TEST-FEED";
-        final DocRef feedRef = feedStore.createDocument(feedName);
-        final DocRef pipelineRef = pipelineStore.createDocument(feedName);
+        FeedDoc feedDoc = feedStore.createDocument();
+        feedDoc.setName(feedName);
+        feedDoc = feedStore.writeDocument(feedDoc);
+        PipelineDoc pipelineDoc = pipelineStore.createDocument();
+        pipelineDoc.setName(feedName);
+        pipelineDoc = pipelineStore.writeDocument(pipelineDoc);
 
         // Add the associated data to the stream store.
         LOGGER.info("Adding data");
@@ -233,7 +238,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         final CreateProcessFilterRequest request = CreateProcessFilterRequest
                 .builder()
                 .processorType(ProcessorType.PIPELINE)
-                .pipeline(pipelineRef)
+                .pipeline(pipelineDoc.asDocRef())
                 .queryData(findStreamQueryData)
                 .autoPriority(true)
                 .enabled(true)

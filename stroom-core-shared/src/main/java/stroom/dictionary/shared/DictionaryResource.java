@@ -41,6 +41,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DictionaryResource extends RestResource, DirectRestService, FetchWithUuid<DictionaryDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a dictionary doc",
+            operationId = "createDictionary")
+    DictionaryDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

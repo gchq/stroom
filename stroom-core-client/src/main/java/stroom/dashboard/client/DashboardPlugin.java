@@ -184,6 +184,19 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     }
 
     @Override
+    public void create(final Consumer<DashboardDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(DASHBOARD_RESOURCE)
+                .method(DashboardResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<DashboardDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

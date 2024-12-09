@@ -60,11 +60,6 @@ class VisualisationStoreImpl implements VisualisationStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -134,6 +129,11 @@ class VisualisationStoreImpl implements VisualisationStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public VisualisationDoc createDocument() {
+        return store.createDocument();
+    }
 
     @Override
     public VisualisationDoc readDocument(final DocRef docRef) {

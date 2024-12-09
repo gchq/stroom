@@ -16,6 +16,7 @@
 
 package stroom.feed.impl;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.feed.api.FeedStore;
@@ -61,9 +62,14 @@ class FeedResourceImpl implements FeedResource {
     }
 
     @Override
+    public FeedDoc create() {
+        return feedStoreProvider.get().createDocument();
+    }
+
+    @Override
     public FeedDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get()
-                .read(feedStoreProvider.get(), FeedDoc.getDocRef(uuid));
+                .read(feedStoreProvider.get(), new DocRef(FeedDoc.DOCUMENT_TYPE, uuid));
     }
 
     @Override

@@ -41,6 +41,13 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SolrIndexResource extends RestResource, DirectRestService, FetchWithUuid<SolrIndexDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a solr index doc",
+            operationId = "createSolrIndex")
+    SolrIndexDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

@@ -43,6 +43,11 @@ class ScriptResourceImpl implements ScriptResource {
     }
 
     @Override
+    public ScriptDoc create() {
+        return scriptStoreProvider.get().createDocument();
+    }
+
+    @Override
     public ScriptDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(scriptStoreProvider.get(), getDocRef(uuid));
     }

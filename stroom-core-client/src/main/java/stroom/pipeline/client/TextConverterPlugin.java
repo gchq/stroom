@@ -65,6 +65,19 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     }
 
     @Override
+    public void create(final Consumer<TextConverterDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(TEXT_CONVERTER_RESOURCE)
+                .method(TextConverterResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<TextConverterDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

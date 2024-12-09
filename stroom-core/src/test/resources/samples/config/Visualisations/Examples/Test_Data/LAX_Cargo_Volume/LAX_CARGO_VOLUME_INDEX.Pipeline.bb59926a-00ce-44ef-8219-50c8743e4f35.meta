@@ -1,7 +1,7 @@
 {
-  "type" : "Pipeline",
   "uuid" : "bb59926a-00ce-44ef-8219-50c8743e4f35",
   "name" : "LAX_CARGO_VOLUME-INDEX",
+  "uniqueName" : "pipeline:lax-cargo-volume-index",
   "version" : "5900dfdd-4762-41fc-9469-e1224c418235",
   "parentPipeline" : {
     "type" : "Pipeline",

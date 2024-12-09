@@ -62,17 +62,6 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef createDocument(final String name) {
-        DocRef docRef = store.createDocument(name);
-        ScyllaDbDoc doc = store.readDocument(docRef);
-        doc.setConnection(ScyllaDbUtil.getDefaultConnection());
-        doc.setKeyspace(ScyllaDbUtil.getDefaultKeyspace());
-        doc.setKeyspaceCql(ScyllaDbUtil.getDefaultKeyspaceCql());
-        store.writeDocument(doc);
-        return docRef;
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
@@ -115,6 +104,15 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
+    public ScyllaDbDoc createDocument() {
+        final ScyllaDbDoc doc = store.createDocument();
+        doc.setConnection(ScyllaDbUtil.getDefaultConnection());
+        doc.setKeyspace(ScyllaDbUtil.getDefaultKeyspace());
+        doc.setKeyspaceCql(ScyllaDbUtil.getDefaultKeyspaceCql());
+        return doc;
+    }
+
+    @Override
     public ScyllaDbDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
@@ -128,36 +126,36 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     private void validateKeyspace(final ScyllaDbDoc document) {
         if (NullSafe.isBlankString(document.getKeyspace())) {
             throw new EntityServiceException("No keyspace name has been defined for '" +
-                    document.getName() +
-                    "'");
+                                             document.getName() +
+                                             "'");
         }
 
         if (!ScyllaDbNameValidator.isValidName(document.getKeyspace())) {
             throw new EntityServiceException("The keyspace name must match the pattern '" +
-                    ScyllaDbNameValidator.getPattern() +
-                    "'");
+                                             ScyllaDbNameValidator.getPattern() +
+                                             "'");
         }
 
         // Validate that the keyspace CQL has the correct keyspace name else bad things could happen.
         if (NullSafe.isBlankString(document.getKeyspaceCql())) {
             throw new EntityServiceException("No keyspace CQL has been defined for '" +
-                    document.getName() +
-                    "'");
+                                             document.getName() +
+                                             "'");
         }
 
         final Optional<String> keyspace = ScyllaDbUtil.extractKeyspaceNameFromCql(document.getKeyspaceCql());
         if (keyspace.isEmpty()) {
             throw new EntityServiceException("Unable to determine keyspace name from keyspace CQL in '" +
-                    document.getName() +
-                    "'");
+                                             document.getName() +
+                                             "'");
         }
 
         if (!keyspace.get().equals(document.getKeyspace())) {
             throw new EntityServiceException("Keyspace name '" +
-                    keyspace.get() +
-                    "' in CQL does not match keyspace name '" +
-                    document.getKeyspace() +
-                    "'");
+                                             keyspace.get() +
+                                             "' in CQL does not match keyspace name '" +
+                                             document.getKeyspace() +
+                                             "'");
         }
     }
 

@@ -1,10 +1,10 @@
 package stroom.docstore.api;
 
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 
 public interface StoreFactory {
 
-    <D extends Doc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
-                                         final String type,
-                                         final Class<D> clazz);
+    <D extends AbstractDoc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
+                                                 final String type,
+                                                 final Class<D> clazz);
 }

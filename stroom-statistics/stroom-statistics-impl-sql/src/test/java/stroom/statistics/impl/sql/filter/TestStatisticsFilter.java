@@ -18,7 +18,6 @@
 package stroom.statistics.impl.sql.filter;
 
 import stroom.datasource.api.v2.QueryField;
-import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
@@ -98,21 +97,21 @@ class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName(STAT_NAME);
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setPrecision(1000L);
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticStoreStore);
 
-        statisticsFilter.setStatisticsDataSource(docRef);
+        statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
@@ -202,14 +201,14 @@ class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName(STAT_NAME);
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setPrecision(precision);
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -217,7 +216,7 @@ class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticStoreStore);
 
-        statisticsFilter.setStatisticsDataSource(docRef);
+        statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
@@ -225,22 +224,22 @@ class TestStatisticsFilter implements Statistics {
                 .as("Expecting 2 events")
                 .isEqualTo(2);
 
-        assertThat(testEvents.get(0).getTimeMs())
+        assertThat(testEvents.getFirst().getTimeMs())
                 .isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
-        assertThat(testEvents.get(0).getName())
+        assertThat(testEvents.getFirst().getName())
                 .isEqualTo(STAT_NAME);
-        assertThat(testEvents.get(0).getTagList().size())
+        assertThat(testEvents.getFirst().getTagList().size())
                 .isEqualTo(2);
-        assertThat(testEvents.get(0).getTagList().get(0).getTag())
+        assertThat(testEvents.getFirst().getTagList().getFirst().getTag())
                 .isEqualTo("tag1name");
-        assertThat(testEvents.get(0).getTagList().get(0).getValue())
+        assertThat(testEvents.getFirst().getTagList().getFirst().getValue())
                 .isEqualTo("1tag1value");
-        assertThat(testEvents.get(0).getTagList().get(1).getTag())
+        assertThat(testEvents.getFirst().getTagList().get(1).getTag())
                 .isEqualTo("tag2name");
-        assertThat(testEvents.get(0).getTagList().get(1).getValue())
+        assertThat(testEvents.getFirst().getTagList().get(1).getValue())
                 .isEqualTo("1tag2value");
         assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLERANCE));
-        assertThatThrownBy(() -> testEvents.get(0)
+        assertThatThrownBy(() -> testEvents.getFirst()
                 .getCount()).isInstanceOf(RuntimeException.class);
 
         assertThat(testEvents.get(1).getTimeMs())
@@ -258,7 +257,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(1).getValue())
                 .isEqualTo("2tag2value");
         assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLERANCE));
-        assertThatThrownBy(() -> testEvents.get(0)
+        assertThatThrownBy(() -> testEvents.getFirst()
                 .getCount()).isInstanceOf(RuntimeException.class);
 
     }
@@ -271,21 +270,21 @@ class TestStatisticsFilter implements Statistics {
             final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
             final StatisticStoreStore statisticStoreStore = getStore();
-            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+            statisticsDataSource.setName(STAT_NAME);
             // xml has a value element so set this to count
             statisticsDataSource.setStatisticType(StatisticType.COUNT);
             statisticsDataSource.setConfig(new StatisticsDataSourceData(
                     Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
             statisticsDataSource.setEnabled(true);
-            statisticStoreStore.writeDocument(statisticsDataSource);
+            statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
             final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                     new LocationFactoryProxy(), this, statisticStoreStore);
 
-            statisticsFilter.setStatisticsDataSource(docRef);
+            statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
             // will throw an error as the type in the xml doesn't match the type in
             // the SDS
@@ -300,21 +299,21 @@ class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticStoreStore);
 
-        statisticsFilter.setStatisticsDataSource(docRef);
+        statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -336,14 +335,14 @@ class TestStatisticsFilter implements Statistics {
             final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
             final StatisticStoreStore statisticStoreStore = getStore();
-            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+            statisticsDataSource.setName(STAT_NAME);
             // xml has a value element so set this to count
             statisticsDataSource.setStatisticType(StatisticType.VALUE);
             statisticsDataSource.setConfig(new StatisticsDataSourceData(
                     Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
             statisticsDataSource.setEnabled(true);
-            statisticStoreStore.writeDocument(statisticsDataSource);
+            statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
@@ -351,7 +350,7 @@ class TestStatisticsFilter implements Statistics {
             final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                     new LocationFactoryProxy(), this, statisticStoreStore);
 
-            statisticsFilter.setStatisticsDataSource(docRef);
+            statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
             // will throw an error as the type in the xml doesn't match the type in
             // the SDS
@@ -367,21 +366,21 @@ class TestStatisticsFilter implements Statistics {
             final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
             final StatisticStoreStore statisticStoreStore = getStore();
-            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+            statisticsDataSource.setName(STAT_NAME);
             // xml has a value element so set this to count
             statisticsDataSource.setStatisticType(StatisticType.COUNT);
             statisticsDataSource.setConfig(new StatisticsDataSourceData(
                     Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
             statisticsDataSource.setEnabled(false);
-            statisticStoreStore.writeDocument(statisticsDataSource);
+            statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
             final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                     new LocationFactoryProxy(), this, statisticStoreStore);
 
-            statisticsFilter.setStatisticsDataSource(docRef);
+            statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
             // will throw an error as the type in the xml doesn't match the type in
             // the SDS
@@ -397,21 +396,21 @@ class TestStatisticsFilter implements Statistics {
             final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
             final StatisticStoreStore statisticStoreStore = getStore();
-            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+            statisticsDataSource.setName(STAT_NAME);
             // xml has a value element so set this to count
             statisticsDataSource.setStatisticType(StatisticType.COUNT);
             statisticsDataSource.setConfig(new StatisticsDataSourceData(
                     Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
             statisticsDataSource.setEnabled(true);
-            statisticStoreStore.writeDocument(statisticsDataSource);
+            statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
             final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                     new LocationFactoryProxy(), this, statisticStoreStore);
 
-            statisticsFilter.setStatisticsDataSource(docRef);
+            statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
             // will throw an error as the type in the xml doesn't match the type in
             // the SDS
@@ -426,21 +425,21 @@ class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticStoreStore);
 
-        statisticsFilter.setStatisticsDataSource(docRef);
+        statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -461,21 +460,21 @@ class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        StatisticStoreDoc statisticsDataSource = statisticStoreStore.createDocument();
+        statisticsDataSource.setName(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setConfig(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
         statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
+        statisticsDataSource = statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticStoreStore);
 
-        statisticsFilter.setStatisticsDataSource(docRef);
+        statisticsFilter.setStatisticsDataSource(statisticsDataSource.asDocRef());
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS

@@ -187,6 +187,11 @@ class TestDocRefInfoCache {
         }
 
         @Override
+        public Document createDocument() {
+            return null;
+        }
+
+        @Override
         public Document readDocument(final DocRef docRef) {
             return null;
         }
@@ -220,11 +225,6 @@ class TestDocRefInfoCache {
 
         @Override
         public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-            return null;
-        }
-
-        @Override
-        public DocRef createDocument(final String name) {
             return null;
         }
 

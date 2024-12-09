@@ -26,7 +26,6 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.docref.DocRef;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
@@ -153,12 +152,12 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void setupDataRetentionRules(final String feedName) {
-        final DocRef docRef = dataRetentionRulesService.createDocument("test");
-        DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
-
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
+
+        final DataRetentionRules dataRetentionRules = dataRetentionRulesService.createDocument();
+        dataRetentionRules.setName("test");
         dataRetentionRules.setRules(Collections.singletonList(rule));
         dataRetentionRulesService.writeDocument(dataRetentionRules);
     }

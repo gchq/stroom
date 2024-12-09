@@ -33,13 +33,13 @@ import java.util.Set;
 public interface ExplorerActionHandler
         extends HasDocumentType, HasDependencies, HasFindDocsByName {
 
-    /**
-     * Called to create a new item in this document store.
-     *
-     * @param name The name of the document to be created.
-     * @return A doc ref for the newly created document.
-     */
-    DocRef createDocument(String name);
+//    /**
+//     * Called to create a new item in this document store.
+//     *
+//     * @param name The name of the document to be created.
+//     * @return A doc ref for the newly created document.
+//     */
+//    DocRef createDocument(String name);
 
     /**
      * Copy an existing document identified by uuid, to the specified location.

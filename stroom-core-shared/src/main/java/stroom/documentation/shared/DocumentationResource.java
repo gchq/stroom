@@ -41,6 +41,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DocumentationResource extends RestResource, DirectRestService, FetchWithUuid<DocumentationDoc> {
 
+    @POST
+    @Path("/")
+    @Operation(
+            summary = "Create a documentation doc",
+            operationId = "createDocumentation")
+    DocumentationDoc create();
+
     @GET
     @Path("/{uuid}")
     @Operation(

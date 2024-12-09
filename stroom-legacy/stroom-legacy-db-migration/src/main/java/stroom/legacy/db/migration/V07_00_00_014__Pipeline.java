@@ -68,7 +68,6 @@ public class V07_00_00_014__Pipeline extends BaseJavaMigration {
                     final String dat = resultSet.getString(9);
 
                     final PipelineDoc document = new PipelineDoc();
-                    document.setType(PipelineDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());

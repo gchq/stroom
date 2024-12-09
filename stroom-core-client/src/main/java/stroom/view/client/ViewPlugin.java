@@ -65,6 +65,19 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
     }
 
     @Override
+    public void create(final Consumer<ViewDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(VIEW_RESOURCE)
+                .method(ViewResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<ViewDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

@@ -142,18 +142,19 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private DocRef createFragmentPipeline() {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
-        final DocRef docRef = textConverterStore.createDocument("Test Text Converter");
-        final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
+        TextConverterDoc textConverter = textConverterStore.createDocument();
+        textConverter.setName("Test Text Converter");
         textConverter.setConverterType(TextConverterType.XML_FRAGMENT);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
-        textConverterStore.writeDocument(textConverter);
+        textConverter = textConverterStore.writeDocument(textConverter);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         pipelineDoc.getPipelineData().addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
+                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter",
+                        textConverter.asDocRef()));
         pipelineDoc.setParentPipeline(createTransformerPipeline());
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
@@ -162,17 +163,18 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private DocRef createTransformerPipeline() {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_PATH);
-        final DocRef xsltRef = xsltStore.createDocument("Test XSLT");
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+        XsltDoc xsltDoc = xsltStore.createDocument();
+        xsltDoc.setName("Test XSLT");
         xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
-        xsltStore.writeDocument(xsltDoc);
+        xsltDoc = xsltStore.writeDocument(xsltDoc);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt",
+                        xsltDoc.asDocRef()));
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

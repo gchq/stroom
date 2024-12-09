@@ -18,10 +18,11 @@ package stroom.visualisation.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,9 +38,9 @@ import java.util.Objects;
                 "A Visualisation is dependent on a [Script]({{< relref \"#script\" >}}) Document for the Javascript " +
                 "code to make it work.")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -50,7 +51,7 @@ import java.util.Objects;
         "scriptRef",
         "settings"})
 @JsonInclude(Include.NON_NULL)
-public class VisualisationDoc extends Doc {
+public class VisualisationDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "Visualisation";
     public static final SvgImage ICON = SvgImage.DOCUMENT_VISUALISATION;
@@ -68,9 +69,9 @@ public class VisualisationDoc extends Doc {
     }
 
     @JsonCreator
-    public VisualisationDoc(@JsonProperty("type") final String type,
-                            @JsonProperty("uuid") final String uuid,
+    public VisualisationDoc(@JsonProperty("uuid") final String uuid,
                             @JsonProperty("name") final String name,
+                            @JsonProperty("uniqueName") final String uniqueName,
                             @JsonProperty("version") final String version,
                             @JsonProperty("createTimeMs") final Long createTimeMs,
                             @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -80,27 +81,17 @@ public class VisualisationDoc extends Doc {
                             @JsonProperty("functionName") final String functionName,
                             @JsonProperty("scriptRef") final DocRef scriptRef,
                             @JsonProperty("settings") final String settings) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.functionName = functionName;
         this.scriptRef = scriptRef;
         this.settings = settings;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

@@ -1,7 +1,7 @@
 {
-  "type" : "Pipeline",
   "uuid" : "65f6d243-9150-4567-b94e-a98c11175c99",
   "name" : "STAFF-NO-REFERENCE",
+  "uniqueName" : "pipeline:staff-no-reference",
   "version" : "cd1873de-180c-4553-a4c9-f15801df9cf1",
   "parentPipeline" : {
     "type" : "Pipeline",

@@ -20,7 +20,6 @@ package stroom.statistics.impl.hbase;
 
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
@@ -60,17 +59,15 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
      */
     @Test
     void testStatisticsDataSource() {
-        final ExplorerNode statNode = explorerService.create(StroomStatsStoreDoc.DOCUMENT_TYPE,
-                "StatName1",
-                null,
-                null);
-        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(statNode.getDocRef());
-        entity.setDescription("My Description");
-        entity.setStatisticType(StatisticType.COUNT);
-        entity.setConfig(new StroomStatsStoreEntityData());
-        entity.getConfig().addStatisticField(new StatisticField("tag1"));
-        entity.getConfig().addStatisticField(new StatisticField("tag2"));
-        stroomStatsStoreStore.writeDocument(entity);
+        StroomStatsStoreDoc doc = stroomStatsStoreStore.createDocument();
+        doc.setName("StatName1");
+        doc.setDescription("My Description");
+        doc.setStatisticType(StatisticType.COUNT);
+        doc.setConfig(new StroomStatsStoreEntityData());
+        doc.getConfig().addStatisticField(new StatisticField("tag1"));
+        doc.getConfig().addStatisticField(new StatisticField("tag2"));
+        doc = stroomStatsStoreStore.writeDocument(doc);
+        explorerService.create(doc.asDocRef(), null, null);
 
         assertThat(stroomStatsStoreStore.list().size()).isEqualTo(1);
 
@@ -79,7 +76,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        importExportSerializer.write(testDataDir, Set.of(statNode.getDocRef()), true);
+        importExportSerializer.write(testDataDir, Set.of(doc.asDocRef()), true);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
@@ -94,12 +91,12 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
 
         assertThat(dataSources.size()).isEqualTo(1);
 
-        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.get(0));
+        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.getFirst());
 
-        assertThat(importedDataSource.getName()).isEqualTo(entity.getName());
-        assertThat(importedDataSource.getStatisticType()).isEqualTo(entity.getStatisticType());
-        assertThat(importedDataSource.getDescription()).isEqualTo(entity.getDescription());
+        assertThat(importedDataSource.getName()).isEqualTo(doc.getName());
+        assertThat(importedDataSource.getStatisticType()).isEqualTo(doc.getStatisticType());
+        assertThat(importedDataSource.getDescription()).isEqualTo(doc.getDescription());
 
-        assertThat(importedDataSource.getConfig()).isEqualTo(entity.getConfig());
+        assertThat(importedDataSource.getConfig()).isEqualTo(doc.getConfig());
     }
 }

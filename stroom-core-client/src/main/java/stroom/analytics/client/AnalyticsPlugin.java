@@ -65,6 +65,19 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
     }
 
     @Override
+    public void create(final Consumer<AnalyticRuleDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANALYTIC_RULE_RESOURCE)
+                .method(AnalyticRuleResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

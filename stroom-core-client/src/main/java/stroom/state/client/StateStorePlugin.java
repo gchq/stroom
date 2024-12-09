@@ -42,7 +42,7 @@ import javax.inject.Singleton;
 @Singleton
 public class StateStorePlugin extends DocumentPlugin<StateDoc> {
 
-    private static final StateDocResource STATE_STORE_RESOURCE = GWT.create(StateDocResource.class);
+    private static final StateDocResource STATE_DOC_RESOURCE = GWT.create(StateDocResource.class);
 
     private final Provider<StateStorePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -67,12 +67,25 @@ public class StateStorePlugin extends DocumentPlugin<StateDoc> {
     }
 
     @Override
+    public void create(final Consumer<StateDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(STATE_DOC_RESOURCE)
+                .method(StateDocResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<StateDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
-                .create(STATE_STORE_RESOURCE)
+                .create(STATE_DOC_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
@@ -87,7 +100,7 @@ public class StateStorePlugin extends DocumentPlugin<StateDoc> {
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
-                .create(STATE_STORE_RESOURCE)
+                .create(STATE_DOC_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)

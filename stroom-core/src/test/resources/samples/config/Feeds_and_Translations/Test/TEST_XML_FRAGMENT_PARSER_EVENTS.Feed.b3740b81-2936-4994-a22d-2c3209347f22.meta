@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "b3740b81-2936-4994-a22d-2c3209347f22",
   "name" : "TEST_XML_FRAGMENT_PARSER-EVENTS",
+  "uniqueName" : "feed:test-xml-fragment-parser-events",
   "version" : "236096f8-a037-4bf7-bc7f-0867786fb673",
   "description" : "TEST_XML_FRAGMENT_PARSER-EVENTS",
   "encoding" : "UTF-8",

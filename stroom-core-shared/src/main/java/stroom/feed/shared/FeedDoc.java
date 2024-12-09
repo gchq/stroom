@@ -20,7 +20,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -34,17 +34,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
-                "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
-                "Ingested data must specify the Feed that is it destined for.\n\n" +
-                "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
-                "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
-                "data storage.\n" +
-                "The Feed Document can also control the ingest of data using its `Feed Status` property and " +
-                "be used for viewing data that belonging to that feed.")
+        "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
+        "Ingested data must specify the Feed that is it destined for.\n\n" +
+        "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
+        "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
+        "data storage.\n" +
+        "The Feed Document can also control the ingest of data using its `Feed Status` property and " +
+        "be used for viewing data that belonging to that feed.")
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -60,7 +60,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "status",
         "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
-public class FeedDoc extends Doc {
+public class FeedDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "Feed";
     public static final SvgImage ICON = SvgImage.DOCUMENT_FEED;
@@ -92,9 +92,9 @@ public class FeedDoc extends Doc {
     }
 
     @JsonCreator
-    public FeedDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public FeedDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
+                   @JsonProperty("uniqueName") final String uniqueName,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -109,7 +109,7 @@ public class FeedDoc extends Doc {
                    @JsonProperty("streamType") final String streamType,
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
         this.encoding = encoding;
@@ -121,20 +121,10 @@ public class FeedDoc extends Doc {
         this.volumeGroup = volumeGroup;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

@@ -32,6 +32,8 @@ import java.util.Optional;
 
 public interface QueryService {
 
+    QueryDoc create();
+
     QueryDoc read(DocRef docRef);
 
     QueryDoc update(QueryDoc doc);

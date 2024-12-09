@@ -259,6 +259,11 @@ public class ProcessorFilterImportExportHandlerImpl
     }
 
     @Override
+    public ProcessorFilterDoc createDocument() {
+        return null;
+    }
+
+    @Override
     public ProcessorFilterDoc readDocument(final DocRef docRef) {
         Objects.requireNonNull(docRef.getUuid());
 
@@ -371,7 +376,7 @@ public class ProcessorFilterImportExportHandlerImpl
 
         Processor result;
         RuntimeException ex;
-        if (page.size() == 0) {
+        if (page.isEmpty()) {
             if (pipelineUuid != null) {
                 // Create the missing processor
                 result = processorService.create(

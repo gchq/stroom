@@ -208,8 +208,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private List<IndexDocument> doTest(final String resourceName, final List<LuceneIndexField> indexFields) {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
-            final DocRef indexRef = indexStore.createDocument("Test index");
-            final LuceneIndexDoc index = indexStore.readDocument(indexRef);
+            final LuceneIndexDoc index = indexStore.createDocument();
+            index.setName("Test index");
             index.setFields(indexFields);
             indexStore.writeDocument(index);
 
@@ -223,7 +223,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
                     "index",
-                    indexRef));
+                    index.asDocRef()));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

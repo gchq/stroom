@@ -18,11 +18,12 @@ package stroom.query.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,9 +39,9 @@ import java.util.Objects;
                 "{{< glossary \"searchable\" \"Searchables\" >}}."
 )
 @JsonPropertyOrder({
-        "type",
         "uuid",
         "name",
+        "uniqueName",
         "version",
         "createTimeMs",
         "updateTimeMs",
@@ -51,7 +52,7 @@ import java.util.Objects;
         "query",
         "queryTablePreferences"})
 @JsonInclude(Include.NON_NULL)
-public class QueryDoc extends Doc {
+public class QueryDoc extends AbstractDoc {
 
     public static final String DOCUMENT_TYPE = "Query";
     public static final SvgImage ICON = SvgImage.DOCUMENT_QUERY;
@@ -69,9 +70,9 @@ public class QueryDoc extends Doc {
     }
 
     @JsonCreator
-    public QueryDoc(@JsonProperty("type") final String type,
-                    @JsonProperty("uuid") final String uuid,
+    public QueryDoc(@JsonProperty("uuid") final String uuid,
                     @JsonProperty("name") final String name,
+                    @JsonProperty("uniqueName") final String uniqueName,
                     @JsonProperty("version") final String version,
                     @JsonProperty("createTimeMs") final Long createTimeMs,
                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -81,27 +82,17 @@ public class QueryDoc extends Doc {
                     @JsonProperty("timeRange") TimeRange timeRange,
                     @JsonProperty("query") final String query,
                     @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(uuid, name, uniqueName, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.timeRange = timeRange;
         this.query = query;
         this.queryTablePreferences = queryTablePreferences;
     }
 
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+    @JsonIgnore
+    @Override
+    public final String getType() {
+        return DOCUMENT_TYPE;
     }
 
     public String getDescription() {

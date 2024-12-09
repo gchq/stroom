@@ -25,7 +25,6 @@ import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.search.elastic.shared.ElasticClusterTestResponse;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.FetchWithUuid;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.InfoResponse;
@@ -33,7 +32,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 @AutoLogged
-class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUuid<ElasticClusterDoc> {
+class ElasticClusterResourceImpl implements ElasticClusterResource {
 
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -48,6 +47,11 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.elasticConfigProvider = elasticConfigProvider;
+    }
+
+    @Override
+    public ElasticClusterDoc create() {
+        return elasticClusterStoreProvider.get().createDocument();
     }
 
     @Override

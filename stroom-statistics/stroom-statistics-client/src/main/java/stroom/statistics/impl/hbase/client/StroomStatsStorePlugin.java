@@ -120,15 +120,13 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
         // null
-        if (entityFromDb != null && (
-                !prevType.equals(entity.getStatisticType()) ||
-                        !prevRollUpType.equals(entity.getRollUpType()) ||
-                        !prevInterval.equals(entity.getPrecision()) ||
-                        !prevFieldList.equals(entity.getStatisticFields()) ||
-                        !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
-            ConfirmEvent.fireWarn(
-                    this,
-                    SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
+        if (!prevType.equals(entity.getStatisticType()) ||
+            !prevRollUpType.equals(entity.getRollUpType()) ||
+            !prevInterval.equals(entity.getPrecision()) ||
+            !prevFieldList.equals(entity.getStatisticFields()) ||
+            !prevMaskSet.equals(entity.getCustomRollUpMasks())) {
+            ConfirmEvent.fireWarn(this, SafeHtmlUtils.fromTrustedString(
+                            "Changes to the following attributes of a statistic data " +
                             "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
                             "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
                             "existing statistics data. Please ensure you understand the full consequences of " +
@@ -156,6 +154,19 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                 throwable -> {
                 },
                 taskMonitorFactory);
+    }
+
+    @Override
+    public void create(final Consumer<StroomStatsStoreDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(STATS_STORE_RESOURCE)
+                .method(StatsStoreResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     @Override

@@ -42,6 +42,11 @@ class StatisticResourceImpl implements StatisticResource {
     }
 
     @Override
+    public StatisticStoreDoc create() {
+        return statisticStoreStoreProvider.get().createDocument();
+    }
+
+    @Override
     public StatisticStoreDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(statisticStoreStoreProvider.get(), getDocRef(uuid));
     }

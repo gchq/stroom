@@ -67,6 +67,19 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
     }
 
     @Override
+    public void create(final Consumer<ElasticIndexDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ELASTIC_INDEX_RESOURCE)
+                .method(ElasticIndexResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

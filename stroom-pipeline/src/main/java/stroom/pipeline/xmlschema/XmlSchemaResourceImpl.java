@@ -40,6 +40,11 @@ class XmlSchemaResourceImpl implements XmlSchemaResource {
     }
 
     @Override
+    public XmlSchemaDoc create() {
+        return xmlSchemaStoreProvider.get().createDocument();
+    }
+
+    @Override
     public XmlSchemaDoc fetch(final String uuid) {
         return documentResourceHelperProvider.get().read(xmlSchemaStoreProvider.get(), getDocRef(uuid));
     }

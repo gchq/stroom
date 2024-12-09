@@ -46,8 +46,11 @@ public interface ExplorerService extends Clearable {
 
     FetchExplorerNodeResult getData(FetchExplorerNodesRequest criteria);
 
-    ExplorerNode create(String docType,
-                        String docName,
+    ExplorerNode createFolder(String name,
+                        ExplorerNode destinationFolder,
+                        PermissionInheritance permissionInheritance);
+
+    ExplorerNode create(DocRef docRef,
                         ExplorerNode destinationFolder,
                         PermissionInheritance permissionInheritance);
 

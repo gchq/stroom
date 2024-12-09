@@ -67,6 +67,19 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
     }
 
     @Override
+    public void create(final Consumer<ElasticClusterDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ELASTIC_CLUSTER_RESOURCE)
+                .method(ElasticClusterResource::create)
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public void load(final DocRef docRef,
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final RestErrorHandler errorHandler,

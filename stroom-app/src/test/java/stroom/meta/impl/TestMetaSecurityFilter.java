@@ -22,6 +22,7 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.shared.MetaFields;
@@ -84,9 +85,9 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);
 
-            final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
-            final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
-            final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
+            final DocRef docref1 = createFeed(FEED_NO_PERMISSION);
+            final DocRef docref2 = createFeed(FEED_USE_PERMISSION);
+            final DocRef docref3 = createFeed(FEED_READ_PERMISSION);
 
             documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
             documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
@@ -105,5 +106,12 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
                 assertThat(readExpression.get().getChildren().size() == 1);
             });
         });
+    }
+
+    private DocRef createFeed(final String name) {
+        FeedDoc doc = feedStore.createDocument();
+        doc.setName(name);
+        doc = feedStore.writeDocument(doc);
+        return doc.asDocRef();
     }
 }

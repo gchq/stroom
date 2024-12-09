@@ -60,28 +60,28 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public DocRef createDocument(final String name) {
-        // create the document with some configurable skeleton content
-        return store.createDocument(
-                name,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
-
-                    final String skeletonConfigText = kafkaConfigProvider.get().getSkeletonConfigContent();
-
-                    return new KafkaConfigDoc(
-                            type,
-                            uuid,
-                            docName,
-                            version,
-                            createTime,
-                            updateTime,
-                            createUser,
-                            updateUser,
-                            "",
-                            skeletonConfigText);
-                });
-    }
+//    @Override
+//    public DocRef createDocument(final String name) {
+//        // create the document with some configurable skeleton content
+//        return store.createDocument(
+//                name,
+//                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+//
+//                    final String skeletonConfigText = kafkaConfigProvider.get().getSkeletonConfigContent();
+//
+//                    return new KafkaConfigDoc(
+//                            type,
+//                            uuid,
+//                            docName,
+//                            version,
+//                            createTime,
+//                            updateTime,
+//                            createUser,
+//                            updateUser,
+//                            "",
+//                            skeletonConfigText);
+//                });
+//    }
 
     @Override
     public DocRef copyDocument(final DocRef docRef,
@@ -148,6 +148,14 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public KafkaConfigDoc createDocument() {
+        final KafkaConfigDoc doc = store.createDocument();
+        final String skeletonConfigText = kafkaConfigProvider.get().getSkeletonConfigContent();
+        doc.setData(skeletonConfigText);
+        return doc;
+    }
 
     @Override
     public KafkaConfigDoc readDocument(final DocRef docRef) {

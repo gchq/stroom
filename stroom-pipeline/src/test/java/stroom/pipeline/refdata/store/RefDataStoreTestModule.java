@@ -72,8 +72,8 @@ public class RefDataStoreTestModule extends AbstractModule {
         this.referenceDataConfigSupplier = referenceDataConfigSupplier;
         this.homeDirProvider = homeDirProvider;
         this.tempDirProvider = tempDirProvider;
-        addFeeds(FeedDoc.buildDocRef().name(FEED_1_NAME).uuid(FEED_1_UUID).build(),
-                FeedDoc.buildDocRef().name(FEED_2_NAME).uuid(FEED_2_UUID).build());
+        addFeeds(DocRef.builder().type(FeedDoc.DOCUMENT_TYPE).name(FEED_1_NAME).uuid(FEED_1_UUID).build(),
+                DocRef.builder().type(FeedDoc.DOCUMENT_TYPE).name(FEED_2_NAME).uuid(FEED_2_UUID).build());
         addMetaFeedAssociations(Map.of(
                 // Two streams for the same feed
                 REF_STREAM_1_ID, FEED_1_NAME,

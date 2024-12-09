@@ -99,8 +99,8 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // Setup the XSLT.
-            final DocRef xsltRef = xsltStore.createDocument("Indexing XSLT");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
+            final XsltDoc xsltDoc = xsltStore.createDocument();
+            xsltDoc.setName("Indexing XSLT");
             xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
             xsltStore.writeDocument(xsltDoc);
 
@@ -116,8 +116,8 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             indexFields.add(LuceneIndexField.createField("ProcessCommand"));
 
             // Setup the target index
-            final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
+            LuceneIndexDoc index = indexStore.createDocument();
+            index.setName("Test index");
             index.setFields(indexFields);
             index = indexStore.writeDocument(index);
 
@@ -135,9 +135,11 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
                     StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
+                    .addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt",
+                            xsltDoc.asDocRef()));
             pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+                    .addProperty(PipelineDataUtil.createProperty("indexingFilter", "index",
+                            index.asDocRef()));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

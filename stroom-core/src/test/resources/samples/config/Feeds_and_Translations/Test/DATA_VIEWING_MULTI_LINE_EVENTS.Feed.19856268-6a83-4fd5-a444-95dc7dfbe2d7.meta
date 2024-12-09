@@ -1,7 +1,7 @@
 {
-  "type" : "Feed",
   "uuid" : "19856268-6a83-4fd5-a444-95dc7dfbe2d7",
   "name" : "DATA_VIEWING_MULTI_LINE-EVENTS",
+  "uniqueName" : "feed:data-viewing-multi-line-events",
   "version" : "fbaba621-e07b-46c0-ac5f-fadb0518dcaa",
   "description" : "DATA_SPLITTER-EVENTS",
   "encoding" : "UTF-8",

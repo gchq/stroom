@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
@@ -156,15 +155,14 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 //        commonTestControl.teardown();
 //        commonTestControl.setup(tempDir);
 
-        final DocRef statisticStoreRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef);
+        final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.createDocument();
+        statisticStoreDoc.setName(STAT_NAME);
         statisticStoreDoc.setDescription("My Description");
         statisticStoreDoc.setStatisticType(StatisticType.VALUE);
         statisticStoreDoc.setConfig(new StatisticsDataSourceData());
         statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG1));
         statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG2));
-        statisticStoreStore.writeDocument(statisticStoreDoc);
-        this.statisticStoreDoc = statisticStoreDoc;
+        this.statisticStoreDoc = statisticStoreStore.writeDocument(statisticStoreDoc);
     }
 
     @Test
