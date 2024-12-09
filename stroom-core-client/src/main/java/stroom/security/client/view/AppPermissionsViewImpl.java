@@ -20,13 +20,9 @@ import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.UserRef;
-import stroom.util.shared.string.CaseType;
-import stroom.widget.form.client.FormGroup;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -47,14 +43,12 @@ public final class AppPermissionsViewImpl
     SimplePanel appUserPermissionsList;
 
     @UiField
-    FormGroup appPermissionsFormGroup;
-    @UiField
     SimplePanel appPermissionsEdit;
 
-    @UiField
-    FormGroup detailsFormGroup;
-    @UiField
-    HTML details;
+//    @UiField
+//    FormGroup detailsFormGroup;
+//    @UiField
+//    HTML details;
 
     @Inject
     public AppPermissionsViewImpl(final Binder binder) {
@@ -82,22 +76,13 @@ public final class AppPermissionsViewImpl
         appPermissionsEdit.setWidget(view.asWidget());
     }
 
-    @Override
-    public void setDetails(final SafeHtml details) {
-        this.details.setHTML(details);
-    }
+//    @Override
+//    public void setDetails(final SafeHtml details) {
+//        appPermissionsEdit.serDetails(details);
+//    }
 
-    @Override
     public void setUserRef(final UserRef userRef) {
-        if (userRef == null) {
-            appPermissionsFormGroup.setLabel(APP_PERM_BASE_LABEL + ":");
-            detailsFormGroup.setLabel(APP_PERM_DETAILS_BASE_LABEL + ":");
-        } else {
-            final String suffix = " for " + userRef.getType(CaseType.LOWER)
-                                  + " \"" + userRef.getDisplayName() + "\":";
-            appPermissionsFormGroup.setLabel(APP_PERM_BASE_LABEL + suffix);
-            detailsFormGroup.setLabel(APP_PERM_DETAILS_BASE_LABEL + suffix);
-        }
+
     }
 
 

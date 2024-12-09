@@ -42,6 +42,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.LegacyHandlerWrapper;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -91,18 +92,26 @@ public class AppPermissionsEditPresenter
         view.setPermissionsView(pagerView);
 
         addColumns();
+        getView().setUserRef(null);
+
+        registerHandler(getSelectionModel()
+                .addSelectionHandler(e -> updateDetails()));
+
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event ->
+                refresh()));
     }
 
     public MultiSelectionModelImpl<AppPermission> getSelectionModel() {
         return selectionModel;
     }
 
-    public void edit(final UserRef userRef) {
+    public void setUserRef(final UserRef userRef) {
         this.relatedUser = userRef;
+        getView().setUserRef(userRef);
         refresh();
     }
 
-    private void refresh() {
+    public void refresh() {
         if (relatedUser == null) {
             currentPermissions = null;
             // Update details panel.
@@ -110,9 +119,10 @@ public class AppPermissionsEditPresenter
             final List<AppPermission> permissions = new ArrayList<>();
             dataGrid.setRowData(0, permissions);
             dataGrid.setRowCount(permissions.size(), true);
-
+            updateDetails();
         } else {
             // Fetch permissions and populate table.
+            GWT.log("Fetching app perms for " + relatedUser);
             restFactory
                     .create(APP_PERMISSION_RESOURCE)
                     .method(res -> res.getAppUserPermissionsReport(relatedUser))
@@ -120,7 +130,8 @@ public class AppPermissionsEditPresenter
                         AppPermissionsEditPresenter.this.currentPermissions = userAppPermissions;
                         updateAllPermissions();
                         // Update details panel.
-                        ValueChangeEvent.fire(this, new ValueChange(false, true));
+//                        ValueChangeEvent.fire(this, new ValueChange(false, true));
+                        updateDetails();
                     })
                     .taskMonitorFactory(this)
                     .exec();
@@ -249,12 +260,86 @@ public class AppPermissionsEditPresenter
         return currentPermissions;
     }
 
+    void updateDetails() {
+        final SafeHtml details = getDetails();
+        getView().setDetails(details);
+    }
+
+    private SafeHtml getDetails() {
+        AppUserPermissionsReport currentPermissions = getCurrentPermissions();
+        final DescriptionBuilder sb = new DescriptionBuilder();
+        final AppPermission permission = getSelectionModel().getSelected();
+        if (permission != null) {
+            addPaths(
+                    currentPermissions.getExplicitPermissions().contains(permission),
+                    currentPermissions.getInheritedPermissions().get(permission),
+                    sb,
+                    "Explicit Permission",
+                    "Inherited From:");
+
+            // See if implied by administrator.
+            if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                addPaths(
+                        currentPermissions
+                                .getExplicitPermissions()
+                                .contains(AppPermission.ADMINISTRATOR),
+                        currentPermissions
+                                .getInheritedPermissions()
+                                .get(AppPermission.ADMINISTRATOR),
+                        sb,
+                        "Implied By Administrator",
+                        "Implied By Administrator Inherited From:");
+            }
+
+            if (sb.toSafeHtml().asString().isEmpty()) {
+                sb.addTitle("No Permission");
+            }
+        }
+
+        return sb.toSafeHtml();
+    }
+
+    private void addPaths(final boolean direct,
+                          final List<String> paths,
+                          final DescriptionBuilder sb,
+                          final String directTitle,
+                          final String inheritedTitle) {
+        if (direct) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle(directTitle);
+        }
+
+        if (GwtNullSafe.hasItems(paths)) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle(inheritedTitle);
+            for (final String path : paths) {
+                sb.addNewLine();
+                sb.addLine(path);
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public interface AppPermissionsEditView extends View {
 
         void setPermissionsView(View view);
+
+        void setDetails(SafeHtml details);
+
+        void setUserRef(UserRef userRef);
     }
 
-    public class ValueChange {
+
+    // --------------------------------------------------------------------------------
+
+
+    @SuppressWarnings("ClassCanBeRecord") // GWT :-(
+    public static class ValueChange {
 
         private final boolean refreshUsers;
         private final boolean refreshDetails;

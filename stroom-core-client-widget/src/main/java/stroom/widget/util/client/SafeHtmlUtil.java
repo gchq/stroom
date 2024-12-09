@@ -14,6 +14,12 @@ public class SafeHtmlUtil {
     private SafeHtmlUtil() {
     }
 
+    public static SafeHtml nullSafe(final SafeHtml safeHtml) {
+        return safeHtml != null
+                ? safeHtml
+                : SafeHtmlUtils.EMPTY_SAFE_HTML;
+    }
+
     /**
      * Null safe way to escape string and return {@link SafeHtml}
      */

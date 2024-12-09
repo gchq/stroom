@@ -71,8 +71,6 @@ public class UserTabPresenter
     private String label;
     private PresenterWidget<?> currentContent;
     private TabData selectedTab;
-//    private UserPermissionReportPresenter userPermsReportPresenter = null;
-//    private UserDependenciesListPresenter userDependenciesListPresenter = null;
 
     @Inject
     public UserTabPresenter(final EventBus eventBus,
@@ -104,7 +102,7 @@ public class UserTabPresenter
         this.appPermissionsEditPresenterLazyValue = new LazyValue<>(
                 appPermissionsEditPresenterProvider,
                 appPermissionsEditPresenter -> {
-                    appPermissionsEditPresenter.edit(getUserRef());
+                    appPermissionsEditPresenter.setUserRef(getUserRef());
                 });
 
         final boolean hasManagerUsersPerm = clientSecurityContext.hasAppPermission(
@@ -162,6 +160,7 @@ public class UserTabPresenter
         } else if (APP_PERMS_TAB.equals(tab)) {
             final AppPermissionsEditPresenter appPermissionsEditPresenter
                     = appPermissionsEditPresenterLazyValue.getValue();
+            appPermissionsEditPresenter.setUserRef(userRef);
             callback.onReady(appPermissionsEditPresenter);
         } else if (DOC_PERMS_TAB.equals(tab)) {
             final UserPermissionReportPresenter userPermsReportPresenter = userPermsReportPresenterLazyValue.getValue();
@@ -210,9 +209,15 @@ public class UserTabPresenter
                 userRef,
                 ref -> ref.getType(CaseType.SENTENCE) + " " + ref.toDisplayString(),
                 "Unknown User/Group");
-        userPermsReportPresenterLazyValue.consumeIfInitialised(userPermissionReportPresenter -> {
-            userPermissionReportPresenter.setUserRef(userRef);
-        });
+        userInfoPresenter.setUserRef(userRef);
+        appPermissionsEditPresenterLazyValue.consumeIfInitialised(appPermissionsEditPresenter ->
+                appPermissionsEditPresenter.setUserRef(userRef));
+        userPermsReportPresenterLazyValue.consumeIfInitialised(userPermissionReportPresenter ->
+                userPermissionReportPresenter.setUserRef(userRef));
+        userDependenciesListPresenterLazyValue.consumeIfInitialised(userDependenciesListPresenter ->
+                userDependenciesListPresenter.setUserRef(userRef));
+        apiKeysListPresenterLazyValue.consumeIfInitialised(apiKeysPresenter ->
+                apiKeysPresenter.setOwner(userRef));
     }
 
     public UserRef getUserRef() {
