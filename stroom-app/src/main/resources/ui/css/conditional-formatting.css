@@ -453,6 +453,16 @@
     font-style: italic;
 }
 
+.cf-light-example {
+    background-color: rgb(255, 255, 255);
+    color: #151515;
+}
+.cf-dark-example {
+    background-color: rgb(34, 37, 44);
+    color: #dce4e5;
+}
+
+
 
 
 
