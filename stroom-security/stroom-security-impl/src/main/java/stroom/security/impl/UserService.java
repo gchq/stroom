@@ -18,8 +18,10 @@
 package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
 
 import java.util.Optional;
@@ -67,4 +69,6 @@ public interface UserService {
      * Logically delete a user
      */
     boolean delete(String userUuid);
+
+    ResultPage<UserDependency> fetchUserDependencies(FindUserDependenciesCriteria criteria);
 }

@@ -88,7 +88,7 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
     private void addMenuItem(final BeforeRevealMenubarEvent event) {
         final IconMenuItem apiKeysMenuItem;
         apiKeysMenuItem = new IconMenuItem.Builder()
-                .priority(2)
+                .priority(10)
                 .icon(ICON)
                 .text(SCREEN_NAME)
                 .action(getOpenAction())

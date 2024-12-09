@@ -26,6 +26,7 @@ public final class ColumnSizeConstants {
     public static final int DATE_COL = 200;
     public static final int DATE_AND_DURATION_COL = 320;
     public static final int UUID_COL = 300;
+    public static final int USER_DISPLAY_NAME_COL = 300;
 
     public static final int BYTE_SIZE_COL = 60;
     /**

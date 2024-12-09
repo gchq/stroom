@@ -20,6 +20,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.security.client.presenter.UserListPresenter.Mode;
 import stroom.security.shared.User;
@@ -79,10 +80,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         super(eventBus, view);
         this.userList = userListPresenterProvider.get();
         this.userList.setMode(Mode.USERS_AND_GROUPS);
-        this.userList.getView().setLabel("Users And Groups");
+        this.userList.getView().setLabel(UsersAndGroupsPlugin.SCREEN_NAME);
         this.userList.setName("userList");
         // Top pane doesn't need to link back to itself
-        this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USERS_AND_GROUPS));
+        this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USER_GROUPS));
 
         this.parentsList = userListPresenterProvider.get();
         // A parent can only be a group
@@ -425,12 +426,12 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.USERS;
+        return UsersAndGroupsPlugin.ICON.getSvgImage();
     }
 
     @Override
     public String getLabel() {
-        return "Users And Groups";
+        return UsersAndGroupsPlugin.SCREEN_NAME;
     }
 
     @Override

@@ -16,7 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.explorer.client.presenter.DocumentPermissionsListPresenter;
 import stroom.explorer.shared.FindResultWithPermissions;
@@ -45,6 +44,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
@@ -52,7 +52,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class UserPermissionReportPresenter
-        extends ContentTabPresenter<UserPermissionReportView>
+        extends MyPresenterWidget<UserPermissionReportView>
         implements QuickFilterUiHandlers {
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
@@ -293,20 +293,24 @@ public class UserPermissionReportPresenter
         refresh();
     }
 
-    @Override
-    public SvgImage getIcon() {
-        return SvgImage.FILE_RAW;
-    }
+//    @Override
+//    public SvgImage getIcon() {
+//        return SvgImage.FILE_RAW;
+//    }
+//
+//    @Override
+//    public String getLabel() {
+//        return "Document Permission Report For '" + userRef.toDisplayString() + "'";
+//    }
+//
+//    @Override
+//    public String getType() {
+//        return "DocumentPermissionReport";
+//    }
 
-    @Override
-    public String getLabel() {
-        return "Document Permission Report For '" + userRef.toDisplayString() + "'";
-    }
 
-    @Override
-    public String getType() {
-        return "DocumentPermissionReport";
-    }
+    // --------------------------------------------------------------------------------
+
 
     public interface UserPermissionReportView extends View {
 

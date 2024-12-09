@@ -1,13 +1,16 @@
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.AppPermissionsPlugin;
+import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
+import stroom.security.client.event.OpenUserEvent;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.identity.client.AccountsPlugin;
@@ -125,10 +128,12 @@ public class UserAndGroupHelper {
 
         final User user = userListPresenter.getSelectionModel().getSelected();
         if (user != null) {
+            final String userDescription = getDescription(user);
             ConfirmEvent.fire(
                     hasHandlers,
-                    "Are you sure you want to delete the selected " +
-                    getDescription(user) + "?",
+                    "Are you sure you want to delete " + userDescription + "?"
+                    + "\n\nThis will also remove them from any groups that they are currently a member of."
+                    + "\nYou will not be permitted to delete them if any content has a dependency on them.",
                     ok -> {
                         if (ok) {
                             restFactory
@@ -140,6 +145,12 @@ public class UserAndGroupHelper {
                                             userListPresenter.refresh();
                                         }
                                     })
+                                    .onFailure(error ->
+                                            AlertEvent.fireError(
+                                                    hasHandlers,
+                                                    "Error deleting " + userDescription,
+                                                    error.getMessage(),
+                                                    null))
                                     .taskMonitorFactory(userListPresenter.getPagerView())
                                     .exec();
                         }
@@ -236,13 +247,15 @@ public class UserAndGroupHelper {
                             itemBuilder.text(buildActionsForMsg(userRef) + ":")
                                     .build())
                     .withSeparator();
-
-            if (screens.contains(UserScreen.APP_PERMISSIONS)) {
+            if (screens.contains(UserScreen.USER)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(AppPermissionsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AppPermissionsPlugin.SCREEN_NAME))
+                        .icon(userRef.isGroup()
+                                ? UserTabPlugin.GROUP_ICON
+                                : UserTabPlugin.USER_ICON)
+                        .text("Open " + userRef.getType(CaseType.LOWER)
+                              + " '" + userRef.toDisplayString() + "'")
                         .command(() ->
-                                OpenAppPermissionsScreenEvent.fire(hasHandlers, userRef)));
+                                OpenUserEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.USERS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
@@ -251,19 +264,26 @@ public class UserAndGroupHelper {
                         .command(() ->
                                 OpenUsersScreenEvent.fire(hasHandlers, userRef)));
             }
-            if (screens.contains(UserScreen.USERS_AND_GROUPS)) {
-                builder.withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(UsersAndGroupsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersAndGroupsPlugin.SCREEN_NAME))
-                        .command(() ->
-                                OpenUsersAndGroupsScreenEvent.fire(hasHandlers, userRef)));
-            }
             if (userRef.isUser() && !isExternalIdp && screens.contains(UserScreen.ACCOUNTS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AccountsPlugin.ICON)
                         .text(buildMenuItemText(userRef, AccountsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAccountEvent.fire(hasHandlers, userRef.getSubjectId())));
+            }
+            if (screens.contains(UserScreen.USER_GROUPS)) {
+                builder.withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(UsersAndGroupsPlugin.ICON)
+                        .text(buildMenuItemText(userRef, UsersAndGroupsPlugin.SCREEN_NAME))
+                        .command(() ->
+                                OpenUsersAndGroupsScreenEvent.fire(hasHandlers, userRef)));
+            }
+            if (screens.contains(UserScreen.APP_PERMISSIONS)) {
+                builder.withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(AppPermissionsPlugin.ICON)
+                        .text(buildMenuItemText(userRef, AppPermissionsPlugin.SCREEN_NAME))
+                        .command(() ->
+                                OpenAppPermissionsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.API_KEYS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
@@ -277,7 +297,7 @@ public class UserAndGroupHelper {
     }
 
     private static String buildMenuItemText(final UserRef userRef, final String screenName) {
-        return "Show " + userRef.getType(CaseType.LOWER) + " in the " + screenName + " screen";
+        return "Show " + userRef.getType(CaseType.LOWER) + " on the " + screenName + " screen";
     }
 
     public static String buildActionsForMsg(final User user) {

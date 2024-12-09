@@ -39,7 +39,7 @@ public class SourceTabPlugin extends AbstractTabPresenterPlugin<SourceKey, Sourc
     }
 
     @Override
-    String getName() {
+    protected String getName() {
         return "Source";
     }
 

@@ -5,11 +5,13 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
 import stroom.util.user.UserDescUtil;
 
@@ -42,6 +44,14 @@ public class UserResourceImpl implements UserResource {
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
         return userServiceProvider.get().find(criteria);
+    }
+
+    @Override
+    public ResultPage<UserDependency> findDependencies(final FindUserDependenciesCriteria criteria) {
+
+        Objects.requireNonNull(criteria.getUserRef());
+        return userServiceProvider.get()
+                .fetchUserDependencies(criteria);
     }
 
     @Override

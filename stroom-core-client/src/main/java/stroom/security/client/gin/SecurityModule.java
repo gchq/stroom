@@ -23,7 +23,8 @@ import stroom.security.client.CurrentUser;
 import stroom.security.client.DocumentPermissionsPlugin;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
-import stroom.security.client.UserPermissionsReportPlugin;
+import stroom.security.client.UserPlugin;
+import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -53,8 +54,12 @@ import stroom.security.client.presenter.DocumentUserPermissionsPresenter.Documen
 import stroom.security.client.presenter.EditApiKeyPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.security.client.presenter.UserInfoPresenter;
+import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
 import stroom.security.client.presenter.UserPermissionReportPresenter;
 import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
+import stroom.security.client.presenter.UserTabPresenter;
+import stroom.security.client.presenter.UserTabPresenter.UserTabView;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.client.view.ApiKeysViewImpl;
@@ -71,7 +76,9 @@ import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
+import stroom.security.client.view.UserInfoViewImpl;
 import stroom.security.client.view.UserPermissionReportViewImpl;
+import stroom.security.client.view.UserTabViewImpl;
 import stroom.security.client.view.UsersViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
@@ -93,9 +100,11 @@ public class SecurityModule extends PluginModule {
         // Users
         bindPlugin(AppPermissionsPlugin.class);
         bindPlugin(DocumentPermissionsPlugin.class);
+        bindPlugin(UserPlugin.class);
         bindPlugin(UsersPlugin.class);
+        bindPlugin(UserTabPlugin.class);
         bindPlugin(UsersAndGroupsPlugin.class);
-        bindPlugin(UserPermissionsReportPlugin.class);
+//        bindPlugin(UserPermissionsReportPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
@@ -157,6 +166,14 @@ public class SecurityModule extends PluginModule {
                 UserPermissionReportPresenter.class,
                 UserPermissionReportView.class,
                 UserPermissionReportViewImpl.class);
+        bindPresenterWidget(
+                UserTabPresenter.class,
+                UserTabView.class,
+                UserTabViewImpl.class);
+        bindPresenterWidget(
+                UserInfoPresenter.class,
+                UserInfoView.class,
+                UserInfoViewImpl.class);
 
         bindPresenterWidget(
                 ApiKeysPresenter.class,

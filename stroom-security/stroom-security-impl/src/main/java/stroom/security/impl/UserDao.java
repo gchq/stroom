@@ -3,6 +3,8 @@ package stroom.security.impl;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserInfo;
+import stroom.util.shared.UserRef;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -36,5 +38,15 @@ public interface UserDao {
 
     void removeUserFromGroup(String userUuid, String groupUuid);
 
-    boolean logicallyDelete(String userUuid);
+    /**
+     * Delete a user and remove it from any groups it is a member of.
+     */
+    boolean deleteUser(String userUuid);
+
+    /**
+     * Get the {@link UserRef} of a user that may or may not have been deleted.
+     * To be used for cases where references to userUuids are held after the corresponding
+     * user has been deleted, e.g. annotation entries.
+     */
+    Optional<UserInfo> getUserInfoByUserUuid(final String userUuid);
 }

@@ -16,41 +16,69 @@
 
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
 class UserServiceImpl implements UserService, ContentPackUserService {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserServiceImpl.class);
+
     private final SecurityContext securityContext;
     private final UserDao userDao;
     private final PermissionChangeEventBus permissionChangeEventBus;
+    private final Map<String, Provider<HasUserDependencies>> hasUserDependenciesProviderMap;
+    private final UserCache userCache;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
                     final UserDao userDao,
-                    final PermissionChangeEventBus permissionChangeEventBus) {
+                    final PermissionChangeEventBus permissionChangeEventBus,
+                    final Map<String, Provider<HasUserDependencies>> hasDependenciesSet,
+                    final UserCache userCache,
+                    final DocRefInfoService docRefInfoService) {
         this.securityContext = securityContext;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
+        this.hasUserDependenciesProviderMap = hasDependenciesSet;
+        this.userCache = userCache;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -213,10 +241,125 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     @Override
     public boolean delete(final String userUuid) {
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
-            userDao.logicallyDelete(userUuid);
-            fireUserChangeEvent(userUuid);
+
+            final UserRef userRef = userCache.getByUuid(userUuid)
+                    .map(User::asRef)
+                    .orElseThrow(() -> new RuntimeException("User not found with UUID {}" + userUuid));
+
+            final List<UserDependency> allUserDependencies = NullSafe.valuesOf(hasUserDependenciesProviderMap)
+                    .stream()
+                    .map(Provider::get)
+                    .flatMap(hasUserDependencies ->
+                            hasUserDependencies.getUserDependencies(userRef).stream())
+                    .toList();
+
+            if (NullSafe.isEmptyCollection(allUserDependencies)) {
+                userDao.deleteUser(userUuid);
+                fireUserChangeEvent(userUuid);
+            } else {
+                final List<String> detailLines = allUserDependencies.stream()
+                        .filter(userDependency ->
+                                NullSafe.getOrElse(
+                                        userDependency.getDocRef(),
+                                        docRef -> securityContext.hasDocumentPermission(
+                                                docRef, DocumentPermission.VIEW),
+                                        true))
+                        .map(UserDependency::getDetails)
+                        .toList();
+
+                if (detailLines.isEmpty()) {
+                    // Deps exist, but we don't have perms to see what they are
+                    throw new RuntimeException(
+                            LogUtil.message(
+                                    "Unable to delete user '{}' as {} {} have dependencies on the user. You do not " +
+                                    "have permission to view these items.",
+                                    userRef.toDisplayString(),
+                                    allUserDependencies.size(),
+                                    StringUtil.plural("item has", "items have", allUserDependencies)));
+                } else {
+                    final String detail = String.join("\n", detailLines);
+                    throw new RuntimeException(
+                            LogUtil.message(
+                                    "Unable to delete user '{}' as the following {} have dependencies on " +
+                                    "the user.\n{}",
+                                    userRef.toDisplayString(),
+                                    StringUtil.plural("item has", "items have", allUserDependencies),
+                                    detail));
+                }
+            }
         });
         return true;
+    }
+
+    @Override
+    public ResultPage<UserDependency> fetchUserDependencies(final FindUserDependenciesCriteria criteria) {
+        Objects.requireNonNull(criteria);
+        final UserRef userRef = Objects.requireNonNull(criteria.getUserRef());
+        final String userUuid = userRef.getUuid();
+
+        final boolean hasPermission = securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+                                      || securityContext.isCurrentUser(userRef);
+
+        if (!hasPermission) {
+            final UserRef decoratedUserRef = userCache.getByUuid(userUuid)
+                    .map(User::asRef)
+                    .orElse(userRef);
+            throw new PermissionException(
+                    userRef,
+                    "You do not have permission to view the dependencies on user "
+                    + decoratedUserRef.toInfoString());
+        }
+
+        final List<UserDependency> allUserDependencies = NullSafe.valuesOf(hasUserDependenciesProviderMap)
+                .stream()
+                .map(Provider::get)
+                .flatMap(hasUserDependencies ->
+                        hasUserDependencies.getUserDependencies(UserRef.forUserUuid(userUuid)).stream())
+                .map(userDependency -> {
+                    final DocRef docRef = NullSafe.get(userDependency.getDocRef(), docRefInfoService::decorate);
+                    return new UserDependency(
+                            userDependency.getUserRef(),
+                            userDependency.getDetails(),
+                            docRef);
+                })
+                .toList();
+
+        LOGGER.debug(() -> LogUtil.message("Found {} userDependencies", allUserDependencies.size()));
+
+        // TODO add in the criteria filtering
+        final Comparator<UserDependency> defaultComparator = CompareUtil.getNullSafeCaseInsensitiveComparator(
+                dep -> NullSafe.get(dep.getDocRef(), DocRef::getName));
+
+        final CriteriaFieldSort fieldSort = NullSafe.first(criteria.getSortList());
+        Comparator<UserDependency> comparator;
+        if (fieldSort != null) {
+            if (FindUserDependenciesCriteria.FIELD_DETAILS.equals(fieldSort.getId())) {
+                comparator = CompareUtil.getNullSafeCaseInsensitiveComparator(UserDependency::getDetails);
+                if (fieldSort.isDesc()) {
+                    comparator = comparator.reversed();
+                }
+                comparator = comparator.thenComparing(defaultComparator);
+            } else {
+                comparator = defaultComparator;
+                if (fieldSort.isDesc()) {
+                    comparator = comparator.reversed();
+                }
+            }
+        } else {
+            comparator = defaultComparator;
+        }
+
+        final List<UserDependency> filteredUserDependencies = allUserDependencies.stream()
+                .filter(userDependency ->
+                        NullSafe.getOrElse(
+                                userDependency.getDocRef(),
+                                docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
+                                true))
+                .sorted(comparator)
+                .toList();
+
+        LOGGER.debug(() -> LogUtil.message("Returning {} filtered userDependencies", filteredUserDependencies.size()));
+        return ResultPage.createCriterialBasedList(filteredUserDependencies, criteria);
     }
 
     private void fireUserChangeEvent(final String userUuid) {
@@ -229,9 +372,10 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     @Deprecated
     @Override
     public UserRef getUserRef(final String subjectId, final boolean isGroup) {
-        if (isGroup) {
-            return userDao.getGroupByName(subjectId).map(User::asRef).orElse(null);
-        }
-        return userDao.getUserBySubjectId(subjectId).map(User::asRef).orElse(null);
+        final Optional<User> optUser = isGroup
+                ? userDao.getGroupByName(subjectId)
+                : userDao.getUserBySubjectId(subjectId);
+        return optUser.map(User::asRef)
+                .orElse(null);
     }
 }

@@ -130,7 +130,8 @@ public class PermissionApp extends TableImpl<PermissionAppRecord> {
     private transient PermissionAppId _permissionAppId;
 
     /**
-     * Get the implicit join path to the <code>stroom.stroom_user</code> table.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.stroom_user</code> table.
      */
     public StroomUser stroomUser() {
         if (_stroomUser == null)
@@ -140,8 +141,8 @@ public class PermissionApp extends TableImpl<PermissionAppRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.permission_app_id</code>
-     * table.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.permission_app_id</code> table.
      */
     public PermissionAppId permissionAppId() {
         if (_permissionAppId == null)

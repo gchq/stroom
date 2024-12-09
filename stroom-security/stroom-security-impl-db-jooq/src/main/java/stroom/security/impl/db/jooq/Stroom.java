@@ -19,6 +19,7 @@ import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
 import stroom.security.impl.db.jooq.tables.PermissionDocId;
 import stroom.security.impl.db.jooq.tables.PermissionDocTypeId;
 import stroom.security.impl.db.jooq.tables.StroomUser;
+import stroom.security.impl.db.jooq.tables.StroomUserArchive;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 
@@ -76,6 +77,11 @@ public class Stroom extends SchemaImpl {
     public final StroomUser STROOM_USER = StroomUser.STROOM_USER;
 
     /**
+     * The table <code>stroom.stroom_user_archive</code>.
+     */
+    public final StroomUserArchive STROOM_USER_ARCHIVE = StroomUserArchive.STROOM_USER_ARCHIVE;
+
+    /**
      * The table <code>stroom.stroom_user_group</code>.
      */
     public final StroomUserGroup STROOM_USER_GROUP = StroomUserGroup.STROOM_USER_GROUP;
@@ -104,6 +110,7 @@ public class Stroom extends SchemaImpl {
             PermissionDocId.PERMISSION_DOC_ID,
             PermissionDocTypeId.PERMISSION_DOC_TYPE_ID,
             StroomUser.STROOM_USER,
+            StroomUserArchive.STROOM_USER_ARCHIVE,
             StroomUserGroup.STROOM_USER_GROUP
         );
     }

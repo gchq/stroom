@@ -57,7 +57,7 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
             MenuKeys.addSecurityMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
-                            .priority(20)
+                            .priority(40)
                             .icon(ICON)
                             .text(SCREEN_NAME)
                             .action(getOpenAction())

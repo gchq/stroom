@@ -45,7 +45,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         this.presenterProvider = presenterProvider;
     }
 
-    public final void open() {
+    public void open() {
         open(presenter -> {
         });
     }

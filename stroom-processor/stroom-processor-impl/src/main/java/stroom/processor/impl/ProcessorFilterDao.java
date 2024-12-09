@@ -6,6 +6,7 @@ import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,4 +36,6 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
      * @return The number of physically deleted filters.
      */
     Set<String> physicalDeleteOldProcessorFilters(Instant deleteThreshold);
+
+    List<ProcessorFilter> fetchByRunAsUser(final String userUuid);
 }

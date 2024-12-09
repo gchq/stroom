@@ -17,6 +17,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserInfo;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
@@ -25,6 +26,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
 import org.jooq.exception.IntegrityConstraintViolationException;
 
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
+import static stroom.security.impl.db.jooq.Tables.STROOM_USER_ARCHIVE;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 
 public class UserDaoImpl implements UserDao {
@@ -81,17 +84,23 @@ public class UserDaoImpl implements UserDao {
     private static final Field<?> DEFAULT_SORT_FIELD = STROOM_USER.DISPLAY_NAME;
     private static final String DEFAULT_SORT_ID = UserFields.FIELD_DISPLAY_NAME;
 
-    private static final Condition IGNORE_DELETED_CONDITION = STROOM_USER.DELETED.isFalse();
-
     private final SecurityDbConnProvider securityDbConnProvider;
     private final ExpressionMapper expressionMapper;
+    // Have to hold the impls as we need to pass in the DSLContext which can't
+    // be exposed on the iface
+    private final AppPermissionDaoImpl appPermissionDaoImpl;
+    private final DocumentPermissionDaoImpl documentPermissionDaoImpl;
 
     @Inject
     public UserDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
-                       final ExpressionMapperFactory expressionMapperFactory) {
+                       final ExpressionMapperFactory expressionMapperFactory,
+                       final AppPermissionDaoImpl appPermissionDaoImpl,
+                       final DocumentPermissionDaoImpl documentPermissionDaoImpl) {
         this.securityDbConnProvider = securityDbConnProvider;
+        this.appPermissionDaoImpl = appPermissionDaoImpl;
+        this.documentPermissionDaoImpl = documentPermissionDaoImpl;
 
-        expressionMapper = expressionMapperFactory.create()
+        this.expressionMapper = expressionMapperFactory.create()
                 .map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean)
                 .map(UserFields.UNIQUE_ID, STROOM_USER.NAME, String::valueOf)
 //                .map(UserFields.NAME, STROOM_USER.NAME, String::valueOf)
@@ -104,13 +113,15 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User create(final User user) {
-        return JooqUtil.contextResult(securityDbConnProvider, context ->
+        return JooqUtil.transactionResult(securityDbConnProvider, context ->
                 create(context, user));
     }
 
     private User create(final DSLContext context, final User user) {
         user.setVersion(1);
         user.setUuid(UUID.randomUUID().toString());
+        // DB requires a display name so default to the subjectId if there isn't one
+        user.setDisplayName(getDisplayNameOrSubjectId(user));
         final Integer id = context
                 .insertInto(STROOM_USER)
                 .columns(STROOM_USER.VERSION,
@@ -133,12 +144,14 @@ public class UserDaoImpl implements UserDao {
                         user.getUuid(),
                         user.isGroup(),
                         user.isEnabled(),
-                        getDisplayNameOrSubjectId(user),
+                        user.getDisplayName(),
                         user.getFullName())
                 .returning(STROOM_USER.ID)
                 .fetchOne(STROOM_USER.ID);
         Objects.requireNonNull(id);
         user.setId(id);
+
+        insertOrUpdateStroomUserArchiveRecord(context, user.getUuid());
         return user;
     }
 
@@ -180,7 +193,6 @@ public class UserDaoImpl implements UserDao {
                 .select()
                 .from(STROOM_USER)
                 .where(STROOM_USER.UUID.eq(uuid))
-                .and(IGNORE_DELETED_CONDITION)
                 .fetchOptional()
                 .map(RECORD_TO_USER_MAPPER);
         LOGGER.debug("getByUuid - uuid: {}, returning: {}", uuid, optUser);
@@ -193,7 +205,6 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(subjectId))
-                        .and(IGNORE_DELETED_CONDITION)
                         .and(STROOM_USER.IS_GROUP.eq(false))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
@@ -207,7 +218,6 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(groupName))
-                        .and(IGNORE_DELETED_CONDITION)
                         .and(STROOM_USER.IS_GROUP.eq(true))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
@@ -217,7 +227,10 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User update(final User user) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> update(context, user));
+        return JooqUtil.transactionResultWithOptimisticLocking(
+                securityDbConnProvider,
+                context ->
+                        update(context, user));
     }
 
     private User update(final DSLContext context, final User user) {
@@ -241,6 +254,8 @@ public class UserDaoImpl implements UserDao {
             throw new DataChangedException("Failed to update user, " +
                                            "it may have been updated by another user or deleted");
         }
+
+        insertOrUpdateStroomUserArchiveRecord(context, user.getUuid());
 
         return getByUuid(context, user.getUuid()).orElseThrow(() ->
                 new RuntimeException("Error fetching updated user"));
@@ -285,7 +300,6 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(condition)
-                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -308,7 +322,6 @@ public class UserDaoImpl implements UserDao {
                         .from(STROOM_USER)
                         .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.USER_UUID.eq(STROOM_USER.UUID))
                         .where(condition)
-                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -331,7 +344,6 @@ public class UserDaoImpl implements UserDao {
                         .from(STROOM_USER)
                         .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.GROUP_UUID.eq(STROOM_USER.UUID))
                         .where(condition)
-                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -387,7 +399,6 @@ public class UserDaoImpl implements UserDao {
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
                         .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                         .and(condition)
-                        .and(IGNORE_DELETED_CONDITION)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -410,7 +421,6 @@ public class UserDaoImpl implements UserDao {
                         .join(STROOM_USER_GROUP)
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
                         .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
-                        .and(IGNORE_DELETED_CONDITION)
                         .and(condition)
                         .orderBy(orderFields)
                         .offset(offset)
@@ -425,36 +435,145 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void addUserToGroup(final String userUuid,
                                final String groupUuid) {
-        final Integer count = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .insertInto(STROOM_USER_GROUP)
-                .columns(STROOM_USER_GROUP.USER_UUID, STROOM_USER_GROUP.GROUP_UUID)
-                .values(userUuid, groupUuid)
-                .onDuplicateKeyUpdate()
-                .set(STROOM_USER_GROUP.GROUP_UUID, STROOM_USER_GROUP.GROUP_UUID)
-                .execute());
-        LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}", userUuid, groupUuid, count);
+        try {
+            final Integer insertCount = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                    .insertInto(STROOM_USER_GROUP)
+                    .columns(STROOM_USER_GROUP.USER_UUID, STROOM_USER_GROUP.GROUP_UUID)
+                    .values(userUuid, groupUuid)
+                    .onDuplicateKeyUpdate()
+                    .set(STROOM_USER_GROUP.GROUP_UUID, STROOM_USER_GROUP.GROUP_UUID)
+                    .execute());
+            LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}",
+                    userUuid, groupUuid, insertCount);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error adding user to group - userUuid: {}, groupUuid: {}", userUuid, groupUuid), e);
+        }
     }
 
     @Override
     public void removeUserFromGroup(final String userUuid,
                                     final String groupUuid) {
-        final Integer count = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .deleteFrom(STROOM_USER_GROUP)
-                .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
-                .and(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
-                .execute());
-        LOGGER.debug("addUserToGroup - userUuid: {}, groupUuid: {}, count: {}", userUuid, groupUuid, count);
+        try {
+            final Integer updateCount = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                    .deleteFrom(STROOM_USER_GROUP)
+                    .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+                    .and(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
+                    .execute());
+            LOGGER.debug("removeUserFromGroup - userUuid: {}, groupUuid: {}, count: {}",
+                    userUuid, groupUuid, updateCount);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error removing user from group - userUuid: {}, groupUuid: {}", userUuid, groupUuid), e);
+        }
+    }
+
+    /**
+     * IMPORTANT - This must be called after any insert/update to STROOM_USER (and
+     * as part of the same txn) to ensure STROOM_USER_ARCHIVE is up-to-date.
+     * NOT to be called after a delete statement as we want to preserve the details
+     * of deleted users.
+     */
+    private void insertOrUpdateStroomUserArchiveRecord(final DSLContext context,
+                                                       final String userUuid) {
+        Objects.requireNonNull(userUuid);
+
+        try {
+            final int changeCount = context.insertInto(STROOM_USER_ARCHIVE,
+                            STROOM_USER_ARCHIVE.UUID,
+                            STROOM_USER_ARCHIVE.NAME,
+                            STROOM_USER_ARCHIVE.DISPLAY_NAME,
+                            STROOM_USER_ARCHIVE.FULL_NAME,
+                            STROOM_USER_ARCHIVE.IS_GROUP)
+                    .select(context.select(
+                                    STROOM_USER.UUID,
+                                    STROOM_USER.NAME,
+                                    STROOM_USER.DISPLAY_NAME,
+                                    STROOM_USER.FULL_NAME,
+                                    STROOM_USER.IS_GROUP)
+                            .from(STROOM_USER)
+                            .where(STROOM_USER.UUID.eq(userUuid)))
+                    .onDuplicateKeyUpdate()
+                    .set(STROOM_USER_ARCHIVE.NAME, STROOM_USER.NAME)
+                    .set(STROOM_USER_ARCHIVE.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME)
+                    .set(STROOM_USER_ARCHIVE.FULL_NAME, STROOM_USER.FULL_NAME)
+                    .set(STROOM_USER_ARCHIVE.IS_GROUP, STROOM_USER.IS_GROUP)
+                    .execute();
+
+            LOGGER.debug("insertOrUpdateStroomUserArchiveRecord - changeCount: {} for userUuid: {}",
+                    changeCount, userUuid);
+        } catch (DataAccessException e) {
+            throw new RuntimeException(LogUtil.message("Error upserting archive record for userUuid {}", userUuid), e);
+        }
     }
 
     @Override
-    public boolean logicallyDelete(final String userUuid) {
-        final Integer count = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .update(STROOM_USER)
-                .set(STROOM_USER.DELETED, true)
-                .where(STROOM_USER.UUID.eq(userUuid))
-                .execute());
-        LOGGER.debug("logicallyDelete - userUuid: {}, count: {}", userUuid, count);
-        return count > 0;
+    public boolean deleteUser(final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        final Integer userCount = JooqUtil.transactionResult(securityDbConnProvider, txnContext -> {
+
+            final User user = getByUuid(txnContext, userUuid)
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "User with UUID '{}' does not exist", userUuid)));
+
+            // First ensure the stroom_user_archive record is up-to-date before we delete
+            // the user
+            insertOrUpdateStroomUserArchiveRecord(txnContext, userUuid);
+
+            // Now remove the user from any groups it is a member of
+            int count = txnContext.deleteFrom(STROOM_USER_GROUP)
+                    .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+                    .execute();
+            LOGGER.debug("Removed {} group memberships for user {}", count, userUuid);
+
+            count = appPermissionDaoImpl.deletePermissionsForUser(txnContext, userUuid);
+            LOGGER.debug("Removed {} app permission records for user {}", count, userUuid);
+
+            count = documentPermissionDaoImpl.deletePermissionsForUser(txnContext, userUuid);
+            LOGGER.debug("Removed {} doc permission records for user {}", count, userUuid);
+
+            count = txnContext.deleteFrom(STROOM_USER)
+                    .where(STROOM_USER.UUID.eq(userUuid))
+                    .execute();
+            LOGGER.debug("Deleted {} record(s) for user {}", count, userUuid);
+
+            if (count == 0 || count > 1) {
+                throw new RuntimeException(LogUtil.message(
+                        "Deleted {} records for user {} but expected to delete exactly one.", count, userUuid));
+            }
+
+            LOGGER.info("Deleted user - subjectId: '{}', displayName: '{}', userUuid: {}",
+                    user.getSubjectId(), user.getDisplayName(), user.getUuid());
+            return count;
+        });
+        return userCount > 0;
+    }
+
+    @Override
+    public Optional<UserInfo> getUserInfoByUserUuid(final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        // Left join to stroom_user, so we can get the enabled state
+        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select(
+                                STROOM_USER_ARCHIVE.NAME,
+                                STROOM_USER_ARCHIVE.DISPLAY_NAME,
+                                STROOM_USER_ARCHIVE.FULL_NAME,
+                                STROOM_USER_ARCHIVE.IS_GROUP,
+                                STROOM_USER.ENABLED,
+                                STROOM_USER.ID)
+                        .from(STROOM_USER_ARCHIVE)
+                        .leftOuterJoin(STROOM_USER).on(STROOM_USER_ARCHIVE.UUID.eq(STROOM_USER.UUID))
+                        .where(STROOM_USER_ARCHIVE.UUID.eq(userUuid))
+                        .fetchOptional())
+                .map(rec -> UserInfo.builder()
+                        .uuid(userUuid)
+                        .subjectId(rec.get(STROOM_USER_ARCHIVE.NAME))
+                        .displayName(rec.get(STROOM_USER_ARCHIVE.DISPLAY_NAME))
+                        .fullName(rec.get(STROOM_USER_ARCHIVE.FULL_NAME))
+                        .group(rec.get(STROOM_USER_ARCHIVE.IS_GROUP))
+                        .enabled(Objects.requireNonNullElse(rec.get(STROOM_USER.ENABLED), false))
+                        .deleted(rec.get(STROOM_USER.ID) == null)
+                        .build());
     }
 
     Condition getUserCondition(final ExpressionOperator expression) {

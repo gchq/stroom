@@ -34,6 +34,15 @@ public interface ClientSecurityContext {
     UserRef getUserRef();
 
     /**
+     * Determine if the passed {@link UserRef} is the same user as the current
+     * authenticated user.
+     *
+     * @param userRef The user to compare against the current authenticated user.
+     * @return True if userRef is equal to the current authenticated user.
+     */
+    boolean isCurrentUser(final UserRef userRef);
+
+    /**
      * Check if the user associated with this security context is logged in.
      *
      * @return True if the user is logged in.

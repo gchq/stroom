@@ -49,7 +49,7 @@ public class OpenUsersScreenEvent extends GwtEvent<OpenUsersScreenHandler> {
 
     @Override
     public String toString() {
-        return "OpenUserOrGroupEvent{" +
+        return "OpenUsersScreenEvent{" +
                "userRef='" + userRef + '\'' +
                '}';
     }

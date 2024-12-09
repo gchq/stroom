@@ -63,6 +63,7 @@ import org.jooq.impl.DSL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
@@ -537,6 +538,17 @@ class AnnotationDaoImpl implements AnnotationDao {
                 }
             }
         });
+    }
+
+    @Override
+    public List<Annotation> fetchByAssignedUser(final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                        .select()
+                        .from(ANNOTATION)
+                        .where(ANNOTATION.ASSIGNED_TO_UUID.eq(userUuid))
+                        .fetch())
+                .map(this::mapToAnnotation);
     }
 
     private Val mapUserUuidToValString(final String userUuid) {

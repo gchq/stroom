@@ -11,6 +11,9 @@ import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -18,6 +21,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.jooq.CommonTableExpression;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
@@ -41,6 +45,8 @@ import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 import static stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GROUP;
 
 public class AppPermissionDaoImpl implements AppPermissionDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppPermissionDaoImpl.class);
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final AppPermissionIdDao appPermissionIdDao;
@@ -251,6 +257,16 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                     .map(this::getAppUserPermissions);
         }
         return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    int deletePermissionsForUser(final DSLContext context, final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        final int delCount = context.deleteFrom(PERMISSION_APP)
+                .where(PERMISSION_APP.USER_UUID.eq(userUuid))
+                .execute();
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for userUuid {}",
+                delCount, PERMISSION_APP.getName(), userUuid));
+        return delCount;
     }
 
     private Set<AppPermission> getAppPermissionSet(final String perms) {

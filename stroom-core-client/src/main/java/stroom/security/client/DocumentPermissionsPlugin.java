@@ -78,7 +78,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
             MenuKeys.addSecurityMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
-                            .priority(30)
+                            .priority(50)
                             .icon(SvgImage.LOCKED)
                             .text("Document Permissions")
                             .action(getOpenAction())

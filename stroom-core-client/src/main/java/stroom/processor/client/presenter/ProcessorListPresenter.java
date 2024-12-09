@@ -54,11 +54,15 @@ import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.TreeRow;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -77,12 +81,14 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
+@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT
 public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<Object> {
 
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
+    private final ClientSecurityContext securityContext;
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
@@ -105,20 +111,22 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
                                   final PagerView view,
+                                  final ClientSecurityContext securityContext,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
                                   final ProcessorInfoBuilder processorInfoBuilder) {
         super(eventBus, view);
+        this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>();
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        this.dataGrid = new MyDataGrid<>();
+        this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;
         this.processorInfoBuilder = processorInfoBuilder;
 
-        request = new FetchProcessorRequest();
-        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
+        this.request = new FetchProcessorRequest();
+        this.processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
@@ -236,6 +244,16 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addColumns() {
+        // TODO Change all the cols to use DataGridUtil and enabledWhen() so the disabled
+        //  ones get low-lighted
+
+        // TODO Add tooltips to all the cols
+
+        // TODO Why show the Pipeline col when you are viewing a PipelineDoc? Appreciate the filter
+        //  automatically includes a term for the pipe and that this presenter is used on folders but might
+        //  be better to hard code the pipe term on a PipelineDoc, make it not visible in the filter and prevent
+        //  its use. Then you can remove the col.
+
         addExpanderColumn();
         addIconColumn();
         addInfoColumn();
@@ -249,6 +267,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addTasksColumn();
 //        addEventsColumn();
         addReprocessColumn();
+        addRunAsUserColumn();
         addEndColumn();
     }
 
@@ -543,6 +562,31 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 return reprocess;
             }
         }, "Reprocess", ColumnSizeConstants.MEDIUM_COL);
+    }
+
+    private void addRunAsUserColumn() {
+        dataGrid.addResizableColumn(
+                DataGridUtil.userRefColumnBuilder(
+                                (ProcessorListRow row) -> {
+                                    if (row instanceof ProcessorFilterRow) {
+                                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                                        return GwtNullSafe.get(
+                                                processorFilterRow,
+                                                ProcessorFilterRow::getProcessorFilter,
+                                                ProcessorFilter::getRunAsUser);
+                                    } else {
+                                        return null;
+                                    }
+                                },
+                                getEventBus(),
+                                securityContext,
+                                true,
+                                DisplayType.AUTO)
+                        .build(),
+                DataGridUtil.headingBuilder("Run As User")
+                        .withToolTip("The processor will run with the same permissions as the Run As User.")
+                        .build(),
+                ColumnSizeConstants.USER_DISPLAY_NAME_COL);
     }
 
     private void addEndColumn() {

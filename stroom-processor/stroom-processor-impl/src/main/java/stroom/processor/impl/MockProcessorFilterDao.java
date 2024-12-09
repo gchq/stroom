@@ -65,6 +65,11 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
+    public List<ProcessorFilter> fetchByRunAsUser(final String userUuid) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
         return dao
                 .getMap()

@@ -21,6 +21,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -31,6 +32,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.AppPermissionsPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
@@ -48,6 +50,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -82,6 +85,7 @@ public class UserListPresenter
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
+    private final ClientSecurityContext securityContext;
     private final PagerView pagerView;
     private final MyDataGrid<User> dataGrid;
     private final MultiSelectionModelImpl<User> selectionModel;
@@ -106,10 +110,12 @@ public class UserListPresenter
     @Inject
     public UserListPresenter(final EventBus eventBus,
                              final QuickFilterPageView userListView,
+                             final ClientSecurityContext securityContext,
                              final PagerView pagerView,
                              final RestFactory restFactory,
                              final UiConfigCache uiConfigCache) {
         super(eventBus, userListView);
+        this.securityContext = securityContext;
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
@@ -216,7 +222,12 @@ public class UserListPresenter
         } else {
             displayNameTooltip = "The name of the user or group.";
         }
-        final Column<User, String> displayNameCol = DataGridUtil.copyTextColumnBuilder(User::getDisplayName)
+//        final Column<User, String> displayNameCol = DataGridUtil.copyTextColumnBuilder(User::getDisplayName)
+//                .enabledWhen(User::isEnabled)
+//                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+//                .build();
+        final Column<User, UserRefProvider<User>> displayNameCol = DataGridUtil.userRefColumnBuilder(
+                        User::getUserRef, getEventBus(), securityContext, DisplayType.DISPLAY_NAME)
                 .enabledWhen(User::isEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                 .build();
@@ -246,10 +257,15 @@ public class UserListPresenter
         // Full name
         if (mode.includesUsers()) {
             dataGrid.addResizableColumn(
-                    DataGridUtil.textColumnBuilder(User::getFullName)
+                    DataGridUtil.userRefColumnBuilder(
+                                    User::getUserRef, getEventBus(), securityContext, DisplayType.FULL_NAME)
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_FULL_NAME, true)
                             .build(),
+//                    DataGridUtil.textColumnBuilder(User::getFullName)
+//                            .enabledWhen(User::isEnabled)
+//                            .withSorting(UserFields.FIELD_FULL_NAME, true)
+//                            .build(),
                     DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_FULL_NAME)
                             .withToolTip(mode.includesGroups()
                                     ? "The full name of the user. Groups do not have a full name."
@@ -261,10 +277,15 @@ public class UserListPresenter
         // Unique User ID
         if (mode == Mode.USERS_ONLY && showUniqueUserIdCol) {
             dataGrid.addResizableColumn(
-                    DataGridUtil.copyTextColumnBuilder(User::getSubjectId)
+                    DataGridUtil.userRefColumnBuilder(
+                                    User::getUserRef, getEventBus(), securityContext, DisplayType.SUBJECT_ID)
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_UNIQUE_ID, true)
                             .build(),
+//                    DataGridUtil.copyTextColumnBuilder(User::getSubjectId)
+//                            .enabledWhen(User::isEnabled)
+//                            .withSorting(UserFields.FIELD_UNIQUE_ID, true)
+//                            .build(),
                     DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_UNIQUE_USER_ID)
                             .withToolTip("The unique user ID on the identity provider.")
                             .build(),

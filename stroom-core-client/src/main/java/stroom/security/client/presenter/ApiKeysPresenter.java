@@ -43,6 +43,7 @@ public class ApiKeysPresenter
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView deleteButton;
+    private UserRef owner = null;
 
     @Inject
     public ApiKeysPresenter(final EventBus eventBus,
@@ -60,11 +61,8 @@ public class ApiKeysPresenter
         view.setList(listPresenter.getView());
 
         addButton = listPresenter.addButton(SvgPresets.ADD.title("Add new API Key"));
-        addButton.addClickHandler(event -> createNewKey());
         editButton = listPresenter.addButton(SvgPresets.EDIT.title("Edit API Key"));
-        editButton.addClickHandler(event -> editSelectedKey());
         deleteButton = listPresenter.addButton(SvgPresets.DELETE.title("Delete API Key"));
-        deleteButton.addClickHandler(event -> deleteSelectedKeys());
 
 //        uiConfigCache.get(uiConfig -> {
 //            if (uiConfig != null) {
@@ -79,7 +77,6 @@ public class ApiKeysPresenter
     private void setButtonStates() {
         final int selectedCount = GwtNullSafe.size(getSelectedItems());
         editButton.setEnabled(selectedCount == 1);
-
         deleteButton.setEnabled(selectedCount > 0);
         if (selectedCount > 1) {
             deleteButton.setTitle("Delete " + selectedCount + " API Keys");
@@ -91,7 +88,6 @@ public class ApiKeysPresenter
     @Override
     protected void onBind() {
         super.onBind();
-
         registerHandler(addButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 createNewKey();
@@ -129,7 +125,11 @@ public class ApiKeysPresenter
     }
 
     private void createNewKey() {
-        editApiKeyPresenterProvider.get().showCreateDialog(Mode.PRE_CREATE, listPresenter::refresh);
+        final boolean allowOwnerSelection = owner == null;
+        editApiKeyPresenterProvider.get().showCreateDialog(
+                Mode.PRE_CREATE,
+                listPresenter::refresh,
+                allowOwnerSelection);
     }
 
     private void editSelectedKey() {
@@ -250,8 +250,13 @@ public class ApiKeysPresenter
         return TAB_TYPE;
     }
 
-    public void showUser(final UserRef userRef) {
-        listPresenter.showUser(userRef);
+    public void showOwner(final UserRef owner) {
+        listPresenter.showUser(owner);
+    }
+
+    public void setOwner(final UserRef owner) {
+        this.owner = owner;
+        listPresenter.setOwner(owner);
     }
 
 

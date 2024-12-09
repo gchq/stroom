@@ -82,10 +82,14 @@ class TestStoredQueryDao {
         // Clear the current DB.
         DbTestUtil.clear();
 
-        final UserRef owner = UserRef.builder().uuid(UUID.randomUUID().toString()).build();
-        storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider,
+        final UserRef owner = UserRef.forUserUuid(UUID.randomUUID().toString());
+        Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
+                .thenReturn(Optional.of(owner));
+
+        storedQueryDao = new StoredQueryDaoImpl(
+                storedQueryDbConnProvider,
                 new QueryJsonSerialiser(),
-                () -> uuid -> Optional.of(owner));
+                () -> userRefLookup);
 
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(
                 storedQueryDao,

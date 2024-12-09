@@ -418,6 +418,8 @@
     gap: 5px;
 }
 
+.userRefLinkCopy,
+.userRefLinkOpen,
 .docRefLinkCopy,
 .docRefLinkOpen,
 .commandLinkOpen {
@@ -2300,23 +2302,29 @@ button.main-menu svg {
     margin-bottom: 0px;
 }
 
+.userRefLinkContainer,
 .docRefLinkContainer,
 .commandLinkContainer {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
     align-items: center;
 }
 
+.userRefLinkContainer .svg-image.hoverIcon,
 .docRefLinkContainer .svg-image,
 .commandLinkContainer .svg-image {
     opacity: 0;
 }
 
 /* The icon gets displayed the same whether the row is disabled or not */
+.dataGridCell:hover .userRefLinkContainer .svg-image.hoverIcon,
 .dataGridCell:hover .docRefLinkContainer .svg-image,
+.userRefLinkContainer:hover .svg-image.hoverIcon,
 .docRefLinkContainer:hover .svg-image,
 .commandLinkContainer:hover .svg-image,
+.dataGridDisabledCell.dataGridCell:hover .userRefLinkContainer .svg-image,
 .dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridDisabledCell .userRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .docRefLinkContainer:hover .svg-image,
 .dataGridDisabledCell .commandLinkContainer:hover .svg-image {
     opacity: .8;

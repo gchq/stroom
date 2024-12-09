@@ -6,7 +6,7 @@ import java.util.Set;
 public enum UserScreen {
     USERS,
     USER,
-    USERS_AND_GROUPS,
+    USER_GROUPS,
     APP_PERMISSIONS,
     API_KEYS,
     ACCOUNTS,

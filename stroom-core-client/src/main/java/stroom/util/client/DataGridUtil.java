@@ -16,11 +16,14 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
+import stroom.data.client.presenter.UserRefCell;
+import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
@@ -29,6 +32,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeAction;
+import stroom.util.shared.UserRef;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
@@ -577,6 +581,45 @@ public class DataGridUtil {
                 cellExtractor,
                 Function.identity(),
                 () -> new PercentBarCell(warningThreshold, dangerThreshold));
+    }
+
+    /**
+     * A builder for creating a column for a {@link UserRef} with hover icons to copy the name of the doc
+     * and to open the user/group.
+     *
+     * @param cellExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, UserRefProvider<T_ROW>, UserRefProvider<T_ROW>, Cell<UserRefProvider<T_ROW>>> userRefColumnBuilder(
+            final Function<T_ROW, UserRef> cellExtractor,
+            final EventBus eventBus,
+            final ClientSecurityContext securityContext,
+            final UserRef.DisplayType displayType) {
+        return userRefColumnBuilder(cellExtractor, eventBus, securityContext, false, displayType);
+    }
+
+    /**
+     * A builder for creating a column for a {@link UserRef} with hover icons to copy the name of the doc
+     * and to open the user/group.
+     *
+     * @param cellExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, UserRefProvider<T_ROW>, UserRefProvider<T_ROW>, Cell<UserRefProvider<T_ROW>>> userRefColumnBuilder(
+            final Function<T_ROW, UserRef> cellExtractor,
+            final EventBus eventBus,
+            final ClientSecurityContext securityContext,
+            final boolean showIcon,
+            final UserRef.DisplayType displayType) {
+
+        Objects.requireNonNull(cellExtractor);
+
+        return new ColumnBuilder<>(
+                row -> new UserRefProvider<>(row, cellExtractor),
+                Function.identity(),
+                () -> new UserRefCell<>(eventBus, securityContext, showIcon, displayType, null));
     }
 
     /**

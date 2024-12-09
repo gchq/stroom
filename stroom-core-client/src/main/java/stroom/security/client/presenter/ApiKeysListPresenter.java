@@ -79,6 +79,7 @@ public class ApiKeysListPresenter
     private Map<Integer, HashedApiKey> apiKeys = new HashMap<>();
     private boolean isExternalIdp = false;
     private String filter;
+    private UserRef owner = null;
 
     @Inject
     public ApiKeysListPresenter(final EventBus eventBus,
@@ -272,7 +273,9 @@ public class ApiKeysListPresenter
 
         // Need manage users perm to CRUD keys for other users
         // If you don't have it no point in showing owner col
-        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+        // Also don't show it if this screen has been set with a single owner
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+            && owner == null) {
             final Column<HashedApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
                             (HashedApiKey row) ->
                                     row.getOwner().toDisplayString())
@@ -337,7 +340,7 @@ public class ApiKeysListPresenter
                                 (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildUserActionMenu(
                                         GwtNullSafe.get(hashedApiKey, HashedApiKey::getOwner),
                                         isExternalIdp(),
-                                        UserScreen.allExcept(UserScreen.API_KEYS),
+                                        getActionScreensToInclude(),
                                         this),
                                 this))
 //                .enabledWhen(User::isEnabled)
@@ -351,6 +354,14 @@ public class ApiKeysListPresenter
 
         dataGrid.getColumnSortList().push(expiresOnColumn);
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private Set<UserScreen> getActionScreensToInclude() {
+        // If single owner has been set, it means this screen is embedded in a user-centric one
+        // so allow jumping to the top level API keys screen
+        return owner != null
+                ? UserScreen.all()
+                : UserScreen.allExcept(UserScreen.API_KEYS);
     }
 
     private void fetchData(final Range range,
@@ -399,11 +410,26 @@ public class ApiKeysListPresenter
         onFilterChange(userInput);
     }
 
-    public void showUser(final UserRef userRef) {
-        if (userRef != null) {
+    /**
+     * Sets the quickFilter to filter on the passed user.
+     * Use this when jumping to the screen from one of the other security screens.
+     */
+    public void showUser(final UserRef owner) {
+        if (owner != null) {
             setQuickFilter(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME.getFilterQualifier()
-                           + ":" + userRef.getDisplayName());
+                           + ":" + owner.getDisplayName());
         }
+    }
+
+    /**
+     * Set the user so the screen can only show one user. No quick filter is set.
+     * Only use on an embedded Api keys list for ONE user.
+     */
+    public void setOwner(final UserRef owner) {
+        clear();
+        this.owner = owner;
+        criteriaBuilder.owner(owner);
+        refresh();
     }
 
     public void clear() {

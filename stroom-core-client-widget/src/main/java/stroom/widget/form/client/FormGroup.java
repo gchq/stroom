@@ -39,6 +39,7 @@ import java.util.Objects;
  *     <g:TextBox ui:field="textBox" addStyleNames="w-100"/>
  * </form:FormGroup>
  * }</pre>
+ * <p>If you have both helpText and a HelpHTML element, then helpText will be used.</p>
  * <p>
  * {@code formLabel} will be automatically added as a {@code <h4>} heading
  * at the top of the help popup.
@@ -131,6 +132,13 @@ public class FormGroup extends Composite implements HasWidgets {
     @SuppressWarnings("unused")
     public void setHelpText(final String helpText) {
         this.helpText = helpText;
+
+        // This allows us to have hard coded help in the ui.xml but override it
+        // using helpText, or set helpText back to null to use the hardcoded
+        // ui.xml content
+        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+            this.helpText = helpHTML.getHTML();
+        }
         updateHelpButton();
     }
 
@@ -193,10 +201,13 @@ public class FormGroup extends Composite implements HasWidgets {
                                             "Class: " + helpHTML.getClass().getName());
         }
         this.helpHTML = helpHTML;
-        this.helpText = this.helpHTML.getHTML();
         this.helpHTML.setStyleName("form-group-help");
-        updateHelpButton();
-        updateLabelPanel();
+
+        // helpText trumps helpHTML
+        if (GwtNullSafe.isBlankString(helpText)) {
+            this.helpText = this.helpHTML.getHTML();
+            updateHelpButton();
+        }
     }
 
     @Override

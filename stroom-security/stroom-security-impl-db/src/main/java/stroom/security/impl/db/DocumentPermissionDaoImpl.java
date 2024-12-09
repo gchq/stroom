@@ -14,6 +14,9 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -49,6 +52,8 @@ import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 import static stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GROUP;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionDaoImpl.class);
 
     private static final BitSet EMPTY = new BitSet(0);
     private static final PermissionDoc PERMISSION_DOC_SOURCE = new PermissionDoc("pd_source");
@@ -113,15 +118,20 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         Objects.requireNonNull(permission, "Null permission");
 
         final UByte permissionId = UByte.valueOf(permission.getPrimitiveValue());
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .insertInto(PERMISSION_DOC)
-                .columns(PERMISSION_DOC.DOC_UUID,
-                        PERMISSION_DOC.USER_UUID,
-                        PERMISSION_DOC.PERMISSION_ID)
-                .values(documentUuid, userUuid, permissionId)
-                .onDuplicateKeyUpdate()
-                .set(PERMISSION_DOC.PERMISSION_ID, permissionId)
-                .execute());
+        try {
+            JooqUtil.context(securityDbConnProvider, context -> context
+                    .insertInto(PERMISSION_DOC)
+                    .columns(PERMISSION_DOC.DOC_UUID,
+                            PERMISSION_DOC.USER_UUID,
+                            PERMISSION_DOC.PERMISSION_ID)
+                    .values(documentUuid, userUuid, permissionId)
+                    .onDuplicateKeyUpdate()
+                    .set(PERMISSION_DOC.PERMISSION_ID, permissionId)
+                    .execute());
+        } catch (Exception e) {
+            throw new RuntimeException("Error trying to upsert documentUuid: " + documentUuid
+                                       + ", userUuid: " + userUuid + ", permission: " + permission, e);
+        }
     }
 
     @Override
@@ -706,6 +716,25 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         }
 
         return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    int deletePermissionsForUser(final DSLContext context, final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        int totalCount = 0;
+        final int permDocCount = context.deleteFrom(PERMISSION_DOC)
+                .where(PERMISSION_DOC.USER_UUID.eq(userUuid))
+                .execute();
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for userUuid {}",
+                permDocCount, PERMISSION_DOC.getName(), userUuid));
+        totalCount += permDocCount;
+
+        final int permDocCreateCount = context.deleteFrom(PERMISSION_DOC_CREATE)
+                .where(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
+                .execute();
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for userUuid {}",
+                permDocCreateCount, PERMISSION_DOC.getName(), userUuid));
+        totalCount += permDocCreateCount;
+        return totalCount;
     }
 
     private DocumentPermission getHighestDocPermission(final String perms) {

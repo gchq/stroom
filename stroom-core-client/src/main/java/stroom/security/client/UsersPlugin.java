@@ -45,7 +45,7 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
             MenuKeys.addSecurityMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
-                            .priority(25)
+                            .priority(20)
                             .icon(ICON)
                             .text(SCREEN_NAME)
 //                            .action(getOpenAction())

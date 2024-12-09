@@ -1,11 +1,19 @@
 package stroom.security.impl.db;
 
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.query.shared.QueryDoc;
+import stroom.script.shared.ScriptDoc;
+import stroom.security.impl.AppPermissionDao;
+import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserInfo;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -15,7 +23,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -26,6 +36,10 @@ class TestUserDaoImpl {
 
     @Inject
     private UserDao userDao;
+    @Inject
+    private AppPermissionDao appPermissionDao;
+    @Inject
+    private DocumentPermissionDao documentPermissionDao;
     @Inject
     private SecurityDbConnProvider securityDbConnProvider;
 
@@ -215,17 +229,212 @@ class TestUserDaoImpl {
         final User user = createUser("foo", false);
         final User group = createUser("foo", true);
 
-        assertThat(userDao.getUserBySubjectId("foo").orElse(null)).isEqualTo(user);
-        assertThat(userDao.getGroupByName("foo").orElse(null)).isEqualTo(group);
+        assertThat(userDao.getUserBySubjectId("foo"))
+                .hasValue(user);
+        assertThat(userDao.getGroupByName("foo"))
+                .hasValue(group);
+    }
+
+    @Test
+    void delete_noMembership() {
+        final User user = createUser("foo", false);
+        final User group = createUser("group4", true);
+
+        UserInfo userInfo = userDao.getUserInfoByUserUuid(user.getUuid())
+                .orElseThrow();
+        assertThat(userInfo.getUuid())
+                .isEqualTo(user.getUuid());
+        assertThat(userInfo.getSubjectId())
+                .isEqualTo(user.getSubjectId());
+        assertThat(userInfo.getDisplayName())
+                .isEqualTo(user.getDisplayName());
+        assertThat(userInfo.getFullName())
+                .isEqualTo(user.getFullName());
+        assertThat(userInfo.isGroup())
+                .isEqualTo(user.isGroup());
+        assertThat(userInfo.isEnabled())
+                .isEqualTo(user.isEnabled());
+        assertThat(userInfo.isDeleted())
+                .isEqualTo(false);
+
+        userDao.deleteUser(user.getUuid());
+
+        final Optional<User> optUser = userDao.getByUuid(user.getUuid());
+        assertThat(optUser)
+                .isEmpty();
+
+        userInfo = userDao.getUserInfoByUserUuid(user.getUuid())
+                .orElseThrow();
+        assertThat(userInfo.getUuid())
+                .isEqualTo(user.getUuid());
+        assertThat(userInfo.getSubjectId())
+                .isEqualTo(user.getSubjectId());
+        assertThat(userInfo.getDisplayName())
+                .isEqualTo(user.getDisplayName());
+        assertThat(userInfo.getFullName())
+                .isEqualTo(user.getFullName());
+        assertThat(userInfo.isGroup())
+                .isEqualTo(user.isGroup());
+        assertThat(userInfo.isEnabled())
+                .isEqualTo(false);  // Has been deleted
+        assertThat(userInfo.isDeleted())
+                .isEqualTo(true); // Has been deleted
+    }
+
+    @Test
+    void delete_withMembershipAndPerms() {
+        final String docUuid1 = "doc1uuid";
+        final String docUuid2 = "doc2uuid";
+        final User user1 = createUser("foo", false);
+        final User user2 = createUser("bar", false);
+        final User group4 = createUser("group4", true);
+        final String uuid1 = user1.getUuid();
+        final String uuid2 = user2.getUuid();
+        final String uuid4 = group4.getUuid();
+
+        // Set up memberships
+        userDao.addUserToGroup(uuid1, uuid4);
+        userDao.addUserToGroup(uuid2, uuid4);
+
+        // Set up app perms
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.STEPPING_PERMISSION);
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.VIEW_DATA_PERMISSION);
+
+        appPermissionDao.addPermission(user2.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
+        appPermissionDao.addPermission(user2.getUuid(), AppPermission.MANAGE_TASKS_PERMISSION);
+
+        appPermissionDao.addPermission(group4.getUuid(), AppPermission.ADMINISTRATOR);
+        appPermissionDao.addPermission(group4.getUuid(), AppPermission.ANNOTATIONS);
+
+        // Set up doc perms
+        documentPermissionDao.setDocumentUserPermission(
+                docUuid1, uuid1, DocumentPermission.OWNER);
+        documentPermissionDao.setDocumentUserPermission(
+                docUuid2, uuid1, DocumentPermission.VIEW);
+        documentPermissionDao.setDocumentUserCreatePermissions(
+                docUuid1, uuid1, Set.of(DictionaryDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE));
+        documentPermissionDao.setDocumentUserCreatePermissions(
+                docUuid2, uuid1, Set.of(DictionaryDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE));
+
+        documentPermissionDao.setDocumentUserPermission(
+                docUuid1, uuid2, DocumentPermission.VIEW);
+        documentPermissionDao.setDocumentUserPermission(
+                docUuid2, uuid2, DocumentPermission.OWNER);
+        documentPermissionDao.setDocumentUserCreatePermissions(
+                docUuid1, uuid2, Set.of(DictionaryDoc.DOCUMENT_TYPE, QueryDoc.DOCUMENT_TYPE));
+        documentPermissionDao.setDocumentUserCreatePermissions(
+                docUuid2, uuid2, Set.of(DictionaryDoc.DOCUMENT_TYPE, QueryDoc.DOCUMENT_TYPE));
+
+
+        // Assert memberships pre-delete
+        assertThat(userDao.findUsersInGroup(uuid4, new FindUserCriteria()).getValues())
+                .containsExactlyInAnyOrder(user1, user2);
+
+        // Assert app perms pre-delete
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.STEPPING_PERMISSION,
+                        AppPermission.VIEW_DATA_PERMISSION);
+        assertThat(appPermissionDao.getPermissionsForUser(user2.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.CHANGE_OWNER_PERMISSION,
+                        AppPermission.MANAGE_TASKS_PERMISSION);
+        assertThat(appPermissionDao.getPermissionsForUser(group4.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.ADMINISTRATOR,
+                        AppPermission.ANNOTATIONS);
+
+        // Assert doc perms pre-delete
+        assertThat(documentPermissionDao.getPermissionsForUser(uuid1).getPermissions())
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        docUuid1, DocumentPermission.OWNER,
+                        docUuid2, DocumentPermission.VIEW));
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, uuid1))
+                .containsExactlyInAnyOrder(
+                        DictionaryDoc.DOCUMENT_TYPE,
+                        ScriptDoc.DOCUMENT_TYPE);
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, uuid1))
+                .containsExactlyInAnyOrder(
+                        DictionaryDoc.DOCUMENT_TYPE,
+                        ScriptDoc.DOCUMENT_TYPE);
+
+        final Runnable assertUser2Perms = () -> {
+            assertThat(documentPermissionDao.getPermissionsForUser(uuid2).getPermissions())
+                    .containsExactlyInAnyOrderEntriesOf(Map.of(
+                            docUuid1, DocumentPermission.VIEW,
+                            docUuid2, DocumentPermission.OWNER));
+            assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, uuid2))
+                    .containsExactlyInAnyOrder(
+                            DictionaryDoc.DOCUMENT_TYPE,
+                            QueryDoc.DOCUMENT_TYPE);
+            assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, uuid2))
+                    .containsExactlyInAnyOrder(
+                            DictionaryDoc.DOCUMENT_TYPE,
+                            QueryDoc.DOCUMENT_TYPE);
+        };
+        assertUser2Perms.run();
+
+        // Now delete the user
+        userDao.deleteUser(uuid1);
+
+        Optional<User> optUser = userDao.getByUuid(uuid1);
+        assertThat(optUser)
+                .isEmpty();
+
+        optUser = userDao.getByUuid(uuid2);
+        assertThat(optUser)
+                .isPresent();
+
+        // Assert memberships post-delete
+        assertThat(userDao.findUsersInGroup(uuid4, new FindUserCriteria()).getValues())
+                .containsExactlyInAnyOrder(user2);
+
+        // Assert app perms post-delete
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()))
+                .isEmpty();
+        assertThat(appPermissionDao.getPermissionsForUser(user2.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.CHANGE_OWNER_PERMISSION,
+                        AppPermission.MANAGE_TASKS_PERMISSION);
+        assertThat(appPermissionDao.getPermissionsForUser(group4.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.ADMINISTRATOR,
+                        AppPermission.ANNOTATIONS);
+
+        // Assert doc perms post-delete
+        assertThat(documentPermissionDao.getPermissionsForUser(uuid1).getPermissions())
+                .isEmpty();
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, uuid1))
+                .isEmpty();
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, uuid1))
+                .isEmpty();
+
+        assertUser2Perms.run();
     }
 
     private User createUser(final String name, boolean group) {
-        User user = User.builder()
+        User userOrGroup = User.builder()
                 .subjectId(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
                 .build();
-        AuditUtil.stamp(() -> "test", user);
-        return userDao.create(user);
+        AuditUtil.stamp(() -> "test", userOrGroup);
+        userDao.create(userOrGroup);
+
+        if (group) {
+            assertThat(userDao.getGroupByName(name))
+                    .hasValue(userOrGroup)
+                    .get()
+                    .extracting(User::isGroup)
+                    .isEqualTo(true);
+        } else {
+            assertThat(userDao.getUserBySubjectId(name))
+                    .hasValue(userOrGroup)
+                    .get()
+                    .extracting(User::isGroup)
+                    .isEqualTo(false);
+        }
+
+        return userOrGroup;
     }
 }

@@ -34,7 +34,7 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
 
         registerHandler(getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
             open(apiKeysPresenter ->
-                    apiKeysPresenter.showUser(event.getUserRef()));
+                    apiKeysPresenter.showOwner(event.getUserRef()));
         }));
     }
 
@@ -59,7 +59,7 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
     private void addMenuItem(final BeforeRevealMenubarEvent event) {
         final IconMenuItem apiKeysMenuItem;
         apiKeysMenuItem = new IconMenuItem.Builder()
-                .priority(3)
+                .priority(60)
                 .icon(ICON)
                 .text(SCREEN_NAME)
                 .action(getOpenAction())

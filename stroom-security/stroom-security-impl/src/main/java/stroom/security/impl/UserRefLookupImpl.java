@@ -21,4 +21,15 @@ public class UserRefLookupImpl implements UserRefLookup {
     public Optional<UserRef> getByUuid(final String userUuid) {
         return userCache.getByUuid(userUuid).map(User::asRef);
     }
+
+    @Override
+    public UserRef decorate(final UserRef userRef) {
+        if (userRef == null) {
+            return null;
+        } else {
+            return userCache.getByRef(userRef)
+                    .map(User::asRef)
+                    .orElse(userRef);
+        }
+    }
 }

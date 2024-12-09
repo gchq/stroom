@@ -61,7 +61,7 @@ public class ProcessorInfoBuilder {
             }
 
             if (filter.getMinMetaCreateTimeMs() != null ||
-                    filter.getMaxMetaCreateTimeMs() != null) {
+                filter.getMaxMetaCreateTimeMs() != null) {
                 if (filter.getMinMetaCreateTimeMs() != null) {
                     tb.row("Min Stream Create Ms",
                             ClientDateUtil.toISOString(filter.getMinMetaCreateTimeMs()));
@@ -75,7 +75,7 @@ public class ProcessorInfoBuilder {
 
             tb.row(SafeHtmlUtil.from("Id"), SafeHtmlUtil.from(filter.getId()));
             tb.row(SafeHtmlUtil.from("Run As User"), SafeHtmlUtil.from(
-                    GwtNullSafe.get(filter.getRunAsUser(), UserRef::toDisplayString)));
+                    GwtNullSafe.get(filter.getRunAsUser(), (UserRef ref) -> ref.toDisplayString())));
             tb.row("Created By", filter.getCreateUser());
             addRowDateString(tb, "Created On", filter.getCreateTimeMs());
             tb.row("Updated By", filter.getUpdateUser());

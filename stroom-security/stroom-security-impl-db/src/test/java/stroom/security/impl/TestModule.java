@@ -8,6 +8,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.security.impl.db.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;
+import stroom.security.mock.MockHasUserDependenciesModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockUserIdentityFactoryModule;
 import stroom.task.mock.MockTaskModule;
@@ -30,6 +31,7 @@ public class TestModule extends AbstractModule {
         install(new MockSecurityContextModule());
         install(new MockUserIdentityFactoryModule());
         install(new MockTaskModule());
+        install(new MockHasUserDependenciesModule());
 
         install(new MockCollectionModule());
         install(new MockDocRefInfoModule());

@@ -1,7 +1,7 @@
 package stroom.security.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.AppPermission;
@@ -38,7 +38,7 @@ class TestAppPermissionDaoImpl {
     @Inject
     private UserDao userDao;
     @Inject
-    private AppPermissionDao appPermissionDao;
+    private AppPermissionDaoImpl appPermissionDao;
     @Inject
     private SecurityDbConnProvider securityDbConnProvider;
 
@@ -225,6 +225,58 @@ class TestAppPermissionDaoImpl {
         assertThat(resultPage.size()).isEqualTo(2);
         validateAppPermissions(resultPage, "user1", Set.of(), Set.of(AppPermission.STEPPING_PERMISSION));
         validateAppPermissions(resultPage, "group1", Set.of(AppPermission.STEPPING_PERMISSION), Set.of());
+    }
+
+    @Test
+    void deletePermissionsForUser() {
+        final UserRef user1 = createUser("user1");
+        final UserRef user2 = createUser("user2");
+        final UserRef group4 = createGroup("group4");
+
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.STEPPING_PERMISSION);
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.VIEW_DATA_PERMISSION);
+
+        appPermissionDao.addPermission(user2.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
+        appPermissionDao.addPermission(user2.getUuid(), AppPermission.MANAGE_TASKS_PERMISSION);
+
+        appPermissionDao.addPermission(group4.getUuid(), AppPermission.ADMINISTRATOR);
+        appPermissionDao.addPermission(group4.getUuid(), AppPermission.ANNOTATIONS);
+
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.STEPPING_PERMISSION,
+                        AppPermission.VIEW_DATA_PERMISSION);
+
+        assertThat(appPermissionDao.getPermissionsForUser(user2.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.CHANGE_OWNER_PERMISSION,
+                        AppPermission.MANAGE_TASKS_PERMISSION);
+
+        assertThat(appPermissionDao.getPermissionsForUser(group4.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.ADMINISTRATOR,
+                        AppPermission.ANNOTATIONS);
+
+
+        final Integer delCount = JooqUtil.contextResult(securityDbConnProvider, context ->
+                appPermissionDao.deletePermissionsForUser(context, user2.getUuid()));
+
+        assertThat(delCount)
+                .isEqualTo(2);
+
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.STEPPING_PERMISSION,
+                        AppPermission.VIEW_DATA_PERMISSION);
+
+        assertThat(appPermissionDao.getPermissionsForUser(user2.getUuid()))
+                .isEmpty();
+
+        assertThat(appPermissionDao.getPermissionsForUser(group4.getUuid()))
+                .containsExactlyInAnyOrder(
+                        AppPermission.ADMINISTRATOR,
+                        AppPermission.ANNOTATIONS);
+
     }
 
     private void validateAppPermissions(final ResultPage<AppUserPermissions> resultPage,

@@ -2,8 +2,6 @@ package stroom.security.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.event.CloseContentEvent;
-import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -12,7 +10,6 @@ import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -63,15 +60,15 @@ public class UserPermissionsReportPlugin extends Plugin {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(3)
-                        .text("Monitoring")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.MONITORING_MENU)
-                        .build());
-
-        addChildItems(event);
+//        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
+//                new KeyedParentMenuItem.Builder()
+//                        .priority(3)
+//                        .text("Monitoring")
+//                        .menuItems(event.getMenuItems())
+//                        .menuKey(MenuKeys.MONITORING_MENU)
+//                        .build());
+//
+//        addChildItems(event);
     }
 
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
@@ -89,26 +86,26 @@ public class UserPermissionsReportPlugin extends Plugin {
     }
 
     public void open() {
-        userRefPopupPresenterProvider.get().show(userRef -> {
-            final UserPermissionReportPresenter presenter = userPermissionReportPresenterAsyncProvider.get();
-            presenter.setUserRef(userRef);
-            final CloseContentEvent.Handler closeHandler = (event) -> {
-                if (presenter instanceof CloseContentEvent.Handler) {
-                    final Callback callback = ok -> {
-                        event.getCallback().closeTab(ok);
-                    };
-
-                    ((CloseContentEvent.Handler) presenter)
-                            .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
-                } else {
-                    // Give the content manager the ok to close the tab.
-                    event.getCallback().closeTab(true);
-                }
-            };
-
-            // Tell the content manager to open the tab.
-            contentManager.open(closeHandler, presenter, presenter);
-        });
+//        userRefPopupPresenterProvider.get().show(userRef -> {
+//            final UserPermissionReportPresenter presenter = userPermissionReportPresenterAsyncProvider.get();
+//            presenter.setUserRef(userRef);
+//            final CloseContentEvent.Handler closeHandler = (event) -> {
+//                if (presenter instanceof CloseContentEvent.Handler) {
+//                    final Callback callback = ok -> {
+//                        event.getCallback().closeTab(ok);
+//                    };
+//
+//                    ((CloseContentEvent.Handler) presenter)
+//                            .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
+//                } else {
+//                    // Give the content manager the ok to close the tab.
+//                    event.getCallback().closeTab(true);
+//                }
+//            };
+//
+//            // Tell the content manager to open the tab.
+//            contentManager.open(closeHandler, presenter, presenter);
+//        });
     }
 
     protected AppPermission getRequiredAppPermission() {

@@ -19,71 +19,41 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- --------------------------------------------------
 
-DELIMITER $$
+-- An archive of the last known values of name, display_name, full_name and is_group for a given
+-- uuid. No constraint on name to allow for stroom_user records being deleted and re-used with
+-- a different uuid.
+CREATE TABLE IF NOT EXISTS `stroom_user_archive` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `display_name` varchar(255) NOT NULL,
+  `full_name` varchar(255) DEFAULT NULL,
+  `is_group` tinyint NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `stroom_user_archive_uuid_idx` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-DROP PROCEDURE IF EXISTS security_run_sql_v1 $$
-
--- DO NOT change this without reading the header!
-CREATE PROCEDURE security_run_sql_v1 (
-    p_sql_stmt varchar(1000)
-)
-BEGIN
-
-    SET @sqlstmt = p_sql_stmt;
-
-    SELECT CONCAT('Running sql: ', @sqlstmt);
-
-    PREPARE stmt FROM @sqlstmt;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
-END $$
-
--- --------------------------------------------------
-
-DROP PROCEDURE IF EXISTS security_add_column_v1$$
-
-CREATE PROCEDURE security_add_column_v1 (
-    p_table_name varchar(64),
-    p_column_name varchar(64),
-    p_column_type_info varchar(64) -- e.g. 'varchar(255) default NULL'
-)
-BEGIN
-    DECLARE object_count integer;
-
-    SELECT COUNT(1)
-    INTO object_count
-    FROM information_schema.columns
-    WHERE table_schema = database()
-    AND table_name = p_table_name
-    AND column_name = p_column_name;
-
-    IF object_count = 0 THEN
-        CALL security_run_sql_v1(CONCAT(
-            'alter table ', database(), '.', p_table_name,
-            ' add column ', p_column_name, ' ', p_column_type_info));
-    ELSE
-        SELECT CONCAT(
-            'Column ',
-            p_column_name,
-            ' already exists on table ',
-            database(),
-            '.',
-            p_table_name);
-    END IF;
-END $$
-
--- --------------------------------------------------
-
-DELIMITER ;
-
-CALL security_add_column_v1(
-    'stroom_user',
-    'deleted',
-    'tinyint NOT NULL DEFAULT 0');
-
-DROP PROCEDURE IF EXISTS security_add_column_v1;
-
-DROP PROCEDURE IF EXISTS security_run_sql_v1;
+-- Idempotent
+-- Populate the new table based on what we currently have in the stroom_user table
+INSERT INTO stroom_user_archive (
+    uuid,
+    name,
+    display_name,
+    full_name,
+    is_group)
+SELECT
+    su.uuid,
+    su.name,
+    su.display_name,
+    su.full_name,
+    su.is_group
+FROM stroom_user su
+ON DUPLICATE KEY UPDATE
+    uuid = su.uuid,
+    name = su.name,
+    display_name = su.display_name,
+    full_name = su.full_name,
+    is_group = su.is_group;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

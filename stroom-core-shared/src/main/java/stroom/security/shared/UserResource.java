@@ -4,6 +4,7 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +38,14 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
                       "Manage Users permission then they can see all users.",
             operationId = "findUsersByCriteria")
     ResultPage<User> find(@Parameter(description = "criteria", required = true) FindUserCriteria criteria);
+
+    @POST
+    @Path("/findDependencies")
+    @Operation(
+            summary = "Find the items that depend on this user",
+            operationId = "findUserDependenciesByCriteria")
+    ResultPage<UserDependency> findDependencies(
+            @Parameter(description = "criteria", required = false) FindUserDependenciesCriteria criteria);
 
     @GET
     @Path("/{userUuid}")

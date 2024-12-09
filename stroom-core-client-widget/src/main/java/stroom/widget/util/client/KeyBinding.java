@@ -531,6 +531,7 @@ public class KeyBinding {
         GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
         GOTO_USER_ACCOUNTS,
+        GOTO_USER_PROFILE,
         GOTO_USERS,
         GOTO_USER_GROUPS,
         GOTO_USER_PREFERENCES,

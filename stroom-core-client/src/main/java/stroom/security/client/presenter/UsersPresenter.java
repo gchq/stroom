@@ -18,6 +18,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+/**
+ * For managing all the users (not groups)
+ */
 public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
@@ -110,12 +113,12 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 //            editButton.setTitle("Edit " + getDescription(selected));
 //            editButton.setEnabled(true);
             deleteButton.setTitle("Delete " + getDescription(selected));
-//            deleteButton.setEnabled(true);
+            deleteButton.setEnabled(true);
         } else {
 //            editButton.setTitle("No Selection");
 //            editButton.setEnabled(false);
             deleteButton.setTitle("No Selection");
-//            deleteButton.setEnabled(false);
+            deleteButton.setEnabled(false);
         }
     }
 

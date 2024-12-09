@@ -26,6 +26,16 @@ import java.util.List;
  * Provide enums for the document permissions.
  */
 public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
+
+    // ************************* IMPORTANT!!!! *************************
+    // Any change to existing primitiveValues must be done in conjunction with a
+    // database migration as these values are held in the DB.
+    //
+    // Also, the primitiveValue is used to determine whether one permission is higher
+    // than another, so the enum values with the highest permission must have the
+    // highest primitiveValue.
+    // *****************************************************************
+
     /**
      * Users with owner permission can find, view/read/load, edit/update/save, delete
      * documents and change permissions.
@@ -58,12 +68,12 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
      */
     USE("Use", 10, PermissionType.NON_DESTRUCTIVE,
             "Only allow use of a document, " +
-                    "e.g. allow use of an index or feeds as part of a search process but do not allow viewing " +
-                    "of the document itself");
+            "e.g. allow use of an index or feeds as part of a search process but do not allow viewing " +
+            "of the document itself");
 
     public static final List<DocumentPermission> LIST = List.of(USE, VIEW, EDIT, DELETE, OWNER);
     public static final PrimitiveValueConverter<DocumentPermission> PRIMITIVE_VALUE_CONVERTER =
-            new PrimitiveValueConverter<>(values());
+            PrimitiveValueConverter.create(DocumentPermission.class, DocumentPermission.values());
 
     private final String displayValue;
     private final byte primitiveValue;
@@ -105,6 +115,10 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
     public boolean isHigher(final DocumentPermission permission) {
         return primitiveValue > permission.getPrimitiveValue();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum PermissionType {
         DESTRUCTIVE,

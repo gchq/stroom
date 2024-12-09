@@ -324,7 +324,7 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
         public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER =
-                new PrimitiveValueConverter<>(VolumeUseState.values());
+                PrimitiveValueConverter.create(VolumeUseState.class, VolumeUseState.values());
 
         private final String displayValue;
         private final byte primitiveValue;
@@ -460,12 +460,12 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     @Override
     public String toString() {
         return "IndexVolume{" +
-                "id=" + id +
-                ", path='" + path + '\'' +
-                ", nodeName='" + nodeName + '\'' +
-                ", state=" + state +
-                ", indexVolumeGroupId=" + indexVolumeGroupId +
-                '}';
+               "id=" + id +
+               ", path='" + path + '\'' +
+               ", nodeName='" + nodeName + '\'' +
+               ", state=" + state +
+               ", indexVolumeGroupId=" + indexVolumeGroupId +
+               '}';
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

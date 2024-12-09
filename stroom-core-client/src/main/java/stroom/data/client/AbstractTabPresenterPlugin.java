@@ -46,18 +46,18 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
     private final ContentManager contentManager;
     private final Provider<T> tabPresenterProvider;
 
-    AbstractTabPresenterPlugin(final EventBus eventBus,
-                               final ContentManager contentManager,
-                               final Provider<T> tabPresenterProvider) {
+    public AbstractTabPresenterPlugin(final EventBus eventBus,
+                                      final ContentManager contentManager,
+                                      final Provider<T> tabPresenterProvider) {
         super(eventBus);
         this.contentManager = contentManager;
         this.tabPresenterProvider = tabPresenterProvider;
     }
 
     /**
-     * @return The name of the presenter begin opened
+     * @return The name of the presenter being opened
      */
-    abstract String getName();
+    protected abstract String getName();
 
     /**
      * @param forceOpen            If false will not open the presenter if it is not already open
@@ -66,9 +66,9 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
      *                             it what content to display.
      * @return The
      */
-    Optional<T> openTabPresenter(final boolean forceOpen,
-                                 final K presenterKey,
-                                 final Consumer<T> tabPresenterConsumer) {
+    protected Optional<T> openTabPresenter(final boolean forceOpen,
+                                           final K presenterKey,
+                                           final Consumer<T> tabPresenterConsumer) {
 
         T tabPresenter = null;
         if (presenterKey == null) {

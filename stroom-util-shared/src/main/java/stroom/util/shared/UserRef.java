@@ -10,7 +10,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.function.Function;
 
+@SuppressWarnings("ClassCanBeRecord") // Cos GWT
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
         "uuid",
@@ -174,6 +176,13 @@ public final class UserRef {
                '}';
     }
 
+    public String toDisplayString(final DisplayType displayType) {
+        final Function<UserRef, String> displayTextFunc = GwtNullSafe.requireNonNullElse(
+                        displayType, DisplayType.AUTO)
+                .getDisplayTextFunc();
+        return displayTextFunc.apply(this);
+    }
+
     public String toDisplayString() {
         if (displayName != null) {
             return displayName;
@@ -217,6 +226,45 @@ public final class UserRef {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+    public enum DisplayType {
+        /**
+         * Displays the first non-null value in this order:
+         * <p>displayName</p>
+         * <p>SubjectId</p>
+         * <p>UUID surrounded in curly braces</p>
+         * <p></p>
+         * <p>This displayType is equivalent to calling {@link UserRef#toDisplayString()}</p>
+         */
+        AUTO(UserRef::toDisplayString, "value"),
+        UUID(UserRef::getUuid, "UUID"),
+        SUBJECT_ID(UserRef::getSubjectId, "unique ID"),
+        DISPLAY_NAME(UserRef::getDisplayName, "display name"),
+        FULL_NAME(UserRef::getFullName, "full name"),
+        ;
+
+        private final Function<UserRef, String> displayTextFunc;
+        private final String typeName;
+
+        DisplayType(final Function<UserRef, String> displayTextFunc,
+                    final String typeName) {
+            this.displayTextFunc = displayTextFunc;
+            this.typeName = typeName;
+        }
+
+        public Function<UserRef, String> getDisplayTextFunc() {
+            return displayTextFunc;
+        }
+
+        /**
+         * @return The name of the display type for use in UI text.
+         */
+        public String getTypeName() {
+            return typeName;
+        }
+    }
 
     // --------------------------------------------------------------------------------
 

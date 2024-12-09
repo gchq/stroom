@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
@@ -190,7 +189,7 @@ class SecurityContextImpl implements SecurityContext {
         final Set<AppPermission> userAppPermissions = userAppPermissionsCache.get(userRef);
         if (userAppPermissions != null) {
             return userAppPermissions.contains(permission) ||
-                    userAppPermissions.contains(AppPermission.ADMINISTRATOR);
+                   userAppPermissions.contains(AppPermission.ADMINISTRATOR);
         }
         return false;
     }
@@ -208,7 +207,7 @@ class SecurityContextImpl implements SecurityContext {
         // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then
         // test for `Use` instead of `Read`.
         final DocumentPermission perm = DocumentPermission.VIEW.equals(permission) &&
-                CurrentUserState.isElevatePermissions()
+                                        CurrentUserState.isElevatePermissions()
                 ? DocumentPermission.USE
                 : permission;
 
