@@ -143,7 +143,7 @@ public class ExpressionPredicateBuilder {
         if (Condition.IS_NULL.equals(condition)) {
             return IsNullPredicate.create(term, valueFunctionFactory.createNullCheck());
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
-            return IsNotNullPredicate.create(term, valueFunctionFactory.createNullCheck());
+            return NotPredicate.create(IsNullPredicate.create(term, valueFunctionFactory.createNullCheck()));
         }
 
         // Try and resolve the term value.
@@ -177,7 +177,7 @@ public class ExpressionPredicateBuilder {
                 return switch (term.getCondition()) {
                     case EQUALS -> StringEquals.create(term, stringExtractor);
                     case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
-                    case NOT_EQUALS -> StringNotEquals.create(term, stringExtractor);
+                    case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
                     case CONTAINS -> StringContains.create(term, stringExtractor);
                     case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
                     case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
@@ -201,7 +201,7 @@ public class ExpressionPredicateBuilder {
         final Function<T, Long> dateExtractor = valueFunctionFactory.createDateExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> DateEquals.create(term, dateExtractor, dateTimeSettings);
-            case NOT_EQUALS -> DateNotEquals.create(term, dateExtractor, dateTimeSettings);
+            case NOT_EQUALS -> NotPredicate.create(DateEquals.create(term, dateExtractor, dateTimeSettings));
             case GREATER_THAN -> DateGreaterThan.create(term, dateExtractor, dateTimeSettings);
             case GREATER_THAN_OR_EQUAL_TO -> DateGreaterThanOrEqualTo.create(term, dateExtractor, dateTimeSettings);
             case LESS_THAN -> DateLessThan.create(term, dateExtractor, dateTimeSettings);
@@ -222,7 +222,7 @@ public class ExpressionPredicateBuilder {
         final Function<T, BigDecimal> numExtractor = valueFunctionFactory.createNumberExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> NumericEquals.create(term, numExtractor);
-            case NOT_EQUALS -> NumericNotEquals.create(term, numExtractor);
+            case NOT_EQUALS -> NotPredicate.create(NumericEquals.create(term, numExtractor));
             case GREATER_THAN -> NumericGreaterThan.create(term, numExtractor);
             case GREATER_THAN_OR_EQUAL_TO -> NumericGreaterThanOrEqualTo.create(term, numExtractor);
             case LESS_THAN -> NumericLessThan.create(term, numExtractor);
@@ -384,6 +384,10 @@ public class ExpressionPredicateBuilder {
             return Optional.of(new NotPredicate<>(subPredicate));
         }
 
+        private static <T> Optional<Predicate<T>> create(final Optional<Predicate<T>> subPredicate) {
+            return subPredicate.map(NotPredicate::new);
+        }
+
         @Override
         public boolean test(final T values) {
             return !subPredicate.test(values);
@@ -425,27 +429,6 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class IsNotNullPredicate<T> extends ExpressionTermPredicate<T> {
-
-        private final Function<T, Boolean> nullCheckFunction;
-
-        private IsNotNullPredicate(final ExpressionTerm term,
-                                   final Function<T, Boolean> nullCheckFunction) {
-            super(term);
-            this.nullCheckFunction = nullCheckFunction;
-        }
-
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Boolean> nullCheckFunction) {
-            return Optional.of(new IsNotNullPredicate<>(term, nullCheckFunction));
-        }
-
-        @Override
-        public boolean test(final T values) {
-            return !nullCheckFunction.apply(values);
-        }
-    }
-
     private abstract static class NumericExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
         final BigDecimal termNum;
@@ -475,25 +458,6 @@ public class ExpressionPredicateBuilder {
         public boolean test(final T values) {
             final BigDecimal val = extractionFunction.apply(values);
             return Objects.equals(val, termNum);
-        }
-    }
-
-    private static class NumericNotEquals<T> extends NumericExpressionTermPredicate<T> {
-
-        private NumericNotEquals(final ExpressionTerm term,
-                                 final Function<T, BigDecimal> extractionFunction) {
-            super(term, extractionFunction);
-        }
-
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
-            return Optional.of(new NumericNotEquals<>(term, extractionFunction));
-        }
-
-        @Override
-        public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            return !Objects.equals(val, termNum);
         }
     }
 
@@ -681,27 +645,6 @@ public class ExpressionPredicateBuilder {
         }
     }
 
-    private static class DateNotEquals<T> extends DateExpressionTermPredicate<T> {
-
-        private DateNotEquals(final ExpressionTerm term,
-                              final Function<T, Long> extractionFunction,
-                              final DateTimeSettings dateTimeSettings) {
-            super(term, extractionFunction, dateTimeSettings);
-        }
-
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateNotEquals<>(term, extractionFunction, dateTimeSettings));
-        }
-
-        @Override
-        public boolean test(final T values) {
-            final Long val = extractionFunction.apply(values);
-            return !Objects.equals(val, termNum);
-        }
-    }
-
     private static class DateGreaterThan<T> extends DateExpressionTermPredicate<T> {
 
         private DateGreaterThan(final ExpressionTerm term,
@@ -882,33 +825,20 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
-            return Optional.of(new StringEquals<>(term, extractionFunction));
+
+            // See if this is a wildcard equals.
+            final String replaced = makePattern(term.getValue());
+            if (!Objects.equals(term.getValue(), replaced)) {
+                return Optional.of(new StringRegex<>(term, extractionFunction,
+                        Pattern.compile(replaced, Pattern.CASE_INSENSITIVE)));
+            }
+
+            return Optional.of(new StringEquals<T>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
             return string.equalsIgnoreCase(extractionFunction.apply(values));
-        }
-    }
-
-    private static class StringNotEquals<T> extends StringExpressionTermPredicate<T> {
-
-        private StringNotEquals(final ExpressionTerm term,
-                                final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
-        }
-
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            return Optional.of(new StringNotEquals<>(term, extractionFunction));
-        }
-
-        @Override
-        public boolean test(final T values) {
-            return !string.equalsIgnoreCase(extractionFunction.apply(values));
         }
     }
 
@@ -924,7 +854,15 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
-            return Optional.of(new StringEqualsCaseSensitive<>(term, extractionFunction));
+
+            // See if this is a wildcard equals.
+            final String replaced = makePattern(term.getValue());
+            if (!Objects.equals(term.getValue(), replaced)) {
+                return Optional.of(new StringRegex<>(term, extractionFunction,
+                        Pattern.compile(replaced)));
+            }
+
+            return Optional.of(new StringEqualsCaseSensitive<T>(term, extractionFunction));
         }
 
         @Override
@@ -951,6 +889,14 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
+
+            // See if this is a wildcard contains.
+            final String replaced = makePattern(term.getValue());
+            if (!Objects.equals(term.getValue(), replaced)) {
+                return Optional.of(new StringRegex<>(term, extractionFunction,
+                        Pattern.compile(".*" + replaced + ".*", Pattern.CASE_INSENSITIVE)));
+            }
+
             return Optional.of(new StringContains<>(term, extractionFunction));
         }
 
@@ -977,6 +923,14 @@ public class ExpressionPredicateBuilder {
             if (NullSafe.isBlankString(term.getValue())) {
                 return Optional.empty();
             }
+
+            // See if this is a wildcard contains.
+            final String replaced = makePattern(term.getValue());
+            if (!Objects.equals(term.getValue(), replaced)) {
+                return Optional.of(new StringRegex<>(term, extractionFunction,
+                        Pattern.compile(".*" + replaced + ".*")));
+            }
+
             return Optional.of(new StringContainsCaseSensitive<>(term, extractionFunction));
         }
 
@@ -1245,5 +1199,35 @@ public class ExpressionPredicateBuilder {
             }
             return false;
         }
+    }
+
+    public static String makePattern(final String value) {
+        int index = 0;
+        final char[] chars = value.toCharArray();
+        final char[] out = new char[chars.length * 2];
+        for (int i = 0; i < chars.length; i++) {
+            final char c = chars[i];
+            if (c == '\\') {
+                if (i < chars.length - 1) {
+                    final char c2 = chars[i + 1];
+                    if (c2 == '*' || c2 == '?') {
+                        out[index++] = c2;
+                        i++;
+                    } else {
+                        out[index++] = c;
+                    }
+                } else {
+                    out[index++] = c;
+                }
+            } else if (c == '*') {
+                out[index++] = '.';
+                out[index++] = c;
+            } else if (c == '?') {
+                out[index++] = '.';
+            } else {
+                out[index++] = c;
+            }
+        }
+        return new String(out, 0, index);
     }
 }

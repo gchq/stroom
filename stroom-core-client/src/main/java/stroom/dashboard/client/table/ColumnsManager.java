@@ -364,10 +364,13 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         }
 
         if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // focus from column filter textbox.
+            column.setColumnFilter(columnFilter);
+
             replaceColumn(column, column.copy().columnFilter(columnFilter).build());
             tablePresenter.setFocused(false);
             tablePresenter.setDirty(true);
-            tablePresenter.updateColumns();
             tablePresenter.onColumnFilterChange();
         }
     }

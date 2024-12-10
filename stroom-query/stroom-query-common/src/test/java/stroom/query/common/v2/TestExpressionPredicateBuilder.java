@@ -10,6 +10,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.filter.StringPredicateFactory;
 
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -363,6 +364,24 @@ class TestExpressionPredicateBuilder {
                                 "the cat sat on the mat"
                         ))
         ));
+    }
+
+    @Test
+    void testWildcardReplacement() {
+        testWildcardReplacement("this*", "this.*");
+        testWildcardReplacement("this?", "this.");
+        testWildcardReplacement("this\\*", "this*");
+        testWildcardReplacement("this\\?", "this?");
+        testWildcardReplacement("this\\", "this\\");
+        testWildcardReplacement("th*is", "th.*is");
+        testWildcardReplacement("th?is", "th.is");
+        testWildcardReplacement("th\\*is", "th*is");
+        testWildcardReplacement("th\\?is", "th?is");
+        testWildcardReplacement("th\\is", "th\\is");
+    }
+
+    private void testWildcardReplacement(final String in, final String expected) {
+        assertThat(ExpressionPredicateBuilder.makePattern(in)).isEqualTo(expected);
     }
 
     private void doStringMatchTest(final String userInput,
