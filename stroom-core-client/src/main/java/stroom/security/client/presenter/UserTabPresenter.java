@@ -2,9 +2,9 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserTabPresenter.UserTabView;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -13,7 +13,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
-import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
@@ -29,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserTabPresenter
-        extends ContentTabPresenter<UserTabView> {
+        extends ContentTabPresenter<LinkTabPanelView> {
 
     private static final String TAB_TYPE = "User";
 
@@ -75,7 +74,7 @@ public class UserTabPresenter
 
     @Inject
     public UserTabPresenter(final EventBus eventBus,
-                            final UserTabView view,
+                            final LinkTabPanelView view,
                             final UserInfoPresenter userInfoPresenter,
                             final ClientSecurityContext clientSecurityContext,
                             final Provider<UserPermissionReportPresenter> userPermsReportPresenterProvider,
@@ -235,12 +234,5 @@ public class UserTabPresenter
 
     public UserRef getUserRef() {
         return userRef;
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface UserTabView extends LinkTabsLayoutView {
-
     }
 }

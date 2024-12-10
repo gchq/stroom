@@ -59,7 +59,6 @@ import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
 import stroom.security.client.presenter.UserPermissionReportPresenter;
 import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
 import stroom.security.client.presenter.UserTabPresenter;
-import stroom.security.client.presenter.UserTabPresenter.UserTabView;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.client.view.ApiKeysViewImpl;
@@ -78,7 +77,6 @@ import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
 import stroom.security.client.view.UserInfoViewImpl;
 import stroom.security.client.view.UserPermissionReportViewImpl;
-import stroom.security.client.view.UserTabViewImpl;
 import stroom.security.client.view.UsersViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
@@ -166,10 +164,7 @@ public class SecurityModule extends PluginModule {
                 UserPermissionReportPresenter.class,
                 UserPermissionReportView.class,
                 UserPermissionReportViewImpl.class);
-        bindPresenterWidget(
-                UserTabPresenter.class,
-                UserTabView.class,
-                UserTabViewImpl.class);
+        bind(UserTabPresenter.class);
         bindPresenterWidget(
                 UserInfoPresenter.class,
                 UserInfoView.class,
