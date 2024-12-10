@@ -43,6 +43,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsView> {
@@ -67,6 +68,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private ButtonView addMembersInButton = null;
     private ButtonView removeMembersInButton = null;
+    private UserRef userRef = null;
 
     @Inject
     public UserAndGroupsPresenter(final EventBus eventBus,
@@ -84,6 +86,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userList.setName("userList");
         // Top pane doesn't need to link back to itself
         this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USER_GROUPS));
+        this.userList.setResultPageConsumer(userResultPage ->
+                onSelection());
 
         this.parentsList = userListPresenterProvider.get();
         // A parent can only be a group
@@ -219,44 +223,55 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }));
     }
 
+    private void setParentsListExtraTerm(final UserRef userRef) {
+        parentsList.setAdditionalTerm(ExpressionTerm
+                .builder()
+                .field(UserFields.PARENTS_OF.getFldName())
+                .condition(Condition.EQUALS)
+                .value(userRef.getUuid())
+                .build());
+        parentsList.refresh();
+
+        final StringBuilder parentLabel = new StringBuilder()
+                .append(userRef.getType(CaseType.SENTENCE))
+                .append(" \"")
+                .append(userRef.getDisplayName())
+                .append("\" is a member of:");
+        parentsList.getView().setLabel(parentLabel.toString());
+    }
+
+    private void setChildrenListAdditionalTerm(final UserRef userRef) {
+        childrenList.setAdditionalTerm(ExpressionTerm
+                .builder()
+                .field(UserFields.CHILDREN_OF.getFldName())
+                .condition(Condition.EQUALS)
+                .value(userRef.getUuid())
+                .build());
+        childrenList.refresh();
+
+        final StringBuilder childLabel = new StringBuilder();
+        if (userRef.isGroup()) {
+            childLabel.append("Members of group \"");
+            childLabel.append(userRef.getDisplayName());
+            childLabel.append("\":");
+        } else {
+            childLabel.append("No group selected");
+        }
+
+        childrenList.getView().setLabel(childLabel.toString());
+    }
+
     private void onSelection() {
         final User selected = userList.getSelectionModel().getSelected();
 //        GWT.log("onSelection - selected: " + selected);
+        onSelection(GwtNullSafe.get(selected, User::asRef));
+    }
+
+    private void onSelection(final UserRef selected) {
         if (selected != null) {
-            parentsList.setAdditionalTerm(ExpressionTerm
-                    .builder()
-                    .field(UserFields.PARENTS_OF.getFldName())
-                    .condition(Condition.EQUALS)
-                    .value(selected.getUuid())
-                    .build());
-            parentsList.refresh();
+            setParentsListExtraTerm(selected);
+            setChildrenListAdditionalTerm(selected);
 
-            final StringBuilder parentLabel = new StringBuilder()
-                    .append(selected.getType(CaseType.SENTENCE))
-                    .append(" \"")
-                    .append(selected.getDisplayName())
-                    .append("\" is a member of:");
-            parentsList.getView().setLabel(parentLabel.toString());
-            getView().setParentsVisible(true);
-
-            childrenList.setAdditionalTerm(ExpressionTerm
-                    .builder()
-                    .field(UserFields.CHILDREN_OF.getFldName())
-                    .condition(Condition.EQUALS)
-                    .value(selected.getUuid())
-                    .build());
-            childrenList.refresh();
-
-            final StringBuilder childLabel = new StringBuilder();
-            if (selected.isGroup()) {
-                childLabel.append("Members of group \"");
-                childLabel.append(selected.getDisplayName());
-                childLabel.append("\":");
-            } else {
-                childLabel.append("No group selected");
-            }
-
-            childrenList.getView().setLabel(childLabel.toString());
             getView().setParentsVisible(true);
             getView().setChildrenVisible(selected.isGroup());
 
@@ -388,9 +403,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         UserAndGroupHelper.onDelete(userList, restFactory, this);
     }
 
-    private static String getDescription(final User user) {
-        return user.getType(CaseType.LOWER)
-               + " '" + user.asRef().toDisplayString() + "'";
+    private static String getDescription(final UserRef userRef) {
+        return userRef.getType(CaseType.LOWER)
+               + " '" + userRef.toDisplayString() + "'";
     }
 
     public void refresh() {
@@ -439,11 +454,29 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         return "UsersAndGroups";
     }
 
+    /**
+     * Set the quick filter to filter on the desired user.
+     *
+     * @param userRef
+     */
     public void showUser(final UserRef userRef) {
-        userList.setResultPageConsumer(userResultPage -> {
-            onSelection();
-        });
         userList.showUser(userRef);
+    }
+
+    /**
+     * Set the specific user
+     *
+     * @param userRef
+     */
+    public void setUserRef(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+        this.userRef = userRef;
+
+        // Specific user so don't show the top pane
+        getView().setUserListVisible(false);
+
+        onSelection(userRef);
+
     }
 
 
@@ -451,6 +484,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
 
     public interface UserAndGroupsView extends View {
+
+        void setUserListVisible(boolean visible);
 
         void setUserList(View view);
 

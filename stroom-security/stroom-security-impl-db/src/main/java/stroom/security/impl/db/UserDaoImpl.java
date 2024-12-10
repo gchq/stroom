@@ -90,15 +90,18 @@ public class UserDaoImpl implements UserDao {
     // be exposed on the iface
     private final AppPermissionDaoImpl appPermissionDaoImpl;
     private final DocumentPermissionDaoImpl documentPermissionDaoImpl;
+    private final ApiKeyDaoImpl apiKeyDaoImpl;
 
     @Inject
     public UserDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
                        final ExpressionMapperFactory expressionMapperFactory,
                        final AppPermissionDaoImpl appPermissionDaoImpl,
-                       final DocumentPermissionDaoImpl documentPermissionDaoImpl) {
+                       final DocumentPermissionDaoImpl documentPermissionDaoImpl,
+                       final ApiKeyDaoImpl apiKeyDaoImpl) {
         this.securityDbConnProvider = securityDbConnProvider;
         this.appPermissionDaoImpl = appPermissionDaoImpl;
         this.documentPermissionDaoImpl = documentPermissionDaoImpl;
+        this.apiKeyDaoImpl = apiKeyDaoImpl;
 
         this.expressionMapper = expressionMapperFactory.create()
                 .map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, StringUtil::asBoolean)
@@ -517,7 +520,7 @@ public class UserDaoImpl implements UserDao {
                             "User with UUID '{}' does not exist", userUuid)));
 
             // First ensure the stroom_user_archive record is up-to-date before we delete
-            // the user
+            // the user, so we have the latest picture of the various names of the user.
             insertOrUpdateStroomUserArchiveRecord(txnContext, userUuid);
 
             // Now remove the user from any groups it is a member of
@@ -531,6 +534,9 @@ public class UserDaoImpl implements UserDao {
 
             count = documentPermissionDaoImpl.deletePermissionsForUser(txnContext, userUuid);
             LOGGER.debug("Removed {} doc permission records for user {}", count, userUuid);
+
+            count = apiKeyDaoImpl.deleteByOwner(txnContext, userUuid);
+            LOGGER.debug("Removed {} API key records for user {}", count, userUuid);
 
             count = txnContext.deleteFrom(STROOM_USER)
                     .where(STROOM_USER.UUID.eq(userUuid))

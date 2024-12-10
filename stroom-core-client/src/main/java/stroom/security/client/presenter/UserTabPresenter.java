@@ -65,6 +65,7 @@ public class UserTabPresenter
     private final LazyValue<UserDependenciesListPresenter> userDependenciesListPresenterLazyValue;
     private final LazyValue<ApiKeysPresenter> apiKeysListPresenterLazyValue;
     private final LazyValue<AppPermissionsEditPresenter> appPermissionsEditPresenterLazyValue;
+    private final LazyValue<UserAndGroupsPresenter> userAndGroupsPresenterLazyValue;
     private final List<TabData> tabs = new ArrayList<>();
 
     private UserRef userRef;
@@ -80,7 +81,8 @@ public class UserTabPresenter
                             final Provider<UserPermissionReportPresenter> userPermsReportPresenterProvider,
                             final Provider<UserDependenciesListPresenter> userDependenciesListPresenterProvider,
                             final Provider<ApiKeysPresenter> apiKeysListPresenterProvider,
-                            final Provider<AppPermissionsEditPresenter> appPermissionsEditPresenterProvider) {
+                            final Provider<AppPermissionsEditPresenter> appPermissionsEditPresenterProvider,
+                            final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
         super(eventBus, view);
         this.userInfoPresenter = userInfoPresenter;
         this.clientSecurityContext = clientSecurityContext;
@@ -104,11 +106,17 @@ public class UserTabPresenter
                 appPermissionsEditPresenter -> {
                     appPermissionsEditPresenter.setUserRef(getUserRef());
                 });
+        this.userAndGroupsPresenterLazyValue = new LazyValue<>(
+                userAndGroupsPresenterProvider,
+                userAndGroupsPresenter -> {
+                    userAndGroupsPresenter.setUserRef(userRef);
+                });
 
         final boolean hasManagerUsersPerm = clientSecurityContext.hasAppPermission(
                 AppPermission.MANAGE_USERS_PERMISSION);
 
         addTab(INFO_TAB);
+        addTab(USER_GROUPS_TAB);
         // It was decided that a user should not see their own app perms.
         if (hasManagerUsersPerm) {
             addTab(APP_PERMS_TAB);
@@ -157,6 +165,11 @@ public class UserTabPresenter
         if (INFO_TAB.equals(tab)) {
             userInfoPresenter.setUserRef(userRef);
             callback.onReady(userInfoPresenter);
+        } else if (USER_GROUPS_TAB.equals(tab)) {
+            final UserAndGroupsPresenter userAndGroupsPresenter
+                    = userAndGroupsPresenterLazyValue.getValue();
+            userAndGroupsPresenter.setUserRef(userRef);
+            callback.onReady(userAndGroupsPresenter);
         } else if (APP_PERMS_TAB.equals(tab)) {
             final AppPermissionsEditPresenter appPermissionsEditPresenter
                     = appPermissionsEditPresenterLazyValue.getValue();
@@ -207,7 +220,7 @@ public class UserTabPresenter
         this.userRef = userRef;
         this.label = GwtNullSafe.getOrElse(
                 userRef,
-                ref -> ref.getType(CaseType.SENTENCE) + " " + ref.toDisplayString(),
+                ref -> ref.getType(CaseType.SENTENCE) + ": " + ref.toDisplayString(),
                 "Unknown User/Group");
         userInfoPresenter.setUserRef(userRef);
         appPermissionsEditPresenterLazyValue.consumeIfInitialised(appPermissionsEditPresenter ->

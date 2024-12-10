@@ -231,12 +231,12 @@ public class UserListPresenter
                 .enabledWhen(User::isEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                 .build();
-        dataGrid.addAutoResizableColumn(
+        dataGrid.addResizableColumn(
                 displayNameCol,
                 DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip(displayNameTooltip)
                         .build(),
-                300);
+                ColumnSizeConstants.USER_DISPLAY_NAME_COL);
 
 //        final Column<User, User> displayNameCol = DataGridUtil.columnBuilder(
 //                        Function.identity(),
@@ -271,7 +271,7 @@ public class UserListPresenter
                                     ? "The full name of the user. Groups do not have a full name."
                                     : "The full name of the user.")
                             .build(),
-                    300);
+                    ColumnSizeConstants.USER_FULL_NAME_COL);
         }
 
         // Unique User ID
@@ -289,7 +289,7 @@ public class UserListPresenter
                     DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_UNIQUE_USER_ID)
                             .withToolTip("The unique user ID on the identity provider.")
                             .build(),
-                    350);
+                    ColumnSizeConstants.UUID_COL);
         }
 
         // Actions Menu btn

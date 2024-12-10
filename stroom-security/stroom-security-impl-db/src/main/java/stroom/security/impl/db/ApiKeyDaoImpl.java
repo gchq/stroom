@@ -31,6 +31,7 @@ import jakarta.inject.Singleton;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
@@ -285,6 +286,17 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     @Override
     public boolean delete(final int id) {
         return genericDao.delete(id);
+    }
+
+    int deleteByOwner(final DSLContext dslContext, final String userUuid) {
+        Objects.requireNonNull(userUuid);
+
+        final int delCount = dslContext.deleteFrom(API_KEY)
+                .where(API_KEY.FK_OWNER_UUID.eq(userUuid))
+                .execute();
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for userUuid {}",
+                delCount, API_KEY.getName(), userUuid));
+        return delCount;
     }
 
     @Override

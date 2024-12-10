@@ -129,32 +129,34 @@ public class UserAndGroupHelper {
         final User user = userListPresenter.getSelectionModel().getSelected();
         if (user != null) {
             final String userDescription = getDescription(user);
-            ConfirmEvent.fire(
-                    hasHandlers,
-                    "Are you sure you want to delete " + userDescription + "?"
-                    + "\n\nThis will also remove them from any groups that they are currently a member of."
-                    + "\nYou will not be permitted to delete them if any content has a dependency on them.",
-                    ok -> {
-                        if (ok) {
-                            restFactory
-                                    .create(USER_RESOURCE)
-                                    .method(resource -> resource.delete(user.getUuid()))
-                                    .onSuccess(didDelete -> {
-                                        if (didDelete) {
-                                            userListPresenter.getSelectionModel().clear(true);
-                                            userListPresenter.refresh();
-                                        }
-                                    })
-                                    .onFailure(error ->
-                                            AlertEvent.fireError(
-                                                    hasHandlers,
-                                                    "Error deleting " + userDescription,
-                                                    error.getMessage(),
-                                                    null))
-                                    .taskMonitorFactory(userListPresenter.getPagerView())
-                                    .exec();
-                        }
-                    });
+            final String msg = "Are you sure you want to permanently delete " + userDescription + "?"
+                               + "\n\nThis will also remove them from any groups that they are currently " +
+                               "a member of and delete any API keys they held. " +
+                               "Any documents that are solely owned by them will then only be " +
+                               "accessible by an administrator."
+                               + "\nYou will not be permitted to delete them if any content has a " +
+                               "dependency on them.";
+            ConfirmEvent.fire(hasHandlers, msg, ok -> {
+                if (ok) {
+                    restFactory
+                            .create(USER_RESOURCE)
+                            .method(resource -> resource.delete(user.getUuid()))
+                            .onSuccess(didDelete -> {
+                                if (didDelete) {
+                                    userListPresenter.getSelectionModel().clear(true);
+                                    userListPresenter.refresh();
+                                }
+                            })
+                            .onFailure(error ->
+                                    AlertEvent.fireError(
+                                            hasHandlers,
+                                            "Error deleting " + userDescription,
+                                            error.getMessage(),
+                                            null))
+                            .taskMonitorFactory(userListPresenter.getPagerView())
+                            .exec();
+                }
+            });
         }
     }
 
