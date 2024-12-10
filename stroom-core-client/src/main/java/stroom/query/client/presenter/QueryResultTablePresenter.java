@@ -318,6 +318,7 @@ public class QueryResultTablePresenter
     }
 
     public void onColumnFilterChange() {
+        reset();
         refresh();
         final QueryResultVisPresenter queryResultVisPresenter = this.queryResultVisPresenter;
         if (queryResultVisPresenter != null) {
