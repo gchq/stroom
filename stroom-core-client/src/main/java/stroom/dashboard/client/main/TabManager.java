@@ -24,6 +24,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -203,6 +204,7 @@ public class TabManager {
                     (EmbeddedQueryComponentSettings) embeddedQueryPresenter.getSettings();
             if (embeddedQueryComponentSettings.getQueryRef() != null) {
                 menuItems.add(createEditQuery(embeddedQueryPresenter));
+                menuItems.add(createRunQuery(embeddedQueryPresenter));
             }
         }
 
@@ -324,6 +326,16 @@ public class TabManager {
                 .icon(SvgImage.DOCUMENT_QUERY)
                 .text("Edit Query")
                 .command(embeddedQueryPresenter::editQuery)
+                .build();
+    }
+
+    private Item createRunQuery(final EmbeddedQueryPresenter embeddedQueryPresenter) {
+        return new IconMenuItem.Builder()
+                .priority(14)
+                .icon(SvgImage.PLAY)
+                .iconColour(IconColour.GREEN)
+                .text("Run Query")
+                .command(embeddedQueryPresenter::runQuery)
                 .build();
     }
 }

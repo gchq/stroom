@@ -349,6 +349,10 @@ public class EmbeddedQueryPresenter
         }
     }
 
+    public void runQuery() {
+        run(true, true);
+    }
+
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
