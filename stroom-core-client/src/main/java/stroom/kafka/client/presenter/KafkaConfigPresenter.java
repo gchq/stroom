@@ -146,4 +146,14 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     public String getType() {
         return KafkaConfigDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

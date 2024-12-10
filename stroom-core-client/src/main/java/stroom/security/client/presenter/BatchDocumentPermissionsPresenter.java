@@ -19,7 +19,8 @@ package stroom.security.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ShowDocumentPermissionsEvent;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.explorer.client.presenter.DocumentListPresenter;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.shared.FindResult;
@@ -172,7 +173,10 @@ public class BatchDocumentPermissionsPresenter
     private void onEdit() {
         final FindResult selected = documentListPresenter.getSelected();
         if (selected != null) {
-            ShowDocumentPermissionsEvent.fire(this, selected.getDocRef());
+//            ShowDocumentPermissionsEvent.fire(this, selected.getDocRef());
+            OpenDocumentEvent.builder(this, selected.getDocRef())
+                    .selectedTab(CommonDocLinkTab.PERMISSIONS)
+                    .fire();
         }
     }
 

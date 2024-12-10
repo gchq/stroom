@@ -159,4 +159,14 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     public String getType() {
         return XmlSchemaDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

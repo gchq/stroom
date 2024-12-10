@@ -103,4 +103,14 @@ public class AnalyticRulePresenter
     public String getType() {
         return AnalyticRuleDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

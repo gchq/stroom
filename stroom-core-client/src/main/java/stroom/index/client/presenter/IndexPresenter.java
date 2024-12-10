@@ -88,4 +88,14 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
     public String getType() {
         return LuceneIndexDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

@@ -187,4 +187,14 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     public String getType() {
         return DictionaryDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

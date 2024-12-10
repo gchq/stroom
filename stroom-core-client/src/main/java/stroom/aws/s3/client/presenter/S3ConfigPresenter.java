@@ -146,4 +146,14 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
     public String getType() {
         return S3ConfigDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

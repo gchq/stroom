@@ -137,7 +137,17 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
         return FeedDoc.DOCUMENT_TYPE;
     }
 
-//    @Override
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
+
+    //    @Override
 //    public boolean handleKeyAction(final Action action) {
 //        if (Action.DOCUMENTATION == action) {
 //            selectTab(DOCUMENTATION);

@@ -24,6 +24,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -98,7 +99,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     protected FolderRootPresenter createEditor() {
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
-                securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
+            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 
@@ -129,7 +130,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskMonitorFactory taskMonitorFactory) {
+                                final CommonDocLinkTab selectedTab, final TaskMonitorFactory taskMonitorFactory) {
         if (documentEditPresenter instanceof FolderRootPresenter) {
             ((FolderRootPresenter) documentEditPresenter).read();
         }

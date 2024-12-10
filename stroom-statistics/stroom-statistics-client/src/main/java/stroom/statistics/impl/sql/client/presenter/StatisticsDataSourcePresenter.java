@@ -94,4 +94,14 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     public String getType() {
         return StatisticStoreDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

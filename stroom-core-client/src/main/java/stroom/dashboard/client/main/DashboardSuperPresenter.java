@@ -130,4 +130,14 @@ public class DashboardSuperPresenter
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
         dashboardPresenter.setResultStoreInfo(resultStoreInfo);
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

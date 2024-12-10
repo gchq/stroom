@@ -91,4 +91,14 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     public String getType() {
         return ReceiveDataRules.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

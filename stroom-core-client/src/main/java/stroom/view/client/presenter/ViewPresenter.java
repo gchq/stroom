@@ -74,4 +74,14 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
     public String getType() {
         return ViewDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

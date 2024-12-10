@@ -74,4 +74,14 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     public String getType() {
         return ElasticClusterDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

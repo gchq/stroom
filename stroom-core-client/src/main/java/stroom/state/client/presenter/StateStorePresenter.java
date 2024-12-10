@@ -74,4 +74,14 @@ public class StateStorePresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     public String getType() {
         return StateDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

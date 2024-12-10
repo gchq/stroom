@@ -84,4 +84,14 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     public String getType() {
         return StroomStatsStoreDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

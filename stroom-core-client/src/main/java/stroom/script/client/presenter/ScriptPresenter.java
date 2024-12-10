@@ -119,4 +119,14 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     public String getType() {
         return ScriptDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

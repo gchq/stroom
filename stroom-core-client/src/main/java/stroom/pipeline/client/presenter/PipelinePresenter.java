@@ -163,4 +163,14 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     public ProcessorPresenter getProcessorPresenter() {
         return processorPresenter;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

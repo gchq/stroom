@@ -105,4 +105,14 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     public String getType() {
         return XsltDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

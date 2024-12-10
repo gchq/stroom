@@ -77,4 +77,14 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     public String getType() {
         return ElasticIndexDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

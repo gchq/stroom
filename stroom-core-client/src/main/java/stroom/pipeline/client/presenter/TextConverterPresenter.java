@@ -153,4 +153,14 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     public String getType() {
         return TextConverterDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }

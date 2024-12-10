@@ -74,4 +74,14 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     public String getType() {
         return VisualisationDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
 }
