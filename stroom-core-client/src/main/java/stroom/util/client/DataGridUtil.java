@@ -23,6 +23,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
@@ -674,14 +675,23 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
             final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
             final EventBus eventBus,
+            final DocumentTypes documentTypes,
             final boolean allowLinkByName,
+            final boolean showIcon,
+            final DocRef.DisplayType displayType,
             final Function<T_ROW, String> cssClassFunc,
             final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunc) {
 
         return new ColumnBuilder<>(
                 cellExtractor,
                 Function.identity(),
-                () -> new DocRefCell<>(eventBus, allowLinkByName, cssClassFunc, cellTextFunc));
+                () -> new DocRefCell<>(eventBus,
+                        documentTypes,
+                        allowLinkByName,
+                        showIcon,
+                        displayType,
+                        cssClassFunc,
+                        cellTextFunc));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(

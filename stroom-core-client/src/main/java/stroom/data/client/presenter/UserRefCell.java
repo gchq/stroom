@@ -154,7 +154,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
                 final String containerClasses = String.join(
                         " ",
                         HOVER_ICON_CONTAINER_CLASS_NAME,
-                        "userRefLinkContainer ");
+                        "userRefLinkContainer");
                 sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
 
                 if (showIcon) {

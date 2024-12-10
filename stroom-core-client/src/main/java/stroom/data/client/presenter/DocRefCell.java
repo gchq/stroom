@@ -3,7 +3,9 @@ package stroom.data.client.presenter;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EventCell;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -36,9 +38,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
     private static final String OPEN_CLASS_NAME = "docRefLinkOpen";
+    private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
+    private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
 
     private final EventBus eventBus;
+    private final DocumentTypes documentTypes;
     private final boolean allowLinkByName;
+    private final boolean showIcon;
+    private final DocRef.DisplayType displayType;
     private final Function<T_ROW, String> cssClassFunction;
     private final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction;
 
@@ -46,26 +53,49 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
 
     public DocRefCell(final EventBus eventBus,
                       final boolean allowLinkByName) {
-        this(eventBus, allowLinkByName, row -> "", null);
+        this(eventBus,
+                null,
+                allowLinkByName,
+                false,
+                DisplayType.NAME,
+                null,
+                null);
     }
 
     public DocRefCell(final EventBus eventBus,
                       final boolean allowLinkByName,
                       final Function<T_ROW, String> cssClassFunction) {
-        this(eventBus, allowLinkByName, cssClassFunction, null);
+        this(eventBus,
+                null,
+                allowLinkByName,
+                false,
+                DisplayType.NAME,
+                cssClassFunction,
+                null);
     }
 
+    /**
+     * @param documentTypes    Must be non-null to show the icon. Can be null.
+     * @param showIcon         Set to true to show the type icon next to the text
+     * @param cssClassFunction Can be null. Function to provide additional css class names.
+     * @param cellTextFunction Can be null. Function to provide the cell 'text' in HTML form. If null
+     *                         then displayType will be used to derive the text from the {@link DocRef}.
+     */
     public DocRefCell(final EventBus eventBus,
+                      final DocumentTypes documentTypes,
                       final boolean allowLinkByName,
+                      final boolean showIcon,
+                      final DocRef.DisplayType displayType,
                       final Function<T_ROW, String> cssClassFunction,
                       final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction) {
         super(MOUSEDOWN);
+        this.documentTypes = documentTypes;
         this.eventBus = eventBus;
         this.allowLinkByName = allowLinkByName;
+        this.showIcon = showIcon;
+        this.displayType = displayType;
         this.cssClassFunction = cssClassFunction;
-        this.cellTextFunction = GwtNullSafe.requireNonNullElseGet(
-                cellTextFunction,
-                () -> this::getTextFromDocRef);
+        this.cellTextFunction = cellTextFunction;
 
         if (template == null) {
             template = GWT.create(Template.class);
@@ -78,7 +108,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 0, 5) ||
-                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5);
+                   ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5);
         }
         return false;
     }
@@ -127,8 +157,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final SafeHtml cellText = cellTextFunction.apply(value);
-            final DocRef docRef = value.getDocRef();
+            final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
+            final SafeHtml cellHtmlText;
+            if (cellTextFunction != null) {
+                cellHtmlText = cellTextFunction.apply(value);
+            } else {
+                cellHtmlText = getTextFromDocRef(value);
+            }
+
             String cssClasses = "docRefLinkText";
             if (cssClassFunction != null) {
                 final String additionalClasses = cssClassFunction.apply(value.getRow());
@@ -136,21 +172,47 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
                     cssClasses += " " + additionalClasses;
                 }
             }
-            final SafeHtml textDiv = template.div(cssClasses, cellText);
+            final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
 
-            sb.appendHtmlConstant("<div class=\"docRefLinkContainer\">");
+            final String containerClasses = String.join(
+                    " ",
+                    HOVER_ICON_CONTAINER_CLASS_NAME,
+                    "docRefLinkContainer");
+
+            sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
+            if (showIcon && documentTypes != null && docRef != null) {
+                final String iconTitle = docRef.getType();
+
+                final SvgImage svgImage = documentTypes.getDocumentType(docRef.getType()).getIcon();
+
+                final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
+                        iconTitle,
+                        svgImage,
+                        ICON_CLASS_NAME,
+                        "deocRefLinkIcon");
+                sb.append(iconDiv);
+            }
+
             sb.append(textDiv);
 
             // This DocRefCell gets used for pipeline props which sometimes are a docRef
             // and other times just a simple string
             if (docRef != null) {
-                final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_CLASS_NAME, COPY_CLASS_NAME);
+                final SafeHtml copy = SvgImageUtil.toSafeHtml(
+                        SvgImage.COPY,
+                        ICON_CLASS_NAME,
+                        COPY_CLASS_NAME,
+                        HOVER_ICON_CLASS_NAME);
                 sb.append(template.divWithToolTip(
                         "Copy name '" + docRef.getName() + "' to clipboard",
                         copy));
 
                 if (docRef.getUuid() != null || allowLinkByName) {
-                    final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME);
+                    final SafeHtml open = SvgImageUtil.toSafeHtml(
+                            SvgImage.OPEN,
+                            ICON_CLASS_NAME,
+                            OPEN_CLASS_NAME,
+                            HOVER_ICON_CLASS_NAME);
                     sb.append(template.divWithToolTip(
                             "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
                             open));
@@ -165,18 +227,21 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         final DocRef docRef = docRefProvider.getDocRef();
         return GwtNullSafe.getOrElseGet(
                 docRef,
-                DocRefCell::getTextFromDocRef,
+                docRef1 -> getTextFromDocRef(docRef1, displayType),
                 SafeHtmlUtils::fromString,
                 () -> SafeHtmlUtils.EMPTY_SAFE_HTML);
     }
 
     public static String getTextFromDocRef(final DocRef docRef) {
-        if (!GwtNullSafe.isBlankString(docRef.getName())) {
-            return docRef.getName();
-        } else if (!GwtNullSafe.isBlankString(docRef.getUuid())) {
-            return docRef.getUuid();
+        return getTextFromDocRef(docRef, DisplayType.AUTO);
+    }
+
+    public static String getTextFromDocRef(final DocRef docRef, final DisplayType displayType) {
+        if (docRef == null) {
+            return null;
+        } else {
+            return docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
         }
-        return null;
     }
 
 

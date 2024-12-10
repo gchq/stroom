@@ -1,24 +1,24 @@
 package stroom.explorer.client.presenter;
 
-import stroom.cell.info.client.SvgCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
 import stroom.explorer.client.event.FocusEvent;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest.Builder;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
-import stroom.svg.client.Preset;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -53,48 +53,53 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     @Inject
     public DocumentPermissionsListPresenter(final EventBus eventBus,
                                             final PagerView view,
-                                            final RestFactory restFactory) {
+                                            final RestFactory restFactory,
+                                            final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         getView().setDataWidget(dataGrid);
-        addColumns();
+        documentTypeCache.fetch(this::addColumns, this);
     }
 
-    private void addColumns() {
+    private void addColumns(final DocumentTypes documentTypes) {
         // Icon
-        final Column<FindResultWithPermissions, Preset> iconCol =
-                new Column<FindResultWithPermissions, Preset>(new SvgCell()) {
-                    @Override
-                    public Preset getValue(final FindResultWithPermissions row) {
-                        if (row != null && row.getFindResult() != null && row.getFindResult().getIcon() != null) {
-                            return new Preset(
-                                    row.getFindResult().getIcon(),
-                                    row.getFindResult().getDocRef().getType(),
-                                    true);
-                        }
-                        return null;
-                    }
-                };
-        iconCol.setSortable(true);
-        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
+//        final Column<FindResultWithPermissions, Preset> iconCol =
+//                new Column<FindResultWithPermissions, Preset>(new SvgCell()) {
+//                    @Override
+//                    public Preset getValue(final FindResultWithPermissions row) {
+//                        if (row != null && row.getFindResult() != null && row.getFindResult().getIcon() != null) {
+//                            return new Preset(
+//                                    row.getFindResult().getIcon(),
+//                                    row.getFindResult().getDocRef().getType(),
+//                                    true);
+//                        }
+//                        return null;
+//                    }
+//                };
+//        iconCol.setSortable(true);
+//        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
 
         // Display Name
-        final Column<FindResultWithPermissions, String> nameCol =
-                new Column<FindResultWithPermissions, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final FindResultWithPermissions row) {
-                        return GwtNullSafe.get(
-                                row,
-                                FindResultWithPermissions::getFindResult,
-                                FindResult::getDocRef,
-                                DocRef::getDisplayValue);
-                    }
-                };
-        nameCol.setSortable(true);
-        dataGrid.addResizableColumn(nameCol, "Document Name", 400);
+        final Column<FindResultWithPermissions, DocRefProvider<FindResultWithPermissions>> docNameCol =
+                DataGridUtil.docRefColumnBuilder(
+                                (FindResultWithPermissions row) ->
+                                        new DocRefProvider<>(row, row2 -> GwtNullSafe.get(
+                                                row2,
+                                                FindResultWithPermissions::getFindResult,
+                                                FindResult::getDocRef)),
+                                getEventBus(),
+                                documentTypes,
+                                false,
+                                true,
+                                DisplayType.NAME,
+                                null,
+                                null)
+                        .build();
+
+        dataGrid.addResizableColumn(docNameCol, "Document", 400);
 
         // Permission
         final Column<FindResultWithPermissions, String> fullNameCol =

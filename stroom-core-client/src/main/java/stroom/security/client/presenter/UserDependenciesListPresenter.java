@@ -7,16 +7,14 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
-import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -167,25 +165,25 @@ public class UserDependenciesListPresenter
         DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
 
         // Doc type icon col
-        dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(
-                                false,
-                                (UserDependency row) -> {
-                                    final String documentType = GwtNullSafe.get(
-                                            row,
-                                            UserDependency::getDocRef,
-                                            DocRef::getType);
-                                    if (documentType != null) {
-                                        return GwtNullSafe.get(documentTypes.getDocumentType(documentType),
-                                                DocumentType::getIcon,
-                                                svg -> new Preset(svg, documentType, true));
-                                    } else {
-                                        return null;
-                                    }
-                                })
-                        .build(),
-                "</br>",
-                ColumnSizeConstants.ICON_COL);
+//        dataGrid.addColumn(
+//                DataGridUtil.svgPresetColumnBuilder(
+//                                false,
+//                                (UserDependency row) -> {
+//                                    final String documentType = GwtNullSafe.get(
+//                                            row,
+//                                            UserDependency::getDocRef,
+//                                            DocRef::getType);
+//                                    if (documentType != null) {
+//                                        return GwtNullSafe.get(documentTypes.getDocumentType(documentType),
+//                                                DocumentType::getIcon,
+//                                                svg -> new Preset(svg, documentType, true));
+//                                    } else {
+//                                        return null;
+//                                    }
+//                                })
+//                        .build(),
+//                "</br>",
+//                ColumnSizeConstants.ICON_COL);
 
         // Doc name col
         final Column<UserDependency, DocRefProvider<UserDependency>> docNameCol = DataGridUtil.docRefColumnBuilder(
@@ -194,7 +192,11 @@ public class UserDependenciesListPresenter
                                         row,
                                         row2 -> new DocRefProvider<>(row2, UserDependency::getDocRef)),
                         getEventBus(),
+                        documentTypes,
                         false,
+                        true,
+                        DisplayType.NAME,
+                        null,
                         null)
                 .withSorting(FindUserDependenciesCriteria.FIELD_DOC_NAME)
                 .build();

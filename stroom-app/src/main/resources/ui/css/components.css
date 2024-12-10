@@ -2311,21 +2311,21 @@ button.main-menu svg {
 }
 
 .userRefLinkContainer .svg-image.hoverIcon,
-.docRefLinkContainer .svg-image,
+.docRefLinkContainer .svg-image.hoverIcon,
 .commandLinkContainer .svg-image {
     opacity: 0;
 }
 
 /* The icon gets displayed the same whether the row is disabled or not */
 .dataGridCell:hover .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridCell:hover .docRefLinkContainer .svg-image.hoverIcon,
 .userRefLinkContainer:hover .svg-image.hoverIcon,
-.docRefLinkContainer:hover .svg-image,
+.docRefLinkContainer:hover .svg-image.hoverIcon,
 .commandLinkContainer:hover .svg-image,
 .dataGridDisabledCell.dataGridCell:hover .userRefLinkContainer .svg-image,
 .dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
 .dataGridDisabledCell .userRefLinkContainer:hover .svg-image.hoverIcon,
-.dataGridDisabledCell .docRefLinkContainer:hover .svg-image,
+.dataGridDisabledCell .docRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .commandLinkContainer:hover .svg-image {
     opacity: .8;
     color: var(--text-color);

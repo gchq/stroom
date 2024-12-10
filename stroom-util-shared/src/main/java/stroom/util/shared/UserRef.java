@@ -229,6 +229,7 @@ public final class UserRef {
 
     // --------------------------------------------------------------------------------
 
+
     public enum DisplayType {
         /**
          * Displays the first non-null value in this order:
