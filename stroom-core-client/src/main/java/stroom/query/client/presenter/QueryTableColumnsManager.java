@@ -158,7 +158,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
     public void resizeColumn(final int colIndex, final int size) {
         final Column column = getColumn(colIndex);
         if (column != null) {
-            replaceColumn(column, column.copy().width(size).build());
+            final List<Column> newColumns = replaceColumn(column, column.copy().width(size).build());
+            tablePresenter.updateColumns(newColumns);
             tablePresenter.setDirty(true);
         }
     }
@@ -170,7 +171,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         if (direction == null) {
             if (column.getSort() != null) {
                 final int order = column.getSort().getOrder();
-                replaceColumn(column, column.copy().sort(null).build());
+                final List<Column> newColumns = replaceColumn(column, column.copy().sort(null).build());
+                tablePresenter.updateColumns(newColumns);
                 increaseSortOrder(columns, order);
                 change = true;
             }
@@ -179,7 +181,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
             if (sort == null) {
                 final int lowestSortOrder = getLowestSortOrder(columns);
                 final Sort newSort = new Sort(lowestSortOrder + 1, direction);
-                replaceColumn(column, column.copy().sort(newSort).build());
+                final List<Column> newColumns = replaceColumn(column, column.copy().sort(newSort).build());
+                tablePresenter.updateColumns(newColumns);
                 change = true;
             } else {
                 final int lowestSortOrder = getLowestSortOrder(columns);
@@ -190,7 +193,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
                     increaseSortOrder(columns, column.getSort().getOrder());
 
                     final Sort newSort = new Sort(lowestSortOrder, direction);
-                    replaceColumn(column, column.copy().sort(newSort).build());
+                    final List<Column> newColumns = replaceColumn(column, column.copy().sort(newSort).build());
+                    tablePresenter.updateColumns(newColumns);
 
                     change = true;
                 }
@@ -222,14 +226,16 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
             final Sort sort = column.getSort();
             if (sort != null && sort.getOrder() > order) {
                 final Sort newSort = new Sort(sort.getOrder() - 1, sort.getDirection());
-                replaceColumn(column, column.copy().sort(newSort).build());
+                final List<Column> newColumns = replaceColumn(column, column.copy().sort(newSort).build());
+                tablePresenter.updateColumns(newColumns);
             }
         }
     }
 
     public void showFormat(final Column column) {
-        formatPresenter.show(column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
+        formatPresenter.show(column, (oldColumn, newColumn) -> {
+            final List<Column> newColumns = replaceColumn(oldColumn, newColumn);
+            tablePresenter.updateColumns(newColumns);
             tablePresenter.setDirty(true);
             tablePresenter.refresh();
         });
@@ -237,8 +243,9 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 
     private void filterColumn(final Column column) {
         columnFilterPresenter.setColumnFilter(column.getColumnFilter());
-        columnFilterPresenter.show(column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
+        columnFilterPresenter.show(column, (oldColumn, newColumn) -> {
+            final List<Column> newColumns = replaceColumn(oldColumn, newColumn);
+            tablePresenter.updateColumns(newColumns);
             tablePresenter.setDirty(true);
 //            tablePresenter.updateColumns();
             tablePresenter.onColumnFilterChange();
@@ -265,7 +272,7 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 //        tablePresenter.updateColumns(columns);
     }
 
-    private void replaceColumn(final Column oldColumn, final Column newColumn) {
+    private List<Column> replaceColumn(final Column oldColumn, final Column newColumn) {
         final List<Column> columns = new ArrayList<>();
         for (final Column column : getColumns()) {
             if (column.getId().equals(oldColumn.getId())) {
@@ -276,8 +283,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
                 columns.add(column);
             }
         }
-        tablePresenter.updateColumns(columns);
         tablePresenter.setPreferredColumns(columns);
+        return columns;
     }
 
     @Override
@@ -290,6 +297,10 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         }
 
         if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // focus from column filter textbox.
+            column.setColumnFilter(columnFilter);
+
             if (columnFilter != null &&
                 GwtNullSafe.isNonBlankString(columnFilter.getFilter())) {
                 if (tablePresenter.getQueryTablePreferences() != null &&
@@ -319,7 +330,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
 //    }
 
     private void showColumn(final Column column) {
-        replaceColumn(column, column.copy().visible(true).build());
+        final List<Column> newColumns = replaceColumn(column, column.copy().visible(true).build());
+        tablePresenter.updateColumns(newColumns);
 //        tablePresenter.setDirty(true);
 //        tablePresenter.updateColumns(columns);
     }
@@ -328,7 +340,8 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         if (getVisibleColumnCount() <= 1) {
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
-            replaceColumn(column, column.copy().visible(false).build());
+            final List<Column> newColumns = replaceColumn(column, column.copy().visible(false).build());
+            tablePresenter.updateColumns(newColumns);
 //            tablePresenter.setDirty(true);
 //            tablePresenter.updateColumns();
         }

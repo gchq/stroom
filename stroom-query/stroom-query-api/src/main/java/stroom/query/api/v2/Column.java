@@ -87,7 +87,7 @@ public final class Column implements HasDisplayValue {
     @JsonProperty
     private final Boolean special;
     @JsonProperty
-    private final ColumnFilter columnFilter;
+    private ColumnFilter columnFilter;
 
     @JsonCreator
     public Column(@JsonProperty("id") final String id,
@@ -168,6 +168,11 @@ public final class Column implements HasDisplayValue {
 
     public ColumnFilter getColumnFilter() {
         return columnFilter;
+    }
+
+    // Required to replace column filter in place without re-rendering table columns.
+    public void setColumnFilter(final ColumnFilter columnFilter) {
+        this.columnFilter = columnFilter;
     }
 
     @JsonIgnore
