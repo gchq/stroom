@@ -71,6 +71,7 @@ public class AnalyticNotificationEditPresenter
             if (extendedUiConfig != null) {
                 if (config != null) {
                     notificationUUID = config.getUuid();
+                    getView().setEnabled(config.isEnabled());
                     getView().setLimitNotifications(config.isLimitNotifications());
                     getView().setMaxNotifications(config.getMaxNotifications());
                     getView().setResumeAfter(config.getResumeAfter());
@@ -149,6 +150,7 @@ public class AnalyticNotificationEditPresenter
         return NotificationConfig
                 .builder()
                 .uuid(notificationUUID)
+                .enabled(getView().isEnabled())
                 .limitNotifications(getView().isLimitNotifications())
                 .maxNotifications(getView().getMaxNotifications())
                 .resumeAfter(getView().getResumeAfter())
@@ -184,6 +186,11 @@ public class AnalyticNotificationEditPresenter
     }
 
     public interface AnalyticNotificationEditView extends View, HasUiHandlers<DirtyUiHandlers> {
+
+
+        boolean isEnabled();
+
+        void setEnabled(boolean enabled);
 
         boolean isLimitNotifications();
 
