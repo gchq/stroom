@@ -6,6 +6,7 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserRef;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -64,10 +65,10 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @DELETE
     @Path("{userUuid}")
     @Operation(
-            summary = "Delete the user with the supplied UUID",
+            summary = "Delete the user with the supplied UserRef",
             operationId = "deleteUser")
     @NotNull
-    boolean delete(@PathParam("userUuid") String userUuid);
+    boolean delete(@PathParam("userRef") UserRef userRef);
 
     @POST
     @Path("/createGroup")
@@ -101,7 +102,7 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @PUT
     @Path("/{userUuid}/{groupUuid}")
     @Operation(
-            summary = "Adds user with UUID userUuid to the group with UUID groupUuid",
+            summary = "Adds user/group with UUID userUuid to the group with UUID groupUuid",
             operationId = "addUserToGroup")
     Boolean addUserToGroup(@PathParam("userUuid") String userUuid,
                            @PathParam("groupUuid") String groupUuid);
@@ -109,7 +110,7 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
     @Operation(
-            summary = "Removes user with UUID userUuid from the group with UUID groupUuid",
+            summary = "Removes user/group with UUID userUuid from the group with UUID groupUuid",
             operationId = "removeUserFromGroup")
     Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
                                 @PathParam("groupUuid") String groupUuid);

@@ -27,6 +27,8 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
+import stroom.storedquery.api.StoredQueryService;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -65,6 +67,8 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     private final Map<String, Provider<HasUserDependencies>> hasUserDependenciesProviderMap;
     private final UserCache userCache;
     private final DocRefInfoService docRefInfoService;
+    private final StoredQueryService storedQueryService;
+    private final UserPreferencesService userPreferencesService;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
@@ -72,13 +76,17 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     final PermissionChangeEventBus permissionChangeEventBus,
                     final Map<String, Provider<HasUserDependencies>> hasDependenciesSet,
                     final UserCache userCache,
-                    final DocRefInfoService docRefInfoService) {
+                    final DocRefInfoService docRefInfoService,
+                    final StoredQueryService storedQueryService,
+                    final UserPreferencesService userPreferencesService) {
         this.securityContext = securityContext;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
         this.hasUserDependenciesProviderMap = hasDependenciesSet;
         this.userCache = userCache;
         this.docRefInfoService = docRefInfoService;
+        this.storedQueryService = storedQueryService;
+        this.userPreferencesService = userPreferencesService;
     }
 
     @Override
@@ -98,7 +106,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
-                        fireUserChangeEvent(persistedUser.getUuid());
+                        fireUserChangeEvent(persistedUser.asRef());
                         if (onCreateAction != null) {
                             onCreateAction.accept(persistedUser);
                         }
@@ -119,7 +127,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
-                        fireUserChangeEvent(persistedUser.getUuid());
+                        fireUserChangeEvent(persistedUser.asRef());
                         if (onCreateAction != null) {
                             onCreateAction.accept(persistedUser);
                         }
@@ -161,11 +169,11 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             if (updatedUser.isGroup()) {
                 final ResultPage<User> resultPage = findUsersInGroup(updatedUser.getUuid(), new FindUserCriteria());
                 for (final User child : resultPage.getValues()) {
-                    fireUserChangeEvent(child.getUuid());
+                    fireUserChangeEvent(child.asRef());
                 }
             }
 
-            fireUserChangeEvent(updatedUser.getUuid());
+            fireUserChangeEvent(updatedUser.asRef());
             return updatedUser;
         });
     }
@@ -200,13 +208,19 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     }
 
     @Override
-    public Boolean addUserToGroup(final String userUuid, final String groupUuid) {
+    public Boolean addUserToGroup(final UserRef userOrGroupRef, final UserRef groupRef) {
+        Objects.requireNonNull(userOrGroupRef);
+        Objects.requireNonNull(groupRef);
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            final String userUuid = userOrGroupRef.getUuid();
+            final String groupUuid = groupRef.getUuid();
+
             // Make sure we aren't creating a cyclic dependency.
             checkCyclicDependency(userUuid, groupUuid, new HashSet<>());
 
             userDao.addUserToGroup(userUuid, groupUuid);
-            fireUserChangeEvent(userUuid);
+            fireUserChangeEvent(userOrGroupRef);
+            fireUserChangeEvent(groupRef);
         });
         return true;
     }
@@ -230,21 +244,25 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     }
 
     @Override
-    public Boolean removeUserFromGroup(final String userUuid, final String groupUuid) {
+    public Boolean removeUserFromGroup(final UserRef userOrGroupRef, final UserRef groupRef) {
+        Objects.requireNonNull(userOrGroupRef);
+        Objects.requireNonNull(groupRef);
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
-            userDao.removeUserFromGroup(userUuid, groupUuid);
-            fireUserChangeEvent(userUuid);
+            userDao.removeUserFromGroup(userOrGroupRef.getUuid(), groupRef.getUuid());
+            fireUserChangeEvent(userOrGroupRef);
+            fireUserChangeEvent(groupRef);
         });
         return true;
     }
 
     @Override
-    public boolean delete(final String userUuid) {
+    public boolean delete(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
 
-            final UserRef userRef = userCache.getByUuid(userUuid)
+            final UserRef existingUserRef = userDao.getByUuid(userRef.getUuid())
                     .map(User::asRef)
-                    .orElseThrow(() -> new RuntimeException("User not found with UUID {}" + userUuid));
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message("User {} not found", userRef)));
 
             final List<UserDependency> allUserDependencies = NullSafe.valuesOf(hasUserDependenciesProviderMap)
                     .stream()
@@ -254,8 +272,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     .toList();
 
             if (NullSafe.isEmptyCollection(allUserDependencies)) {
-                userDao.deleteUser(userUuid);
-                fireUserChangeEvent(userUuid);
+                doDelete(userRef);
             } else {
                 final List<String> detailLines = allUserDependencies.stream()
                         .filter(userDependency ->
@@ -289,6 +306,31 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             }
         });
         return true;
+    }
+
+    private boolean doDelete(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+        final String userUuid = userRef.getUuid();
+        final boolean didDelete = userDao.deleteUser(userRef);
+        if (didDelete) {
+            // We can't delete these things inside the user deletion txn as they are in different
+            // db modules. Best we can do is log any failures and delete as much as we can. Not the
+            // end of the world if there are orphaned records hanging around.
+            try {
+                storedQueryService.deleteByOwner(userUuid);
+            } catch (Exception e) {
+                LOGGER.error("Error deleting stored queries for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
+            try {
+                userPreferencesService.delete(userRef);
+            } catch (Exception e) {
+                LOGGER.error("Error deleting user preferences for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
+            fireUserChangeEvent(userRef);
+        }
+        return didDelete;
     }
 
     @Override
@@ -362,11 +404,9 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         return ResultPage.createCriterialBasedList(filteredUserDependencies, criteria);
     }
 
-    private void fireUserChangeEvent(final String userUuid) {
-        PermissionChangeEvent.fire(permissionChangeEventBus, UserRef
-                .builder()
-                .uuid(userUuid)
-                .build(), null);
+    private void fireUserChangeEvent(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+        PermissionChangeEvent.fire(permissionChangeEventBus, userRef, null);
     }
 
     @Deprecated

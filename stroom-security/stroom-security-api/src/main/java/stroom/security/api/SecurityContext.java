@@ -56,13 +56,25 @@ public interface SecurityContext extends HasAuditableUserIdentity {
 
     /**
      * Determine if the passed {@link UserRef} is the same user as the current
-     * authenticated user.
+     * authenticated user. Being administrator has no bearing on the result of this method.
      *
      * @param userRef The user to compare against the current authenticated user.
      * @return True if userRef is equal to the current authenticated user.
      */
     default boolean isCurrentUser(final UserRef userRef) {
         return Objects.equals(getUserRef(), userRef);
+    }
+
+    /**
+     * Determine if the passed userUuid is the same user as the current
+     * authenticated user. Being administrator has no bearing on the result of this method.
+     *
+     * @param userUuid The user to compare against the current authenticated user.
+     * @return True if userUuid is equal to the userUuid of the current authenticated user.
+     */
+    default boolean isCurrentUser(final String userUuid) {
+        final String currentUserUuid = getUserRef().getUuid();
+        return Objects.equals(currentUserUuid, userUuid);
     }
 
     /**

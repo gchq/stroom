@@ -257,7 +257,7 @@ class TestUserDaoImpl {
         assertThat(userInfo.isDeleted())
                 .isEqualTo(false);
 
-        userDao.deleteUser(user.getUuid());
+        userDao.deleteUser(user.asRef());
 
         final Optional<User> optUser = userDao.getByUuid(user.getUuid());
         assertThat(optUser)
@@ -375,7 +375,7 @@ class TestUserDaoImpl {
         assertUser2Perms.run();
 
         // Now delete the user
-        userDao.deleteUser(uuid1);
+        userDao.deleteUser(user1.asRef());
 
         Optional<User> optUser = userDao.getByUuid(uuid1);
         assertThat(optUser)

@@ -118,7 +118,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                 .required(false)
                 .metavar(USER_OR_GROUP_META_VAR, TARGET_GROUP_META_VAR)
                 .help("The name of the user/group being added and the group to add it to " +
-                        "e.g. 'admin Administrators'");
+                      "e.g. 'admin Administrators'");
 
         subparser.addArgument(asArg(REMOVE_FROM_GROUP_ARG_NAME))
                 .dest(REMOVE_FROM_GROUP_ARG_NAME)
@@ -128,7 +128,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                 .required(false)
                 .metavar(USER_OR_GROUP_META_VAR, TARGET_GROUP_META_VAR)
                 .help("The name of the user/group being removed and the group it is being removed from, " +
-                        "e.g. 'admin Administrators'");
+                      "e.g. 'admin Administrators'");
 
         subparser.addArgument(asArg(GRANT_PERMISSION_ARG_NAME))
                 .dest(GRANT_PERMISSION_ARG_NAME)
@@ -137,7 +137,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                 .nargs(2)
                 .metavar(USER_OR_GROUP_META_VAR, PERMISSION_NAME_META_VAR)
                 .help("The name of the user/group and the name of the application permission to " +
-                        "grant to it, e.g. 'Administrators Administrator'.");
+                      "grant to it, e.g. 'Administrators Administrator'.");
 
         subparser.addArgument(asArg(REVOKE_PERMISSION_ARG_NAME))
                 .dest(REVOKE_PERMISSION_ARG_NAME)
@@ -146,7 +146,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                 .nargs(2)
                 .metavar(USER_OR_GROUP_META_VAR, PERMISSION_NAME_META_VAR)
                 .help("The name of the user/group and the name of the application permission to " +
-                        "revoke from it, e.g. 'Administrators Administrator'.");
+                      "revoke from it, e.g. 'Administrators Administrator'.");
 
         subparser.addArgument(asArg(LIST_PERMISSIONS_ARG_NAME))
                 .dest(LIST_PERMISSIONS_ARG_NAME)
@@ -185,9 +185,9 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                     .sorted()
                     .collect(Collectors.joining("\n"));
             LOGGER.info("Valid application permission names:\n" +
-                            "--------------------\n" +
-                            "  {}\n" +
-                            "--------------------",
+                        "--------------------\n" +
+                        "  {}\n" +
+                        "--------------------",
                     perms);
         }
     }
@@ -300,7 +300,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                 final UserRef targetGroup = getUserObject(
                         targetGroupId, UserType.GROUP, ADD_TO_GROUP_ARG_NAME);
 
-                userService.addUserToGroup(userOrGroup.getUuid(), targetGroup.getUuid());
+                userService.addUserToGroup(userOrGroup, targetGroup);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroup,
                         targetGroup,
@@ -309,7 +309,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                         true);
                 indentedInfo(LOGGER,
                         "Added '" + userOrGroup.toDisplayString() + "' to group '"
-                                + targetGroup.toDisplayString() + "'",
+                        + targetGroup.toDisplayString() + "'",
                         "  ");
 
             } catch (Exception e) {
@@ -340,7 +340,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                 final UserRef targetGroup = getUserObject(
                         targetGroupId, UserType.GROUP, REMOVE_FROM_GROUP_ARG_NAME);
 
-                userService.removeUserFromGroup(userOrGroup.getUuid(), targetGroup.getUuid());
+                userService.removeUserFromGroup(userOrGroup, targetGroup);
 
                 logAddOrRemoveFromGroupEvent(
                         userOrGroup,
@@ -350,7 +350,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                         false);
                 indentedInfo(LOGGER,
                         "Removed " + userOrGroup.toDisplayString()
-                                + " from group " + targetGroup.toDisplayString(),
+                        + " from group " + targetGroup.toDisplayString(),
                         "  ");
 
             } catch (Exception e) {
@@ -499,13 +499,13 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
 
         if (optUserOrGroup.isEmpty()) {
             info(LOGGER, LogUtil.message("{} not found when treating '{}' in arg group '{}' as a unique subjectId. " +
-                            "Falling back to treating it as a displayName",
+                                         "Falling back to treating it as a displayName",
                     expectedUserType.displayName, subjectId, argGroupName));
         }
         stroom.security.shared.User userOrGroup = optUserOrGroup
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "A {} cannot be found with a subjectId or displayName matching identifier '{}' " +
-                                "in arg group '{}'",
+                        "in arg group '{}'",
                         expectedUserType.displayName,
                         subjectId,
                         argGroupName)));
@@ -813,9 +813,9 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
         @Override
         public String toString() {
             return "GroupArgs{" +
-                    "userOrGroupId='" + userOrGroupId + '\'' +
-                    ", targetGroupId='" + targetGroupId + '\'' +
-                    '}';
+                   "userOrGroupId='" + userOrGroupId + '\'' +
+                   ", targetGroupId='" + targetGroupId + '\'' +
+                   '}';
         }
     }
 
@@ -836,9 +836,9 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
         @Override
         public String toString() {
             return "PermissionArgs{" +
-                    "userOrGroupId='" + userOrGroupId + '\'' +
-                    ", permissionName='" + permissionName + '\'' +
-                    '}';
+                   "userOrGroupId='" + userOrGroupId + '\'' +
+                   ", permissionName='" + permissionName + '\'' +
+                   '}';
         }
     }
 

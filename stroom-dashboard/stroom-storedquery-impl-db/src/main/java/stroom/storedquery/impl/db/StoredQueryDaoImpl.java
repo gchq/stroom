@@ -7,6 +7,9 @@ import stroom.security.user.api.UserRefLookup;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.util.NullSafe;
 import stroom.util.exception.DataChangedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -18,12 +21,11 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -32,7 +34,7 @@ import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
 class StoredQueryDaoImpl implements StoredQueryDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(stroom.storedquery.impl.StoredQueryDao.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredQueryDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindStoredQueryCriteria.FIELD_ID, QUERY.ID,
@@ -120,7 +122,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
         if (count == 0) {
             throw new DataChangedException("Failed to update stored query, " +
-                    "it may have been updated by another user or deleted");
+                                           "it may have been updated by another user or deleted");
         }
 
         return fetch(storedQuery.getId()).orElseThrow(() ->
@@ -240,5 +242,18 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 //        }
 
         return optional.orElse(null);
+    }
+
+    @Override
+    public int delete(final String ownerUuid) {
+        Objects.requireNonNull(ownerUuid);
+        final int delCount = JooqUtil.contextResult(storedQueryDbConnProvider, dslContext -> dslContext
+                .deleteFrom(QUERY)
+                .where(QUERY.OWNER_UUID.eq(ownerUuid))
+                .execute());
+
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for ownerUuid {}",
+                delCount, QUERY.getName(), ownerUuid));
+        return delCount;
     }
 }

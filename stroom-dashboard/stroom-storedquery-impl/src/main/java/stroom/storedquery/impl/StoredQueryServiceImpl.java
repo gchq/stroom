@@ -3,14 +3,18 @@ package stroom.storedquery.impl;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.util.AuditUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class StoredQueryServiceImpl implements StoredQueryService {
@@ -27,6 +31,14 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
+        Objects.requireNonNull(storedQuery);
+        final UserRef ownerFromReq = storedQuery.getOwner();
+        if (ownerFromReq != null && !securityContext.isCurrentUser(ownerFromReq)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    LogUtil.message("Attempt to create a stored query for a user ({}) that is " +
+                                    "different to the logged in user.", ownerFromReq));
+        }
+
         AuditUtil.stamp(securityContext, storedQuery);
         storedQuery.setOwner(securityContext.getUserRef());
         storedQuery.setUuid(UUID.randomUUID().toString());
@@ -35,29 +47,85 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public StoredQuery update(@NotNull final StoredQuery storedQuery) {
-        AuditUtil.stamp(securityContext, storedQuery);
-        if (storedQuery.getOwner() == null) {
-            storedQuery.setOwner(securityContext.getUserRef());
-        }
-        return securityContext.secureResult(() -> dao.update(storedQuery));
+        Objects.requireNonNull(storedQuery);
+
+        return securityContext.secureResult(() -> {
+            final StoredQuery existingStoredQuery = dao.fetch(storedQuery.getId())
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "Stored query with id {} doesn't exist", storedQuery.getId())));
+            final UserRef existingOwner = existingStoredQuery.getOwner();
+
+            if (storedQuery.getOwner() != null && !Objects.equals(storedQuery.getOwner(), existingOwner)) {
+                throw new RuntimeException(LogUtil.message(
+                        "You cannot change the owner of a stored query. existing: {}, new: {}",
+                        existingOwner, storedQuery.getOwner()));
+            }
+
+            if (securityContext.isAdmin()
+                || securityContext.isCurrentUser(existingOwner)) {
+
+                AuditUtil.stamp(securityContext, storedQuery);
+                if (storedQuery.getOwner() == null) {
+                    storedQuery.setOwner(securityContext.getUserRef());
+                }
+                return dao.update(storedQuery);
+            } else {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You must be the owner of a stored query to update it, or be administrator.");
+            }
+        });
     }
 
     @Override
     public boolean delete(int id) {
-        return securityContext.secureResult(() -> dao.delete(id));
+        return securityContext.secureResult(() -> {
+            final StoredQuery storedQuery = dao.fetch(id)
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "Stored query with id {} doesn't exist", id)));
+
+            final UserRef ownerUserRef = storedQuery.getOwner();
+
+            if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+                || securityContext.isCurrentUser(ownerUserRef)) {
+
+                return dao.delete(id);
+            } else {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You must be the owner of a stored query to delete it, or hold "
+                        + AppPermission.MANAGE_USERS_PERMISSION.getDisplayValue() + " permission");
+            }
+        });
+    }
+
+    @Override
+    public int deleteByOwner(final String ownerUuid) {
+        return securityContext.secureResult(() -> {
+            if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+                || securityContext.isCurrentUser(ownerUuid)) {
+
+                return dao.delete(ownerUuid);
+            } else {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You must be the owner of the stored queries to delete them, or hold "
+                        + AppPermission.MANAGE_USERS_PERMISSION.getDisplayValue() + " permission");
+            }
+        });
     }
 
     @Override
     public StoredQuery fetch(int id) {
-        final StoredQuery storedQuery = securityContext.secureResult(() ->
-                dao.fetch(id)).orElse(null);
+        return securityContext.secureResult(() -> {
+            final StoredQuery storedQuery = dao.fetch(id)
+                    .orElse(null);
 
-        if (storedQuery != null
-                && !securityContext.getUserRef().equals(storedQuery.getOwner())) {
-            throw new PermissionException(securityContext.getUserRef(),
-                    "This retrieved stored query belongs to another user");
-        }
-        return storedQuery;
+            if (storedQuery != null) {
+                if (!securityContext.isCurrentUser(storedQuery.getOwner())) {
+                    throw new PermissionException(securityContext.getUserRef(),
+                            "This retrieved stored query belongs to another user");
+                }
+            }
+            return storedQuery;
+        });
     }
 
     @Override

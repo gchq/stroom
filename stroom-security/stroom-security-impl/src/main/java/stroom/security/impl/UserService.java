@@ -23,6 +23,7 @@ import stroom.security.shared.User;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserRef;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -61,14 +62,14 @@ public interface UserService {
 
     ResultPage<User> findGroupsForUser(String userUuid, FindUserCriteria criteria);
 
-    Boolean addUserToGroup(String userUuid, String groupUuid);
+    Boolean addUserToGroup(UserRef userOrGroupRef, UserRef groupRef);
 
-    Boolean removeUserFromGroup(String userUuid, String groupUuid);
+    Boolean removeUserFromGroup(UserRef userOrGroupRef, UserRef groupRef);
 
     /**
      * Logically delete a user
      */
-    boolean delete(String userUuid);
+    boolean delete(UserRef userRef);
 
     ResultPage<UserDependency> fetchUserDependencies(FindUserDependenciesCriteria criteria);
 }

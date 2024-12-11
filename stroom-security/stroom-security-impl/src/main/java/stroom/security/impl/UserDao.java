@@ -41,7 +41,7 @@ public interface UserDao {
     /**
      * Delete a user and remove it from any groups it is a member of.
      */
-    boolean deleteUser(String userUuid);
+    boolean deleteUser(UserRef userRef);
 
     /**
      * Get the {@link UserRef} of a user that may or may not have been deleted.

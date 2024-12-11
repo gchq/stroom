@@ -76,28 +76,28 @@ class TestUserServiceImpl {
         checkUsersInGroup(userGroup1);
         checkUsersInGroup(userGroup2);
 
-        userService.addUserToGroup(user1.getUuid(), userGroup1.getUuid());
+        userService.addUserToGroup(user1.asRef(), userGroup1.asRef());
 
         checkGroupsForUser(user1, userGroup1);
         checkGroupsForUser(user2);
         checkUsersInGroup(userGroup1, user1);
         checkUsersInGroup(userGroup2);
 
-        userService.addUserToGroup(user1.getUuid(), userGroup2.getUuid());
+        userService.addUserToGroup(user1.asRef(), userGroup2.asRef());
 
         checkGroupsForUser(user1, userGroup1, userGroup2);
         checkGroupsForUser(user2);
         checkUsersInGroup(userGroup1, user1);
         checkUsersInGroup(userGroup2, user1);
 
-        userService.addUserToGroup(user2.getUuid(), userGroup1.getUuid());
+        userService.addUserToGroup(user2.asRef(), userGroup1.asRef());
 
         checkGroupsForUser(user1, userGroup1, userGroup2);
         checkGroupsForUser(user2, userGroup1);
         checkUsersInGroup(userGroup1, user1, user2);
         checkUsersInGroup(userGroup2, user1);
 
-        userService.removeUserFromGroup(user2.getUuid(), userGroup1.getUuid());
+        userService.removeUserFromGroup(user2.asRef(), userGroup1.asRef());
 
         checkGroupsForUser(user1, userGroup1, userGroup2);
         checkGroupsForUser(user2);

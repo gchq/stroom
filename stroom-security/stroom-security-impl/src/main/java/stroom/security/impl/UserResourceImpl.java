@@ -13,6 +13,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserRef;
 import stroom.util.user.UserDescUtil;
 
 import event.logging.CreateEventAction;
@@ -69,9 +70,9 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public boolean delete(final String userUuid) {
+    public boolean delete(final UserRef userRef) {
         return userServiceProvider.get()
-                .delete(Objects.requireNonNull(userUuid));
+                .delete(Objects.requireNonNull(userRef));
     }
 
     @Override
@@ -169,20 +170,22 @@ public class UserResourceImpl implements UserResource {
     public Boolean addUserToGroup(final String userUuid,
                                   final String groupUuid) {
         final User userIdForLogging = fetch(userUuid);
+        final UserRef userOrGroupRef = userIdForLogging.asRef();
         final User groupIdForLogging = fetch(groupUuid);
+        final UserRef groupRef = groupIdForLogging.asRef();
 
         try {
-            final Boolean result = userServiceProvider.get().addUserToGroup(userUuid, groupUuid);
+            final Boolean result = userServiceProvider.get().addUserToGroup(userOrGroupRef, groupRef);
             authorisationEventLogProvider.get().addPermission(
-                    userIdForLogging.asRef(),
-                    groupIdForLogging.asRef().toDisplayString(),
+                    userOrGroupRef,
+                    groupRef.toDisplayString(),
                     result,
                     null);
             return result;
         } catch (final Exception e) {
             authorisationEventLogProvider.get().addPermission(
-                    userIdForLogging.asRef(),
-                    groupIdForLogging.asRef().toDisplayString(),
+                    userOrGroupRef,
+                    groupRef.toDisplayString(),
                     false,
                     e.getMessage());
             throw e;
@@ -194,10 +197,12 @@ public class UserResourceImpl implements UserResource {
     public Boolean removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
         final User userIdForLogging = fetch(userUuid);
+        final UserRef userRef = userIdForLogging.asRef();
         final User groupIdForLogging = fetch(groupUuid);
+        final UserRef groupRef = groupIdForLogging.asRef();
 
         try {
-            final Boolean result = userServiceProvider.get().removeUserFromGroup(userUuid, groupUuid);
+            final Boolean result = userServiceProvider.get().removeUserFromGroup(userRef, groupRef);
             authorisationEventLogProvider.get().removePermission(
                     userIdForLogging.asRef(),
                     groupIdForLogging.asRef().toDisplayString(),

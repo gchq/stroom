@@ -18,6 +18,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserInfo;
+import stroom.util.shared.UserRef;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
@@ -511,13 +512,15 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public boolean deleteUser(final String userUuid) {
-        Objects.requireNonNull(userUuid);
+    public boolean deleteUser(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
         final Integer userCount = JooqUtil.transactionResult(securityDbConnProvider, txnContext -> {
+            final String userInfoStr = userRef.toInfoString();
+            final String userUuid = userRef.getUuid();
 
             final User user = getByUuid(txnContext, userUuid)
                     .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                            "User with UUID '{}' does not exist", userUuid)));
+                            "User {} does not exist", userInfoStr)));
 
             // First ensure the stroom_user_archive record is up-to-date before we delete
             // the user, so we have the latest picture of the various names of the user.
@@ -527,29 +530,29 @@ public class UserDaoImpl implements UserDao {
             int count = txnContext.deleteFrom(STROOM_USER_GROUP)
                     .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
                     .execute();
-            LOGGER.debug("Removed {} group memberships for user {}", count, userUuid);
+            LOGGER.debug("Removed {} group memberships for user {}", count, userInfoStr);
 
             count = appPermissionDaoImpl.deletePermissionsForUser(txnContext, userUuid);
-            LOGGER.debug("Removed {} app permission records for user {}", count, userUuid);
+            LOGGER.debug("Removed {} app permission records for user {}", count, userInfoStr);
 
             count = documentPermissionDaoImpl.deletePermissionsForUser(txnContext, userUuid);
-            LOGGER.debug("Removed {} doc permission records for user {}", count, userUuid);
+            LOGGER.debug("Removed {} doc permission records for user {}", count, userInfoStr);
 
             count = apiKeyDaoImpl.deleteByOwner(txnContext, userUuid);
-            LOGGER.debug("Removed {} API key records for user {}", count, userUuid);
+            LOGGER.debug("Removed {} API key records for user {}", count, userInfoStr);
 
             count = txnContext.deleteFrom(STROOM_USER)
                     .where(STROOM_USER.UUID.eq(userUuid))
                     .execute();
-            LOGGER.debug("Deleted {} record(s) for user {}", count, userUuid);
+            LOGGER.debug("Deleted {} record(s) for user {}", count, userInfoStr);
 
             if (count == 0 || count > 1) {
                 throw new RuntimeException(LogUtil.message(
-                        "Deleted {} records for user {} but expected to delete exactly one.", count, userUuid));
+                        "Deleted {} records for user {} but expected to delete exactly one.", count, userInfoStr));
             }
 
             LOGGER.info("Deleted user - subjectId: '{}', displayName: '{}', userUuid: {}",
-                    user.getSubjectId(), user.getDisplayName(), user.getUuid());
+                    user.getSubjectId(), user.getDisplayName(), userUuid);
             return count;
         });
         return userCount > 0;

@@ -21,4 +21,6 @@ public interface StoredQueryDao extends HasIntCrud<StoredQuery> {
     Integer getOldestId(final String ownerUuid,
                         final boolean favourite,
                         final int retain);
+
+    int delete(String ownerUuid);
 }
