@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.security.impl'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-config:stroom-config-common')

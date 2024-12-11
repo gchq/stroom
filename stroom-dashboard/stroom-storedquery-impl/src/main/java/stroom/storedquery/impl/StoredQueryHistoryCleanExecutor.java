@@ -21,13 +21,14 @@ import stroom.security.user.api.UserRefLookup;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -54,10 +55,13 @@ public class StoredQueryHistoryCleanExecutor {
     }
 
     public void exec() {
-        clean(false);
+        clean();
     }
 
-    private void clean(final boolean favourite) {
+    /**
+     * Delete all non-favourite stored queries
+     */
+    private void clean() {
         info(() -> "Starting history clean task");
 
         final int historyItemsRetention = storedQueryConfig.getItemsRetention();
@@ -67,17 +71,18 @@ public class StoredQueryHistoryCleanExecutor {
                 .minus(historyDaysRetention, ChronoUnit.DAYS)
                 .toEpochMilli();
 
-        final List<String> users = storedQueryDao.getUsers(favourite);
-        users.forEach(ownerUuid -> {
+        final Set<String> userUuids = storedQueryDao.getUsersWithNonFavourites();
+        LOGGER.debug(() -> LogUtil.message("Found {} userUuids", userUuids.size()));
+
+        userUuids.forEach(ownerUuid -> {
             final String userDisplayName = userRefLookup.getByUuid(ownerUuid)
                     .map(UserRef::toInfoString)
                     .orElse("?");
-            info(() -> "Cleaning query history for user '" + userDisplayName
-                    + "' with ownerUuid '" + ownerUuid + "'");
 
-            final Integer oldestId = storedQueryDao.getOldestId(
-                    ownerUuid, favourite, historyItemsRetention);
-            storedQueryDao.clean(ownerUuid, favourite, oldestId, oldestCrtMs);
+            info(() -> "Cleaning query history for user '" + userDisplayName
+                       + "' with ownerUuid '" + ownerUuid + "'");
+
+            storedQueryDao.clean(ownerUuid, historyItemsRetention, oldestCrtMs);
         });
 
         info(() -> "Finished history clean task");

@@ -21,6 +21,7 @@ import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -29,6 +30,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -38,6 +40,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -99,16 +102,32 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public boolean delete(final int id) {
+    public boolean deleteAllByOwner(final int id) {
         return securityContext.secureResult(() -> {
             final Activity activity = fetch(id);
             if (activity != null) {
-                if (!securityContext.getUserRef().equals(activity.getUserRef())) {
+                if (!securityContext.isCurrentUser(activity.getUserRef())) {
                     throw new EntityServiceException("Attempt to update another persons activity");
                 }
                 return dao.delete(id);
             }
             return false;
+        });
+    }
+
+    @Override
+    public int deleteAllByOwner(final UserRef ownerRef) {
+        Objects.requireNonNull(ownerRef);
+        return securityContext.secureResult(() -> {
+            if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+                || securityContext.isCurrentUser(ownerRef)) {
+                return dao.deleteAllByOwner(ownerRef);
+
+            } else {
+                throw new PermissionException(securityContext.getUserRef(),
+                        LogUtil.message("You must be the owner to delete all activities for {} or hold {}",
+                                ownerRef, AppPermission.MANAGE_USERS_PERMISSION));
+            }
         });
     }
 
@@ -162,8 +181,8 @@ public class ActivityServiceImpl implements ActivityService {
                 .stream()
                 .flatMap(activity -> {
                     if (activity != null
-                            && activity.getDetails() != null
-                            && activity.getDetails().getProperties() != null) {
+                        && activity.getDetails() != null
+                        && activity.getDetails().getProperties() != null) {
                         // We want to search all fields by default
                         return activity.getDetails().getProperties().stream()
                                 .map(prop -> FilterFieldDefinition.defaultField(prop.getName()));
@@ -203,8 +222,8 @@ public class ActivityServiceImpl implements ActivityService {
                         valid = false;
                         if (Strings.isNullOrEmpty(prop.getValidationMessage())) {
                             messages.add("Invalid value '" + value
-                                    + "' for property '" + prop.getId()
-                                    + "' must match '" + prop.getValidation() + "'");
+                                         + "' for property '" + prop.getId()
+                                         + "' must match '" + prop.getValidation() + "'");
                         } else {
                             messages.add(prop.getValidationMessage());
                         }
@@ -212,8 +231,8 @@ public class ActivityServiceImpl implements ActivityService {
                 } catch (final PatternSyntaxException e) {
                     valid = false;
                     messages.add("Unable to parse validation regex '"
-                            + prop.getValidation() + "' for property '"
-                            + prop.getId() + "'");
+                                 + prop.getValidation() + "' for property '"
+                                 + prop.getId() + "'");
                 }
             }
         }

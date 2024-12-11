@@ -140,7 +140,7 @@ public class UserAndGroupHelper {
                 if (ok) {
                     restFactory
                             .create(USER_RESOURCE)
-                            .method(resource -> resource.delete(user.asRef()))
+                            .method(resource -> resource.delete(user.getUuid()))
                             .onSuccess(didDelete -> {
                                 if (didDelete) {
                                     userListPresenter.getSelectionModel().clear(true);

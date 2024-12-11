@@ -19,7 +19,8 @@ public class UserRefLookupImpl implements UserRefLookup {
 
     @Override
     public Optional<UserRef> getByUuid(final String userUuid) {
-        return userCache.getByUuid(userUuid).map(User::asRef);
+        return userCache.getByUuid(userUuid)
+                .map(User::asRef);
     }
 
     @Override

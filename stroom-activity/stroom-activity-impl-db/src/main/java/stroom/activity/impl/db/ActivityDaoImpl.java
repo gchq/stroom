@@ -24,6 +24,9 @@ import stroom.db.util.JooqUtil;
 import stroom.util.NullSafe;
 import stroom.util.exception.DataChangedException;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -32,6 +35,7 @@ import org.jooq.Record;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,8 +45,9 @@ import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 
 public class ActivityDaoImpl implements ActivityDao {
 
-    private final ActivityDbConnProvider activityDbConnProvider;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActivityDaoImpl.class);
 
+    private final ActivityDbConnProvider activityDbConnProvider;
 
     private static final Function<Record, Activity> RECORD_TO_ACTIVITY_MAPPER = record -> Activity.builder()
             .id(record.get(ACTIVITY.ID))
@@ -185,5 +190,19 @@ public class ActivityDaoImpl implements ActivityDao {
                         .collect(Collectors.toList());
             }
         });
+    }
+
+    @Override
+    public int deleteAllByOwner(final UserRef ownerRef) {
+        Objects.requireNonNull(ownerRef);
+        final int delCount = JooqUtil.contextResult(activityDbConnProvider, dslContext -> dslContext
+                .deleteFrom(ACTIVITY)
+                .where(ACTIVITY.USER_UUID.eq(ownerRef.getUuid()))
+                .execute());
+
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for user {}",
+                delCount, ACTIVITY.getName(), ownerRef.toInfoString()));
+
+        return delCount;
     }
 }

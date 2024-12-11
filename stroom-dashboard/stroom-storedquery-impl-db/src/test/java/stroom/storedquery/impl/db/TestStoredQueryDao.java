@@ -83,8 +83,11 @@ class TestStoredQueryDao {
         // Clear the current DB.
         DbTestUtil.clear();
 
-        owner = UserRef.forUserUuid(UUID.randomUUID().toString());
-        Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
+        owner = UserRef.builder()
+                .uuid(UUID.randomUUID().toString())
+                .subjectId("owner")
+                .build();
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid())))
                 .thenReturn(Optional.of(owner));
 
         storedQueryDao = new StoredQueryDaoImpl(
@@ -104,6 +107,7 @@ class TestStoredQueryDao {
         refQuery.setName("Ref query");
         refQuery.setDashboardUuid(dashboardRef.getUuid());
         refQuery.setComponentId(QUERY_COMPONENT);
+        refQuery.setFavourite(false);
         refQuery.setQuery(Query.builder()
                 .dataSource(indexRef)
                 .expression(ExpressionOperator.builder().build())
@@ -121,6 +125,7 @@ class TestStoredQueryDao {
         testQuery.setName("Test query");
         testQuery.setDashboardUuid(dashboardRef.getUuid());
         testQuery.setComponentId(QUERY_COMPONENT);
+        testQuery.setFavourite(false);
         testQuery.setQuery(Query.builder()
                 .dataSource(indexRef)
                 .expression(root.build())
@@ -177,13 +182,16 @@ class TestStoredQueryDao {
 
     @Test
     void testOldHistoryDeletion() {
-        Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
-                .thenReturn(Optional.of(UserRef
-                        .builder()
-                        .uuid("dummy")
-                        .subjectId("dummy")
-                        .displayName("dummy")
-                        .build()));
+//        Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
+//                .thenReturn(Optional.of(UserRef
+//                        .builder()
+//                        .uuid("dummy")
+//                        .subjectId("dummy")
+//                        .displayName("dummy")
+//                        .build()));
+
+//        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid())))
+//                .thenReturn(Optional.of(owner));
 
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
@@ -203,16 +211,39 @@ class TestStoredQueryDao {
             newQuery.setComponentId(query.getComponentId());
             newQuery.setFavourite(false);
             newQuery.setQuery(query.getQuery());
-            newQuery.setOwner(query.getOwner());
+            newQuery.setOwner(owner);
             AuditUtil.stamp(securityContext, newQuery);
             storedQueryDao.create(newQuery);
         }
+
+        UserRef owner2 = UserRef.builder()
+                .uuid(UUID.randomUUID().toString())
+                .subjectId("owner2")
+                .build();
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid())))
+                .thenReturn(Optional.of(owner2));
+
+        // Add in 10 for a different user
+        for (int i = 0; i < 10; i++) {
+            final StoredQuery newQuery = new StoredQuery();
+            newQuery.setName("History");
+            newQuery.setDashboardUuid(query.getDashboardUuid());
+            newQuery.setComponentId(query.getComponentId());
+            newQuery.setFavourite(false);
+            newQuery.setQuery(query.getQuery());
+            newQuery.setOwner(owner2);
+            AuditUtil.stamp(securityContext, newQuery);
+            storedQueryDao.create(newQuery);
+        }
+
+        list = storedQueryDao.find(criteria);
+        assertThat(list.size()).isEqualTo(132); // 2 + 120 + 10
 
         // Clean the history.
         queryHistoryCleanExecutor.exec();
 
         list = storedQueryDao.find(criteria);
-        assertThat(list.size()).isEqualTo(100);
+        assertThat(list.size()).isEqualTo(110); // 100 + 10
     }
 
     @Test

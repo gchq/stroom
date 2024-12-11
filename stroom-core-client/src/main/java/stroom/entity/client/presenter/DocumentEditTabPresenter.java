@@ -34,13 +34,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,6 +47,7 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
@@ -89,12 +88,12 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
     }
 
-    private void addEntry(final Map<CommonDocLinkTab, TabData> map,
+    private void addEntry(final Map<CommonDocLinkTab, TabData> commonTabsMap,
                           final CommonDocLinkTab commonDocLinkTab,
                           final Supplier<TabData> tabDataSupplier) {
         final TabData tabData = tabDataSupplier.get();
         if (tabData != null) {
-            map.put(commonDocLinkTab, tabData);
+            commonTabsMap.put(commonDocLinkTab, tabData);
         }
     }
 
@@ -152,7 +151,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     public void selectTab(final TabData tab) {
-        GWT.log("docRef: " + docRef + ", selecting tab " + GwtNullSafe.get(tab, TabData::getLabel));
+//        GWT.log("docRef: " + docRef + ", selecting tab " + GwtNullSafe.get(tab, TabData::getLabel));
         final TaskMonitor taskMonitor = createTaskMonitor();
         final Task task = new SimpleTask("Selecting tab");
         taskMonitor.onStart(task);
@@ -246,6 +245,16 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     @Override
     public SvgImage getIcon() {
         return DocumentTypeImages.get(getType());
+    }
+
+    @Override
+    public Optional<String> getTooltip() {
+        final String type = docRef.getType();
+        if (type != null) {
+            return Optional.of(type + " - " + docRef.getName());
+        } else {
+            return Optional.of(docRef.getName());
+        }
     }
 
     @Override

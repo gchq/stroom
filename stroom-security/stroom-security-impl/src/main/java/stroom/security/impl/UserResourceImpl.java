@@ -70,9 +70,9 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public boolean delete(final UserRef userRef) {
+    public boolean delete(final String userUuid) {
         return userServiceProvider.get()
-                .delete(Objects.requireNonNull(userRef));
+                .delete(Objects.requireNonNull(userUuid));
     }
 
     @Override

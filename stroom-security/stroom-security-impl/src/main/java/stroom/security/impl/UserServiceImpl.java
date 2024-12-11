@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.activity.api.ActivityService;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.security.api.ContentPackUserService;
@@ -69,6 +70,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     private final DocRefInfoService docRefInfoService;
     private final StoredQueryService storedQueryService;
     private final UserPreferencesService userPreferencesService;
+    private final ActivityService activityService;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
@@ -78,7 +80,8 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     final UserCache userCache,
                     final DocRefInfoService docRefInfoService,
                     final StoredQueryService storedQueryService,
-                    final UserPreferencesService userPreferencesService) {
+                    final UserPreferencesService userPreferencesService,
+                    final ActivityService activityService) {
         this.securityContext = securityContext;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
@@ -87,6 +90,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         this.docRefInfoService = docRefInfoService;
         this.storedQueryService = storedQueryService;
         this.userPreferencesService = userPreferencesService;
+        this.activityService = activityService;
     }
 
     @Override
@@ -256,13 +260,14 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     }
 
     @Override
-    public boolean delete(final UserRef userRef) {
-        Objects.requireNonNull(userRef);
+    public boolean delete(final String userUuid) {
+        Objects.requireNonNull(userUuid);
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
 
-            final UserRef existingUserRef = userDao.getByUuid(userRef.getUuid())
+            final UserRef userRef = userDao.getByUuid(userUuid)
                     .map(User::asRef)
-                    .orElseThrow(() -> new RuntimeException(LogUtil.message("User {} not found", userRef)));
+                    .orElseThrow(() ->
+                            new RuntimeException(LogUtil.message("User not found with userUuid {}", userUuid)));
 
             final List<UserDependency> allUserDependencies = NullSafe.valuesOf(hasUserDependenciesProviderMap)
                     .stream()
@@ -315,18 +320,40 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             // We can't delete these things inside the user deletion txn as they are in different
             // db modules. Best we can do is log any failures and delete as much as we can. Not the
             // end of the world if there are orphaned records hanging around.
+            int storedQueryCount = 0;
             try {
-                storedQueryService.deleteByOwner(userRef);
+                storedQueryCount = storedQueryService.deleteByOwner(userRef);
             } catch (Exception e) {
                 LOGGER.error("Error deleting stored queries for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on
             }
+            int userPrefCount = 0;
             try {
-                userPreferencesService.delete(userRef);
+                userPrefCount = userPreferencesService.delete(userRef)
+                        ? 1
+                        : 0;
             } catch (Exception e) {
                 LOGGER.error("Error deleting user preferences for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on
             }
+            int activityCount = 0;
+            try {
+                activityCount = activityService.deleteAllByOwner(userRef);
+            } catch (Exception e) {
+                LOGGER.error("Error deleting activities for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
+
+            LOGGER.info("Deleted the following associated records for deleted user {}, stored queries: {}, " +
+                        "user preferences: {}, activities: {}",
+                    userRef.toInfoString(),
+                    storedQueryCount,
+                    userPrefCount,
+                    activityCount);
+
+            // Search result stores will get cleaned up by
+            // stroom.query.common.v2.ResultStoreManager.evictExpiredElements
+
             fireUserChangeEvent(userRef);
         }
         return didDelete;

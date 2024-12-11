@@ -21,12 +21,16 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -174,38 +178,56 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public void clean(final String ownerUuid, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
+    public void clean(final String ownerUuid,
+                      final int historyItemsRetention,
+                      final long oldestCrtMs) {
         try {
-            LOGGER.debug("Deleting old rows");
+            LOGGER.debug("Deleting old rows for ownerUuid: {}, historyItemsRetention: {}, oldestCrtMs: {}",
+                    ownerUuid, historyItemsRetention, oldestCrtMs);
+            final int rows = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
 
-            final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.ofNullable(ownerUuid).map(QUERY.OWNER_UUID::eq),
-                    Optional.of(QUERY.FAVOURITE.eq(favourite)),
-                    Optional.ofNullable(oldestId)
-                            .map(id -> QUERY.ID.le(id).or(QUERY.CREATE_TIME_MS.lt(oldestCrtMs)))
-                            .or(() -> Optional.of(QUERY.CREATE_TIME_MS.lt(oldestCrtMs))));
+                final Field<Integer> rowNumField = DSL.rowNumber()
+                        .over(DSL.orderBy(QUERY.ID.desc()))
+                        .as("rn");
 
-            final int rows = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
-                    .deleteFrom(QUERY)
-                    .where(conditions)
-                    .execute());
+                // Rank the rows with lowest ronNum being the most recent
+                // and highest rowNum being the oldest
+                Table<?> inner = context
+                        .select(
+                                QUERY.ID,
+                                rowNumField,
+                                QUERY.CREATE_TIME_MS)
+                        .from(QUERY)
+                        .where(QUERY.OWNER_UUID.eq(ownerUuid))
+                        .and(QUERY.FAVOURITE.eq(false)) // Don't want to delete favourites
+                        .asTable("inner");
+                final Field<Integer> innerId = inner.field(QUERY.ID);
+
+                return context
+                        .deleteFrom(QUERY)
+                        .where(DSL.exists(
+                                context.select(DSL.inline((String) null))
+                                        .from(inner)
+                                        .where(rowNumField.greaterThan(historyItemsRetention)
+                                                .or(QUERY.CREATE_TIME_MS.lessThan(oldestCrtMs)))
+                                        .and(QUERY.ID.eq(innerId))
+                        ))
+                        .execute();
+            });
 
             LOGGER.debug("Deleted {} rows for ownerUuid: {}", rows, ownerUuid);
-
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
     @Override
-    public List<String> getUsers(final boolean favourite) {
-        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
-                .select(QUERY.OWNER_UUID)
+    public Set<String> getUsersWithNonFavourites() {
+        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> new HashSet<>(context
+                .selectDistinct(QUERY.OWNER_UUID)
                 .from(QUERY)
-                .where(QUERY.FAVOURITE.eq(favourite))
-                .groupBy(QUERY.OWNER_UUID)
-                .orderBy(QUERY.OWNER_UUID)
-                .fetch(QUERY.OWNER_UUID));
+                .where(QUERY.FAVOURITE.eq(false))
+                .fetch(QUERY.OWNER_UUID)));
     }
 
     @Override

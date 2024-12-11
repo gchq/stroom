@@ -6,7 +6,6 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
-import stroom.util.shared.UserRef;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,10 +64,10 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @DELETE
     @Path("{userUuid}")
     @Operation(
-            summary = "Delete the user with the supplied UserRef",
+            summary = "Delete the user with the supplied user UUID",
             operationId = "deleteUser")
     @NotNull
-    boolean delete(@PathParam("userRef") UserRef userRef);
+    boolean delete(@PathParam("userUuid") String userUuid);
 
     @POST
     @Path("/createGroup")

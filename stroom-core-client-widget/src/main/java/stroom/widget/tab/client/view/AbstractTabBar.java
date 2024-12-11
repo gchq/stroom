@@ -16,7 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -50,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractTabBar extends Widget implements TabBar, RequiresResize {
@@ -68,10 +68,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     public AbstractTabBar() {
         sinkEvents(Event.ONMOUSEDOWN |
-                Event.ONMOUSEUP |
-                Event.ONMOUSEOVER |
-                Event.ONMOUSEOUT |
-                Event.ONKEYDOWN);
+                   Event.ONMOUSEUP |
+                   Event.ONMOUSEOVER |
+                   Event.ONMOUSEOUT |
+                   Event.ONKEYDOWN);
     }
 
     protected abstract AbstractTab createTab(TabData tabData);
@@ -84,7 +84,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void addTab(final TabData tabData) {
-        if (tabs.size() == 0) {
+        if (tabs.isEmpty()) {
             keyboardSelectedTab = tabData;
         }
 
@@ -113,7 +113,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             tabs.remove(tabData);
             tabPriority.remove(tabData);
 
-            if (tabPriority.size() > 0) {
+            if (!tabPriority.isEmpty()) {
                 keyboardSelectedTab = tabPriority.get(0);
                 fireTabSelection(tabPriority.get(0));
                 onResize();
@@ -150,7 +150,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void selectTab(final TabData tabData) {
-        if (!EqualsUtil.isEquals(tabData, selectedTab)) {
+        if (!Objects.equals(tabData, selectedTab)) {
             selectedTab = tabData;
             keyboardSelectedTab = tabData;
             if (selectedTab != null) {

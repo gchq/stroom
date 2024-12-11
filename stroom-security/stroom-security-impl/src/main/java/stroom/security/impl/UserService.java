@@ -67,9 +67,9 @@ public interface UserService {
     Boolean removeUserFromGroup(UserRef userOrGroupRef, UserRef groupRef);
 
     /**
-     * Logically delete a user
+     * Physically delete a user
      */
-    boolean delete(UserRef userRef);
+    boolean delete(String userUuid);
 
     ResultPage<UserDependency> fetchUserDependencies(FindUserDependenciesCriteria criteria);
 }
