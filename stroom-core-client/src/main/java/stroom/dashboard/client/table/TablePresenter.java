@@ -1041,6 +1041,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     void onColumnFilterChange() {
+        reset();
         refresh();
         getComponents().fireComponentChangeEvent(this);
     }

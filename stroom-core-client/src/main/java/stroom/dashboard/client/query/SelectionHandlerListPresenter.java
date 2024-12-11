@@ -19,6 +19,8 @@ package stroom.dashboard.client.query;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
@@ -42,6 +44,7 @@ public class SelectionHandlerListPresenter
 
     private final MyDataGrid<ComponentSelectionHandler> dataGrid;
     private final MultiSelectionModelImpl<ComponentSelectionHandler> selectionModel;
+    private Components components;
 
     @Inject
     public SelectionHandlerListPresenter(final EventBus eventBus,
@@ -82,7 +85,13 @@ public class SelectionHandlerListPresenter
                 new Column<ComponentSelectionHandler, String>(new TextCell()) {
                     @Override
                     public String getValue(final ComponentSelectionHandler row) {
-                        return row.getComponentId();
+                        if (components != null) {
+                            final Component component = components.get(row.getComponentId());
+                            if (component != null) {
+                                return component.getDisplayValue();
+                            }
+                        }
+                        return "--missing-- (" + row.getComponentId() + ")";
                     }
                 };
         dataGrid.addResizableColumn(componentColumn, "Component", 200);
@@ -111,5 +120,9 @@ public class SelectionHandlerListPresenter
 
     public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
+    }
+
+    public void setComponents(final Components components) {
+        this.components = components;
     }
 }

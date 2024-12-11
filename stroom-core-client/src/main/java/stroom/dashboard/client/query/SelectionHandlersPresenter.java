@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
@@ -398,6 +399,12 @@ public class SelectionHandlersPresenter
     private void update() {
         listPresenter.setData(selectionHandlers);
         updateButtons();
+    }
+
+    @Override
+    public void setComponents(final Components components) {
+        listPresenter.setComponents(components);
+        super.setComponents(components);
     }
 
     private void updateButtons() {
