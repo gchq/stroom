@@ -3,7 +3,7 @@ package stroom.query.common.v2;
 import stroom.datasource.api.v2.FieldType;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.util.date.DateUtil;

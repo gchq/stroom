@@ -47,6 +47,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
@@ -134,6 +135,7 @@ class QueryServiceImpl implements QueryService {
     private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
     private final ResourceStore resourceStore;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -148,7 +150,8 @@ class QueryServiceImpl implements QueryService {
                      final NodeInfo nodeInfo,
                      final SearchRequestFactory searchRequestFactory,
                      final ExpressionContextFactory expressionContextFactory,
-                     final ResourceStore resourceStore) {
+                     final ResourceStore resourceStore,
+                     final ExpressionPredicateFactory expressionPredicateFactory) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -162,6 +165,7 @@ class QueryServiceImpl implements QueryService {
         this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
         this.resourceStore = resourceStore;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
@@ -259,7 +263,7 @@ class QueryServiceImpl implements QueryService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory) {
+                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;

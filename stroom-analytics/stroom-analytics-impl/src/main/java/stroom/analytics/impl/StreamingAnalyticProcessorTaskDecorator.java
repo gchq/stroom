@@ -26,6 +26,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.StringFieldValue;
 import stroom.query.common.v2.ValFilter;
 import stroom.query.language.functions.ExpressionContext;
@@ -62,6 +63,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     private final DetectionConsumerProxy detectionConsumerProxy;
     private final FieldListConsumerHolder fieldListConsumerHolder;
     private final FieldValueExtractorFactory fieldValueExtractorFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private AnalyticFieldListConsumer fieldListConsumer;
 
@@ -74,7 +76,8 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
                                                    final FieldListConsumerHolder fieldListConsumerHolder,
-                                                   final FieldValueExtractorFactory fieldValueExtractorFactory) {
+                                                   final FieldValueExtractorFactory fieldValueExtractorFactory,
+                                                   final ExpressionPredicateFactory expressionPredicateFactory) {
         this.streamingAnalyticCache = streamingAnalyticCache;
         this.expressionContextFactory = expressionContextFactory;
         this.memoryIndex = memoryIndex;
@@ -82,6 +85,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         this.detectionConsumerProxy = detectionConsumerProxy;
         this.fieldListConsumerHolder = fieldListConsumerHolder;
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
@@ -127,6 +131,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                 tableSettings.getValueFilter(),
                 compiledColumns,
                 searchRequest.getDateTimeSettings(),
+                expressionPredicateFactory,
                 paramMap);
 
         try {

@@ -18,6 +18,8 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -25,7 +27,11 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.NullSafe;
 import stroom.util.filter.StringPredicateFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
+
+import jakarta.inject.Inject;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -36,41 +42,60 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-public class ExpressionPredicateBuilder {
+public class ExpressionPredicateFactory {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExpressionPredicateFactory.class);
     private static final String DELIMITER = ",";
 
-    public static <T> Optional<Predicate<T>> create(final ExpressionOperator operator,
-                                                    final ValueFunctionFactories<T> queryFieldIndex,
-                                                    final DateTimeSettings dateTimeSettings) {
+    private final WordListProvider wordListProvider;
+
+    @Inject
+    public ExpressionPredicateFactory(final WordListProvider wordListProvider) {
+        this.wordListProvider = wordListProvider;
+    }
+
+    public <T> Optional<Predicate<T>> create(final ExpressionOperator operator,
+                                             final ValueFunctionFactories<T> queryFieldIndex,
+                                             final DateTimeSettings dateTimeSettings) {
         if (operator == null) {
             return Optional.empty();
         }
 
-        return createPredicate(operator, queryFieldIndex, dateTimeSettings);
+        return createPredicate(operator, queryFieldIndex, dateTimeSettings, wordListProvider);
     }
 
-    private static <T> Optional<Predicate<T>> createPredicate(final ExpressionItem item,
-                                                              final ValueFunctionFactories<T> queryFieldIndex,
-                                                              final DateTimeSettings dateTimeSettings) {
+    private <T> Optional<Predicate<T>> createPredicate(final ExpressionItem item,
+                                                       final ValueFunctionFactories<T> queryFieldIndex,
+                                                       final DateTimeSettings dateTimeSettings,
+                                                       final WordListProvider wordListProvider) {
         if (!item.enabled()) {
             return Optional.empty();
         }
 
-        if (item instanceof ExpressionOperator) {
-            return createOperatorPredicate((ExpressionOperator) item, queryFieldIndex, dateTimeSettings);
-        } else if (item instanceof ExpressionTerm) {
-            return createTermPredicate((ExpressionTerm) item, queryFieldIndex, dateTimeSettings);
+        if (item instanceof final ExpressionOperator expressionOperator) {
+            return createOperatorPredicate(
+                    expressionOperator,
+                    queryFieldIndex,
+                    dateTimeSettings,
+                    wordListProvider);
+        } else if (item instanceof final ExpressionTerm expressionTerm) {
+            return createTermPredicate(
+                    expressionTerm,
+                    queryFieldIndex,
+                    dateTimeSettings,
+                    wordListProvider);
         } else {
             throw new MatchException("Unexpected item type");
         }
     }
 
-    private static <T> Optional<Predicate<T>> createOperatorPredicate(final ExpressionOperator operator,
-                                                                      final ValueFunctionFactories<T> queryFieldIndex,
-                                                                      final DateTimeSettings dateTimeSettings) {
+    private <T> Optional<Predicate<T>> createOperatorPredicate(final ExpressionOperator operator,
+                                                               final ValueFunctionFactories<T> queryFieldIndex,
+                                                               final DateTimeSettings dateTimeSettings,
+                                                               final WordListProvider wordListProvider) {
         if (!operator.enabled() || operator.getChildren() == null || operator.getChildren().isEmpty()) {
             return Optional.empty();
         }
@@ -79,7 +104,11 @@ public class ExpressionPredicateBuilder {
             case AND -> {
                 final List<Predicate<T>> predicates = new ArrayList<>(operator.getChildren().size());
                 for (final ExpressionItem child : operator.getChildren()) {
-                    Optional<Predicate<T>> optional = createPredicate(child, queryFieldIndex, dateTimeSettings);
+                    Optional<Predicate<T>> optional = createPredicate(
+                            child,
+                            queryFieldIndex,
+                            dateTimeSettings,
+                            wordListProvider);
                     optional.ifPresent(predicates::add);
                 }
                 if (predicates.isEmpty()) {
@@ -93,7 +122,11 @@ public class ExpressionPredicateBuilder {
             case OR -> {
                 final List<Predicate<T>> predicates = new ArrayList<>(operator.getChildren().size());
                 for (final ExpressionItem child : operator.getChildren()) {
-                    Optional<Predicate<T>> optional = createPredicate(child, queryFieldIndex, dateTimeSettings);
+                    Optional<Predicate<T>> optional = createPredicate(
+                            child,
+                            queryFieldIndex,
+                            dateTimeSettings,
+                            wordListProvider);
                     optional.ifPresent(predicates::add);
                 }
                 if (predicates.isEmpty()) {
@@ -108,8 +141,11 @@ public class ExpressionPredicateBuilder {
                 if (operator.getChildren().size() > 1) {
                     throw new MatchException("Unexpected number of child terms in NOT");
                 }
-                final Optional<Predicate<T>> optionalChildPredicate =
-                        createPredicate(operator.getChildren().getFirst(), queryFieldIndex, dateTimeSettings);
+                final Optional<Predicate<T>> optionalChildPredicate = createPredicate(
+                        operator.getChildren().getFirst(),
+                        queryFieldIndex,
+                        dateTimeSettings,
+                        wordListProvider);
                 if (optionalChildPredicate.isEmpty()) {
                     yield Optional.empty();
                 }
@@ -119,9 +155,10 @@ public class ExpressionPredicateBuilder {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private static <T> Optional<Predicate<T>> createTermPredicate(final ExpressionTerm term,
-                                                                  final ValueFunctionFactories<T> valueFunctionFactories,
-                                                                  final DateTimeSettings dateTimeSettings) {
+    private <T> Optional<Predicate<T>> createTermPredicate(final ExpressionTerm term,
+                                                           final ValueFunctionFactories<T> valueFunctionFactories,
+                                                           final DateTimeSettings dateTimeSettings,
+                                                           final WordListProvider wordListProvider) {
         if (!term.enabled()) {
             return Optional.empty();
         }
@@ -146,32 +183,38 @@ public class ExpressionPredicateBuilder {
             return NotPredicate.create(IsNullPredicate.create(term, valueFunctionFactory.createNullCheck()));
         }
 
-        // Try and resolve the term value.
-        String termValue = term.getValue();
-        if (NullSafe.isBlankString(termValue)) {
-            throw new MatchException("Value not set");
-        }
-
         // Create a query based on the field type and condition.
         final FieldType fieldType = valueFunctionFactory.getFieldType();
         if (FieldType.DATE.equals(fieldType)) {
-            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+            return createDateTermPredicate(
+                    term,
+                    valueFunctionFactory,
+                    dateTimeSettings,
+                    wordListProvider);
         } else if (fieldType.isNumeric()) {
-            return createNumericTermPredicate(term, valueFunctionFactory);
+            return createNumericTermPredicate(
+                    term,
+                    valueFunctionFactory,
+                    wordListProvider);
         } else {
-            return createGeneralTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+            return createGeneralTermPredicate(
+                    term,
+                    valueFunctionFactory,
+                    dateTimeSettings,
+                    wordListProvider);
         }
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private static <T> Optional<Predicate<T>> createGeneralTermPredicate(final ExpressionTerm term,
-                                                                         final ValueFunctionFactory<T> valueFunctionFactory,
-                                                                         final DateTimeSettings dateTimeSettings) {
+    private <T> Optional<Predicate<T>> createGeneralTermPredicate(final ExpressionTerm term,
+                                                                  final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                  final DateTimeSettings dateTimeSettings,
+                                                                  final WordListProvider wordListProvider) {
         try {
-            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings);
+            return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings, wordListProvider);
         } catch (final RuntimeException e) {
             try {
-                return createNumericTermPredicate(term, valueFunctionFactory);
+                return createNumericTermPredicate(term, valueFunctionFactory, wordListProvider);
             } catch (final RuntimeException e2) {
                 final Function<T, String> stringExtractor = valueFunctionFactory.createStringExtractor();
                 return switch (term.getCondition()) {
@@ -188,6 +231,7 @@ public class ExpressionPredicateBuilder {
                     case MATCHES_REGEX_CASE_SENSITIVE -> StringRegexCaseSensitive.create(term, stringExtractor);
                     case WORD_BOUNDARY -> StringWordBoundary.create(term, stringExtractor);
                     case IN -> StringIn.create(term, stringExtractor);
+                    case IN_DICTIONARY -> StringInDictionary.create(term, stringExtractor, wordListProvider);
                     default -> throw e2;
                 };
             }
@@ -195,9 +239,10 @@ public class ExpressionPredicateBuilder {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private static <T> Optional<Predicate<T>> createDateTermPredicate(final ExpressionTerm term,
-                                                                      final ValueFunctionFactory<T> valueFunctionFactory,
-                                                                      final DateTimeSettings dateTimeSettings) {
+    private <T> Optional<Predicate<T>> createDateTermPredicate(final ExpressionTerm term,
+                                                               final ValueFunctionFactory<T> valueFunctionFactory,
+                                                               final DateTimeSettings dateTimeSettings,
+                                                               final WordListProvider wordListProvider) {
         final Function<T, Long> dateExtractor = valueFunctionFactory.createDateExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> DateEquals.create(term, dateExtractor, dateTimeSettings);
@@ -208,6 +253,7 @@ public class ExpressionPredicateBuilder {
             case LESS_THAN_OR_EQUAL_TO -> DateLessThanOrEqualTo.create(term, dateExtractor, dateTimeSettings);
             case BETWEEN -> DateBetween.create(term, dateExtractor, dateTimeSettings);
             case IN -> DateIn.create(term, dateExtractor, dateTimeSettings);
+            case IN_DICTIONARY -> DateInDictionary.create(term, dateExtractor, dateTimeSettings, wordListProvider);
             default -> throw new MatchException("Unexpected condition '" +
                                                 term.getCondition().getDisplayValue() +
                                                 "' for " +
@@ -217,8 +263,9 @@ public class ExpressionPredicateBuilder {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private static <T> Optional<Predicate<T>> createNumericTermPredicate(final ExpressionTerm term,
-                                                                         final ValueFunctionFactory<T> valueFunctionFactory) {
+    private <T> Optional<Predicate<T>> createNumericTermPredicate(final ExpressionTerm term,
+                                                                  final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                  final WordListProvider wordListProvider) {
         final Function<T, BigDecimal> numExtractor = valueFunctionFactory.createNumberExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> NumericEquals.create(term, numExtractor);
@@ -229,6 +276,7 @@ public class ExpressionPredicateBuilder {
             case LESS_THAN_OR_EQUAL_TO -> NumericLessThanOrEqualTo.create(term, numExtractor);
             case BETWEEN -> NumericBetween.create(term, numExtractor);
             case IN -> NumericIn.create(term, numExtractor);
+            case IN_DICTIONARY -> NumericInDictionary.create(term, numExtractor, wordListProvider);
             default -> throw new MatchException("Unexpected condition '" +
                                                 term.getCondition().getDisplayValue() +
                                                 "' for " +
@@ -442,6 +490,14 @@ public class ExpressionPredicateBuilder {
         }
     }
 
+    private static <T> Optional<Predicate<T>> ifValue(final ExpressionTerm term,
+                                                      final Supplier<Predicate<T>> supplier) {
+        if (NullSafe.isBlankString(term.getValue())) {
+            return Optional.empty();
+        }
+        return Optional.of(supplier.get());
+    }
+
     private static class NumericEquals<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericEquals(final ExpressionTerm term,
@@ -451,7 +507,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, BigDecimal> extractionFunction) {
-            return Optional.of(new NumericEquals<>(term, extractionFunction));
+            return ifValue(term, () -> new NumericEquals<>(term, extractionFunction));
         }
 
         @Override
@@ -470,7 +526,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, BigDecimal> extractionFunction) {
-            return Optional.of(new NumericGreaterThan<>(term, extractionFunction));
+            return ifValue(term, () -> new NumericGreaterThan<>(term, extractionFunction));
         }
 
         @Override
@@ -490,7 +546,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, BigDecimal> extractionFunction) {
-            return Optional.of(new NumericGreaterThanOrEqualTo<>(term, extractionFunction));
+            return ifValue(term, () -> new NumericGreaterThanOrEqualTo<>(term, extractionFunction));
         }
 
         @Override
@@ -510,7 +566,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, BigDecimal> extractionFunction) {
-            return Optional.of(new NumericLessThan<>(term, extractionFunction));
+            return ifValue(term, () -> new NumericLessThan<>(term, extractionFunction));
         }
 
         @Override
@@ -530,7 +586,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, BigDecimal> extractionFunction) {
-            return Optional.of(new NumericLessThanOrEqualTo<>(term, extractionFunction));
+            return ifValue(term, () -> new NumericLessThanOrEqualTo<>(term, extractionFunction));
         }
 
         @Override
@@ -556,14 +612,16 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, BigDecimal> extractionFunction) {
-            final BigDecimal[] between = getTermNumbers(term, term.getValue());
-            if (between.length != 2) {
-                throw new MatchException("2 numbers needed for between query");
-            }
-            if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
-                throw new MatchException("From number must be lower than to number");
-            }
-            return Optional.of(new NumericBetween<>(term, extractionFunction, between));
+            return ifValue(term, () -> {
+                final BigDecimal[] between = getTermNumbers(term, term.getValue());
+                if (between.length != 2) {
+                    throw new MatchException("2 numbers needed for between query");
+                }
+                if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
+                    throw new MatchException("From number must be lower than to number");
+                }
+                return new NumericBetween<>(term, extractionFunction, between);
+            });
         }
 
         @Override
@@ -609,6 +667,52 @@ public class ExpressionPredicateBuilder {
         }
     }
 
+    private static class NumericInDictionary<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, BigDecimal> extractionFunction;
+        private final BigDecimal[] in;
+
+        private NumericInDictionary(final ExpressionTerm term,
+                                    final Function<T, BigDecimal> extractionFunction,
+                                    final BigDecimal[] in) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            this.in = in;
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, BigDecimal> extractionFunction,
+                                                         final WordListProvider wordListProvider) {
+            final String[] words;
+            if (term.getDocRef() != null) {
+                words = wordListProvider.getWords(term.getDocRef());
+            } else {
+                words = loadDictionary(wordListProvider, term.getValue());
+            }
+            if (words.length == 0) {
+                return Optional.of(values -> false);
+            }
+
+            final BigDecimal[] in = new BigDecimal[words.length];
+            for (int i = 0; i < words.length; i++) {
+                final String word = words[i];
+                in[i] = getTermNumber(term, word);
+            }
+            return Optional.of(new NumericInDictionary<>(term, extractionFunction, in));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final BigDecimal val = extractionFunction.apply(values);
+            for (final BigDecimal n : in) {
+                if (Objects.equals(n, val)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
 
     private abstract static class DateExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
@@ -635,7 +739,7 @@ public class ExpressionPredicateBuilder {
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, Long> extractionFunction,
                                                          final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateEquals<>(term, extractionFunction, dateTimeSettings));
+            return ifValue(term, () -> new DateEquals<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
@@ -656,7 +760,7 @@ public class ExpressionPredicateBuilder {
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, Long> extractionFunction,
                                                          final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateGreaterThan<>(term, extractionFunction, dateTimeSettings));
+            return ifValue(term, () -> new DateGreaterThan<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
@@ -677,7 +781,7 @@ public class ExpressionPredicateBuilder {
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, Long> extractionFunction,
                                                          final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateGreaterThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
+            return ifValue(term, () -> new DateGreaterThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
@@ -698,7 +802,7 @@ public class ExpressionPredicateBuilder {
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, Long> extractionFunction,
                                                          final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateLessThan<>(term, extractionFunction, dateTimeSettings));
+            return ifValue(term, () -> new DateLessThan<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
@@ -719,7 +823,7 @@ public class ExpressionPredicateBuilder {
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, Long> extractionFunction,
                                                          final DateTimeSettings dateTimeSettings) {
-            return Optional.of(new DateLessThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
+            return ifValue(term, () -> new DateLessThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
         }
 
         @Override
@@ -745,14 +849,16 @@ public class ExpressionPredicateBuilder {
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, Long> extractionFunction,
                                                          final DateTimeSettings dateTimeSettings) {
-            final long[] between = getTermDates(term, term.getValue(), dateTimeSettings);
-            if (between.length != 2) {
-                throw new MatchException("2 numbers needed for between query");
-            }
-            if (CompareUtil.compareLong(between[0], between[1]) >= 0) {
-                throw new MatchException("From number must be lower than to number");
-            }
-            return Optional.of(new DateBetween<>(term, extractionFunction, between));
+            return ifValue(term, () -> {
+                final long[] between = getTermDates(term, term.getValue(), dateTimeSettings);
+                if (between.length != 2) {
+                    throw new MatchException("2 numbers needed for between query");
+                }
+                if (CompareUtil.compareLong(between[0], between[1]) >= 0) {
+                    throw new MatchException("From number must be lower than to number");
+                }
+                return new DateBetween<>(term, extractionFunction, between);
+            });
         }
 
         @Override
@@ -799,16 +905,63 @@ public class ExpressionPredicateBuilder {
         }
     }
 
+    private static class DateInDictionary<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, Long> extractionFunction;
+        private final long[] in;
+
+        private DateInDictionary(final ExpressionTerm term,
+                                 final Function<T, Long> extractionFunction,
+                                 final long[] in) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            this.in = in;
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, Long> extractionFunction,
+                                                         final DateTimeSettings dateTimeSettings,
+                                                         final WordListProvider wordListProvider) {
+            final String[] words;
+            if (term.getDocRef() != null) {
+                words = wordListProvider.getWords(term.getDocRef());
+            } else {
+                words = loadDictionary(wordListProvider, term.getValue());
+            }
+            if (words.length == 0) {
+                return Optional.of(values -> false);
+            }
+
+            final long[] in = new long[words.length];
+            for (int i = 0; i < words.length; i++) {
+                final String word = words[i];
+                in[i] = getTermDate(term, word, dateTimeSettings);
+            }
+            return Optional.of(new DateInDictionary<>(term, extractionFunction, in));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            for (final long n : in) {
+                if (Objects.equals(n, val)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
     private abstract static class StringExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
-        final String string;
+        final String value;
         final Function<T, String> extractionFunction;
 
         private StringExpressionTermPredicate(final ExpressionTerm term,
+                                              final String value,
                                               final Function<T, String> extractionFunction) {
             super(term);
-            string = term.getValue();
+            this.value = value;
             this.extractionFunction = extractionFunction;
         }
     }
@@ -816,88 +969,83 @@ public class ExpressionPredicateBuilder {
     private static class StringEquals<T> extends StringExpressionTermPredicate<T> {
 
         private StringEquals(final ExpressionTerm term,
+                             final String value,
                              final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            super(term, value, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
+            return ifValue(term, () -> {
+                // See if this is a wildcard equals.
+                final String replaced = makePattern(term.getValue());
+                if (!Objects.equals(term.getValue(), replaced)) {
+                    return new StringRegex<>(term, extractionFunction,
+                            Pattern.compile(replaced, Pattern.CASE_INSENSITIVE));
+                }
 
-            // See if this is a wildcard equals.
-            final String replaced = makePattern(term.getValue());
-            if (!Objects.equals(term.getValue(), replaced)) {
-                return Optional.of(new StringRegex<>(term, extractionFunction,
-                        Pattern.compile(replaced, Pattern.CASE_INSENSITIVE)));
-            }
-
-            return Optional.of(new StringEquals<T>(term, extractionFunction));
+                return new StringEquals<T>(term, term.getValue(), extractionFunction);
+            });
         }
 
         @Override
         public boolean test(final T values) {
-            return string.equalsIgnoreCase(extractionFunction.apply(values));
+            return value.equalsIgnoreCase(extractionFunction.apply(values));
         }
     }
 
     private static class StringEqualsCaseSensitive<T> extends StringExpressionTermPredicate<T> {
 
         private StringEqualsCaseSensitive(final ExpressionTerm term,
+                                          final String value,
                                           final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            super(term, value, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
+            return ifValue(term, () -> {
+                // See if this is a wildcard equals.
+                final String replaced = makePattern(term.getValue());
+                if (!Objects.equals(term.getValue(), replaced)) {
+                    return new StringRegex<>(term, extractionFunction,
+                            Pattern.compile(replaced));
+                }
 
-            // See if this is a wildcard equals.
-            final String replaced = makePattern(term.getValue());
-            if (!Objects.equals(term.getValue(), replaced)) {
-                return Optional.of(new StringRegex<>(term, extractionFunction,
-                        Pattern.compile(replaced)));
-            }
-
-            return Optional.of(new StringEqualsCaseSensitive<T>(term, extractionFunction));
+                return new StringEqualsCaseSensitive<T>(term, term.getValue(), extractionFunction);
+            });
         }
 
         @Override
         public boolean test(final T values) {
-            return string.equals(extractionFunction.apply(values));
+            return value.equals(extractionFunction.apply(values));
         }
     }
 
     private static class StringContains<T> extends ExpressionTermPredicate<T> {
 
         private final Function<T, String> extractionFunction;
-        private final String string;
+        private final String value;
 
         private StringContains(final ExpressionTerm term,
                                final Function<T, String> extractionFunction) {
             super(term);
             this.extractionFunction = extractionFunction;
-            string = term.getValue().toLowerCase();
+            value = term.getValue().toLowerCase();
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
+            return ifValue(term, () -> {
+                // See if this is a wildcard contains.
+                final String replaced = makePattern(term.getValue());
+                if (!Objects.equals(term.getValue(), replaced)) {
+                    return new StringRegex<>(term, extractionFunction,
+                            Pattern.compile(".*" + replaced + ".*", Pattern.CASE_INSENSITIVE));
+                }
 
-            // See if this is a wildcard contains.
-            final String replaced = makePattern(term.getValue());
-            if (!Objects.equals(term.getValue(), replaced)) {
-                return Optional.of(new StringRegex<>(term, extractionFunction,
-                        Pattern.compile(".*" + replaced + ".*", Pattern.CASE_INSENSITIVE)));
-            }
-
-            return Optional.of(new StringContains<>(term, extractionFunction));
+                return new StringContains<>(term, extractionFunction);
+            });
         }
 
         @Override
@@ -906,7 +1054,7 @@ public class ExpressionPredicateBuilder {
             if (val == null) {
                 return false;
             }
-            return val.toLowerCase(Locale.ROOT).contains(string);
+            return val.toLowerCase(Locale.ROOT).contains(value);
         }
     }
 
@@ -914,24 +1062,21 @@ public class ExpressionPredicateBuilder {
 
         private StringContainsCaseSensitive(final ExpressionTerm term,
                                             final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            super(term, term.getValue(), extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
+            return ifValue(term, () -> {
+                // See if this is a wildcard contains.
+                final String replaced = makePattern(term.getValue());
+                if (!Objects.equals(term.getValue(), replaced)) {
+                    return new StringRegex<>(term, extractionFunction,
+                            Pattern.compile(".*" + replaced + ".*"));
+                }
 
-            // See if this is a wildcard contains.
-            final String replaced = makePattern(term.getValue());
-            if (!Objects.equals(term.getValue(), replaced)) {
-                return Optional.of(new StringRegex<>(term, extractionFunction,
-                        Pattern.compile(".*" + replaced + ".*")));
-            }
-
-            return Optional.of(new StringContainsCaseSensitive<>(term, extractionFunction));
+                return new StringContainsCaseSensitive<>(term, extractionFunction);
+            });
         }
 
         @Override
@@ -940,7 +1085,7 @@ public class ExpressionPredicateBuilder {
             if (val == null) {
                 return false;
             }
-            return val.contains(string);
+            return val.contains(value);
         }
     }
 
@@ -959,11 +1104,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            return Optional.of(new StringStartsWith<>(term, extractionFunction));
+            return ifValue(term, () -> new StringStartsWith<>(term, extractionFunction));
         }
 
         @Override
@@ -980,16 +1121,12 @@ public class ExpressionPredicateBuilder {
 
         private StringStartsWithCaseSensitive(final ExpressionTerm term,
                                               final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            super(term, term.getValue(), extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            return Optional.of(new StringStartsWithCaseSensitive<>(term, extractionFunction));
+            return ifValue(term, () -> new StringStartsWithCaseSensitive<>(term, extractionFunction));
         }
 
         @Override
@@ -998,7 +1135,7 @@ public class ExpressionPredicateBuilder {
             if (val == null) {
                 return false;
             }
-            return val.startsWith(string);
+            return val.startsWith(value);
         }
     }
 
@@ -1016,11 +1153,7 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            return Optional.of(new StringEndsWith<>(term, extractionFunction));
+            return ifValue(term, () -> new StringEndsWith<>(term, extractionFunction));
         }
 
         @Override
@@ -1037,16 +1170,12 @@ public class ExpressionPredicateBuilder {
 
         private StringEndsWithCaseSensitive(final ExpressionTerm term,
                                             final Function<T, String> extractionFunction) {
-            super(term, extractionFunction);
+            super(term, term.getValue(), extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            return Optional.of(new StringEndsWithCaseSensitive<>(term, extractionFunction));
+            return ifValue(term, () -> new StringEndsWithCaseSensitive<>(term, extractionFunction));
         }
 
         @Override
@@ -1055,7 +1184,7 @@ public class ExpressionPredicateBuilder {
             if (val == null) {
                 return false;
             }
-            return val.endsWith(string);
+            return val.endsWith(value);
         }
     }
 
@@ -1075,12 +1204,10 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            final Pattern pattern = Pattern.compile(term.getValue(), Pattern.CASE_INSENSITIVE);
-            return Optional.of(new StringRegex<>(term, extractionFunction, pattern));
+            return ifValue(term, () -> {
+                final Pattern pattern = Pattern.compile(term.getValue(), Pattern.CASE_INSENSITIVE);
+                return new StringRegex<>(term, extractionFunction, pattern);
+            });
         }
 
         @Override
@@ -1108,12 +1235,10 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            final Pattern pattern = Pattern.compile(term.getValue());
-            return Optional.of(new StringRegexCaseSensitive<>(term, extractionFunction, pattern));
+            return ifValue(term, () -> {
+                final Pattern pattern = Pattern.compile(term.getValue());
+                return new StringRegexCaseSensitive<>(term, extractionFunction, pattern);
+            });
         }
 
         @Override
@@ -1141,12 +1266,10 @@ public class ExpressionPredicateBuilder {
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
-            // If the term value is null or empty then always match.
-            if (NullSafe.isBlankString(term.getValue())) {
-                return Optional.empty();
-            }
-            final Predicate<String> predicate = StringPredicateFactory.createWordBoundaryPredicate(term.getValue());
-            return Optional.of(new StringWordBoundary<>(term, extractionFunction, predicate));
+            return ifValue(term, () -> {
+                final Predicate<String> predicate = StringPredicateFactory.createWordBoundaryPredicate(term.getValue());
+                return new StringWordBoundary<>(term, extractionFunction, predicate);
+            });
         }
 
         @Override
@@ -1161,45 +1284,81 @@ public class ExpressionPredicateBuilder {
 
     private static class StringIn<T> extends ExpressionTermPredicate<T> {
 
-        private final List<Predicate<T>> subPredicates;
+        private final Function<T, String> extractionFunction;
+        private final String[] in;
 
         private StringIn(final ExpressionTerm term,
-                         final List<Predicate<T>> subPredicates) {
+                         final Function<T, String> extractionFunction,
+                         final String[] in) {
             super(term);
-            this.subPredicates = subPredicates;
+            this.extractionFunction = extractionFunction;
+            this.in = in;
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
             final String[] in = term.getValue().split(" ");
-            final List<Predicate<T>> subPredicates = new ArrayList<>(in.length);
-            for (final String str : in) {
-                final ExpressionTerm subTerm = ExpressionTerm
-                        .builder()
-                        .field(term.getField())
-                        .condition(Condition.EQUALS)
-                        .value(str)
-                        .build();
-                final Optional<Predicate<T>> subPredicate = StringEqualsCaseSensitive.create(subTerm,
-                        extractionFunction);
-                subPredicate.ifPresent(subPredicates::add);
+            // If there are no terms then always a false match.
+            if (in.length == 0) {
+                return Optional.of(values -> false);
             }
-            if (subPredicates.isEmpty()) {
-                return Optional.empty();
-            }
-            return Optional.of(new StringIn<>(term, subPredicates));
+            return Optional.of(new StringIn<>(term, extractionFunction, in));
         }
 
         @Override
         public boolean test(final T values) {
-            for (final Predicate<T> predicate : subPredicates) {
-                if (predicate.test(values)) {
+            final String value = extractionFunction.apply(values);
+            for (final String n : in) {
+                if (Objects.equals(n, value)) {
                     return true;
                 }
             }
             return false;
         }
     }
+
+    private static class StringInDictionary<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, String> extractionFunction;
+        private final String[] in;
+
+        private StringInDictionary(final ExpressionTerm term,
+                                   final Function<T, String> extractionFunction,
+                                   final String[] in) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            this.in = in;
+        }
+
+        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
+                                                         final Function<T, String> extractionFunction,
+                                                         final WordListProvider wordListProvider) {
+            final String[] words;
+            if (term.getDocRef() != null) {
+                words = wordListProvider.getWords(term.getDocRef());
+            } else {
+                words = loadDictionary(wordListProvider, term.getValue());
+            }
+
+            // If there are no terms then always a false match.
+            if (words.length == 0) {
+                return Optional.of(values -> false);
+            }
+            return Optional.of(new StringIn<>(term, extractionFunction, words));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final String value = extractionFunction.apply(values);
+            for (final String n : in) {
+                if (Objects.equals(n, value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
 
     public static String makePattern(final String value) {
         int index = 0;
@@ -1229,5 +1388,42 @@ public class ExpressionPredicateBuilder {
             }
         }
         return new String(out, 0, index);
+    }
+
+    private static String[] loadDictionary(final WordListProvider wordListProvider,
+                                           final String name) {
+        // Try by UUID
+        final Optional<DocRef> optionalDocRef = wordListProvider.findByUuid(name);
+        final DocRef docRef;
+        if (optionalDocRef.isEmpty()) {
+            LOGGER.debug(() -> "Unable to load dictionary by UUID '" + name + "'");
+
+            // Try and load a dictionary with the supplied name.
+            final List<DocRef> list = wordListProvider.findByName(name);
+
+            if (list == null || list.isEmpty()) {
+                final String message = "Dictionary not found with name '" + name
+                                       + "'. You might not have permission to access this dictionary";
+                LOGGER.debug(() -> message);
+                throw new MatchException(message);
+
+            } else {
+                if (list.size() > 1) {
+                    LOGGER.debug(() -> "Multiple dictionaries found with name '" + name
+                                       + "' - using the first one that was created");
+                }
+
+                docRef = list.getFirst();
+            }
+        } else {
+            docRef = optionalDocRef.get();
+        }
+
+        if (docRef == null) {
+            throw new MatchException("Unable to find dictionary " + name);
+
+        } else {
+            return wordListProvider.getWords(docRef);
+        }
     }
 }

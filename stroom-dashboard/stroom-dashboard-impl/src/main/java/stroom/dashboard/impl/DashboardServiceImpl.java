@@ -45,6 +45,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResultBuilder;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
@@ -114,6 +115,7 @@ class DashboardServiceImpl implements DashboardService {
     private final TaskContextFactory taskContextFactory;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -127,7 +129,8 @@ class DashboardServiceImpl implements DashboardService {
                          final ExecutorProvider executorProvider,
                          final TaskContextFactory taskContextFactory,
                          final ResultStoreManager searchResponseCreatorManager,
-                         final NodeInfo nodeInfo) {
+                         final NodeInfo nodeInfo,
+                         final ExpressionPredicateFactory expressionPredicateFactory) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -140,6 +143,7 @@ class DashboardServiceImpl implements DashboardService {
         this.taskContextFactory = taskContextFactory;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
@@ -313,7 +317,7 @@ class DashboardServiceImpl implements DashboardService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory) {
+                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;

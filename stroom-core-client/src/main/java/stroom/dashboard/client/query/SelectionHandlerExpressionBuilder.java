@@ -38,7 +38,7 @@ public class SelectionHandlerExpressionBuilder {
         ExpressionOperator currentSelectionExpression = null;
         if (component instanceof HasComponentSelection) {
             final HasComponentSelection hasComponentSelection = (HasComponentSelection) component;
-            final List<ComponentSelection> selection = hasComponentSelection.getSelection();
+            final List<ComponentSelection> componentSelections = hasComponentSelection.getSelection();
             if (selectionHandlers != null) {
                 final List<ComponentSelectionHandler> matchingHandlers = selectionHandlers
                         .stream()
@@ -52,9 +52,9 @@ public class SelectionHandlerExpressionBuilder {
                             .builder()
                             .op(Op.OR);
                     for (final ComponentSelectionHandler selectionHandler : matchingHandlers) {
-                        for (final ComponentSelection params : selection) {
+                        for (final ComponentSelection componentSelection : componentSelections) {
                             ExpressionOperator ex = selectionHandler.getExpression();
-                            ex = ExpressionUtil.replaceExpressionParameters(ex, params.getMap());
+                            ex = ExpressionUtil.replaceExpressionParameters(ex, componentSelection);
                             innerBuilder.addOperator(ex);
                         }
                     }

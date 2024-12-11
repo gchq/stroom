@@ -89,7 +89,8 @@ class TestSearchResponseCreator {
                 sizesProvider,
                 mockStore,
                 new ExpressionContextFactory().createContext(searchRequest),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
     }
 
     @Test

@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
@@ -66,7 +67,8 @@ public class ResultStore {
                        final CoprocessorsImpl coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings,
-                       final MapDataStoreFactory mapDataStoreFactory) {
+                       final MapDataStoreFactory mapDataStoreFactory,
+                       final ExpressionPredicateFactory expressionPredicateFactory) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
         this.userRef = userRef;
@@ -78,7 +80,8 @@ public class ResultStore {
                 sizesProvider,
                 this,
                 coprocessors.getExpressionContext(),
-                mapDataStoreFactory);
+                mapDataStoreFactory,
+                expressionPredicateFactory);
     }
 
     public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {

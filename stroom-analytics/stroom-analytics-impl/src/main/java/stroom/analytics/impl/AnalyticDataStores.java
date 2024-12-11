@@ -31,6 +31,7 @@ import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.TableResultCreator;
@@ -85,6 +86,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final ByteBufferFactory bufferFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -96,7 +98,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final ExpressionContextFactory expressionContextFactory,
                               final NodeInfo nodeInfo,
                               final SecurityContext securityContext,
-                              final ByteBufferFactory bufferFactory) {
+                              final ByteBufferFactory bufferFactory,
+                              final ExpressionPredicateFactory expressionPredicateFactory) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -106,6 +109,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.bufferFactory = bufferFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -306,7 +310,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 dataStoreSettings,
                 executorProvider,
                 errorConsumer,
-                bufferFactory);
+                bufferFactory,
+                expressionPredicateFactory);
     }
 
     @Override
@@ -419,7 +424,9 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
                 final FormatterFactory formatterFactory =
                         new FormatterFactory(searchRequest.getDateTimeSettings());
-                final TableResultCreator resultCreator = new TableResultCreator(formatterFactory);
+                final TableResultCreator resultCreator = new TableResultCreator(
+                        formatterFactory,
+                        expressionPredicateFactory);
                 ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
                 TableSettings tableSettings = resultRequest.getMappings().getFirst();
                 tableSettings = tableSettings

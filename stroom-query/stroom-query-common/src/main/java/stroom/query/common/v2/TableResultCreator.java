@@ -43,18 +43,22 @@ public class TableResultCreator implements ResultCreator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultCreator.class);
 
     private final FormatterFactory formatterFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private TableResult lastResult;
 
-    public TableResultCreator(final FormatterFactory formatterFactory) {
-        this(formatterFactory, false);
+    public TableResultCreator(final FormatterFactory formatterFactory,
+                              final ExpressionPredicateFactory expressionPredicateFactory) {
+        this(formatterFactory, expressionPredicateFactory, false);
     }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
+                              final ExpressionPredicateFactory expressionPredicateFactory,
                               final boolean cacheLastResult) {
         this.formatterFactory = formatterFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -95,6 +99,7 @@ public class TableResultCreator implements ResultCreator {
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
+                        expressionPredicateFactory,
                         errorConsumer);
                 if (optionalRowCreator.isEmpty()) {
                     optionalRowCreator = FilteredRowCreator.create(
@@ -105,7 +110,8 @@ public class TableResultCreator implements ResultCreator {
                             keyFactory,
                             tableSettings.getAggregateFilter(),
                             dataStore.getDateTimeSettings(),
-                            errorConsumer);
+                            errorConsumer,
+                            expressionPredicateFactory);
                 }
             }
 

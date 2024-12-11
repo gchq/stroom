@@ -46,6 +46,7 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.MapDataStoreFactory;
@@ -121,7 +122,8 @@ class TestSearchResultCreation {
                 pathCreator,
                 () -> executorService,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ByteBufferFactoryImpl());
+                new ByteBufferFactoryImpl(),
+                new ExpressionPredicateFactory(null));
     }
 
     @AfterEach
@@ -173,7 +175,8 @@ class TestSearchResultCreation {
                 coprocessors,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -307,7 +310,8 @@ class TestSearchResultCreation {
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -387,7 +391,8 @@ class TestSearchResultCreation {
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -498,7 +503,8 @@ class TestSearchResultCreation {
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 

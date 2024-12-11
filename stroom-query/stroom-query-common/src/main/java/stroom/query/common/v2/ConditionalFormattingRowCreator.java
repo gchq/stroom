@@ -5,7 +5,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.format.Formatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;
@@ -51,6 +51,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                                                    final ExpressionOperator rowFilterExpression,
                                                    final List<ConditionalFormattingRule> rules,
                                                    final DateTimeSettings dateTimeSettings,
+                                                   final ExpressionPredicateFactory expressionPredicateFactory,
                                                    final ErrorConsumer errorConsumer) {
         // Create conditional formatting expression matcher.
         if (rules != null) {
@@ -64,7 +65,8 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                 for (final ConditionalFormattingRule rule : activeRules) {
                     try {
                         final Optional<Predicate<Val[]>> optionalValuesPredicate =
-                                ExpressionPredicateBuilder.create(rule.getExpression(),
+                                expressionPredicateFactory.create(
+                                        rule.getExpression(),
                                         queryFieldIndex,
                                         dateTimeSettings);
                         optionalValuesPredicate.ifPresent(columnExpressionMatcher ->
@@ -85,7 +87,8 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                             .createValuesPredicate(newColumns,
                                     applyValueFilters,
                                     rowFilterExpression,
-                                    dateTimeSettings);
+                                    dateTimeSettings,
+                                    expressionPredicateFactory);
 
                     return Optional.of(new ConditionalFormattingRowCreator(
                             columnIndexMapping,
