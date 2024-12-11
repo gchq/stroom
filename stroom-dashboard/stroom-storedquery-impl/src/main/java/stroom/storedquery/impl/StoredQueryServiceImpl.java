@@ -98,12 +98,12 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     }
 
     @Override
-    public int deleteByOwner(final String ownerUuid) {
+    public int deleteByOwner(final UserRef ownerUserRef) {
         return securityContext.secureResult(() -> {
             if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
-                || securityContext.isCurrentUser(ownerUuid)) {
+                || securityContext.isCurrentUser(ownerUserRef)) {
 
-                return dao.delete(ownerUuid);
+                return dao.delete(ownerUserRef);
             } else {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must be the owner of the stored queries to delete them, or hold "

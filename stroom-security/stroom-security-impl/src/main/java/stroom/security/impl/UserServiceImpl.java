@@ -310,14 +310,13 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
     private boolean doDelete(final UserRef userRef) {
         Objects.requireNonNull(userRef);
-        final String userUuid = userRef.getUuid();
         final boolean didDelete = userDao.deleteUser(userRef);
         if (didDelete) {
             // We can't delete these things inside the user deletion txn as they are in different
             // db modules. Best we can do is log any failures and delete as much as we can. Not the
             // end of the world if there are orphaned records hanging around.
             try {
-                storedQueryService.deleteByOwner(userUuid);
+                storedQueryService.deleteByOwner(userRef);
             } catch (Exception e) {
                 LOGGER.error("Error deleting stored queries for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on

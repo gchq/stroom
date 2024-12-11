@@ -69,6 +69,7 @@ class TestStoredQueryDao {
 
     private DocRef dashboardRef;
     private DocRef indexRef;
+    private UserRef owner;
 
     @BeforeEach
     void beforeEach() {
@@ -82,7 +83,7 @@ class TestStoredQueryDao {
         // Clear the current DB.
         DbTestUtil.clear();
 
-        final UserRef owner = UserRef.forUserUuid(UUID.randomUUID().toString());
+        owner = UserRef.forUserUuid(UUID.randomUUID().toString());
         Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
                 .thenReturn(Optional.of(owner));
 
@@ -225,7 +226,23 @@ class TestStoredQueryDao {
         assertThat(root.getChildren().size()).isEqualTo(1);
     }
 
-//    @Test
+    @Test
+    void delete() {
+        ResultPage<StoredQuery> list = storedQueryDao.find(new FindStoredQueryCriteria());
+        assertThat(list.size())
+                .isEqualTo(2);
+
+        final int delCount = storedQueryDao.delete(owner);
+
+        assertThat(delCount)
+                .isEqualTo(2);
+
+        list = storedQueryDao.find(new FindStoredQueryCriteria());
+        assertThat(list.size())
+                .isZero();
+    }
+
+    //    @Test
 //    public void testLoadById() {
 //        final QueryEntity query = queryService.loadById(testQuery.getId());
 //

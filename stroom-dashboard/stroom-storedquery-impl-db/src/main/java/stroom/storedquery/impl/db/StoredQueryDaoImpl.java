@@ -245,15 +245,15 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public int delete(final String ownerUuid) {
-        Objects.requireNonNull(ownerUuid);
+    public int delete(final UserRef ownerUserRef) {
+        Objects.requireNonNull(ownerUserRef);
         final int delCount = JooqUtil.contextResult(storedQueryDbConnProvider, dslContext -> dslContext
                 .deleteFrom(QUERY)
-                .where(QUERY.OWNER_UUID.eq(ownerUuid))
+                .where(QUERY.OWNER_UUID.eq(ownerUserRef.getUuid()))
                 .execute());
 
-        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for ownerUuid {}",
-                delCount, QUERY.getName(), ownerUuid));
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for ownerUserRef {}",
+                delCount, QUERY.getName(), ownerUserRef.toInfoString()));
         return delCount;
     }
 }

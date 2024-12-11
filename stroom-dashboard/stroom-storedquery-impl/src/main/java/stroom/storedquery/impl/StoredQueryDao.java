@@ -4,6 +4,7 @@ import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import java.util.List;
 
@@ -22,5 +23,5 @@ public interface StoredQueryDao extends HasIntCrud<StoredQuery> {
                         final boolean favourite,
                         final int retain);
 
-    int delete(String ownerUuid);
+    int delete(UserRef ownerUuid);
 }
