@@ -181,17 +181,7 @@ class TestStoredQueryDao {
     }
 
     @Test
-    void testOldHistoryDeletion() {
-//        Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
-//                .thenReturn(Optional.of(UserRef
-//                        .builder()
-//                        .uuid("dummy")
-//                        .subjectId("dummy")
-//                        .displayName("dummy")
-//                        .build()));
-
-//        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner.getUuid())))
-//                .thenReturn(Optional.of(owner));
+    void testOldHistoryDeletion_byCount() {
 
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
@@ -244,6 +234,79 @@ class TestStoredQueryDao {
 
         list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(110); // 100 + 10
+    }
+
+    @Test
+    void testOldHistoryDeletion_byAge() {
+
+        final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
+        criteria.setDashboardUuid(dashboardRef.getUuid());
+        criteria.setComponentId(QUERY_COMPONENT);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
+
+        ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
+        assertThat(list.size()).isEqualTo(2);
+
+        StoredQuery query = list.getFirst();
+
+        // Add 10 more for owner with OLD create time
+        // These will be deleted
+        for (int i = 0; i < 10; i++) {
+            final StoredQuery newQuery = new StoredQuery();
+            newQuery.setName("History");
+            newQuery.setDashboardUuid(query.getDashboardUuid());
+            newQuery.setComponentId(query.getComponentId());
+            newQuery.setFavourite(false);
+            newQuery.setQuery(query.getQuery());
+            newQuery.setOwner(owner);
+            AuditUtil.stamp(securityContext, newQuery);
+            newQuery.setCreateTimeMs(0L); // Make them VERY old
+            storedQueryDao.create(newQuery);
+        }
+
+        // Add 10 more for owner with recent create time
+        // These will be kept
+        for (int i = 0; i < 10; i++) {
+            final StoredQuery newQuery = new StoredQuery();
+            newQuery.setName("History");
+            newQuery.setDashboardUuid(query.getDashboardUuid());
+            newQuery.setComponentId(query.getComponentId());
+            newQuery.setFavourite(false);
+            newQuery.setQuery(query.getQuery());
+            newQuery.setOwner(owner);
+            AuditUtil.stamp(securityContext, newQuery); // New ones
+            storedQueryDao.create(newQuery);
+        }
+
+        UserRef owner2 = UserRef.builder()
+                .uuid(UUID.randomUUID().toString())
+                .subjectId("owner2")
+                .build();
+        Mockito.when(userRefLookup.getByUuid(Mockito.eq(owner2.getUuid())))
+                .thenReturn(Optional.of(owner2));
+
+        // Add 10 more for owner2 with recent create time
+        // These will be kept
+        for (int i = 0; i < 10; i++) {
+            final StoredQuery newQuery = new StoredQuery();
+            newQuery.setName("History");
+            newQuery.setDashboardUuid(query.getDashboardUuid());
+            newQuery.setComponentId(query.getComponentId());
+            newQuery.setFavourite(false);
+            newQuery.setQuery(query.getQuery());
+            newQuery.setOwner(owner2);
+            AuditUtil.stamp(securityContext, newQuery);
+            storedQueryDao.create(newQuery);
+        }
+
+        list = storedQueryDao.find(criteria);
+        assertThat(list.size()).isEqualTo(32); // 2 + 10 + 10 + 10
+
+        // Clean the history.
+        queryHistoryCleanExecutor.exec();
+
+        list = storedQueryDao.find(criteria);
+        assertThat(list.size()).isEqualTo(22); // 2 + 10 + 10
     }
 
     @Test
