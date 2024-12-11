@@ -168,6 +168,21 @@ public class NotificationListPresenter
     }
 
     private void addColumns() {
+        // Enable notifications
+        final Column<NotificationConfig, TickBoxState> enabledColumn = new Column<NotificationConfig, TickBoxState>(
+                TickBoxCell.create(false, false)) {
+            @Override
+            public TickBoxState getValue(final NotificationConfig row) {
+                return TickBoxState.fromBoolean(row.isEnabled());
+            }
+        };
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            final NotificationConfig updated = row.copy().enabled(!row.isEnabled()).build();
+            replace(updated);
+            setDirty(true);
+            refresh();
+        });
+        dataGrid.addColumn(enabledColumn, "Enabled", 80);
         dataGrid.addResizableColumn(
                 new Column<NotificationConfig, String>(new TextCell()) {
                     @Override
