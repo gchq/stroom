@@ -19,6 +19,7 @@ ext.moduleName = 'stroom.query.common'
 dependencies {
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')

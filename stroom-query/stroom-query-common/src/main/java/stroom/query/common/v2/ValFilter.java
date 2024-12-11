@@ -4,7 +4,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
@@ -25,11 +25,12 @@ public class ValFilter {
     public static Predicate<Val[]> create(final ExpressionOperator rowExpression,
                                           final CompiledColumns compiledColumns,
                                           final DateTimeSettings dateTimeSettings,
+                                          final ExpressionPredicateFactory expressionPredicateFactory,
                                           final Map<String, String> paramMap) {
         final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil
                 .createColumnNameValExtractor(compiledColumns.getColumns());
         final Optional<Predicate<Val[]>> optionalRowExpressionMatcher =
-                ExpressionPredicateBuilder.create(rowExpression, queryFieldIndex, dateTimeSettings);
+                expressionPredicateFactory.create(rowExpression, queryFieldIndex, dateTimeSettings);
 
         final Set<String> fieldsUsed = new HashSet<>(ExpressionUtil.fields(rowExpression));
         final List<UsedColumn> usedColumns = new ArrayList<>();

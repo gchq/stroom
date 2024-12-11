@@ -5,7 +5,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.util.date.DateUtil;
 import stroom.util.filter.StringPredicateFactory;
 
@@ -27,9 +27,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestExpressionPredicateBuilder {
+class TestExpressionPredicateFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionPredicateBuilder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionPredicateFactory.class);
 
     private static final ValueFunctionFactories<String> TEXT_VALUE_FUNCTION_FACTORIES = fieldName ->
             new StringValueFunctionFactory(QueryField.builder().fldName("test").fldType(FieldType.TEXT).build());
@@ -381,7 +381,7 @@ class TestExpressionPredicateBuilder {
     }
 
     private void testWildcardReplacement(final String in, final String expected) {
-        assertThat(ExpressionPredicateBuilder.makePattern(in)).isEqualTo(expected);
+        assertThat(ExpressionPredicateFactory.makePattern(in)).isEqualTo(expected);
     }
 
     private void doStringMatchTest(final String userInput,
@@ -415,7 +415,7 @@ class TestExpressionPredicateBuilder {
             return string -> true;
         }
 
-        final Optional<Predicate<String>> optionalValuesPredicate = ExpressionPredicateBuilder
+        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory(null)
                 .create(simpleStringExpressionParser.orElseThrow(), TEXT_VALUE_FUNCTION_FACTORIES, null);
         return string -> optionalValuesPredicate.orElseThrow().test(string);
     }
@@ -465,7 +465,7 @@ class TestExpressionPredicateBuilder {
                 .referenceTime(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"))
                 .timeZone(UserTimeZone.utc())
                 .build();
-        final Optional<Predicate<String>> optionalValuesPredicate = ExpressionPredicateBuilder
+        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory(null)
                 .create(simpleStringExpressionParser.orElseThrow(), DATE_VALUE_FUNCTION_FACTORIES, dateTimeSettings);
         return string -> optionalValuesPredicate.orElseThrow().test(string);
     }

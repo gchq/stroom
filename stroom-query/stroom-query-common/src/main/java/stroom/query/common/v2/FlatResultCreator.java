@@ -62,6 +62,7 @@ public class FlatResultCreator implements ResultCreator {
     private final ExpressionContext expressionContext;
     private final Map<String, String> paramMap;
     private final FormatterFactory formatterFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final Sizes defaultMaxResultsSizes;
     private final boolean cacheLastResult;
@@ -73,6 +74,7 @@ public class FlatResultCreator implements ResultCreator {
                              final ExpressionContext expressionContext,
                              final Map<String, String> paramMap,
                              final FormatterFactory formatterFactory,
+                             final ExpressionPredicateFactory expressionPredicateFactory,
                              final Sizes defaultMaxResultsSizes,
                              final boolean cacheLastResult) {
         this.dataStoreFactory = dataStoreFactory;
@@ -81,6 +83,7 @@ public class FlatResultCreator implements ResultCreator {
         this.expressionContext = expressionContext;
         this.paramMap = paramMap;
         this.formatterFactory = formatterFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.cacheLastResult = cacheLastResult;
     }
@@ -181,7 +184,8 @@ public class FlatResultCreator implements ResultCreator {
                                 parent,
                                 child,
                                 paramMap,
-                                errorConsumer);
+                                errorConsumer,
+                                expressionPredicateFactory);
                         mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                     }
 
@@ -349,6 +353,7 @@ public class FlatResultCreator implements ResultCreator {
         private final DataStoreSettings dataStoreSettings;
         private final SearchRequestSource searchRequestSource;
         private final ExpressionContext expressionContext;
+        private final ExpressionPredicateFactory expressionPredicateFactory;
         private final QueryKey queryKey;
         private final String componentId;
         private final TableSettings parent;
@@ -367,11 +372,13 @@ public class FlatResultCreator implements ResultCreator {
                final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
-               final ErrorConsumer errorConsumer) {
+               final ErrorConsumer errorConsumer,
+               final ExpressionPredicateFactory expressionPredicateFactory) {
             this.dataStoreFactory = dataStoreFactory;
             this.dataStoreSettings = dataStoreSettings;
             this.searchRequestSource = searchRequestSource;
             this.expressionContext = expressionContext;
+            this.expressionPredicateFactory = expressionPredicateFactory;
             this.queryKey = queryKey;
             this.componentId = componentId;
             this.parent = parent;
@@ -421,7 +428,8 @@ public class FlatResultCreator implements ResultCreator {
                     parent.getColumns(),
                     parent.applyValueFilters(),
                     parent.getAggregateFilter(),
-                    dataStore.getDateTimeSettings());
+                    dataStore.getDateTimeSettings(),
+                    expressionPredicateFactory);
             final Predicate<Val[]> predicate = filter.orElse(vals -> true);
 
             // Get top level items.

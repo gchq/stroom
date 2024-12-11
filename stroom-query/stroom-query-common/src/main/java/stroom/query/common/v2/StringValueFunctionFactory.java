@@ -2,7 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.util.date.DateUtil;
 
 import java.math.BigDecimal;

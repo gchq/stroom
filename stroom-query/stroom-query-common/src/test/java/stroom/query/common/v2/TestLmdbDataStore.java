@@ -121,7 +121,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 dataStoreSettings,
                 () -> executorService,
                 errorConsumer,
-                new ByteBufferFactoryImpl());
+                new ByteBufferFactoryImpl(),
+                new ExpressionPredicateFactory(null));
     }
 
     @Test
@@ -170,7 +171,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    formatterFactory,
+                    new ExpressionPredicateFactory(null));
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -252,7 +255,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                             .addMappings(tableSettings)
                             .requestedRange(new OffsetRange(0, 3000))
                             .build();
-                    final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+                    final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                            formatterFactory,
+                            new ExpressionPredicateFactory(null));
                     final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                             dataStore,
                             tableResultRequest);
@@ -273,7 +278,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 //                        LOGGER.info("Open groups: " + openGroups.size());
 //                    }
 
-                    final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(formatterFactory);
+                    final TableResultCreator tableComponentResultCreator2 = new TableResultCreator(
+                            formatterFactory,
+                            new ExpressionPredicateFactory(null));
                     final TableResult searchResult2 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest2);
@@ -296,7 +303,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 //                        LOGGER.info("Open groups: " + openGroups.size());
 //                    }
 
-                    final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(formatterFactory);
+                    final TableResultCreator tableComponentResultCreator3 = new TableResultCreator(
+                            formatterFactory,
+                            new ExpressionPredicateFactory(null));
                     final TableResult searchResult3 = (TableResult) tableComponentResultCreator2.create(
                             dataStore,
                             tableResultRequest3);
@@ -334,7 +343,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    formatterFactory,
+                    new ExpressionPredicateFactory(null));
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -404,7 +415,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                formatterFactory,
+                new ExpressionPredicateFactory(null));
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);

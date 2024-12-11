@@ -48,6 +48,7 @@ public class SearchResponseCreator {
     private final ResultStore store;
     private final ExpressionContext expressionContext;
     private final MapDataStoreFactory mapDataStoreFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -57,11 +58,13 @@ public class SearchResponseCreator {
     public SearchResponseCreator(final SizesProvider sizesProvider,
                                  final ResultStore store,
                                  final ExpressionContext expressionContext,
-                                 final MapDataStoreFactory mapDataStoreFactory) {
+                                 final MapDataStoreFactory mapDataStoreFactory,
+                                 final ExpressionPredicateFactory expressionPredicateFactory) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.expressionContext = expressionContext;
         this.mapDataStoreFactory = mapDataStoreFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     /**
@@ -127,9 +130,9 @@ public class SearchResponseCreator {
                 LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
                 didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
                 LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
-                        effectiveTimeout +
-                        ", didSearchComplete=" +
-                        didSearchComplete);
+                                   effectiveTimeout +
+                                   ", didSearchComplete=" +
+                                   didSearchComplete);
 
                 if (!didSearchComplete && !searchRequest.incremental()) {
                     // Search didn't complete non-incremental search in time so return a timed out error response
@@ -160,13 +163,13 @@ public class SearchResponseCreator {
             final List<Result> res = LOGGER.logDurationIfTraceEnabled(() ->
                     getResults(searchRequest, resultCreatorMap), "Getting results");
             LOGGER.debug(() -> "Returning new SearchResponse with results: " +
-                    (res.isEmpty()
-                            ? "null"
-                            : res.size()) +
-                    ", complete: " +
-                    complete +
-                    ", isComplete: " +
-                    store.isComplete());
+                               (res.isEmpty()
+                                       ? "null"
+                                       : res.size()) +
+                               ", complete: " +
+                               complete +
+                               ", isComplete: " +
+                               store.isComplete());
 
             List<Result> results = res;
 
@@ -197,8 +200,8 @@ public class SearchResponseCreator {
                     searchRequest.getKey(),
                     store,
                     new RuntimeException("Error getting search results: [" +
-                            e.getMessage() +
-                            "], see service's logs for details", e));
+                                         e.getMessage() +
+                                         "], see service's logs for details", e));
         }
     }
 
@@ -297,7 +300,10 @@ public class SearchResponseCreator {
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                     final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
-                    resultCreator = new TableResultCreator(formatterFactory, cacheLastResult);
+                    resultCreator = new TableResultCreator(
+                            formatterFactory,
+                            expressionPredicateFactory,
+                            cacheLastResult);
 
                 } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {
                     final FlatResultCreator flatResultCreator = new FlatResultCreator(
@@ -307,6 +313,7 @@ public class SearchResponseCreator {
                             expressionContext,
                             null,
                             null,
+                            expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
                             cacheLastResult);
                     resultCreator = new VisResultCreator(flatResultCreator);
@@ -319,6 +326,7 @@ public class SearchResponseCreator {
                             expressionContext,
                             null,
                             null,
+                            expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
                             cacheLastResult);
                     resultCreator = new QLVisResultCreator(flatResultCreator, resultRequest
@@ -334,6 +342,7 @@ public class SearchResponseCreator {
                             expressionContext,
                             null,
                             null,
+                            expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
                             cacheLastResult);
                 }

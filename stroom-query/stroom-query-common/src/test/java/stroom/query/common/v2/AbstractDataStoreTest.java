@@ -86,7 +86,9 @@ abstract class AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                formatterFactory,
+                new ExpressionPredicateFactory(null));
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
@@ -144,7 +146,9 @@ abstract class AbstractDataStoreTest {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                formatterFactory,
+                new ExpressionPredicateFactory(null));
 
         // Make sure we only get 10 results.
         ResultRequest tableResultRequest = ResultRequest.builder()
@@ -264,7 +268,9 @@ abstract class AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 1))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                formatterFactory,
+                new ExpressionPredicateFactory(null));
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
@@ -342,7 +348,9 @@ abstract class AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 50))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    formatterFactory,
+                    new ExpressionPredicateFactory(null));
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -598,7 +606,9 @@ abstract class AbstractDataStoreTest {
                         .build();
 
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                formatterFactory,
+                new ExpressionPredicateFactory(null));
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
@@ -618,7 +628,9 @@ abstract class AbstractDataStoreTest {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
 
         // Make sure we only get 2000 results.
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(formatterFactory);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                formatterFactory,
+                new ExpressionPredicateFactory(null));
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 

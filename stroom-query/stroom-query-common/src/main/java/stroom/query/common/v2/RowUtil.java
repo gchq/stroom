@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.Column;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactories;
-import stroom.query.common.v2.ExpressionPredicateBuilder.ValueFunctionFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.common.v2.format.Formatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;

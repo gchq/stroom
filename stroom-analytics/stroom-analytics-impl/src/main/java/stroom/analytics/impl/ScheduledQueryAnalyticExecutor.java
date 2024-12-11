@@ -45,6 +45,7 @@ import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FilteredRowCreator;
 import stroom.query.common.v2.ItemMapper;
 import stroom.query.common.v2.KeyFactory;
@@ -109,6 +110,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactory duplicateCheckFactory;
     private final DuplicateCheckDirs duplicateCheckDirs;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -126,7 +128,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final SecurityContext securityContext,
                                    final ExecutionScheduleDao executionScheduleDao,
                                    final DuplicateCheckFactory duplicateCheckFactory,
-                                   final DuplicateCheckDirs duplicateCheckDirs) {
+                                   final DuplicateCheckDirs duplicateCheckDirs,
+                                   final ExpressionPredicateFactory expressionPredicateFactory) {
         this.analyticHelper = analyticHelper;
         this.analyticRuleStore = analyticRuleStore;
         this.executorProvider = executorProvider;
@@ -143,6 +146,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
         this.duplicateCheckDirs = duplicateCheckDirs;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     public void exec() {
@@ -384,6 +388,7 @@ public class ScheduledQueryAnalyticExecutor {
                             tableSettings.getValueFilter(),
                             compiledColumns,
                             modifiedRequest.getDateTimeSettings(),
+                            expressionPredicateFactory,
                             paramMap);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
@@ -462,7 +467,8 @@ public class ScheduledQueryAnalyticExecutor {
                                 keyFactory,
                                 tableSettings.getAggregateFilter(),
                                 expressionContext.getDateTimeSettings(),
-                                errorConsumer);
+                                errorConsumer,
+                                expressionPredicateFactory);
 
                         if (optionalRowCreator.isEmpty()) {
                             optionalRowCreator = SimpleRowCreator.create(
