@@ -18,27 +18,21 @@ package stroom.data.grid.client;
 
 import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.gwtplatform.mvp.client.View;
 
-public interface PagerView extends View, TaskHandlerFactory {
-
-    /**
-     * Set a form group label for the pager view. If not set it won't take up any
-     * space
-     */
-    void setHeading(final String string);
+public interface PagerView extends View, TaskMonitorFactory {
 
     ButtonView addButton(Preset preset);
 
     void addButton(ButtonView buttonView);
 
-    ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                     final Preset secondaryPreset);
+    ToggleButtonView addToggleButton(Preset primaryPreset,
+                                     Preset secondaryPreset);
 
     RefreshButton getRefreshButton();
 

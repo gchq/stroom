@@ -17,13 +17,14 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -42,13 +43,10 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
+public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
     private static final Binder binder = GWT.create(Binder.class);
-    private final int clientLeft;
-    private final int clientTop;
 
     @UiField
     SimplePanel icon;
@@ -62,8 +60,10 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
     private boolean dragging;
     private int dragStartX;
     private int dragStartY;
-    private int windowWidth;
-    private HandlerRegistration resizeHandlerRegistration;
+    private Rect dragStartWindow;
+
+    private Element dialogContent;
+    private Element dialogButtons;
 
     /**
      * Creates an empty dialog box. It should not be shown until its child
@@ -106,10 +106,6 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
         setStyleName("dialog-popup");
         setWidget(binder.createAndBindUi(this));
 
-        windowWidth = Window.getClientWidth();
-        clientLeft = Document.get().getBodyOffsetLeft();
-        clientTop = Document.get().getBodyOffsetTop();
-
         final MouseHandler mouseHandler = new MouseHandler();
         addDomHandler(mouseHandler, MouseDownEvent.getType());
         addDomHandler(mouseHandler, MouseUpEvent.getType());
@@ -137,19 +133,7 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
     }
 
     @Override
-    public void show() {
-        if (resizeHandlerRegistration == null) {
-            resizeHandlerRegistration = Window.addResizeHandler(event -> windowWidth = event.getWidth());
-        }
-        super.show();
-    }
-
-    @Override
     public void forceHide(final boolean autoClosed) {
-        if (resizeHandlerRegistration != null) {
-            resizeHandlerRegistration.removeHandler();
-            resizeHandlerRegistration = null;
-        }
         super.hide(autoClosed);
     }
 
@@ -173,7 +157,7 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
     @Override
     public void onBrowserEvent(final Event event) {
         // If we're not yet dragging, only trigger mouse events if the event
-        // occurs in the caption wrapper
+        // occurs in the caption wrapper.
         switch (event.getTypeInt()) {
             case Event.ONMOUSEDOWN:
             case Event.ONMOUSEUP:
@@ -199,13 +183,14 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
      * @see DOM#setCapture
      * @see #continueDragging
      */
-    protected void beginDragging(final MouseDownEvent event) {
+    private void beginDragging(final MouseDownEvent event) {
         getDragGlass().show();
 
         dragging = true;
+        dragStartX = event.getClientX();
+        dragStartY = event.getClientY();
+        dragStartWindow = new Rect(getElement());
         DOM.setCapture(getElement());
-        dragStartX = event.getX();
-        dragStartY = event.getY();
     }
 
     /**
@@ -216,19 +201,23 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
      * @see #beginDragging
      * @see #endDragging
      */
-    protected void continueDragging(final MouseMoveEvent event) {
+    private void continueDragging(final MouseMoveEvent event) {
         if (dragging) {
-            final int absX = event.getX() + getAbsoluteLeft();
-            final int absY = event.getY() + getAbsoluteTop();
+            final int x = event.getClientX();
+            final int y = event.getClientY();
+            double dx = x - dragStartX;
+            double dy = y - dragStartY;
 
-            // If the mouse is off the screen to the left, right, or top, don't
-            // move the dialog box. This would let users
-            // lose dialog boxes, which would be bad for modal popups.
-            if (absX < clientLeft || absX >= windowWidth || absY < clientTop) {
-                return;
-            }
+            double left = dragStartWindow.getLeft() + dx;
+            double top = dragStartWindow.getTop() + dy;
 
-            setPopupPosition(absX - dragStartX, absY - dragStartY);
+            // Add some constraints to stop the dialog being moved off screen.
+            //            left = Math.max(0, Math.min(Window.getClientWidth() - getOffsetWidth(), left));
+            //            top = Math.max(0, Math.min(Window.getClientHeight() - getOffsetHeight(), top));
+            left = Math.max(0, Math.min(Window.getClientWidth() - 22, left));
+            top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
+
+            setPopupPosition((int) left, (int) top);
         }
     }
 
@@ -241,7 +230,7 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
      * @see #beginDragging
      * @see #endDragging
      */
-    protected void endDragging(final MouseUpEvent event) {
+    private void endDragging(final MouseUpEvent event) {
         dragging = false;
         DOM.releaseCapture(getElement());
 
@@ -251,8 +240,8 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
     @Override
     protected void onPreviewNativeEvent(final NativePreviewEvent event) {
         // We need to preventDefault() on mouseDown events (outside of the
-        // DialogBox content) to keep text from being
-        // selected when it is dragged.
+        // DialogBox content) to keep text from being selected when it
+        // is dragged.
         final NativeEvent nativeEvent = event.getNativeEvent();
 
         if (!event.isCanceled() && (event.getTypeInt() == Event.ONMOUSEDOWN) && isCaptionEvent(nativeEvent)) {
@@ -263,16 +252,34 @@ public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
     }
 
     private boolean isCaptionEvent(final NativeEvent event) {
+        // Lazy init content elements.
+        if (dialogContent == null) {
+            dialogContent = ElementUtil.findChild(content.getElement(), "dialog-content");
+            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog-buttons");
+        }
+
         final EventTarget target = event.getEventTarget();
         if (Element.is(target)) {
-            return titleText.getElement().isOrHasChild(Element.as(target));
+            final Element element = Element.as(target);
+            // Check the event targets the dialog.
+            if (getElement().isOrHasChild(element)) {
+                // If the target is dialog content then ensure the event does not target child elements.
+                if (dialogContent != null && dialogContent.isOrHasChild(element)) {
+                    return dialogContent.equals(element);
+                }
+                // If the target is dialog buttons then ensure the event does not target child elements.
+                if (dialogButtons != null && dialogButtons.isOrHasChild(element)) {
+                    return dialogButtons.equals(element);
+                }
+                return true;
+            }
         }
         return false;
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return spinner.createTaskHandler();
+    public TaskMonitor createTaskMonitor() {
+        return spinner.createTaskMonitor();
     }
 
     public interface Binder extends UiBinder<Widget, Dialog> {

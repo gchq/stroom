@@ -11,10 +11,21 @@
         <form:FormGroup addStyleNames="dock-min">
             <tickbox:CustomCheckBox ui:field="enabled" identity="selectionHandlerEnabled" label="Enabled"/>
         </form:FormGroup>
-        <form:FormGroup addStyleNames="dock-max" identity="selectionHandlerExpression"
-                        label="Additional Query Expression">
-            <g:SimplePanel ui:field="layout" styleName="dock-max stroom-control">
-            </g:SimplePanel>
-        </form:FormGroup>
+        <g:MySplitLayoutPanel vSplits="0.5" styleName="dock-max">
+            <g:north size="400">
+                <form:FormGroup addStyleNames="max" identity="selectionHandlerExpression"
+                                label="Additional Query Expression">
+                    <g:SimplePanel ui:field="layout" styleName="dock-max stroom-control"/>
+                </form:FormGroup>
+            </g:north>
+            <g:center>
+                <form:FormGroup addStyleNames="max" identity="selectionHandlerCurrentSelection"
+                                label="Current Selection">
+                    <g:MaxScrollPanel addStyleNames="max stroom-control">
+                        <g:SimplePanel ui:field="currentSelection"/>
+                    </g:MaxScrollPanel>
+                </form:FormGroup>
+            </g:center>
+        </g:MySplitLayoutPanel>
     </g:FlowPanel>
 </ui:UiBinder>

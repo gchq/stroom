@@ -18,14 +18,18 @@ public class HoppingWindow implements Window {
     private final String windowSize;
     @JsonProperty
     private final String advanceSize;
+    @JsonProperty
+    private final String function;
 
     @JsonCreator
     public HoppingWindow(@JsonProperty("timeField") final String timeField,
                          @JsonProperty("windowSize") final String windowSize,
-                         @JsonProperty("advanceSize") final String advanceSize) {
+                         @JsonProperty("advanceSize") final String advanceSize,
+                         @JsonProperty("function") final String function) {
         this.timeField = timeField;
         this.windowSize = windowSize;
         this.advanceSize = advanceSize;
+        this.function = function;
     }
 
     public String getTimeField() {
@@ -40,6 +44,10 @@ public class HoppingWindow implements Window {
         return advanceSize;
     }
 
+    public String getFunction() {
+        return function;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -50,12 +58,14 @@ public class HoppingWindow implements Window {
         }
         final HoppingWindow that = (HoppingWindow) o;
         return Objects.equals(timeField, that.timeField) && Objects.equals(windowSize,
-                that.windowSize) && Objects.equals(advanceSize, that.advanceSize);
+                that.windowSize) && Objects.equals(advanceSize, that.advanceSize) && Objects.equals(
+                function,
+                that.function);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeField, windowSize, advanceSize);
+        return Objects.hash(timeField, windowSize, advanceSize, function);
     }
 
     @Override
@@ -64,6 +74,7 @@ public class HoppingWindow implements Window {
                 "timeField='" + timeField + '\'' +
                 ", windowSize='" + windowSize + '\'' +
                 ", advanceSize='" + advanceSize + '\'' +
+                ", function='" + function + '\'' +
                 '}';
     }
 
@@ -80,6 +91,7 @@ public class HoppingWindow implements Window {
         private String timeField = "EventTime";
         private String windowSize = "10m";
         private String advanceSize = "1m";
+        private String function = "count()";
 
         private Builder() {
         }
@@ -88,6 +100,7 @@ public class HoppingWindow implements Window {
             this.timeField = hoppingWindow.timeField;
             this.windowSize = hoppingWindow.windowSize;
             this.advanceSize = hoppingWindow.advanceSize;
+            this.function = hoppingWindow.function;
         }
 
         public Builder timeField(final String timeField) {
@@ -105,8 +118,13 @@ public class HoppingWindow implements Window {
             return this;
         }
 
+        public Builder function(final String function) {
+            this.function = function;
+            return this;
+        }
+
         public HoppingWindow build() {
-            return new HoppingWindow(timeField, windowSize, advanceSize);
+            return new HoppingWindow(timeField, windowSize, advanceSize, function);
         }
     }
 }

@@ -20,6 +20,9 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -43,6 +46,8 @@ public class ProcessorEditPresenter
     private final EditExpressionPresenter editExpressionPresenter;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
+    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    private final ClientSecurityContext clientSecurityContext;
 
     private ProcessorType processorType;
     private DocRef pipelineRef;
@@ -53,12 +58,17 @@ public class ProcessorEditPresenter
                                   final ProcessorEditView view,
                                   final EditExpressionPresenter editExpressionPresenter,
                                   final RestFactory restFactory,
-                                  final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                                  final DateTimeSettingsFactory dateTimeSettingsFactory,
+                                  final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
+                                  final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
+        this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
+        this.clientSecurityContext = clientSecurityContext;
         view.setExpressionView(editExpressionPresenter.getView());
+        view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
     }
 
     public void read(final ExpressionOperator expression,
@@ -80,10 +90,6 @@ public class ProcessorEditPresenter
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
     }
 
-    public ExpressionOperator write() {
-        return editExpressionPresenter.write();
-    }
-
     public void show(final ProcessorType processorType,
                      final DocRef pipelineRef,
                      final ProcessorFilter filter,
@@ -94,9 +100,15 @@ public class ProcessorEditPresenter
         if (filter == null) {
             minMetaCreateTimeMs = null;
             maxMetaCreateTimeMs = null;
+            userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
         } else {
             minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
             maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
+            if (filter.getRunAsUser() == null) {
+                userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
+            } else {
+                userRefSelectionBoxPresenter.setSelected(filter.getRunAsUser());
+            }
         }
         show(processorType, pipelineRef, filter, defaultExpression, minMetaCreateTimeMs, maxMetaCreateTimeMs, consumer);
     }
@@ -134,9 +146,10 @@ public class ProcessorEditPresenter
                 .onShow(e -> editExpressionPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ExpressionOperator expression = write();
+                        final ExpressionOperator expression = editExpressionPresenter.write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
+                        final UserRef userRef = userRefSelectionBoxPresenter.getSelected();
 
                         validateExpression(fields, expression, () -> {
                             try {
@@ -193,7 +206,7 @@ public class ProcessorEditPresenter
                 .onFailure(throwable -> {
                     AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -278,13 +291,14 @@ public class ProcessorEditPresenter
             filter.setQueryData(queryData);
             filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
+            filter.setRunAsUser(userRefSelectionBoxPresenter.getSelected());
 
             restFactory
                     .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.update(filter.getId(), filter))
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
         } else {
@@ -298,12 +312,13 @@ public class ProcessorEditPresenter
                     .enabled(false)
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .runAsUser(userRefSelectionBoxPresenter.getSelected())
                     .build();
             restFactory
                     .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.create(request))
                     .onSuccess(r -> hide(r, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -319,5 +334,7 @@ public class ProcessorEditPresenter
         Long getMaxMetaCreateTimeMs();
 
         void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
+
+        void setRunAsUserView(View view);
     }
 }

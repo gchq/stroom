@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.visualisation.client.presenter;
@@ -23,7 +22,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -50,7 +49,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         this.editorPresenter = editorPresenter;
 
         scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
-        scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        scriptPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setScriptView(scriptPresenter.getView());
         view.setSettingsView(editorPresenter.getView());
@@ -80,7 +79,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         editorPresenter.getFormatAction().setAvailable(!readOnly);
 
         getView().getFunctionName().setText(visualisation.getFunctionName());
-        scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());
+        scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef(), true);
         editorPresenter.setText(visualisation.getSettings());
     }
 
@@ -91,6 +90,10 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         visualisation.setSettings(editorPresenter.getText().trim());
         return visualisation;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface VisualisationSettingsView extends View {
 

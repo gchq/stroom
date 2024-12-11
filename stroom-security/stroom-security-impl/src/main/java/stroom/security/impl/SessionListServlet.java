@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.SessionDetails;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -27,7 +27,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
@@ -55,15 +55,12 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     private final SecurityContext securityContext;
     private final SessionListService sessionListService;
-    private final UserAppPermissionService userAppPermissionService;
 
     @Inject
     SessionListServlet(final SecurityContext securityContext,
-                       final SessionListService sessionListService,
-                       final UserAppPermissionService userAppPermissionService) {
+                       final SessionListService sessionListService) {
         this.securityContext = securityContext;
         this.sessionListService = sessionListService;
-        this.userAppPermissionService = userAppPermissionService;
     }
 
     /**
@@ -85,9 +82,9 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     "You are not authorised to view the session list");
         }
         showSessionList(request, response);
@@ -118,23 +115,23 @@ class SessionListServlet extends HttpServlet implements IsServlet {
             sessionListService
                     .listSessions()
                     .stream()
-                    .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserName()))
+                    .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserRef()))
                     .sorted(Comparator.comparing(SessionDetails::getLastAccessedMs))
                     .forEach(sessionDetails -> {
                         try {
                             writer.write("<tr>");
                             final String subjectId = NullSafe.get(
-                                    sessionDetails.getUserName(),
-                                    UserName::getSubjectId);
+                                    sessionDetails.getUserRef(),
+                                    UserRef::getSubjectId);
                             final String displayName = NullSafe.getOrElse(
-                                    sessionDetails.getUserName(),
-                                    UserName::getDisplayName,
+                                    sessionDetails.getUserRef(),
+                                    UserRef::getDisplayName,
                                     subjectId);
 
                             writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
                             writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
                             writeCell(writer, displayName);
-                            writeCell(writer, NullSafe.get(sessionDetails.getUserName(), UserName::getFullName));
+                            writeCell(writer, NullSafe.get(sessionDetails.getUserRef(), UserRef::getFullName));
                             writeCell(writer, subjectId);
                             writeCell(writer, sessionDetails.getNodeName());
                             writeCell(writer, "<span class=\"agent\">"

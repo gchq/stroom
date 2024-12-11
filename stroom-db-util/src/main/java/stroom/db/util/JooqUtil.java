@@ -100,6 +100,13 @@ public final class JooqUtil {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings.withRenderSchema(RENDER_SCHEMA);
+
+        // Stop jooq from trying to do 'SET @@group_concat_max_len = 4294967295;' before each
+        // statement using group_concat. This means we are limited to the default of
+        // 1024 (unless it has been set to something else)
+        // https://blog.jooq.org/mysqls-allowmultiqueries-flag-with-jdbc-and-jooq/
+        settings.withRenderGroupConcatMaxLenSessionVariable(false);
+
         if (isExecuteWithOptimisticLocking) {
             settings.withExecuteWithOptimisticLocking(true);
         }
@@ -700,7 +707,7 @@ public final class JooqUtil {
                                final int defaultValue) {
         if (pageRequest != null) {
             if (pageRequest.getLength() != null) {
-                if (oneLarger) {
+                if (oneLarger && pageRequest.getLength() < Integer.MAX_VALUE) {
                     return pageRequest.getLength() + 1;
                 } else {
                     return pageRequest.getLength();

@@ -21,15 +21,16 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -57,8 +58,10 @@ import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
@@ -74,17 +77,21 @@ import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
+import stroom.query.client.presenter.TableComponentSelection;
 import stroom.query.client.presenter.TableRow;
 import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
@@ -97,6 +104,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -116,9 +124,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasSelection {
+        implements HasDirtyHandlers, ResultComponent, HasComponentSelection {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -135,6 +144,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addColumnButton;
     private final ButtonView downloadButton;
+    private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
@@ -153,6 +163,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
+    private ExpressionOperator currentSelectionFilter;
+    private final TableRowStyles tableRowStyles;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -163,7 +175,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final FilterPresenter filterPresenter,
+                          final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
@@ -183,10 +195,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.userPreferencesManager = userPreferencesManager;
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
+        tableRowStyles = new TableRowStyles(userPreferencesManager);
 
-        columnSelectionListModel.setTaskHandlerFactory(this);
+        columnSelectionListModel.setTaskMonitorFactory(this);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.addStyleName("TablePresenter");
+        dataGrid.setRowStyles(tableRowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -198,11 +213,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
-        downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        downloadButton.setVisible(securityContext
+                .hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+
+        // Filter values
+        valueFilterButton = new InlineSvgToggleButton();
+        valueFilterButton.setSvg(SvgImage.FILTER);
+        valueFilterButton.setTitle("Filter Values");
+        pagerView.addButton(valueFilterButton);
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
-        annotateButton.setVisible(securityContext.hasAppPermission(PermissionNames.ANNOTATIONS));
+        annotateButton.setVisible(securityContext
+                .hasAppPermission(AppPermission.ANNOTATIONS));
         annotateButton.setEnabled(false);
 
         columnsManager = new ColumnsManager(
@@ -210,7 +233,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
-                filterPresenter);
+                tableFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get(result -> {
@@ -277,7 +300,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (currentSearchModel.isPolling()) {
                     ConfirmEvent.fire(TablePresenter.this,
                             "Search still in progress. Do you want to download the current results? " +
-                                    "Note that these may be incomplete.",
+                            "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -289,10 +312,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        getTableSettings(),
+                        getTableComponentSettings(),
                         selectionModel.getSelectedItems());
             }
         }));
@@ -302,9 +327,44 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
     }
 
+    @Override
+    public void setComponents(final Components components) {
+        super.setComponents(components);
+
+        registerHandler(components.addComponentChangeHandler(event -> {
+            final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
+                    .create(components.getComponents(), getTableComponentSettings().getSelectionFilter())
+                    .orElse(null);
+            if (!Objects.equals(currentSelectionFilter, selectionFilter)) {
+                currentSelectionFilter = selectionFilter;
+                onColumnFilterChange();
+            }
+        }));
+    }
+
+    public void toggleApplyValueFilters() {
+        final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
+        setSettings(getTableComponentSettings()
+                .copy()
+                .applyValueFilters(applyValueFilters)
+                .build());
+        setDirty(true);
+        refresh();
+        setApplyValueFilters(applyValueFilters);
+    }
+
+    private void setApplyValueFilters(final boolean applyValueFilters) {
+        valueFilterButton.setState(applyValueFilters);
+        if (applyValueFilters) {
+            dataGrid.addStyleName("applyValueFilters");
+        } else {
+            dataGrid.removeStyleName("applyValueFilters");
+        }
+    }
+
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -379,8 +439,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 .componentId(tableSettings.getKey())
                                                 .requestedRange(OffsetRange.UNBOUNDED)
                                                 .tableName(getTableName(tableSettings.getKey()))
-                                                .tableSettings(((TableComponentSettings) tableSettings.getValue())
-                                                        .copy().buildTableSettings())
+                                                .tableSettings(getTableSettings())
                                                 .fetch(Fetch.ALL)
                                                 .build()));
 
@@ -420,7 +479,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 this,
                                                 result))
-                                        .taskHandlerFactory(this)
+                                        .taskMonitorFactory(this)
                                         .exec();
                             }
                             e.hide();
@@ -447,9 +506,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableSettings(),
+        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableComponentSettings(),
                 selectionModel.getSelectedItems());
-        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableSettings(),
+        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
                 selectionModel.getSelectedItems());
         final boolean enabled = eventIdList.size() > 0 || annotationIdList.size() > 0;
         annotateButton.setEnabled(enabled);
@@ -457,12 +516,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void startSearch() {
-        final TableSettings tableSettings = getTableSettings()
-                .copy()
-                .buildTableSettings();
         tableResultRequest = tableResultRequest
                 .copy()
-                .tableSettings(tableSettings)
+                .tableSettings(getTableSettings())
                 .build();
 
         setPause(false, false);
@@ -495,6 +551,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                    tableRowStyles.setConditionalFormattingRules(getTableSettings()
+                            .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
@@ -551,7 +609,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
-        final boolean showDetail = getTableSettings().showDetail();
+        final boolean showDetail = getTableComponentSettings().showDetail();
         for (final Column column : columns) {
             if (column.getGroup() != null) {
                 maxGroup = Math.max(maxGroup, column.getGroup());
@@ -569,18 +627,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
-            SafeStylesBuilder rowStyle = new SafeStylesBuilder();
-
-            // Row styles.
-            if (row.getBackgroundColor() != null
-                    && !row.getBackgroundColor().isEmpty()) {
-                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
-            }
-            if (row.getTextColor() != null
-                    && !row.getTextColor().isEmpty()) {
-                rowStyle.trustedColor(row.getTextColor());
-            }
-
             final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
             for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
                 final Column column = columns.get(i);
@@ -589,12 +635,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         : "";
 
                 SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
-                stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
                 if (column.getFormat() != null &&
-                        column.getFormat().getWrap() != null &&
-                        column.getFormat().getWrap()) {
+                    column.getFormat().getWrap() != null &&
+                    column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
@@ -605,6 +650,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
+                cellsMap.put(column.getName(), cell);
                 cellsMap.put(column.getId(), cell);
             }
 
@@ -617,7 +663,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 expander = new Expander(row.getDepth(), false, true);
             }
 
-            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
+            processed.add(new TableRow(
+                    expander,
+                    row.getGroupKey(),
+                    cellsMap,
+                    row.getMatchingRule()));
         }
 
         // Set the expander column width.
@@ -645,7 +695,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 };
 
-        final ColumnHeader columnHeader = new ColumnHeader(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
     }
@@ -653,9 +703,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void handleFieldRename(final String oldName,
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
-            if (getTableSettings() != null && getTableSettings().getConditionalFormattingRules() != null) {
+            if (getTableComponentSettings() != null &&
+                getTableComponentSettings().getConditionalFormattingRules() != null) {
                 final AtomicBoolean wasModified = new AtomicBoolean(false);
-                getTableSettings().getConditionalFormattingRules().stream()
+                getTableComponentSettings().getConditionalFormattingRules().stream()
                         .map(ConditionalFormattingRule::getExpression)
                         .forEach(expressionOperator -> {
                             boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
@@ -735,25 +786,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void updateFields() {
-        if (getTableSettings().getColumns() == null) {
-            setSettings(getTableSettings().copy().columns(new ArrayList<>()).build());
+        if (getTableComponentSettings().getColumns() == null) {
+            setSettings(getTableComponentSettings().copy().columns(new ArrayList<>()).build());
         }
 
         if (currentSearchModel != null) {
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
 
             // See if the datasource changed.
-            final DocRef currentDataSource = getTableSettings().getDataSourceRef();
+            final DocRef currentDataSource = getTableComponentSettings().getDataSourceRef();
             final DocRef loadedDataSource = indexLoader.getLoadedDataSourceRef();
             if (!Objects.equals(currentDataSource, loadedDataSource)) {
                 dataSourceClient.fetchDefaultExtractionPipeline(loadedDataSource, extractionPipeline -> {
-                    final TableComponentSettings.Builder builder = getTableSettings().copy();
+                    final TableComponentSettings.Builder builder = getTableComponentSettings().copy();
 
                     // Update data source ref so the table has an idea where it will be receiving data from.
                     builder.dataSourceRef(loadedDataSource);
 
                     // Update the extraction pipeline.
-                    if (extractionPipeline != null && getTableSettings().useDefaultExtractionPipeline()) {
+                    if (extractionPipeline != null && getTableComponentSettings().useDefaultExtractionPipeline()) {
                         builder.extractionPipeline(extractionPipeline).extractValues(true);
                     }
                     setSettings(builder.build());
@@ -767,15 +818,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void ensureSpecialFields(final String... indexFieldNames) {
         // Remove all special fields as we will re-add them.
-        getTableSettings().getColumns().removeIf(Column::isSpecial);
+        getTableComponentSettings().getColumns().removeIf(Column::isSpecial);
 
-        final Optional<Integer> maxGroup = getTableSettings()
+        final Optional<Integer> maxGroup = getTableComponentSettings()
                 .getColumns()
                 .stream()
                 .map(Column::getGroup)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo);
-        if (getTableSettings().showDetail() || maxGroup.isEmpty()) {
+        if (getTableComponentSettings().showDetail() || maxGroup.isEmpty()) {
             final List<Column> requiredSpecialColumns = new ArrayList<>();
             for (final String indexFieldName : indexFieldNames) {
                 final Column specialColumn = buildSpecialColumn(indexFieldName);
@@ -788,13 +839,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
-                final Version version = Version.parse(getTableSettings().getModelVersion());
+                final Version version = Version.parse(getTableComponentSettings().getModelVersion());
                 final boolean old = version.lt(CURRENT_MODEL_VERSION);
                 if (old) {
                     requiredSpecialColumns.forEach(requiredSpecialDsColumn ->
-                            getTableSettings().getColumns().removeIf(column ->
+                            getTableComponentSettings().getColumns().removeIf(column ->
                                     !column.isVisible() && column.getName().equals(requiredSpecialDsColumn.getName())));
-                    setSettings(getTableSettings()
+                    setSettings(getTableComponentSettings()
                             .copy()
                             .modelVersion(CURRENT_MODEL_VERSION.toString())
                             .build());
@@ -802,7 +853,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 // Add special fields.
                 requiredSpecialColumns.forEach(column ->
-                        getTableSettings().getColumns().add(column));
+                        getTableComponentSettings().getColumns().add(column));
             }
         }
 
@@ -819,10 +870,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public static Column buildSpecialColumn(final String indexFieldName) {
-        final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
+        final String reservedColumnName = IndexConstants.generateReservedColumnName(indexFieldName);
         return Column.builder()
-                .id(obfuscatedColumnName)
-                .name(obfuscatedColumnName)
+                .id(reservedColumnName)
+                .name(reservedColumnName)
                 .expression(ParamSubstituteUtil.makeParam(indexFieldName))
                 .visible(false)
                 .special(true)
@@ -839,7 +890,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
         existingColumns.clear();
 
-        final List<Column> columns = getTableSettings().getColumns();
+        final List<Column> columns = getTableComponentSettings().getColumns();
         addExpanderColumn();
         columnsManager.setColumnsStartIndex(1);
 
@@ -883,16 +934,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
-        if (getTableSettings().getColumns() != null) {
-            final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
-            final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
+        if (getTableComponentSettings().getColumns() != null) {
+            final String reservedStreamId = IndexConstants.RESERVED_STREAM_ID_FIELD_NAME;
+            final String reservedEventId = IndexConstants.RESERVED_EVENT_ID_FIELD_NAME;
 
             final List<Column> columns = new ArrayList<>();
-            getTableSettings().getColumns().forEach(column -> {
+            getTableComponentSettings().getColumns().forEach(column -> {
                 Column col = column;
-                if (obfuscatedStreamId.equals(col.getName())) {
+                if (reservedStreamId.equals(col.getName())) {
                     col = buildSpecialColumn(IndexConstants.STREAM_ID);
-                } else if (obfuscatedEventId.equals(col.getName())) {
+                } else if (reservedEventId.equals(col.getName())) {
                     col = buildSpecialColumn(IndexConstants.EVENT_ID);
                 } else if (column.getId() == null) {
                     col = column.copy().id(columnsManager.createRandomColumnId(usedFieldIds)).build();
@@ -900,32 +951,39 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 usedFieldIds.add(column.getId());
                 columns.add(col);
             });
-            setSettings(getTableSettings().copy().columns(columns).build());
+            setSettings(getTableComponentSettings().copy().columns(columns).build());
         }
+
+        // Change value filter state.
+        setApplyValueFilters(getTableComponentSettings().applyValueFilters());
     }
 
-    public TableComponentSettings getTableSettings() {
+    public TableComponentSettings getTableComponentSettings() {
         return (TableComponentSettings) getSettings();
     }
 
     @Override
     public void link() {
-        String queryId = getTableSettings().getQueryId();
+        String queryId = getTableComponentSettings().getQueryId();
         queryId = getComponents().validateOrGetLastComponentId(queryId, QueryPresenter.TYPE.getId());
-        setSettings(getTableSettings().copy().queryId(queryId).build());
+        setSettings(getTableComponentSettings().copy().queryId(queryId).build());
         setQueryId(queryId);
     }
 
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        final TableComponentSettings tableComponentSettings = getTableSettings();
+        final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         setQueryId(tableComponentSettings.getQueryId());
         updatePageSize();
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(getTableSettings().getConditionalFormattingRules());
+        dataGrid.redraw();
     }
 
     private void updatePageSize() {
-        final TableComponentSettings tableComponentSettings = getTableSettings();
+        final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         final int start = dataGrid.getVisibleRange().getStart();
         dataGrid.setVisibleRange(new Range(
                 start,
@@ -941,21 +999,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
-        final TableSettings tableSettings = getTableSettings()
+        return tableResultRequest.copy().tableSettings(getTableSettings()).fetch(fetch).build();
+    }
+
+    public TableSettings getTableSettings() {
+        TableSettings tableSettings = getTableComponentSettings()
                 .copy()
                 .buildTableSettings();
-        return tableResultRequest.copy().tableSettings(tableSettings).fetch(fetch).build();
+        return tableSettings.copy().aggregateFilter(currentSelectionFilter).build();
     }
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
-        final TableSettings tableSettings = getTableSettings()
-                .copy()
-                .buildTableSettings();
         return tableResultRequest
                 .copy()
                 .requestedRange(OffsetRange.UNBOUNDED)
-                .tableSettings(tableSettings)
+                .tableSettings(getTableSettings())
                 .fetch(Fetch.ALL)
                 .build();
     }
@@ -977,33 +1036,26 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    @Override
-    public List<QueryField> getFields() {
-        final List<QueryField> abstractFields = new ArrayList<>();
-        final List<Column> columns = getTableSettings().getColumns();
-        if (columns != null && columns.size() > 0) {
-            for (final Column column : columns) {
-                abstractFields.add(QueryField.createText(column.getName(), true));
-            }
-        }
-        return abstractFields;
-    }
-
-    @Override
-    public List<Map<String, String>> getSelection() {
-        final List<Map<String, String>> list = new ArrayList<>();
-        final List<Column> columns = getTableSettings().getColumns();
-        for (final TableRow tableRow : getSelectedRows()) {
-            final Map<String, String> map = new HashMap<>();
-            for (final Column column : columns) {
-                map.put(column.getName(), tableRow.getText(column.getId()));
-            }
-            list.add(map);
-        }
-        return list;
-    }
-
     void refresh() {
+        refresh(() -> {
+        });
+    }
+
+    void onColumnFilterChange() {
+        reset();
+        refresh();
+        getComponents().fireComponentChangeEvent(this);
+    }
+
+    public TableSectionElement getTableHeadElement() {
+        return dataGrid.getTableHeadElement();
+    }
+
+    public void setFocused(final boolean focused) {
+        dataGrid.setFocused(focused);
+    }
+
+    void refresh(final Runnable afterRefresh) {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
             currentSearchModel.refresh(getComponentConfig().getId(), result -> {
@@ -1013,6 +1065,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
+                } finally {
+                    afterRefresh.run();
                 }
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
@@ -1023,8 +1077,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         setDataInternal(null);
     }
 
-    public List<TableRow> getSelectedRows() {
-        return selectionModel.getSelectedItems();
+    @Override
+    public List<ColumnRef> getColumns() {
+        return GwtNullSafe.list(getTableComponentSettings().getColumns())
+                .stream()
+                .map(col -> new ColumnRef(col.getId(), col.getName()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ComponentSelection> getSelection() {
+        final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+        return TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
     private TableComponentSettings createSettings() {
@@ -1037,10 +1101,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return TableComponentSettings.builder().maxResults(arr).build();
     }
 
+    @Override
     public Set<String> getHighlights() {
         if (currentSearchModel != null
-                && currentSearchModel.getCurrentResponse() != null
-                && currentSearchModel.getCurrentResponse().getHighlights() != null) {
+            && currentSearchModel.getCurrentResponse() != null
+            && currentSearchModel.getCurrentResponse().getHighlights() != null) {
             return currentSearchModel.getCurrentResponse().getHighlights();
         }
 
@@ -1065,13 +1130,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public synchronized void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        columnSelectionListModel.setTaskHandlerFactory(taskHandlerFactory);
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        columnSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
-
-    // --------------------------------------------------------------------------------
-
 
     public interface TableView extends View {
 

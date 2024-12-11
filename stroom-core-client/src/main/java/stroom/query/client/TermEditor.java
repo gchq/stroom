@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,14 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.util.shared.EqualsUtil;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.StringUtil;
+import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -40,10 +43,12 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TermEditor extends Composite {
 
@@ -63,8 +68,10 @@ public class TermEditor extends Composite {
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
     private final Widget docRefWidget;
+    private final Widget userRefWidget;
     private final Label fieldTypeLabel;
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
+    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
@@ -76,10 +83,15 @@ public class TermEditor extends Composite {
     private final AsyncSuggestOracle suggestOracle;
     private FieldSelectionListModel fieldSelectionListModel;
 
-    public TermEditor(final DocSelectionBoxPresenter docSelectionBoxPresenter) {
-        suggestOracle = new AsyncSuggestOracle(docSelectionBoxPresenter);
+    public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
+                      final Provider<UserRefSelectionBoxPresenter> userRefProvider) {
+        final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
+        docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
+        docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
+        suggestOracle = new AsyncSuggestOracle(docRefPresenter);
 
-        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
+        this.docSelectionBoxPresenter = docRefPresenter;
+        this.userRefSelectionBoxPresenter = userRefProvider.get();
         if (docSelectionBoxPresenter != null) {
             docRefWidget = docSelectionBoxPresenter.getWidget();
         } else {
@@ -89,6 +101,16 @@ public class TermEditor extends Composite {
         docRefWidget.addStyleName(ITEM_CLASS_NAME);
         docRefWidget.addStyleName("docRef");
         docRefWidget.setVisible(false);
+
+        if (userRefSelectionBoxPresenter != null) {
+            userRefWidget = userRefSelectionBoxPresenter.getWidget();
+        } else {
+            userRefWidget = new Label();
+        }
+
+        userRefWidget.addStyleName(ITEM_CLASS_NAME);
+        userRefWidget.addStyleName("docRef");
+        userRefWidget.setVisible(false);
 
         fieldListBox = createFieldBox();
         conditionListBox = createConditionBox();
@@ -124,6 +146,7 @@ public class TermEditor extends Composite {
         inner.add(valueTo);
         inner.add(dateTo);
         inner.add(docRefWidget);
+        inner.add(userRefWidget);
 
         layout = new FlowPanel();
         layout.add(inner);
@@ -212,6 +235,15 @@ public class TermEditor extends Composite {
                         }
                     }
                     sb.append(",");
+                } else if (widget.equals(userRefWidget)) {
+                    if (userRefSelectionBoxPresenter != null) {
+                        final UserRef userRef = userRefSelectionBoxPresenter.getSelected();
+                        if (userRef != null) {
+                            docRef = UserDocRefUtil.createDocRef(userRef);
+                            sb.append(docRef.getName());
+                        }
+                    }
+                    sb.append(",");
                 }
             }
 
@@ -237,6 +269,10 @@ public class TermEditor extends Composite {
                 selected = term.getCondition();
             } else if (conditions.contains(Condition.IS_DOC_REF)) {
                 selected = Condition.IS_DOC_REF;
+            } else if (conditions.contains(Condition.IS_USER_REF)) {
+                selected = Condition.IS_USER_REF;
+            } else if (conditions.contains(Condition.USER_HAS_PERM)) {
+                selected = Condition.USER_HAS_PERM;
             } else if (conditions.contains(Condition.EQUALS)) {
                 selected = Condition.EQUALS;
             } else {
@@ -315,6 +351,30 @@ public class TermEditor extends Composite {
                 case IS_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
+                case OF_DOC_REF:
+                    enterDocRefMode(field, condition);
+                    break;
+                case IS_USER_REF:
+                    enterUserRefMode(field, condition);
+                    break;
+                case USER_HAS_PERM:
+                    enterUserRefMode(field, condition);
+                    break;
+                case USER_HAS_OWNER:
+                    enterUserRefMode(field, condition);
+                    break;
+                case USER_HAS_DELETE:
+                    enterUserRefMode(field, condition);
+                    break;
+                case USER_HAS_EDIT:
+                    enterUserRefMode(field, condition);
+                    break;
+                case USER_HAS_VIEW:
+                    enterUserRefMode(field, condition);
+                    break;
+                case USER_HAS_USE:
+                    enterUserRefMode(field, condition);
+                    break;
                 case MATCHES_REGEX:
                     enterTextMode();
                     break;
@@ -349,13 +409,25 @@ public class TermEditor extends Composite {
             docSelectionBoxPresenter.setAllowFolderSelection(false);
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Dictionary");
-            } else if (Condition.IN_FOLDER.equals(condition)) {
+            } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Folder");
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
-                docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
+                if (field.getDocRefType() != null) {
+                    docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
+                } else {
+                    docSelectionBoxPresenter.setAllowFolderSelection(true);
+                }
             }
-            docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef());
+            docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef(), true);
+        }
+    }
+
+    private void enterUserRefMode(final QueryField field, final Condition condition) {
+        setActiveWidgets(userRefWidget);
+
+        if (userRefSelectionBoxPresenter != null) {
+            userRefSelectionBoxPresenter.setSelected(UserDocRefUtil.createUserRef(term.getDocRef()));
         }
     }
 
@@ -441,7 +513,7 @@ public class TermEditor extends Composite {
         if (docSelectionBoxPresenter != null) {
             registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
                 final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
-                if (!EqualsUtil.isEquals(term.getDocRef(), selection)) {
+                if (!Objects.equals(term.getDocRef(), selection)) {
                     write(term);
                     fireDirty();
                 }

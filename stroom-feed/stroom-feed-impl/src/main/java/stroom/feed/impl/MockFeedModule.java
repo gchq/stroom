@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.feed.impl;
 
+import stroom.data.store.api.FsVolumeGroupService;
+import stroom.data.store.mock.MockFsVolumeGroupService;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 
@@ -27,5 +29,8 @@ public class MockFeedModule extends AbstractModule {
     protected void configure() {
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
+
+        // Only needed for feed import so not an issue for Cli
+        bind(FsVolumeGroupService.class).to(MockFsVolumeGroupService.class);
     }
 }

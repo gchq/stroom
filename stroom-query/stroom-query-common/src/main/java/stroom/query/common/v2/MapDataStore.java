@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,10 +61,9 @@ public class MapDataStore implements DataStore {
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
-    private final List<Column> columns;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnsArray;
-    private final CompiledSorters compiledSorters;
+    private final CompiledSorters<ItemImpl> compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -89,7 +88,7 @@ public class MapDataStore implements DataStore {
                         final ErrorConsumer errorConsumer,
                         final ResultStoreMapConfig resultStoreMapConfig) {
         this.componentId = componentId;
-        columns = tableSettings.getColumns();
+        List<Column> columns = tableSettings.getColumns();
         this.dateTimeSettings = expressionContext == null
                 ? null
                 : expressionContext.getDateTimeSettings();
@@ -97,7 +96,7 @@ public class MapDataStore implements DataStore {
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         this.compiledColumnsArray = compiledColumns.getCompiledColumns();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledColumnsArray, tableSettings.showDetail());
-        this.compiledSorters = new CompiledSorters(compiledDepths, this.compiledColumnsArray);
+        this.compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         this.compiledDepths = compiledDepths;
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
@@ -133,7 +132,7 @@ public class MapDataStore implements DataStore {
             final boolean[] groupIndices = groupIndicesByDepth[depth];
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
-            Val[] groupValues = Val.empty();
+            Val[] groupValues = Val.emptyArray();
             if (groupSize > 0) {
                 groupValues = new Val[groupSize];
             }
@@ -147,20 +146,21 @@ public class MapDataStore implements DataStore {
                     final ValCache valCache = new ValCache(generator);
                     Val value;
 
-                    // If this is the first level then check if we should filter out this data.
-                    if (depth == 0) {
-                        final CompiledFilter compiledFilter = compiledColumn.getCompiledFilter();
-                        if (compiledFilter != null) {
-                            // If we are filtering then we need to evaluate this field
-                            // now so that we can filter the resultant value.
-                            value = valCache.getVal(values, storedValues);
-
-                            if (value != null && !compiledFilter.match(value.toString())) {
-                                // We want to exclude this item so get out of this method ASAP.
-                                return;
-                            }
-                        }
-                    }
+                    // ALL VALUE FILTERING IS DONE IN LMDB SO NOT NEEDED HERE.
+//                    // If this is the first level then check if we should filter out this data.
+//                    if (depth == 0) {
+//                        final Optional<Predicate<String>> optionalCompiledFilter = compiledColumn.getCompiledFilter();
+//                        if (optionalCompiledFilter.isPresent()) {
+//                            // If we are filtering then we need to evaluate this field
+//                            // now so that we can filter the resultant value.
+//                            value = valCache.getVal(values, storedValues);
+//
+//                            if (value != null && !optionalCompiledFilter.get().test(value.toString())) {
+//                                // We want to exclude this item so get out of this method ASAP.
+//                                return;
+//                            }
+//                        }
+//                    }
 
                     // If we are grouping at this level then evaluate the expression and add to the group values.
                     if (groupIndices[columnIndex]) {

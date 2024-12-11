@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import stroom.util.shared.time.SimpleDuration;
@@ -269,6 +285,15 @@ public class GwtNullSafe {
         }
     }
 
+    /**
+     * @return str trimmed or an empty string if str is null
+     */
+    public static String trim(final String str) {
+        return str != null
+                ? str.trim()
+                : "";
+    }
+
     public static String join(final CharSequence delimiter, final CharSequence... elements) {
         if (elements == null || elements.length == 0) {
             return "";
@@ -303,8 +328,8 @@ public class GwtNullSafe {
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.contains(subStr);
+               && subStr != null
+               && str.contains(subStr);
     }
 
     /**
@@ -528,6 +553,15 @@ public class GwtNullSafe {
     }
 
     /**
+     * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
+     */
+    public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
+        return list != null
+                ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an empty list.
      */
     public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
@@ -686,9 +720,19 @@ public class GwtNullSafe {
             final R result = Objects.requireNonNull(getter)
                     .apply(value);
             return result != null
-                    && Objects.requireNonNull(predicate)
-                    .test(result);
+                   && Objects.requireNonNull(predicate)
+                           .test(result);
         }
+    }
+
+    /**
+     * @return The result of calling {@link Object#toString()} on value
+     * or an empty string if value is null.
+     */
+    public static String toString(final Object value) {
+        return value != null
+                ? value.toString()
+                : "";
     }
 
     public static <T1> String toString(final T1 value,
@@ -801,8 +845,8 @@ public class GwtNullSafe {
             } else {
                 final R result = Objects.requireNonNull(getter2).apply(value2);
                 return result != null
-                        && Objects.requireNonNull(predicate)
-                        .test(result);
+                       && Objects.requireNonNull(predicate)
+                               .test(result);
             }
         }
     }

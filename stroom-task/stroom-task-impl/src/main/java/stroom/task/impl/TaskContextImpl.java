@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
 import stroom.util.NullSafe;
-import stroom.util.shared.HasAuditableUserIdentity;
 
 import org.slf4j.Logger;
 
@@ -35,7 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
+public class TaskContextImpl implements TaskContext {
 
     private final TaskId taskId;
     private final String name;
@@ -141,11 +140,6 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
         return useAsRead;
     }
 
-    @Override
-    public String getUserIdentityForAudit() {
-        return NullSafe.get(userIdentity, UserIdentity::getUserIdentityForAudit);
-    }
-
     String getSessionId() {
         if (userIdentity instanceof HasSession) {
             return ((HasSession) userIdentity).getSessionId();
@@ -187,11 +181,7 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
 
     String getInfo() {
-        final Supplier<String> messageSupplier = this.messageSupplier;
-        if (messageSupplier != null) {
-            return messageSupplier.get();
-        }
-        return "";
+        return NullSafe.getOrElse(messageSupplier, Supplier::get, "");
     }
 
     synchronized void addChild(final TaskContextImpl taskContext) {
@@ -211,6 +201,6 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
     @Override
     public String toString() {
-        return getInfo();
+        return name + " - " + getInfo();
     }
 }

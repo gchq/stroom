@@ -23,10 +23,10 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.presenter.Plugin;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -78,14 +78,14 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
                     null);
         } else {
             tabPresenter = keyToPresenterMap.get(presenterKey);
-            final TaskHandler taskHandler = new DefaultTaskListener(this).createTaskHandler();
+            final TaskMonitor taskMonitor = new DefaultTaskMonitorFactory(this).createTaskMonitor();
             final Task task = new SimpleTask("Opening " + getName() + " (" + presenterKey + ")");
 
             if (tabPresenter != null) {
                 // If we already have a tab item for this key then make sure it is visible.
 
                 // Start spinning.
-                taskHandler.onStart(task);
+                taskMonitor.onStart(task);
 
                 // Let the caller set what it wants on the presenter
                 tabPresenterConsumer.accept(tabPresenter);
@@ -94,11 +94,11 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
                 SelectContentTabEvent.fire(this, tabPresenter);
 
                 // Stop spinning.
-                taskHandler.onEnd(task);
+                taskMonitor.onEnd(task);
 
             } else if (forceOpen) {
                 // Start spinning.
-                taskHandler.onStart(task);
+                taskMonitor.onStart(task);
 
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
@@ -114,7 +114,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
                 final CloseContentEvent.Handler closeHandler = createCloseHandler(tabPresenter);
 
                 // Load the document and show the tab.
-                showTab(presenterKey, tabPresenter, closeHandler, taskHandler, task);
+                showTab(presenterKey, tabPresenter, closeHandler, taskMonitor, task);
             }
         }
 
@@ -124,7 +124,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
     private void showTab(final K presenterKey,
                          final T tabPresenter,
                          final CloseContentEvent.Handler closeHandler,
-                         final TaskHandler taskHandler,
+                         final TaskMonitor taskMonitor,
                          final Task task) {
         try {
             if (presenterKey == null) {
@@ -141,7 +141,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
             }
         } finally {
             // Stop spinning.
-            taskHandler.onEnd(task);
+            taskMonitor.onEnd(task);
         }
     }
 

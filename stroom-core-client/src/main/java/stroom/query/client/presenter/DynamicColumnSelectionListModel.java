@@ -1,5 +1,6 @@
 package stroom.query.client.presenter;
 
+import stroom.dashboard.client.main.UniqueUtil;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -15,11 +16,11 @@ import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicColumnSelectionListModel
-        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskHandlerFactory, HasHandlers {
+        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskMonitorFactory, HasHandlers {
 
     private static final String NONE_TITLE = "[ none ]";
 
@@ -48,7 +49,7 @@ public class DynamicColumnSelectionListModel
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
     private FindFieldCriteria lastCriteria;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     @Inject
     public DynamicColumnSelectionListModel(final EventBus eventBus,
@@ -85,7 +86,7 @@ public class DynamicColumnSelectionListModel
                             createResults(stringMatch, parentPath, pageRequest, response);
                     consumer.accept(resultPage);
                 }
-            }, taskHandlerFactory);
+            }, taskMonitorFactory);
         }
     }
 
@@ -151,18 +152,21 @@ public class DynamicColumnSelectionListModel
                                                       final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         final Column count = Column.builder()
+                .id(UniqueUtil.generateUUID())
                 .name("Count")
                 .format(Format.NUMBER)
                 .expression("count()")
                 .build();
         add(filter, ColumnSelectionItem.create(count), builder);
         final Column countGroups = Column.builder()
+                .id(UniqueUtil.generateUUID())
                 .name("Count Groups")
                 .format(Format.NUMBER)
                 .expression("countGroups()")
                 .build();
         add(filter, ColumnSelectionItem.create(countGroups), builder);
         final Column custom = Column.builder()
+                .id(UniqueUtil.generateUUID())
                 .name("Custom")
                 .build();
         add(filter, ColumnSelectionItem.create(custom), builder);
@@ -174,7 +178,7 @@ public class DynamicColumnSelectionListModel
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         if (dataSourceRef != null &&
                 dataSourceRef.getType() != null &&
-                clientSecurityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
+                clientSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             if ("Index".equals(dataSourceRef.getType()) ||
                     "SolrIndex".equals(dataSourceRef.getType()) ||
                     "ElasticIndex".equals(dataSourceRef.getType())) {
@@ -249,8 +253,8 @@ public class DynamicColumnSelectionListModel
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override
@@ -306,6 +310,7 @@ public class DynamicColumnSelectionListModel
         private static Column convertFieldInfo(final QueryField fieldInfo) {
             final String indexFieldName = fieldInfo.getFldName();
             final Builder columnBuilder = Column.builder();
+            columnBuilder.id(UniqueUtil.generateUUID());
             columnBuilder.name(indexFieldName);
 
             final FieldType fieldType = fieldInfo.getFldType();

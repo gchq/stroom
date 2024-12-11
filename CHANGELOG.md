@@ -13,6 +13,234 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.5] - 2024-12-05
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+* Issue **#4596** : Add case-sensitive value filter conditions.
+
+* Issue **#4596** : Drive visualisations using table quick filters and selection handlers.
+
+* Issue **#4596** : Merge include/exclude and column value filter dialogs.
+
+* Issue **#4596** : Change conditional formatting to allow custom light and dark colours.
+
+* Issue **#4596** : Turn off conditional formatting with user preferences.
+
+* Issue **#4627** : Fix StroomQL function character escaping.
+
+* Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
+
+* Issue **#4612** : Fix stroomQL query not including all data points in the visualisation.
+
+* Issue **#4617** : Add debug to try to diagnose issue.
+
+* Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
+
+
+## [v7.7-beta.4] - 2024-11-11
+
+* Issue **#4601** : Add null handling and better error logging to Excel download.
+
+
+## [v7.7-beta.3] - 2024-11-11
+
+* Issue **#4597** : Fix NPE when opening the Document Permissions Report screen for a user.
+
+* Change the code that counts expression terms and gets all fields/values from an expression tree to no longer ignore NOT operators.
+
+* Issue **#4596** : Fix demo bugs.
+
+* Issue **#4596** : Add table value filter dialog option.
+
+
+## [v7.7-beta.2] - 2024-11-06
+
+* Change the permission filtering to use a LinkedHashSet for children of and descendants of terms.
+
+* Fix error when creating a document as a user without `Administrator` or `Manager Users`.
+
+* Issue **#4588** : Fix the API allowing documents to be moved with only VIEW permission. The UI requires EDIT permission. The API is now in line with that.
+
+* Fix the `Copy As` menu item for ancestor folders that the user does not have VIEW permission on. For these cases, the `Copy As` sub menu now only displays the `Copy as name` entry.
+
+* Change the explorer context menu to include the entries for `Dependencies` and `Dependants` if the user has at least VIEW permission. Previously required OWNER.
+
+* Issue **#4586** : Fix error when changing filter on Document Permissions Report.
+
+
+## [v7.7-beta.1] - 2024-11-04
+
+* Issue **#4523** : Embed queries in dashboards.
+
+* Issue **#4504** : Add column value filters.
+
+* Issue **#4546** : Remove redundant dashboard tab options.
+
+* Issue **#4547** : Add selection handlers to dashboard tables to quick filter based on component selection.
+
+* Issue **#4071** : Add preset theme compatible styles for conditional formatting.
+
+* Issue **#4157** : Fix copy of conditional formatting rules.
+
+
+## [v7.6-beta.4] - 2024-11-04
+
+* Issue **#4550** : Fix datasource already in use issue.
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.5_11-jdk-alpine`.
+
+* Issue **#4580** : Auto add a permission user when an account is created.
+
+* Issue **#4582** : Show all users by default and not just ones with explicit permissions.
+
+* Issue **#4562** : Use Zip64 compatibility mode.
+
+* Issue **#4564** : Use expression as column name.
+
+* Issue **#4558** : Fix query pause behaviour.
+
+* Issue **#4549** : Fix conditional formatting fall through behaviour.
+
+* In the Pipeline Properties pane, add copy/goto hover icons to any properties that are Documents. Add copy/goto hover links to the Pipeline, Feed and Inherited From columns in the Pipeline References pane.
+
+* Issue **#4560** : Don't sort the list of Pipeline References (reference loaders).  Instead display them in the order they will get used in the lookup.
+
+* Issue **#4570** : Fix error when clearing then filtering in a doc ref picker.
+
+
+## [v7.6-beta.3] - 2024-10-18
+
+* Issue **#4501** : Fix Query editor syntax highlighting.
+
+* Add query help and editor completions for Dictionary Docs for use with `in dictionary`.
+
+* Issue **#4487** : Fix nasty error when running a stats query with no columns.
+
+* Issue **#4498** : Make the explorer tree Expand/Collapse All buttons respect the current Quick Filter input text.
+
+* Issue **#4518** : Change the Stream Upload dialog to default the stream type to that of the feed.
+
+* Issue **#4470** : On import of Feed or Index docs, replace unknown volume groups with the respective configured default volume group (or null if not configured).
+
+* Issue **#4460** : Change the way we display functions with lots of arguments in query help and code completion popup.
+
+* Issue **#4526** : Change Dictionary to not de-duplicate words as this is breaking JSON when used for holding SSL config in JSON form.
+
+* Issue **#4528** : Make the Reindex Content job respond to stroom shutdown.
+
+* Issue **#4532** : Fix Run Job Now so that it works when the job or jobNode is disabled.
+
+* Issue **#4444** : Change the `hash()` expression function to allow the `algorithm` and `salt` arguments to be the result of functions, e.g. `hash(${field1}, concat('SHA-', ${algoLen}), ${salt})`.
+
+* Issue **#4534** : Fix NPE in include/exclude filter.
+
+* Issue **#4527** : Change the non-regex search syntax of _Find in Content_ to not use Lucene field based syntax so that `:` works correctly. Also change the regex search to use Lucene and improve the styling of the screen.
+
+* Issue **#4536** : Fix NPE.
+
+* Issue **#4539** : Improve search query logging.
+
+* Improve the process of (re-)indexing content. It is now triggered by a user doing a content search. Users will get an error message if the index is still being initialised. The `stroom.contentIndex.enabled` property has been removed.
+
+* Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
+
+* Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.
+
+
+## [v7.6-beta.2] - 2024-10-07
+
+* Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
+
+* Issue **#4341** : Allow download from query table.
+
+* Issue **#4507** : Fix index shard permission issue.
+
+* Issue **#4510** : Fix right click in editor pane.
+
+* Issue **#4511** : Fix StreamId, EventId selection in query tables.
+
+* Issue **#4485** : Improve dialog move/resize behaviour.
+
+* Issue **#4492** : Make Lucene behave like SQL for OR(NOT()) queries.
+
+* Issue **#4494** : Allow functions in StroomQL select, e.g. `count()`.
+
+* Issue **#4202** : Fix default destination not being selected when you do _Save As_.
+
+* Issue **#4475** : Add `mask()` function and deprecate `countPrevious()`.
+
+* Issue **#4491** : Fix tab closure when deleting items in the explorer tree.
+
+* Issue **#4502** : Fix inability to step an un-processed stream.
+
+* Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
+
+* Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
+
+* Issue **#4458** : Fix explorer node tags not being copied. Also fix copy/move not selecting the parent folder of the source as the default destination folder.
+
+* Issue **#4478** : Fix boolean expression precedence in StroomQL.
+
+* Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
+
+* Issue **#4455** : Add Goto Document links to the Imports sub-tab of the Dictionary screen. Also add new Effective Words tab to list all the words in the dictionary that include those from its imports (and their imports).
+
+* Issue **#4468** : Improve handling of key sequences and detection of key events from ACE editor.
+
+* Issue **#4472** : Change the User Preferences dialog to cope with redundant stroom/editor theme names.
+
+* Issue **#4479** : Add ability to assume role for S3.
+
+* Issue **#4202** : Fix problems with Dashboard Extraction Pipeline picker incorrectly changing the selected pipeline.
+
+* Change the DocRef picker so that it shows a warning icon if the selected DocRef no longer exists or the user doesn't have permission to view it.
+
+* Change the Extraction Pipeline picker on the Index Settings screen to pre-filter on `tag:extraction`. This is configured using the property `stroom.ui.query.indexPipelineSelectorIncludedTags`.
+
+* Change the key names in the example rule detection to remove `-`. Not sensible to encourage keys with a `-` in them as that prevents doing `values.key-1`. Also add a warning if there are multiple detection values with the same name/key (only the first will be used in each case).
+
+* Issue **#4476** : Fix streaming analytic issue where it failed to match after seeing records with missing query fields.
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4463** : Fix NPE with analytic rule email templating.
+
+* Issue **#4146** : Fix audit events for deleting/restoring streams.
+
+* Change the alert dialog message styling to have a max-height of 600px so long messages get a scrollbar.
+
+* Issue **#4468** : Fix selection box keyboard selection behavior when no quick filter is visible.
+
+* Issue **#4471** : Fix NPE with stepping filter.
+
+* Issue **#4451** : Add S3 pipeline appender.
+
+* Issue **#4401** : Improve content search.
+
+* Issue **#4417** : Show stepping progress and allow termination.
+
+* Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
+
+* Issue **#4448** : Fix query refresh tooltip when not refreshing.
+
+* Issue **#4457** : Fix ctrl+enter shortcut for query start.
+
+* Issue **#4441** : Improve sorted column matching.
+
+* Issue **#4449** : Reload Scheduled Query Analytics between executions.
+
+* Issue **#4420** : Make app title dynamic.
+
+* Issue **#4453** : Dictionaries will ignore imports if a user has no permission to read them.
+
+* Issue **#4404** : Change the Query editor completions to be context aware, e.g. it only lists Datasources after a `from `.
+
+* Issue **#4450** : Fix editor completion in Query editor so that it doesn't limit completions to 100. Added the property `stroom.ui.maxEditorCompletionEntries` to control the maximum number of completions items that are shown. In the event that the property is exceeded, Stroom will pre-filter the completions based on the user's input.
+
+* Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
+
+
 ## [v7.5-proxy-beta.2] - 2024-09-16
 
 * Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
@@ -47,17 +275,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
 
-* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
-
-
-## [v7.5-beta.11] - 2024-09-04
-
 * Issue **#4426** : Add INFO message when an index shard is created.
 
 * Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
-
-
-## [v7.5-beta.10] - 2024-09-04
 
 * Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
 
@@ -68,6 +288,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
 
 * Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
+## [v7.6-beta.1] - 2024-08-30
+
+* Issue **#4345** : Write analytic email notification failures to the analytic error feed.
+
+* Issue **#4379** : Improve Stroom permission model.
 
 
 ## [v7.5-beta.9] - 2024-08-30
@@ -815,11 +1042,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-proxy-beta.2...HEAD
-[v7.5-proxy-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.12...v7.5-proxy-beta.2
-[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
-[v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
-[v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.5...HEAD
+[v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
+[v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
+[v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
+[v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
+[v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
+[v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
+[v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
+[v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
+[v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
 [v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7

@@ -19,6 +19,10 @@ dependencies {
     implementation libs.guava
     implementation libs.guice
     implementation libs.hikari
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.jackson_dataformat_yaml
+    implementation libs.jackson_datatype_jdk8
     implementation libs.jgit
     implementation libs.jooq
     implementation libs.junit_jupiter_api
@@ -29,6 +33,7 @@ dependencies {
     implementation libs.vavr
     implementation libs.wix_embedded_mysql
 
+    runtimeOnly libs.mysql_connector_java
 
     // The following logging libs are needed when running junits outside dropwizard
     runtimeOnly libs.jcl_over_slf4j

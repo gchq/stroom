@@ -35,11 +35,11 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.FieldIndex;
@@ -88,6 +88,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final AnalyticDataStores analyticDataStores;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final LongAdder hitCount = new LongAdder();
     private final LongAdder extractionCount = new LongAdder();
@@ -100,13 +101,15 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                    final ExecutorProvider executorProvider,
                                    final Executor executor,
                                    final TaskContextFactory taskContextFactory,
-                                   final AnalyticDataStores analyticDataStores) {
+                                   final AnalyticDataStores analyticDataStores,
+                                   final ExpressionPredicateFactory expressionPredicateFactory) {
         this.annotationsDecoratorFactory = annotationsDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.analyticDataStores = analyticDataStores;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
@@ -246,9 +249,10 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                     final TableResultConsumer tableResultConsumer = new TableResultConsumer(
                             doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
-                    final ColumnFormatter fieldFormatter =
-                            new ColumnFormatter(new FormatterFactory(null));
-                    final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+                    final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
+                    final TableResultCreator resultCreator = new TableResultCreator(
+                            formatterFactory,
+                            expressionPredicateFactory) {
                         @Override
                         public TableResultBuilder createTableResultBuilder() {
                             return tableResultConsumer;

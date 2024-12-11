@@ -422,21 +422,13 @@
 	background-color: yellow;
 }
 
-.fields-labels {
-	padding-left: 40px;
+.TablePresenter th span {
+    display: flex;
 }
 
-.fields-label {
-	height: 18px;
-	font-weight: 500;
-}
-
-.fields-row {
-	height: 18px;
-}
-
-.fields-field {
-	padding: 0px;
+.column-top {
+    display: flex;
+    flex-direction: row;
 	cursor: pointer;
 	opacity: 0.9;
     transition: opacity 0.5s linear;
@@ -445,12 +437,7 @@
     -o-transition: opacity 0.5s linear;
 }
 
-.fields-field * {
-    vertical-align: middle;
-    display: inline-block;
-}
-
-.fields-fieldLabel {
+.column-label {
 	display: inline;
 	height: 16px;
 	padding: 0px;
@@ -458,28 +445,41 @@
 	font-weight: 500;
 }
 
-.allow-header-selection .fields-fieldLabel {
+.allow-header-selection .column-label {
 	cursor: pointer;
 }
 
-.allow-header-selection .fields-field:hover {
+.allow-header-selection .column-top:hover {
     opacity: 1;
 }
 
-.allow-header-selection .fields-field:hover .fields-fieldLabel {
+.allow-header-selection .column-top:hover .column-label {
     text-decoration: underline;
 }
 
-.fields-fieldText {
-	height: 16px;
-	border: 1px solid var(--border-color);
-}
-
-.fields-sortOrder {
+.column-sortOrder {
 	display: inline-block;
 	font-size: var(--font-size-8);
 	vertical-align: top;
 	text-decoration: none;
+}
+
+.TablePresenter input {
+    width: 100%;
+    display: none;
+}
+
+.TablePresenter .dataGridHeader {
+    min-height: 16px;
+    vertical-align: top;
+}
+
+.TablePresenter.applyValueFilters input {
+    display: inline-block;
+}
+
+.TablePresenter.applyValueFilters .dataGridHeader {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical)  var(--row__padding--horizontal);
 }
 
 .dashboardVis-outerLayout {
@@ -541,6 +541,29 @@
 .ListInputView,
 .TextInputView {
     padding: 0 0.4rem 0.4rem 0.4rem;
+}
+
+.selectionItemCell-content .listInputItem-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 2em;
+    width: 390px;
+}
+
+.listInputItem-container .listInputItem-word {
+    display: inline-block;
+}
+
+.listInputItem-container .listInputItem-source {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25em;
+}
+
+.listInputItem-container .listInputItem-source-text {
+    display: inline-block;
+    color: var(--text-color--disabled);
 }
 
 .VisFrame-container {

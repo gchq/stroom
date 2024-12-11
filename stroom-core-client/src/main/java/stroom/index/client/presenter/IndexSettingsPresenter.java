@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.client.presenter;
@@ -23,6 +22,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.shared.IndexVolumeGroup;
@@ -31,7 +31,10 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.QueryConfig;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.inject.Inject;
@@ -54,17 +57,29 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus,
                                   final IndexSettingsView view,
-                                  final DocSelectionBoxPresenter pipelinePresenter,
-                                  final RestFactory restFactory) {
+                                  final DocSelectionBoxPresenter pipelinePickerPresenter,
+                                  final RestFactory restFactory,
+                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        this.pipelinePresenter = pipelinePresenter;
+        this.pipelinePresenter = pipelinePickerPresenter;
         this.restFactory = restFactory;
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        pipelinePickerPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePickerPresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
-        view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
+        view.setDefaultExtractionPipelineView(pipelinePickerPresenter.getView());
+
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                GwtNullSafe.consume(
+                        extendedUiConfig.getQuery(),
+                        QueryConfig::getIndexPipelineSelectorIncludedTags,
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePickerPresenter::setQuickFilter);
+            }
+        }, this);
     }
 
     @Override
@@ -86,7 +101,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         getView().setTimeField(index.getTimeField());
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
         updateGroupList(index.getVolumeGroupName());
-        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
     @Override
@@ -99,7 +114,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         index.setRetentionDayAge(getView().getRetentionAge().getValue().getDays());
 
         String volumeGroupName = getView().getVolumeGroups().getValue();
-        if (volumeGroupName != null && volumeGroupName.length() == 0) {
+        if (GwtNullSafe.isEmptyString(volumeGroupName)) {
             volumeGroupName = null;
         }
         index.setVolumeGroupName(volumeGroupName);
@@ -132,7 +147,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
                         listBox.setValue(selected);
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

@@ -30,7 +30,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ContentResource;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.DocRefs;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -102,7 +102,7 @@ public class ExportConfigPresenter
         view.setUiHandlers(this);
 
         // Only show the System node at the root for export
-        treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM);
+        treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
     }
 
     @Override
@@ -162,7 +162,7 @@ public class ExportConfigPresenter
         // Set the data for the type filter.
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, this);
 
-        treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        treePresenter.setRequiredPermissions(DocumentPermission.VIEW);
         treePresenter.refresh();
 
         getView().focus();
@@ -193,7 +193,7 @@ public class ExportConfigPresenter
                         event.hide();
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

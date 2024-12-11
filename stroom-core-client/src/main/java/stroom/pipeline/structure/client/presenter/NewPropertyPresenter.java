@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -297,7 +297,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
@@ -347,7 +347,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
@@ -392,9 +392,9 @@ public class NewPropertyPresenter
         }
 
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
-        entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        entityDropDownPresenter.setRequiredPermissions(DocumentPermission.USE);
         try {
-            entityDropDownPresenter.setSelectedEntityReference(value);
+            entityDropDownPresenter.setSelectedEntityReference(value, true);
         } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);
         }
@@ -415,6 +415,10 @@ public class NewPropertyPresenter
     private void setDirty(final boolean dirty) {
         setDirty(dirty, true);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface NewPropertyView extends View, Focus, HasUiHandlers<NewPropertyUiHandlers> {
 

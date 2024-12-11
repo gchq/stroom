@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import stroom.test.common.TestUtil;
@@ -804,6 +820,26 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testTrim() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(GwtNullSafe::trim)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase(" ", "")
+                .addCase("\n", "")
+                .addCase("\t", "")
+                .addCase("foo", "foo")
+                .addCase(" foo", "foo")
+                .addCase("foo ", "foo")
+                .addCase(" foo ", "foo")
+                .addCase(" \n\tfoo\n\t ", "foo")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testConsumeNonBlankString() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -1088,6 +1124,26 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testUnmodifiableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        GwtNullSafe.unmodifiableList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
@@ -1311,6 +1367,26 @@ class TestGwtNullSafe {
                 .withSimpleEqualityAssertion()
                 .addCase(nonNullRunnable, true)
                 .addCase(null, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testToString() {
+        final Object obj = new Object() {
+            @Override
+            public String toString() {
+                return "foo";
+            }
+        };
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Object.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(GwtNullSafe::toString)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase("foo", "foo")
+                .addCase(obj, "foo")
                 .build();
     }
 

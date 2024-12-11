@@ -19,7 +19,7 @@ package stroom.entity.client.presenter;
 import stroom.data.table.client.Refreshable;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
@@ -46,9 +46,9 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
     protected abstract void getContent(TabData tab, ContentCallback callback);
 
     public void selectTab(final TabData tab) {
-        final TaskHandler taskHandler = createTaskHandler();
+        final TaskMonitor taskMonitor = createTaskMonitor();
         final Task task = new SimpleTask("Select tab");
-        taskHandler.onStart(task);
+        taskMonitor.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -66,7 +66,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
                     }
                 });
             }
-            taskHandler.onEnd(task);
+            taskMonitor.onEnd(task);
         });
     }
 

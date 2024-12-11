@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -47,7 +47,7 @@ public class BasicListInputSettingsPresenter
         this.dictionaryPresenter = dictionaryPresenter;
 
         dictionaryPresenter.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
-        dictionaryPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dictionaryPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setDictionaryView(dictionaryPresenter.getView());
     }
@@ -66,7 +66,7 @@ public class BasicListInputSettingsPresenter
             getView().setKey(settings.getKey());
             getView().setValues(settings.getValues());
             getView().setUseDictionary(settings.isUseDictionary());
-            dictionaryPresenter.setSelectedEntityReference(settings.getDictionary());
+            dictionaryPresenter.setSelectedEntityReference(settings.getDictionary(), true);
             getView().setAllowTextEntry(settings.isAllowTextEntry());
         }
     }
@@ -107,6 +107,10 @@ public class BasicListInputSettingsPresenter
 
         return !equal;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface BasicListInputSettingsView extends BasicSettingsView {
 

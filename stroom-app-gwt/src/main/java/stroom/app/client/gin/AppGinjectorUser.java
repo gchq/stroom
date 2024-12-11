@@ -25,11 +25,15 @@ import stroom.alert.client.gin.AlertModule;
 import stroom.analytics.client.gin.AnalyticsGinjector;
 import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.annotation.client.AnnotationModule;
+import stroom.aws.s3.client.gin.S3ConfigGinjector;
+import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.query.gin.QueryGinjector;
@@ -148,10 +152,12 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         StroomStatsStoreModule.class,
         TaskModule.class,
         VisModule.class,
+        EmbeddedQueryModule.class,
         VisualisationModule.class,
         ViewModule.class,
         WelcomeModule.class,
         XMLSchemaModule.class,
+        S3ConfigModule.class,
         ScyllaDbModule.class,
         StateStoreModule.class,
 })
@@ -189,9 +195,11 @@ public interface AppGinjectorUser extends
         TaskGinjector,
         ViewGinjector,
         VisGinjector,
+        EmbeddedQueryGinjector,
         VisualisationGinjector,
         WelcomeGinjector,
         XMLSchemaGinjector,
+        S3ConfigGinjector,
         ScyllaDbGinjector,
         StateStoreGinjector {
 

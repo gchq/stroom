@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.state.client.presenter;
@@ -21,7 +20,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.state.client.presenter.StateStoreSettingsPresenter.StateStoreSettingsView;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
@@ -49,7 +48,7 @@ public class StateStoreSettingsPresenter
         this.clusterPresenter = clusterPresenter;
 
         clusterPresenter.setIncludedTypes(ScyllaDbDoc.DOCUMENT_TYPE);
-        clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setUiHandlers(this);
         view.setClusterView(clusterPresenter.getView());
@@ -69,7 +68,7 @@ public class StateStoreSettingsPresenter
     protected void onRead(final DocRef docRef, final StateDoc doc, final boolean readOnly) {
         getView().onReadOnly(readOnly);
 
-        clusterPresenter.setSelectedEntityReference(doc.getScyllaDbRef());
+        clusterPresenter.setSelectedEntityReference(doc.getScyllaDbRef(), true);
         getView().setStateType(doc.getStateType());
         getView().setCondense(doc.isCondense());
         getView().setCondenseAge(doc.getCondenseAge());
@@ -91,6 +90,10 @@ public class StateStoreSettingsPresenter
         doc.setRetainTimeUnit(getView().getRetainTimeUnit());
         return doc;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface StateStoreSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<StateStoreSettingsUiHandlers> {

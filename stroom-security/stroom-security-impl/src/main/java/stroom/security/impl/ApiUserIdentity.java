@@ -4,10 +4,10 @@ import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.HasJwtClaims;
-import stroom.security.shared.HasStroomUserIdentity;
+import stroom.security.shared.HasUserRef;
 import stroom.util.NullSafe;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.exception.ThrowingFunction;
+import stroom.util.shared.UserRef;
 
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
@@ -15,11 +15,9 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 
-class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdentity, HasJwtClaims, HasJwt {
+class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtClaims, HasJwt {
 
-    private final String userUuid;
-    private final String subjectId;
-    private final String displayName;
+    private final UserRef userRef;
     private final String sessionId;
     private final JwtContext jwtContext;
 
@@ -33,32 +31,34 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
                     final String displayName,
                     final String sessionId,
                     final JwtContext jwtContext) {
-        this.userUuid = userUuid;
-        this.subjectId = subjectId;
-        // Fall back to id if not present
-        this.displayName = Objects.requireNonNullElse(displayName, subjectId);
+        final Optional<String> fullName = NullSafe.getAsOptional(
+                jwtContext.getJwtClaims(),
+                ThrowingFunction.unchecked(jwtClaims ->
+                        jwtClaims.getClaimValue("name", String.class)));
+
+        this.userRef = new UserRef(userUuid, subjectId, displayName, fullName.orElse(null), false);
         this.sessionId = sessionId;
         this.jwtContext = jwtContext;
     }
 
     @Override
     public String getSubjectId() {
-        return subjectId;
+        return userRef.getSubjectId();
     }
 
     @Override
     public Optional<String> getFullName() {
-        return getClaimValue("name");
+        return Optional.ofNullable(userRef.getFullName());
     }
 
     @Override
     public String getDisplayName() {
-        return displayName;
+        return userRef.toDisplayString();
     }
 
     @Override
-    public String getUuid() {
-        return userUuid;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
@@ -80,14 +80,13 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
             return false;
         }
         final ApiUserIdentity that = (ApiUserIdentity) o;
-        return Objects.equals(userUuid, that.userUuid) && Objects.equals(subjectId,
-                that.subjectId) && Objects.equals(displayName, that.displayName) && Objects.equals(sessionId,
-                that.sessionId);
+        return Objects.equals(userRef, that.userRef) &&
+                Objects.equals(sessionId, that.sessionId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userUuid, subjectId, displayName, sessionId);
+        return Objects.hash(userRef, sessionId);
     }
 
     @Override
@@ -98,20 +97,5 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
     @Override
     public JwtClaims getJwtClaims() {
         return jwtContext.getJwtClaims();
-    }
-
-    @Override
-    public UserName asUserName() {
-        String displayName = getDisplayName();
-        if (Objects.equals(displayName, subjectId)) {
-            displayName = null;
-        }
-        return new SimpleUserName(
-                subjectId,
-                Objects.equals(displayName, subjectId)
-                        ? null
-                        : displayName,
-                getFullName().orElse(null),
-                userUuid);
     }
 }

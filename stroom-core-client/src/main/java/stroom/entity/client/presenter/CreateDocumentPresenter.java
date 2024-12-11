@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.client.presenter;
@@ -26,8 +25,8 @@ import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.security.shared.DocumentPermission;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -73,7 +72,7 @@ public class CreateDocumentPresenter
         view.setFolderView(entityTreePresenter.getView());
 
         entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
-        entityTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE, DocumentPermissionNames.READ);
+        entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
     @ProxyEvent
@@ -86,6 +85,10 @@ public class CreateDocumentPresenter
         entityTreePresenter.setSelectedItem(event.getSelected());
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
+
+        // We want to select the parent folder, so we have a default dest to move into.
+        entityTreePresenter.setSelectParentIfNotFound(true);
+
         entityTreePresenter.getModel().refresh();
 
         caption = event.getDialogCaption();
@@ -158,9 +161,9 @@ public class CreateDocumentPresenter
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        entityTreePresenter.setTaskHandlerFactory(taskHandlerFactory);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     // --------------------------------------------------------------------------------

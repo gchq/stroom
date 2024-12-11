@@ -54,7 +54,7 @@ public class ExpressionFilter extends ExpressionCopier {
         public Builder addPrefixIncludeFilter(final String fieldPrefix) {
             final Function<ExpressionTerm.Builder, ExpressionTerm.Builder> function = builder -> {
                 final ExpressionTerm expressionTerm = builder.build();
-                if (expressionTerm.getField().startsWith(fieldPrefix)) {
+                if (expressionTerm.getField() != null && expressionTerm.getField().startsWith(fieldPrefix)) {
                     return builder;
                 }
                 return null;
@@ -66,7 +66,7 @@ public class ExpressionFilter extends ExpressionCopier {
         public Builder addPrefixExcludeFilter(final String fieldPrefix) {
             final Function<ExpressionTerm.Builder, ExpressionTerm.Builder> function = builder -> {
                 final ExpressionTerm expressionTerm = builder.build();
-                if (!expressionTerm.getField().startsWith(fieldPrefix)) {
+                if (expressionTerm.getField() != null && !expressionTerm.getField().startsWith(fieldPrefix)) {
                     return builder;
                 }
                 return null;

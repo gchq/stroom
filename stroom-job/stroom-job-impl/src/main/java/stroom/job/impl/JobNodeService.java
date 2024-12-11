@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.job.impl;
@@ -27,7 +26,7 @@ import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -76,7 +75,7 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(jobNode);
 
-        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<JobNode> before = fetch(jobNode.getId());
 
             // We always want to update a job node instance even if we have a stale version.
@@ -91,14 +90,14 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(batchScheduleRequest.getJobType(), batchScheduleRequest.getSchedule().getExpression());
 
-        securityContext.secure(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             jobNodeDao.updateSchedule(batchScheduleRequest);
         });
     }
 
     JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(
-                PermissionNames.MANAGE_JOBS_PERMISSION,
+                AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> {
                     final JobNodeListResponse jobNodeListResponse = jobNodeDao.find(findJobNodeCriteria);
 
@@ -303,17 +302,17 @@ class JobNodeService {
     }
 
     private void ensureSchedule(final JobType jobType, final String scheduleExpression) {
-        // Stop Job Nodes being saved with invalid crons.
-        if (JobType.CRON.equals(jobType)) {
-            if (scheduleExpression != null) {
-                // This will throw a runtime exception if the expression is invalid.
-                new CronTrigger(scheduleExpression);
-            }
-        }
-        if (JobType.FREQUENCY.equals(jobType)) {
-            if (scheduleExpression != null) {
-                // This will throw a runtime exception if the expression is invalid.
-                new FrequencyTrigger(scheduleExpression);
+        if (scheduleExpression != null) {
+            // Stop Job Nodes being saved with invalid crons.
+            switch (jobType) {
+                case CRON -> {
+                    // This will throw a runtime exception if the expression is invalid.
+                    new CronTrigger(scheduleExpression);
+                }
+                case FREQUENCY -> {
+                    // This will throw a runtime exception if the expression is invalid.
+                    new FrequencyTrigger(scheduleExpression);
+                }
             }
         }
     }

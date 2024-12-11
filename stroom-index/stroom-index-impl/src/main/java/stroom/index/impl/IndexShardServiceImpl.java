@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.impl;
@@ -29,12 +28,14 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.List;
 import java.util.Optional;
 
 @Singleton
@@ -52,7 +53,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION,
+        return securityContext.secureResult(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION,
                 () -> indexShardDao.find(criteria));
     }
 
@@ -63,7 +64,19 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(IndexShardFields.getFields()).build();
+        if (!IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(getFields()).build();
+    }
+
+    private List<QueryField> getFields() {
+        return IndexShardFields.getFields();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
     }
 
     @Override
@@ -80,7 +93,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
+        securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () ->
                 indexShardDao.search(criteria, fieldIndex, consumer));
     }
 }

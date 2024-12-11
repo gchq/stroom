@@ -28,8 +28,21 @@
 
 .editor .hl {
     position: absolute;
-	background-color: var(--code-editor__background-color--highlight);
-	z-index: 2;
+    /* Your styling options here are limited as the highlight is a separate layer to the text
+    so you can't control the text colour, plus the text colour will differ depending
+    on the syntax highlighting in play.
+    Using a outline is no good as it looks rubbish when stepping multi-line source, e.g. XML.
+    */
+    background-color: var(--code-editor__background-color--highlight);
+    /* put it above the user selection so you can still see it */
+    z-index: 8;
+
+    /*
+    outline-color: var(--code-editor__background-color--highlight);
+    outline-style: solid;
+    outline-width: 2px;
+    border-radius: 2px;
+    */
 }
 
 .editor .err {

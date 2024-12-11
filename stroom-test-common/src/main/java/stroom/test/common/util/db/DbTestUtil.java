@@ -10,6 +10,7 @@ import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
 import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
+import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,6 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -226,19 +228,42 @@ public class DbTestUtil {
         }
     }
 
-    public static void dropAllTestDatabases() {
+    public static void doWithRootConnection(final Consumer<Connection> connectionConsumer) {
+        if (connectionConsumer != null) {
+            getWithRootConnection(connection -> {
+                connectionConsumer.accept(connection);
+                // Result ignored
+                return null;
+            });
+        }
+    }
+
+    public static <T> T getWithRootConnection(final Function<Connection, T> conectionFunction) {
+        Objects.requireNonNull(conectionFunction);
         final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
         final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
 
-        // Create new db.
-        final Properties connectionProps = new Properties();
-        connectionProps.put("user", rootConnectionConfig.getUser());
-        connectionProps.put("password", rootConnectionConfig.getPassword());
-
-        final Predicate<String> dbNameMatchPredicate = DB_NAME_PATTERN.asMatchPredicate();
-
+        ensureJdbcDriver(connectionConfig);
         try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
-                connectionProps)) {
+                rootConnectionConfig.getUser(),
+                rootConnectionConfig.getPassword())) {
+            return conectionFunction.apply(connection);
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static void ensureJdbcDriver(final ConnectionConfig connectionConfig) {
+        try {
+            Class.forName(connectionConfig.getClassName());
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void dropAllTestDatabases() {
+        final Predicate<String> dbNameMatchPredicate = DB_NAME_PATTERN.asMatchPredicate();
+        doWithRootConnection(ThrowingConsumer.unchecked(connection -> {
             try (final Statement statement = connection.createStatement()) {
                 final ResultSet resultSet = statement.executeQuery("SHOW DATABASES;");
                 final List<String> dbNames = new ArrayList<>();
@@ -254,9 +279,17 @@ public class DbTestUtil {
                     statement.executeUpdate("DROP DATABASE " + dbName + ";");
                 }
             }
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        }));
+    }
+
+    public static void dropDatabase(final String dbName) {
+        doWithRootConnection(ThrowingConsumer.unchecked(rootConn -> {
+            try (final Statement statement = rootConn.createStatement()) {
+                statement.executeUpdate("DROP DATABASE `" + dbName + "`;");
+            }
+        }));
+
+
     }
 
 //    private static String getThreadLocalDbName(final boolean isSharedDatabase) {
@@ -415,18 +448,9 @@ public class DbTestUtil {
 
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
                     connectionProps)) {
-                try (final Statement statement = connection.createStatement()) {
-
-                    statement.executeUpdate("CREATE DATABASE `" + dbName +
-                            "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-
-                    statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
-                            connectionConfig.getUser() + "'@'%' IDENTIFIED BY '" +
-                            connectionConfig.getPassword() + "';");
-
-                    statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
-                            connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
-                }
+                final String username = connectionConfig.getUser();
+                final String password = connectionConfig.getPassword();
+                createStroomDatabaseAndUser(connection, dbName, username, password);
             } catch (final SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -469,6 +493,26 @@ public class DbTestUtil {
         dataSources.add(dataSource);
 
         return dataSource;
+    }
+
+    public static void createStroomDatabaseAndUser(final Connection connection,
+                                                   final String dbName,
+                                                   final String username,
+                                                   final String password) throws SQLException {
+        try (final Statement statement = connection.createStatement()) {
+            LOGGER.debug("Creating database '{}'", dbName);
+            statement.executeUpdate("CREATE DATABASE `" + dbName +
+                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+
+            LOGGER.debug("Creating DB user '{}'", username);
+            statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+                    username + "'@'%' IDENTIFIED BY '" +
+                    password + "';");
+
+            LOGGER.debug("Granting privileges to user '{}'", username);
+            statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
+                    username + "'@'%' WITH GRANT OPTION;");
+        }
     }
 
     private static DataSource createDataSource(final String name,
@@ -731,7 +775,10 @@ public class DbTestUtil {
             try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString(1);
-                    tables.add(name);
+                    // `permission_doc_id` is a table of static reference values so leave it alone.
+                    if (!"permission_doc_id".equalsIgnoreCase(name)) {
+                        tables.add(name);
+                    }
                 }
             }
         } catch (final SQLException e) {

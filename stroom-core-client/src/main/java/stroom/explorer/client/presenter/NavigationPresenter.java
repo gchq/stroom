@@ -58,10 +58,10 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -240,7 +240,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         KeyBinding.addCommand(Action.CREATE_FEED, () ->
                 CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
         KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
-                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER));
+                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER_TYPE));
         KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
                 CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
         KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
@@ -308,11 +308,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
         // Deal with task listeners.
-        final TaskHandler taskHandler = getView().getTaskListener().createTaskHandler();
+        final TaskMonitor taskMonitor = getView().getTaskListener().createTaskMonitor();
         registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
-                taskHandler.onStart(e.getTask())));
+                taskMonitor.onStart(e.getTask())));
         registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
-                taskHandler.onEnd(e.getTask())));
+                taskMonitor.onEnd(e.getTask())));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
@@ -324,8 +324,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     event.getSelectionType()));
             final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
             final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
-                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
-                    !ExplorerConstants.isSystemNode(selectedNode);
+                                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
+                                    !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
@@ -435,7 +435,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, getView().getTaskListener());
 
         explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
+        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermission.VIEW);
         explorerTree.getTreeModel().setIncludedTypeSet(null);
 
         // Show the tree.
@@ -501,6 +501,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         void focusQuickFilter();
 
-        TaskHandlerFactory getTaskListener();
+        TaskMonitorFactory getTaskListener();
     }
 }

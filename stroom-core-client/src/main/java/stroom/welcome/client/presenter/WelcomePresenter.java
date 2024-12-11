@@ -24,7 +24,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
@@ -51,10 +51,10 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 .create(SESSION_INFO_RESOURCE)
                 .method(SessionInfoResource::get)
                 .onSuccess(sessionInfo -> {
-                    final UserName userName = sessionInfo.getUserName();
-                    view.getUserIdentity().setText(userName.getSubjectId());
-                    view.getDisplayName().setText(userName.getUserIdentityForAudit());
-                    view.getFullName().setText(userName.getFullName());
+                    final UserRef userRef = sessionInfo.getUserRef();
+                    view.getUserIdentity().setText(userRef.getSubjectId());
+                    view.getDisplayName().setText(userRef.getDisplayName());
+                    view.getFullName().setText(userRef.getFullName());
 
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     view.getBuildVersion().setText(buildInfo.getBuildVersion());
@@ -64,7 +64,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 })
                 .onFailure(caught ->
                         AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
 
         uiConfigCache.get(result -> {

@@ -44,7 +44,6 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
     ProcessorFilter processorFilter1;
     ProcessorFilter processorFilter2;
 
-
     @Test
     void testChangeTaskStatus() {
         processor1 = createProcessor();

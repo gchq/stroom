@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.importexport;
@@ -27,7 +26,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dictionary.impl.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
@@ -117,12 +116,12 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         deleteAllAndCheck();
 
         final ExplorerNode folder1 = explorerService.create(
-                ExplorerConstants.FOLDER,
+                ExplorerConstants.FOLDER_TYPE,
                 "Group1",
                 null,
                 null);
         final ExplorerNode folder2 = explorerService.create(
-                ExplorerConstants.FOLDER,
+                ExplorerConstants.FOLDER_TYPE,
                 "Group2",
                 null,
                 null);
@@ -206,8 +205,9 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create visualisation.
         final VisComponentSettings visSettings = VisComponentSettings.builder()
                 .tableId("table-1234")
-                .tableSettings(tableSettings)
-                .visualisation(visNode != null ? visNode.getDocRef() : null)
+                .visualisation(visNode != null
+                        ? visNode.getDocRef()
+                        : null)
                 .build();
 
         final ComponentConfig visualisation = ComponentConfig.builder()

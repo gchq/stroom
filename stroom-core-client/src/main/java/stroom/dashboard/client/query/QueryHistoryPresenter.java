@@ -142,7 +142,7 @@ public class QueryHistoryPresenter
                                 .fire();
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

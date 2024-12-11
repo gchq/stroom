@@ -16,18 +16,49 @@
 
 package stroom.query.client.presenter;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.core.client.LocationManager;
+import stroom.dashboard.client.table.ColumnFilterPresenter;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.DownloadPresenter;
+import stroom.dashboard.client.table.FormatPresenter;
+import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableRowStyles;
+import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestFactory;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
+import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryResource;
+import stroom.query.shared.QuerySearchRequest;
+import stroom.query.shared.QueryTablePreferences;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -38,30 +69,38 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent {
+        implements ResultComponent, HasComponentSelection, HasDirtyHandlers {
+
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private int expanderColumnWidth;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
+    private final RestFactory restFactory;
+    private final LocationManager locationManager;
     private final PagerView pagerView;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
-    private final DataGridSelectionEventManager<TableRow> selectionEventManager;
 
     private QueryModel currentSearchModel;
     private boolean ignoreRangeChange;
@@ -70,18 +109,57 @@ public class QueryResultTablePresenter
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
 
+    private final ButtonView downloadButton;
+    private final DownloadPresenter downloadPresenter;
+    private final InlineSvgToggleButton valueFilterButton;
+
+    private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
+    private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
+    private final QueryTableColumnsManager columnsManager;
+    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
+    private List<Column> currentColumns = Collections.emptyList();
+    private QueryResultVisPresenter queryResultVisPresenter;
+    private ExpressionOperator currentSelectionFilter;
+    private final TableRowStyles tableRowStyles;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
+                                     final RestFactory restFactory,
+                                     final LocationManager locationManager,
                                      final QueryResultTableView tableView,
-                                     final PagerView pagerView) {
+                                     final PagerView pagerView,
+                                     final DownloadPresenter downloadPresenter,
+                                     final ClientSecurityContext securityContext,
+                                     final FormatPresenter formatPresenter,
+                                     final Provider<RulesPresenter> rulesPresenterProvider,
+                                     final ColumnFilterPresenter columnFilterPresenter,
+                                     final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
+        this.restFactory = restFactory;
+        this.locationManager = locationManager;
+        this.downloadPresenter = downloadPresenter;
+        tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
+        dataGrid.addStyleName("TablePresenter");
+        dataGrid.setRowStyles(tableRowStyles);
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
+                dataGrid,
+                selectionModel,
+                false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+
+
+        columnsManager = new QueryTableColumnsManager(
+                this,
+                formatPresenter,
+                rulesPresenterProvider,
+                columnFilterPresenter);
+        dataGrid.setHeadingListener(columnsManager);
+        columnsManager.setColumnsStartIndex(1);
+
 
         pagerView.setDataWidget(dataGrid);
         tableView.setTableView(pagerView);
@@ -102,6 +180,16 @@ public class QueryResultTablePresenter
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        // Download
+        downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
+        downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+
+        // Filter values
+        valueFilterButton = new InlineSvgToggleButton();
+        valueFilterButton.setSvg(SvgImage.FILTER);
+        valueFilterButton.setTitle("Filter Values");
+        pagerView.addButton(valueFilterButton);
     }
 
     private void toggleOpenGroup(final String group) {
@@ -157,14 +245,49 @@ public class QueryResultTablePresenter
 //            }
 //        }));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
-            setPause(!pause, true);
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+
+        registerHandler(downloadButton.addClickHandler(event -> {
+            if (currentSearchModel != null) {
+                if (currentSearchModel.isSearching()) {
+                    ConfirmEvent.fire(QueryResultTablePresenter.this,
+                            "Search still in progress. Do you want to download the current results? " +
+                            "Note that these may be incomplete.",
+                            ok -> {
+                                if (ok) {
+                                    download();
+                                }
+                            });
+                } else {
+                    download();
+                }
+            }
         }));
+
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+    }
+
+    public void toggleApplyValueFilters() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
+        setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
+        setDirty(true);
+        refresh();
+        setApplyValueFilters(applyValueFilters);
+    }
+
+    private void setApplyValueFilters(final boolean applyValueFilters) {
+        valueFilterButton.setState(applyValueFilters);
+        if (applyValueFilters) {
+            dataGrid.addStyleName("applyValueFilters");
+        } else {
+            dataGrid.removeStyleName("applyValueFilters");
+        }
     }
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -172,7 +295,11 @@ public class QueryResultTablePresenter
         pagerView.getRefreshButton().setPaused(this.pause);
     }
 
-    private void refresh() {
+    public void setFocused(final boolean focused) {
+        dataGrid.setFocused(focused);
+    }
+
+    public void refresh() {
         if (currentSearchModel != null) {
             pagerView.getRefreshButton().setRefreshing(true);
             currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
@@ -189,6 +316,16 @@ public class QueryResultTablePresenter
             RefreshRequestEvent.fire(this);
         }
     }
+
+    public void onColumnFilterChange() {
+        reset();
+        refresh();
+        final QueryResultVisPresenter queryResultVisPresenter = this.queryResultVisPresenter;
+        if (queryResultVisPresenter != null) {
+            queryResultVisPresenter.refresh();
+        }
+    }
+
 
 //    @Override
 //    protected void addColumns(final boolean allowSelectAll) {
@@ -298,12 +435,10 @@ public class QueryResultTablePresenter
         }
     }
 
-    private List<Column> currentFields;
-    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
-
     private void setDataInternal(final Result componentResult) {
         GWT.log("setDataInternal");
 
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         ignoreRangeChange = true;
 
         try {
@@ -311,24 +446,76 @@ public class QueryResultTablePresenter
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                if (!Objects.equals(currentFields, tableResult.getColumns())) {
-//                    final Set<String> newIdSet = tableResult
-//                            .getFields()
+                // Get result columns.
+                List<Column> columns = tableResult.getColumns();
+
+                if (columns != null && queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
+
+                    // Create a map of the result columns by id and remember the order that the result has them in.
+                    final Map<String, ColAndPosition> mapped = new HashMap<>();
+                    int position = 0;
+                    for (final Column column : columns) {
+                        mapped.put(column.getId(), new ColAndPosition(position++, column));
+                    }
+
+                    final List<ColAndPosition> fixedColumns = new ArrayList<>(columns.size());
+
+                    // Add columns based on preference order and add preferred widths.
+                    for (final Column prefColumn : queryTablePreferences.getColumns()) {
+                        final ColAndPosition colAndPosition = mapped.remove(prefColumn.getId());
+                        if (colAndPosition != null) {
+                            final Column col = colAndPosition.column;
+                            fixedColumns.add(new ColAndPosition(
+                                    colAndPosition.position,
+                                    col
+                                            .copy()
+                                            .width(prefColumn.getWidth())
+                                            .visible(prefColumn.isVisible())
+                                            .format(prefColumn.getFormat())
+                                            .build()));
+                        }
+                    }
+
+                    // Add in columns that we didn't have a preference for in the most sensible position.
+                    mapped.values().forEach(colAndPosition -> {
+                        int insertPos = 0;
+                        for (int i = 0; i < fixedColumns.size(); i++) {
+                            if (fixedColumns.get(i).position < colAndPosition.position) {
+                                insertPos = i + 1;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        fixedColumns.add(insertPos, colAndPosition);
+                    });
+
+                    columns = fixedColumns
+                            .stream()
+                            .map(c -> c.column)
+                            .collect(Collectors.toList());
+
+
+//                    // Adjust result columns to match UI preferences.
+//                    final Map<String, Column> prefs = queryTablePreferences
+//                            .getColumns()
 //                            .stream()
-//                            .map(Field::getId)
-//                            .collect(Collectors.toSet());
-
-                    // First remove stale fields.
-                    updateColumns(tableResult.getColumns());
-
-//                    removeAllColumns();
+//                            .collect(Collectors.toMap(Column::getId, c -> c));
 //
-//                    // Add new columns.
-//                    for (final Field field : tableResult.getFields()) {
-//                        addColumn(field);
-//                    }
-                    currentFields = tableResult.getColumns();
+//                    final List<Column> fixedColumns = new ArrayList<>(columns.size());
+//                    columns.forEach(column -> {
+//                        final Column pref = prefs.get(column.getId());
+//                        if (pref != null) {
+//                            fixedColumns.add(column.copy().width(pref.getWidth()).build());
+//                        } else {
+//                            fixedColumns.add(column);
+//                        }
+//                    });
+//                    columns = fixedColumns;
                 }
+
+
+                updateColumns(columns);
 
                 final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
@@ -336,19 +523,20 @@ public class QueryResultTablePresenter
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                    tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
+                            .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
                 }
 
-//                // Enable download of current results.
-//                downloadButton.setEnabled(true);
+                // Enable download of current results.
+                downloadButton.setEnabled(true);
             } else {
-//                // Disable download of current results.
-//                downloadButton.setEnabled(false);
+                // Disable download of current results.
+                downloadButton.setEnabled(false);
 
                 dataGrid.setRowData(0, new ArrayList<>());
                 dataGrid.setRowCount(0, true);
-
                 selectionModel.clear();
             }
         } catch (final RuntimeException e) {
@@ -366,28 +554,26 @@ public class QueryResultTablePresenter
     }
 
     void updateColumns(final List<Column> columns) {
-//        // Now make sure special fields exist for stream id and event id.
-//        ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
+        if (!Objects.equals(currentColumns, columns)) {
+            currentColumns = columns;
 
-        // Remove existing columns.
-        for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
-            dataGrid.removeColumn(column);
-        }
-        existingColumns.clear();
+            // Remove existing columns.
+            removeAllColumns();
 
-//        final List<Field> fields = getTableSettings().getFields();
-        addExpanderColumn();
-//        fieldsManager.setFieldsStartIndex(1);
+            // Add expander column.
+            addExpanderColumn();
 
-        // Add fields as columns.
-        for (final Column column : columns) {
-            // Only include the field if it is supposed to be visible.
-            if (column.isVisible()) {
-                addColumn(column);
+            // Add columns.
+            for (final Column column : columns) {
+                // Only include the field if it is supposed to be visible.
+                if (column.isVisible()) {
+                    addColumn(column);
+                }
             }
-        }
 
-        dataGrid.resizeTableToFitColumns();
+//                dataGrid.redrawHeaders();
+            dataGrid.resizeTableToFitColumns();
+        }
     }
 
     private void addExpanderColumn() {
@@ -408,7 +594,7 @@ public class QueryResultTablePresenter
                     }
                 };
 
-        final ColumnHeader columnHeader = new ColumnHeader(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
     }
@@ -435,18 +621,6 @@ public class QueryResultTablePresenter
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
-            SafeStylesBuilder rowStyle = new SafeStylesBuilder();
-
-            // Row styles.
-            if (row.getBackgroundColor() != null
-                    && !row.getBackgroundColor().isEmpty()) {
-                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
-            }
-            if (row.getTextColor() != null
-                    && !row.getTextColor().isEmpty()) {
-                rowStyle.trustedColor(row.getTextColor());
-            }
-
             final Map<String, Cell> cellsMap = new HashMap<>();
             for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
                 final Column column = columns.get(i);
@@ -455,12 +629,11 @@ public class QueryResultTablePresenter
                         : "";
 
                 SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
-                stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
                 if (column.getFormat() != null &&
-                        column.getFormat().getWrap() != null &&
-                        column.getFormat().getWrap()) {
+                    column.getFormat().getWrap() != null &&
+                    column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
@@ -471,6 +644,7 @@ public class QueryResultTablePresenter
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
+                cellsMap.put(column.getName(), cell);
                 cellsMap.put(column.getId(), cell);
             }
 
@@ -483,7 +657,11 @@ public class QueryResultTablePresenter
                 expander = new Expander(row.getDepth(), false, true);
             }
 
-            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
+            processed.add(new TableRow(
+                    expander,
+                    row.getGroupKey(),
+                    cellsMap,
+                    row.getMatchingRule()));
         }
 
         // Set the expander column width.
@@ -506,6 +684,120 @@ public class QueryResultTablePresenter
         this.currentSearchModel = queryModel;
     }
 
+    private void download() {
+        if (currentSearchModel != null) {
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final QuerySearchRequest currentSearch = currentSearchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
+                final QuerySearchRequest request = currentSearch
+                        .copy()
+                        .queryKey(queryKey)
+                        .storeHistory(false)
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .build();
+
+                downloadPresenter.setShowDownloadAll(false);
+                ShowPopupEvent.builder(downloadPresenter)
+                        .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .caption("Download Options")
+                        .onShow(e -> downloadPresenter.getView().focus())
+                        .onHideRequest(e -> {
+                            if (e.isOk()) {
+                                final DownloadQueryResultsRequest downloadSearchResultsRequest =
+                                        new DownloadQueryResultsRequest(
+                                                request,
+                                                downloadPresenter.getFileType(),
+                                                downloadPresenter.isSample(),
+                                                downloadPresenter.getPercent());
+                                restFactory
+                                        .create(QUERY_RESOURCE)
+                                        .method(res -> res.downloadSearchResults(
+                                                currentSearchModel.getCurrentNode(),
+                                                downloadSearchResultsRequest))
+                                        .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
+                                                this,
+                                                result))
+                                        .taskMonitorFactory(this)
+                                        .exec();
+                            }
+                            e.hide();
+                        })
+                        .fire();
+            }
+        }
+    }
+
+    @Override
+    public List<ColumnRef> getColumns() {
+        return GwtNullSafe.list(currentColumns)
+                .stream()
+                .map(col -> new ColumnRef(col.getId(), col.getName()))
+                .collect(Collectors.toList());
+    }
+
+    public List<Column> getCurrentColumns() {
+        return new ArrayList<>(currentColumns);
+    }
+
+    public void setPreferredColumns(final List<Column> columns) {
+        setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
+        currentColumns = columns;
+        setDirty(true);
+    }
+
+    QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferencesSupplier.get();
+    }
+
+    void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+        queryTablePreferencesConsumer.accept(queryTablePreferences);
+    }
+
+    @Override
+    public List<ComponentSelection> getSelection() {
+        final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+        return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        return GwtNullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
+    }
+
+    public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
+        this.queryTablePreferencesSupplier = queryTablePreferencesSupplier;
+    }
+
+    public void setQueryTablePreferencesConsumer(final Consumer<QueryTablePreferences> queryTablePreferencesConsumer) {
+        this.queryTablePreferencesConsumer = queryTablePreferencesConsumer;
+    }
+
+    public void updateQueryTablePreferences() {
+        // Change value filter state.
+        setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
+        refresh();
+    }
+
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setDirty(final boolean dirty) {
+        DirtyEvent.fire(this, dirty);
+    }
+
+    public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {
+        this.queryResultVisPresenter = queryResultVisPresenter;
+    }
+
+    public void setCurrentSelectionFilter(final ExpressionOperator currentSelectionFilter) {
+        this.currentSelectionFilter = currentSelectionFilter;
+    }
+
+    public ExpressionOperator getCurrentSelectionFilter() {
+        return currentSelectionFilter;
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -513,5 +805,16 @@ public class QueryResultTablePresenter
     public interface QueryResultTableView extends View {
 
         void setTableView(View view);
+    }
+
+    private static class ColAndPosition {
+
+        private final int position;
+        private final Column column;
+
+        public ColAndPosition(final int position, final Column column) {
+            this.position = position;
+            this.column = column;
+        }
     }
 }

@@ -26,9 +26,9 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -97,8 +97,8 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 //    }
 
     protected FolderRootPresenter createEditor() {
-        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(
-                PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
+            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 
@@ -109,7 +109,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         // Root folder is just a constant so no load needed
 //        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
     }
@@ -119,7 +119,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         // Nothing to do here, root folder is special
     }
 
@@ -129,7 +129,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskHandlerFactory taskHandlerFactory) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         if (documentEditPresenter instanceof FolderRootPresenter) {
             ((FolderRootPresenter) documentEditPresenter).read();
         }
@@ -145,7 +145,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 
     @Override
     public String getType() {
-        return ExplorerConstants.SYSTEM;
+        return ExplorerConstants.SYSTEM_TYPE;
     }
 
     @Override

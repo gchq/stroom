@@ -28,7 +28,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext, storedQuery);
-        storedQuery.setOwnerUuid(securityContext.getUserUuid());
+        storedQuery.setOwner(securityContext.getUserRef());
         storedQuery.setUuid(UUID.randomUUID().toString());
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
@@ -36,8 +36,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     @Override
     public StoredQuery update(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext, storedQuery);
-        if (storedQuery.getOwnerUuid() == null) {
-            storedQuery.setOwnerUuid(securityContext.getUserUuid());
+        if (storedQuery.getOwner() == null) {
+            storedQuery.setOwner(securityContext.getUserRef());
         }
         return securityContext.secureResult(() -> dao.update(storedQuery));
     }
@@ -53,8 +53,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
                 dao.fetch(id)).orElse(null);
 
         if (storedQuery != null
-                && !storedQuery.getUpdateUser().equals(securityContext.getSubjectId())) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                && !securityContext.getUserRef().equals(storedQuery.getOwner())) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "This retrieved stored query belongs to another user");
         }
         return storedQuery;
@@ -62,9 +62,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
-        final String userUuid = securityContext.getUserUuid();
-        criteria.setOwnerUuid(userUuid);
-
+        criteria.setOwner(securityContext.getUserRef());
         return securityContext.secureResult(() -> dao.find(criteria));
     }
 }

@@ -506,6 +506,28 @@
     cursor: pointer;
 }
 
+.dropDownView-warning {
+    position: absolute;
+    display: flex;
+    bottom: 8px;
+    right: 3px;
+	width: 17px;
+	width: 17px;
+    cursor: pointer;
+}
+
+.dropDownView-warning svg {
+    width: 17px;
+    height: 17px;
+}
+
+.dropDownView-warning > .background {
+    /* Because the icon is inside the drop down text box, we need to alter its hover background
+       so it doesn't spill over the border of the text box. */
+    height: 88%;
+    margin-top: 2px;
+}
+
 .dropDownView-button svg {
 	width: 15px;
 	height: 15px;
@@ -1374,6 +1396,10 @@
     padding: 6px 8px;
 }
 
+.stepToolbar {
+    align-items: center;
+}
+
 .steppingFilterViewImpl {
 }
 
@@ -1490,6 +1516,7 @@
     background-color: var(--navigation__background-color--selected-hovered);
 }
 
+/*
 .navigation .cellTableOddRow:focus-within,
 .navigation .cellTableEvenRow:focus-within {
     background-color: var(--navigation__background-color--focussed);
@@ -1498,6 +1525,18 @@
 .navigation .cellTableSelectedRow:focus-within {
     background-color: var(--navigation__background-color--selected--focussed);
 }
+*/
+
+.navigation .cellTableOddRow:focus-within,
+.navigation .cellTableEvenRow:focus-within {
+    box-shadow: var(--row__box-shadow--focussed);
+}
+
+.navigation .cellTableSelectedRow:focus-within {
+    box-shadow: var(--row__box-shadow--selected--focussed);
+}
+
+
 
 .navigation-title-bar {
     display: flex;
@@ -1675,7 +1714,6 @@ button.main-menu svg {
 }
 
 .form-padding {
-    overflow: auto;
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }
 
@@ -1990,6 +2028,11 @@ button.main-menu svg {
     position: relative;
 }
 
+.find-topBar .gwt-TextArea {
+    /* Single line */
+    height: 2.1rem;
+}
+
 .find-buttons {
     display: flex;
     position: absolute;
@@ -2011,12 +2054,14 @@ button.main-menu svg {
 .findCell-row {
 	display: flex;
 	flex-direction: column;
+	margin-bottom: 0.5em;
 }
 
 .findCell-main {
     display: flex;
     gap: .7rem;
     padding: .2rem;
+    align-items: center;
 }
 
 .findCell-icon {
@@ -2031,11 +2076,44 @@ button.main-menu svg {
     flex-grow: 1;
     overflow: hidden;
     white-space: pre;
+    letter-spacing: -0.6px;
+    font-size: 95%;
+    /* Fade out the long lines */
+    mask-image: linear-gradient(to right, #000000 0%, #000000 90%, rgb(128 0 52 / 0%) 100%);
+    overflow: hidden;
+    /* Padding to make room for the highlight outline */
+    padding: 2px;
+}
+
+/* if the sample does not start at the beginning of the line fade the text out on the left and the right */
+.findCell-sample.findCell-sample-truncated {
+    mask-image: linear-gradient(to right, rgb(128 0 52 / 0%) 0%, #000000 10%, #000000 90%, rgb(128 0 52 / 0%) 100%);
+}
+
+.findCell-sample div {
+    font-family: var(--monospace-font-family);
+}
+
+.findCell-sample-before {
 }
 
 .findCell-highlight {
-	background-color: yellow;
-	color: black;
+    background-color: var(--highlight__background-color);
+    border-radius: 2px;
+    color: black;
+    /*
+    outline-color: var(--highlight__background-color);
+    outline-style: solid;
+    outline-width: 2px;
+    border-radius: 2px;
+    */
+}
+
+.cellTableSelectedRowCell .findCell-highlight {
+	background-color: var(--highlight__background-color--selected);
+}
+
+.findCell-sample-after {
 }
 
 .findCell-name {
@@ -2044,26 +2122,36 @@ button.main-menu svg {
     align-items: end;
     white-space: pre;
     color: var(--navigation__text-color);
+    user-select: text;
+}
+
+/* findCell-name is used for both Find In Content and Recent Items
+ so only add the margin when used in Find In Content */
+.findCell-sample + .findCell-name {
+    margin-left: 6rem;
 }
 
 .findCell-sub {
     display: flex;
-    gap: .7rem;
-    padding: .2rem;
+    gap: 6rem;
+    padding: .1rem;
 }
 
 .findCell-path {
     display: flex;
-    font-size: 0.7rem;
+    font-size: .7rem;
     flex-grow: 1;
     opacity: .5;
+    user-select: text;
 }
 
 .findCell-uuid {
     display: flex;
-    font-size: .7rem;
+    font-size: .6rem;
+    font-family: monospace;
     flex-grow: 0;
     opacity: .5;
+    user-select: text;
 }
 
 .pipelineElementChooser-iconCell {
@@ -2088,7 +2176,7 @@ button.main-menu svg {
 
 .SelectionPopup .listContainer {
     min-width: 200px;
-    max-width: 300px;
+    max-width: 400px;
     max-height: 400px;
 }
 
@@ -2128,11 +2216,11 @@ button.main-menu svg {
 
 .selectionList .cellTableOddRow:focus-within,
 .selectionList .cellTableEvenRow:focus-within {
-    background-color: var(--row__background-color--focussed);
+    box-shadow: var(--row__box-shadow--focussed);
 }
 
 .selectionList .cellTableSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected--focussed);
+    box-shadow: var(--row__box-shadow--selected--focussed);
 }
 
 .selectionList-links {
@@ -2177,69 +2265,6 @@ button.main-menu svg {
 
 .duration-picker {
     display: flex;
-}
-
-.folderPermissionsUsers {
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.folderPermissionsCreatePermissions > div {
-    /* 0 height to prevent the create perms box taking the size of its contents.
-       We want it to take a height based on the flex layout of its parent */
-    height: 0px;
-}
-
-.folderPermissionsPermissionsContainer {
-    gap: var(--control__padding--vertical);
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.documentPermissionType-noPermission {
-    color: var(--text-color--disabled);
-}
-
-.documentPermissionType-destructive {
-}
-
-.documentPermissionType-destructive.documentPermissionType-inferred {
-    /* color: hsl(from var(--text-color--red) h s calc(l - 20%)); */
-    opacity: 90%;
-}
-
-.documentPermissionType-destructive.documentPermissionType-direct {
-    font-weight: 500;
-}
-
-.documentPermissionType-nonDestructive {
-}
-
-.documentPermissionType-nonDestructive.documentPermissionType-inferred {
-    /* color: hsl(from var(--text-color--green) h s calc(l - 20%)); */
-    opacity: 90%;
-}
-
-.documentPermissionType-nonDestructive.documentPermissionType-direct {
-    font-weight: 500;
-}
-
-.documentPermissionsUsers {
-    gap: var(--control__padding--vertical);
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.documentPermissionsPermissionsFormGrp > div {
-    flex-shrink: 0;
-    flex-grow: 0;
-}
-
-.documentPermissionsPermissions {
-    gap: var(--control__padding--vertical);
-    flex-basis: 11rem;
-    flex-shrink: 0;
-    flex-grow: 0;
 }
 
 .editNodeTagsAllTagsFrmGrp,
@@ -2313,4 +2338,23 @@ button.main-menu svg {
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
+}
+
+.documentPermissionChangeControls {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+.inherited {
+    opacity: 0.4;
+}
+
+.bold {
+    font-weight: 600;
+}
+
+/* Add a smidge of a gap between the split and the next form group */
+.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+    margin-top: 0.5em;
 }

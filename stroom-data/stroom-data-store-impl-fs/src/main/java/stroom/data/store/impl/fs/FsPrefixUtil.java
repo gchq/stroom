@@ -82,36 +82,6 @@ final class FsPrefixUtil {
         }
     }
 
-//    /**
-//     * Given a string chop it up into 3 parts separately by '/'.
-//     */
-//    static String buildIdPath(final String id) {
-//        if (id.length() == PAD_SIZE) {
-//            return null;
-//        }
-//
-//        StringBuilder builder = new StringBuilder();
-//        int startPos = 0;
-//        while (startPos < id.length() - PAD_SIZE) {
-//            builder.append(id.charAt(startPos));
-//            startPos++;
-//            if (startPos < id.length()) {
-//                builder.append(id.charAt(startPos));
-//                startPos++;
-//                if (startPos < id.length()) {
-//                    builder.append(id.charAt(startPos));
-//                    builder.append('/');
-//                    startPos++;
-//                }
-//            }
-//        }
-//        // Drop last '/'
-//        if (builder.charAt(builder.length() - 1) == '/') {
-//            builder.setLength(builder.length() - 1);
-//        }
-//        return builder.toString();
-//    }
-
     /**
      * Given a string chop it up into parts and append to a path.
      */
@@ -129,17 +99,5 @@ final class FsPrefixUtil {
             result = result.resolve(part);
         }
         return result;
-    }
-
-    static String getIdPath(final String id) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
-            final String part = id.substring(i, i + PAD_SIZE);
-            if (sb.length() > 0) {
-                sb.append("/");
-            }
-            sb.append(part);
-        }
-        return sb.toString();
     }
 }

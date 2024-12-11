@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client.event;
 
 import stroom.docref.DocRef;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -32,31 +31,31 @@ public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
     private final List<DocRef> docRefs;
     private final boolean confirm;
     private final ResultCallback callback;
-    private final TaskHandlerFactory taskHandlerFactory;
+    private final TaskMonitorFactory taskMonitorFactory;
 
     private DeleteDocumentEvent(final List<DocRef> docRefs,
                                 final boolean confirm,
                                 final ResultCallback callback,
-                                final TaskHandlerFactory taskHandlerFactory) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         this.docRefs = docRefs;
         this.confirm = confirm;
         this.callback = callback;
-        this.taskHandlerFactory = taskHandlerFactory;
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     public static void fire(final HasHandlers handlers,
                             final List<DocRef> docRefs,
                             final boolean confirm,
-                            final TaskHandlerFactory taskHandlerFactory) {
-        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, null, taskHandlerFactory));
+                            final TaskMonitorFactory taskMonitorFactory) {
+        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, null, taskMonitorFactory));
     }
 
     public static void fire(final HasHandlers handlers,
                             final List<DocRef> docRefs,
                             final boolean confirm,
                             final ResultCallback callback,
-                            final TaskHandlerFactory taskHandlerFactory) {
-        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, callback, taskHandlerFactory));
+                            final TaskMonitorFactory taskMonitorFactory) {
+        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, callback, taskMonitorFactory));
     }
 
     public static Type<Handler> getType() {
@@ -88,9 +87,13 @@ public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
         return callback;
     }
 
-    public TaskHandlerFactory getTaskHandlerFactory() {
-        return taskHandlerFactory;
+    public TaskMonitorFactory getTaskMonitorFactory() {
+        return taskMonitorFactory;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 

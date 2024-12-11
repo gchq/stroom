@@ -10,17 +10,4 @@ public interface HasAuditableUserIdentity {
      * or audit events.
      */
     String getUserIdentityForAudit();
-
-    /**
-     * Helper method for deriving an auditable user identity from the unique user name
-     * and the possibly not unique and optional display name
-     */
-    static String fromUserNames(final String name, final String displayName) {
-        // GWT so no Objects.requireNonNullElse()
-        if (displayName != null) {
-            return displayName;
-        } else {
-            return name;
-        }
-    }
 }

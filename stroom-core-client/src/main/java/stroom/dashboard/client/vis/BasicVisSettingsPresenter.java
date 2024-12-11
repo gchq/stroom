@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.tab.client.presenter.TabData;
@@ -78,7 +77,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
-        visualisationPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        visualisationPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());
     }
@@ -91,7 +90,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     @Override
     protected void onBind() {
         registerHandler(visualisationPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
+            if (!Objects.equals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
                 writeDynamicSettings(dynamicSettings);
                 loadVisualisation(visualisationPresenter.getSelectedEntityReference(), dynamicSettings);
             }
@@ -107,7 +106,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         fieldNames = new ArrayList<>();
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
             if (columns != null && columns.size() > 0) {
                 for (final Column column : columns) {
                     if (!fieldNames.contains(column.getName())) {
@@ -138,7 +137,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                         final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
                         readSettings(settings, dynamicSettings);
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -197,7 +196,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             dynamicSettings = new JSONObject();
         }
 
-        visualisationPresenter.setSelectedEntityReference(settings.getVisualisation());
+        visualisationPresenter.setSelectedEntityReference(settings.getVisualisation(), true);
         loadVisualisation(settings.getVisualisation(), dynamicSettings);
     }
 
@@ -268,6 +267,10 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public void setSettingsPresenter(final SettingsPresenter settingsPresenter) {
         this.settingsPresenter = settingsPresenter;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface BasicVisSettingsView
             extends BasicSettingsView, HasUiHandlers<BasicVisSettingsUiHandlers> {

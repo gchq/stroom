@@ -17,11 +17,14 @@
 package stroom.dashboard.client.main;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -67,9 +70,6 @@ public class TabManager {
 
         final Component component = components.get(tabConfig.getId());
         if (component != null) {
-            final ComponentConfig componentConfig = component.getComponentConfig();
-            final Consumer<String> nameChangeConsumer = component::setComponentName;
-
             if (Objects.equals(currentTabConfig, tabConfig)) {
                 HideMenuEvent.builder().fire(dashboardPresenter);
 
@@ -92,8 +92,7 @@ public class TabManager {
                         PopupLocation.BELOW);
                 final List<Item> menuItems = updateMenuItems(tabLayout.getTabLayoutConfig(),
                         tabConfig,
-                        componentConfig,
-                        nameChangeConsumer);
+                        component);
                 currentTabConfig = tabConfig;
                 ShowMenuEvent
                         .builder()
@@ -160,8 +159,10 @@ public class TabManager {
 
     private List<Item> updateMenuItems(final TabLayoutConfig tabLayoutConfig,
                                        final TabConfig tabConfig,
-                                       final ComponentConfig componentConfig,
-                                       final Consumer<String> nameChangeConsumer) {
+                                       final Component component) {
+        final ComponentConfig componentConfig = component.getComponentConfig();
+        final Consumer<String> nameChangeConsumer = component::setComponentName;
+
         final List<Item> menuItems = new ArrayList<>();
 
         // Create rename menu.
@@ -181,11 +182,31 @@ public class TabManager {
 
         // Create duplicate menus.
         menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
-        menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
+        if (tabLayoutConfig.getAllTabCount() > 1) {
+            menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
+        }
 
         // Create remove menus.
         menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
-        menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+        if (tabLayoutConfig.getAllTabCount() > 1) {
+            menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+        }
+
+        if (component instanceof EmbeddedQueryPresenter) {
+            final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
+            final boolean showingVis = embeddedQueryPresenter.isShowingVis();
+            final boolean canShowVis = embeddedQueryPresenter.canShowVis();
+            if (showingVis || canShowVis) {
+                menuItems.add(createShowTable(embeddedQueryPresenter, showingVis));
+            }
+
+            final EmbeddedQueryComponentSettings embeddedQueryComponentSettings =
+                    (EmbeddedQueryComponentSettings) embeddedQueryPresenter.getSettings();
+            if (embeddedQueryComponentSettings.getQueryRef() != null) {
+                menuItems.add(createEditQuery(embeddedQueryPresenter));
+                menuItems.add(createRunQuery(embeddedQueryPresenter));
+            }
+        }
 
         return menuItems;
     }
@@ -282,6 +303,39 @@ public class TabManager {
                 .icon(SvgImage.DELETE)
                 .text("Remove All")
                 .command(() -> removeTabPanel(tabLayoutConfig))
+                .build();
+    }
+
+    private Item createShowTable(final EmbeddedQueryPresenter embeddedQueryPresenter,
+                                 final boolean showingVis) {
+        return new IconMenuItem.Builder()
+                .priority(12)
+                .icon(showingVis
+                        ? SvgImage.TABLE
+                        : SvgImage.DOCUMENT_VISUALISATION)
+                .text(showingVis
+                        ? "Show Table"
+                        : "Show Visualisation")
+                .command(() -> embeddedQueryPresenter.showTable(showingVis))
+                .build();
+    }
+
+    private Item createEditQuery(final EmbeddedQueryPresenter embeddedQueryPresenter) {
+        return new IconMenuItem.Builder()
+                .priority(13)
+                .icon(SvgImage.DOCUMENT_QUERY)
+                .text("Edit Query")
+                .command(embeddedQueryPresenter::editQuery)
+                .build();
+    }
+
+    private Item createRunQuery(final EmbeddedQueryPresenter embeddedQueryPresenter) {
+        return new IconMenuItem.Builder()
+                .priority(14)
+                .icon(SvgImage.PLAY)
+                .iconColour(IconColour.GREEN)
+                .text("Run Query")
+                .command(embeddedQueryPresenter::runQuery)
                 .build();
     }
 }

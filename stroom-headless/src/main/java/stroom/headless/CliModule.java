@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.headless;
 
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
+import stroom.data.store.api.FsVolumeGroupService;
+import stroom.data.store.mock.MockFsVolumeGroupService;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
@@ -31,6 +33,8 @@ import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.processor.impl.MockProcessorModule;
+import stroom.security.api.ContentPackUserService;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
@@ -108,6 +112,11 @@ public class CliModule extends AbstractModule {
         bind(PathConfig.class).to(StroomPathConfig.class);
         install(new DirProvidersModule());
         install(new MockJerseyModule());
+
+        bind(ContentPackUserService.class).to(MockSecurityContext.class);
+
+        // Only needed for feed import so not an issue for Cli
+        bind(FsVolumeGroupService.class).to(MockFsVolumeGroupService.class);
     }
 
     @Provides

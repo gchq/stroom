@@ -9,7 +9,7 @@ import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +19,7 @@ public interface ApiKeyDao {
 
     FilterFieldMappers<HashedApiKey> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME, (HashedApiKey apiKey) ->
-                    NullSafe.get(apiKey.getOwner(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(apiKey.getOwner(), UserRef::toDisplayString)),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_NAME, HashedApiKey::getName),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_PREFIX, HashedApiKey::getApiKeyPrefix),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_COMMENTS, HashedApiKey::getComments),

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.token;
 
 import stroom.query.language.token.QuotedStringToken.Builder;
@@ -34,69 +50,96 @@ public class Tokeniser {
         tokens = Collections.singletonList(unknown);
 
         // Tag quoted strings and comments.
-        extractQuotedTokens();
+        tokens = extractQuotedTokens(tokens);
 
         // Add support for parameters.
-        splitParam("\\$\\{[^}]*}", 0, TokenType.PARAM);
+        tokens = splitParam("\\$\\{[^}]*}", 0, TokenType.PARAM, tokens);
 
         // Tag keywords.
-        TokenType.KEYWORDS.forEach(token -> tagKeyword(token.toString().toLowerCase(Locale.ROOT), token));
+        TokenType.ALL_KEYWORDS.forEach(token -> {
+            tokens = tagKeyword(token.toString().toLowerCase(Locale.ROOT), token, tokens);
+        });
+
+        // Treat NOT/AND/OR as keywords if they are in an expression to make sure they aren't treated as functions,
+        // e.g. not().
+        List<Token> replaced = new ArrayList<>();
+        TokenType currentKeyword = null;
+        for (final Token token : tokens) {
+            if (TokenType.ALL_KEYWORDS.contains(token.getTokenType())) {
+                currentKeyword = token.getTokenType();
+                replaced.add(token);
+            } else if (currentKeyword != null &&
+                    TokenType.EXPRESSION_KEYWORDS.contains(currentKeyword) &&
+                    TokenType.UNKNOWN.equals(token.getTokenType())) {
+                List<Token> outTokens = new ArrayList<>();
+                outTokens.add(token);
+                outTokens = tagKeyword("and", TokenType.AND, outTokens);
+                outTokens = tagKeyword("or", TokenType.OR, outTokens);
+                outTokens = tagKeyword("not", TokenType.NOT, outTokens);
+                replaced.addAll(outTokens);
+            } else {
+                replaced.add(token);
+            }
+        }
+        tokens = replaced;
+
         // Treat other conjunctions as keywords.
-        tagKeyword("in", TokenType.IN);
-        tagKeyword("by", TokenType.BY);
-        tagKeyword("as", TokenType.AS);
-        tagKeyword("between", TokenType.BETWEEN);
-        tagKeyword("dictionary", TokenType.DICTIONARY);
+        tokens = tagKeyword("in", TokenType.IN, tokens);
+        tokens = tagKeyword("by", TokenType.BY, tokens);
+        tokens = tagKeyword("as", TokenType.AS, tokens);
+        tokens = tagKeyword("between", TokenType.BETWEEN, tokens);
+        tokens = tagKeyword("dictionary", TokenType.DICTIONARY, tokens);
 
         // Tag functions.
-        split("([a-z][a-zA-Z]*)(\\()", 1, TokenType.FUNCTION_NAME);
+        tokens = split("([a-z][a-zA-Z]*)(\\()", 1, TokenType.FUNCTION_NAME, tokens);
 
         // Tag brackets.
-        split("\\(", 0, TokenType.OPEN_BRACKET);
-        split("\\)", 0, TokenType.CLOSE_BRACKET);
+        tokens = split("\\(", 0, TokenType.OPEN_BRACKET, tokens);
+        tokens = split("\\)", 0, TokenType.CLOSE_BRACKET, tokens);
 
         // Tag null conditions.
-        split("(^|\\s)(is[\\s]+null)(\\s|$)", 2, TokenType.IS_NULL);
-        split("(^|\\s)(is[\\s]+not[\\s]+null)(\\s|$)", 2, TokenType.IS_NOT_NULL);
+        tokens = split("(^|\\s)(is[\\s]+null)(\\s|$)", 2, TokenType.IS_NULL, tokens);
+        tokens = split("(^|\\s)(is[\\s]+not[\\s]+null)(\\s|$)", 2, TokenType.IS_NOT_NULL, tokens);
 
         // Tag whitespace.
-        split("\\s+", 0, TokenType.WHITESPACE);
+        tokens = split("\\s+", 0, TokenType.WHITESPACE, tokens);
 
         // Tag dates.
-        split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.DATE_TIME);
+        tokens = split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.DATE_TIME, tokens);
 
-        split(",", 0, TokenType.COMMA);
-        split("\\^", 0, TokenType.ORDER);
-        split("/", 0, TokenType.DIVISION);
-        split("\\*", 0, TokenType.MULTIPLICATION);
-        split("%", 0, TokenType.MODULUS);
-        split("\\+", 0, TokenType.PLUS);
-        split("\\-", 0, TokenType.MINUS);
-        split("!=", 0, TokenType.NOT_EQUALS);
-        split("<=", 0, TokenType.LESS_THAN_OR_EQUAL_TO);
-        split(">=", 0, TokenType.GREATER_THAN_OR_EQUAL_TO);
-        split("<", 0, TokenType.LESS_THAN);
-        split(">", 0, TokenType.GREATER_THAN);
-        split("=", 0, TokenType.EQUALS);
+        tokens = split(",", 0, TokenType.COMMA, tokens);
+        tokens = split("\\^", 0, TokenType.ORDER, tokens);
+        tokens = split("/", 0, TokenType.DIVISION, tokens);
+        tokens = split("\\*", 0, TokenType.MULTIPLICATION, tokens);
+        tokens = split("%", 0, TokenType.MODULUS, tokens);
+        tokens = split("\\+", 0, TokenType.PLUS, tokens);
+        tokens = split("\\-", 0, TokenType.MINUS, tokens);
+        tokens = split("!=", 0, TokenType.NOT_EQUALS, tokens);
+        tokens = split("<=", 0, TokenType.LESS_THAN_OR_EQUAL_TO, tokens);
+        tokens = split(">=", 0, TokenType.GREATER_THAN_OR_EQUAL_TO, tokens);
+        tokens = split("<", 0, TokenType.LESS_THAN, tokens);
+        tokens = split(">", 0, TokenType.GREATER_THAN, tokens);
+        tokens = split("=", 0, TokenType.EQUALS, tokens);
 
         // Tag durations.
-        split("(^|\\s|\\))(\\d+(ns|ms|s|m|h|d|w|M|y))", 2, TokenType.DURATION);
+        tokens = split("(^|\\s|\\))(\\d+(ns|ms|s|m|h|d|w|M|y))", 2, TokenType.DURATION, tokens);
         // Tag numbers.
-        split("(^|\\s|\\))(\\d+(\\.\\d+)?([Ee]-\\d+)?)", 2, TokenType.NUMBER);
+        tokens = split("(^|\\s|\\))(\\d+(\\.\\d+)?([Ee]-\\d+)?)", 2, TokenType.NUMBER, tokens);
 
         // Tag everything else as a string.
-        categorise(TokenType.STRING);
+        tokens = categorise(TokenType.STRING, tokens);
     }
 
-    private void tagKeyword(final String pattern, final TokenType tokenType) {
-        split("(^\\s*|[^=]\\s+|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
+    public static List<Token> tagKeyword(final String pattern, final TokenType tokenType, final List<Token> tokens) {
+        return split("(^\\s*|[^=]\\s+|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType, tokens);
     }
 
     public static List<Token> parse(final String string) {
         return new Tokeniser(string).tokens;
     }
 
-    private void categorise(final TokenType tokenType) {
+    public static List<Token> categorise(final TokenType tokenType,
+                                   final List<Token> tokens) {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
@@ -110,66 +153,75 @@ public class Tokeniser {
                 out.add(token);
             }
         }
-        this.tokens = out;
+        return out;
     }
 
-    private void split(final String regex,
-                       final int group,
-                       final TokenType tokenType) {
-        final Pattern pattern = PATTERN_CACHE
-                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+    public static List<Token> split(final String regex,
+                              final int group,
+                              final TokenType tokenType,
+                              final List<Token> tokens) {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
-                final String str = new String(token.getChars(),
-                        token.getStart(),
-                        token.getEnd() - token.getStart() + 1);
-                final Matcher matcher = pattern.matcher(str);
-
-                int lastPos = 0;
-                while (matcher.find()) {
-                    final int start = matcher.start(group);
-                    final int end = matcher.end(group);
-                    if (start != -1 && end != -1) {
-                        if (start > lastPos) {
-                            out.add(new Token.Builder()
-                                    .tokenType(token.getTokenType())
-                                    .chars(token.getChars())
-                                    .start(token.getStart() + lastPos)
-                                    .end(token.getStart() + start - 1)
-                                    .build());
-                        }
-
-                        out.add(new Token.Builder()
-                                .tokenType(tokenType)
-                                .chars(token.getChars())
-                                .start(token.getStart() + start)
-                                .end(token.getStart() + end - 1)
-                                .build());
-                        lastPos = end;
-                    }
-                }
-
-                if (token.getStart() + lastPos <= token.getEnd()) {
-                    out.add(new Token.Builder()
-                            .tokenType(token.getTokenType())
-                            .chars(token.getChars())
-                            .start(token.getStart() + lastPos)
-                            .end(token.getEnd())
-                            .build());
-                }
+                out.addAll(splitUnknown(regex, group, tokenType, token));
             } else {
                 out.add(token);
             }
         }
-        this.tokens = out;
+        return out;
     }
 
-    private void splitParam(final String regex,
-                            final int group,
-                            final TokenType tokenType) {
-        final Pattern pattern = PATTERN_CACHE
-                .computeIfAbsent(regex, k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+    private static List<Token> splitUnknown(final String regex,
+                                     final int group,
+                                     final TokenType tokenType,
+                                     final Token token) {
+        final Pattern pattern = getPattern(regex);
+        final List<Token> out = new ArrayList<>();
+        final String str = new String(token.getChars(),
+                token.getStart(),
+                token.getEnd() - token.getStart() + 1);
+        final Matcher matcher = pattern.matcher(str);
+
+        int lastPos = 0;
+        while (matcher.find()) {
+            final int start = matcher.start(group);
+            final int end = matcher.end(group);
+            if (start != -1 && end != -1) {
+                if (start > lastPos) {
+                    out.add(new Token.Builder()
+                            .tokenType(token.getTokenType())
+                            .chars(token.getChars())
+                            .start(token.getStart() + lastPos)
+                            .end(token.getStart() + start - 1)
+                            .build());
+                }
+
+                out.add(new Token.Builder()
+                        .tokenType(tokenType)
+                        .chars(token.getChars())
+                        .start(token.getStart() + start)
+                        .end(token.getStart() + end - 1)
+                        .build());
+                lastPos = end;
+            }
+        }
+
+        if (token.getStart() + lastPos <= token.getEnd()) {
+            out.add(new Token.Builder()
+                    .tokenType(token.getTokenType())
+                    .chars(token.getChars())
+                    .start(token.getStart() + lastPos)
+                    .end(token.getEnd())
+                    .build());
+        }
+        return out;
+    }
+
+    private List<Token> splitParam(final String regex,
+                                   final int group,
+                                   final TokenType tokenType,
+                                   final List<Token> tokens) {
+        final Pattern pattern = getPattern(regex);
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
@@ -214,10 +266,10 @@ public class Tokeniser {
                 out.add(token);
             }
         }
-        this.tokens = out;
+        return out;
     }
 
-    private void extractQuotedTokens() {
+    public static List<Token> extractQuotedTokens(final List<Token> tokens) {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
@@ -309,10 +361,10 @@ public class Tokeniser {
                 out.add(token);
             }
         }
-        this.tokens = out;
+        return out;
     }
 
-    private boolean testChars(Token token, char[] test, int pos) {
+    private static boolean testChars(Token token, char[] test, int pos) {
         if (pos + test.length - 1 > token.getEnd()) {
             return false;
         }
@@ -324,5 +376,10 @@ public class Tokeniser {
             }
         }
         return true;
+    }
+
+    private static Pattern getPattern(final String regex) {
+        return PATTERN_CACHE.computeIfAbsent(regex, k ->
+                Pattern.compile(k, Pattern.CASE_INSENSITIVE));
     }
 }

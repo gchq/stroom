@@ -54,6 +54,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -97,6 +98,7 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         createStateDoc(scyllaDbDoc, "hostname_to_location_map");
         createStateDoc(scyllaDbDoc, "hostname_to_ip_map");
         createStateDoc(scyllaDbDoc, "id_to_user_map");
+        createStateDoc(scyllaDbDoc, "number_to_id");
 
         // Add reference data to state store.
         // Setup the pipeline.
@@ -126,7 +128,7 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         final List<PipelineReference> pipelineReferences = Collections.singletonList(PipelineDataUtil.createReference(
                 "translationFilter",
                 "pipelineReference",
-                new DocRef(StateDoc.DOCUMENT_TYPE, null),
+                new DocRef(StateDoc.DOCUMENT_TYPE, UUID.randomUUID().toString()),
                 null,
                 null));
         commonTranslationTestHelper.setupStateProcess(

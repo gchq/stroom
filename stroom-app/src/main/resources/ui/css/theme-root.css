@@ -43,6 +43,10 @@
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-900);
 
+    /* e.g. Find in content match highlighting */
+    --highlight__background-color: yellow;
+    --highlight__background-color--selected: yellow;
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
@@ -50,13 +54,15 @@
     --border-color: #ebebeb;
 
     --header__border-color: #dddddd;
-    --row__background-color--even: #ebebeb;
+    --row__background-color--even: #f5f5f5;
     --row__background-color--odd: #fff;
     --row__background-color--hovered: #e6f4ff;
     --row__background-color--selected: rgba(129, 212, 250, .5);
     --row__background-color--selected--hovered: rgba(129, 212, 250, 1);
     --row__background-color--focussed: rgba(129, 212, 250, .6);
     --row__background-color--selected--focussed: rgba(129, 212, 250, .8);
+    --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
+    --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: #000;
 
     --menu-separator__color: #bfbfbf;

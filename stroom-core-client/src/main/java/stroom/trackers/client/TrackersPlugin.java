@@ -44,7 +44,7 @@ public class TrackersPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
 //        //TODO what are the correct permissions?
-//        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_JOBS_PERMISSION)) {
+//        if (getSecurityContext().hasAppPermission(AppPermissionEnum.MANAGE_JOBS_PERMISSION)) {
 //            clientPropertyCache.get()
 //                    .onSuccess(result -> {
 //                        final IconMenuItem streamTaskMenuItem;

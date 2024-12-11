@@ -27,14 +27,15 @@ public class QuerySettingsPresenter extends SettingsPresenter {
     @Inject
     public QuerySettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                   final BasicQuerySettingsPresenter basicSettingsPresenter,
-                                  final SelectionHandlersPresenter selectionHandlersPresenter) {
+                                  final SelectionHandlersPresenter selectionQueryPresenter) {
         super(eventBus, view);
         getView().asWidget().addStyleName("settingsPresenter");
 
-        selectionHandlersPresenter.setBasicQuerySettingsPresenter(basicSettingsPresenter);
+        selectionQueryPresenter.setDataSourceRefConsumer(consumer ->
+                consumer.accept(basicSettingsPresenter.getDataSource()));
 
         addTab("Basic", basicSettingsPresenter);
-        addTab("Selection Handlers", selectionHandlersPresenter);
+        addTab("Selection Query", selectionQueryPresenter);
     }
 
     @Override

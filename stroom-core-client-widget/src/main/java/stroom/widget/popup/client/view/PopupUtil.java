@@ -1,6 +1,5 @@
 package stroom.widget.popup.client.view;
 
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -9,27 +8,13 @@ import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.PopupPanel;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public class PopupUtil {
 
     private static final int POPUP_SHADOW_WIDTH = 9;
-    private static final long CLOSE_TIME_DELTA_MS = 150L;
-    private static final int DELAY_MS = 30_000;
-    // uniqueId => closeTimeEpocMs
-    private static final Map<String, Long> UNIQUE_ID_TO_CLOSE_TIME_MAP = new HashMap<>();
-    private static final Set<String> OPEN_IDS = new HashSet<>();
 
-    private static Timer timer;
-
-    public static void showPopup(final String uniqueId,
-                                 final Popup popup,
+    public static void showPopup(final Popup popup,
                                  final boolean isModal,
                                  final PopupPosition popupPosition,
                                  final PopupSize popupSize,
@@ -37,119 +22,71 @@ public class PopupUtil {
                                  final Runnable onShow) {
 //        GWT.log("onShow called, uniqueId: " + uniqueId + ", timeSinceClose: " + getTimeSinceCloseMs(uniqueId));
 
-        // Prevent a popup being opened twice
-        if (!OPEN_IDS.contains(uniqueId)) {
-            // This is to stop the popup re-showing if you click on the thing that opened it, e.g.
-            // Click on a help icon, popup opens, click on help icon to close it (because help icon
-            // is outside the panel so auto-hide will close it) but it will then just open it again
-            // which is not what the user wants. This attempts to stop that.
-            if (isModal
-                    || getTimeSinceCloseMs(uniqueId) > CLOSE_TIME_DELTA_MS) {
-                OPEN_IDS.add(uniqueId);
-                final PopupPanel popupPanel = (PopupPanel) popup;
-                // Hide the popup because we are going to position it before making it
-                // visible.
-                popupPanel.setVisible(false);
-                popupPanel.setModal(false);
+        final PopupPanel popupPanel = (PopupPanel) popup;
+        // Hide the popup because we are going to position it before making it
+        // visible.
+        popupPanel.setVisible(false);
+        popupPanel.setModal(false);
 
-                popupPanel.addCloseHandler(event -> {
-                    OPEN_IDS.remove(uniqueId);
-                    if (!isModal) {
-                        // Record the time we close the popup
-                        UNIQUE_ID_TO_CLOSE_TIME_MAP.put(uniqueId, System.currentTimeMillis());
-                    }
+        // Way to set popups to be modal using glass.
+        if (isModal) {
+            popupPanel.setGlassEnabled(isModal);
+        }
 
-                    if (timer == null) {
-                        timer = new Timer() {
-                            @Override
-                            public void run() {
-                                // Tidy up the map 30s after the popup is closed
-                                UNIQUE_ID_TO_CLOSE_TIME_MAP.entrySet().removeIf(entry -> {
-                                    final long deltaMs = System.currentTimeMillis() - entry.getValue();
-                                    return deltaMs < (DELAY_MS - 1_000);
-                                });
-                            }
-                        };
-                    } else {
-                        timer.cancel();
-                    }
-                    timer.schedule(DELAY_MS);
-                });
-
-                // Way to set popups to be modal using glass.
-                if (isModal) {
-                    popupPanel.setGlassEnabled(isModal);
-                }
-
-                // Attach the popup to the DOM.
-                CurrentFocus.push();
-                popupPanel.show();
-                // Defer the command to position and make visible because we need the
-                // popup to size first.
-                Scheduler.get().scheduleDeferred(() -> {
-                    // Now get the popup size.
-                    final int w = popupPanel.getOffsetWidth();
-                    final int h = popupPanel.getOffsetHeight();
+        // Attach the popup to the DOM.
+        CurrentFocus.push();
+        popupPanel.show();
+        // Defer the command to position and make visible because we need the
+        // popup to size first.
+        Scheduler.get().scheduleDeferred(() -> {
+            // Now get the popup size.
+            final int w = popupPanel.getOffsetWidth();
+            final int h = popupPanel.getOffsetHeight();
 
 //            GWT.log("popup.offsetWidth/Height: " + popupPanel.getOffsetWidth() + "/" + popupPanel.getOffsetHeight());
 
-                    // Set the popup size.
-                    int newWidth = w;
-                    int newHeight = h;
-                    if (popupSize != null) {
-                        newWidth = getSize(newWidth, popupSize.getWidth());
-                        newHeight = getSize(newHeight, popupSize.getHeight());
-                    }
-                    if (newWidth != w) {
-                        popupPanel.setWidth(newWidth + "px");
-                    }
-                    if (newHeight != h) {
-                        popupPanel.setHeight(newHeight + "px");
-                    }
-
-//                    if (popupPosition == null) {
-//                        // Center the popup in the client window.
-//                        centerPopup(popup, newWidth, newHeight);
-//                    } else {
-//                        // Position the popup so it is as close as possible to
-//                        // the required location but is all on screen.
-//                        positionPopup(popup, popupType, popupPosition, newWidth, newHeight);
-//                    }
-                    if (popupPosition == null) {
-                        // Center the popup in the client window.
-                        final Position position = PositionUtil.center(newWidth, newHeight);
-                        popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
-
-                    } else {
-                        // Position the popup so it is as close as possible to
-                        // the required location but is all on screen.
-                        int shadowWidth = 0;
-                        if (popupType != PopupType.POPUP) {
-                            shadowWidth = POPUP_SHADOW_WIDTH;
-                        }
-
-                        final Position position = PositionUtil.getPosition(shadowWidth,
-                                popupPosition,
-                                newWidth,
-                                newHeight);
-                        popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
-                    }
-
-                    // Make the popup visible.
-                    popupPanel.setVisible(true);
-                    popupPanel.getElement().getStyle().setOpacity(1);
-
-                    if (onShow != null) {
-                        Scheduler.get().scheduleDeferred(onShow::run);
-                    }
-                });
+            // Set the popup size.
+            int newWidth = w;
+            int newHeight = h;
+            if (popupSize != null) {
+                newWidth = getSize(newWidth, popupSize.getWidth());
+                newHeight = getSize(newHeight, popupSize.getHeight());
             }
-        }
-    }
+            if (newWidth != w) {
+                popupPanel.setWidth(newWidth + "px");
+            }
+            if (newHeight != h) {
+                popupPanel.setHeight(newHeight + "px");
+            }
 
-    private static Long getTimeSinceCloseMs(final String uniqueId) {
-        final long closeTimeMs = GwtNullSafe.requireNonNullElse(UNIQUE_ID_TO_CLOSE_TIME_MAP.get(uniqueId), 0L);
-        return System.currentTimeMillis() - closeTimeMs;
+            if (popupPosition == null) {
+                // Center the popup in the client window.
+                final Position position = PositionUtil.center(newWidth, newHeight);
+                popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
+
+            } else {
+                // Position the popup so it is as close as possible to
+                // the required location but is all on screen.
+                int shadowWidth = 0;
+                if (popupType != PopupType.POPUP) {
+                    shadowWidth = POPUP_SHADOW_WIDTH;
+                }
+
+                final Position position = PositionUtil.getPosition(shadowWidth,
+                        popupPosition,
+                        newWidth,
+                        newHeight);
+                popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
+            }
+
+            // Make the popup visible.
+            popupPanel.setVisible(true);
+            popupPanel.getElement().getStyle().setOpacity(1);
+
+            if (onShow != null) {
+                Scheduler.get().scheduleDeferred(onShow::run);
+            }
+        });
     }
 
     private static int getSize(final int current, Size size) {

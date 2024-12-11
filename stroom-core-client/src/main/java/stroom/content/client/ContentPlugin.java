@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.function.Consumer;
+
 public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plugin {
 
     private final ContentManager contentManager;
@@ -46,7 +48,12 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         return presenter;
     }
 
-    public P open() {
+    public final void open() {
+        open(presenter -> {
+        });
+    }
+
+    public void open(Consumer<P> consumer) {
         if (presenter == null) {
             // If the presenter is null then we haven't got this tab open.
             // Create a new presenter.
@@ -65,7 +72,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
                 };
 
                 ((CloseContentEvent.Handler) presenter)
-                        .onCloseRequest(new CloseContentEvent(event.isIgnoreIfDirty(), callback));
+                        .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
                 // Give the content manager the ok to close the tab.
             } else {
                 event.getCallback().closeTab(true);
@@ -84,6 +91,6 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
             final Refreshable refreshable = (Refreshable) presenter;
             refreshable.refresh();
         }
-        return presenter;
+        consumer.accept(presenter);
     }
 }

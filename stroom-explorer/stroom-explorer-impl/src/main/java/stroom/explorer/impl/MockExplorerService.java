@@ -20,7 +20,10 @@ package stroom.explorer.impl;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.AdvancedDocumentFindRequest;
+import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
@@ -29,8 +32,8 @@ import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
-import stroom.explorer.shared.FindRequest;
 import stroom.explorer.shared.FindResult;
+import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.ResultPage;
 
@@ -125,7 +128,18 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public ResultPage<FindResult> find(final FindRequest request) {
+    public ResultPage<FindResult> find(final DocumentFindRequest request) {
+        return null;
+    }
+
+    @Override
+    public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
+        return null;
+    }
+
+    @Override
+    public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            final AdvancedDocumentFindWithPermissionsRequest request) {
         return null;
     }
 

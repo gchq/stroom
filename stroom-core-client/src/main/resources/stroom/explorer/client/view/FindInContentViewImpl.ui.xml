@@ -12,7 +12,7 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <g:MySplitLayoutPanel styleName="dock-max">
-            <g:north size="200">
+            <g:north size="300">
                 <g:SimplePanel ui:field="resultContainer"
                                styleName="max form-control-border form-control-background"/>
             </g:north>
@@ -23,4 +23,4 @@
             </g:center>
         </g:MySplitLayoutPanel>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

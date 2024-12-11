@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search;
 
 import stroom.annotation.api.AnnotationFields;
-import stroom.dictionary.impl.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
@@ -444,22 +443,26 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
 
     private TableSettings createTableSettings(final boolean extractValues) {
         final Column streamIdColumn = Column.builder()
+                .id("Stream Id")
                 .name("Stream Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
+                .id("Event Id")
                 .name("Event Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
+                .id("Event Time")
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
+                .id("Status")
                 .name("Status")
                 .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
                 .build();

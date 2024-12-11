@@ -17,7 +17,9 @@ import stroom.node.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.resource.impl.MockResourceModule;
+import stroom.security.api.ContentPackUserService;
 import stroom.security.impl.UserService;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;
 import stroom.state.impl.MockStateModule;
@@ -29,6 +31,7 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
+import stroom.util.shared.ResultPage;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -38,7 +41,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -49,6 +51,7 @@ public class MockServiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new MockSecurityContextModule());
         install(new MockJerseyModule());
         install(new MockActivityModule());
         install(new MockDocRefInfoModule());
@@ -78,7 +81,6 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.refdata.ReferenceDataModule());
         install(new stroom.processor.mock.MockProcessorModule());
         install(new MockResourceModule());
-        install(new MockSecurityContextModule());
         install(new stroom.task.impl.MockTaskModule());
         install(new MockInternalStatisticsModule());
         install(new MockProcessorModule());
@@ -88,11 +90,13 @@ public class MockServiceModule extends AbstractModule {
         install(new MockXmlSchemaModule());
         install(new MockStateModule());
 
+        bind(ContentPackUserService.class).to(MockSecurityContext.class);
+
         final UserService mockUserService = mock(UserService.class);
         when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {
             final String uuid = invocation.getArgument(0);
-            final List<User> list = mockUserService.find(null);
-            for (final User e : list) {
+            final ResultPage<User> list = mockUserService.find(null);
+            for (final User e : list.getValues()) {
                 if (e.getUuid() != null && e.getUuid().equals(uuid)) {
                     return e;
                 }

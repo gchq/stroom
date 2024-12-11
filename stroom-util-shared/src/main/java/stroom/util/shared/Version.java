@@ -17,13 +17,12 @@
 package stroom.util.shared;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Wrapper for build versions
  */
 public class Version implements Serializable, Comparable<Version> {
-
-    private static final long serialVersionUID = -302774034712796288L;
 
     private Integer major;
     private Integer minor;
@@ -154,19 +153,6 @@ public class Version implements Serializable, Comparable<Version> {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Version)) {
-            return false;
-        }
-        Version other = (Version) obj;
-        EqualsBuilder equalsBuilder = new EqualsBuilder();
-        equalsBuilder.append(this.major, other.major);
-        equalsBuilder.append(this.minor, other.minor);
-        equalsBuilder.append(this.patch, other.patch);
-        return equalsBuilder.isEquals();
-    }
-
-    @Override
     public int compareTo(Version other) {
         int result = compare(this.major, other.major);
         if (result != 0) {
@@ -192,11 +178,21 @@ public class Version implements Serializable, Comparable<Version> {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Version version = (Version) o;
+        return Objects.equals(major, version.major) &&
+                Objects.equals(minor, version.minor) &&
+                Objects.equals(patch, version.patch);
+    }
+
+    @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(major);
-        hashCodeBuilder.append(minor);
-        hashCodeBuilder.append(patch);
-        return hashCodeBuilder.toHashCode();
+        return Objects.hash(major, minor, patch);
     }
 }

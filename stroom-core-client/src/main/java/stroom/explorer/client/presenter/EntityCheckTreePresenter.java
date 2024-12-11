@@ -22,6 +22,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.NodeFlag;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
@@ -79,7 +80,7 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         explorerTree.getTreeModel().setNodeFlags(nodeFlags);
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         explorerTree.getTreeModel().setRequiredPermissions(requiredPermissions);
     }
 

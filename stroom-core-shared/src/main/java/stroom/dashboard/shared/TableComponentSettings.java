@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "queryId",
@@ -45,9 +46,11 @@ import java.util.Objects;
         "pageSize",
         "showDetail",
         "conditionalFormattingRules",
-        "modelVersion"})
+        "modelVersion",
+        "applyValueFilters",
+        "selectionHandlers"})
 @JsonInclude(Include.NON_NULL)
-public class TableComponentSettings implements ComponentSettings {
+public class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
 
     public static final long[] DEFAULT_MAX_RESULTS = {};
 
@@ -73,11 +76,11 @@ public class TableComponentSettings implements ComponentSettings {
     private final DocRef extractionPipeline;
 
     @Schema(description = "Defines the maximum number of results to return at each grouping level, e.g. " +
-            "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
-            "In the absence of this field system defaults will apply", example = "1000,10,1")
+                          "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
+                          "In the absence of this field system defaults will apply", example = "1000,10,1")
     @JsonPropertyDescription("Defines the maximum number of results to return at each grouping level, e.g. " +
-            "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
-            "In the absence of this field system defaults will apply")
+                             "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
+                             "In the absence of this field system defaults will apply")
     @JsonProperty
     private final List<Long> maxResults;
 
@@ -88,8 +91,8 @@ public class TableComponentSettings implements ComponentSettings {
     private final Integer pageSize;
 
     @JsonPropertyDescription("When grouping is used a value of true indicates that the results will include the full " +
-            "detail of any results aggregated into a group as well as their aggregates. A value of " +
-            "false will only include the aggregated values for each group. Defaults to false.")
+                             "detail of any results aggregated into a group as well as their aggregates. A value of " +
+                             "false will only include the aggregated values for each group. Defaults to false.")
     @JsonProperty
     private final Boolean showDetail;
 
@@ -99,6 +102,10 @@ public class TableComponentSettings implements ComponentSettings {
     @Schema(description = "IGNORE: UI use only", hidden = true)
     @JsonProperty("modelVersion")
     private final String modelVersion;
+    @JsonProperty
+    private final Boolean applyValueFilters;
+    @JsonProperty
+    private final List<ComponentSelectionHandler> selectionHandlers;
 
     @JsonCreator
     public TableComponentSettings(
@@ -113,8 +120,16 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("showDetail") final Boolean showDetail,
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
-            @JsonProperty("modelVersion") final String modelVersion) {
+            @JsonProperty("modelVersion") final String modelVersion,
+            @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
+            @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
 
+        // TODO all List props should be set like this
+        //  this.fields = GwtNullSafe.unmodifiableList(fields);
+        //  so that we can ensure the obj is immutable, however some code is mutating
+        //  these lists, e.g.
+        //  getTableSettings().getColumns().removeIf(Column::isSpecial);
+        //  Too dangerous to fix in 7.5, so best done in 7.7
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
         this.fields = fields;
@@ -126,6 +141,8 @@ public class TableComponentSettings implements ComponentSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
+        this.applyValueFilters = applyValueFilters;
+        this.selectionHandlers = selectionHandlers;
     }
 
     public String getQueryId() {
@@ -151,10 +168,7 @@ public class TableComponentSettings implements ComponentSettings {
     }
 
     public boolean extractValues() {
-        if (extractValues == null) {
-            return true;
-        }
-        return extractValues;
+        return extractValues != Boolean.FALSE;
     }
 
     public Boolean getUseDefaultExtractionPipeline() {
@@ -162,10 +176,7 @@ public class TableComponentSettings implements ComponentSettings {
     }
 
     public boolean useDefaultExtractionPipeline() {
-        if (useDefaultExtractionPipeline == null) {
-            return false;
-        }
-        return useDefaultExtractionPipeline;
+        return useDefaultExtractionPipeline == Boolean.TRUE;
     }
 
     public DocRef getExtractionPipeline() {
@@ -185,10 +196,7 @@ public class TableComponentSettings implements ComponentSettings {
     }
 
     public boolean showDetail() {
-        if (showDetail == null) {
-            return false;
-        }
-        return showDetail;
+        return showDetail == Boolean.TRUE;
     }
 
     public List<ConditionalFormattingRule> getConditionalFormattingRules() {
@@ -197,6 +205,25 @@ public class TableComponentSettings implements ComponentSettings {
 
     public String getModelVersion() {
         return modelVersion;
+    }
+
+    public Boolean getApplyValueFilters() {
+        return applyValueFilters;
+    }
+
+    public boolean applyValueFilters() {
+        return applyValueFilters == Boolean.TRUE;
+    }
+
+    @Deprecated
+    public List<ComponentSelectionHandler> getSelectionHandlers() {
+        return selectionHandlers;
+    }
+
+    @JsonIgnore
+    @Override
+    public List<ComponentSelectionHandler> getSelectionFilter() {
+        return selectionHandlers;
     }
 
     @Override
@@ -209,16 +236,18 @@ public class TableComponentSettings implements ComponentSettings {
         }
         final TableComponentSettings that = (TableComponentSettings) o;
         return Objects.equals(queryId, that.queryId) &&
-                Objects.equals(dataSourceRef, that.dataSourceRef) &&
-                Objects.equals(fields, that.fields) &&
-                Objects.equals(extractValues, that.extractValues) &&
-                Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline) &&
-                Objects.equals(extractionPipeline, that.extractionPipeline) &&
-                Objects.equals(maxResults, that.maxResults) &&
-                Objects.equals(pageSize, that.pageSize) &&
-                Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion);
+               Objects.equals(dataSourceRef, that.dataSourceRef) &&
+               Objects.equals(fields, that.fields) &&
+               Objects.equals(extractValues, that.extractValues) &&
+               Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline) &&
+               Objects.equals(extractionPipeline, that.extractionPipeline) &&
+               Objects.equals(maxResults, that.maxResults) &&
+               Objects.equals(pageSize, that.pageSize) &&
+               Objects.equals(showDetail, that.showDetail) &&
+               Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+               Objects.equals(modelVersion, that.modelVersion) &&
+               Objects.equals(applyValueFilters, that.applyValueFilters) &&
+               Objects.equals(selectionHandlers, that.selectionHandlers);
     }
 
     @Override
@@ -234,24 +263,28 @@ public class TableComponentSettings implements ComponentSettings {
                 pageSize,
                 showDetail,
                 conditionalFormattingRules,
-                modelVersion);
+                modelVersion,
+                applyValueFilters,
+                selectionHandlers);
     }
 
     @Override
     public String toString() {
         return "TableSettings{" +
-                "queryId='" + queryId + '\'' +
-                ", dataSourceRef=" + dataSourceRef +
-                ", columns=" + fields +
-                ", extractValues=" + extractValues +
-                ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
-                ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + maxResults +
-                ", pageSize=" + pageSize +
-                ", showDetail=" + showDetail +
-                ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", modelVersion='" + modelVersion + '\'' +
-                '}';
+               "queryId='" + queryId + '\'' +
+               ", dataSourceRef=" + dataSourceRef +
+               ", columns=" + fields +
+               ", extractValues=" + extractValues +
+               ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
+               ", extractionPipeline=" + extractionPipeline +
+               ", maxResults=" + maxResults +
+               ", pageSize=" + pageSize +
+               ", showDetail=" + showDetail +
+               ", conditionalFormattingRules=" + conditionalFormattingRules +
+               ", modelVersion='" + modelVersion + '\'' +
+               ", applyValueFilters='" + applyValueFilters + '\'' +
+               ", selectionHandlers='" + selectionHandlers + '\'' +
+               '}';
     }
 
     public static Builder builder() {
@@ -263,10 +296,16 @@ public class TableComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder
+            extends ComponentSettings.AbstractBuilder<TableComponentSettings, TableComponentSettings.Builder>
+            implements HasSelectionFilterBuilder<TableComponentSettings, Builder> {
 
         private String queryId;
         private DocRef dataSourceRef;
@@ -279,6 +318,8 @@ public class TableComponentSettings implements ComponentSettings {
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
+        private Boolean applyValueFilters;
+        private List<ComponentSelectionHandler> selectionFilter;
 
         private Builder() {
         }
@@ -301,6 +342,21 @@ public class TableComponentSettings implements ComponentSettings {
                     ? null
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
+            this.applyValueFilters = tableSettings.applyValueFilters;
+            this.selectionFilter = tableSettings.selectionHandlers;
+        }
+
+        private List<ConditionalFormattingRule> copyConditionalFormattingRules(
+                final List<ConditionalFormattingRule> rules) {
+
+            if (rules == null) {
+                return null;
+            } else {
+                return rules.stream()
+                        .map(col -> col.copy()
+                                .build())
+                        .collect(Collectors.toCollection(ArrayList::new));
+            }
         }
 
         /**
@@ -309,17 +365,17 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder queryId(final String value) {
             this.queryId = value;
-            return this;
+            return self();
         }
 
         public Builder dataSourceRef(final DocRef dataSourceRef) {
             this.dataSourceRef = dataSourceRef;
-            return this;
+            return self();
         }
 
         public Builder columns(final List<Column> columns) {
             this.columns = columns;
-            return this;
+            return self();
         }
 
         /**
@@ -342,7 +398,7 @@ public class TableComponentSettings implements ComponentSettings {
             } else {
                 this.columns.addAll(values);
             }
-            return this;
+            return self();
         }
 
         /**
@@ -355,7 +411,7 @@ public class TableComponentSettings implements ComponentSettings {
             } else {
                 this.extractValues = Boolean.FALSE;
             }
-            return this;
+            return self();
         }
 
         public Builder useDefaultExtractionPipeline(final Boolean value) {
@@ -364,7 +420,7 @@ public class TableComponentSettings implements ComponentSettings {
             } else {
                 this.useDefaultExtractionPipeline = Boolean.TRUE;
             }
-            return this;
+            return self();
         }
 
 
@@ -374,7 +430,7 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder extractionPipeline(final DocRef value) {
             this.extractionPipeline = value;
-            return this;
+            return self();
         }
 
         /**
@@ -388,17 +444,21 @@ public class TableComponentSettings implements ComponentSettings {
         public Builder extractionPipeline(final String type,
                                           final String uuid,
                                           final String name) {
-            return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
+            return self().extractionPipeline(DocRef.builder()
+                    .type(type)
+                    .uuid(uuid)
+                    .name(name)
+                    .build());
         }
 
         public Builder maxResults(final List<Long> maxResults) {
             this.maxResults = maxResults;
-            return this;
+            return self();
         }
 
         public Builder pageSize(final Integer pageSize) {
             this.pageSize = pageSize;
-            return this;
+            return self();
         }
 
         /**
@@ -409,16 +469,31 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder showDetail(final Boolean value) {
             this.showDetail = value;
-            return this;
+            return self();
         }
 
         public Builder conditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
             this.conditionalFormattingRules = conditionalFormattingRules;
-            return this;
+            return self();
         }
 
         public Builder modelVersion(final String modelVersion) {
             this.modelVersion = modelVersion;
+            return self();
+        }
+
+        public Builder applyValueFilters(final Boolean applyValueFilters) {
+            this.applyValueFilters = applyValueFilters;
+            return self();
+        }
+
+        public Builder selectionFilter(final List<ComponentSelectionHandler> selectionFilter) {
+            this.selectionFilter = selectionFilter;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
@@ -435,7 +510,9 @@ public class TableComponentSettings implements ComponentSettings {
                     pageSize,
                     showDetail,
                     conditionalFormattingRules,
-                    modelVersion);
+                    modelVersion,
+                    applyValueFilters,
+                    selectionFilter);
         }
 
         public TableSettings buildTableSettings() {
@@ -450,7 +527,8 @@ public class TableComponentSettings implements ComponentSettings {
                     maxResults,
                     showDetail,
                     conditionalFormattingRules,
-                    null);
+                    null,
+                    applyValueFilters);
         }
     }
 }

@@ -18,11 +18,11 @@ package stroom.ui.config.client;
 
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.DefaultErrorHandler;
-import stroom.dispatch.client.QuietTaskListener;
+import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.ExtendedUiConfig;
 
 import com.google.gwt.core.client.GWT;
@@ -61,7 +61,7 @@ public class UiConfigCache implements HasHandlers {
                     // alive unnecessarily.
                     if (securityContext.isLoggedIn()) {
                         refreshing = true;
-                        refresh(result -> refreshing = result != null, new QuietTaskListener());
+                        refresh(result -> refreshing = result != null, new QuietTaskMonitorFactory());
                     }
                 }
             }
@@ -74,7 +74,7 @@ public class UiConfigCache implements HasHandlers {
     }
 
     public void refresh(final Consumer<ExtendedUiConfig> consumer,
-                        final TaskHandlerFactory taskHandlerFactory) {
+                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(CONFIG_RESOURCE)
                 .method(GlobalConfigResource::fetchExtendedUiConfig)
@@ -84,18 +84,18 @@ public class UiConfigCache implements HasHandlers {
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
                 })
                 .onFailure(error -> new DefaultErrorHandler(this, () -> consumer.accept(null)))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void get(final Consumer<ExtendedUiConfig> consumer) {
-        get(consumer, new DefaultTaskListener(this));
+        get(consumer, new DefaultTaskMonitorFactory(this));
     }
 
-    public void get(final Consumer<ExtendedUiConfig> consumer, final TaskHandlerFactory taskHandlerFactory) {
+    public void get(final Consumer<ExtendedUiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
         final ExtendedUiConfig props = clientProperties;
         if (props == null) {
-            refresh(consumer, taskHandlerFactory);
+            refresh(consumer, taskMonitorFactory);
         }
         consumer.accept(props);
     }

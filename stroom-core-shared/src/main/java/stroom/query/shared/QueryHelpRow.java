@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.shared;
 
 import stroom.svg.shared.SvgImage;
@@ -21,6 +37,8 @@ public class QueryHelpRow {
     @JsonProperty
     private final SvgImage icon;
     @JsonProperty
+    private final String iconTooltip;
+    @JsonProperty
     private final String title;
     @JsonProperty
     private final QueryHelpData data;
@@ -30,12 +48,14 @@ public class QueryHelpRow {
                         @JsonProperty("id") final String id,
                         @JsonProperty("hasChildren") final boolean hasChildren,
                         @JsonProperty("icon") final SvgImage icon,
+                        @JsonProperty("iconTooltip") final String iconTooltip,
                         @JsonProperty("title") final String title,
                         @JsonProperty("data") final QueryHelpData data) {
         this.type = type;
         this.id = id;
         this.hasChildren = hasChildren;
         this.icon = icon;
+        this.iconTooltip = iconTooltip;
         this.title = title;
         this.data = data;
     }
@@ -58,6 +78,10 @@ public class QueryHelpRow {
 
     public SvgImage getIcon() {
         return icon;
+    }
+
+    public String getIconTooltip() {
+        return iconTooltip;
     }
 
     public QueryHelpData getData() {
@@ -88,12 +112,17 @@ public class QueryHelpRow {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private QueryHelpType type = QueryHelpType.TITLE;
         private String id;
         private boolean hasChildren;
         private SvgImage icon;
+        private String iconTooltip;
         private String title;
         private QueryHelpData data;
 
@@ -105,6 +134,7 @@ public class QueryHelpRow {
             this.id = row.id;
             this.hasChildren = row.hasChildren;
             this.icon = row.icon;
+            this.iconTooltip = row.iconTooltip;
             this.title = row.title;
             this.data = row.data;
         }
@@ -130,6 +160,11 @@ public class QueryHelpRow {
             return this;
         }
 
+        public Builder iconTooltip(final String iconTooltip) {
+            this.iconTooltip = iconTooltip;
+            return this;
+        }
+
         public Builder title(final String title) {
             this.title = title;
             return this;
@@ -141,7 +176,7 @@ public class QueryHelpRow {
         }
 
         public QueryHelpRow build() {
-            return new QueryHelpRow(type, id, hasChildren, icon, title, data);
+            return new QueryHelpRow(type, id, hasChildren, icon, iconTooltip, title, data);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.search;
@@ -47,6 +46,7 @@ import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -172,6 +172,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 builder.addAll(fields);
             }
             return builder.build();
+        });
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+            return NullSafe.get(
+                    index,
+                    this::getDataSourceFields,
+                    List::size);
         });
     }
 

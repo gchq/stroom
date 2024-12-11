@@ -16,10 +16,6 @@ public class ValueReferenceIndex {
         return add(new CountReference(list.size(), name));
     }
 
-    public CountIterationReference addCountIteration(final String name, final int iteration) {
-        return add(new CountIterationReference(list.size(), name, iteration));
-    }
-
     public DoubleListReference addDoubleList(final String name) {
         return add(new DoubleListReference(list.size(), name));
     }

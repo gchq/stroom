@@ -36,6 +36,10 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
+import stroom.data.client.presenter.EditExpressionPresenter;
+import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
+import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.data.client.presenter.ItemNavigatorPresenter;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.client.presenter.ItemSelectionPresenter;
@@ -51,6 +55,8 @@ import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
+import stroom.data.client.view.EditExpressionViewImpl;
+import stroom.data.client.view.ExpressionViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
@@ -74,6 +80,7 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
+import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
@@ -81,6 +88,7 @@ import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.progress.client.view.ProgressViewImpl;
+import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
@@ -100,6 +108,7 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
+        bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
         bind(UrlParameters.class).in(Singleton.class);
         bind(DelegatingAceCompleter.class).asEagerSingleton();
         bind(DataDisplaySupport.class).asEagerSingleton();
@@ -125,6 +134,14 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 EditorPresenter.class,
                 EditorView.class,
                 EditorViewImpl.class);
+        bindPresenterWidget(
+                ExpressionPresenter.class,
+                ExpressionView.class,
+                ExpressionViewImpl.class);
+        bindPresenterWidget(
+                EditExpressionPresenter.class,
+                EditExpressionView.class,
+                EditExpressionViewImpl.class);
         bindPresenterWidget(
                 IFramePresenter.class,
                 IFrameView.class,

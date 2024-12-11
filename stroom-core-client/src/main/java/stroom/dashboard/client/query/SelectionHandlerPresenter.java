@@ -17,18 +17,23 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.datasource.api.v2.QueryField;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.client.presenter.DynamicFieldSelectionListModel;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -36,6 +41,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,17 +50,16 @@ public class SelectionHandlerPresenter
         implements SelectionHandlerUiHandlers, Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
-    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
+    private FieldSelectionListModel fieldSelectionListModel;
     private ComponentSelectionHandler originalHandler;
+    private Components components;
 
     @Inject
     public SelectionHandlerPresenter(final EventBus eventBus,
                                      final SelectionHandlerView view,
-                                     final EditExpressionPresenter editExpressionPresenter,
-                                     final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
+                                     final EditExpressionPresenter editExpressionPresenter) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
-        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setUiHandlers(this);
     }
@@ -66,7 +71,8 @@ public class SelectionHandlerPresenter
 
     void read(final ComponentSelectionHandler componentSelectionHandler,
               final List<Component> componentList,
-              final DocRef dataSourceRef) {
+              final FieldSelectionListModel fieldSelectionListModel) {
+        this.fieldSelectionListModel = fieldSelectionListModel;
         getView().setComponentList(componentList);
         final Optional<Component> optionalComponent = componentList
                 .stream()
@@ -75,8 +81,8 @@ public class SelectionHandlerPresenter
         getView().setComponent(optionalComponent.orElse(null));
 
         this.originalHandler = componentSelectionHandler;
-        fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
-        editExpressionPresenter.init(null, null, fieldSelectionBoxModel);
+        fieldSelectionListModel.setTaskMonitorFactory(this);
+        editExpressionPresenter.init(null, null, fieldSelectionListModel);
         this.originalHandler = componentSelectionHandler;
         if (componentSelectionHandler.getExpression() == null) {
             editExpressionPresenter.read(ExpressionOperator.builder().build());
@@ -84,6 +90,39 @@ public class SelectionHandlerPresenter
             editExpressionPresenter.read(componentSelectionHandler.getExpression());
         }
         getView().setEnabled(componentSelectionHandler.isEnabled());
+
+        if (components != null && components.getComponents() != null) {
+            getView().setCurrentSelection(getCurrentSelection(components.getComponents()));
+        }
+    }
+
+    private SafeHtml getCurrentSelection(final Collection<Component> components) {
+        final TableBuilder tb = new TableBuilder();
+        for (final Component component : components) {
+            appendComponentSelection(component, tb);
+        }
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        return htmlBuilder.toSafeHtml();
+    }
+
+    private void appendComponentSelection(final Component component,
+                                          final TableBuilder tb) {
+        if (component instanceof HasComponentSelection) {
+            final HasComponentSelection hasComponentSelection = (HasComponentSelection) component;
+            final List<ComponentSelection> componentSelections = hasComponentSelection.getSelection();
+
+            if (componentSelections != null) {
+                boolean firstSelection = true;
+                for (final ComponentSelection componentSelection : componentSelections) {
+                    if (firstSelection) {
+                        tb.row(TableCell.header(component.getDisplayValue()));
+                    }
+                    tb.row(componentSelection.asSafeHtml());
+                    firstSelection = false;
+                }
+            }
+        }
     }
 
     ComponentSelectionHandler write() {
@@ -131,20 +170,14 @@ public class SelectionHandlerPresenter
 //        }
     }
 
-    private void addFieldNames(final Component component, final List<QueryField> allFields) {
-        if (component instanceof HasSelection) {
-            final HasSelection hasSelection = (HasSelection) component;
-            final List<QueryField> fields = hasSelection.getFields();
-            if (fields != null && fields.size() > 0) {
-                allFields.addAll(fields);
-            }
-        }
+    @Override
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        fieldSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
-    @Override
-    public synchronized void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        fieldSelectionBoxModel.setTaskHandlerFactory(taskHandlerFactory);
+    public void setComponents(final Components components) {
+        this.components = components;
     }
 
     public interface SelectionHandlerView extends View, Focus, HasUiHandlers<SelectionHandlerUiHandlers> {
@@ -160,5 +193,7 @@ public class SelectionHandlerPresenter
         boolean isEnabled();
 
         void setEnabled(boolean enabled);
+
+        void setCurrentSelection(final SafeHtml selection);
     }
 }

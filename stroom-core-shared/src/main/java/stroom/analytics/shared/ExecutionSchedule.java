@@ -1,6 +1,7 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -20,7 +21,8 @@ import java.util.Objects;
         "schedule",
         "contiguous",
         "scheduleBounds",
-        "owningDoc"
+        "owningDoc",
+        "runAsUser"
 })
 public class ExecutionSchedule {
 
@@ -40,6 +42,8 @@ public class ExecutionSchedule {
     private final ScheduleBounds scheduleBounds;
     @JsonProperty
     private final DocRef owningDoc;
+    @JsonProperty
+    private final UserRef runAsUser;
 
     @JsonCreator
     public ExecutionSchedule(@JsonProperty("id") final Integer id,
@@ -49,7 +53,8 @@ public class ExecutionSchedule {
                              @JsonProperty("schedule") final Schedule schedule,
                              @JsonProperty("contiguous") final boolean contiguous,
                              @JsonProperty("scheduleBounds") final ScheduleBounds scheduleBounds,
-                             @JsonProperty("owningDoc") final DocRef owningDoc) {
+                             @JsonProperty("owningDoc") final DocRef owningDoc,
+                             @JsonProperty("runAsUser") UserRef runAsUser) {
         this.id = id;
         this.name = name;
         this.enabled = enabled;
@@ -58,6 +63,7 @@ public class ExecutionSchedule {
         this.contiguous = contiguous;
         this.scheduleBounds = scheduleBounds;
         this.owningDoc = owningDoc;
+        this.runAsUser = runAsUser;
     }
 
     public Integer getId() {
@@ -90,6 +96,10 @@ public class ExecutionSchedule {
 
     public DocRef getOwningDoc() {
         return owningDoc;
+    }
+
+    public UserRef getRunAsUser() {
+        return runAsUser;
     }
 
     @Override
@@ -141,6 +151,7 @@ public class ExecutionSchedule {
         private boolean contiguous = true;
         private ScheduleBounds scheduleBounds;
         private DocRef owningDoc;
+        private UserRef runAsUser;
 
         private Builder() {
         }
@@ -154,6 +165,7 @@ public class ExecutionSchedule {
             this.contiguous = executionSchedule.contiguous;
             this.scheduleBounds = executionSchedule.scheduleBounds;
             this.owningDoc = executionSchedule.owningDoc;
+            this.runAsUser = executionSchedule.runAsUser;
         }
 
 
@@ -197,6 +209,11 @@ public class ExecutionSchedule {
             return this;
         }
 
+        public Builder runAsUser(final UserRef runAsUser) {
+            this.runAsUser = runAsUser;
+            return this;
+        }
+
         public ExecutionSchedule build() {
             return new ExecutionSchedule(
                     id,
@@ -206,7 +223,8 @@ public class ExecutionSchedule {
                     schedule,
                     contiguous,
                     scheduleBounds,
-                    owningDoc);
+                    owningDoc,
+                    runAsUser);
         }
     }
 }

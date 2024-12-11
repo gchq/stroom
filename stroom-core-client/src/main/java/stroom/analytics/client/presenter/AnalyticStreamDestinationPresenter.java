@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
@@ -25,7 +24,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,7 +48,7 @@ public class AnalyticStreamDestinationPresenter
         this.feedPresenter = feedPresenter;
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeedView(feedPresenter.getView());
     }
 
@@ -61,7 +60,7 @@ public class AnalyticStreamDestinationPresenter
     public void read(final NotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
-            feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed());
+            feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed(), true);
         }
     }
 
@@ -80,6 +79,10 @@ public class AnalyticStreamDestinationPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface AnalyticStreamDestinationView extends View, HasUiHandlers<DirtyUiHandlers> {
 

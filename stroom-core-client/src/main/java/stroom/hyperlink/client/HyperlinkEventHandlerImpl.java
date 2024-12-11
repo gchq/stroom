@@ -16,8 +16,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.security.shared.UserNameResource;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 import stroom.widget.popup.client.event.RenamePopupEvent;
@@ -136,7 +135,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case ANNOTATION: {
-                    openAnnotation(href, event.getTaskHandlerFactory());
+                    openAnnotation(href, event.getTaskMonitorFactory());
                     break;
                 }
                 default:
@@ -147,39 +146,31 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         }
     }
 
-    private void openAnnotation(final String href, final TaskHandlerFactory taskHandlerFactory) {
+    private void openAnnotation(final String href, final TaskMonitorFactory taskMonitorFactory) {
         final Long annotationId = getLongParam(href, "annotationId");
         final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
         final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
         final String title = getParam(href, "title");
         final String subject = getParam(href, "subject");
         final String status = getParam(href, "status");
-        final String assignedTo = getParam(href, "assignedTo");
+//        final String assignedTo = getParam(href, "assignedTo");
         final String comment = getParam(href, "comment");
 
         // assignedTo is a display name so have to convert it back to a unique username
-        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-        restFactory
-                .create(userNameResource)
-                .method(res -> res.getByDisplayName(assignedTo))
-                .onSuccess(assignedToUserName -> {
-                    final Annotation annotation = new Annotation();
-                    annotation.setId(annotationId);
-                    annotation.setTitle(title);
-                    annotation.setSubject(subject);
-                    annotation.setStatus(status);
-                    annotation.setAssignedTo(assignedToUserName);
-                    annotation.setComment(comment);
+        final Annotation annotation = new Annotation();
+        annotation.setId(annotationId);
+        annotation.setTitle(title);
+        annotation.setSubject(subject);
+        annotation.setStatus(status);
+//        annotation.setAssignedTo(assignedTo);
+        annotation.setComment(comment);
 
-                    final List<EventId> linkedEvents = new ArrayList<>();
-                    if (streamId != null && eventId != null) {
-                        linkedEvents.add(new EventId(streamId, eventId));
-                    }
+        final List<EventId> linkedEvents = new ArrayList<>();
+        if (streamId != null && eventId != null) {
+            linkedEvents.add(new EventId(streamId, eventId));
+        }
 
-                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
-                })
-                .taskHandlerFactory(taskHandlerFactory)
-                .exec();
+        ShowAnnotationEvent.fire(this, annotation, linkedEvents);
     }
 
     private void openData(final String href) {

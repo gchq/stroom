@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search;
 
 import stroom.annotation.api.AnnotationFields;
-import stroom.dictionary.impl.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
@@ -324,7 +323,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 15);
 
-        dictionaryStore.deleteDocument(dic.getUuid());
+        dictionaryStore.deleteDocument(docRef);
     }
 
     /**
@@ -348,8 +347,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(dic1.getUuid());
-        dictionaryStore.deleteDocument(dic2.getUuid());
+        dictionaryStore.deleteDocument(docRef1);
+        dictionaryStore.deleteDocument(docRef2);
     }
 
     /**
@@ -373,8 +372,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(dic1.getUuid());
-        dictionaryStore.deleteDocument(dic2.getUuid());
+        dictionaryStore.deleteDocument(docRef1);
+        dictionaryStore.deleteDocument(docRef2);
     }
 
     /**
@@ -508,22 +507,26 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final boolean extractValues) {
         final Column streamIdColumn = Column.builder()
+                .id("1")
                 .name("Stream Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
+                .id("2")
                 .name("Event Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
+                .id("3")
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
+                .id("4")
                 .name("Status")
                 .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
                 .build();

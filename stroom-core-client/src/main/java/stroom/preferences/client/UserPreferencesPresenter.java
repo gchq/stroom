@@ -22,9 +22,9 @@ import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
-import stroom.ui.config.shared.Themes;
-import stroom.ui.config.shared.Themes.ThemeType;
+import stroom.security.shared.AppPermission;
+import stroom.ui.config.shared.Theme;
+import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -72,7 +72,8 @@ public final class UserPreferencesPresenter
         this.editorPreferencesPresenter = editorPreferencesPresenter;
         this.timePreferencesPresenter = timePreferencesPresenter;
         view.setUiHandlers(this);
-        view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
+        view.setAsDefaultVisible(clientSecurityContext
+                .hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
 
         addTab(THEME, themePreferencesPresenter);
         addTab(EDITOR, editorPreferencesPresenter);
@@ -117,8 +118,8 @@ public final class UserPreferencesPresenter
 
         if (!Objects.equals(before.getTheme(), after.getTheme())) {
             // Theme changed
-            final ThemeType themeTypeBefore = Themes.getThemeType(before.getTheme());
-            final ThemeType themeTypeAfter = Themes.getThemeType(after.getTheme());
+            final ThemeType themeTypeBefore = Theme.getThemeType(before.getTheme());
+            final ThemeType themeTypeAfter = Theme.getThemeType(after.getTheme());
             final boolean change = editorPreferencesPresenter.updateTheme(themeTypeBefore, themeTypeAfter);
             if (change) {
                 // Update the prefs with the change

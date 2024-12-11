@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.task.impl;
 
 import stroom.cluster.task.api.NodeNotFoundException;
@@ -21,11 +37,12 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -73,7 +90,7 @@ class SearchableTaskProgress implements Searchable {
 
     @Override
     public DocRef getDocRef() {
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_TASKS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_TASKS_PERMISSION)) {
             return TASK_MANAGER_PSEUDO_DOC_REF;
         }
         return null;
@@ -81,7 +98,21 @@ class SearchableTaskProgress implements Searchable {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(TaskManagerFields.getFields()).build();
+        if (!TASK_MANAGER_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(getFields())
+                .build();
+    }
+
+    private List<QueryField> getFields() {
+        return TaskManagerFields.getFields();
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
     }
 
     @Override
@@ -98,7 +129,7 @@ class SearchableTaskProgress implements Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
 
             final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(

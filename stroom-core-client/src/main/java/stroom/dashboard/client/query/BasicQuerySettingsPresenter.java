@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -52,7 +52,7 @@ public class BasicQuerySettingsPresenter
 //        final String[] types = dataSourceTypes.getTypes();
 //        dataSourceSelectionPresenter.setIncludedTypes(types);
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
-        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }
 
@@ -66,7 +66,7 @@ public class BasicQuerySettingsPresenter
     }
 
     private void setDataSource(final DocRef dataSourceRef) {
-        dataSourceSelectionPresenter.setSelectedEntityReference(dataSourceRef);
+        dataSourceSelectionPresenter.setSelectedEntityReference(dataSourceRef, true);
     }
 
     @Override
@@ -140,6 +140,10 @@ public class BasicQuerySettingsPresenter
 
         return !equal;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface BasicQuerySettingsView extends BasicSettingsView {
 

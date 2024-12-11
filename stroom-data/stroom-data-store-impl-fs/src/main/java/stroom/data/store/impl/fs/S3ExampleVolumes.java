@@ -1,12 +1,28 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.AwsBasicCredentials;
-import stroom.data.store.impl.fs.shared.AwsCredentialsProviderType;
+import stroom.aws.s3.shared.AwsBasicCredentials;
+import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
@@ -36,7 +52,6 @@ public class S3ExampleVolumes {
         if (existing.isEmpty()) {
             final S3ClientConfig s3ClientConfig = S3ClientConfig
                     .builder()
-                    .credentialsProviderType(AwsCredentialsProviderType.STATIC)
                     .credentials(AwsBasicCredentials
                             .builder()
                             .accessKeyId("AKIAIOSFODNN7EXAMPLE")

@@ -209,11 +209,6 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public Boolean getRequireReactWrapper() {
-        return uiConfig.getRequireReactWrapper();
-    }
-
-    @JsonIgnore
     public NodeMonitoringConfig getNodeMonitoring() {
         return uiConfig.getNodeMonitoring();
     }
@@ -236,6 +231,11 @@ public class ExtendedUiConfig {
     @JsonIgnore
     public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
         return uiConfig.getDefaultApiKeyHashAlgorithm();
+    }
+
+    @JsonIgnore
+    public int getMaxEditorCompletionEntries() {
+        return uiConfig.getMaxEditorCompletionEntries();
     }
 
     @JsonIgnore

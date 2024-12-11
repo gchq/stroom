@@ -25,24 +25,12 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
             new RecordToProcessorFilterTrackerMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-//    private final GenericDao<ProcessorFilterTrackerRecord, ProcessorFilterTracker, Integer> genericDao;
 
     @Inject
     ProcessorFilterTrackerDaoImpl(final ProcessorDbConnProvider processorDbConnProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
-
-//        this.genericDao = new GenericDao<>(
-//                processorDbConnProvider,
-//                PROCESSOR_FILTER_TRACKER,
-//                PROCESSOR_FILTER_TRACKER.ID,
-//                ProcessorFilterTracker.class);
     }
 
-    //    @Override
-//    public ProcessorFilterTracker create(final ProcessorFilterTracker processorFilterTracker) {
-//        return genericDao.create(processorFilterTracker);
-//    }
-//
     @Override
     public Optional<ProcessorFilterTracker> fetch(final int id) {
         return JooqUtil.contextResult(processorDbConnProvider, context ->
@@ -62,11 +50,6 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
                 .fetchOptional()
                 .map(RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER);
     }
-//
-//    @Override
-//    public ProcessorFilterTracker update(final ProcessorFilterTracker processorFilterTracker) {
-//        return genericDao.update(processorFilterTracker);
-//    }
 
     @Override
     public int update(final ProcessorFilterTracker processorFilterTracker) {
@@ -103,9 +86,4 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
 
         return count;
     }
-
-//    @Override
-//    public boolean delete(final int id) {
-//        return genericDao.delete(id);
-//    }
 }

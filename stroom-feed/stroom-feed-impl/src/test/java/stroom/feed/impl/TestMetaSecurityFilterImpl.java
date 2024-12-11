@@ -1,5 +1,6 @@
 package stroom.feed.impl;
 
+import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
@@ -7,6 +8,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.security.shared.DocumentPermission;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestMetaSecurityFilterImpl {
 
-    private static final String PERMISSION = "MyPermission";
+    private static final DocumentPermission PERMISSION = DocumentPermission.VIEW;
     private static final String FIELD_1 = "Field1";
     private static final String FIELD_2 = "Field2";
     private static final String FEED_1 = "FEED1";
@@ -83,7 +85,7 @@ class TestMetaSecurityFilterImpl {
         setupFeedStoreMock();
         Mockito.when(securityContextSpy.isAdmin())
                 .thenReturn(false);
-        Mockito.when(securityContextSpy.hasDocumentPermission(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(securityContextSpy.hasDocumentPermission(Mockito.any(), Mockito.any()))
                 .thenReturn(false);
 
         final Optional<ExpressionOperator> optExpr = metaSecurityFilter.getExpression(
@@ -108,19 +110,19 @@ class TestMetaSecurityFilterImpl {
                 .thenReturn(false);
 
         Mockito.when(securityContextSpy.hasDocumentPermission(
-                Mockito.eq(FEED_1 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                        Mockito.eq(feed(FEED_1)), Mockito.eq(PERMISSION)))
                 .thenReturn(true);
         Mockito.when(securityContextSpy.hasDocumentPermission(
-                        Mockito.eq(FEED_2 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                        Mockito.eq(feed(FEED_2)), Mockito.eq(PERMISSION)))
                 .thenReturn(false);
         Mockito.when(securityContextSpy.hasDocumentPermission(
-                        Mockito.eq(FEED_3 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                        Mockito.eq(feed(FEED_3)), Mockito.eq(PERMISSION)))
                 .thenReturn(true);
         Mockito.when(securityContextSpy.hasDocumentPermission(
-                        Mockito.eq(FEED_4 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                        Mockito.eq(feed(FEED_4)), Mockito.eq(PERMISSION)))
                 .thenReturn(false);
         Mockito.when(securityContextSpy.hasDocumentPermission(
-                        Mockito.eq(FEED_5 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                        Mockito.eq(feed(FEED_5)), Mockito.eq(PERMISSION)))
                 .thenReturn(false);
 
         final Optional<ExpressionOperator> optExpr = metaSecurityFilter.getExpression(
@@ -136,5 +138,9 @@ class TestMetaSecurityFilterImpl {
                 .build();
         assertThat(optExpr)
                 .hasValue(expected);
+    }
+
+    private DocRef feed(final String name) {
+        return new DocRef("Feed", name + UUID_SUFFIX);
     }
 }

@@ -16,6 +16,8 @@
 
 package stroom.explorer.shared;
 
+import stroom.security.shared.DocumentPermission;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,14 +33,15 @@ public class ExplorerNodePermissions {
     @JsonProperty
     private final Set<String> createPermissions;
     @JsonProperty
-    private final Set<String> documentPermissions;
+    private final Set<DocumentPermission> documentPermissions;
     @JsonProperty
     private final boolean admin;
 
     @JsonCreator
     public ExplorerNodePermissions(@JsonProperty("explorerNode") final ExplorerNode explorerNode,
                                    @JsonProperty("createPermissions") final Set<String> createPermissions,
-                                   @JsonProperty("documentPermissions") final Set<String> documentPermissions,
+                                   @JsonProperty("documentPermissions") final Set<DocumentPermission>
+                                           documentPermissions,
                                    @JsonProperty("admin") final boolean admin) {
         this.explorerNode = explorerNode;
         this.createPermissions = createPermissions;
@@ -48,18 +51,6 @@ public class ExplorerNodePermissions {
 
     public ExplorerNode getExplorerNode() {
         return explorerNode;
-    }
-
-    public Set<String> getCreatePermissions() {
-        return createPermissions;
-    }
-
-    public Set<String> getDocumentPermissions() {
-        return documentPermissions;
-    }
-
-    public boolean isAdmin() {
-        return admin;
     }
 
     public boolean hasCreatePermission(final DocumentType type) {
@@ -76,7 +67,7 @@ public class ExplorerNodePermissions {
         return createPermissions.contains(type);
     }
 
-    public boolean hasDocumentPermission(final String permission) {
+    public boolean hasDocumentPermission(final DocumentPermission permission) {
         if (admin) {
             return true;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.NullSafe;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -243,15 +247,16 @@ class FormatDate extends StroomExtensionFunctionCall {
         if (fieldSet.contains(WEEK_BASED_YEAR)
                 || fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
                 || fieldSet.contains(WEEK_OF_YEAR)
-                || fieldSet.contains(WEEK_OF_MONTH)
-                || fieldSet.contains(DAY_OF_WEEK)) {
-
+                || fieldSet.contains(WEEK_OF_MONTH)) {
             // Week based date parsing.
             return createWeekBasedParser(fieldSet, builder, zoneId);
+        } else if (fieldSet.contains(DAY_OF_WEEK) && !fieldSet.contains(DAY_OF_MONTH)) {
+            // Week based date parsing.
+            return createWeekBasedParser(fieldSet, builder, zoneId);
+        } else {
+            // Regular date parsing.
+            return createRegularParser(fieldSet, builder, zoneId);
         }
-
-        // Regular date parsing.
-        return createRegularParser(fieldSet, builder, zoneId);
     }
 
     /**
@@ -360,19 +365,15 @@ class FormatDate extends StroomExtensionFunctionCall {
         return ZoneOffset.UTC;
     }
 
-    private Instant getBaseTime() {
+    // Pkg private for testing
+    Instant getBaseTime() {
         if (baseTime == null) {
-            Long createMs = null;
-            if (metaHolder != null) {
-                if (metaHolder.getMeta() != null) {
-                    createMs = metaHolder.getMeta().getCreateMs();
-                }
-            }
-            if (createMs != null) {
-                baseTime = Instant.ofEpochMilli(createMs);
-            } else {
-                baseTime = Instant.now();
-            }
+            baseTime = NullSafe.getOrElseGet(
+                    metaHolder,
+                    MetaHolder::getMeta,
+                    Meta::getCreateMs,
+                    Instant::ofEpochMilli,
+                    Instant::now);
         }
         return baseTime;
     }
@@ -391,18 +392,29 @@ class FormatDate extends StroomExtensionFunctionCall {
         return ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class FieldSet {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FieldSet.class);
 
         private final String resolvedPattern;
 
         FieldSet(final DateTimeFormatter parseFormatter) {
             this.resolvedPattern = parseFormatter.toString();
+            LOGGER.debug("resolvedPattern: {}", resolvedPattern);
         }
 
         private boolean contains(final String fieldName) {
             return resolvedPattern.contains("(" + fieldName + ",");
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Key {
 
@@ -433,6 +445,10 @@ class FormatDate extends StroomExtensionFunctionCall {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class RegularParser implements Function<String, Long> {
 
         private final DateTimeFormatter formatter;
@@ -451,6 +467,10 @@ class FormatDate extends StroomExtensionFunctionCall {
             return dateTime.toInstant().toEpochMilli();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class RegularParserWithReferenceTime implements Function<String, Long> {
 
@@ -494,6 +514,10 @@ class FormatDate extends StroomExtensionFunctionCall {
             return dateTime.toInstant().toEpochMilli();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class WeekBasedParser implements Function<String, Long> {
 

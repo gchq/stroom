@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
+import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
@@ -102,7 +103,7 @@ public class ProcessorTaskListPresenter
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskHandlerFactory(view)
+                            .taskMonitorFactory(view)
                             .exec();
                 }
             }
@@ -126,7 +127,7 @@ public class ProcessorTaskListPresenter
                                     .orElse(null);
                             showTooltip(popupPosition, row, meta);
                         })
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -166,12 +167,13 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
         dataGrid
-                .addResizableColumn(new OrderByColumn<ProcessorTask, DocRef>(
-                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
+                .addResizableColumn(new OrderByColumn<ProcessorTask, DocRefProvider<DocRef>>(
+                        new DocRefCell<>(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
-                    public DocRef getValue(final ProcessorTask row) {
+                    public DocRefProvider<DocRef> getValue(final ProcessorTask row) {
                         if (row.getFeedName() != null) {
-                            return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
+                            final DocRef docRef = new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
+                            return DocRefProvider.forDocRef(docRef);
                         } else {
                             return null;
                         }
@@ -189,11 +191,11 @@ public class ProcessorTaskListPresenter
             }
         }, "Priority", 60);
         dataGrid.addResizableColumn(
-                new Column<ProcessorTask, DocRef>(new DocRefCell(getEventBus(), false)) {
+                new Column<ProcessorTask, DocRefProvider<DocRef>>(new DocRefCell<>(getEventBus(), false)) {
                     @Override
-                    public DocRef getValue(final ProcessorTask row) {
+                    public DocRefProvider<DocRef> getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
-                            return row.getProcessorFilter().getPipeline();
+                            return DocRefProvider.forDocRef(row.getProcessorFilter().getPipeline());
                         }
                         return null;
                     }
@@ -302,7 +304,7 @@ public class ProcessorTaskListPresenter
             setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(docRef));
         } else if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createFeedExpression(docRef));
-        } else if (ExplorerConstants.FOLDER.equals(docRef.getType())) {
+        } else if (ExplorerConstants.FOLDER_TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createFolderExpression(docRef));
         }
     }

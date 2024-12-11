@@ -52,7 +52,7 @@ public final class ZipUtil {
 
     public static ZipArchiveOutputStream createOutputStream(final OutputStream outputStream) {
         final ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(outputStream);
-        zipArchiveOutputStream.setUseZip64(Zip64Mode.Always);
+        zipArchiveOutputStream.setUseZip64(Zip64Mode.AlwaysWithCompatibility);
         return zipArchiveOutputStream;
     }
 

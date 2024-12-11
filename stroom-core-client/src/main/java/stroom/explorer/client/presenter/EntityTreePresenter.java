@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -95,7 +96,7 @@ public class EntityTreePresenter
         explorerTree.getTreeModel().setNodeFlags(nodeFlags);
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         explorerTree.getTreeModel().setRequiredPermissions(requiredPermissions);
     }
 
@@ -110,6 +111,14 @@ public class EntityTreePresenter
     public void setSelectedItem(final ExplorerNode selection) {
         explorerTree.getSelectionModel().setSelected(selection);
     }
+
+    public void setSelectParentIfNotFound(final boolean selectParentIfNotFound) {
+        explorerTree.getTreeModel().setSelectParentIfNotFound(selectParentIfNotFound);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EntityTreeView extends View, Focus, HasUiHandlers<EntityTreeUiHandlers> {
 

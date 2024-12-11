@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.query.api.v2;
 
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.StringUtil;
@@ -33,37 +34,45 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-@JsonPropertyOrder({"field", "condition", "value", "docRef"})
+@JsonPropertyOrder({
+        "field",
+        "condition",
+        "value",
+        "docRef"
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef"})
+@XmlType(name = "ExpressionTerm", propOrder = {
+        "field",
+        "condition",
+        "value",
+        "docRef"
+})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionTerm",
         description = "A predicate term in a query expression tree")
 public final class ExpressionTerm extends ExpressionItem {
 
     @XmlElement
-    @Schema(description = "The name of the field that is being evaluated in this predicate term",
-            required = true)
+    @Schema(description = "The name of the field that is being evaluated in this predicate term")
     @JsonProperty
-    private String field; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private String field; // TODO : XML serialisation still requires no-arg constructor and mutable fields
 
     @XmlElement
-    @Schema(description = "The condition of the predicate term",
-            required = true)
+    @Schema(description = "The condition of the predicate term")
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private Condition condition;
 
     @XmlElement
     @Schema(description = "The value that the field value is being evaluated against. Not required if a " +
-            "dictionary is supplied")
+                          "dictionary is supplied")
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private String value;
 
     @XmlElement
     @Schema(description = "The DocRef that the field value is being evaluated against if the condition is " +
-            "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
+                          "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
     // TODO : XML serialisation still requires no-arg constructor and mutable fields
     private DocRef docRef;
@@ -146,9 +155,9 @@ public final class ExpressionTerm extends ExpressionItem {
         }
         ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
-                condition == that.condition &&
-                Objects.equals(value, that.value) &&
-                Objects.equals(docRef, that.docRef);
+               condition == that.condition &&
+               Objects.equals(value, that.value) &&
+               Objects.equals(docRef, that.docRef);
     }
 
     @Override
@@ -196,42 +205,107 @@ public final class ExpressionTerm extends ExpressionItem {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Condition implements HasDisplayValue {
-        @Deprecated CONTAINS("contains"), // No longer pick-able in TermEditor
-        EQUALS("="),
-        NOT_EQUALS("!="),
-        GREATER_THAN(">"),
-        GREATER_THAN_OR_EQUAL_TO(">="),
-        LESS_THAN("<"),
-        LESS_THAN_OR_EQUAL_TO("<="),
+        CONTAINS("+",
+                "contains",
+                "contains"),
+        EQUALS("=",
+                "=",
+                "equals"),
+        STARTS_WITH("^",
+                "starts with",
+                "starts with"),
+        ENDS_WITH("$",
+                "ends with",
+                "ends with"),
+        NOT_EQUALS("!=",
+                "!=",
+                "not equals"),
+        GREATER_THAN(">",
+                ">",
+                "greater than"),
+        GREATER_THAN_OR_EQUAL_TO(">=",
+                ">=",
+                "greater than or equal to"),
+        LESS_THAN("<",
+                "<",
+                "less than"),
+        LESS_THAN_OR_EQUAL_TO("<=",
+                "<=",
+                "less than or equal to"),
         BETWEEN("between"),
         IN("in"),
         IN_DICTIONARY("in dictionary"),
         IN_FOLDER("in folder"),
         IS_DOC_REF("is"),
+        IS_USER_REF("is"),
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
-        MATCHES_REGEX("matches regex");
+        MATCHES_REGEX("/",
+                "matches regex",
+                "matches regex"),
+        WORD_BOUNDARY("?",
+                "word boundary",
+                "word boundary"),
 
-//        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
-//                EQUALS,
-//                GREATER_THAN,
-//                GREATER_THAN_OR_EQUAL_TO,
-//                LESS_THAN,
-//                LESS_THAN_OR_EQUAL_TO,
-//                BETWEEN);
+        CONTAINS_CASE_SENSITIVE("=+",
+                "contains (case sensitive)",
+                "contains (case sensitive)"),
+        EQUALS_CASE_SENSITIVE("==",
+                "==",
+                "equals (case sensitive)"),
+        STARTS_WITH_CASE_SENSITIVE("=^",
+                "starts with (case sensitive)",
+                "starts with (case sensitive)"),
+        ENDS_WITH_CASE_SENSITIVE("=$",
+                "ends with (case sensitive)",
+                "ends with (case sensitive)"),
+        MATCHES_REGEX_CASE_SENSITIVE("=/",
+                "matches regex (case sensitive)",
+                "matches regex (case sensitive)"),
+
+        // Permission related conditions.
+        OF_DOC_REF("of"),
+        USER_HAS_PERM("has permissions"),
+        USER_HAS_OWNER("has owner permission"),
+        USER_HAS_DELETE("has delete permission"),
+        USER_HAS_EDIT("has edit permission"),
+        USER_HAS_VIEW("has view permission"),
+        USER_HAS_USE("has use permission");
 
         public static final String IN_CONDITION_DELIMITER = ",";
 
+        private final String operator;
         private final String displayValue;
+        private final String description;
 
         Condition(final String displayValue) {
+            this.operator = displayValue;
             this.displayValue = displayValue;
+            this.description = displayValue;
+        }
+
+        Condition(final String operator, final String displayValue, final String description) {
+            this.operator = operator;
+            this.description = description;
+            this.displayValue = displayValue;
+        }
+
+        public String getOperator() {
+            return operator;
         }
 
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+
+        public String getDescription() {
+            return description;
         }
     }
 
@@ -242,6 +316,10 @@ public final class ExpressionTerm extends ExpressionItem {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link ExpressionTerm}
@@ -270,6 +348,11 @@ public final class ExpressionTerm extends ExpressionItem {
          */
         public Builder field(final String value) {
             this.field = value;
+            return this;
+        }
+
+        public Builder field(final QueryField value) {
+            this.field = value.getFldName();
             return this;
         }
 

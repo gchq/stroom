@@ -186,11 +186,13 @@ class TestEventSearch extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final LuceneIndexDoc index, final boolean extractValues) {
         final Column idColumn = Column.builder()
+                .id("1")
                 .name("IdTreeNode")
                 .expression(ParamSubstituteUtil.makeParam("StreamId"))
                 .build();
 
         final Column timeColumn = Column.builder()
+                .id("2")
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)

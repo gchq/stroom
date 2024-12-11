@@ -3,7 +3,7 @@ package stroom.security.shared;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,7 +49,7 @@ public class FindApiKeyCriteria extends BaseCriteria {
     @JsonProperty
     private String quickFilterInput;
     @JsonProperty
-    private UserName owner;
+    private UserRef owner;
 
     public FindApiKeyCriteria() {
     }
@@ -58,7 +58,7 @@ public class FindApiKeyCriteria extends BaseCriteria {
     public FindApiKeyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                               @JsonProperty("quickFilterInput") final String quickFilterInput,
-                              @JsonProperty("owner") final UserName owner) {
+                              @JsonProperty("owner") final UserRef owner) {
         super(pageRequest, sortList);
         this.quickFilterInput = quickFilterInput;
         this.owner = owner;
@@ -70,13 +70,13 @@ public class FindApiKeyCriteria extends BaseCriteria {
         return findApiKeyCriteria;
     }
 
-    public static FindApiKeyCriteria create(final UserName owner) {
+    public static FindApiKeyCriteria create(final UserRef owner) {
         FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
         findApiKeyCriteria.setOwner(owner);
         return findApiKeyCriteria;
     }
 
-    public static FindApiKeyCriteria create(final String quickFilterInput, final UserName owner) {
+    public static FindApiKeyCriteria create(final String quickFilterInput, final UserRef owner) {
         FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
         findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
         findApiKeyCriteria.setOwner(owner);
@@ -91,11 +91,11 @@ public class FindApiKeyCriteria extends BaseCriteria {
         this.quickFilterInput = quickFilterInput;
     }
 
-    public UserName getOwner() {
+    public UserRef getOwner() {
         return owner;
     }
 
-    public void setOwner(final UserName owner) {
+    public void setOwner(final UserRef owner) {
         this.owner = owner;
     }
 }

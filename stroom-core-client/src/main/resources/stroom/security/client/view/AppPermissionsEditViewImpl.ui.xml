@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:MySplitLayoutPanel styleName="max default-min-sizes">
+        <g:south size="200">
+            <form:FormGroup label="Application Permission Details">
+                <g:HTML ui:field="details" styleName="max form-control-border form-control-background form-padding"/>
+            </form:FormGroup>
+        </g:south>
+        <g:center>
+            <form:FormGroup label="Application Permissions">
+                <g:SimplePanel ui:field="permissions" styleName="max form-control-border form-control-background"/>
+            </form:FormGroup>
+        </g:center>
+    </g:MySplitLayoutPanel>
+</ui:UiBinder> 

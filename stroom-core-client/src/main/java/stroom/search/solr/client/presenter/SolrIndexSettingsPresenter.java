@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.solr.client.presenter;
@@ -33,8 +32,8 @@ import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.security.shared.DocumentPermission;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -69,7 +68,7 @@ public class SolrIndexSettingsPresenter
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
@@ -88,7 +87,7 @@ public class SolrIndexSettingsPresenter
     }
 
     @Override
-    public void onTestConnection(final TaskHandlerFactory taskHandlerFactory) {
+    public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
         getView().setTestingConnection(true);
         final SolrIndexDoc index = onWrite(new SolrIndexDoc());
         restFactory
@@ -104,7 +103,7 @@ public class SolrIndexSettingsPresenter
                     }
                 })
                 .onFailure(new DefaultErrorHandler(this, () -> getView().setTestingConnection(false)))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -125,10 +124,10 @@ public class SolrIndexSettingsPresenter
             index.setRetentionExpression(ExpressionOperator.builder().build());
         }
 
-        fieldSelectionBoxModel.setDataSourceRef(docRef);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
     @Override
@@ -152,9 +151,9 @@ public class SolrIndexSettingsPresenter
     }
 
     @Override
-    public synchronized void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        fieldSelectionBoxModel.setTaskHandlerFactory(taskHandlerFactory);
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface SolrIndexSettingsView

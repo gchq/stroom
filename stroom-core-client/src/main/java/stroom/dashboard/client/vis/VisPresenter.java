@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -25,6 +24,8 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -33,21 +34,21 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.data.pager.client.RefreshButton;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.VisResult;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
-import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -69,14 +70,13 @@ import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class VisPresenter
         extends AbstractComponentPresenter<VisPresenter.VisView>
-        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection {
+        implements ResultComponent, StatusHandler, HasComponentSelection {
 
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
@@ -91,13 +91,13 @@ public class VisPresenter
     static {
         final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(
                 "{" +
-                        "\"values\": []," +
-                        "\"min\": []," +
-                        "\"max\": []," +
-                        "\"sum\": []," +
-                        "\"types\": []," +
-                        "\"sortDirections\": []" +
-                        "}"));
+                "\"values\": []," +
+                "\"min\": []," +
+                "\"max\": []," +
+                "\"sum\": []," +
+                "\"types\": []," +
+                "\"sortDirections\": []" +
+                "}"));
         EMPTY_DATA = dataObject.getJavaScriptObject();
     }
 
@@ -118,11 +118,9 @@ public class VisPresenter
     private long nextUpdate;
     private Timer updateTimer;
     private JavaScriptObject lastData;
-    //    private double opacity = 0;
-    private TablePresenter linkedTablePresenter;
+    private TableSettings currentLinkedTableSettings;
 
-    private final Timer timer;
-    private List<Map<String, String>> currentSelection;
+    private final VisSelectionModel visSelectionModel;
     private boolean pause;
 
     @Inject
@@ -136,27 +134,15 @@ public class VisPresenter
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
 
+        visSelectionModel = new VisSelectionModel();
+        visSelectionModel.addSelectionHandler(event -> getComponents().fireComponentChangeEvent(VisPresenter.this));
+
         visFrame = new VisFrame(eventBus);
-        visFrame.setTaskHandlerFactory(getView().getRefreshButton());
-        visFrame.setUiHandlers(this);
+        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
+        visFrame.setUiHandlers(visSelectionModel);
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
-
-        timer = new Timer() {
-            @Override
-            public void run() {
-                getComponents().fireComponentChangeEvent(VisPresenter.this);
-            }
-        };
-    }
-
-    @Override
-    public void onSelection(final List<Map<String, String>> selection) {
-        if (!Objects.equals(currentSelection, selection)) {
-            currentSelection = selection;
-            timer.schedule(250);
-        }
     }
 
     /*****************
@@ -214,7 +200,7 @@ public class VisPresenter
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -223,7 +209,7 @@ public class VisPresenter
     }
 
     private String getClassName(final String theme) {
-        return "vis " + Themes.getClassName(theme);
+        return "vis " + Theme.getClassName(theme);
     }
 
     @Override
@@ -244,7 +230,7 @@ public class VisPresenter
     public void setComponents(final Components components) {
         super.setComponents(components);
         registerHandler(components.addComponentChangeHandler(event -> {
-            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
+            if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(),
                     event.getComponentId())) {
                 updateTableId(event.getComponentId());
             }
@@ -252,23 +238,30 @@ public class VisPresenter
     }
 
     private void updateTableId(final String tableId) {
-        final VisComponentSettings.Builder builder = getVisSettings().copy();
+        final VisComponentSettings visComponentSettings = getVisSettings();
+        final VisComponentSettings.Builder builder = visComponentSettings.copy();
 
         builder.tableId(tableId);
 
-        linkedTablePresenter = null;
         final Component component = getComponents().get(getVisSettings().getTableId());
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            linkedTablePresenter = tablePresenter;
 
-            final TableComponentSettings tableSettings = tablePresenter.getTableSettings();
-            builder.tableSettings(tableSettings);
-            final String queryId = tableSettings.getQueryId();
+            final TableComponentSettings tableComponentSettings = tablePresenter
+                    .getTableComponentSettings();
+            final String queryId = tableComponentSettings.getQueryId();
             setQueryId(queryId);
 
+            final TableSettings tableSettings = tablePresenter.getTableSettings();
+
+            // Refresh if the linked table settings have changed.
+            if (!Objects.equals(currentLinkedTableSettings, tableSettings)) {
+                currentLinkedTableSettings = tableSettings;
+                refresh();
+            }
+
         } else {
-            builder.tableSettings(null);
+            currentLinkedTableSettings = null;
             setQueryId(null);
         }
 
@@ -459,7 +452,7 @@ public class VisPresenter
                             }
                         } catch (final RuntimeException e) {
                             failure(function, "Unable to parse settings for visualisation: "
-                                    + getVisSettings().getVisualisation());
+                                              + getVisSettings().getVisualisation());
                         }
 
                         function.setFunctionName(result.getFunctionName());
@@ -483,7 +476,7 @@ public class VisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -494,7 +487,7 @@ public class VisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -646,12 +639,15 @@ public class VisPresenter
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
+        final VisComponentSettings visComponentSettings = getVisSettings();
+
         // Update table settings.
-        updateLinkedTableSettings();
         return VisResultRequest
                 .builder()
                 .componentId(getId())
-                .visDashboardSettings(getVisSettings())
+                .visualisation(visComponentSettings.getVisualisation())
+                .json(visComponentSettings.getJson())
+                .tableSettings(currentLinkedTableSettings)
 //                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(fetch)
                 .build();
@@ -659,27 +655,18 @@ public class VisPresenter
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
+        final VisComponentSettings visComponentSettings = getVisSettings();
+
         // Update table settings.
-        updateLinkedTableSettings();
         return VisResultRequest
                 .builder()
                 .componentId(getId())
-                .visDashboardSettings(getVisSettings())
+                .visualisation(visComponentSettings.getVisualisation())
+                .json(visComponentSettings.getJson())
+                .tableSettings(currentLinkedTableSettings)
 //                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(Fetch.ALL)
                 .build();
-    }
-
-    private void updateLinkedTableSettings() {
-        // Update table settings.
-        TableComponentSettings tableComponentSettings = null;
-        if (linkedTablePresenter != null) {
-            tableComponentSettings = linkedTablePresenter.getTableSettings();
-        }
-        setSettings(getVisSettings()
-                .copy()
-                .tableSettings(tableComponentSettings)
-                .build());
     }
 
     private JSONObject combineSettings(final JSONObject possibleSettings, final JSONObject dynamicSettings) {
@@ -722,17 +709,18 @@ public class VisPresenter
     }
 
     @Override
-    public List<QueryField> getFields() {
-        final List<QueryField> abstractFields = new ArrayList<>();
-        // TODO : @66 TEMPORARY FIELDS
-        abstractFields.add(QueryField.createText("name", true));
-        abstractFields.add(QueryField.createText("value", true));
-        return abstractFields;
+    public List<ColumnRef> getColumns() {
+        return visSelectionModel.getColumns();
     }
 
     @Override
-    public List<Map<String, String>> getSelection() {
-        return currentSelection;
+    public List<ComponentSelection> getSelection() {
+        return visSelectionModel.getSelection();
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        return visSelectionModel.getHighlights();
     }
 
     @Override

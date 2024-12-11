@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 import java.sql.SQLTransactionRollbackException;
 import java.util.ArrayList;
@@ -96,15 +97,13 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     }
 
     private void createFieldSource(final DSLContext context, final DocRef docRef) {
-        // TODO Consider using JooqUtil.tryCreate() as onDuplicateKeyIgnore will
-        //  ignore any error, not just dup keys
         context
                 .insertInto(INDEX_FIELD_SOURCE)
                 .set(INDEX_FIELD_SOURCE.TYPE, docRef.getType())
                 .set(INDEX_FIELD_SOURCE.UUID, docRef.getUuid())
                 .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
-                .onDuplicateKeyIgnore()
-                .returningResult(INDEX_FIELD_SOURCE.ID)
+                .onDuplicateKeyUpdate()
+                .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
                 .execute();
     }
 
@@ -250,6 +249,20 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             .build();
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        final Optional<Integer> optFieldSource = getFieldSource(docRef, false);
+        if (optFieldSource.isPresent()) {
+            return JooqUtil.contextResult(queryDatasourceDbConnProvider, context -> context
+                    .selectCount()
+                    .from(INDEX_FIELD)
+                    .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(optFieldSource.get()))
+                    .fetchOne(DSL.count()));
+        } else {
+            return 0;
+        }
     }
 }
 

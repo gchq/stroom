@@ -37,6 +37,11 @@
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-700);
 
+    /* e.g. Find in content match highlighting */
+    /*--highlight__background-color: #c5c500;*/
+    --highlight__background-color: #d9d900;
+    --highlight__background-color--selected: #d9d900;
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-300);
     /* <code> blocks, e.g. in markdown */
@@ -51,6 +56,8 @@
     --row__background-color--selected--hovered: rgb(0,120,199);
     --row__background-color--focussed: rgba(0,120,199,.5);
     --row__background-color--selected--focussed: rgb(0,120,199);
+    --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
+    --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: var(--text-color--selected);
 
     --menu-separator__color: rgb(255 255 255 / 20%);
@@ -119,6 +126,8 @@
     --code-editor__border-color--fatal: red;
     --code-editor__background-color--fatal: red;
     --code-editor__background-color--highlight: #1164a3;
+    /*--code-editor__background-color--highlight: #d9d900;*/
+
 
     --xsdbrowser-box__background-color: #19171d;
     --xsdbrowser-box__border-color: #15161b;

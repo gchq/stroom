@@ -23,12 +23,6 @@ import java.util.Set;
 
 public interface ResultComponent {
 
-//    ComponentSettings getSettings();
-
-//    ComponentResultRequest getResultRequest(boolean ignorePause);
-
-//    ComponentResultRequest createDownloadQueryRequest();
-
     OffsetRange getRequestedRange();
 
     Set<String> getOpenGroups();

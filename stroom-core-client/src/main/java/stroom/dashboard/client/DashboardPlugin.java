@@ -36,8 +36,8 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -81,11 +81,11 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
-                                     final TaskHandlerFactory taskHandlerFactory) {
+                                     final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, taskHandlerFactory);
+        return super.open(docRef, forceOpen, fullScreen, taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final String href) {
@@ -122,7 +122,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskListener(this));
+            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -159,7 +159,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private void reopen(final ResultStoreInfo resultStoreInfo) {
         final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
         if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
-            final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, source.getOwnerDocUuid());
+            final DocRef docRef = source.getOwnerDocRef();
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
@@ -173,7 +173,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskListener(this));
+            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -187,13 +187,13 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public void load(final DocRef docRef,
                      final Consumer<DashboardDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(DASHBOARD_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -202,13 +202,13 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final DashboardDoc document,
                      final Consumer<DashboardDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(DASHBOARD_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

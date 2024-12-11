@@ -21,10 +21,8 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,28 +37,13 @@ public class KeyBinding {
 
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
 
-    private static final Map<Shortcut, KeySequence> KEY_SEQUENCES_BY_FIRST_KEY = new HashMap<>();
-    private static final Map<Shortcut, KeySequence> KEY_SEQUENCES_BY_SECOND_KEY = new HashMap<>();
-    private static final Map<KeySequence, Action> KEY_SEQUENCE_TO_ACTION_MAP = new HashMap<>();
-    private static final Map<Action, KeySequence> ACTION_TO_KEY_SEQUENCE_MAP = new HashMap<>();
     private static final Map<String, Action> DOC_TYPE_TO_ACTION_MAP = new HashMap<>();
 
     private static final int GOTO_FIRST_KEY = KeyCodes.KEY_G;
     private static final int CREATE_DOC_FIRST_KEY = KeyCodes.KEY_C;
-    private static final int SUB_TAB_FIRST_KEY = KeyCodes.KEY_T;
+//    private static final int SUB_TAB_FIRST_KEY = KeyCodes.KEY_T;
 
-    private static final int KEY_SEQUENCE_TIMER_DELAY = 1_000;
-    private static final Timer KEY_SEQUENCE_TIMER = new Timer() {
-        @Override
-        public void run() {
-            clearKeySequenceState();
-        }
-    };
-
-    private static Shortcut firstInSequence = null;
-    private static boolean seenKeyUpBetween = false;
-    // This
-    private static String eventTargetKey = null;
+    private static final KeySequences KEY_SEQUENCES = new KeySequences();
 
     static {
         add(Action.MOVE_UP, KeyCodes.KEY_W, KeyCodes.KEY_K, KeyCodes.KEY_UP);
@@ -94,10 +77,7 @@ public class KeyBinding {
         add(Action.FOCUS_FILTER, Shortcut.builder().keyCode(MyKeyCodes.KEY_FORWARD_SLASH).build());
         add(Action.FOCUS_EXPLORER_FILTER, Shortcut.builder().ctrl().keyCode(MyKeyCodes.KEY_FORWARD_SLASH).build());
 
-        addKeySequence(
-                Action.FIND,
-                Shortcut.builder().shift().keyCode(KeyCodes.KEY_SHIFT).build(),
-                Shortcut.builder().shift().keyCode(KeyCodes.KEY_SHIFT).build());
+        KEY_SEQUENCES.addKeySequence(Action.FIND, KeyCodes.KEY_SHIFT, KeyCodes.KEY_SHIFT);
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
         addGotoKeySequence(Action.GOTO_APP_PERMS, KeyCodes.KEY_A);
@@ -112,6 +92,7 @@ public class KeyBinding {
         addGotoKeySequence(Action.GOTO_DATA_RETENTION, KeyCodes.KEY_R);
         addGotoKeySequence(Action.GOTO_SEARCH_RESULTS, KeyCodes.KEY_S);
         addGotoKeySequence(Action.GOTO_TASKS, KeyCodes.KEY_T);
+        addGotoKeySequence(Action.GOTO_USER_GROUPS, KeyCodes.KEY_G);
         addGotoKeySequence(Action.GOTO_USER_PREFERENCES, KeyCodes.KEY_U);
         addGotoKeySequence(Action.GOTO_FS_VOLUMES, KeyCodes.KEY_V);
         addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
@@ -135,7 +116,7 @@ public class KeyBinding {
         DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.DOCUMENT_TYPE, Action.CREATE_ELASTIC_INDEX);
         DOC_TYPE_TO_ACTION_MAP.put(DashboardDoc.DOCUMENT_TYPE, Action.CREATE_DASHBOARD);
         DOC_TYPE_TO_ACTION_MAP.put(FeedDoc.DOCUMENT_TYPE, Action.CREATE_FEED);
-        DOC_TYPE_TO_ACTION_MAP.put(ExplorerConstants.FOLDER, Action.CREATE_FOLDER);
+        DOC_TYPE_TO_ACTION_MAP.put(ExplorerConstants.FOLDER_TYPE, Action.CREATE_FOLDER);
         DOC_TYPE_TO_ACTION_MAP.put(DictionaryDoc.DOCUMENT_TYPE, Action.CREATE_DICTIONARY);
         DOC_TYPE_TO_ACTION_MAP.put(LuceneIndexDoc.DOCUMENT_TYPE, Action.CREATE_LUCENE_INDEX);
         DOC_TYPE_TO_ACTION_MAP.put(DocumentationDoc.DOCUMENT_TYPE, Action.CREATE_DOCUMENTATION);
@@ -170,194 +151,132 @@ public class KeyBinding {
             return shortcuts.get(0).toString();
         } else {
             // Try key sequences instead
-            final KeySequence keySequence = ACTION_TO_KEY_SEQUENCE_MAP.get(action);
-            if (keySequence != null) {
-                return keySequence.toString();
-            } else {
-                return null;
-            }
+            return KEY_SEQUENCES.getShortcut(action);
         }
     }
 
-    public static void consumeAction(final NativeEvent e,
-                                     final Action action,
-                                     final Runnable onAction) {
-
-        final Action actualAction = test(e);
-        if (actualAction == action && onAction != null) {
-            onAction.run();
-            // Caller has consumed it so stop it propagating further
-            e.stopPropagation();
-        }
-    }
-
-    /**
-     * Tests the supplied {@link NativeEvent} to see if the key(s) are associated with an {@link Action}.
-     * If a {@link Command} has been assigned to the {@link Action} then the command will be run and a
-     * null {@link Action} will be returned.
-     *
-     * @return Matching {@link Action} or null
-     */
     public static Action test(final NativeEvent e) {
         Action action = null;
         logKey(e);
 
         // We don't want to test key binds in text input else we pick up things like the user typing '/'
-        if (shouldCheckKeySequence(e)) {
-            if (BrowserEvents.KEYDOWN.equals(e.getType())) {
-                final Shortcut shortcut = getShortcut(e);
-                action = testKeyDownEvent(e, shortcut);
-                if (action == null) {
-                    action = onKeyDown(e, shortcut);
+        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+//            GWT.log("KeyBinding KEYDOWN " + keyCodeToString(e.getKeyCode()));
+
+            // Only test a basic action if we have a modifier.
+            if (e.getAltKey() || e.getCtrlKey() || e.getMetaKey()) {
+                // If there is a modifier then this isn't going to be a key sequence.
+                KEY_SEQUENCES.clear();
+                action = getKeyDownAction(e);
+                action = testAction(e, action);
+
+            } else if (isInput(e)) {
+                // We will support some single key bindings in text boxes.
+                if (e.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                    KEY_SEQUENCES.clear();
+                    action = getKeyDownAction(e);
+                    action = testAction(e, action);
+                } else if (e.getKeyCode() == KeyCodes.KEY_SHIFT) {
+                    // Allow double shift keysequence in text area.
+                    KEY_SEQUENCES.onKeyDown(e);
+                } else {
+                    KEY_SEQUENCES.clear();
                 }
 
-                final Command command = COMMANDS.get(action);
-                if (command == null) {
-                    // No command assigned so return the action for the caller to do something with
-//                action = onKeyDown(e, shortcut);
-                } else {
-                    // Swallow the event and run the command
-                    e.preventDefault();
-                    e.stopPropagation();
-                    command.execute();
-                    // Clear the action as we have executed the command
-                    action = null;
+            } else {
+                // See if this is potentially part of a sequence.
+                if (!KEY_SEQUENCES.onKeyDown(e)) {
+                    // It isn't part of a sequence so test if it is a simple binding.
+                    action = getKeyDownAction(e);
+                    if (action != null) {
+                        action = testAction(e, action);
+                    }
                 }
-            } else if (BrowserEvents.KEYUP.equals(e.getType())) {
-                final Shortcut shortcut = getShortcut(e);
-                testKeyUpEvent(e, shortcut);
+            }
+
+        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+//            GWT.log("KeyBinding KEYUP " + keyCodeToString(e.getKeyCode()));
+
+            action = KEY_SEQUENCES.onKeyUp(e);
+            action = testAction(e, action);
+        }
+        return action;
+    }
+
+    private static Action testAction(final NativeEvent e,
+                                     final Action action) {
+        // Find a basic modifier binding.
+        if (action != null) {
+            final Command command = COMMANDS.get(action);
+            if (command != null) {
+                // Swallow the event and run the command
+                e.preventDefault();
+                e.stopPropagation();
+                command.execute();
+                // Clear the action as we have executed the command
+                return null;
             }
         }
         return action;
     }
 
-    private static boolean shouldCheckKeySequence(final NativeEvent e) {
+
+    private static boolean isInput(final NativeEvent e) {
         final EventTarget eventTarget = e.getEventTarget();
-        final boolean shouldCheck;
+        final boolean isInput;
         if (eventTarget != null) {
             if (Element.is(eventTarget)) {
                 final Element element = Element.as(eventTarget);
                 final String tagName = element.getTagName();
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
-                shouldCheck = !isTextBox(element, tagName)
-                        && !"TEXTAREA".equalsIgnoreCase(tagName);
+                isInput = isTextBox(element, tagName)
+                          || "TEXTAREA".equalsIgnoreCase(tagName);
 
 //                final String className = GwtNullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
 //                GWT.log("className: " + className + " tagName: " + element.getTagName()
 //                        + " type: " + type + " shouldCheck: " + shouldCheck);
             } else {
-                shouldCheck = true;
+                isInput = false;
             }
         } else {
-            shouldCheck = true;
+            isInput = false;
         }
-//        GWT.log("shouldCheck: " + shouldCheck);
-        return shouldCheck;
+        return isInput;
     }
 
     private static boolean isTextBox(final Element element, final String tagName) {
         return "INPUT".equalsIgnoreCase(tagName)
-                && isTextualInputType(element);
+               && isTextualInputType(element);
     }
 
     private static boolean isTextualInputType(final Element element) {
         // These are the type of input element that we want to stop
         final String type = element.getAttribute("type");
         return GwtNullSafe.isBlankString(type)
-                || "text".equalsIgnoreCase(type)
-                || "password".equalsIgnoreCase(type)
-                || "search".equalsIgnoreCase(type)
-                || "number".equalsIgnoreCase(type)
-                || "url".equalsIgnoreCase(type);
-    }
-
-    private static Action testKeyDownEvent(final NativeEvent e,
-                                           final Shortcut shortcut) {
-        Action action = null;
-        if (firstInSequence == null) {
-            if (KEY_SEQUENCES_BY_FIRST_KEY.containsKey(shortcut)) {
-                // Might be a key sequence so allow the user a short time to press
-                // the second key bind in the sequence
-                firstInSequence = shortcut;
-                eventTargetKey = deriveEventTargetKey(e);
-                KEY_SEQUENCE_TIMER.cancel();
-                KEY_SEQUENCE_TIMER.schedule(KEY_SEQUENCE_TIMER_DELAY);
-            }
-        } else {
-            // Check for key up in between so we know it is two distinct key binds
-            if (seenKeyUpBetween
-                    && KEY_SEQUENCES_BY_SECOND_KEY.containsKey(shortcut)
-                    && Objects.equals(eventTargetKey, deriveEventTargetKey(e))) {
-                final KeySequence keySequence = new KeySequence(firstInSequence, shortcut);
-                action = KEY_SEQUENCE_TO_ACTION_MAP.get(keySequence);
-//                GWT.log("Got action: " + action + " for sequence " + keySequence);
-                // We have seen a second key so regardless of whether the pair matched on one of our binds
-                // clear out the state ready for another go
-                clearKeySequenceState();
-                KEY_SEQUENCE_TIMER.cancel();
-            }
-        }
-        return action;
-    }
-
-    private static void testKeyUpEvent(final NativeEvent e,
-                                       final Shortcut shortcut) {
-        if (firstInSequence != null
-                && Objects.equals(eventTargetKey, deriveEventTargetKey(e))) {
-            seenKeyUpBetween = true;
-        }
-    }
-
-    /**
-     * Use the abs position of the event target as a key, so we can tell different keyDown events
-     * apart, e.g. if the exp tree does not consume an event then it will bubble up to the
-     * MainPresenter to check.
-     */
-    private static String deriveEventTargetKey(final NativeEvent e) {
-        return GwtNullSafe.get(
-                e.getCurrentEventTarget(),
-                KeyBinding::getElement,
-                elm ->
-                        elm.getAbsoluteLeft() + ":" + elm.getAbsoluteTop());
-    }
-
-    private static Element getElement(final EventTarget eventTarget) {
-        if (eventTarget != null) {
-            try {
-                if (Element.is(eventTarget)) {
-                    return Element.as(eventTarget);
-                }
-            } catch (Exception e) {
-                // Just swallow
-            }
-        }
-        return null;
-    }
-
-    private static void clearKeySequenceState() {
-//        GWT.log("Clearing key sequence state");
-        firstInSequence = null;
-        seenKeyUpBetween = false;
-        eventTargetKey = null;
+               || "text".equalsIgnoreCase(type)
+               || "password".equalsIgnoreCase(type)
+               || "search".equalsIgnoreCase(type)
+               || "number".equalsIgnoreCase(type)
+               || "url".equalsIgnoreCase(type);
     }
 
     private static void logKey(final NativeEvent e) {
-        final List<String> keys = new ArrayList<>();
-        if (e.getShiftKey()) {
-            keys.add("Shift");
-        }
-        if (e.getCtrlKey()) {
-            keys.add("Ctrl");
-        }
-        if (e.getAltKey()) {
-            keys.add("Alt");
-        }
-        if (e.getMetaKey()) {
-            keys.add("Meta");
-        }
-        keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
+//        final List<String> keys = new ArrayList<>();
+//        if (e.getShiftKey()) {
+//            keys.add("Shift");
+//        }
+//        if (e.getCtrlKey()) {
+//            keys.add("Ctrl");
+//        }
+//        if (e.getAltKey()) {
+//            keys.add("Alt");
+//        }
+//        if (e.getMetaKey()) {
+//            keys.add("Meta");
+//        }
+//        keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
 //        GWT.log(e.getType()
 //                + " (" + e.getKeyCode() + ") - "
 //                + String.join("+", keys)
@@ -365,8 +284,9 @@ public class KeyBinding {
 //                + ", eventTargetKey: " + deriveEventTargetKey(e));
     }
 
-    private static Action onKeyDown(final NativeEvent e,
-                                    final Shortcut shortcut) {
+    private static Action getKeyDownAction(final NativeEvent e) {
+
+        final Shortcut shortcut = getShortcut(e);
 
 //        GWT.log("KEYDOWN = " + shortcut);
 
@@ -378,16 +298,6 @@ public class KeyBinding {
 //            GWT.log("BINDING = " + binding);
 
             action = binding.action;
-//            command = COMMANDS.get(action);
-//            if (command != null) {
-//                GWT.log("COMMAND = " + command);
-//
-//                e.preventDefault();
-//                e.stopPropagation();
-//                command.execute();
-//            } else {
-//                return action;
-//            }
         }
         return action;
     }
@@ -442,8 +352,10 @@ public class KeyBinding {
             final List<Shortcut> shortcuts2 = ACTION_TO_SHORTCUTS_MAP.computeIfAbsent(action, k -> new ArrayList<>());
             if (shortcuts2.contains(shortcut)) {
                 throw new RuntimeException("Duplicate shortcut " + shortcut + " for action " + action
-                        + ", existing shortcuts: "
-                        + shortcuts2.stream().map(Objects::toString).collect(Collectors.joining(", ")));
+                                           + ", existing shortcuts: "
+                                           + shortcuts2.stream()
+                                                   .map(Objects::toString)
+                                                   .collect(Collectors.joining(", ")));
             }
             shortcuts2.add(shortcut);
             SHORTCUT_TO_ACTION_MAP.put(shortcut, action);
@@ -456,43 +368,18 @@ public class KeyBinding {
 
     static void addGotoKeySequence(final Action action,
                                    final int keyCode2) {
-        addKeySequence(
+        KEY_SEQUENCES.addKeySequence(
                 action,
-                Shortcut.unmodifiedKey(GOTO_FIRST_KEY),
-                Shortcut.unmodifiedKey(keyCode2));
+                GOTO_FIRST_KEY,
+                keyCode2);
     }
 
     static void addCreateDocKeySequence(final Action action,
                                         final int keyCode2) {
-        addKeySequence(
+        KEY_SEQUENCES.addKeySequence(
                 action,
-                Shortcut.unmodifiedKey(CREATE_DOC_FIRST_KEY),
-                Shortcut.unmodifiedKey(keyCode2));
-    }
-
-    static void addKeySequence(final Action action,
-                               final int keyCode1,
-                               final int keyCode2) {
-        addKeySequence(
-                action,
-                Shortcut.unmodifiedKey(keyCode1),
-                Shortcut.unmodifiedKey(keyCode2));
-    }
-
-    static void addKeySequence(final Action action,
-                               final Shortcut shortcut1,
-                               final Shortcut shortcut2) {
-        final KeySequence keySequence = new KeySequence(shortcut1, shortcut2);
-        final KeySequence existingKeySequence = ACTION_TO_KEY_SEQUENCE_MAP.put(action, keySequence);
-        if (existingKeySequence != null) {
-            throw new RuntimeException("Action " + action
-                    + " is already bound to key sequence " + existingKeySequence + ". "
-                    + "Tyring to bind it to " + keySequence);
-        }
-        KEY_SEQUENCE_TO_ACTION_MAP.put(keySequence, action);
-
-        KEY_SEQUENCES_BY_FIRST_KEY.put(keySequence.getFirst(), keySequence);
-        KEY_SEQUENCES_BY_SECOND_KEY.put(keySequence.getSecond(), keySequence);
+                CREATE_DOC_FIRST_KEY,
+                keyCode2);
     }
 
     public static String keyCodeToString(final int keyCode) {
@@ -638,9 +525,12 @@ public class KeyBinding {
         GOTO_SEARCH_RESULTS,
         GOTO_FS_VOLUMES,
         GOTO_APP_PERMS,
+        GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
         GOTO_USER_ACCOUNTS,
+        GOTO_USER_GROUPS,
         GOTO_USER_PREFERENCES,
+        GOTO_USER_PERMISSION_REPORT,
 
         // Create Doc key sequences
         CREATE_ELASTIC_INDEX, // C
@@ -676,9 +566,9 @@ public class KeyBinding {
         @Override
         public String toString() {
             return "Binding{" +
-                    "shortcut=" + shortcut +
-                    ", action=" + action +
-                    '}';
+                   "shortcut=" + shortcut +
+                   ", action=" + action +
+                   '}';
         }
 
         public static class Builder {
@@ -726,10 +616,6 @@ public class KeyBinding {
             this.meta = meta;
         }
 
-        public static Shortcut unmodifiedKey(final int keyCode) {
-            return new Shortcut(keyCode, false, false, false, false);
-        }
-
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -740,10 +626,10 @@ public class KeyBinding {
             }
             final Shortcut binding = (Shortcut) o;
             return keyCode == binding.keyCode &&
-                    shift == binding.shift &&
-                    ctrl == binding.ctrl &&
-                    alt == binding.alt &&
-                    meta == binding.meta;
+                   shift == binding.shift &&
+                   ctrl == binding.ctrl &&
+                   alt == binding.alt &&
+                   meta == binding.meta;
         }
 
         @Override
@@ -768,10 +654,6 @@ public class KeyBinding {
             }
             keysPressed.add(keyCodeToString(keyCode));
             return java.lang.String.join("+", keysPressed);
-        }
-
-        public boolean hasModifiers() {
-            return shift || ctrl || alt || meta;
         }
 
         public static Builder builder() {
@@ -841,55 +723,6 @@ public class KeyBinding {
 
         private Shortcut build() {
             return new Shortcut(keyCode, shift, ctrl, alt, meta);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class KeySequence {
-
-        private final List<Shortcut> shortcuts;
-
-        // For the moment only support sequences of two shortcuts, e.g. 'g,p'
-        private KeySequence(final Shortcut shortcut1,
-                            final Shortcut shortcut2) {
-            Objects.requireNonNull(shortcut1);
-            Objects.requireNonNull(shortcut2);
-            this.shortcuts = Arrays.asList(shortcut1, shortcut2);
-        }
-
-        public Shortcut getFirst() {
-            return shortcuts.get(0);
-        }
-
-        public Shortcut getSecond() {
-            return shortcuts.get(1);
-        }
-
-        @Override
-        public String toString() {
-            return shortcuts.stream()
-                    .map(Objects::toString)
-                    .collect(Collectors.joining(""));
-        }
-
-        @Override
-        public boolean equals(final Object object) {
-            if (this == object) {
-                return true;
-            }
-            if (object == null || getClass() != object.getClass()) {
-                return false;
-            }
-            final KeySequence that = (KeySequence) object;
-            return Objects.equals(shortcuts, that.shortcuts);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(shortcuts);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.impl;
@@ -27,19 +26,26 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @Singleton
 public class IndexStoreImpl implements IndexStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexStoreImpl.class);
 
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
@@ -48,13 +54,18 @@ public class IndexStoreImpl implements IndexStore {
             LuceneIndexDoc.ICON);
     private final Store<LuceneIndexDoc> store;
     private final Provider<IndexFieldService> indexFieldServiceProvider;
+    private final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider;
+    private final IndexSerialiser serialiser;
 
     @Inject
     IndexStoreImpl(final StoreFactory storeFactory,
                    final IndexSerialiser serialiser,
-                   final Provider<IndexFieldService> indexFieldServiceProvider) {
+                   final Provider<IndexFieldService> indexFieldServiceProvider,
+                   final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
+        this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
         this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.DOCUMENT_TYPE, LuceneIndexDoc.class);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -76,23 +87,23 @@ public class IndexStoreImpl implements IndexStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        return store.renameDocument(uuid, name);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        store.deleteDocument(uuid);
+    public void deleteDocument(final DocRef docRef) {
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override
@@ -164,7 +175,34 @@ public class IndexStoreImpl implements IndexStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        final DocRef ref = store.importDocument(docRef, dataMap, importState, importSettings);
+
+        // If the imported feed's vol grp doesn't exist in this env use our default
+        // or null it out
+        Map<String, byte[]> effectiveDataMap = dataMap;
+        try {
+            final LuceneIndexDoc doc = serialiser.read(dataMap);
+
+            final String volumeGroup = doc.getVolumeGroupName();
+            if (volumeGroup != null) {
+                final IndexVolumeGroupService fsVolumeGroupService = indexVolumeGroupServiceProvider.get();
+                final List<String> allVolumeGroups = fsVolumeGroupService.getNames();
+                if (!allVolumeGroups.contains(volumeGroup)) {
+                    LOGGER.debug("Volume group '{}' in imported index {} is not a valid volume group",
+                            volumeGroup, docRef);
+                    fsVolumeGroupService.getDefaultVolumeGroup()
+                            .ifPresentOrElse(
+                                    doc::setVolumeGroupName,
+                                    () -> doc.setVolumeGroupName(null));
+
+                    effectiveDataMap = serialiser.write(doc);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
+                    docRef, e.getMessage()), e);
+        }
+
+        final DocRef ref = store.importDocument(docRef, effectiveDataMap, importState, importSettings);
         indexFieldServiceProvider.get().transferFieldsToDB(ref);
         return ref;
     }

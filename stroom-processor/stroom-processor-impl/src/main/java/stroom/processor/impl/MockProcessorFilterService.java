@@ -12,6 +12,8 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
+import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -25,12 +27,15 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
     private final ProcessorService processorService;
     private final MockProcessorFilterDao dao;
+    private final SecurityContext securityContext;
 
     @Inject
     MockProcessorFilterService(final ProcessorService processorService,
-                               final MockProcessorFilterDao dao) {
+                               final MockProcessorFilterDao dao,
+                               final SecurityContext securityContext) {
         this.processorService = processorService;
         this.dao = dao;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -43,6 +48,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, filter);
         Processor processor = processorService.create(
                 request.getProcessorType(),
                 request.getPipeline(),
@@ -50,6 +56,12 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
         filter.setProcessor(processor);
         return dao.create(filter);
+    }
+
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
+        filter.setRunAsUser(NullSafe.getOrElse(request,
+                CreateProcessFilterRequest::getRunAsUser,
+                securityContext.getUserRef()));
     }
 
     //    @Override
@@ -69,6 +81,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, filter);
         return dao.create(filter);
     }
 
@@ -90,6 +103,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, filter);
         return dao.create(filter);
     }
 

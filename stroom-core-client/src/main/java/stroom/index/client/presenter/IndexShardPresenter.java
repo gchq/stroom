@@ -40,8 +40,8 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
@@ -112,7 +112,7 @@ public class IndexShardPresenter
         this.securityContext = securityContext;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
             buttonFlush = view.addButton(SvgPresets.SHARD_FLUSH);
             buttonDelete = view.addButton(SvgPresets.DELETE);
         }
@@ -442,7 +442,7 @@ public class IndexShardPresenter
                                 .method(res -> res.find(queryCriteria))
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
-                                .taskHandlerFactory(getView())
+                                .taskMonitorFactory(getView())
                                 .exec();
                     }
 
@@ -456,8 +456,8 @@ public class IndexShardPresenter
             }
 
             securityContext.hasDocumentPermission(
-                    document.getUuid(),
-                    DocumentPermissionNames.DELETE,
+                    docRef,
+                    DocumentPermission.DELETE,
                     result -> {
                         this.allowDelete = result;
                         enableButtons();
@@ -552,7 +552,7 @@ public class IndexShardPresenter
                     .create(INDEX_RESOURCE)
                     .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .taskHandlerFactory(getView())
+                    .taskMonitorFactory(getView())
                     .exec();
         }), throwable -> {
         }, getView());
@@ -569,7 +569,7 @@ public class IndexShardPresenter
                     .create(INDEX_RESOURCE)
                     .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .taskHandlerFactory(getView())
+                    .taskMonitorFactory(getView())
                     .exec();
         }), throwable -> {
         }, getView());

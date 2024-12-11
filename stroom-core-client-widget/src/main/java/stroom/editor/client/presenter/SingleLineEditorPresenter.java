@@ -16,6 +16,8 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.widget.util.client.GlobalKeyHandler;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -30,8 +32,9 @@ public class SingleLineEditorPresenter
     public SingleLineEditorPresenter(final EventBus eventBus,
                                      final SingleLineEditorView view,
                                      final DelegatingAceCompleter delegatingAceCompleter,
-                                     final CurrentPreferences currentPreferences) {
-        super(eventBus, view, delegatingAceCompleter, currentPreferences);
+                                     final CurrentPreferences currentPreferences,
+                                     final GlobalKeyHandler globalKeyHandler) {
+        super(eventBus, view, delegatingAceCompleter, currentPreferences, globalKeyHandler);
     }
 
     @Override

@@ -16,12 +16,16 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisFrame;
+import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.data.pager.client.RefreshButton;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QLVisResult;
 import stroom.query.api.v2.Result;
@@ -30,8 +34,9 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
-import stroom.ui.config.shared.Themes;
+import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -58,7 +63,7 @@ import java.util.Set;
 
 public class QueryResultVisPresenter
         extends MyPresenterWidget<QueryResultVisView>
-        implements StatusHandler, ResultComponent {
+        implements StatusHandler, ResultComponent, HasComponentSelection {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
@@ -98,6 +103,7 @@ public class QueryResultVisPresenter
     private Timer updateTimer;
     private JavaScriptObject lastData;
 
+    private VisSelectionModel visSelectionModel;
     private boolean pause;
 
     private final JavaScriptObject context;
@@ -114,8 +120,8 @@ public class QueryResultVisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
-        visFrame.setTaskHandlerFactory(getView().getRefreshButton());
-//        visFrame.setUiHandlers(this);
+        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
+
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
@@ -123,13 +129,10 @@ public class QueryResultVisPresenter
         this.context = new JSONObject().getJavaScriptObject();
     }
 
-//    @Override
-//    public void onSelection(final List<Map<String, String>> selection) {
-//        if (!Objects.equals(currentSelection, selection)) {
-//            currentSelection = selection;
-//            timer.schedule(250);
-//        }
-//    }
+    public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
+        this.visSelectionModel = visSelectionModel;
+        visFrame.setUiHandlers(visSelectionModel);
+    }
 
     /*****************
      * Start of Layout
@@ -198,7 +201,7 @@ public class QueryResultVisPresenter
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
@@ -207,7 +210,7 @@ public class QueryResultVisPresenter
     }
 
     private String getClassName(final String theme) {
-        return "vis " + Themes.getClassName(theme);
+        return "vis " + Theme.getClassName(theme);
     }
 
     @Override
@@ -224,56 +227,6 @@ public class QueryResultVisPresenter
         visFrame.unbind();
     }
 
-    //    @Override
-//    public void setComponents(final Components components) {
-//        super.setComponents(components);
-//        registerHandler(components.addComponentChangeHandler(event -> {
-//            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
-//                    event.getComponentId())) {
-//                updateTableId(event.getComponentId());
-//            }
-//        }));
-//    }
-//
-//    private void updateTableId(final String tableId) {
-//        final VisComponentSettings.Builder builder = getVisSettings().copy();
-//
-//        builder.tableId(tableId);
-//
-//        linkedTablePresenter = null;
-//        final Component component = getComponents().get(getVisSettings().getTableId());
-//        if (component instanceof TablePresenter) {
-//            final TablePresenter tablePresenter = (TablePresenter) component;
-//            linkedTablePresenter = tablePresenter;
-//
-//            final TableComponentSettings tableSettings = tablePresenter.getTableSettings();
-//            builder.tableSettings(tableSettings);
-//            final String queryId = tableSettings.getQueryId();
-//            setQueryId(queryId);
-//
-//        } else {
-//            builder.tableSettings(null);
-//            setQueryId(null);
-//        }
-//
-//        setSettings(builder.build());
-//    }
-//
-//    private void setQueryId(final String queryId) {
-//        cleanupSearchModelAssociation();
-//
-//        if (queryId != null) {
-//            final Component component = getComponents().get(queryId);
-//            if (component instanceof QueryPresenter) {
-//                final QueryPresenter queryPresenter = (QueryPresenter) component;
-//                currentSearchModel = queryPresenter.getSearchModel();
-//                if (currentSearchModel != null) {
-//                    currentSearchModel.addComponent(getComponentConfig().getId(), this);
-//                }
-//            }
-//        }
-//    }
-//
     @Override
     public void reset() {
     }
@@ -314,7 +267,7 @@ public class QueryResultVisPresenter
         }
     }
 
-    private void refresh() {
+    public void refresh() {
         getView().getRefreshButton().setRefreshing(true);
         currentSearchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
             try {
@@ -328,7 +281,7 @@ public class QueryResultVisPresenter
         });
     }
 
-    void clear() {
+    public void clear() {
         currentData = EMPTY_DATA;
         currentError = null;
         update();
@@ -471,7 +424,7 @@ public class QueryResultVisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -482,7 +435,7 @@ public class QueryResultVisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskHandlerFactory(getView().getRefreshButton())
+                .taskMonitorFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -632,55 +585,6 @@ public class QueryResultVisPresenter
         return null;
     }
 
-    //
-//    @Override
-//    public ComponentType getType() {
-//        return TYPE;
-//    }
-
-    //    @Override
-//    public boolean isPaused() {
-//        return pause;
-//    }
-//
-//    @Override
-//    public ComponentResultRequest getResultRequest(final Fetch fetch) {
-//        // Update table settings.
-//        updateLinkedTableSettings();
-//        return VisResultRequest
-//                .builder()
-//                .componentId(getId())
-//                .visDashboardSettings(getVisSettings())
-////                .requestedRange(new OffsetRange(0, MAX_RESULTS))
-//                .fetch(fetch)
-//                .build();
-//    }
-//
-//    @Override
-//    public ComponentResultRequest createDownloadQueryRequest() {
-//        // Update table settings.
-//        updateLinkedTableSettings();
-//        return VisResultRequest
-//                .builder()
-//                .componentId(getId())
-//                .visDashboardSettings(getVisSettings())
-////                .requestedRange(new OffsetRange(0, MAX_RESULTS))
-//                .fetch(Fetch.ALL)
-//                .build();
-//    }
-//
-//    private void updateLinkedTableSettings() {
-//        // Update table settings.
-//        TableComponentSettings tableComponentSettings = null;
-//        if (linkedTablePresenter != null) {
-//            tableComponentSettings = linkedTablePresenter.getTableSettings();
-//        }
-//        setSettings(getVisSettings()
-//                .copy()
-//                .tableSettings(tableComponentSettings)
-//                .build());
-//    }
-//
     private JSONObject combineSettings(final JSONObject possibleSettings, final JSONObject dynamicSettings) {
         if (possibleSettings == null) {
             return dynamicSettings;
@@ -720,21 +624,20 @@ public class QueryResultVisPresenter
         return allSettings;
     }
 
-//
-//    @Override
-//    public List<AbstractField> getFields() {
-//        final List<AbstractField> abstractFields = new ArrayList<>();
-//        // TODO : @66 TEMPORARY FIELDS
-//        abstractFields.add(QueryField.createText("name", true));
-//        abstractFields.add(QueryField.createText("value", true));
-//        return abstractFields;
-//    }
-//
-//    @Override
-//    public List<Map<String, String>> getSelection() {
-//        return currentSelection;
-//    }
+    @Override
+    public List<ColumnRef> getColumns() {
+        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getColumns);
+    }
 
+    @Override
+    public List<ComponentSelection> getSelection() {
+        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getSelection);
+    }
+
+    @Override
+    public Set<String> getHighlights() {
+        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getHighlights);
+    }
 
     @Override
     public void setQueryModel(final QueryModel queryModel) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.db.util;
 
 import stroom.config.common.ConnectionConfig;
@@ -232,8 +248,21 @@ public class DbUtil {
 
     public static boolean doesTableExist(final Connection connection, final String tableName) {
         try {
+            final String catalog = connection.getCatalog(); // AKA the mysql DB in use
+            final String schema = connection.getSchema();
+            LOGGER.debug("doesTableExist - catalog: {}, schema: {}, tableName: {}", catalog, schema, tableName);
             final DatabaseMetaData meta = connection.getMetaData();
-            try (ResultSet tables = meta.getTables(null, null, tableName, null)) {
+            try (ResultSet tables = meta.getTables(
+                    catalog, schema, tableName, null)) {
+//                boolean found = false;
+//                while (tables.next()) {
+//                    found = true;
+//                    final String tblCat = tables.getString("TABLE_CAT");
+//                    final String tblSchema = tables.getString("TABLE_SCHEM");
+//                    final String tblName = tables.getString("TABLE_NAME");
+//                    LOGGER.info("tblCat: {}, tblSchema: {}, tableName: {}", tblCat, tblSchema, tblName);
+//                }
+//                return found;
                 return tables.next();
             }
         } catch (SQLException e) {

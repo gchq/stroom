@@ -16,46 +16,35 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+
 import jakarta.inject.Inject;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 class UserAndPermissionsHelper {
 
-    private final UserGroupsCache userGroupsCache;
-    private final UserAppPermissionsCache userAppPermissionsCache;
+    private final SecurityContext securityContext;
 
     @Inject
-    UserAndPermissionsHelper(final UserGroupsCache userGroupsCache,
-                             final UserAppPermissionsCache userAppPermissionsCache) {
-        this.userGroupsCache = userGroupsCache;
-        this.userAppPermissionsCache = userAppPermissionsCache;
+    UserAndPermissionsHelper(final SecurityContext securityContext) {
+        this.securityContext = securityContext;
     }
 
-    public Set<String> get(final String userUuid) {
-        final Set<String> appPermissionSet = new HashSet<>();
-
-        // Add app permissions set explicitly for this user first.
-        addPermissions(appPermissionSet, userUuid);
-
-        // Get user groups for this user.
-        final Set<String> userGroupUuids = userGroupsCache.get(userUuid);
-
-        // Add app permissions set on groups this user belongs to.
-        if (userGroupUuids != null) {
-            for (final String userGroupUuid : userGroupUuids) {
-                addPermissions(appPermissionSet, userGroupUuid);
+    public Set<AppPermission> getCurrentAppPermissions() {
+        if (securityContext.isAdmin()) {
+            return Collections.singleton(AppPermission.ADMINISTRATOR);
+        } else {
+            final Set<AppPermission> appPermissionSet = new HashSet<>();
+            for (final AppPermission permission : AppPermission.values()) {
+                if (securityContext.hasAppPermission(permission)) {
+                    appPermissionSet.add(permission);
+                }
             }
-        }
-
-        return appPermissionSet;
-    }
-
-    private void addPermissions(final Set<String> appPermissionSet, final String userGroupUuid) {
-        final Set<String> userAppPermissions = userAppPermissionsCache.get(userGroupUuid);
-        if (userAppPermissions != null) {
-            appPermissionSet.addAll(userAppPermissions);
+            return appPermissionSet;
         }
     }
 }

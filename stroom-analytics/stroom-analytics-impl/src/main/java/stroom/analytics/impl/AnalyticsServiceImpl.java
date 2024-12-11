@@ -27,12 +27,14 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         emailSender.send(emailDestination, getExampleDetection());
     }
 
-    private Detection getExampleDetection() {
+    // pkg private for testing
+    Detection getExampleDetection() {
         final String stroom = "Test Environment";
         final String executionTime = "2024-02-29T17:48:40.396Z";
         final String detectTime = "2024-02-29T17:48:41.582Z";
         final String effectiveExecutionTime = "2024-02-29T16:00:00.000Z";
 
+        // NOTE variables (including keys in maps) cannot use '-'
         return Detection.builder()
                 .withDetectTime(detectTime)
                 .withDetectorName("Example detector for test use.")
@@ -47,9 +49,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .withExecutionTime(executionTime)
                 .withExecutionSchedule("1hr")
                 .withEffectiveExecutionTime(effectiveExecutionTime)
-                .addValue("name-1", "value-A")
-                .addValue("name-2", "value-B")
-                .addValue("name-3", "value-C")
+                .addValue("name_1", "value_A")
+                .addValue("name_2", "value_B")
+                .addValue("name_3", "value_C")
+                .addValue("name_4", null)
                 .addLinkedEvents(new DetectionLinkedEvent(stroom, 1001L, 1L))
                 .addLinkedEvents(new DetectionLinkedEvent(stroom, 1001L, 2L))
                 .addLinkedEvents(new DetectionLinkedEvent(stroom, 2001L, 1L))

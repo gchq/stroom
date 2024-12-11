@@ -22,8 +22,9 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
-import stroom.ui.config.shared.Themes;
-import stroom.ui.config.shared.Themes.ThemeType;
+import stroom.ui.config.shared.AceEditorTheme;
+import stroom.ui.config.shared.Theme;
+import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.Toggle;
@@ -35,8 +36,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme.AceThemeType;
 
 import java.util.List;
 import java.util.Objects;
@@ -77,24 +76,15 @@ public final class EditorPreferencesPresenter
         return false;
     }
 
-    private static AceEditorTheme getDefaultEditorTheme(final AceThemeType aceThemeType) {
-        return aceThemeType.isLight()
-                ? AceEditorTheme.DEFAULT_LIGHT_THEME
-                : AceEditorTheme.DEFAULT_DARK_THEME;
-    }
-
     public void read(final UserPreferences userPreferences) {
         final String themeName = userPreferences.getTheme();
-        final ThemeType themeType = Themes.getThemeType(themeName);
-        final AceThemeType aceThemeType = ThemeType.LIGHT.equals(themeType)
-                ? AceThemeType.LIGHT
-                : AceThemeType.DARK;
+        final ThemeType themeType = Theme.getThemeType(themeName);
 
         String editorThemeName = userPreferences.getEditorTheme();
         if (!AceEditorTheme.isValidThemeName(editorThemeName)
-                || !AceEditorTheme.matchesThemeType(editorThemeName, aceThemeType)) {
+                || !AceEditorTheme.matchesThemeType(editorThemeName, themeType)) {
             // e.g. light editor theme with a dark stroom theme, so use the default dark editor theme
-            editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
+            editorThemeName = AceEditorTheme.getDefaultEditorTheme(themeType).getName();
         }
 
         // Get applicable editor themes for the stroom theme type
@@ -115,6 +105,10 @@ public final class EditorPreferencesPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EditorPreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
 

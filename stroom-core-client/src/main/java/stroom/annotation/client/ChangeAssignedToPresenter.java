@@ -22,17 +22,12 @@ import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.UserResource;
-import stroom.util.shared.UserName;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -40,38 +35,27 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 
 public class ChangeAssignedToPresenter
         extends MyPresenterWidget<ChangeAssignedToView>
         implements ChangeAssignedToUiHandlers {
 
     private final RestFactory restFactory;
-    private final ChooserPresenter<UserName> assignedToPresenter;
+    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
-    private UserName currentAssignedTo;
 
     @Inject
     public ChangeAssignedToPresenter(final EventBus eventBus,
                                      final ChangeAssignedToView view,
                                      final RestFactory restFactory,
-                                     final ChooserPresenter<UserName> assignedToPresenter,
+                                     final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.assignedToPresenter = assignedToPresenter;
+        this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
+        getView().setUserView(userRefSelectionBoxPresenter.getView());
         getView().setUiHandlers(this);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(assignedToPresenter.addDataSelectionHandler(e -> {
-            final UserName selected = assignedToPresenter.getSelected();
-            changeAssignedTo(selected);
-        }));
     }
 
     public void show(final List<Long> annotationIdList) {
@@ -79,12 +63,13 @@ public class ChangeAssignedToPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizableX(500))
                 .caption("Change Assigned To")
-                .onShow(e -> getView().focus())
+                .onShow(e -> userRefSelectionBoxPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                        final SetAssignedToRequest request = new SetAssignedToRequest(annotationIdList,
-                                currentAssignedTo);
+                        final SetAssignedToRequest request = new SetAssignedToRequest(
+                                annotationIdList,
+                                userRefSelectionBoxPresenter.getSelected());
                         restFactory
                                 .create(annotationResource)
                                 .method(res -> res.setAssignedTo(request))
@@ -93,7 +78,7 @@ public class ChangeAssignedToPresenter
                                     e.hide();
                                 })
                                 .onFailure(RestErrorHandler.forPopup(this, e))
-                                .taskHandlerFactory(this)
+                                .taskMonitorFactory(this)
                                 .exec();
                     } else {
                         e.hide();
@@ -102,50 +87,13 @@ public class ChangeAssignedToPresenter
                 .fire();
     }
 
-    private void changeAssignedTo(final UserName selected) {
-        if (!Objects.equals(currentAssignedTo, selected)) {
-            currentAssignedTo = selected;
-            getView().setAssignedTo(selected.getUserIdentityForAudit());
-            HidePopupRequestEvent.builder(assignedToPresenter)
-                    .fire();
-        }
-    }
-
-    @Override
-    public void showAssignedToChooser(final Element element) {
-        if (currentAssignedTo == null) {
-            assignedToPresenter.setClearSelectionText(null);
-        } else {
-            assignedToPresenter.setClearSelectionText("Clear");
-        }
-        assignedToPresenter.setDataSupplier((filter, consumer) -> {
-            final UserResource userResource = GWT.create(UserResource.class);
-            restFactory
-                    .create(userResource)
-                    .method(res -> res.getAssociates(filter))
-                    .onSuccess(consumer)
-                    .taskHandlerFactory(this)
-                    .exec();
-        });
-        assignedToPresenter.clearFilter();
-        assignedToPresenter.setSelected(currentAssignedTo);
-        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
-                element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.builder(assignedToPresenter)
-                .popupType(PopupType.POPUP)
-                .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
-                .onShow(e -> assignedToPresenter.focus())
-                .fire();
-    }
-
     @Override
     public void assignYourself() {
-        changeAssignedTo(clientSecurityContext.getUserName());
+        userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
     }
 
-    public interface ChangeAssignedToView extends View, Focus, HasUiHandlers<ChangeAssignedToUiHandlers> {
+    public interface ChangeAssignedToView extends View, HasUiHandlers<ChangeAssignedToUiHandlers> {
 
-        void setAssignedTo(String assignedTo);
+        void setUserView(final View view);
     }
 }

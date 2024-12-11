@@ -64,7 +64,7 @@ class TestDuplicateCheckFactoryImpl {
 
     @Test
     void test() {
-        final Row row = new Row("test", List.of("test"), 0, "", "");
+        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
             assertThat(duplicateCheck.check(row)).isTrue();
@@ -76,7 +76,7 @@ class TestDuplicateCheckFactoryImpl {
 
     @Test
     void testReload() {
-        final Row row = new Row("test", List.of("test"), 0, "", "");
+        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
             assertThat(duplicateCheck.check(row)).isTrue();
@@ -94,7 +94,7 @@ class TestDuplicateCheckFactoryImpl {
 
     @Test
     void testDifferentAnalytic() {
-        final Row row = new Row("test", List.of("test"), 0, "", "");
+        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1")) {
             assertThat(duplicateCheck1.check(row)).isTrue();
@@ -118,7 +118,7 @@ class TestDuplicateCheckFactoryImpl {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, analyticRuleUuid)) {
             for (int i = 0; i < 223; i++) {
-                final Row row = new Row("test" + i, List.of("test" + i), 0, "", "");
+                final Row row = Row.builder().groupKey("test" + i).values(List.of("test" + i)).build();
                 assertThat(duplicateCheck.check(row)).isTrue();
                 assertThat(duplicateCheck.check(row)).isFalse();
             }

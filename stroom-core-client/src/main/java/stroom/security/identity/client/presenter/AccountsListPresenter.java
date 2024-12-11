@@ -19,9 +19,9 @@ import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.GwtNullSafe;
@@ -170,7 +170,7 @@ public class AccountsListPresenter
                                 this.refresh();
                             })
                             .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), this::refresh))
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             });
@@ -179,7 +179,7 @@ public class AccountsListPresenter
 
     private void initTableColumns() {
         // User Id
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             final Column<Account, String> userIdColumn = DataGridUtil.textColumnBuilder(
                             Account::getUserId)
                     .enabledWhen(Account::isEnabled)
@@ -230,7 +230,7 @@ public class AccountsListPresenter
 
     private void fetchData(final Range range,
                            final Consumer<AccountResultPage> dataConsumer,
-                           final TaskHandlerFactory taskHandlerFactory) {
+                           final TaskMonitorFactory taskMonitorFactory) {
         final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
         final FindAccountRequest criteria = new FindAccountRequest(pageRequest, sortList, filter);
         restFactory
@@ -242,7 +242,7 @@ public class AccountsListPresenter
                                 this,
                                 "Error fetching accounts: " + throwable.getMessage(),
                                 null))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

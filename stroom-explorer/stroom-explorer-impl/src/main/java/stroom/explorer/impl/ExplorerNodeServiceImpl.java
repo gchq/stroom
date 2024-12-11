@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
@@ -9,8 +25,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -21,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -109,10 +127,12 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public void copyNode(final DocRef sourceDocRef,
+    public void copyNode(final ExplorerNode sourceNode,
                          final DocRef destDocRef,
                          final DocRef destinationFolderRef,
                          final PermissionInheritance permissionInheritance) {
+        Objects.requireNonNull(sourceNode);
+        final DocRef sourceDocRef = sourceNode.getDocRef();
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -152,7 +172,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             LOGGER.error(e.getMessage(), e);
         }
 
-        addNode(destinationFolderRef, destDocRef);
+        addNode(destinationFolderRef, destDocRef, sourceNode.getTags());
     }
 
     @Override
@@ -172,7 +192,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case NONE:
                     // Remove all current permissions, ignore permissions of the destination folder, just make the
                     // new item owned by the current user.
-                    clearDocumentPermissions(docRef);
+                    removeAllDocumentPermissions(docRef);
                     addDocumentPermissions(null, docRef, true, true);
                     break;
                 case SOURCE:
@@ -181,7 +201,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case DESTINATION:
                     // Remove all current permissions, add permissions of the destination folder, and make the new
                     // item owned by the current user.
-                    clearDocumentPermissions(docRef);
+                    removeAllDocumentPermissions(docRef);
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 case COMBINED:
@@ -252,17 +272,17 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private synchronized void createRoot() {
         final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        if (roots == null || roots.size() == 0) {
+        if (NullSafe.isEmptyCollection(roots)) {
             // Insert System root node.
             final DocRef root = ExplorerConstants.SYSTEM_DOC_REF;
-            addNode(null, root);
+            addNode(root);
         }
     }
 
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
         // Only return entries the user has permission to see.
-        if (docRef != null && securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.USE)) {
+        if (docRef != null && securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             return getNodeForDocRef(docRef)
                     .map(this::createExplorerNode);
         } else {
@@ -342,17 +362,16 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public void deleteAllNodes() {
         explorerTreeDao.removeAll();
-        addNode(null, ExplorerConstants.SYSTEM_DOC_REF);
+        addNode(null, ExplorerConstants.SYSTEM_DOC_REF, null);
     }
 
-    private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
-        addNode(parentFolderRef, docRef, null);
+    private void addNode(final DocRef docRef) {
+        addNode(null, docRef, null);
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef, final Set<String> tags) {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
-        final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
-//        setTags(docNode);
+        final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef, tags);
         explorerTreeDao.addChild(folderNode, docNode);
     }
 
@@ -372,49 +391,47 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         }
     }
 
-//    private void setTags(final ExplorerTreeNode explorerTreeNode) {
-//        if (explorerTreeNode != null) {
-//            explorerTreeNode.setTags(ExplorerFlags.getFlag(explorerTreeNode.getType()));
-//        }
-//    }
-
     private void addDocumentPermissions(final DocRef source,
                                         final DocRef dest,
-                                        final boolean owner,
+                                        final boolean setOwnerPerm,
                                         final boolean cascade) {
-        final String sourceType = NullSafe.get(source, DocRef::getType);
-        final String sourceUuid = NullSafe.get(source, DocRef::getUuid);
+        final UserRef userRef = securityContext.getUserRef();
+        final boolean isFolder = NullSafe.test(source, DocRef::getType, DocumentTypes::isFolder);
 
-        if (cascade
-                && sourceType != null
-                && sourceUuid != null
-                && DocumentTypes.isFolder(sourceType)) {
-            final List<ExplorerNode> descendants = getDescendants(dest);
-            descendants.forEach(descendant ->
-                    documentPermissionService.addDocumentPermissions(
-                            source,
-                            descendant.getDocRef(),
-                            owner)
-            );
+        final Consumer<DocRef> docRefConsumer = destDocRef -> {
+            if (setOwnerPerm) {
+                // We are making them the owner therefore, they won't hold owner, and thus we will get
+                // a perm exception as they need owner to change the perms. Hence, run as proc user.
+                securityContext.asProcessingUser(() ->
+                        documentPermissionService.setPermission(destDocRef, userRef, DocumentPermission.OWNER));
+            }
+            // User should now be in a position to add other perms
+            documentPermissionService.addDocumentPermissions(source, destDocRef);
+        };
+
+        if (cascade && isFolder) {
+            getDescendants(dest).forEach(descendant -> {
+                final DocRef descendantDocRef = descendant.getDocRef();
+                docRefConsumer.accept(descendantDocRef);
+            });
         }
 
-        documentPermissionService.addDocumentPermissions(source, dest, owner);
+        docRefConsumer.accept(dest);
     }
 
-    private void clearDocumentPermissions(final DocRef docRef) {
-        documentPermissionService.clearDocumentPermissions(docRef.getUuid());
+    private void removeAllDocumentPermissions(final DocRef docRef) {
+        documentPermissionService.removeAllDocumentPermissions(docRef);
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        if (Objects.equals(ExplorerConstants.SYSTEM_NODE.getType(), explorerTreeNode.getType())
-                && Objects.equals(ExplorerConstants.SYSTEM_NODE.getUuid(), explorerTreeNode.getUuid())) {
+        if (ExplorerConstants.isSystemNode(explorerTreeNode.getType(), explorerTreeNode.getUuid())) {
             return ExplorerConstants.SYSTEM_NODE;
-        } else if (Objects.equals(ExplorerConstants.FAVOURITES_NODE.getType(), explorerTreeNode.getType())
-                && Objects.equals(ExplorerConstants.FAVOURITES_NODE.getUuid(), explorerTreeNode.getUuid())) {
+        } else if (ExplorerConstants.isFavouritesNode(explorerTreeNode.getType(), explorerTreeNode.getUuid())) {
             return ExplorerConstants.FAVOURITES_NODE;
         } else {
             return explorerTreeNode.buildExplorerNode()
-                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType()).orElse(null))
+                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType())
+                            .orElse(null))
                     .build();
         }
     }

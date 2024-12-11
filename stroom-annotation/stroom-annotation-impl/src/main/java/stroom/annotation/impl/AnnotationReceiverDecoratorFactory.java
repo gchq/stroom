@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationFields;
@@ -10,7 +26,6 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
@@ -21,7 +36,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
@@ -42,17 +57,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
             nullSafeEntry(AnnotationFields.ID, Annotation::getId),
-            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime, createTimeEpochMs ->
-                    Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime, updateTimeEpochMs ->
-                    Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
             nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
             nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
             nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
             nullSafeEntry(AnnotationFields.ASSIGNED_TO, annotation ->
-                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
             nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
 
@@ -66,7 +75,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
             Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
             Map.entry(AnnotationFields.ASSIGNED_TO, annotation ->
-                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
             Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
 
@@ -254,8 +263,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                     return ValString.create((String) value);
                 } else if (value instanceof Long) {
                     return ValLong.create((Long) value);
-                } else if (value instanceof final UserName userName) {
-                    return ValString.create(userName.getUserIdentityForAudit());
+                } else if (value instanceof final UserRef userRef) {
+                    return ValString.create(userRef.toDisplayString());
                 } else {
                     throw new RuntimeException("Unexpected type " + value.getClass().getName());
                 }

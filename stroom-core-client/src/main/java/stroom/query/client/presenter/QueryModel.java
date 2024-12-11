@@ -18,7 +18,10 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DestroyReason;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -28,9 +31,11 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.query.shared.QueryTablePreferences;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -43,60 +48,57 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
+public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     public static final String TABLE_COMPONENT_ID = "table";
     public static final String VIS_COMPONENT_ID = "vis";
 
-
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private String queryUuid;
+    private DocRef queryDocRef;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private String currentNode;
     private QueryKey currentQueryKey;
-    private QueryContext currentQueryContext;
     private QuerySearchRequest currentSearch;
     private boolean searching;
     private boolean polling;
     private SourceType sourceType = SourceType.QUERY_UI;
+    private Set<String> currentHighlights;
+    private final Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
     private final Map<String, ResultComponent> resultComponents = new HashMap<>();
 
-    private final ResultComponent tablePresenter;
-    private final ResultComponent visPresenter;
-
     public QueryModel(final EventBus eventBus,
                       final RestFactory restFactory,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                       final ResultStoreModel resultStoreModel,
-                      final ResultComponent tablePresenter,
-                      final ResultComponent visPresenter) {
+                      final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
-        this.tablePresenter = tablePresenter;
-        this.visPresenter = visPresenter;
-        tablePresenter.setQueryModel(this);
-        visPresenter.setQueryModel(this);
-
-        resultComponents.put(TABLE_COMPONENT_ID, tablePresenter);
-        resultComponents.put(VIS_COMPONENT_ID, visPresenter);
+        this.queryTablePreferencesSupplier = queryTablePreferencesSupplier;
     }
 
-    public void init(final String queryUuid) {
-        this.queryUuid = queryUuid;
+    public void addResultComponent(final String componentId, final ResultComponent resultComponent) {
+        resultComponent.setQueryModel(this);
+        resultComponents.put(componentId, resultComponent);
+    }
+
+    public void init(final DocRef queryDocRef) {
+        this.queryDocRef = queryDocRef;
     }
 
     /**
@@ -138,6 +140,7 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
         // Stop polling.
         polling = false;
         currentSearch = null;
+        currentHighlights = null;
     }
 
     /**
@@ -148,25 +151,20 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
                                final TimeRange timeRange,
                                final boolean incremental,
                                final boolean storeHistory,
-                               final String queryInfo) {
+                               final String queryInfo,
+                               final ExpressionOperator additionalQueryExpression) {
         GWT.log("SearchModel - startNewSearch()");
 
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
 
-//        final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
-//        if (resultComponentMap != null) {
-//            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
-//            if (dataSourceRef != null && expression != null) {
-//                // Copy the expression.
-//                ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
-//
-        currentQueryContext = QueryContext
+        final QueryContext currentQueryContext = QueryContext
                 .builder()
                 .params(params)
                 .timeRange(timeRange)
                 .queryInfo(queryInfo)
                 .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
+                .additionalQueryExpression(additionalQueryExpression)
                 .build();
 
         currentSearch = QuerySearchRequest
@@ -175,11 +173,12 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
                         SearchRequestSource
                                 .builder()
                                 .sourceType(sourceType)
-                                .ownerDocUuid(queryUuid)
+                                .ownerDocRef(queryDocRef)
                                 .build())
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
+                .queryTablePreferences(queryTablePreferencesSupplier.get())
                 .build();
 //            }
 //        }
@@ -205,20 +204,18 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
     /**
      * Refresh the search data for the specified component.
      */
-    public void refresh(final String componentId,
-                        final Consumer<Result> resultConsumer) {
+    public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         boolean exec = false;
         final QueryKey queryKey = currentQueryKey;
         final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
-            // Tell the refreshing component that it should want data.
-            resultComponent.startSearch();
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(false)
                     .openGroups(resultComponent.getOpenGroups())
                     .requestedRange(resultComponent.getRequestedRange())
+                    .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();
 
             exec = true;
@@ -229,6 +226,7 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
                         Result result = null;
                         try {
                             if (response != null && response.getResults() != null) {
+                                currentHighlights = response.getHighlights();
                                 for (final Result componentResult : response.getResults()) {
                                     if (componentId.equals(componentResult.getComponentId())) {
                                         result = componentResult;
@@ -250,7 +248,7 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
                         }
                         resultConsumer.accept(null);
                     })
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
 
@@ -263,14 +261,14 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey), taskHandlerFactory);
+                    GWT.log("Destroyed store " + queryKey), taskMonitorFactory);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey), taskHandlerFactory);
+                    GWT.log("Terminate search " + queryKey), taskMonitorFactory);
         }
     }
 
@@ -278,12 +276,19 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
+            final ResultComponent tablePresenter = resultComponents.get(TABLE_COMPONENT_ID);
+            final Set<String> openGroups = GwtNullSafe
+                    .getOrElse(tablePresenter, ResultComponent::getOpenGroups, Collections.emptySet());
+            final OffsetRange requestedRange = GwtNullSafe
+                    .getOrElse(tablePresenter, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
+
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(storeHistory)
-                    .openGroups(tablePresenter.getOpenGroups())
-                    .requestedRange(tablePresenter.getRequestedRange())
+                    .openGroups(openGroups)
+                    .requestedRange(requestedRange)
+                    .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();
 
             restFactory
@@ -325,7 +330,7 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
                             poll(false);
                         }
                     })
-                    .taskHandlerFactory(taskHandlerFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }
     }
@@ -386,42 +391,6 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
         searchStateListeners.forEach(listener -> listener.onSearching(searching));
     }
 
-
-//    public boolean isSearching() {
-//        return searching;
-//    }
-//
-//    public QueryKey getCurrentQueryKey() {
-//        return currentQueryKey;
-//    }
-//
-//    public Search getCurrentSearch() {
-//        return currentSearch;
-//    }
-//
-//    public IndexLoader getIndexLoader() {
-//        return indexLoader;
-//    }
-//
-//    public DashboardSearchResponse getCurrentResponse() {
-//        return currentResponse;
-//    }
-
-//    public void addComponent(final String componentId, final ResultConsumer resultComponent) {
-//        // Create and assign a new map here to prevent concurrent modification exceptions.
-//        final Map<String, ResultConsumer> componentMap = new HashMap<>(this.componentMap);
-//        componentMap.put(componentId, resultComponent);
-//        this.componentMap = componentMap;
-//    }
-
-    //    public void removeComponent(final String componentId) {
-//        // Create and assign a new map here to prevent concurrent modification exceptions.
-//        final Map<String, ResultConsumer> componentMap = new HashMap<>(this.componentMap);
-//        componentMap.remove(componentId);
-//        this.componentMap = componentMap;
-//    }
-
-
     public void addSearchStateListener(final SearchStateListener listener) {
         searchStateListeners.add(listener);
     }
@@ -451,12 +420,28 @@ public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override
     public void fireEvent(final GwtEvent<?> gwtEvent) {
         eventBus.fireEvent(gwtEvent);
+    }
+
+    public QueryKey getCurrentQueryKey() {
+        return currentQueryKey;
+    }
+
+    public QuerySearchRequest getCurrentSearch() {
+        return currentSearch;
+    }
+
+    public String getCurrentNode() {
+        return currentNode;
+    }
+
+    public Set<String> getCurrentHighlights() {
+        return currentHighlights;
     }
 }

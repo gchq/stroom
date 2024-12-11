@@ -19,15 +19,17 @@ package stroom.security.client;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserAndPermissions;
-import stroom.task.client.TaskHandlerFactory;
-import stroom.util.shared.UserName;
+import stroom.security.shared.DocumentPermission;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -49,8 +51,8 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final RestFactory restFactory;
     private final Provider<SplashPresenter> splashPresenterProvider;
     private final CurrentActivity currentActivity;
-    private UserName userName;
-    private Set<String> permissions;
+    private UserRef userRef;
+    private Set<AppPermission> permissions;
 
     @Inject
     public CurrentUser(final EventBus eventBus,
@@ -64,19 +66,19 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     public void clear() {
-        this.userName = null;
+        this.userRef = null;
         this.permissions = null;
     }
 
-    public void setUserAndPermissions(final UserAndPermissions userAndPermissions) {
+    public void setUserAndPermissions(final AppUserPermissions userAndPermissions) {
         setUserAndPermissions(userAndPermissions, true);
     }
 
-    public void setUserAndPermissions(final UserAndPermissions userAndPermissions,
+    public void setUserAndPermissions(final AppUserPermissions userAndPermissions,
                                       final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userName = userAndPermissions.getUserName();
+            this.userRef = userAndPermissions.getUserRef();
             this.permissions = userAndPermissions.getPermissions();
         }
 
@@ -90,24 +92,24 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     @Override
-    public UserName getUserName() {
-        return userName;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
     public boolean isLoggedIn() {
-        return userName != null;
+        return userRef != null;
     }
 
     private boolean isAdmin() {
         if (permissions != null) {
-            return permissions.contains(PermissionNames.ADMINISTRATOR);
+            return permissions.contains(AppPermission.ADMINISTRATOR);
         }
         return false;
     }
 
     @Override
-    public boolean hasAppPermission(final String name) {
+    public boolean hasAppPermission(final AppPermission name) {
         if (permissions != null) {
             return permissions.contains(name) || isAdmin();
         }
@@ -115,18 +117,18 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     @Override
-    public void hasDocumentPermission(final String documentUuid,
-                                      final String permission,
+    public void hasDocumentPermission(final DocRef docRef,
+                                      final DocumentPermission permission,
                                       final Consumer<Boolean> consumer,
                                       final Consumer<Throwable> errorHandler,
-                                      final TaskHandlerFactory taskHandlerFactory) {
+                                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(DOC_PERMISSION_RESOURCE)
                 .method(res ->
-                        res.checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission)))
+                        res.checkDocumentPermission(new CheckDocumentPermissionRequest(docRef, permission)))
                 .onSuccess(consumer)
                 .onFailure(t -> errorHandler.accept(t.getException()))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

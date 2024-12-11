@@ -102,6 +102,7 @@ public class FlexLayout extends Composite {
     private boolean designMode;
 
     private List<Component> newComponents;
+    private Component addedComponent;
 
     @Inject
     public FlexLayout(final EventBus eventBus) {
@@ -307,7 +308,9 @@ public class FlexLayout extends Composite {
         final double y = event.getClientY();
 
         if (selectedSplitter != null) {
-            stopSplitResize(x, y);
+            if (startPos != null) {
+                stopSplitResize(x, y);
+            }
 
         } else if (selection != null) {
             if (draggingTab) {
@@ -337,7 +340,13 @@ public class FlexLayout extends Composite {
                     final boolean changed = moveTab(mouseTarget, tabGroup, targetLayout, targetPos);
 
                     if (changed) {
+                        // Show the component settings now we have placed.
+                        if (addedComponent != null) {
+                            addedComponent.showSettings();
+                        }
+
                         // Don't keep trying to add the same new component.
+                        addedComponent = null;
                         newComponents = null;
 
                         // Clear and refresh the layout.
@@ -404,7 +413,12 @@ public class FlexLayout extends Composite {
         }
     }
 
-    public void enterNewComponentDestinationMode(final List<Component> newComponents, final double x, final double y) {
+    public void enterNewComponentDestinationMode(
+            final Component addedComponent,
+            final List<Component> newComponents,
+            final double x,
+            final double y) {
+        this.addedComponent = addedComponent;
         this.newComponents = newComponents;
 
         // Reset vars.

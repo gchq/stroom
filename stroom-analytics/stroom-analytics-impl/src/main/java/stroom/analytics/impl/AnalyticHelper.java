@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
@@ -84,6 +100,12 @@ public class AnalyticHelper {
     }
 
     public List<AnalyticRuleDoc> getRules() {
+        // TODO this is not very efficient. It fetches all the docrefs from the DB,
+        //  then loops over them to fetch+deser the associated doc for each one (one by one)
+        //  so the caller can filter half of them out by type.
+        //  It would be better if we had a json type col in the doc table, so that the
+        //  we can pass some kind of json path query to the persistence layer that the DBPersistence
+        //  can translate to a MySQL json path query.
         final List<DocRef> docRefList = analyticRuleStore.list();
         final List<AnalyticRuleDoc> rules = new ArrayList<>();
         for (final DocRef docRef : docRefList) {

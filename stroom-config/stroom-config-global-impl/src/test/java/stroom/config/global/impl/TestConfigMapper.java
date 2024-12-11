@@ -1,8 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
+import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
@@ -19,6 +36,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -26,7 +44,6 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
-import stroom.index.impl.ContentIndexConfig;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
@@ -763,18 +780,6 @@ class TestConfigMapper {
 //        configMapper.refreshConfig(appConfig);
 //    }
 
-    private static ObjectMapper createYamlObjectMapper() {
-        final YAMLFactory yamlFactory = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yamlFactory);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-//        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
-    }
-
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
@@ -923,9 +928,9 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
-                @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                 @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
@@ -946,6 +951,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
@@ -982,9 +988,9 @@ class TestConfigMapper {
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
-                    contentIndexConfig,
                     contentPackImportConfig,
                     legacyConfig,
+                    dashboardConfig,
                     dataConfig,
                     docStoreConfig,
                     elasticConfig,
@@ -1005,6 +1011,7 @@ class TestConfigMapper {
                     publicUri,
                     queryDataSourceConfig,
                     receiveDataConfig,
+                    s3Config,
                     searchConfig,
                     securityConfig,
                     serviceDiscoveryConfig,

@@ -21,9 +21,11 @@ import stroom.dashboard.client.main.UniqueUtil;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnFilter;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -31,6 +33,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
@@ -47,13 +50,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ColumnsManager implements HeadingListener {
+public class ColumnsManager implements HeadingListener, HasValueFilter {
 
     private final TablePresenter tablePresenter;
     private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
-    private final FilterPresenter filterPresenter;
+    private final TableFilterPresenter tableFilterPresenter;
     private int columnsStartIndex;
     private int currentColIndex = -1;
     private boolean ignoreNext;
@@ -62,19 +65,23 @@ public class ColumnsManager implements HeadingListener {
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final FilterPresenter filterPresenter) {
+                          final TableFilterPresenter tableFilterPresenter) {
         this.tablePresenter = tablePresenter;
         this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
-        this.filterPresenter = filterPresenter;
+        this.tableFilterPresenter = tableFilterPresenter;
     }
 
     @Override
     public void onMouseDown(NativeEvent event, Heading heading) {
         int colIndex = -1;
         if (heading != null) {
-            colIndex = heading.getColIndex();
+            final Element element = Element.as(event.getEventTarget());
+            final Element columnTop = ElementUtil.findParent(element, "column-top", 3);
+            if (columnTop != null) {
+                colIndex = heading.getColIndex();
+            }
         }
 
         ignoreNext = currentColIndex == colIndex;
@@ -94,9 +101,7 @@ public class ColumnsManager implements HeadingListener {
                     @Override
                     public void run() {
                         if (currentColIndex == colIndex) {
-                            HideMenuEvent
-                                    .builder()
-                                    .fire(tablePresenter);
+                            HideMenuEvent.builder().fire(tablePresenter);
 
                         } else {
                             currentColIndex = colIndex;
@@ -133,7 +138,7 @@ public class ColumnsManager implements HeadingListener {
     public void moveColumn(final int fromIndex, final int toIndex) {
         final Column column = getColumn(fromIndex);
         if (column != null) {
-            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
             columns.remove(column);
 
             final int destIndex = toIndex - columnsStartIndex;
@@ -159,7 +164,7 @@ public class ColumnsManager implements HeadingListener {
     }
 
     private void changeSort(final Column column, final SortDirection direction) {
-        final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+        final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
         boolean change = false;
 
         if (direction == null) {
@@ -246,12 +251,20 @@ public class ColumnsManager implements HeadingListener {
         });
     }
 
-    private void filterField(final Column column) {
-        filterPresenter.show(tablePresenter, column, (oldField, newField) -> {
+    private void filterColumn(final Column column) {
+        tableFilterPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
+
+            if (newField.getColumnFilter() != null &&
+                GwtNullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
+                if (!tablePresenter.getTableSettings().applyValueFilters()) {
+                    tablePresenter.toggleApplyValueFilters();
+                }
+            }
+
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.refresh();
+            tablePresenter.onColumnFilterChange();
         });
     }
 
@@ -262,8 +275,8 @@ public class ColumnsManager implements HeadingListener {
     public void addColumn(final int index, final Column templateColumn) {
         final String columnName = makeUniqueColumnName(templateColumn.getName());
         final Column newColumn = templateColumn.copy()
-                .name(columnName)
                 .id(createRandomColumnId())
+                .name(columnName)
                 .build();
 
         final List<Column> columns = getColumns();
@@ -341,16 +354,37 @@ public class ColumnsManager implements HeadingListener {
         updateColumns(columns);
     }
 
+    @Override
+    public void setValueFilter(final Column column,
+                               final String valueFilter) {
+        ColumnFilter columnFilter = null;
+        if (GwtNullSafe.isNonBlankString(valueFilter)) {
+            // TODO : Add case sensitive option.
+            columnFilter = new ColumnFilter(valueFilter);
+        }
+
+        if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
+            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // focus from column filter textbox.
+            column.setColumnFilter(columnFilter);
+
+            replaceColumn(column, column.copy().columnFilter(columnFilter).build());
+            tablePresenter.setFocused(false);
+            tablePresenter.setDirty(true);
+            tablePresenter.onColumnFilterChange();
+        }
+    }
+
     private List<Column> getColumns() {
-        if (tablePresenter.getSettings() != null && tablePresenter.getTableSettings().getColumns() != null) {
-            return new ArrayList<>(tablePresenter.getTableSettings().getColumns());
+        if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
+            return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
         }
         return new ArrayList<>();
     }
 
     private void updateColumns(final List<Column> columns) {
         tablePresenter.setSettings(
-                tablePresenter.getTableSettings()
+                tablePresenter.getTableComponentSettings()
                         .copy()
                         .columns(columns)
                         .build());
@@ -410,8 +444,8 @@ public class ColumnsManager implements HeadingListener {
         menuItems.add(createGroupByMenu(column));
         // Create format menu.
         menuItems.add(createFormatMenu(column));
-        // Add filter menu item.
-        menuItems.add(createFilterMenu(column));
+        // Add column filter menu item.
+        menuItems.add(createColumnFilterMenu(column));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
@@ -604,18 +638,21 @@ public class ColumnsManager implements HeadingListener {
         return depths.size();
     }
 
-    private Item createFilterMenu(final Column column) {
+    private Item createColumnFilterMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(4)
                 .icon(SvgImage.FILTER)
                 .disabledIcon(SvgImage.FILTER)
                 .text("Filter")
-                .command(() -> filterField(column))
-                .highlight(column.getFilter() != null
-                        && ((column.getFilter().getIncludes() != null
-                        && column.getFilter().getIncludes().trim().length() > 0)
-                        || (column.getFilter().getExcludes() != null
-                        && column.getFilter().getExcludes().trim().length() > 0)))
+                .command(() -> filterColumn(column))
+                .highlight((column.getFilter() != null
+                           && ((column.getFilter().getIncludes() != null
+                                && column.getFilter().getIncludes().trim().length() > 0)
+                               || (column.getFilter().getExcludes() != null
+                                   && column.getFilter().getExcludes().trim().length() > 0))) ||
+                               (column.getColumnFilter() != null
+                           && ((column.getColumnFilter().getFilter() != null
+                                && column.getColumnFilter().getFilter().trim().length() > 0))))
                 .build();
     }
 
@@ -626,7 +663,7 @@ public class ColumnsManager implements HeadingListener {
                 .text("Format")
                 .command(() -> showFormat(column))
                 .highlight(column.getFormat() != null && column.getFormat().getSettings() != null
-                        && !column.getFormat().getSettings().isDefault())
+                           && !column.getFormat().getSettings().isDefault())
                 .build();
     }
 

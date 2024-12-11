@@ -9,6 +9,8 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -72,7 +74,8 @@ public class ProcessorInfoBuilder {
             }
 
             tb.row(SafeHtmlUtil.from("Id"), SafeHtmlUtil.from(filter.getId()));
-            tb.row(SafeHtmlUtil.from("Owner"), SafeHtmlUtil.from(processorFilterRow.getOwnerDisplayName()));
+            tb.row(SafeHtmlUtil.from("Run As User"), SafeHtmlUtil.from(
+                    GwtNullSafe.get(filter.getRunAsUser(), UserRef::toDisplayString)));
             tb.row("Created By", filter.getCreateUser());
             addRowDateString(tb, "Created On", filter.getCreateTimeMs());
             tb.row("Updated By", filter.getUpdateUser());
@@ -86,7 +89,10 @@ public class ProcessorInfoBuilder {
                         DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
             }
 
-            tb.row("Reprocess", filter.isReprocess() ? "True" : "False");
+            tb.row("Reprocess",
+                    filter.isReprocess()
+                            ? "True"
+                            : "False");
             tb.row("Max Concurrent Tasks",
                     filter.getMaxProcessingTasks() == 0
                             ? "Unlimited"

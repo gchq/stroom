@@ -20,6 +20,7 @@ import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.StringCriteria;
+import stroom.util.shared.UserRef;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     @JsonProperty
     private String schemaGroup;
     @JsonProperty
-    private String user;
+    private UserRef userRef;
 
     public FindXMLSchemaCriteria() {
     }
@@ -53,12 +54,12 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
                                  @JsonProperty("namespaceURI") final String namespaceURI,
                                  @JsonProperty("systemId") final String systemId,
                                  @JsonProperty("schemaGroup") final String schemaGroup,
-                                 @JsonProperty("user") final String user) {
+                                 @JsonProperty("userRef") final UserRef userRef) {
         super(pageRequest, sortList, name, requiredPermission);
         this.namespaceURI = namespaceURI;
         this.systemId = systemId;
         this.schemaGroup = schemaGroup;
-        this.user = user;
+        this.userRef = userRef;
     }
 
     public FindXMLSchemaCriteria(final String name) {
@@ -89,12 +90,12 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         this.schemaGroup = schemaGroup;
     }
 
-    public String getUser() {
-        return user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
-    public void setUser(final String user) {
-        this.user = user;
+    public void setUserRef(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
     public boolean matches(final XmlSchemaDoc doc) {
@@ -125,12 +126,12 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         return Objects.equals(namespaceURI, that.namespaceURI) &&
                 Objects.equals(systemId, that.systemId) &&
                 Objects.equals(schemaGroup, that.schemaGroup) &&
-                Objects.equals(user, that.user);
+                Objects.equals(userRef, that.userRef);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), namespaceURI, systemId, schemaGroup, user);
+        return Objects.hash(super.hashCode(), namespaceURI, systemId, schemaGroup, userRef);
     }
 
     @Override
@@ -139,7 +140,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
                 "namespaceURI='" + namespaceURI + '\'' +
                 ", systemId='" + systemId + '\'' +
                 ", schemaGroup='" + schemaGroup + '\'' +
-                ", user='" + user + '\'' +
+                ", userRef='" + userRef + '\'' +
                 '}';
     }
 }

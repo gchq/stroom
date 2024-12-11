@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.view.client.presenter;
@@ -28,7 +27,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -65,10 +64,10 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         view.setExpressionView(expressionPresenter.getView());
 
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
-        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelineSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        pipelineSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {
@@ -95,8 +94,8 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
     @Override
     protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
-        dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
-        pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
+        dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource(), true);
+        pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline(), true);
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(MetaFields.getAllFields());
         expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);

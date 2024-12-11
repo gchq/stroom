@@ -44,12 +44,11 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
@@ -57,6 +56,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -65,6 +65,8 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -95,10 +97,11 @@ public class SteppingPresenter
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
-    private final PipelineStepRequest request;
+    private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
     private final PipelineTreePresenter pipelineTreePresenter;
     private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> elementPresenterProvider;
+    private final SimplePanel stepMessage;
     private final StepLocationLinkPresenter stepLocationLinkPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
@@ -107,6 +110,7 @@ public class SteppingPresenter
     private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
+    private final InlineSvgButton terminateButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean showingData;
@@ -139,8 +143,17 @@ public class SteppingPresenter
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
 
+        terminateButton = new InlineSvgButton();
+        terminateButton.setEnabled(false);
+        terminateButton.addStyleName("QueryButtons-button stop");
+        terminateButton.setSvg(SvgImage.STOP);
+        terminateButton.setTitle("Terminate Stepping");
+        final ButtonPanel buttonPanel = new ButtonPanel();
+        buttonPanel.addButton(terminateButton);
+
         view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
+        view.addWidgetRight(buttonPanel);
         view.setTreeView(pipelineTreePresenter.getView());
 
         sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
@@ -152,19 +165,18 @@ public class SteppingPresenter
         pipelineTreePresenter.setPipelineTreeBuilder(new SteppingPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
-        // Create the translation request to use.
-        request = new PipelineStepRequest();
-
         stepControlPresenter.setEnabledButtons(
                 false,
-                request.getStepType(),
+                requestBuilder.build().getStepType(),
                 showingData,
                 foundRecord,
                 false,
                 false,
                 null);
 
-        saveButton = addButtonLeft(SvgPresets.SAVE);
+        leftButtons = new ButtonPanel();
+        saveButton = leftButtons.addButton(SvgPresets.SAVE);
+
         // Create but don't add yet
         toggleLogPaneButton = new InlineSvgToggleButton();
         toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
@@ -173,6 +185,14 @@ public class SteppingPresenter
         leftButtons.addButton(toggleLogPaneButton);
 
         sourcePresenter.setClassificationUiHandlers(this);
+
+        this.stepMessage = new SimplePanel();
+
+        final FlowPanel stepToolbar = new FlowPanel();
+        stepToolbar.addStyleName("stepToolbar dock-container-horizontal dock-min");
+        stepToolbar.add(leftButtons);
+        stepToolbar.add(stepMessage);
+        getView().addWidgetLeft(stepToolbar);
     }
 
     @Override
@@ -198,6 +218,7 @@ public class SteppingPresenter
             showChangeFiltersDialog();
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
+        registerHandler(terminateButton.addClickHandler(event -> terminate()));
         registerHandler(toggleLogPaneButton.addClickHandler(event -> {
             final ElementPresenter elementPresenter = getCurrentElementPresenter();
             if (elementPresenter != null) {
@@ -235,10 +256,10 @@ public class SteppingPresenter
         steppingFilterPresenter.show(
                 elements,
                 getSelectedPipeElement(),
-                request.getStepFilterMap(),
+                requestBuilder.build().getStepFilterMap(),
                 stepFilterMap -> {
                     pipelineModel.setStepFilters(stepFilterMap);
-                    request.setStepFilterMap(stepFilterMap);
+                    requestBuilder.stepFilterMap(stepFilterMap);
                     // Need to refresh the view in case any elements need to reflect active filters
                     pipelineTreePresenter.getView().refresh();
                     pipelineTreePresenter.getSelectionModel().setSelected(selectedObject, true);
@@ -283,23 +304,24 @@ public class SteppingPresenter
     }
 
     private void clearAllFilters() {
-        GwtNullSafe.map(request.getStepFilterMap())
-                .values()
-                .forEach(SteppingFilterSettings::clearAllFilters);
+        requestBuilder.stepFilterMap(null);
         // Update the model so the filter icon in the pipe elements is updated
-        pipelineModel.setStepFilters(request.getStepFilterMap());
+        pipelineModel.setStepFilters(requestBuilder.build().getStepFilterMap());
         pipelineTreePresenter.getView().refresh();
     }
 
     private void clearFiltersOnSelected() {
         final PipelineElement selectedPipeElement = getSelectedPipeElement();
-        if (selectedPipeElement != null && request.getStepFilterMap() != null) {
-            final SteppingFilterSettings steppingFilterSettings = request.getStepFilterMap()
-                    .get(selectedPipeElement.getId());
+        final Map<String, SteppingFilterSettings> stepFilterMap = requestBuilder.build().getStepFilterMap();
+        if (selectedPipeElement != null && stepFilterMap != null) {
+            final SteppingFilterSettings steppingFilterSettings = stepFilterMap.get(selectedPipeElement.getId());
             if (steppingFilterSettings != null) {
-                steppingFilterSettings.clearAllFilters();
+                final Map<String, SteppingFilterSettings> newMap = new HashMap<>(stepFilterMap);
+                newMap.remove(selectedPipeElement.getId());
+                requestBuilder.stepFilterMap(newMap);
+
                 // Update the model so the filter icon in the pipe elements is updated
-                pipelineModel.setStepFilters(request.getStepFilterMap());
+                pipelineModel.setStepFilters(newMap);
             }
         }
         pipelineTreePresenter.getView().refresh();
@@ -333,15 +355,6 @@ public class SteppingPresenter
         }
     }
 
-    private ButtonView addButtonLeft(final Preset preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            getView().addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.addButton(preset);
-    }
-
     private PresenterWidget<?> getContent(final PipelineElement element) {
         if (PipelineModel.SOURCE_ELEMENT.getElementType().equals(element.getElementType())) {
             currentElementPresenter = null;
@@ -359,11 +372,11 @@ public class SteppingPresenter
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
                 final ElementPresenter presenter = elementPresenterProvider.get();
-                presenter.setTaskHandlerFactory(this);
+                presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
-                presenter.setPipelineName(request.getPipeline().getName());
+                presenter.setPipelineName(requestBuilder.build().getPipeline().getName());
                 presenter.setClassification(classification);
                 elementPresenterMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
@@ -520,12 +533,12 @@ public class SteppingPresenter
         sourcePresenter.setSourceLocation(sourceLocation);
 
         // Set the pipeline on the stepping action.
-        request.setPipeline(pipeline);
+        requestBuilder.pipeline(pipeline);
 
         // Set the stream id on the stepping action.
         final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
-        request.setCriteria(findMetaCriteria);
-        request.setChildStreamType(childStreamType);
+        requestBuilder.criteria(findMetaCriteria);
+        requestBuilder.childStreamType(childStreamType);
 
         // Load the pipeline.
         restFactory
@@ -561,7 +574,7 @@ public class SteppingPresenter
                                 stepLocation.getRecordIndex()));
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -577,16 +590,29 @@ public class SteppingPresenter
     private void step(final StepType stepType, final StepLocation stepLocation) {
         if (!busyTranslating) {
             busyTranslating = true;
+            stepMessage.getElement().setInnerHTML("Stepping...");
+            stepMessage.setVisible(true);
+            terminateButton.setEnabled(true);
+
+            // Set a null session UUID as this is a new stepping session.
+            requestBuilder.sessionUuid(null);
 
             // If we are stepping to the first or last record then clear all
             // current state from the action.
             if (StepType.FIRST.equals(stepType) || StepType.LAST.equals(stepType)) {
-                request.reset();
+                requestBuilder.stepLocation(null);
+                requestBuilder.stepType(null);
+
+                final Map<String, SteppingFilterSettings> stepFilterMap = requestBuilder.build().getStepFilterMap();
+                if (stepFilterMap != null) {
+                    stepFilterMap.values().forEach(steppingFilterSettings ->
+                            steppingFilterSettings.clearUniqueValues());
+                }
             }
 
             // Is the event telling us to jump to a specific location?
             if (stepLocation != null) {
-                request.setStepLocation(stepLocation);
+                requestBuilder.stepLocation(stepLocation);
             }
 
             // Set dirty code on action.
@@ -598,21 +624,73 @@ public class SteppingPresenter
                     codeMap.put(elementId, code);
                 }
             }
-            request.setCode(codeMap);
+            requestBuilder.timeout(40L);
+            requestBuilder.code(codeMap);
+            requestBuilder.stepType(stepType);
 
-            request.setStepType(stepType);
+            poll();
+        }
+    }
 
+    private void poll() {
+        restFactory
+                .create(STEPPING_RESOURCE)
+                .method(res -> res.step(requestBuilder.build()))
+                .onSuccess(response -> {
+                    if (!response.isComplete()) {
+                        if (busyTranslating) {
+                            final StepLocation progressLocation = response.getProgressLocation();
+                            stepMessage.getElement().setInnerHTML("Stepping... " +
+                                    getStepLocationText(progressLocation));
+                            requestBuilder.sessionUuid(response.getSessionUuid());
+                            poll();
+                        } else {
+                            stop();
+                        }
+                    } else {
+                        readResult(response);
+                        stop();
+                    }
+                })
+                .onFailure(restError -> {
+                    AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
+                    busyTranslating = false;
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private String getStepLocationText(final StepLocation stepLocation) {
+        if (stepLocation == null) {
+            return "";
+        }
+
+        return "[" +
+                stepLocation.getMetaId() + ":" +
+                (stepLocation.getPartIndex() + 1) + ":" +
+                (stepLocation.getRecordIndex() + 1) +
+                "]";
+    }
+
+    public void terminate() {
+        stop();
+        final PipelineStepRequest request = requestBuilder.build();
+        if (request.getSessionUuid() != null) {
             restFactory
                     .create(STEPPING_RESOURCE)
-                    .method(res -> res.step(request))
-                    .onSuccess(this::readResult)
-                    .onFailure(restError -> {
-                        AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
-                        busyTranslating = false;
+                    .method(res -> res.terminateStepping(request))
+                    .onSuccess(response -> {
+                        // Ignore response, we will assume we have stopped.
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
+    }
+
+    private void stop() {
+        busyTranslating = false;
+        stepMessage.getElement().setInnerHTML("");
+        terminateButton.setEnabled(false);
     }
 
     private SharedStepData getEffectiveStepData() {
@@ -624,7 +702,7 @@ public class SteppingPresenter
                 steppingResult = currentResult;
             } else {
                 if (lastFoundResult != null
-                        && Objects.equals(currentResult.getStepLocation(), lastFoundResult.getStepLocation())
+                        && Objects.equals(currentResult.getFoundLocation(), lastFoundResult.getFoundLocation())
                         && GwtNullSafe.isEmptyCollection(currentResult.getGeneralErrors())
                         && !GwtNullSafe.test(currentResult.getStepData(), SharedStepData::hasIndicators)) {
                     // Same location as last time and no errors/indicators in the curr result, so just display
@@ -715,12 +793,12 @@ public class SteppingPresenter
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
                 // position ready for the next step.
-                request.setStepLocation(result.getStepLocation());
-                stepLocationLinkPresenter.setStepLocation(result.getStepLocation());
+                requestBuilder.stepLocation(result.getFoundLocation());
+                stepLocationLinkPresenter.setStepLocation(result.getFoundLocation());
             }
 
             // Sync step filters.
-            request.setStepFilterMap(result.getStepFilterMap());
+            requestBuilder.stepFilterMap(result.getStepFilterMap());
 
             if (result.getGeneralErrors() != null && result.getGeneralErrors().size() > 0) {
                 final StringBuilder sb = new StringBuilder();
@@ -736,12 +814,12 @@ public class SteppingPresenter
         } finally {
             stepControlPresenter.setEnabledButtons(
                     true,
-                    request.getStepType(),
+                    requestBuilder.build().getStepType(),
                     showingData,
                     foundRecord,
                     fatalErrors.isPresent(),
                     result.hasActiveFilter(),
-                    result.getStepLocation());
+                    result.getFoundLocation());
             busyTranslating = false;
         }
     }
@@ -773,9 +851,9 @@ public class SteppingPresenter
 
     private void onSelect(final PipelineElement element) {
         if (element != null) {
-            final TaskHandler taskHandler = createTaskHandler();
+            final TaskMonitor taskMonitor = createTaskMonitor();
             final Task task = new SimpleTask("Stepping");
-            taskHandler.onStart(task);
+            taskMonitor.onStart(task);
             Scheduler.get().scheduleDeferred(() -> {
                 final PresenterWidget<?> content = getContent(element);
                 if (content != null) {
@@ -784,7 +862,7 @@ public class SteppingPresenter
 
                     updateElementSeverities();
                 }
-                taskHandler.onEnd(task);
+                taskMonitor.onEnd(task);
             });
         }
     }

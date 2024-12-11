@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.stepping;
 
 import stroom.docref.DocRef;
@@ -23,27 +39,35 @@ import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.inject.Singleton;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
+@Singleton
 public class SteppingService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SteppingService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SteppingService.class);
 
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stepping");
 
@@ -56,6 +80,8 @@ public class SteppingService {
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
+    private final Map<Key, SteppingRequestHandler> currentHandlers = new ConcurrentHashMap<>();
+    private final TaskManager taskManager;
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -66,7 +92,8 @@ public class SteppingService {
                            final SecurityContext securityContext,
                            final PipelineScopeRunnable pipelineScopeRunnable,
                            final ElementRegistryFactory pipelineElementRegistryFactory,
-                           final ElementFactory elementFactory) {
+                           final ElementFactory elementFactory,
+                           final TaskManager taskManager) {
         this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
         this.executorProvider = executorProvider;
@@ -76,17 +103,96 @@ public class SteppingService {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
+        this.taskManager = taskManager;
     }
 
     public SteppingResult step(final PipelineStepRequest request) {
-        // Execute the stepping task.
-        final Function<TaskContext, SteppingResult> function = taskContext -> {
-            final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
-            return steppingRequestHandler.exec(taskContext, request);
-        };
-        final Supplier<SteppingResult> supplier = taskContextFactory.contextResult("Translation stepping", function);
-        final Executor executor = executorProvider.get(THREAD_POOL);
-        return CompletableFuture.supplyAsync(supplier, executor).join();
+        LOGGER.trace(() -> "step() - " + request);
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+
+        final Key key;
+        final SteppingResult result;
+        if (request.getSessionUuid() == null) {
+            LOGGER.debug("New Stepping Session");
+
+            // Create a new session UUID on the request.
+            final PipelineStepRequest modifiedRequest = request
+                    .copy()
+                    .sessionUuid(UUID.randomUUID().toString())
+                    .build();
+            key = new Key(userIdentity, modifiedRequest.getSessionUuid());
+            final SteppingRequestHandler handler = currentHandlers.computeIfAbsent(key, k -> {
+                final AtomicReference<SteppingRequestHandler> reference = new AtomicReference<>();
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                final Executor executor = executorProvider.get(THREAD_POOL);
+
+                CompletableFuture.runAsync(taskContextFactory.context("Translation stepping", taskContext -> {
+                    final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
+                    reference.set(steppingRequestHandler);
+                    countDownLatch.countDown();
+                    steppingRequestHandler.exec(taskContext, modifiedRequest);
+                }), executor);
+
+                try {
+                    countDownLatch.await();
+                } catch (final InterruptedException e) {
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+
+                return reference.get();
+            });
+            result = handler.getResult(modifiedRequest);
+
+        } else {
+            LOGGER.debug(() -> "Polling stepping session: " + request.getSessionUuid());
+
+            key = new Key(userIdentity, request.getSessionUuid());
+            final SteppingRequestHandler handler = currentHandlers.get(key);
+            if (handler == null) {
+                throw new RuntimeException("No stepping session found for key: " + request.getSessionUuid());
+            }
+
+            result = handler.getResult(request);
+        }
+
+        // Remove handler if complete.
+        if (result.isComplete()) {
+            currentHandlers.remove(key);
+        }
+
+        // Also remove old handlers for dead stepping tasks and terminate them.
+        final Instant oldest = Instant.now().minusSeconds(10);
+        currentHandlers.forEach((key1, value) -> {
+            if (value.getLastRequestTime().isBefore(oldest)) {
+                terminate(key1);
+            }
+        });
+
+        return result;
+    }
+
+    public Boolean terminateStepping(final PipelineStepRequest request) {
+        LOGGER.trace(() -> "terminateStepping() - " + request);
+
+        if (request.getSessionUuid() != null) {
+            LOGGER.debug(() -> "Terminate stepping: " + request.getSessionUuid());
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            final Key key = new Key(userIdentity, request.getSessionUuid());
+            return terminate(key);
+        }
+        return false;
+    }
+
+    private Boolean terminate(final Key key) {
+        LOGGER.debug(() -> "Terminate: " + key);
+        final SteppingRequestHandler handler = currentHandlers.remove(key);
+        if (handler != null) {
+            taskManager.terminate(handler.getTaskContext().getTaskId());
+            return true;
+        }
+        return false;
     }
 
     public DocRef getPipelineForStepping(final GetPipelineForMetaRequest request) {
@@ -113,29 +219,25 @@ public class SteppingService {
     private Meta getMeta(final Long id) {
         if (id == null) {
             return null;
+        } else {
+            return securityContext.asProcessingUserResult(() -> {
+                final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
+                final List<Meta> streamList = metaService.find(criteria).getValues();
+                return NullSafe.first(streamList);
+            });
         }
-
-        return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
-            final List<Meta> streamList = metaService.find(criteria).getValues();
-            if (streamList != null && streamList.size() > 0) {
-                return streamList.get(0);
-            }
-
-            return null;
-        });
     }
 
     private Meta getFirstChildMeta(final Long id) {
         if (id == null) {
             return null;
+        } else {
+            return securityContext.asProcessingUserResult(() -> {
+                final FindMetaCriteria criteria =
+                        new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
+                return metaService.find(criteria).getFirst();
+            });
         }
-
-        return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria =
-                    new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
-            return metaService.find(criteria).getFirst();
-        });
     }
 
     private DocRef getPipeline(final Meta meta) {
@@ -190,13 +292,22 @@ public class SteppingService {
                         null);
             }
 
-            if (elementInstance instanceof SupportsCodeInjection) {
-                final SupportsCodeInjection supportsCodeInjection = (SupportsCodeInjection) elementInstance;
-                return supportsCodeInjection.findDoc(request.getFeedName(), request.getPipelineName(), LOGGER::debug);
+            if (elementInstance instanceof SupportsCodeInjection supportsCodeInjection) {
+                return supportsCodeInjection.findDoc(
+                        request.getFeedName(),
+                        request.getPipelineName(),
+                        LOGGER::debug);
             }
 
             throw new PipelineFactoryException("Element does not support code injection " + elementClass);
         });
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    public record Key(UserIdentity userIdentity, String uuid) {
+
+    }
 }

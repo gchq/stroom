@@ -25,6 +25,7 @@ import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -74,7 +75,7 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
     }
 
     @Override
-    protected String getRequiredAppPermission() {
+    protected AppPermission getRequiredAppPermission() {
         return null;
     }
 

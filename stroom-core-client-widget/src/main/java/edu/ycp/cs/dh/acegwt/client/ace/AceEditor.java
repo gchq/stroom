@@ -19,6 +19,8 @@
 
 package edu.ycp.cs.dh.acegwt.client.ace;
 
+import stroom.ui.config.shared.AceEditorTheme;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
@@ -1111,4 +1113,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         this.commandLine = cmdLine;
         this.commandLine.setCommandLineListener(command -> execCommand(command));
     }
+
+    public native Element getTextInputElement()/*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		return editor.textInput.getElement();
+	}-*/;
 }

@@ -5,6 +5,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +34,7 @@ public class TestSerialisation {
                 Set.of("t1", "t2"),
                 Set.of("t1", "t2"),
                 Set.of(NodeFlag.OPEN, NodeFlag.FAVOURITE),
-                Set.of("p1", "p2"),
+                Set.of(DocumentPermission.USE, DocumentPermission.VIEW),
                 "blah",
                 true,
                 null);

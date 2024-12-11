@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,8 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.format.Formatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -47,15 +48,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class FlatResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlatResultCreator.class);
 
-    private final ColumnFormatter columnFormatter;
-    private final List<Mapper> mappers;
-    private final List<Column> columns;
+    private final DataStoreFactory dataStoreFactory;
+    private final SearchRequest searchRequest;
+    private final String componentId;
+    private final ExpressionContext expressionContext;
+    private final Map<String, String> paramMap;
+    private final FormatterFactory formatterFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    private final Sizes defaultMaxResultsSizes;
     private final boolean cacheLastResult;
     private FlatResult lastResult;
 
@@ -63,68 +72,20 @@ public class FlatResultCreator implements ResultCreator {
                              final SearchRequest searchRequest,
                              final String componentId,
                              final ExpressionContext expressionContext,
-                             final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
-                             final ColumnFormatter columnFormatter,
+                             final FormatterFactory formatterFactory,
+                             final ExpressionPredicateFactory expressionPredicateFactory,
                              final Sizes defaultMaxResultsSizes,
                              final boolean cacheLastResult) {
-        this.columnFormatter = columnFormatter;
+        this.dataStoreFactory = dataStoreFactory;
+        this.searchRequest = searchRequest;
+        this.componentId = componentId;
+        this.expressionContext = expressionContext;
+        this.paramMap = paramMap;
+        this.formatterFactory = formatterFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
+        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.cacheLastResult = cacheLastResult;
-
-        // User may have added a vis pane but not defined the vis
-        final List<TableSettings> tableSettings = resultRequest.getMappings()
-                .stream()
-                .filter(Objects::nonNull)
-                .toList();
-
-        if (tableSettings.size() > 1) {
-            mappers = new ArrayList<>(tableSettings.size() - 1);
-            for (int i = 0; i < tableSettings.size() - 1; i++) {
-                final TableSettings parent = tableSettings.get(i);
-                final TableSettings child = tableSettings.get(i + 1);
-
-                final Sizes maxResults;
-                if (child != null && child.getMaxResults() != null && child.getMaxResults().size() > 0) {
-                    maxResults = Sizes.create(child.getMaxResults());
-                } else {
-                    maxResults = defaultMaxResultsSizes;
-                }
-
-                final DataStoreSettings dataStoreSettings = DataStoreSettings
-                        .createBasicSearchResultStoreSettings()
-                        .copy()
-                        .maxResults(maxResults)
-                        .build();
-
-                mappers.add(new Mapper(
-                        dataStoreFactory,
-                        dataStoreSettings,
-                        searchRequest.getSearchRequestSource(),
-                        expressionContext,
-                        searchRequest.getKey(),
-                        componentId,
-                        parent,
-                        child,
-                        paramMap,
-                        errorConsumer));
-            }
-        } else {
-            LOGGER.debug(() -> LogUtil.message(
-                    "Invalid non-null tableSettings count ({}) for search: {} and componentId: {}",
-                    tableSettings.size(),
-                    searchRequest.getKey(),
-                    componentId));
-            errorConsumer.add(() -> LogUtil.message(
-                    "Component with ID: '{}' has not been configured correctly so will not show any data.",
-                    componentId));
-            mappers = Collections.emptyList();
-        }
-
-        final TableSettings child = tableSettings.getLast();
-
-        columns = child != null
-                ? child.getColumns()
-                : Collections.emptyList();
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Column>> groupColumns, final Key key) {
@@ -152,7 +113,7 @@ public class FlatResultCreator implements ResultCreator {
 
                     final List<Column> columns = groupColumns.get(depth);
                     if (columns != null) {
-                        column = columns.get(0);
+                        column = columns.getFirst();
                     }
 
                     result.add(convert(column, val));
@@ -184,96 +145,162 @@ public class FlatResultCreator implements ResultCreator {
             return null;
         }
 
+        // User may have added a vis pane but not defined the vis
+        final List<TableSettings> tableSettings = resultRequest.getMappings()
+                .stream()
+                .filter(Objects::nonNull)
+                .toList();
+
         final FlatResultBuilder resultBuilder = FlatResult.builder();
         if (!errorConsumer.hasErrors()) {
             try {
                 // Map data.
                 DataStore mappedDataStore = dataStore;
-                for (final Mapper mapper : mappers) {
-                    mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
-                }
+                if (tableSettings.size() > 1) {
+                    for (int i = 0; i < tableSettings.size() - 1; i++) {
+                        final TableSettings parent = tableSettings.get(i);
+                        final TableSettings child = tableSettings.get(i + 1);
 
-                final Map<Integer, List<Column>> groupFields = new HashMap<>();
-                for (final Column column : columns) {
-                    if (column.getGroup() != null) {
-                        groupFields.computeIfAbsent(column.getGroup(), k ->
-                                        new ArrayList<>())
-                                .add(column);
+                        final Sizes maxResults;
+                        if (child != null && child.getMaxResults() != null && !child.getMaxResults().isEmpty()) {
+                            maxResults = Sizes.create(child.getMaxResults());
+                        } else {
+                            maxResults = defaultMaxResultsSizes;
+                        }
+
+                        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                                .createBasicSearchResultStoreSettings()
+                                .copy()
+                                .maxResults(maxResults)
+                                .build();
+
+                        final Mapper mapper = new Mapper(
+                                dataStoreFactory,
+                                dataStoreSettings,
+                                searchRequest.getSearchRequestSource(),
+                                expressionContext,
+                                searchRequest.getKey(),
+                                componentId,
+                                parent,
+                                child,
+                                paramMap,
+                                errorConsumer,
+                                expressionPredicateFactory);
+                        mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                     }
-                }
 
-                // Get top level items.
-                mappedDataStore.fetch(
-                        mappedDataStore.getColumns(),
-                        resultRequest.getRequestedRange(),
-                        OpenGroups.ALL,
-                        resultRequest.getTimeFilter(),
-                        IdentityItemMapper.INSTANCE,
-                        item -> {
-                            final List<Object> resultList = new ArrayList<>(columns.size() + 3);
+                    final TableSettings child = tableSettings.getLast();
+                    final List<Column> columns = child != null
+                            ? child.getColumns()
+                            : Collections.emptyList();
 
-                            final Key key = item.getKey();
-                            if (key != null) {
-                                resultList.add(toNodeKey(groupFields, key.getParent()));
-                                resultList.add(toNodeKey(groupFields, key));
-                                resultList.add(key.getDepth());
+
+                    final Map<Integer, List<Column>> groupFields = new HashMap<>();
+                    for (final Column column : columns) {
+                        if (column.getGroup() != null) {
+                            groupFields.computeIfAbsent(column.getGroup(), k ->
+                                            new ArrayList<>())
+                                    .add(column);
+                        }
+                    }
+
+                    // Get top level items.
+                    final Function<Val, Object>[] converters = new Function[mappedDataStore.getColumns().size()];
+                    if (formatterFactory != null) {
+                        final Formatter[] formatters = RowUtil.createFormatters(mappedDataStore.getColumns(),
+                                formatterFactory);
+                        for (int i = 0; i < converters.length; i++) {
+                            final Column column = mappedDataStore.getColumns().get(i);
+                            if (column.getFormat() == null) {
+                                converters[i] = val -> convert(column, val);
                             } else {
-                                resultList.add(null);
-                                resultList.add(null);
-                                resultList.add(0);
+                                final Formatter formatter = formatters[i];
+                                converters[i] = formatter::format;
                             }
+                        }
+                    } else {
+                        for (int i = 0; i < converters.length; i++) {
+                            final Column column = mappedDataStore.getColumns().get(i);
+                            converters[i] = val -> convert(column, val);
+                        }
+                    }
 
-                            // Convert all list into fully resolved objects evaluating
-                            // functions where necessary.
-                            int i = 0;
-                            for (final Column col : columns) {
-                                final Val val = item.getValue(i);
-                                Object result = null;
-                                if (val != null) {
-                                    Column column = col;
+                    // Now fetch data.
+                    mappedDataStore.fetch(
+                            mappedDataStore.getColumns(),
+                            resultRequest.getRequestedRange(),
+                            OpenGroups.ALL,
+                            resultRequest.getTimeFilter(),
+                            IdentityItemMapper.INSTANCE,
+                            item -> {
+                                final List<Object> resultList = new ArrayList<>(columns.size() + 3);
 
-                                    // Ensure a column has a format if none explicitly set.
-                                    if (val.type().isValue() && (column.getFormat() == null ||
-                                            column.getFormat().getType() == Type.GENERAL)) {
-                                        if (stroom.query.language.functions.Type.DATE.equals(val.type())) {
-                                            column = column.copy().format(Format.DATE_TIME).build();
-                                        } else if (val.type().isNumber()) {
-                                            column = column.copy().format(Format.NUMBER).build();
-                                        } else {
-                                            column = column.copy().format(Format.TEXT).build();
-                                        }
-
-                                        columns.set(i, column);
-                                    }
-
-                                    // Convert all list into fully resolved
-                                    // objects evaluating functions where necessary.
-                                    if (columnFormatter != null) {
-                                        result = columnFormatter.format(column, val);
-                                    } else {
-                                        result = convert(column, val);
-                                    }
+                                final Key key = item.getKey();
+                                if (key != null) {
+                                    resultList.add(toNodeKey(groupFields, key.getParent()));
+                                    resultList.add(toNodeKey(groupFields, key));
+                                    resultList.add(key.getDepth());
+                                } else {
+                                    resultList.add(null);
+                                    resultList.add(null);
+                                    resultList.add(0);
                                 }
 
-                                resultList.add(result);
-                                i++;
-                            }
+                                // Convert all list into fully resolved objects evaluating
+                                // functions where necessary.
+                                int i = 0;
+                                for (final Column col : columns) {
+                                    final Val val = item.getValue(i);
+                                    Object result = null;
+                                    if (val != null) {
+                                        Column column = col;
 
-                            // Add the values.
-                            resultBuilder.addValues(resultList);
-                        },
-                        resultBuilder::totalResults);
+                                        // Ensure a column has a format if none explicitly set.
+                                        if (val.type().isValue() && (column.getFormat() == null ||
+                                                                     column.getFormat().getType() == Type.GENERAL)) {
+                                            if (stroom.query.language.functions.Type.DATE.equals(val.type())) {
+                                                column = column.copy().format(Format.DATE_TIME).build();
+                                            } else if (val.type().isNumber()) {
+                                                column = column.copy().format(Format.NUMBER).build();
+                                            } else {
+                                                column = column.copy().format(Format.TEXT).build();
+                                            }
 
-                final List<Column> structure = new ArrayList<>();
-                structure.add(Column.builder().name(":ParentKey").build());
-                structure.add(Column.builder().name(":Key").build());
-                structure.add(Column.builder().name(":Depth").build());
-                structure.addAll(this.columns);
+                                            columns.set(i, column);
+                                        }
 
-                resultBuilder
-                        .componentId(resultRequest.getComponentId())
-                        .errors(errorConsumer.getErrors())
-                        .structure(structure);
+                                        // Convert all list into fully resolved
+                                        // objects evaluating functions where necessary.
+                                        result = converters[i].apply(val);
+                                    }
+
+                                    resultList.add(result);
+                                    i++;
+                                }
+
+                                // Add the values.
+                                resultBuilder.addValues(resultList);
+                            },
+                            resultBuilder::totalResults);
+
+                    final List<Column> structure = new ArrayList<>();
+                    structure.add(Column.builder().id(":ParentKey").name(":ParentKey").build());
+                    structure.add(Column.builder().id(":Key").name(":Key").build());
+                    structure.add(Column.builder().id(":Depth").name(":Depth").build());
+                    structure.addAll(columns);
+
+                    resultBuilder.structure(structure);
+
+                } else {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Invalid non-null tableSettings count ({}) for search: {} and componentId: {}",
+                            tableSettings.size(),
+                            searchRequest.getKey(),
+                            componentId));
+                    errorConsumer.add(() -> LogUtil.message(
+                            "Component with ID: '{}' has not been configured correctly so will not show any data.",
+                            componentId));
+                }
 
             } catch (final UncheckedInterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
@@ -326,13 +353,14 @@ public class FlatResultCreator implements ResultCreator {
         private final DataStoreSettings dataStoreSettings;
         private final SearchRequestSource searchRequestSource;
         private final ExpressionContext expressionContext;
+        private final ExpressionPredicateFactory expressionPredicateFactory;
         private final QueryKey queryKey;
         private final String componentId;
+        private final TableSettings parent;
         private final TableSettings child;
         private final Map<String, String> paramMap;
         private final ErrorConsumer errorConsumer;
         private final FieldIndex childFieldIndex;
-
         private final int[] parentFieldIndices;
 
         Mapper(final DataStoreFactory dataStoreFactory,
@@ -344,20 +372,22 @@ public class FlatResultCreator implements ResultCreator {
                final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
-               final ErrorConsumer errorConsumer) {
+               final ErrorConsumer errorConsumer,
+               final ExpressionPredicateFactory expressionPredicateFactory) {
             this.dataStoreFactory = dataStoreFactory;
             this.dataStoreSettings = dataStoreSettings;
             this.searchRequestSource = searchRequestSource;
             this.expressionContext = expressionContext;
+            this.expressionPredicateFactory = expressionPredicateFactory;
             this.queryKey = queryKey;
             this.componentId = componentId;
+            this.parent = parent;
             this.child = child;
             this.paramMap = paramMap;
             this.errorConsumer = errorConsumer;
 
-            final FieldIndex parentFieldIndex = new FieldIndex();
-
             // Parent fields are now table column names.
+            final FieldIndex parentFieldIndex = new FieldIndex();
             for (final Column column : parent.getColumns()) {
                 parentFieldIndex.create(column.getName());
             }
@@ -393,10 +423,19 @@ public class FlatResultCreator implements ResultCreator {
                     dataStoreSettings,
                     errorConsumer);
 
+            // Apply filter to parent.
+            final Optional<Predicate<Val[]>> filter = FilteredRowCreator.createValuesPredicate(
+                    parent.getColumns(),
+                    parent.applyValueFilters(),
+                    parent.getAggregateFilter(),
+                    dataStore.getDateTimeSettings(),
+                    expressionPredicateFactory);
+            final Predicate<Val[]> predicate = filter.orElse(vals -> true);
+
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
             dataStore.fetch(
-                    dataStore.getColumns(),
+                    parent.getColumns(),
                     OffsetRange.UNBOUNDED,
                     OpenGroups.NONE,
                     timeFilter,
@@ -411,7 +450,11 @@ public class FlatResultCreator implements ResultCreator {
                                 values[i] = val;
                             }
                         }
-                        childDataStore.accept(Val.of(values));
+
+                        // Filter values.
+                        if (predicate.test(values)) {
+                            childDataStore.accept(Val.of(values));
+                        }
                     },
                     null);
 

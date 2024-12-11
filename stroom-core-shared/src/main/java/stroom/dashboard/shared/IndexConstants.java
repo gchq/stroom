@@ -22,11 +22,13 @@ public interface IndexConstants {
     // For the table names use generateObfuscatedColumnName() below
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
+    String RESERVED_STREAM_ID_FIELD_NAME = "__stream_id__";
+    String RESERVED_EVENT_ID_FIELD_NAME = "__event_id__";
 
     /**
      * Convert EventId to __event_id__
      */
-    static String generateObfuscatedColumnName(final String indexFieldName) {
+    static String generateReservedColumnName(final String indexFieldName) {
         if (indexFieldName != null) {
             StringBuilder stringBuilder = new StringBuilder("__");
             for (int i = 0; i < indexFieldName.length(); i++) {

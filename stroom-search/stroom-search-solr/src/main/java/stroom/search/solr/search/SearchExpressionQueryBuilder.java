@@ -382,7 +382,11 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query negate(final Query query) {
-        return new BooleanQuery.Builder().add(query, Occur.MUST_NOT).build();
+        // To enable SQL style functionality we have to tell Lucene to match all except the specified term.
+        return new BooleanQuery.Builder()
+                .add(new MatchAllDocsQuery(), Occur.SHOULD)
+                .add(query, Occur.MUST_NOT)
+                .build();
     }
 
     private Query getNumericIn(final String fieldName, final String value) {

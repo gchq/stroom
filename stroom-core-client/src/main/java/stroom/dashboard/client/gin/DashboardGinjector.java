@@ -17,6 +17,8 @@
 package stroom.dashboard.client.gin;
 
 import stroom.dashboard.client.DashboardPlugin;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.input.gin.InputGinjector;
 import stroom.dashboard.client.input.gin.InputModule;
 import stroom.dashboard.client.query.gin.QueryGinjector;
@@ -36,14 +38,16 @@ import com.google.gwt.inject.client.GinModules;
         TableModule.class,
         TextModule.class,
         VisModule.class,
-        InputModule.class
+        InputModule.class,
+        EmbeddedQueryModule.class
 })
 public interface DashboardGinjector extends
         QueryGinjector,
         TableGinjector,
         TextGinjector,
         VisGinjector,
-        InputGinjector {
+        InputGinjector,
+        EmbeddedQueryGinjector {
 
     AsyncProvider<DashboardPlugin> getDashboardPlugin();
 }

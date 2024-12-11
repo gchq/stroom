@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.impl;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
@@ -30,6 +46,7 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.MapDataStoreFactory;
@@ -50,6 +67,7 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -104,7 +122,8 @@ class TestSearchResultCreation {
                 pathCreator,
                 () -> executorService,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ByteBufferFactoryImpl());
+                new ByteBufferFactoryImpl(),
+                new ExpressionPredicateFactory(null));
     }
 
     @AfterEach
@@ -153,11 +172,11 @@ class TestSearchResultCreation {
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
                 null,
-                null,
                 coprocessors,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -287,12 +306,12 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                UUID.randomUUID().toString(),
-                "test_user_id",
+                UserRef.builder().uuid(UUID.randomUUID().toString()).build(),
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -368,12 +387,12 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                UUID.randomUUID().toString(),
-                "test_user_id",
+                UserRef.builder().uuid(UUID.randomUUID().toString()).build(),
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -481,11 +500,11 @@ class TestSearchResultCreation {
                 searchRequest.getSearchRequestSource(),
                 null,
                 null,
-                null,
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ExpressionPredicateFactory(null));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -714,17 +733,20 @@ class TestSearchResultCreation {
     private TableSettings createDonutVisSettings() {
         return TableSettings.builder()
                 .addColumns(Column.builder()
+                        .id("1")
                         .sort(new Sort(null, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .group(0)
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("2")
                         .expression("${UserId}")
                         .format(Format.GENERAL)
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("3")
                         .expression("${Count}")
                         .format(Format.NUMBER)
                         .build()
@@ -808,6 +830,7 @@ class TestSearchResultCreation {
     private TableSettings createBubbleVisSettings() {
         return TableSettings.builder()
                 .addColumns(Column.builder()
+                        .id("1")
                         .expression("${EventTime}")
                         .sort(new Sort(0, SortDirection.ASCENDING))
                         .format(Format.DATE_TIME)
@@ -815,6 +838,7 @@ class TestSearchResultCreation {
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("2")
                         .expression("${UserId}")
                         .sort(new Sort(1, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
@@ -822,12 +846,14 @@ class TestSearchResultCreation {
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("3")
                         .expression("${UserId}")
                         .sort(new Sort(2, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("4")
                         .expression("${Count}")
                         .format(Format.NUMBER)
                         .build()
@@ -852,12 +878,14 @@ class TestSearchResultCreation {
     private TableSettings createLineVisSettings() {
         return TableSettings.builder()
                 .addColumns(Column.builder()
+                        .id("1")
                         .sort(new Sort(0, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .group(0)
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("2")
                         .expression("${UserId}")
                         .sort(new Sort(1,
                                 SortDirection.ASCENDING)) // TODO : The original was not sorted but this makes
@@ -867,12 +895,14 @@ class TestSearchResultCreation {
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("3")
                         .expression("${EventTime}")
                         .sort(new Sort(2, SortDirection.ASCENDING))
                         .format(Format.DATE_TIME)
                         .build()
                 )
                 .addColumns(Column.builder()
+                        .id("4")
                         .expression("${Count}")
                         .format(Format.NUMBER)
                         .build()

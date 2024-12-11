@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
@@ -24,6 +25,7 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
@@ -49,8 +51,7 @@ public class ResultStore {
     private final SearchRequestSource searchRequestSource;
     private final Set<String> highlights = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CoprocessorsImpl coprocessors;
-    private final String userUuid;
-    private final String createUser;
+    private final UserRef userRef;
     private final Instant creationTime;
     private volatile Instant lastAccessTime;
     private final String nodeName;
@@ -62,16 +63,15 @@ public class ResultStore {
 
     public ResultStore(final SearchRequestSource searchRequestSource,
                        final SizesProvider sizesProvider,
-                       final String userUuid,
-                       final String createUser,
+                       final UserRef userRef,
                        final CoprocessorsImpl coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings,
-                       final MapDataStoreFactory mapDataStoreFactory) {
+                       final MapDataStoreFactory mapDataStoreFactory,
+                       final ExpressionPredicateFactory expressionPredicateFactory) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
-        this.userUuid = userUuid;
-        this.createUser = createUser;
+        this.userRef = userRef;
         this.creationTime = Instant.now();
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
@@ -80,7 +80,8 @@ public class ResultStore {
                 sizesProvider,
                 this,
                 coprocessors.getExpressionContext(),
-                mapDataStoreFactory);
+                mapDataStoreFactory,
+                expressionPredicateFactory);
     }
 
     public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {
@@ -218,12 +219,8 @@ public class ResultStore {
         return coprocessors.getData(componentId);
     }
 
-    public String getUserUuid() {
-        return userUuid;
-    }
-
-    public String getCreateUser() {
-        return createUser;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public Instant getCreationTime() {

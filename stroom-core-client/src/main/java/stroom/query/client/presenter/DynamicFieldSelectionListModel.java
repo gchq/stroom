@@ -5,9 +5,9 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.query.client.DataSourceClient;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicFieldSelectionListModel
-        implements FieldSelectionListModel, HasTaskHandlerFactory, HasHandlers {
+        implements FieldSelectionListModel, HasTaskMonitorFactory, HasHandlers {
 
     private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;
-    private DocRef dataSourceRef;
+    private Consumer<Consumer<DocRef>> dataSourceRefConsumer;
     private Boolean queryable;
     private FindFieldCriteria lastCriteria;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     @Inject
     public DynamicFieldSelectionListModel(final EventBus eventBus,
@@ -45,7 +45,7 @@ public class DynamicFieldSelectionListModel
                               final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
-        if (dataSourceRef != null) {
+        consumeDataSource(dataSourceRef -> {
             final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
@@ -77,13 +77,13 @@ public class DynamicFieldSelectionListModel
 
                         consumer.accept(resultPage);
                     }
-                }, taskHandlerFactory);
+                }, taskMonitorFactory);
             }
-        }
+        });
     }
 
-    public void setDataSourceRef(final DocRef dataSourceRef) {
-        this.dataSourceRef = dataSourceRef;
+    public void setDataSourceRefConsumer(final Consumer<Consumer<DocRef>> dataSourceRefConsumer) {
+        this.dataSourceRefConsumer = dataSourceRefConsumer;
     }
 
     public void setQueryable(final Boolean queryable) {
@@ -97,7 +97,14 @@ public class DynamicFieldSelectionListModel
 
     @Override
     public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
-        dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer, taskHandlerFactory);
+        consumeDataSource(dataSourceRef ->
+                dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer, taskMonitorFactory));
+    }
+
+    private void consumeDataSource(final Consumer<DocRef> dsc) {
+        if (dataSourceRefConsumer != null) {
+            dataSourceRefConsumer.accept(dsc);
+        }
     }
 
     @Override
@@ -134,8 +141,8 @@ public class DynamicFieldSelectionListModel
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

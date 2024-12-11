@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.feed.impl;
 
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -27,15 +27,21 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +49,8 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStoreImpl.class);
 
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.DATA_PROCESSING,
@@ -52,15 +60,23 @@ public class FeedStoreImpl implements FeedStore {
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
+    private final FeedSerialiser serialiser;
+    private final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider;
+    private final ImportConverter importConverter;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser,
-                         final SecurityContext securityContext) {
+                         final SecurityContext securityContext,
+                         final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider,
+                         final ImportConverter importConverter) {
+        this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
         this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
+        this.serialiser = serialiser;
+        this.importConverter = importConverter;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -79,12 +95,12 @@ public class FeedStoreImpl implements FeedStore {
         final DocRef created = store.createDocument(name);
 
         // Double check the feed wasn't created elsewhere at the same time.
-        if (checkDuplicateName(name, created.getUuid())) {
+        if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the name is duplicated.
 
             // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
             // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created.getUuid()));
+            securityContext.asProcessingUser(() -> store.deleteDocument(created));
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         }
 
@@ -106,30 +122,30 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
+    public DocRef renameDocument(final DocRef docRef, final String name) {
         feedNameValidator.validateName(name);
 
         // Check a feed doesn't already exist with this name.
-        if (checkDuplicateName(name, uuid)) {
+        if (checkDuplicateName(name, docRef)) {
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         }
 
-        return store.renameDocument(uuid, name);
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        store.deleteDocument(uuid);
+    public void deleteDocument(final DocRef docRef) {
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override
@@ -204,7 +220,38 @@ public class FeedStoreImpl implements FeedStore {
             newDocRef = new DocRef(docRef.getType(), docRef.getUuid(), newName);
         }
 
-        return store.importDocument(newDocRef, dataMap, importState, importSettings);
+        // If the imported feed's vol grp doesn't exist in this env use our default
+        // or null it out
+        Map<String, byte[]> effectiveDataMap = importConverter.convert(
+                docRef,
+                dataMap,
+                importState,
+                importSettings,
+                securityContext.getUserIdentityForAudit());
+        try {
+            final FeedDoc feedDoc = serialiser.read(effectiveDataMap);
+
+            final String volumeGroup = feedDoc.getVolumeGroup();
+            if (volumeGroup != null) {
+                final FsVolumeGroupService fsVolumeGroupService = fsVolumeGroupServiceProvider.get();
+                final List<String> allVolumeGroups = fsVolumeGroupService.getNames();
+                if (!allVolumeGroups.contains(volumeGroup)) {
+                    LOGGER.debug("Volume group '{}' in imported feed {} is not a valid volume group",
+                            volumeGroup, docRef);
+                    fsVolumeGroupService.getDefaultVolumeGroup()
+                            .ifPresentOrElse(
+                                    feedDoc::setVolumeGroup,
+                                    () -> feedDoc.setVolumeGroup(null));
+
+                    effectiveDataMap = serialiser.write(feedDoc);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
+                    docRef, e.getMessage()), e);
+        }
+
+        return store.importDocument(newDocRef, effectiveDataMap, importState, importSettings);
     }
 
     @Override
@@ -255,11 +302,11 @@ public class FeedStoreImpl implements FeedStore {
         return UniqueNameUtil.getCopyName(name, existingNames, "COPY", "_");
     }
 
-    private boolean checkDuplicateName(final String name, final String whitelistUuid) {
+    private boolean checkDuplicateName(final String name, final DocRef whitelistUuid) {
         final List<DocRef> list = list();
         for (final DocRef docRef : list) {
             if (name.equals(docRef.getName()) &&
-                    (whitelistUuid == null || !whitelistUuid.equals(docRef.getUuid()))) {
+                    (whitelistUuid == null || !whitelistUuid.equals(docRef))) {
                 return true;
             }
         }

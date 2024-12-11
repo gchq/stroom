@@ -152,11 +152,9 @@ public class SearchRequestMapper {
                 resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof final VisResultRequest visResultRequest) {
-                final TableSettings parentTableSettings = visResultRequest.getVisDashboardSettings().getTableSettings()
-                        .copy()
-                        .buildTableSettings();
+                final TableSettings parentTableSettings = visResultRequest.getTableSettings();
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(
-                        visResultRequest.getVisDashboardSettings(), parentTableSettings);
+                        visResultRequest, parentTableSettings);
 
                 final Builder builder = ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
@@ -422,10 +420,10 @@ public class SearchRequestMapper {
 
 
     private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(
-            final VisComponentSettings visComponentSettings,
+            final VisResultRequest visResultRequest,
             final TableSettings parentTableSettings) {
 
-        DocRef docRef = visComponentSettings.getVisualisation();
+        DocRef docRef = visResultRequest.getVisualisation();
         TableSettings tableSettings = null;
 
         if (docRef == null) {
@@ -443,7 +441,7 @@ public class SearchRequestMapper {
         final VisSettings visSettings = JsonUtil.readValue(visualisation.getSettings(), VisSettings.class);
         if (visSettings != null && visSettings.getData() != null) {
             final SettingResolver settingResolver = new SettingResolver(visSettings,
-                    visComponentSettings.getJson());
+                    visResultRequest.getJson());
             final Structure structure = visSettings.getData().getStructure();
             if (structure != null) {
 

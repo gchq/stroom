@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -56,7 +56,7 @@ public class BasicTableSettingsPresenter
         this.pipelinePresenter = pipelinePresenter;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
 
@@ -119,11 +119,12 @@ public class BasicTableSettingsPresenter
     }
 
     private DocRef getPipeline() {
+//        GWT.log("getSelectedEntityReference: " + pipelinePresenter.getSelectedEntityReference());
         return pipelinePresenter.getSelectedEntityReference();
     }
 
     private void setPipeline(final DocRef pipeline) {
-        pipelinePresenter.setSelectedEntityReference(pipeline);
+        pipelinePresenter.setSelectedEntityReference(pipeline, true);
     }
 
     private String getMaxResults() {
@@ -200,6 +201,7 @@ public class BasicTableSettingsPresenter
         final TableComponentSettings oldSettings = (TableComponentSettings) componentConfig.getSettings();
         final TableComponentSettings newSettings = writeSettings(oldSettings);
 
+        // Need to compare extractionPipeline including name in case it has been renamed after decoration
         final boolean equal = Objects.equals(oldSettings.getQueryId(), newSettings.getQueryId()) &&
                 Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
                 Objects.equals(oldSettings.useDefaultExtractionPipeline(),
@@ -213,7 +215,7 @@ public class BasicTableSettingsPresenter
     }
 
     private String fromList(final List<Long> maxResults) {
-        if (maxResults == null || maxResults.size() == 0) {
+        if (GwtNullSafe.isEmptyCollection(maxResults)) {
             return "";
         }
 
@@ -228,7 +230,7 @@ public class BasicTableSettingsPresenter
     }
 
     private List<Long> toList(final String string) {
-        if (string == null || string.length() == 0) {
+        if (GwtNullSafe.isEmptyString(string)) {
             return null;
         }
 

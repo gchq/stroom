@@ -52,7 +52,7 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -63,14 +63,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 class SteppingRequestHandler {
 
@@ -104,10 +106,15 @@ class SteppingRequestHandler {
     private String lastFeedName;
     private Pipeline pipeline;
     private LoggingErrorReceiver loggingErrorReceiver;
-    private Set<String> generalErrors;
+    private final Set<String> generalErrors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private boolean isSegmentedData;
     // elementId => Indicators
     private Map<String, Indicators> startProcessIndicatorMap = Collections.emptyMap();
+    private PipelineStepRequest request;
+    private SteppingResult result;
+    private CountDownLatch countDownLatch = new CountDownLatch(1);
+    private Instant createTime;
+    private Instant lastRequestTime;
 
     @Inject
     SteppingRequestHandler(final Store streamStore,
@@ -144,22 +151,22 @@ class SteppingRequestHandler {
         this.pipelineDataCache = pipelineDataCache;
         this.pipelineContext = pipelineContext;
         this.securityContext = securityContext;
+        this.createTime = Instant.now();
+        this.lastRequestTime = createTime;
     }
 
-    public SteppingResult exec(final TaskContext taskContext,
-                               final PipelineStepRequest request) {
+    public void exec(final TaskContext taskContext,
+                     final PipelineStepRequest request) {
         this.taskContext = taskContext;
+        this.request = request;
         taskContext.info(() -> "Started stepping");
 
-        return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
+        securityContext.secure(AppPermission.STEPPING_PERMISSION, () -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
             // on can be read.
-            return securityContext.useAsReadResult(() -> {
+            securityContext.useAsRead(() -> {
                 // Set the current user so they are visible during translation.
                 currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
-
-                StepData stepData;
-                generalErrors = new HashSet<>();
 
                 loggingErrorReceiver = new LoggingErrorReceiver();
                 errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
@@ -189,13 +196,43 @@ class SteppingRequestHandler {
                     lastFeedName = null;
                 }
 
-                // Set the output.
-                if (controller.getLastFoundLocation() != null) {
-                    currentLocation = controller.getLastFoundLocation();
+                setResult(createResult(true));
+            });
+        });
+    }
 
-                    // FIXME : Sort out use of response cache so we don't run out of
-                    // memory.
-                    stepData = steppingResponseCache.getStepData(currentLocation);
+    private void setResult(final SteppingResult result) {
+        this.result = result;
+        countDownLatch.countDown();
+    }
+
+    public SteppingResult getResult(final PipelineStepRequest request) {
+        lastRequestTime = Instant.now();
+
+        try {
+            countDownLatch.await(request.getTimeout(), TimeUnit.MILLISECONDS);
+        } catch (final InterruptedException e) {
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        SteppingResult res = this.result;
+        if (res == null) {
+            res = createResult(false);
+        }
+        return res;
+    }
+
+    private SteppingResult createResult(final boolean complete) {
+        StepData stepData;
+        // Set the output.
+        if (controller.getLastFoundLocation() != null) {
+            currentLocation = controller.getLastFoundLocation();
+
+            // FIXME : Sort out use of response cache so we don't run out of
+            // memory.
+            stepData = steppingResponseCache.getStepData(currentLocation);
 
 //                // Fill in the source data if it hasn't been already.
 //                for (final ElementData elementData : stepData.getElementMap().values()) {
@@ -206,32 +243,34 @@ class SteppingRequestHandler {
 //                    }
 //                }
 
-                } else {
-                    // Pick up any step data that remains so we can deliver any errors
-                    // that caused the system not to step.
-                    stepData = controller.createStepData(null);
-                }
-                // Indicators get cleared at the start of each call to process so merge in any indicators
-                // we found when calling startProcessing
-                mergeStartProcessingIndicators(stepData);
+        } else {
+            // Pick up any step data that remains so we can deliver any errors
+            // that caused the system not to step.
+            stepData = controller.createStepData(null);
+        }
+        // Indicators get cleared at the start of each call to process so merge in any indicators
+        // we found when calling startProcessing
+        mergeStartProcessingIndicators(stepData);
 
-                taskContext.info(() -> "Finished stepping");
+        taskContext.info(() -> "Finished stepping");
 
-                if (taskContext.isTerminated()) {
-                    generalErrors.add("Stepping was terminated");
-                }
+        if (taskContext.isTerminated()) {
+            generalErrors.add("Stepping was terminated");
+        }
 
-                return new SteppingResult(
-                        request.getStepFilterMap(),
-                        currentLocation,
-                        NullSafe.get(stepData, StepData::convertToShared),
-                        curentStreamOffset,
-                        controller.isFound(),
-                        generalErrors,
-                        isSegmentedData);
-            });
-        });
+        return new SteppingResult(
+                request.getSessionUuid(),
+                request.getStepFilterMap(),
+                controller.getProgressLocation(),
+                currentLocation,
+                NullSafe.get(stepData, StepData::convertToShared),
+                curentStreamOffset,
+                controller.isFound(),
+                generalErrors,
+                isSegmentedData,
+                complete);
     }
+
 
     private void mergeStartProcessingIndicators(final StepData stepData) {
         if (stepData != null) {
@@ -264,7 +303,7 @@ class SteppingRequestHandler {
             final List<Long> streamIdList = getFilteredStreamIdList(criteria);
             currentStreamIndex = -1;
 
-            if (streamIdList.size() > 0) {
+            if (!streamIdList.isEmpty()) {
                 if (StepType.FIRST.equals(stepType)) {
                     // If we are trying to find the first record then start with
                     // the first stream, first stream no, first record.
@@ -694,9 +733,21 @@ class SteppingRequestHandler {
     private Map<String, Indicators> getErrorReceiverIndicatorsMap() {
         final ErrorReceiver errorReceiver = errorReceiverProxy.getErrorReceiver();
         if (errorReceiver instanceof final LoggingErrorReceiver loggingErrorReceiver2) {
-            return new HashMap<>(NullSafe.map(loggingErrorReceiver2.getIndicatorsMap()));
+            return new ConcurrentHashMap<>(NullSafe.map(loggingErrorReceiver2.getIndicatorsMap()));
         } else {
             return Collections.emptyMap();
         }
+    }
+
+    public Instant getCreateTime() {
+        return createTime;
+    }
+
+    public Instant getLastRequestTime() {
+        return lastRequestTime;
+    }
+
+    public TaskContext getTaskContext() {
+        return taskContext;
     }
 }

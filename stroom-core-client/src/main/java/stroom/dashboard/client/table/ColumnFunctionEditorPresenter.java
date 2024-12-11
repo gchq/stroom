@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
-import stroom.util.shared.EqualsUtil;
+import stroom.query.shared.QueryHelpType;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -43,6 +43,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.EnumSet;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
@@ -123,8 +125,10 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
-        queryHelpPresenter.setTaskHandlerFactory(this);
-        queryHelpPresenter.setShowAll(false);
+        queryHelpPresenter.setTaskMonitorFactory(this);
+        queryHelpPresenter.setIncludedTypes(EnumSet.of(
+                QueryHelpType.FIELD,
+                QueryHelpType.FUNCTION));
         queryHelpPresenter.linkToEditor(this.editorPresenter);
         queryHelpPresenter.refresh();
 
@@ -140,7 +144,7 @@ public class ColumnFunctionEditorPresenter
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final String expression = editorPresenter.getText();
-            if (EqualsUtil.isEquals(expression, column.getExpression())) {
+            if (Objects.equals(expression, column.getExpression())) {
                 e.hide();
             } else {
                 if (expression == null) {
@@ -163,7 +167,7 @@ public class ColumnFunctionEditorPresenter
                                 }
                             })
                             .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskHandlerFactory(this)
+                            .taskMonitorFactory(this)
                             .exec();
                 }
             }

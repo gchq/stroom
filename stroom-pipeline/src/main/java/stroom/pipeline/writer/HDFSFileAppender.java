@@ -23,7 +23,6 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
-import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;

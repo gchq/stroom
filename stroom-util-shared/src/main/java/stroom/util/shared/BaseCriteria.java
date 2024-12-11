@@ -133,7 +133,7 @@ public abstract class BaseCriteria {
         }
         final BaseCriteria that = (BaseCriteria) o;
         return Objects.equals(pageRequest, that.pageRequest) &&
-                Objects.equals(sortList, that.sortList);
+               Objects.equals(sortList, that.sortList);
     }
 
     @Override
@@ -144,8 +144,52 @@ public abstract class BaseCriteria {
     @Override
     public String toString() {
         return "BaseCriteria{" +
-                "pageRequest=" + pageRequest +
-                ", sortList=" + sortList +
-                '}';
+               "pageRequest=" + pageRequest +
+               ", sortList=" + sortList +
+               '}';
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public abstract static class AbstractBuilder<T extends BaseCriteria, B extends AbstractBuilder<T, B>>
+            extends BaseBuilder<T, B> {
+
+        protected PageRequest pageRequest;
+        protected List<CriteriaFieldSort> sortList;
+
+        protected AbstractBuilder() {
+
+        }
+
+        protected AbstractBuilder(final T criteria) {
+            if (criteria.getPageRequest() != null) {
+                pageRequest = new PageRequest(
+                        criteria.getPageRequest().getOffset(),
+                        criteria.getPageRequest().getLength());
+            }
+            if (criteria.getSortList() != null) {
+                sortList = new ArrayList<>(criteria.getSortList());
+            }
+        }
+
+        public B pageRequest(final PageRequest pageRequest) {
+            this.pageRequest = pageRequest;
+            return self();
+        }
+
+        public B sortList(final List<CriteriaFieldSort> sortList) {
+            this.sortList = sortList;
+            return self();
+        }
+
+        public B addSort(final CriteriaFieldSort sort) {
+            if (sortList == null) {
+                sortList = new ArrayList<>();
+            }
+            sortList.add(sort);
+            return self();
+        }
     }
 }

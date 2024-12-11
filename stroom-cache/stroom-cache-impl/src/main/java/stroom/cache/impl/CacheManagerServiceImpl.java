@@ -20,7 +20,7 @@ import stroom.cache.api.StroomCache;
 import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.Clearable;
 
@@ -53,7 +53,7 @@ public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
     @Override
     public List<String> getCacheNames() {
-        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
+        return securityContext.secureResult(AppPermission.MANAGE_CACHE_PERMISSION, () ->
                 cacheManager.getCacheNames()
                         .stream()
                         .sorted(Comparator.naturalOrder())
@@ -62,7 +62,7 @@ public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
     @Override
     public List<CacheIdentity> getCacheIdentities() {
-        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
+        return securityContext.secureResult(AppPermission.MANAGE_CACHE_PERMISSION, () ->
                 cacheManager.getCacheIdentities()
                         .stream()
                         .sorted(Comparator.naturalOrder())
@@ -71,11 +71,11 @@ public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
     @Override
     public List<CacheInfo> find(final FindCacheInfoCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_CACHE_PERMISSION, () -> {
             final List<String> cacheNames = cacheManager.getCacheNames()
                     .stream()
                     .sorted(Comparator.naturalOrder())
-                    .collect(Collectors.toList());
+                    .toList();
 
             final List<CacheInfo> list = new ArrayList<>(cacheNames.size());
             for (final String cacheName : cacheNames) {

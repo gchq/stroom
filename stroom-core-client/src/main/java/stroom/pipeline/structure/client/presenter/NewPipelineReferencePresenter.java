@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
@@ -68,10 +68,10 @@ public class NewPipelineReferencePresenter
 
         // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE, StateDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        feedPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        feedPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         pipelinePresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setPipelineView(pipelinePresenter.getView());
@@ -102,8 +102,8 @@ public class NewPipelineReferencePresenter
 
         getView().setElement(pipelineReference.getElement());
 
-        pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
-        feedPresenter.setSelectedEntityReference(pipelineReference.getFeed());
+        pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline(), true);
+        feedPresenter.setSelectedEntityReference(pipelineReference.getFeed(), true);
         updateDataTypes(pipelineReference.getStreamType());
 
         pipelinePresenter.addDataSelectionHandler(event -> {
@@ -160,7 +160,7 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

@@ -22,7 +22,7 @@ import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -65,12 +65,15 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        if (criteria.getDataSourceRef() != null && !loadedIndexes.contains(criteria.getDataSourceRef())) {
-            transferFieldsToDB(criteria.getDataSourceRef());
-            loadedIndexes.add(criteria.getDataSourceRef());
-        }
-
+        ensureLoaded(criteria.getDataSourceRef());
         return indexFieldDao.findFields(criteria);
+    }
+
+    private void ensureLoaded(final DocRef dataSourceRef) {
+        if (dataSourceRef != null && !loadedIndexes.contains(dataSourceRef)) {
+            transferFieldsToDB(dataSourceRef);
+            loadedIndexes.add(dataSourceRef);
+        }
     }
 
     @Override
@@ -103,11 +106,17 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        ensureLoaded(docRef);
+        return indexFieldDao.getFieldCount(docRef);
+    }
+
+    @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
         return securityContext.useAsReadResult(() -> {
 
             // Check for read permission.
-            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 // If there is no read permission then return no fields.
                 return null;
             }

@@ -37,7 +37,9 @@ import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -107,7 +109,7 @@ public class ScheduledProcessListPresenter
                             .method(res -> res.fetchExecutionSchedule(request))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskHandlerFactory(view)
+                            .taskMonitorFactory(view)
                             .exec();
                 }
             }
@@ -146,7 +148,7 @@ public class ScheduledProcessListPresenter
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.updateExecutionSchedule(row.copy().enabled(value.toBoolean()).build()))
                     .onSuccess(updated -> refresh())
-                    .taskHandlerFactory(getView())
+                    .taskMonitorFactory(getView())
                     .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
@@ -183,6 +185,14 @@ public class ScheduledProcessListPresenter
                         return row.getSchedule().toString();
                     }
                 }, ExecutionScheduleFields.SCHEDULE, ColumnSizeConstants.DATE_COL);
+
+        dataGrid.addResizableColumn(
+                new Column<ExecutionSchedule, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final ExecutionSchedule row) {
+                        return GwtNullSafe.get(row, ExecutionSchedule::getRunAsUser, UserRef::toDisplayString);
+                    }
+                }, ExecutionScheduleFields.RUN_AS_USER, ColumnSizeConstants.DATE_COL);
 
         dataGrid.addAutoResizableColumn(
                 new OrderByColumn<ExecutionSchedule, String>(

@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasCapacity;

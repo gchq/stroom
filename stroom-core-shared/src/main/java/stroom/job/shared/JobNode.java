@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.job.shared;
 
 
@@ -202,37 +218,6 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         this.enabled = enabled;
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    @Schema
-    public enum JobType implements HasPrimitiveValue {
-        UNKNOWN("UNKNOWN", 0),
-        CRON("Cron", 1),
-        FREQUENCY("Frequency", 2),
-        DISTRIBUTED("Distributed", 3);
-
-        public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                JobType.values());
-        private final String displayValue;
-        private final byte primitiveValue;
-
-        JobType(final String displayValue, final int primitiveValue) {
-            this.displayValue = displayValue;
-            this.primitiveValue = (byte) primitiveValue;
-        }
-
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        @Override
-        public byte getPrimitiveValue() {
-            return primitiveValue;
-        }
-    }
-
     @Override
     public String toString() {
         return "JobNode{" +
@@ -266,5 +251,38 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @Schema
+    public enum JobType implements HasPrimitiveValue {
+        UNKNOWN("UNKNOWN", 0),
+        CRON("Cron", 1),
+        FREQUENCY("Frequency", 2),
+        DISTRIBUTED("Distributed", 3),
+        ;
+
+        public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
+                JobType.values());
+
+        private final String displayValue;
+        private final byte primitiveValue;
+
+        JobType(final String displayValue, final int primitiveValue) {
+            this.displayValue = displayValue;
+            this.primitiveValue = (byte) primitiveValue;
+        }
+
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        @Override
+        public byte getPrimitiveValue() {
+            return primitiveValue;
+        }
     }
 }

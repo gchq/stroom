@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -50,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractTabBar extends Widget implements TabBar, RequiresResize {
@@ -150,7 +150,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void selectTab(final TabData tabData) {
-        if (!EqualsUtil.isEquals(tabData, selectedTab)) {
+        if (!Objects.equals(tabData, selectedTab)) {
             selectedTab = tabData;
             keyboardSelectedTab = tabData;
             if (selectedTab != null) {
@@ -403,7 +403,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         break;
 
                     case MOVE_RIGHT:
-                        if (visibleTabs.size() > 0) {
+                        if (!visibleTabs.isEmpty()) {
                             if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(0);
                             } else {
@@ -417,7 +417,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         break;
 
                     case MOVE_LEFT:
-                        if (visibleTabs.size() > 0) {
+                        if (!visibleTabs.isEmpty()) {
                             if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(visibleTabs.size() - 1);
                             } else {
@@ -692,6 +692,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     protected int getTabGap() {
         return 0;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TabItemComparator implements Comparator<TabData> {
 

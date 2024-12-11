@@ -1,6 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
@@ -11,7 +28,7 @@ import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -77,7 +94,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
-    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
@@ -129,7 +146,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume create(final FsVolume fileVolume) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             FsVolume result;
             Path volPath = getAbsVolumePath(fileVolume);
             try {
@@ -194,7 +211,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume update(final FsVolume fileVolume) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             AuditUtil.stamp(securityContext, fileVolume);
             final FsVolume result = fsVolumeDao.update(fileVolume);
 
@@ -205,7 +222,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public int delete(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             final int result = fsVolumeDao.delete(id);
 
             fireChange(EntityAction.DELETE);
@@ -215,7 +232,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume fetch(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () ->
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () ->
                 fsVolumeDao.fetch(id));
     }
 

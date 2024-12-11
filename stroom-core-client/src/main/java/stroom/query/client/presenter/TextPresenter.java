@@ -28,7 +28,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 
@@ -104,7 +104,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //            // Determine if we should show tha play button.
 //            playButtonVisible = !isHtml
 //                    && getTextSettings().isShowStepping()
-//                    && securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+//                    && securityContext.hasAppPermission(AppPermissionEnum.STEPPING_PERMISSION);
 //
 //            // Show the play button if we have fetched input data.
 //            getView().setSteppingVisible(playButtonVisible);
@@ -552,8 +552,8 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     }
 
 //    private String checkPermissions() {
-//        if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
-//            if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
+//        if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_PERMISSION)) {
+//            if (!securityContext.hasAppPermission(AppPermissionEnum.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
 //                return "You do not have permission to display this item";
 //            } else if (getTextSettings().getPipeline() == null) {
 //                return "You must choose a pipeline to display this item";
@@ -608,7 +608,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                     }
                                 }
                             })
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             };
@@ -662,7 +662,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 //
 //        // If we can't get the same table id then set to null so that changes to any table can be listened to.
-//        if (!EqualsUtil.isEquals(tableId, newTableId)) {
+//        if (!Objects.equals(tableId, newTableId)) {
 //            newTableId = null;
 //        }
 //
@@ -719,7 +719,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     }
 
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskHandlerFactory {
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {
 
         void setContent(View view);
 

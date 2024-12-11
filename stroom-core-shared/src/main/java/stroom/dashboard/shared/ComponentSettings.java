@@ -32,15 +32,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text"),
         @JsonSubTypes.Type(value = KeyValueInputComponentSettings.class, name = "key-value-input"),
         @JsonSubTypes.Type(value = ListInputComponentSettings.class, name = "list-input"),
-        @JsonSubTypes.Type(value = TextInputComponentSettings.class, name = "text-input")
+        @JsonSubTypes.Type(value = TextInputComponentSettings.class, name = "text-input"),
+        @JsonSubTypes.Type(value = EmbeddedQueryComponentSettings.class, name = "embedded-query"),
 })
 @JsonInclude(Include.NON_NULL)
 public interface ComponentSettings {
+    AbstractBuilder<?, ?> copy();
 
-    Builder copy();
+    abstract class AbstractBuilder<T extends ComponentSettings, B extends ComponentSettings.AbstractBuilder<T, ?>> {
 
-    interface Builder {
+        protected abstract B self();
 
-        ComponentSettings build();
+        public abstract T build();
     }
 }

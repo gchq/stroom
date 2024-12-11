@@ -18,7 +18,6 @@ package stroom.ui.config.shared;
 
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
-import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,13 +34,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class UserPreferences {
 
-    public static final String DEFAULT_THEME = Themes.THEME_NAME_DARK;
-
     public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
     public static final Toggle DEFAULT_EDITOR_LIVE_AUTO_COMPLETION = Toggle.OFF;
-    public static final String DEFAULT_EDITOR_THEME_LIGHT = "chrome";
-    public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
     public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
+
+    // Keep these two in sync, i.e. a dark stroom theme needs a dark ace theme
+    public static final String DEFAULT_THEME_NAME = Theme.DEFAULT_THEME.getThemeName();
 
     @JsonProperty
     @JsonPropertyDescription("The theme to use, e.g. `light`, `dark`")
@@ -72,7 +70,7 @@ public class UserPreferences {
     private final String fontSize;
 
     @Schema(description = "A date time formatting pattern string conforming to the specification of " +
-            "java.time.format.DateTimeFormatter")
+                          "java.time.format.DateTimeFormatter")
     @JsonProperty
     private final String dateTimePattern;
 
@@ -81,6 +79,9 @@ public class UserPreferences {
 
     @JsonProperty
     private final Boolean enableTransparency;
+
+    @JsonProperty
+    private final Boolean hideConditionalStyles;
 
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
@@ -92,7 +93,8 @@ public class UserPreferences {
                            @JsonProperty("fontSize") final String fontSize,
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
                            @JsonProperty("timeZone") final UserTimeZone timeZone,
-                           @JsonProperty("enableTransparency") final Boolean enableTransparency) {
+                           @JsonProperty("enableTransparency") final Boolean enableTransparency,
+                           @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = GwtNullSafe.requireNonNullElse(
@@ -105,6 +107,7 @@ public class UserPreferences {
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
         this.enableTransparency = GwtNullSafe.requireNonNullElse(enableTransparency, true);
+        this.hideConditionalStyles = hideConditionalStyles;
     }
 
     public String getTheme() {
@@ -147,6 +150,10 @@ public class UserPreferences {
         return enableTransparency;
     }
 
+    public Boolean getHideConditionalStyles() {
+        return hideConditionalStyles;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -156,16 +163,17 @@ public class UserPreferences {
             return false;
         }
         final UserPreferences that = (UserPreferences) o;
-        return Objects.equals(theme, that.theme)
-                && Objects.equals(editorTheme, that.editorTheme)
-                && Objects.equals(editorKeyBindings, that.editorKeyBindings)
-                && Objects.equals(editorLiveAutoCompletion, that.editorLiveAutoCompletion)
-                && Objects.equals(density, that.density)
-                && Objects.equals(font, that.font)
-                && Objects.equals(fontSize, that.fontSize)
-                && Objects.equals(dateTimePattern, that.dateTimePattern)
-                && Objects.equals(timeZone, that.timeZone)
-                && Objects.equals(enableTransparency, that.enableTransparency);
+        return Objects.equals(theme, that.theme) &&
+               Objects.equals(editorTheme, that.editorTheme) &&
+               Objects.equals(editorKeyBindings, that.editorKeyBindings) &&
+               Objects.equals(editorLiveAutoCompletion, that.editorLiveAutoCompletion) &&
+               Objects.equals(density, that.density) &&
+               Objects.equals(font, that.font) &&
+               Objects.equals(fontSize, that.fontSize) &&
+               Objects.equals(dateTimePattern, that.dateTimePattern) &&
+               Objects.equals(timeZone, that.timeZone) &&
+               Objects.equals(enableTransparency, that.enableTransparency) &&
+               Objects.equals(hideConditionalStyles, that.hideConditionalStyles);
     }
 
     @Override
@@ -179,23 +187,25 @@ public class UserPreferences {
                 fontSize,
                 dateTimePattern,
                 timeZone,
-                enableTransparency);
+                enableTransparency,
+                hideConditionalStyles);
     }
 
     @Override
     public String toString() {
         return "UserPreferences{" +
-                "theme='" + theme + '\'' +
-                ", editorTheme='" + editorTheme + '\'' +
-                ", editorKeyBindings='" + editorKeyBindings + '\'' +
-                ", editorLiveAutoCompletion='" + editorLiveAutoCompletion + '\'' +
-                ", density='" + density + '\'' +
-                ", font='" + font + '\'' +
-                ", fontSize='" + fontSize + '\'' +
-                ", dateTimePattern='" + dateTimePattern + '\'' +
-                ", timeZone=" + timeZone +
-                ", enableTransparency=" + enableTransparency +
-                '}';
+               "theme='" + theme + '\'' +
+               ", editorTheme='" + editorTheme + '\'' +
+               ", editorKeyBindings='" + editorKeyBindings + '\'' +
+               ", editorLiveAutoCompletion='" + editorLiveAutoCompletion + '\'' +
+               ", density='" + density + '\'' +
+               ", font='" + font + '\'' +
+               ", fontSize='" + fontSize + '\'' +
+               ", dateTimePattern='" + dateTimePattern + '\'' +
+               ", timeZone=" + timeZone +
+               ", enableTransparency=" + enableTransparency +
+               ", hideConditionalStyles=" + hideConditionalStyles +
+               '}';
     }
 
     public static Builder builder() {
@@ -206,16 +216,13 @@ public class UserPreferences {
         return new Builder(this);
     }
 
-    public static String getDefaultEditorTheme(final String themeName) {
-        final ThemeType themeType = Themes.getThemeType(themeName);
-        switch (themeType) {
-            case DARK:
-                return DEFAULT_EDITOR_THEME_DARK;
-            case LIGHT:
-                return DEFAULT_EDITOR_THEME_LIGHT;
-            default:
-                throw new RuntimeException("Unknown theme name '" + themeName + "'");
-        }
+    /**
+     * Get the default editor theme that corresponds to the passed stroom theme name.
+     * e.g. a dark editor theme for a dark stroom theme.
+     */
+    public static String getDefaultEditorTheme(final String stroomThemeName) {
+        final ThemeType themeType = Theme.getThemeType(stroomThemeName);
+        return AceEditorTheme.getDefaultEditorTheme(themeType).getName();
     }
 
 
@@ -225,6 +232,8 @@ public class UserPreferences {
     public enum EditorKeyBindings {
         STANDARD("Standard"),
         VIM("Vim");
+
+        public static final EditorKeyBindings DEFAULT_KEY_BINDINGS = STANDARD;
 
         private final String displayValue;
 
@@ -239,8 +248,10 @@ public class UserPreferences {
         public static EditorKeyBindings fromDisplayValue(final String displayValue) {
             if (VIM.displayValue.equalsIgnoreCase(displayValue)) {
                 return VIM;
-            } else {
+            } else if (STANDARD.displayValue.equalsIgnoreCase(displayValue)) {
                 return STANDARD;
+            } else {
+                return DEFAULT_KEY_BINDINGS;
             }
         }
     }
@@ -261,10 +272,11 @@ public class UserPreferences {
         private String dateTimePattern;
         private UserTimeZone timeZone;
         private Boolean enableTransparency;
+        private Boolean hideConditionalStyles;
 
         private Builder() {
-            theme = DEFAULT_THEME;
-            editorTheme = getDefaultEditorTheme(DEFAULT_THEME);
+            theme = DEFAULT_THEME_NAME;
+            editorTheme = getDefaultEditorTheme(theme);
             editorKeyBindings = DEFAULT_EDITOR_KEY_BINDINGS;
             editorLiveAutoCompletion = DEFAULT_EDITOR_LIVE_AUTO_COMPLETION;
             density = "Compact";
@@ -286,6 +298,7 @@ public class UserPreferences {
             this.dateTimePattern = userPreferences.dateTimePattern;
             this.timeZone = userPreferences.timeZone;
             this.enableTransparency = userPreferences.enableTransparency;
+            this.hideConditionalStyles = userPreferences.hideConditionalStyles;
         }
 
         public Builder theme(final String theme) {
@@ -338,6 +351,11 @@ public class UserPreferences {
             return this;
         }
 
+        public Builder hideConditionalStyles(final Boolean hideConditionalStyles) {
+            this.hideConditionalStyles = hideConditionalStyles;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -349,7 +367,8 @@ public class UserPreferences {
                     fontSize,
                     dateTimePattern,
                     timeZone,
-                    enableTransparency);
+                    enableTransparency,
+                    hideConditionalStyles);
         }
     }
 

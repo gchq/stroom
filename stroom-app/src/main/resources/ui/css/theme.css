@@ -1,6 +1,5 @@
 @import url("theme-root.css");
 @import url("theme-dark.css");
-@import url("theme-darker.css");
 
 .stroom-theme-dark .navigation {
 	background-color: var(--navigation__background-color) !important;

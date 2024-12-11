@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
@@ -37,7 +53,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -238,7 +254,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
 
-        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
+        return securityContext.secureResult(AppPermission.VIEW_DATA_PERMISSION, () ->
                         taskContextFactory.contextResult("Reference Data Lookup (API)",
                                 taskContext ->
                                         LOGGER.logDurationIfDebugEnabled(
@@ -251,7 +267,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public void purge(final StroomDuration purgeAge, final String nodeName) {
 
-        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_CACHE_PERMISSION, () -> {
 
             final List<String> nodeNames = getNodeList(nodeName);
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
@@ -320,7 +336,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     public void purge(final String feedName,
                       final StroomDuration purgeAge,
                       final String nodeName) {
-        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_CACHE_PERMISSION, () -> {
 
             final List<String> nodeNames = getNodeList(nodeName);
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
@@ -407,7 +423,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public void purge(final long refStreamId, final String nodeName) {
 
-        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_CACHE_PERMISSION, () -> {
             final List<String> nodeNames = getNodeList(nodeName);
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -483,7 +499,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     @Override
     public void clearBufferPool(final String nodeName) {
-        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_CACHE_PERMISSION, () -> {
             final List<String> nodeNames = getNodeList(nodeName);
 
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
@@ -657,7 +673,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             return supplier.get();
         } else {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to view reference data");
         }
     }
@@ -668,7 +684,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             runnable.run();
         } else {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to view reference data");
         }
     }
@@ -680,7 +696,21 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(ReferenceDataFields.FIELDS).build();
+        if (!ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(getFields())
+                .build();
+    }
+
+    private List<QueryField> getFields() {
+        return ReferenceDataFields.FIELDS;
+    }
+
+    @Override
+    public int getFieldCount(final DocRef docRef) {
+        return NullSafe.size(getFields());
     }
 
     @Override

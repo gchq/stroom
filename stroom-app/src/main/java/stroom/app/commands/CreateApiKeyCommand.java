@@ -12,7 +12,7 @@ import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.google.inject.Injector;
 import event.logging.CreateEventAction;
@@ -57,8 +57,6 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             COMMENTS_ARG_NAME,
             HASH_ALGORITHM_ARG_NAME);
 
-    private final Path configFile;
-
     @Inject
     private ApiKeyService apiKeyService;
     @Inject
@@ -72,7 +70,6 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
 
     public CreateApiKeyCommand(final Path configFile) {
         super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
-        this.configFile = configFile;
     }
 
     @Override
@@ -133,7 +130,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         final String outputPath = namespace.getString(OUTPUT_FILE_PATH_ARG_NAME);
 
         userService.getUserBySubjectId(userId)
-                .map(User::asUserName)
+                .map(User::asRef)
                 .ifPresentOrElse(
                         userName -> {
                             final CreateHashedApiKeyResponse response = createApiKey(
@@ -159,7 +156,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
     }
 
     private CreateHashedApiKeyResponse createApiKey(final Namespace namespace,
-                                                    final UserName userName) {
+                                                    final UserRef userRef) {
         final String apiKeyName = namespace.getString(API_KEY_NAME_ARG_NAME);
         if (NullSafe.isBlankString(apiKeyName)) {
             throw new RuntimeException("A name must be provided for the API key");
@@ -174,7 +171,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 HashAlgorithm.DEFAULT);
 
         LOGGER.info("Creating API key for user '{}' using algorithm '{}'",
-                userName.getUserIdentityForAudit(),
+                userRef.toInfoString(),
                 hashAlgorithm.getDisplayValue());
 
         // Service will give us a default expire time if null
@@ -187,15 +184,13 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 namespace.getString(COMMENTS_ARG_NAME),
                 "Created by 'create_api_key' command.");
 
-        final CreateHashedApiKeyResponse response = apiKeyService.create(new CreateHashedApiKeyRequest(
-                userName,
+        return apiKeyService.create(new CreateHashedApiKeyRequest(
+                userRef,
                 expireTimeEpochMs,
                 apiKeyName,
                 comments,
                 true,
                 hashAlgorithm));
-
-        return response;
     }
 
     /**
@@ -216,11 +211,11 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
 
                 final File fileInfo = new File(path);
                 LOGGER.info("Wrote API key for user '{}' to file '{}'",
-                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         fileInfo.getAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
-                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         LogUtil.exceptionMessage(e));
 
                 // Destroy the created API key
@@ -230,7 +225,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         } else {
             // Output API key to standard out
             LOGGER.info("Generated API key for user '{}': '{}'",
-                    createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                    createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                     createHashedApiKeyResponse.getApiKey());
         }
 

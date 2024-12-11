@@ -97,21 +97,25 @@
     "type" : "flat",
     "componentId" : "vis-QYG7H",
     "structure" : [ {
+      "id" : ":ParentKey",
       "name" : ":ParentKey",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : ":Key",
       "name" : ":Key",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : ":Depth",
       "name" : ":Depth",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : "1",
       "sort" : {
         "direction" : "ASCENDING"
       },
@@ -123,6 +127,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "2",
       "expression" : "${UserId}",
       "format" : {
         "type" : "TEXT"
@@ -131,6 +136,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "3",
       "expression" : "${Count}",
       "format" : {
         "type" : "NUMBER"
@@ -611,21 +617,25 @@
     "type" : "flat",
     "componentId" : "vis-L1AL1",
     "structure" : [ {
+      "id" : ":ParentKey",
       "name" : ":ParentKey",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : ":Key",
       "name" : ":Key",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : ":Depth",
       "name" : ":Depth",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : "1",
       "expression" : "${EventTime}",
       "sort" : {
         "order" : 0,
@@ -639,6 +649,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "2",
       "expression" : "${UserId}",
       "sort" : {
         "order" : 1,
@@ -652,6 +663,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "3",
       "expression" : "${UserId}",
       "sort" : {
         "order" : 2,
@@ -664,6 +676,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "4",
       "expression" : "${Count}",
       "format" : {
         "type" : "NUMBER"
@@ -679,21 +692,25 @@
     "type" : "flat",
     "componentId" : "vis-SPSCW",
     "structure" : [ {
+      "id" : ":ParentKey",
       "name" : ":ParentKey",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : ":Key",
       "name" : ":Key",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : ":Depth",
       "name" : ":Depth",
       "width" : 200,
       "visible" : true,
       "special" : false
     }, {
+      "id" : "1",
       "sort" : {
         "order" : 0,
         "direction" : "ASCENDING"
@@ -706,6 +723,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "2",
       "expression" : "${UserId}",
       "sort" : {
         "order" : 1,
@@ -719,6 +737,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "3",
       "expression" : "${EventTime}",
       "sort" : {
         "order" : 2,
@@ -731,6 +750,7 @@
       "visible" : true,
       "special" : false
     }, {
+      "id" : "4",
       "expression" : "${Count}",
       "format" : {
         "type" : "NUMBER"

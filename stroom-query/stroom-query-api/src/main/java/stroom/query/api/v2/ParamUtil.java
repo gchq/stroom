@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public final class ParamUtil {
         }
 
         final String trimmed = string.trim();
-        if (trimmed.length() == 0) {
+        if (trimmed.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -104,7 +104,7 @@ public final class ParamUtil {
         return list;
     }
 
-    public static String replaceParameters(final String value, final Map<String, String> paramMap) {
+    public static String replaceParameters(final String value, final ParamValues paramValues) {
         if (value == null) {
             return null;
         }
@@ -152,7 +152,7 @@ public final class ParamUtil {
                 case '}':
                     if (paramStart != -1) {
                         final String key = value.substring(paramStart + 2, i);
-                        String replacement = paramMap.get(key);
+                        String replacement = paramValues.get(key);
                         if (replacement != null) {
                             sb.append(replacement);
                         }
@@ -189,6 +189,11 @@ public final class ParamUtil {
             paramMap = Collections.emptyMap();
         }
         return paramMap;
+    }
+
+    public static ParamValues createParamValueFunction(final List<Param> params) {
+        final Map<String, String> paramMap = createParamMap(params);
+        return paramMap::get;
     }
 
     public static String getCombinedParameterString(final List<Param> params) {

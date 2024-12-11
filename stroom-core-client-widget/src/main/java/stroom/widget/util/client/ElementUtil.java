@@ -1,30 +1,51 @@
 package stroom.widget.util.client;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 
 public class ElementUtil {
 
     public static boolean hasClassName(final Element element,
                                        final String className) {
-        return findMatching(element, className, 0, 0) != null;
+        return findParent(element, className, 0, 0) != null;
     }
 
     public static boolean hasClassName(final Element element,
                                        final String className,
-                                       final int depth,
                                        final int maxDepth) {
-        return findMatching(element, className, depth, maxDepth) != null;
+        return findParent(element, className, 0, maxDepth) != null;
     }
 
-    public static Element findMatching(final Element element,
-                                       final String className) {
-        return findMatching(element, className, 0, 0);
+    public static Element findChild(final Element element, final String className) {
+        if (element != null) {
+            final String elementClassName = ElementUtil.getClassName(element);
+            if (elementClassName != null && elementClassName.contains(className)) {
+                return element;
+            } else if (element.getChildNodes() != null) {
+                for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+                    final Node node = element.getChildNodes().getItem(i);
+                    if (Element.is(node)) {
+                        final Element child = findChild(Element.as(node), className);
+                        if (child != null) {
+                            return child;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
-    public static Element findMatching(final Element element,
-                                       final String className,
-                                       final int depth,
-                                       final int maxDepth) {
+    public static Element findParent(final Element element,
+                                     final String className,
+                                     final int maxDepth) {
+        return findParent(element, className, 0, maxDepth);
+    }
+
+    private static Element findParent(final Element element,
+                                      final String className,
+                                      final int depth,
+                                      final int maxDepth) {
         if (element == null) {
             return null;
         }
@@ -38,16 +59,33 @@ public class ElementUtil {
          *
          * To avoid this problem we get the class attribute of the element instead.
          */
-        final String elementClassName = element.getAttribute("class");
+        final String elementClassName = getClassName(element);
         if (elementClassName.contains(className)) {
             return element;
         }
 
         if (depth < maxDepth) {
-            return findMatching(element.getParentElement(), className, depth + 1, maxDepth);
+            return findParent(element.getParentElement(), className, depth + 1, maxDepth);
         }
 
         return null;
+    }
+
+    public static String getClassName(final Element el) {
+        if (el == null) {
+            return null;
+        }
+
+        /*
+         * DON'T CHANGE THIS CODE.
+         *
+         * Although it appears that `element.getClassName()` returns a String it actually returns an SVGAnimatedString
+         * object for SVG elements when it is running as JavaScript. See here:
+         * https://developer.mozilla.org/en-US/docs/Web/API/Element/className
+         *
+         * To avoid this problem we get the class attribute of the element instead.
+         */
+        return el.getAttribute("class");
     }
 
     public static Rect getClientRect(Element el) {
@@ -225,5 +263,13 @@ public class ElementUtil {
             left += offsetLeft - cur.scrollLeft;
             cur = cur.parentNode;
         }
+    }-*/;
+
+    public static native int getSelectionStart(Element elem) /*-{
+        return elem.selectionStart;
+    }-*/;
+
+    public static native void setSelectionStart(Element elem, int selectionStart) /*-{
+        elem.selectionStart = selectionStart;
     }-*/;
 }

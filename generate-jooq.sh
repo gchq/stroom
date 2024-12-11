@@ -16,13 +16,13 @@ cd -
 cd stroom-security/stroom-security-impl-db-jooq
 ../../gradlew generateJooq
 cd -
-cd .idea/modules/stroom-annotation/stroom-annotation-impl-db-jooq
+cd stroom-annotation/stroom-annotation-impl-db-jooq
 ../../gradlew generateJooq
 cd -
-cd .idea/modules/stroom-processor/stroom-processor-impl-db-jooq
+cd stroom-processor/stroom-processor-impl-db-jooq
 ../../gradlew generateJooq
 cd -
-cd .idea/modules/stroom-cluster/stroom-cluster-lock-impl-db-jooq
+cd stroom-cluster/stroom-cluster-lock-impl-db-jooq
 ../../gradlew generateJooq
 cd -
 cd stroom-activity/stroom-activity-impl-db-jooq

@@ -10,7 +10,7 @@ class FilterBuilderTest {
         final String excludes = "stuff to exclude **";
         final String includes = "stuff to include &&";
 
-        final Filter filter = Filter
+        final IncludeExcludeFilter filter = IncludeExcludeFilter
                 .builder()
                 .excludes(excludes)
                 .includes(includes)

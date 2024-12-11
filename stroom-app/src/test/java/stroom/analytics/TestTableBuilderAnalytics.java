@@ -28,7 +28,6 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 
 import jakarta.inject.Inject;
@@ -44,7 +43,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
-@IncludeModule(MockSecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
@@ -77,7 +75,6 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                 where UserId = user5
                 window EventTime by 1y advance 1y
                 group by UserId
-                // having count > countPrevious
                 select UserId""";
         basicTest(query, 9, 3);
     }
@@ -89,7 +86,7 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                 where UserId = user5
                 window EventTime by 1y advance 1y
                 group by UserId
-                having "period-0" = 0
+                having "period0" = 0
                 select UserId""";
         basicTest(query, 9, 2);
     }

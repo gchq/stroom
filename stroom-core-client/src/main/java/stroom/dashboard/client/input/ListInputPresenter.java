@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,14 @@ import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;
+import stroom.dictionary.shared.Word;
+import stroom.dictionary.shared.WordList;
 import stroom.dictionary.shared.WordListResource;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.Param;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -37,7 +42,11 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ListInputPresenter
         extends AbstractComponentPresenter<ListInputView>
@@ -65,8 +74,8 @@ public class ListInputPresenter
     }
 
     @Override
-    public void onValueChanged(final String value) {
-        setSettings(getListInputSettings().copy().value(value).build());
+    public void onValueChanged(final WordItem value) {
+        setSettings(getListInputSettings().copy().value(value.getWord()).build());
         ComponentChangeEvent.fire(this, this);
         setDirty(true);
     }
@@ -74,10 +83,10 @@ public class ListInputPresenter
     @Override
     public List<Param> getParams() {
         final List<Param> list = new ArrayList<>();
-        final String key = getListInputSettings().getKey();
-        final String value = getView().getSelectedValue();
-        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
-            final Param param = new Param(key.trim(), value.trim());
+        final String key = GwtNullSafe.trim(getListInputSettings().getKey());
+        final String value = GwtNullSafe.trim(getView().getSelectedValue());
+        if (!key.isEmpty() && !value.isEmpty()) {
+            final Param param = new Param(key, value);
             list.add(param);
         }
         return list;
@@ -96,24 +105,38 @@ public class ListInputPresenter
     }
 
     private void update(final ListInputComponentSettings settings) {
+
+        getView().setAllowTextEntry(settings.isAllowTextEntry());
+
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
             restFactory
                     .create(WORD_LIST_RESOURCE)
                     .method(res -> res.getWords(settings.getDictionary().getUuid()))
-                    .onSuccess(words -> {
-                        if (words != null) {
-                            getView().setValues(words);
-                            getView().setSelectedValue(settings.getValue());
-                            getView().setAllowTextEntry(settings.isAllowTextEntry());
+                    .onSuccess(wordList -> {
+                        if (wordList != null && !wordList.isEmpty()) {
+                            final List<WordItem> values = wordList.getSortedList()
+                                    .stream()
+                                    .map(wordObj ->
+                                            new WordItem(wordObj, wordList))
+                                    .collect(Collectors.toList());
+
+                            final WordItem selectedValue = WordItem.sourcedWord(settings.getValue(), wordList);
+                            getView().setValues(values);
+                            getView().setSelectedValue(selectedValue);
+                        } else {
+                            getView().setValues(Collections.emptyList());
+                            getView().setSelectedValue(null);
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         } else {
-            getView().setValues(settings.getValues());
-            getView().setSelectedValue(settings.getValue());
-            getView().setAllowTextEntry(settings.isAllowTextEntry());
+            final List<WordItem> simpleValues = GwtNullSafe.stream(settings.getValues())
+                    .map(WordItem::simpleWord)
+                    .collect(Collectors.toList());
+            getView().setValues(simpleValues);
+            getView().setSelectedValue(WordItem.simpleWord(settings.getValue()));
         }
     }
 
@@ -151,12 +174,73 @@ public class ListInputPresenter
 
     public interface ListInputView extends View, HasUiHandlers<ListInputUiHandlers> {
 
-        void setValues(List<String> values);
+        void setValues(List<WordItem> values);
 
-        void setSelectedValue(String selected);
+        void setSelectedValue(WordItem selected);
 
         String getSelectedValue();
 
         void setAllowTextEntry(boolean allowTextEntry);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class WordItem implements HasDisplayValue {
+
+        public static final WordItem EMPTY = new WordItem("", null);
+
+        private final String word;
+        private final DocRef sourceDocRef;
+
+        public WordItem(final String word, final DocRef sourceDocRef) {
+            this.word = word;
+            this.sourceDocRef = sourceDocRef;
+        }
+
+        /**
+         * For non dictionary based lists
+         *
+         * @param word
+         */
+        public static WordItem simpleWord(final String word) {
+            if (GwtNullSafe.isNonBlankString(word)) {
+                return new WordItem(word, null);
+            } else {
+                return EMPTY;
+            }
+        }
+
+        public static WordItem sourcedWord(final String word, final WordList wordList) {
+            if (GwtNullSafe.isNonBlankString(word)) {
+                return wordList.getWord(word)
+                        .map(wordObj -> {
+                            final DocRef sourceDocRef = wordList.getSource(wordObj).orElse(null);
+                            return new WordItem(word, sourceDocRef);
+                        })
+                        .orElse(EMPTY);
+            } else {
+                return EMPTY;
+            }
+        }
+
+        public WordItem(final Word word, final WordList wordList) {
+            this.word = Objects.requireNonNull(word).getWord();
+            this.sourceDocRef = wordList.getSource(word).orElseThrow();
+        }
+
+        public String getWord() {
+            return word;
+        }
+
+        public Optional<DocRef> getSourceDocRef() {
+            return Optional.ofNullable(sourceDocRef);
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return word;
+        }
     }
 }

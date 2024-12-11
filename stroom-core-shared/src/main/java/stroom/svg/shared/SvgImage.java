@@ -895,6 +895,17 @@ public enum SvgImage {
             "357.4118,1308.5958 1481.458,814.08272 1484.4672,517.50864 Z\" /></svg> \n" +
             ""),
 
+    DOCUMENT_S3("document/S3.svg", "svg-image__document-s3", "" +
+            "<svg viewBox=\"0 0 70 70\" xml:space=\"preserve\" xmlns=\"http://www.w3.org/2000/svg\"" +
+            "><path d=\"m63.95 15.786c0 4.006-12.963 7.238-28.949 7.238-15.988 0-28.951-3.232-" +
+            "28.951-7.238l9.65 43.839c0 2.672 8.637 4.826 19.301 4.826 10.662 0 19.299-2.154 " +
+            "19.299-4.826l9.65-43.839z\" clip-rule=\"evenodd\" fill=\"var(--icon-colour__green)\" " +
+            "fill-rule=\"evenodd\"/><path d=\"m63.95 12.786c0-4.004-12.963-7.237-28.949-7.237-15" +
+            ".988 0-28.951 3.233-28.951 7.237 0 4.006 12.963 7.238 28.951 7.238 15.986 0 28.9" +
+            "49-3.232 28.949-7.238z\" clip-rule=\"evenodd\" fill=\"var(--icon-colour__green)\" fil" +
+            "l-rule=\"evenodd\"/></svg> \n" +
+            ""),
+
     DOCUMENT_SCRIPT("document/Script.svg", "svg-image__document-script", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:var(--icon-colour__blue)\" d=\"m 1512.2605,1230.6818 " +
