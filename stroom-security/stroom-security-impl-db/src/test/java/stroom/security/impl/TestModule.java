@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.activity.api.ActivityService;
 import stroom.cache.impl.CacheModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -11,12 +12,16 @@ import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.mock.MockHasUserDependenciesModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockUserIdentityFactoryModule;
+import stroom.storedquery.api.StoredQueryService;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.guice.GuiceTestUtil;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
 
 import com.google.inject.AbstractModule;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 
@@ -46,5 +51,15 @@ public class TestModule extends AbstractModule {
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });
+
+        final StoredQueryService storedQueryService = GuiceTestUtil.bindMock(binder(), StoredQueryService.class);
+        Mockito.when(storedQueryService.deleteByOwner(Mockito.any())).thenReturn(0);
+
+        final UserPreferencesService userPreferencesService = GuiceTestUtil.bindMock(
+                binder(), UserPreferencesService.class);
+        Mockito.when(userPreferencesService.delete(Mockito.any())).thenReturn(true);
+
+        final ActivityService activityService = GuiceTestUtil.bindMock(binder(), ActivityService.class);
+        Mockito.when(activityService.deleteAllByOwner(Mockito.any())).thenReturn(0);
     }
 }
