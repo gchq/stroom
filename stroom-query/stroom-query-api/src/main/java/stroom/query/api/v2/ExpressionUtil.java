@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -228,8 +227,8 @@ public class ExpressionUtil {
         if (query != null) {
             ExpressionOperator expression = query.getExpression();
             if (query.getParams() != null && expression != null) {
-                final Map<String, String> paramMap = ParamUtil.createParamMap(query.getParams());
-                expression = replaceExpressionParameters(expression, paramMap);
+                final ParamValues paramValues = ParamUtil.createParamValueFunction(query.getParams());
+                expression = replaceExpressionParameters(expression, paramValues);
             }
             result = query.copy().expression(expression).build();
         }
@@ -240,8 +239,8 @@ public class ExpressionUtil {
                                                                  final List<Param> params) {
         final ExpressionOperator result;
         if (operator != null) {
-            final Map<String, String> paramMap = ParamUtil.createParamMap(params);
-            result = replaceExpressionParameters(operator, paramMap);
+            final ParamValues paramValues = ParamUtil.createParamValueFunction(params);
+            result = replaceExpressionParameters(operator, paramValues);
         } else {
             result = null;
         }
@@ -249,7 +248,7 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
-                                                                 final Map<String, String> paramMap) {
+                                                                 final ParamValues paramValues) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()
                 .enabled(operator.getEnabled())
@@ -258,12 +257,12 @@ public class ExpressionUtil {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    builder.addOperator(replaceExpressionParameters(childOperator, paramMap));
+                    builder.addOperator(replaceExpressionParameters(childOperator, paramValues));
 
                 } else if (child instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
-                    final String replaced = ParamUtil.replaceParameters(value, paramMap);
+                    final String replaced = ParamUtil.replaceParameters(value, paramValues);
                     builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())

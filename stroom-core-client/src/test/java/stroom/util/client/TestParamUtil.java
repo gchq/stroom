@@ -18,6 +18,8 @@ package stroom.util.client;
 
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamValues;
+import stroom.query.api.v2.ParamValuesImpl;
 
 import org.junit.jupiter.api.Test;
 
@@ -66,28 +68,28 @@ class TestParamUtil {
 
     @Test
     void testReplacement() {
-        Map<String, String> map = getMap("key1=value1");
-        String result = ParamUtil.replaceParameters("this is ${key1}", map);
+        ParamValues paramValues = new ParamValuesImpl(getMap("key1=value1"));
+        String result = ParamUtil.replaceParameters("this is ${key1}", paramValues);
         assertThat(result).isEqualTo("this is value1");
 
-        map = getMap("key1=value1 key2=value2");
-        result = ParamUtil.replaceParameters("this is $${key1} ${key2}", map);
+        paramValues = new ParamValuesImpl(getMap("key1=value1 key2=value2"));
+        result = ParamUtil.replaceParameters("this is $${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("this is ${key1} value2");
 
-        result = ParamUtil.replaceParameters("this is $$${key1} ${key2}", map);
+        result = ParamUtil.replaceParameters("this is $$${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("this is $value1 value2");
 
-        result = ParamUtil.replaceParameters("this is $$$${key1} ${key2}", map);
+        result = ParamUtil.replaceParameters("this is $$$${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("this is $${key1} value2");
 
-        result = ParamUtil.replaceParameters("this is $$$$${key1} ${key2}", map);
+        result = ParamUtil.replaceParameters("this is $$$$${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("this is $$value1 value2");
 
-        result = ParamUtil.replaceParameters("$this is $$$$${key1} ${key2}", map);
+        result = ParamUtil.replaceParameters("$this is $$$$${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("$this is $$value1 value2");
 
-        map = getMap("user=user1 user2");
-        result = ParamUtil.replaceParameters("${user}", map);
+        paramValues = new ParamValuesImpl(getMap("user=user1 user2"));
+        result = ParamUtil.replaceParameters("${user}", paramValues);
         assertThat(result).isEqualTo("user1 user2");
     }
 

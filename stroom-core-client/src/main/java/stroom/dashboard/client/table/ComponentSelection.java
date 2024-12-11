@@ -1,19 +1,10 @@
 package stroom.dashboard.client.table;
 
-import java.util.Map;
+import stroom.query.api.v2.ParamValues;
 
-public class ComponentSelection {
-    private Map<String, String> map;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
-    public ComponentSelection(final Map<String, String> map) {
-        this.map = map;
-    }
+public interface ComponentSelection extends ParamValues {
 
-    public String get(final String key) {
-        return map.get(key);
-    }
-
-    public Map<String, String> getMap() {
-        return map;
-    }
+    SafeHtml asSafeHtml();
 }

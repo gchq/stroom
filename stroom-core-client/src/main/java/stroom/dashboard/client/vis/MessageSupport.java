@@ -16,10 +16,10 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.query.client.presenter.VisComponentSelection;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
@@ -30,16 +30,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MessageSupport
@@ -91,21 +88,6 @@ public class MessageSupport
         PostMessage.get().postMessage(frame, json, frameId);
     }
 
-    private Map<String, String> toMap(final JSONObject obj) {
-        final Map<String, String> map = new HashMap<>();
-        if (obj != null) {
-            for (final String key : obj.keySet()) {
-                final JSONValue v = obj.get(key);
-                if (v.isString() != null) {
-                    map.put(key, v.isString().stringValue());
-                } else {
-                    map.put(key, v.toString());
-                }
-            }
-        }
-        return map;
-    }
-
     @Override
     public void receiveMessage(final MessageEvent event, final JSONObject message) {
         final Integer callbackId = JSONUtil.getInteger(message.get("callbackId"));
@@ -122,16 +104,7 @@ public class MessageSupport
             GWT.log("Received selection from vis: " + selection.toString());
 
             if (uiHandlers != null) {
-                final List<ComponentSelection> list = new ArrayList<>();
-                final JSONArray array = selection.isArray();
-                if (array != null) {
-                    for (int i = 0; i < array.size(); i++) {
-                        list.add(new ComponentSelection(toMap(array.get(i).isObject())));
-                    }
-                } else {
-                    list.add(new ComponentSelection(toMap(selection.isObject())));
-                }
-                uiHandlers.onSelection(list);
+                uiHandlers.onSelection(VisComponentSelection.create(selection));
             }
 
         } else {

@@ -761,7 +761,7 @@ public class EmbeddedQueryPresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        if (currentVisPresenter != null) {
+        if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
             return currentVisPresenter.getSelection();
         } else if (currentTablePresenter != null) {
             return currentTablePresenter.getSelection();

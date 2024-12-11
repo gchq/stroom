@@ -18,14 +18,22 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,6 +41,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +52,7 @@ public class SelectionHandlerPresenter
     private final EditExpressionPresenter editExpressionPresenter;
     private FieldSelectionListModel fieldSelectionListModel;
     private ComponentSelectionHandler originalHandler;
+    private Components components;
 
     @Inject
     public SelectionHandlerPresenter(final EventBus eventBus,
@@ -80,6 +90,39 @@ public class SelectionHandlerPresenter
             editExpressionPresenter.read(componentSelectionHandler.getExpression());
         }
         getView().setEnabled(componentSelectionHandler.isEnabled());
+
+        if (components != null && components.getComponents() != null) {
+            getView().setCurrentSelection(getCurrentSelection(components.getComponents()));
+        }
+    }
+
+    private SafeHtml getCurrentSelection(final Collection<Component> components) {
+        final TableBuilder tb = new TableBuilder();
+        for (final Component component : components) {
+            appendComponentSelection(component, tb);
+        }
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        return htmlBuilder.toSafeHtml();
+    }
+
+    private void appendComponentSelection(final Component component,
+                                          final TableBuilder tb) {
+        if (component instanceof HasComponentSelection) {
+            final HasComponentSelection hasComponentSelection = (HasComponentSelection) component;
+            final List<ComponentSelection> componentSelections = hasComponentSelection.getSelection();
+
+            if (componentSelections != null) {
+                boolean firstSelection = true;
+                for (final ComponentSelection componentSelection : componentSelections) {
+                    if (firstSelection) {
+                        tb.row(TableCell.header(component.getDisplayValue()));
+                    }
+                    tb.row(componentSelection.asSafeHtml());
+                    firstSelection = false;
+                }
+            }
+        }
     }
 
     ComponentSelectionHandler write() {
@@ -133,6 +176,10 @@ public class SelectionHandlerPresenter
         fieldSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
+    public void setComponents(final Components components) {
+        this.components = components;
+    }
+
     public interface SelectionHandlerView extends View, Focus, HasUiHandlers<SelectionHandlerUiHandlers> {
 
         void setComponentList(List<Component> componentList);
@@ -146,5 +193,7 @@ public class SelectionHandlerPresenter
         boolean isEnabled();
 
         void setEnabled(boolean enabled);
+
+        void setCurrentSelection(final SafeHtml selection);
     }
 }
