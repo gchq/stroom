@@ -77,6 +77,7 @@ import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
+import stroom.query.client.presenter.TableComponentSelection;
 import stroom.query.client.presenter.TableRow;
 import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
@@ -1086,32 +1087,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public List<ComponentSelection> getSelection() {
-        return GwtNullSafe.list(selectionModel.getSelectedItems())
-                .stream()
-                .map(tableRow -> {
-                    final Map<String, String> values = new HashMap<>();
-                    final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
-
-                    for (final ColumnRef column : columns) {
-                        if (column.getId() != null) {
-                            final String value = tableRow.getText(column.getId());
-                            if (value != null) {
-                                values.computeIfAbsent(column.getId(), k -> value);
-                            }
-                        }
-                    }
-                    for (final ColumnRef column : columns) {
-                        if (column.getName() != null) {
-                            final String value = tableRow.getText(column.getName());
-                            if (value != null) {
-                                values.computeIfAbsent(column.getName(), k -> value);
-                            }
-                        }
-                    }
-
-                    return new ComponentSelection(values);
-                })
-                .collect(Collectors.toList());
+        final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+        return TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
     private TableComponentSettings createSettings() {

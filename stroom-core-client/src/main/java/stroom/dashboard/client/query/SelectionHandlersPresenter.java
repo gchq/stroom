@@ -231,9 +231,10 @@ public class SelectionHandlersPresenter
                 .enabled(true)
                 .build();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
+        editSelectionHandlerPresenter.setComponents(getComponents());
         editSelectionHandlerPresenter.read(newRule, componentList, fieldSelectionListModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -254,9 +255,10 @@ public class SelectionHandlersPresenter
 
     private void edit(final ComponentSelectionHandler existingRule) {
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
+        editSelectionHandlerPresenter.setComponents(getComponents());
         editSelectionHandlerPresenter.read(existingRule, componentList, fieldSelectionListModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
