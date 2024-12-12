@@ -14,13 +14,33 @@
         </g:south>
         <g:center>
             <g:FlowPanel>
-                <form:FormGroup label="Permission Visibility" addStyleNames="form-padding">
+                <form:FormGroup label="Permission Visibility"
+                                addStyleNames="form-padding">
+                    <form:HelpHTML>
+                        <p>This dropdown controls which users/groups are shown in the <em>Users and Groups</em>
+                            pane below.</p>
+                        <ul>
+                            <li><strong>Show Explicit</strong> - Show only those users/groups that have an explicit
+                                permission on this document/folder, i.e. one that has been
+                                directly assigned to them.</li>
+                            <li><strong>Show Effective</strong> - Show only those users/groups that have an explicit
+                            or inherited permission on this document/folder. The permission may be inherited from
+                            a group they are a member of or an ancestor group.</li>
+                            <li><strong>Show All</strong> - Shows all users/groups regardless of permissions held.
+                            Select this to grant new permissions to users/groups.</li>
+                        </ul>
+                    </form:HelpHTML>
                     <l:SelectionBox ui:field="permissionVisibility"/>
                 </form:FormGroup>
-                <form:FormGroup label="Users and Groups" addStyleNames="form-label-padding max">
+                <form:FormGroup label="Users and Groups"
+                                addStyleNames="form-label-padding max">
+                    <form:HelpHTML>
+                        <p>Shows users/groups, optionally filtered based on the value of the
+                            <em>Permission Visibility</em> dropdown.</p>
+                    </form:HelpHTML>
                     <g:SimplePanel ui:field="docUserPermissionsList" styleName="max"/>
                 </form:FormGroup>
             </g:FlowPanel>
         </g:center>
     </g:ThinSplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

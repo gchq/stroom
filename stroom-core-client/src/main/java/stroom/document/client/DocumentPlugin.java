@@ -34,6 +34,7 @@ import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -44,6 +45,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 
+import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -138,8 +140,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     presenter = (DocumentEditPresenter<?, D>) existing;
                 }
 
-                if (selectedLinkTab != null && existing instanceof DocumentEditTabPresenter<?, ?>) {
-                    ((DocumentEditTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
+                if (selectedLinkTab != null) {
+                    GWT.log("existing - " + existing.getClass().getName());
+                    if (existing instanceof DocumentEditTabPresenter<?, ?>) {
+                        ((DocumentEditTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
+                    } else if (existing instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) existing).selectCommonTab(selectedLinkTab);
+                    }
                 }
             } else if (forceOpen) {
                 // If the item isn't already open but we are forcing it open then,
@@ -214,8 +221,12 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             if (doc == null) {
                 AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
             } else {
-                if (selectedTab != null && documentEditPresenter instanceof DocumentEditTabPresenter<?, ?>) {
-                    ((DocumentEditTabPresenter<?, ?>) documentEditPresenter).selectCommonTab(selectedTab);
+                if (selectedTab != null) {
+                    if (documentEditPresenter instanceof DocumentEditTabPresenter<?, ?>) {
+                        ((DocumentEditTabPresenter<?, ?>) documentEditPresenter).selectCommonTab(selectedTab);
+                    } else if (documentEditPresenter instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) documentEditPresenter).selectCommonTab(selectedTab);
+                    }
                 }
                 // Read the newly loaded document.
                 if (documentEditPresenter instanceof HasDocumentRead) {

@@ -162,4 +162,9 @@ public class FolderPresenter
     public DocRef getDocRef() {
         return docRef;
     }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
 }

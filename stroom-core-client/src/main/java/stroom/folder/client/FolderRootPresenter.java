@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
@@ -44,6 +45,7 @@ public class FolderRootPresenter
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData PROCESSORS = new TabDataImpl("Processors");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final TabContentProvider<Object> tabContentProvider;
 
@@ -53,7 +55,8 @@ public class FolderRootPresenter
                                final LinkTabPanelView view,
                                final Provider<MetaPresenter> metaPresenterProvider,
                                final Provider<ProcessorPresenter> processorPresenterProvider,
-                               final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider) {
+                               final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider,
+                               final DocumentUserPermissionsTabProvider<Object> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         this.tabContentProvider = new TabContentProvider<>(eventBus);
 
@@ -118,6 +121,8 @@ public class FolderRootPresenter
                 selectedTab = PROCESSORS;
             }
         }
+        addTab(PERMISSIONS);
+        tabContentProvider.add(PERMISSIONS, documentUserPermissionsTabProvider);
 
         selectTab(selectedTab);
     }
@@ -154,5 +159,10 @@ public class FolderRootPresenter
     @Override
     public DocRef getDocRef() {
         return ExplorerConstants.SYSTEM_DOC_REF;
+    }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
     }
 }
