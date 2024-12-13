@@ -5,17 +5,37 @@
              xmlns:l="urn:import:stroom.item.client">
     <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="600">
-            <!-- The app perms list and details pane -->
+            <!-- The pane that lists all the app perms with check boxes to set them -->
             <g:SimplePanel ui:field="appPermissionsEdit"
                            styleName="max"/>
         </g:south>
         <g:center>
             <g:FlowPanel>
-                <form:FormGroup label="Permission Visibility" addStyleNames="form-padding">
+                <form:FormGroup label="Permission Visibility"
+                                addStyleNames="form-padding">
+                    <form:HelpHTML>
+                        <p>This dropdown controls which users/groups are shown in the <em>Users and Groups</em>
+                            pane below.</p>
+                        <ul>
+                            <li><strong>Show Explicit</strong> - Show only those users/groups that have an explicit
+                                application permission, i.e. one that has been directly assigned to them.</li>
+                            <li><strong>Show Effective</strong> - Show only those users/groups that have an explicit
+                                or inherited application permission. The permission may be inherited from
+                                a group they are a member of or from an ancestor of a group they are a member of.</li>
+                            <li><strong>Show All</strong> - Shows all users/groups regardless of permissions held.
+                                Select this to grant new permissions to users/groups.</li>
+                        </ul>
+                    </form:HelpHTML>
                     <l:SelectionBox ui:field="permissionVisibility"/>
                 </form:FormGroup>
-                <form:FormGroup label="Users and Groups" addStyleNames="form-label-padding max">
-                    <g:SimplePanel ui:field="appUserPermissionsList" styleName="max"/>
+                <form:FormGroup label="Users and Groups"
+                                addStyleNames="form-label-padding max">
+                    <form:HelpHTML>
+                        <p>Shows users/groups, optionally filtered based on the value of the
+                            <em>Permission Visibility</em> dropdown.</p>
+                    </form:HelpHTML>
+                    <g:SimplePanel ui:field="appUserPermissionsList"
+                                   styleName="max"/>
                 </form:FormGroup>
             </g:FlowPanel>
         </g:center>

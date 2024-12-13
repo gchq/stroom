@@ -25,7 +25,7 @@
                                 directly assigned to them.</li>
                             <li><strong>Show Effective</strong> - Show only those users/groups that have an explicit
                             or inherited permission on this document/folder. The permission may be inherited from
-                            a group they are a member of or an ancestor group.</li>
+                            a group they are a member of or from an ancestor of a group they are a member of.</li>
                             <li><strong>Show All</strong> - Shows all users/groups regardless of permissions held.
                             Select this to grant new permissions to users/groups.</li>
                         </ul>
@@ -35,7 +35,7 @@
                 <form:FormGroup label="Users and Groups"
                                 addStyleNames="form-label-padding max">
                     <form:HelpHTML>
-                        <p>Shows users/groups, optionally filtered based on the value of the
+                        <p>Lists users/groups, optionally filtered based on the value of the
                             <em>Permission Visibility</em> dropdown.</p>
                     </form:HelpHTML>
                     <g:SimplePanel ui:field="docUserPermissionsList" styleName="max"/>

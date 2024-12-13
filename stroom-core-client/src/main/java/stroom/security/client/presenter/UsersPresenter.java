@@ -10,6 +10,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -49,7 +50,11 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
         view.setUserList(this.userList.getView());
 
-        this.userList.getView().setLabel("Users");
+        this.userList.getView().setLabel("Users:");
+        this.userList.getView().setHelpText(HtmlBuilder.builder()
+                .para(htmlBuilder -> htmlBuilder.append(
+                        "Lists all Stroom users. Users can be added, deleted, disabled and enabled."))
+                .toSafeHtml());
         this.userList.setMode(Mode.USERS_ONLY);
         this.userList.setShowUniqueUserIdCol(true);
         this.userList.setShowEnabledCol(true);

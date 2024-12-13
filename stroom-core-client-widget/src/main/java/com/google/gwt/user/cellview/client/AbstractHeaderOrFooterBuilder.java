@@ -6,6 +6,7 @@
 package com.google.gwt.user.cellview.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.Cell;
@@ -25,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<T>, FooterBuilder<T> {
+
+    private static final SafeHtml ARROW_UP_SAFE_HTML = SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP);
+    private static final SafeHtml ARROW_DOWN_SAFE_HTML = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
 
     private final boolean isFooter;
     private boolean isSortIconStartOfLine = true;
@@ -198,7 +202,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
             return null;
         } else {
             String value = elem.getAttribute(attribute);
-            return value != null && value.length() != 0
+            return GwtNullSafe.isNonEmptyString(value)
                     ? value
                     : null;
         }
@@ -209,12 +213,14 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
     }
 
     private SafeHtml getSortIcon(final boolean isAscending) {
-        if (isAscending) {
-            return SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
-        } else {
-            return SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP);
-        }
+        return isAscending
+                ? ARROW_UP_SAFE_HTML
+                : ARROW_DOWN_SAFE_HTML;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TwoWayHashMap<K, V> {
 

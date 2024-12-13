@@ -33,6 +33,7 @@ import org.jooq.exception.IntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -359,6 +360,23 @@ public class UserDaoImpl implements UserDao {
     }
 
     Collection<OrderField<?>> createOrderFields(final BaseCriteria criteria) {
+        return createOrderFields(criteria, null);
+    }
+
+    /**
+     * @param additionalFieldMappings Any additional field name to {@link Field} mappings. Can be null.
+     */
+    Collection<OrderField<?>> createOrderFields(final BaseCriteria criteria,
+                                                final Map<String, Field<?>> additionalFieldMappings) {
+
+        final Map<String, Field<?>> nameToFieldMap;
+        if (additionalFieldMappings != null) {
+            nameToFieldMap = new HashMap<>(SORT_FIELD_NAME_TO_FIELD_MAP);
+            nameToFieldMap.putAll(additionalFieldMappings);
+        } else {
+            nameToFieldMap = SORT_FIELD_NAME_TO_FIELD_MAP;
+        }
+
         final List<CriteriaFieldSort> sortList = new ArrayList<>(NullSafe
                 .getOrElseGet(criteria, BaseCriteria::getSortList, Collections::emptyList));
         if (sortList.isEmpty()) {
@@ -367,7 +385,7 @@ public class UserDaoImpl implements UserDao {
 
         final ArrayList<OrderField<?>> sortFields = sortList.stream()
                 .map(sort -> {
-                    Field<?> field = SORT_FIELD_NAME_TO_FIELD_MAP.get(sort.getId());
+                    Field<?> field = nameToFieldMap.get(sort.getId());
                     if (field == null) {
                         field = DEFAULT_SORT_FIELD;
                     }

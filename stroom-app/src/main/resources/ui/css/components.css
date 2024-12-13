@@ -1776,10 +1776,13 @@ button.main-menu svg {
     margin-bottom: 0rem;
 }
 
-.form-label-padding .form-group-label {
+.form-label-padding .form-group-label,
+.form-label-padding .help-button {
     margin-top: var(--control__gap--vertical);
+}
+
+.form-label-padding .form-group-label {
     margin-left: var(--control__gap--horizontal);
-    margin-right: var(--control__gap--horizontal);
 }
 
 .help-button-tooltip {
@@ -1791,15 +1794,27 @@ button.main-menu svg {
     border-radius: 6px;
 }
 
-.help-button-tooltip .popupContent {
+.markdown.help-button-tooltip .popupContent {
     margin: 5px;
     font-weight: 400;
 }
 
-.help-button-tooltip .popupContent div {
+.markdown.help-button-tooltip .popupContent div,
+.markdown.help-button-tooltip .popupContent span,
+.markdown.help-button-tooltip .popupContent p,
+.markdown.help-button-tooltip .popupContent b,
+.markdown.help-button-tooltip .popupContent i {
     font-weight: 400;
     /* Make it a wee bit smaller than normal text in stroom which is size-13 */
     font-size: var(--font-size-12);
+    line-height: 0.9em;
+}
+
+.markdown.help-button-tooltip .popupContent h4 {
+    font-weight: 500;
+    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
+    font-size: var(--font-size-13);
+    line-height: 1.6em;
 }
 
 .form-group .help-button .icon-button {

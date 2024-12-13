@@ -16,7 +16,7 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.widget.form.client.FormLabel;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -36,7 +36,7 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
         implements QuickFilterPageView {
 
     @UiField
-    FormLabel label;
+    FormGroup formGroup;
     @UiField
     QuickFilter quickFilter;
     @UiField
@@ -47,13 +47,17 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
     @Inject
     public QuickFilterPageViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        label.setVisible(false);
+        formGroup.setLabel(null);
     }
 
     @Override
     public void setLabel(final String label) {
-        this.label.setLabel(label);
-        this.label.setVisible(true);
+        formGroup.setLabel(label);
+    }
+
+    @Override
+    public void setHelpText(final SafeHtml helpText) {
+        formGroup.overrideHelpText(helpText);
     }
 
     @Override

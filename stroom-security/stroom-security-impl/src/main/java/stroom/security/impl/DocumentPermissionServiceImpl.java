@@ -331,15 +331,20 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
-        return map
-                .entrySet()
+        return map.entrySet()
                 .stream()
                 .collect(Collectors.toMap(Entry::getKey, entry -> {
                     return entry.getValue()
                             .stream()
                             .map(list -> list.stream()
                                     .map(UserRef::toDisplayString)
-                                    .collect(Collectors.joining(" > ")))
+//                                    .map(userRef ->
+//                                            userRef.getType(CaseType.SENTENCE)
+//                                            + ": \""
+//                                            + userRef.toDisplayString()
+//                                            + "\""
+//                                    )
+                                    .collect(Collectors.joining(" --> ")))
                             .toList();
                 }));
     }

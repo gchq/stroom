@@ -34,6 +34,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -82,7 +83,15 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         super(eventBus, view);
         this.userList = userListPresenterProvider.get();
         this.userList.setMode(Mode.USERS_AND_GROUPS);
-        this.userList.getView().setLabel(UsersAndGroupsPlugin.SCREEN_NAME);
+        this.userList.getView().setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
+        this.userList.getView().setHelpText(HtmlBuilder.builder()
+                .para(paraBuilder -> paraBuilder
+                        .append("Lists all users and user groups. User groups can be added and deleted."))
+                .para(paraBuilder -> paraBuilder
+                        .append("To add/delete/disable users, open the ")
+                        .italic(italicBuilder -> italicBuilder.append("Users"))
+                        .append(" screen."))
+                .toSafeHtml());
         this.userList.setName("userList");
         // Top pane doesn't need to link back to itself
         this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USER_GROUPS));
@@ -232,12 +241,28 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 .build());
         parentsList.refresh();
 
-        final StringBuilder parentLabel = new StringBuilder()
-                .append(userRef.getType(CaseType.SENTENCE))
-                .append(" \"")
-                .append(userRef.getDisplayName())
-                .append("\" is a member of:");
-        parentsList.getView().setLabel(parentLabel.toString());
+        parentsList.getView().setLabel(getIdentityDescription(userRef, CaseType.SENTENCE) + " is a member of:");
+        final String lowerUserDesc = getIdentityDescription(userRef, CaseType.LOWER);
+        parentsList.getView().setHelpText(HtmlBuilder.builder()
+                .para("Lists user groups that " + lowerUserDesc + " is a direct member of.")
+                .para(paraBuilder -> paraBuilder
+                        .append("Use the '")
+                        .bold("+")
+                        .append("' icon to add ")
+                        .append(lowerUserDesc)
+                        .append(" to another group."))
+                .para(paraBuilder -> paraBuilder
+                        .append("Use the '")
+                        .bold("-")
+                        .append("' icon to remove ")
+                        .append(lowerUserDesc)
+                        .append(" from the selected parent group."))
+                .toSafeHtml());
+    }
+
+    private String getIdentityDescription(final UserRef userRef, final CaseType caseType) {
+        Objects.requireNonNull(userRef);
+        return userRef.getType(caseType) + " \"" + userRef.getDisplayName() + "\"";
     }
 
     private void setChildrenListAdditionalTerm(final UserRef userRef) {
@@ -249,16 +274,30 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 .build());
         childrenList.refresh();
 
-        final StringBuilder childLabel = new StringBuilder();
+        final String identityDesc = getIdentityDescription(userRef, CaseType.LOWER);
         if (userRef.isGroup()) {
-            childLabel.append("Members of group \"");
-            childLabel.append(userRef.getDisplayName());
-            childLabel.append("\":");
+            childrenList.getView().setLabel("Members of " + identityDesc + ":");
+            childrenList.getView().setHelpText(HtmlBuilder.builder()
+                    .para("Lists users and user groups that are direct members of " + identityDesc + ".")
+                    .para(paraBuilder -> paraBuilder
+                            .append("Use the '")
+                            .bold("+")
+                            .append("' icon to add a new user or group as a member of ")
+                            .append(identityDesc)
+                            .append("."))
+                    .para(paraBuilder -> paraBuilder
+                            .append("Use the '")
+                            .bold("-")
+                            .append("' icon to remove the selected member from ")
+                            .append(identityDesc)
+                            .append("."))
+                    .toSafeHtml());
         } else {
-            childLabel.append("No group selected");
+            childrenList.getView().setLabel("No group selected");
+            childrenList.getView().setHelpText(HtmlBuilder.builder()
+                    .para("Users cannot have members.")
+                    .toSafeHtml());
         }
-
-        childrenList.getView().setLabel(childLabel.toString());
     }
 
     private void onSelection() {

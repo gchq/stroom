@@ -11,6 +11,7 @@ import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.NullSafe;
@@ -35,6 +36,7 @@ import org.jooq.impl.DSL;
 import org.jooq.types.UByte;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,10 +60,26 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     private static final BitSet EMPTY = new BitSet(0);
     private static final PermissionDoc PERMISSION_DOC_SOURCE = new PermissionDoc("pd_source");
     private static final PermissionDocCreate PERMISSION_DOC_CREATE_SOURCE = new PermissionDocCreate("pdc_source");
+    private static final int NULL_PERM = -1;
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final DocTypeIdDao docTypeIdDao;
     private final Provider<UserDaoImpl> userDaoProvider;
+
+    static {
+        // We rely on NULL_PERM being less than all DocumentPermission primitiveValues as we
+        // use max/greatest so check for a developer mistake
+        final int minPrimitiveValue = Arrays.stream(DocumentPermission.values())
+                .mapToInt(DocumentPermission::getPrimitiveValue)
+                .min()
+                .orElseThrow(() -> new RuntimeException("No DocumentPermission values"));
+
+        if (minPrimitiveValue < NULL_PERM) {
+            throw new RuntimeException(LogUtil.message(
+                    "NULL_PERM {} must be less than the lowest DocumentPermission primitiveValue {}",
+                    NULL_PERM, minPrimitiveValue));
+        }
+    }
 
     @Inject
     public DocumentPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
@@ -70,6 +88,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         this.securityDbConnProvider = securityDbConnProvider;
         this.docTypeIdDao = docTypeIdDao;
         this.userDaoProvider = userDaoProvider;
+
     }
 
     @Override
@@ -429,7 +448,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         final int offset = JooqUtil.getOffset(request.getPageRequest());
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
-        final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 
         final List<Condition> conditions = new ArrayList<>();
         conditions.add(userDao.getUserCondition(request.getExpression()));
@@ -447,8 +465,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         final Name cte = DSL.name("cte");
         final Field<String> cteUserUuid = DSL.field(cte.append("user_uuid"), String.class);
         final Field<String> cteGroupUuid = DSL.field(cte.append("group_uuid"), String.class);
-        final Field<String> ctePerms = DSL.field(cte.append("perms"), String.class);
-        final Field<String> cteInheritedPerms = DSL.field(cte.append("inherited_perms"), String.class);
+        final Field<Integer> ctePerms = DSL.field(cte.append("perms"), Integer.class);
+        final Field<Integer> cteInheritedPerms = DSL.field(cte.append("inherited_perms"), Integer.class);
 
         final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context -> {
 
@@ -457,8 +475,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                     .select(
                             su.UUID.as("user_uuid"),
                             sug.GROUP_UUID,
-                            DSL.groupConcatDistinct(pd.PERMISSION_ID).as("perms"),
-                            DSL.groupConcatDistinct(pdParent.PERMISSION_ID).as("parent_perms"))
+                            DSL.max(DSL.ifnull(pd.PERMISSION_ID, NULL_PERM)).as("perms"),
+                            DSL.max(DSL.ifnull(pdParent.PERMISSION_ID, NULL_PERM)).as("parent_perms"))
                     .from(su)
                     .leftOuterJoin(sug)
                     .on(sug.USER_UUID.eq(su.UUID))
@@ -471,8 +489,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
             final Table<?> v = select.asTable("v");
             final Field<String> vUserUuid = v.field("user_uuid", String.class);
             final Field<String> vGroupUuid = v.field("group_uuid", String.class);
-            final Field<String> vPerms = v.field("perms", String.class);
-            final Field<String> vParentPerms = v.field("parent_perms", String.class);
+            final Field<Integer> vPerms = v.field("perms", Integer.class);
+            final Field<Integer> vParentPerms = v.field("parent_perms", Integer.class);
             assert vUserUuid != null;
             assert vGroupUuid != null;
             assert vPerms != null;
@@ -494,13 +512,15 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                                                     vUserUuid,
                                                     vGroupUuid,
                                                     vPerms,
-                                                    DSL.if_(cteInheritedPerms.isNull(), vParentPerms,
-                                                            DSL.if_(vParentPerms.isNull(),
-                                                                    cteInheritedPerms,
-                                                                    DSL.concat(
-                                                                            DSL.concat(cteInheritedPerms,
-                                                                                    ","),
-                                                                            vParentPerms))))
+                                                    DSL.greatest(
+                                                            DSL.ifnull(cteInheritedPerms, NULL_PERM),
+                                                            DSL.ifnull(vParentPerms, NULL_PERM)))
+//                                                    DSL.if_(cteInheritedPerms.isNull(), vParentPerms,
+//                                                            DSL.if_(vParentPerms.isNull(),
+//                                                                    cteInheritedPerms,
+//                                                                    DSL.greatest(
+//                                                                            cteInheritedPerms,
+//                                                                            vParentPerms))))
                                             .from(DSL.table(cte))
                                             .join(v).on(vGroupUuid.eq(cteUserUuid))));
 
@@ -510,51 +530,81 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                     .select(
                             cteUserUuid,
                             cteGroupUuid,
-                            DSL.groupConcatDistinct(ctePerms).as("perms"),
-                            DSL.groupConcatDistinct(cteInheritedPerms).as("inherited_perms"))
+                            DSL.max(DSL.ifnull(ctePerms, NULL_PERM)).as("perms"),
+                            DSL.max(DSL.ifnull(cteInheritedPerms, NULL_PERM)).as("inherited_perms"))
                     .from(commonTableExpression)
                     .groupBy(cteUserUuid, cteGroupUuid)
                     .asTable();
 
             final Field<String> recUserUuid = recursive.field("user_uuid", String.class);
             final Field<String> recGroupUuid = recursive.field("group_uuid", String.class);
-            final Field<String> recPerms = recursive.field("perms", String.class);
-            final Field<String> recInheritedPerms = recursive.field("inherited_perms", String.class);
+            final Field<Integer> recPerms = recursive.field("perms", Integer.class);
+            final Field<Integer> recInheritedPerms = recursive.field("inherited_perms", Integer.class);
             assert recUserUuid != null;
             assert recGroupUuid != null;
             assert recPerms != null;
             assert recInheritedPerms != null;
 
+            final Field<Integer> maxOfPermsAgg = DSL.max(DSL.ifnull(recPerms, NULL_PERM));
+            final Field<Integer> maxOfInheritedAgg = DSL.max(DSL.ifnull(recInheritedPerms, NULL_PERM));
+            final Field<Integer> maxOfPermsField = maxOfPermsAgg.as(recPerms.getName());
+            final Field<Integer> maxOfInheritedField = maxOfInheritedAgg.as(recInheritedPerms.getName());
+            final Field<Integer> effectivePerm = DSL.greatest(
+                    DSL.ifnull(maxOfPermsAgg, NULL_PERM),
+                    DSL.ifnull(maxOfInheritedAgg, NULL_PERM));
+
             // Add additional conditions if we want to just show effective or explicit permissions.
             switch (request.getShowLevel()) {
-                case SHOW_EFFECTIVE -> conditions.add(recPerms.isNotNull()
-                        .or(recInheritedPerms.isNotNull()));
-                case SHOW_EXPLICIT -> conditions.add(recPerms.isNotNull());
+                case SHOW_EFFECTIVE -> conditions.add(DSL.ifnull(recPerms, NULL_PERM).notEqual(NULL_PERM)
+                        .or(DSL.ifnull(recInheritedPerms, NULL_PERM).notEqual(NULL_PERM)));
+                case SHOW_EXPLICIT -> conditions.add(DSL.ifnull(recPerms, NULL_PERM).notEqual(NULL_PERM));
             }
 
+            final Map<String, Field<?>> additionalSortFieldMappings;
+            if (request.isFieldInSort(DocumentPermissionFields.FIELD_EXPLICIT_DOC_PERMISSION)) {
+                additionalSortFieldMappings = Map.of(
+                        DocumentPermissionFields.FIELD_EXPLICIT_DOC_PERMISSION, maxOfPermsField);
+            } else if (request.isFieldInSort(DocumentPermissionFields.FIELD_EFFECTIVE_DOC_PERMISSION)) {
+                additionalSortFieldMappings = Map.of(
+                        DocumentPermissionFields.FIELD_EFFECTIVE_DOC_PERMISSION, effectivePerm);
+            } else {
+                additionalSortFieldMappings = null;
+            }
+            final Collection<OrderField<?>> orderFields = userDao.createOrderFields(
+                    request, additionalSortFieldMappings);
             // Join recursive select to user.
-            return context
+            // Max on the perms, as a user may be a member of multiple groups each with a perm on the doc
+            final var sql = context
                     .select(STROOM_USER.UUID,
                             STROOM_USER.NAME,
                             STROOM_USER.DISPLAY_NAME,
                             STROOM_USER.FULL_NAME,
                             STROOM_USER.IS_GROUP,
-                            recPerms,
-                            recInheritedPerms)
+                            maxOfPermsField,
+                            maxOfInheritedField,
+                            effectivePerm)
                     .from(STROOM_USER)
                     .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
                     .where(conditions)
+                    .groupBy(
+                            STROOM_USER.UUID,
+                            STROOM_USER.NAME,
+                            STROOM_USER.DISPLAY_NAME,
+                            STROOM_USER.FULL_NAME,
+                            STROOM_USER.IS_GROUP)
                     .orderBy(orderFields)
                     .offset(offset)
-                    .limit(limit)
-                    .fetch();
+                    .limit(limit);
+
+            LOGGER.debug("sql:\n{}", sql);
+            return sql.fetch();
 
         }).map(r -> {
             final UserRef userRef = recordToUserRef(r);
-            final String perms = r.get(ctePerms);
-            final String inheritedPerms = r.get(cteInheritedPerms);
-            final DocumentPermission permission = getHighestDocPermission(perms);
-            final DocumentPermission inherited = getHighestDocPermission(inheritedPerms);
+            final Integer perms = r.get(ctePerms);
+            final Integer inheritedPerms = r.get(cteInheritedPerms);
+            final DocumentPermission permission = getPermFromPrimitive(perms);
+            final DocumentPermission inherited = getPermFromPrimitive(inheritedPerms);
             return new DocumentUserPermissions(
                     userRef,
                     permission,
@@ -564,6 +614,13 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         });
 
         return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    private DocumentPermission getPermFromPrimitive(final Integer primitive) {
+        return NullSafe.get(primitive, prim ->
+                prim == NULL_PERM
+                        ? null
+                        : DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(primitive.byteValue()));
     }
 
 

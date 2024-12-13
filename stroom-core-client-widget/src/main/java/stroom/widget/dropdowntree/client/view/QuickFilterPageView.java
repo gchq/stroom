@@ -27,6 +27,8 @@ public interface QuickFilterPageView extends View, Focus, HasUiHandlers<QuickFil
 
     void setLabel(String label);
 
+    void setHelpText(SafeHtml helpText);
+
     void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
     void setDataView(View view);

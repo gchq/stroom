@@ -122,7 +122,7 @@ public class AppPermissionsEditPresenter
             updateDetails();
         } else {
             // Fetch permissions and populate table.
-            GWT.log("Fetching app perms for " + relatedUser);
+//            GWT.log("Fetching app perms for " + relatedUser);
             restFactory
                     .create(APP_PERMISSION_RESOURCE)
                     .method(res -> res.getAppUserPermissionsReport(relatedUser))

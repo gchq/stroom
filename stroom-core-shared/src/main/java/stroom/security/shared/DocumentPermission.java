@@ -34,6 +34,10 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
     // Also, the primitiveValue is used to determine whether one permission is higher
     // than another, so the enum values with the highest permission must have the
     // highest primitiveValue.
+    //
+    // Also, do NOT use a primitiveValue of -1 as that gets used in DocumentPermissionDaoImpl
+    // as an alternative for null values.
+    //
     // *****************************************************************
 
     /**
@@ -114,6 +118,22 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
 
     public boolean isHigher(final DocumentPermission permission) {
         return primitiveValue > permission.getPrimitiveValue();
+    }
+
+    /**
+     * @return The highest permission. Copes with nulls.
+     */
+    public static DocumentPermission highest(final DocumentPermission perm1,
+                                             final DocumentPermission perm2) {
+        if (perm1 == null) {
+            return perm2;
+        } else if (perm2 == null) {
+            return perm1;
+        } else if (perm1.primitiveValue > perm2.primitiveValue) {
+            return perm1;
+        } else {
+            return perm2;
+        }
     }
 
 

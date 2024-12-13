@@ -27,12 +27,9 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -165,12 +162,11 @@ public class DocumentUserPermissionsPresenter
 
         DescriptionBuilder sb = new DescriptionBuilder();
         if (permissions.getExplicitPermission() != null) {
-            sb.addTitle("Explicit Permission: " + permissions.getExplicitPermission().getDisplayValue());
+            sb.addTitle("Explicit Permission: " + toDisplayValue(permissions.getExplicitPermission()));
             maxPermission = permissions.getExplicitPermission();
         }
 
-        if (permissions.getInheritedPermissionPaths() != null &&
-            permissions.getInheritedPermissionPaths().size() > 0) {
+        if (GwtNullSafe.hasEntries(permissions.getInheritedPermissionPaths())) {
             sb.addNewLine();
             sb.addNewLine();
             sb.addTitle("Inherited Permissions:");
@@ -184,15 +180,22 @@ public class DocumentUserPermissionsPresenter
 
                     for (final String path : paths) {
                         sb.addNewLine();
-                        sb.addLine(permission.getDisplayValue());
-                        sb.addLine(": ");
+                        sb.addLine(toDisplayValue(permission));
+                        sb.addLine(" from ");
+                        if (path.contains(">")) {
+                            sb.addLine("ancestor group: ");
+                        } else {
+                            sb.addLine("parent group: ");
+                        }
+
                         sb.addLine(path);
                     }
                 }
             }
 
             final DescriptionBuilder sb2 = new DescriptionBuilder();
-            sb2.addTitle("Effective Permission: " + maxPermission.getDisplayValue());
+            sb2.addTitle("Effective Permission: "
+                         + GwtNullSafe.get(maxPermission, this::toDisplayValue));
             sb2.addNewLine();
             sb2.addNewLine();
             sb2.append(sb.toSafeHtml());
@@ -203,6 +206,12 @@ public class DocumentUserPermissionsPresenter
             sb.addTitle("No Permission");
         }
         return sb.toSafeHtml();
+    }
+
+    private String toDisplayValue(final DocumentPermission documentPermission) {
+        return GwtNullSafe.get(documentPermission,
+                DocumentPermission::getDisplayValue,
+                String::toUpperCase);
     }
 
     @Override

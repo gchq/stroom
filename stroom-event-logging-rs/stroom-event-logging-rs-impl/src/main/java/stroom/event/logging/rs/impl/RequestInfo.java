@@ -61,7 +61,7 @@ class RequestInfo {
     }
 
     public static boolean objectIsLoggable(Object obj) {
-        return obj != null  && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
+        return obj != null && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
     }
 
     public RequestInfo(final SecurityContext securityContext,
@@ -106,10 +106,10 @@ class RequestInfo {
 
         //Only required for update and delete operations
         if (OperationType.UPDATE.equals(containerResourceInfo.getOperationType()) ||
-                OperationType.DELETE.equals(containerResourceInfo.getOperationType())) {
+            OperationType.DELETE.equals(containerResourceInfo.getOperationType())) {
             try {
                 boolean templateHasAnId = template instanceof HasId ||
-                        template instanceof HasIntegerId || template instanceof HasUuid;
+                                          template instanceof HasIntegerId || template instanceof HasUuid;
 
                 if (templateHasAnId) {
                     if (resource instanceof FetchWithIntegerId<?>) {
@@ -120,13 +120,13 @@ class RequestInfo {
                             HasId hasId = (HasId) template;
                             if (hasId.getId() > Integer.MAX_VALUE) {
                                 LOGGER.error("ID out of range for int in request of type " +
-                                        template.getClass().getSimpleName());
+                                             template.getClass().getSimpleName());
                             } else {
                                 result = integerReadSupportingResource.fetch((int) ((HasId) template).getId());
                             }
                         } else {
                             LOGGER.error("Unable to extract ID from request of type " +
-                                    template.getClass().getSimpleName());
+                                         template.getClass().getSimpleName());
                         }
                     } else if (resource instanceof FetchWithLongId<?>) {
                         FetchWithLongId<?> integerReadSupportingResource = (FetchWithLongId<?>) resource;
@@ -136,13 +136,13 @@ class RequestInfo {
                             HasId hasId = (HasId) template;
                             if (hasId.getId() > Integer.MAX_VALUE) {
                                 LOGGER.error("ID out of range for int in request of type " +
-                                        template.getClass().getSimpleName());
+                                             template.getClass().getSimpleName());
                             } else {
                                 result = integerReadSupportingResource.fetch(((HasId) template).getId());
                             }
                         } else {
                             LOGGER.error("Unable to extract ID from request of type " +
-                                    template.getClass().getSimpleName());
+                                         template.getClass().getSimpleName());
                         }
                     } else if (resource instanceof FetchWithUuid<?>) {
                         FetchWithUuid<?> docrefReadSupportingResource = (FetchWithUuid<?>) resource;
@@ -152,7 +152,7 @@ class RequestInfo {
                         } else {
                             LOGGER.error(
                                     "Unable to extract uuid and type from request of type " +
-                                            template.getClass().getSimpleName());
+                                    template.getClass().getSimpleName());
                         }
                     }
                 } else if (resource instanceof FetchWithTemplate<?>) {
@@ -160,27 +160,27 @@ class RequestInfo {
 
                     Optional<Method> fetchMethodOptional =
                             Arrays.stream(templateReadSupportingResource.getClass().getMethods())
-                            .filter(m -> m.getName().equals("fetch")
-                                    && m.getParameterCount() == 1
-                                    && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
-                            .findFirst();
+                                    .filter(m -> m.getName().equals("fetch")
+                                                 && m.getParameterCount() == 1
+                                                 && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
+                                    .findFirst();
 
                     if (fetchMethodOptional.isPresent()) {
                         result = templateReadSupportingResource.fetch(template);
                     } else {
                         LOGGER.error(
                                 "Unable to find appropriate fetch method for type " +
-                                        template.getClass().getSimpleName());
+                                template.getClass().getSimpleName());
                     }
-                }  else if (resource instanceof FindWithCriteria<?, ?>) {
+                } else if (resource instanceof FindWithCriteria<?, ?>) {
                     FindWithCriteria<Object, Object> findWithCriteriaSupportingResource =
                             (FindWithCriteria<Object, Object>) resource;
 
                     Optional<Method> findMethodOptional =
                             Arrays.stream(findWithCriteriaSupportingResource.getClass().getMethods())
                                     .filter(m -> m.getName().equals("find")
-                                            && m.getParameterCount() == 1
-                                            && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
+                                                 && m.getParameterCount() == 1
+                                                 && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
                                     .findFirst();
                     if (findMethodOptional.isPresent()) {
                         ResultPage<Object> resultPage = findWithCriteriaSupportingResource.find(template);
@@ -192,13 +192,13 @@ class RequestInfo {
                     } else {
                         LOGGER.error(
                                 "Unable to find appropriate fetch method for type " +
-                                        template.getClass().getSimpleName());
+                                template.getClass().getSimpleName());
                     }
                 } else {
                     //Need to either implement the interface or switch to MANUALLY_LOGGED
                     LOGGER.warn("Remote resource " +
-                            resource.getClass().getSimpleName() + " is not correctly configured for autologging." +
-                            " Before operation object will not be available.");
+                                resource.getClass().getSimpleName() + " is not correctly configured for autologging." +
+                                " Before operation object will not be available.");
                 }
 
             } catch (Exception ex) {
@@ -254,6 +254,10 @@ class RequestInfo {
         }
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class ObjectId implements HasId {
 
