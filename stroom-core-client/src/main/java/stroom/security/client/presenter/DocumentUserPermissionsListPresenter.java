@@ -41,7 +41,6 @@ import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
@@ -52,9 +51,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
@@ -62,8 +59,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.Comparator;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -99,6 +97,7 @@ public class DocumentUserPermissionsListPresenter
         documentTypeCache.fetch(this::setupColumns, this);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -116,26 +115,25 @@ public class DocumentUserPermissionsListPresenter
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
 
-        criteriaBuilder.sortList(List.of(
-                new CriteriaFieldSort(
-                        UserFields.DISPLAY_NAME.getFldName(),
-                        false,
-                        true),
-                new CriteriaFieldSort(
-                        UserFields.UNIQUE_ID.getFldName(),
-                        false,
-                        true)));
+//        criteriaBuilder.sortList(List.of(
+//                new CriteriaFieldSort(
+//                        UserFields.DISPLAY_NAME.getFldName(),
+//                        false,
+//                        true),
+//                new CriteriaFieldSort(
+//                        UserFields.UNIQUE_ID.getFldName(),
+//                        false,
+//                        true)));
     }
 
     @Override
     public void onFilterChange(String text) {
-        if (text != null) {
-            text = text.trim();
-            if (text.isEmpty()) {
-                text = null;
-            }
+        text = GwtNullSafe.trim(text);
+        if (text.isEmpty()) {
+            text = null;
         }
-
+        // Clear to ensure we go back to page one
+        clear();
         final ExpressionOperator expression = QuickFilterExpressionParser
                 .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
         criteriaBuilder.expression(expression);
@@ -168,6 +166,17 @@ public class DocumentUserPermissionsListPresenter
             dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
+        }
+    }
+
+    public void clear() {
+//        GWT.log(name + " - clear");
+        selectionModel.clear();
+        if (dataProvider != null) {
+            dataProvider.getDataDisplays().forEach(hasData -> {
+                hasData.setRowData(0, Collections.emptyList());
+                hasData.setRowCount(0, true);
+            });
         }
     }
 
@@ -244,56 +253,113 @@ public class DocumentUserPermissionsListPresenter
                 160);
 
         if (DocumentTypes.isFolder(docRef)) {
-            // Document Create Permissions.
             final int docTypeCount = documentTypes.getTypes().size();
-            final Column<DocumentUserPermissions, SafeHtml> documentCreateTypeCol =
-                    new Column<DocumentUserPermissions, SafeHtml>(new SafeHtmlCell()) {
-                        @Override
-                        public SafeHtml getValue(final DocumentUserPermissions documentUserPermissions) {
-                            final DescriptionBuilder sb = new DescriptionBuilder();
-                            final Set<String> explicit = documentUserPermissions
-                                    .getDocumentCreatePermissions();
-                            final Set<String> inherited = documentUserPermissions
-                                    .getInheritedDocumentCreatePermissions();
-                            if ((GwtNullSafe.hasItems(explicit)) || (GwtNullSafe.hasItems(inherited))) {
-                                if (GwtNullSafe.size(explicit) == docTypeCount) {
-                                    sb.addLine(true, false, "All");
-                                } else if (GwtNullSafe.size(inherited) == docTypeCount) {
-                                    sb.addLine(true, true, "All");
-                                } else {
-                                    boolean notEmpty = false;
-                                    boolean lastInherited = false;
-                                    //noinspection SimplifyStreamApiCallChains // Cos GWT
-                                    final List<DocumentType> types = documentTypes.getTypes()
-                                            .stream()
-                                            .sorted(Comparator.comparing(DocumentType::getDisplayType))
-                                            .collect(Collectors.toList());
-                                    for (final DocumentType documentType : types) {
-                                        if (GwtNullSafe.collectionContains(explicit, documentType.getType())) {
-                                            if (notEmpty) {
-                                                sb.addLine(false, lastInherited, ", ");
-                                            }
-                                            sb.addLine(documentType.getDisplayType());
-                                            lastInherited = false;
-                                            notEmpty = true;
-                                        } else if (GwtNullSafe.collectionContains(inherited, documentType.getType())) {
-                                            if (notEmpty) {
-                                                sb.addLine(false, lastInherited, ", ");
-                                            }
-                                            sb.addLine(false, true, documentType.getDisplayType());
-                                            lastInherited = true;
-                                            notEmpty = true;
-                                        }
-                                    }
-                                }
-                            }
 
-                            return sb.toSafeHtml();
-                        }
-                    };
-            dataGrid.addAutoResizableColumn(documentCreateTypeCol,
-                    "Create Document Types",
-                    100);
+            // Explicit doc create types
+            dataGrid.addAutoResizableColumn(
+                    DataGridUtil.textColumnBuilder(
+                                    (DocumentUserPermissions row) -> {
+                                        final Set<String> explicit = row
+                                                .getDocumentCreatePermissions();
+                                        if ((GwtNullSafe.hasItems(explicit))) {
+                                            if (GwtNullSafe.size(explicit) == docTypeCount) {
+                                                return "ALL";
+                                            } else {
+                                                return documentTypes.getTypes()
+                                                        .stream()
+                                                        .filter(docType -> explicit.contains(docType.getType()))
+                                                        .map(DocumentType::getDisplayType)
+                                                        .sorted()
+                                                        .collect(Collectors.joining(", "));
+                                            }
+                                        } else {
+                                            return null;
+                                        }
+                                    })
+                            .build(),
+                    DataGridUtil.headingBuilder("Explicit Create Document Types")
+                            .withToolTip("The document types that this user/group has explicit permission to create. " +
+                                         "Ignores inherited permissions.")
+                            .build(),
+                    300);
+
+            dataGrid.addAutoResizableColumn(
+                    DataGridUtil.textColumnBuilder(
+                                    (DocumentUserPermissions row) -> {
+                                        final Set<String> effective = new HashSet<>(
+                                                GwtNullSafe.set(row.getDocumentCreatePermissions()));
+                                        effective.addAll(row.getInheritedDocumentCreatePermissions());
+                                        if ((!effective.isEmpty())) {
+                                            if (effective.size() == docTypeCount) {
+                                                return "ALL";
+                                            } else {
+                                                return documentTypes.getTypes()
+                                                        .stream()
+                                                        .filter(docType -> effective.contains(docType.getType()))
+                                                        .map(DocumentType::getDisplayType)
+                                                        .sorted()
+                                                        .collect(Collectors.joining(", "));
+                                            }
+                                        } else {
+                                            return null;
+                                        }
+                                    })
+                            .build(),
+                    DataGridUtil.headingBuilder("Effective Create Document Types")
+                            .withToolTip("The document types that this user/group has explicit or inherited " +
+                                         "permission to create.")
+                            .build(),
+                    300);
+
+            // Document Create Permissions.
+//            final Column<DocumentUserPermissions, SafeHtml> documentCreateTypeCol =
+//                    new Column<DocumentUserPermissions, SafeHtml>(new SafeHtmlCell()) {
+//                        @Override
+//                        public SafeHtml getValue(final DocumentUserPermissions documentUserPermissions) {
+//                            final DescriptionBuilder sb = new DescriptionBuilder();
+//                            final Set<String> explicit = documentUserPermissions
+//                                    .getDocumentCreatePermissions();
+//                            final Set<String> inherited = documentUserPermissions
+//                                    .getInheritedDocumentCreatePermissions();
+//                            if ((GwtNullSafe.hasItems(explicit)) || (GwtNullSafe.hasItems(inherited))) {
+//                                if (GwtNullSafe.size(explicit) == docTypeCount) {
+//                                    sb.addLine(true, false, "ALL");
+//                                } else if (GwtNullSafe.size(inherited) == docTypeCount) {
+//                                    sb.addLine(true, true, "ALL");
+//                                } else {
+//                                    boolean notEmpty = false;
+//                                    boolean lastInherited = false;
+//                                    //noinspection SimplifyStreamApiCallChains // Cos GWT
+//                                    final List<DocumentType> types = documentTypes.getTypes()
+//                                            .stream()
+//                                            .sorted(Comparator.comparing(DocumentType::getDisplayType))
+//                                            .collect(Collectors.toList());
+//                                    for (final DocumentType documentType : types) {
+//                                        if (GwtNullSafe.collectionContains(explicit, documentType.getType())) {
+//                                            if (notEmpty) {
+//                                                sb.addLine(false, lastInherited, ", ");
+//                                            }
+//                                            sb.addLine(documentType.getDisplayType());
+//                                            lastInherited = false;
+//                                            notEmpty = true;
+//                                        } else if (GwtNullSafe.collectionContains(inherited, documentType.getType())) {
+//                                            if (notEmpty) {
+//                                                sb.addLine(false, lastInherited, ", ");
+//                                            }
+//                                            sb.addLine(false, true, documentType.getDisplayType());
+//                                            lastInherited = true;
+//                                            notEmpty = true;
+//                                        }
+//                                    }
+//                                }
+//                            }
+//
+//                            return sb.toSafeHtml();
+//                        }
+//                    };
+//            dataGrid.addAutoResizableColumn(documentCreateTypeCol,
+//                    "Effective Create Document Types",
+//                    300);
         }
 
         DataGridUtil.addEndColumn(dataGrid);
@@ -318,6 +384,10 @@ public class DocumentUserPermissionsListPresenter
     }
 
     public void setShowLevel(final PermissionShowLevel showLevel) {
-        criteriaBuilder.showLevel(showLevel);
+        if (!Objects.equals(showLevel, criteriaBuilder.getShowLevel())) {
+            criteriaBuilder.showLevel(showLevel);
+            // We may be on page two so clear everything, so we go back to page one
+            clear();
+        }
     }
 }

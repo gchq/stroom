@@ -98,6 +98,10 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             return self();
         }
 
+        public PermissionShowLevel getShowLevel() {
+            return showLevel;
+        }
+
         @Override
         protected Builder self() {
             return this;
