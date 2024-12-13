@@ -160,9 +160,10 @@ class RequestInfo {
 
                     Optional<Method> fetchMethodOptional =
                             Arrays.stream(templateReadSupportingResource.getClass().getMethods())
-                                    .filter(m -> m.getName().equals("fetch")
-                                                 && m.getParameterCount() == 1
-                                                 && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
+                                    .filter(m ->
+                                            m.getName().equals("fetch")
+                                            && m.getParameterCount() == 1
+                                            && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
                                     .findFirst();
 
                     if (fetchMethodOptional.isPresent()) {
@@ -178,9 +179,10 @@ class RequestInfo {
 
                     Optional<Method> findMethodOptional =
                             Arrays.stream(findWithCriteriaSupportingResource.getClass().getMethods())
-                                    .filter(m -> m.getName().equals("find")
-                                                 && m.getParameterCount() == 1
-                                                 && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
+                                    .filter(m ->
+                                            m.getName().equals("find")
+                                            && m.getParameterCount() == 1
+                                            && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
                                     .findFirst();
                     if (findMethodOptional.isPresent()) {
                         ResultPage<Object> resultPage = findWithCriteriaSupportingResource.find(template);

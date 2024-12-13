@@ -228,12 +228,13 @@ public class DocumentUserPermissionsListPresenter
 
         // Effective Permission
         dataGrid.addColumn(
-                DataGridUtil.textColumnBuilder((DocumentUserPermissions row) -> {
-                            final DocumentPermission explicit = row.getPermission();
-                            final DocumentPermission inherited = row.getInheritedPermission();
-                            return GwtNullSafe.get(DocumentPermission.highest(explicit, inherited),
-                                    DocumentPermission::getDisplayValue);
-                        })
+                DataGridUtil.textColumnBuilder(
+                                (DocumentUserPermissions row) -> {
+                                    final DocumentPermission explicit = row.getPermission();
+                                    final DocumentPermission inherited = row.getInheritedPermission();
+                                    return GwtNullSafe.get(DocumentPermission.highest(explicit, inherited),
+                                            DocumentPermission::getDisplayValue);
+                                })
                         .withSorting(DocumentPermissionFields.FIELD_EFFECTIVE_DOC_PERMISSION)
                         .build(),
                 DataGridUtil.headingBuilder("Effective Permission")
