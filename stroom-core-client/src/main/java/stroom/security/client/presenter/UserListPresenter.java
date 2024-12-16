@@ -29,15 +29,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.client.ApiKeysPlugin;
-import stroom.security.client.AppPermissionsPlugin;
-import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.event.OpenApiKeysScreenEvent;
-import stroom.security.client.event.OpenAppPermissionsScreenEvent;
-import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
-import stroom.security.identity.client.AccountsPlugin;
-import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
@@ -51,13 +43,10 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
-import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -73,7 +62,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -307,7 +295,7 @@ public class UserListPresenter
                 .build();
 
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar
-        dataGrid.addResizableColumn(
+        dataGrid.addColumn(
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
@@ -316,52 +304,8 @@ public class UserListPresenter
         dataGrid.getColumnSortList().push(displayNameCol);
     }
 
-    private List<Item> buildActionMenu(final User user) {
-        if (user == null) {
-            return Collections.emptyList();
-        } else {
-            final UserRef userRef = user.asRef();
-            return MenuBuilder.builder()
-                    .withSimpleMenuItem(itemBuilder ->
-                            itemBuilder.text(buildActionsForMsg(user) + ":")
-                                    .build())
-                    .withSeparator()
-                    .withIconMenuItem(itemBuilder -> itemBuilder
-                            .icon(AppPermissionsPlugin.ICON)
-                            .text("Show user in the " + AppPermissionsPlugin.SCREEN_NAME + " screen")
-                            .command(() ->
-                                    OpenAppPermissionsScreenEvent.fire(this, userRef)))
-                    .withIconMenuItem(itemBuilder -> itemBuilder
-                            .icon(UsersAndGroupsPlugin.ICON)
-                            .text("Show user in the " + UsersAndGroupsPlugin.SCREEN_NAME + " screen")
-                            .command(() ->
-                                    OpenUsersAndGroupsScreenEvent.fire(this, userRef)))
-                    .withIconMenuItemIf(!isExternalIdp(), itemBuilder -> itemBuilder
-                            .icon(AccountsPlugin.ICON)
-                            .text("Show user in the " + AccountsPlugin.SCREEN_NAME + " screen")
-                            .command(() ->
-                                    OpenAccountEvent.fire(this, userRef.getSubjectId())))
-                    .withIconMenuItem(itemBuilder -> itemBuilder
-                            .icon(ApiKeysPlugin.ICON)
-                            .text("Show user in the " + ApiKeysPlugin.SCREEN_NAME + " screen")
-                            .command(() ->
-                                    OpenApiKeysScreenEvent.fire(this, userRef)))
-                    .build();
-        }
-    }
-
     private boolean isExternalIdp() {
         return isExternalIdp;
-    }
-
-    private static String buildActionsForMsg(final User user) {
-        if (user == null) {
-            return "";
-        } else {
-            return "Actions for "
-                   + user.getType(CaseType.LOWER)
-                   + " '" + user.getDisplayName() + "'";
-        }
     }
 
     public void setShowUniqueUserIdCol(final boolean showUniqueUserIdCol) {
@@ -424,22 +368,6 @@ public class UserListPresenter
                         Attribute.className("two-icon-column-header"))
                 .toSafeHtml();
     }
-
-//    private Function<User, CommandLink> buildOpenAppPermissionsCommandLink() {
-//        return (User user) -> {
-//            if (user != null) {
-//                final String displayName = user.getDisplayName();
-//                return new CommandLink(
-//                        displayName,
-//                        "Open " + user.getType() + " '" + user.getDisplayName() + "' on the "
-//                        + AppPermissionsPlugin.SCREEN_NAME + " screen.",
-//                        () -> OpenAppPermissionsScreenEvent.fire(
-//                                UserListPresenter.this, user.asRef()));
-//            } else {
-//                return null;
-//            }
-//        };
-//    }
 
     public void setQuickFilterText(final String quickFilterText) {
 //        GWT.log(name + " - setQuickFilterText: " + quickFilterText);

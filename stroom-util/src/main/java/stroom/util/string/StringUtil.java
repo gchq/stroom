@@ -238,4 +238,68 @@ public class StringUtil {
             return asBoolean(str);
         }
     }
+
+    /**
+     * Replaces repeated delimiters with a single delimiter and removes
+     * any trailing or leading delimiters (repeated or not).
+     * Useful for tidying up after a dumb join operation that adds delimiters
+     * for null/empty values.
+     * <p>
+     * E.g. {@code ',,foo,,bar,,'} becomes {@code 'foo,bar'}
+     * </p>
+     * <p>
+     * NOT to be used if you want null/empty items in your delimited list.
+     * </p>
+     * <p>
+     * If str is null, returns null.
+     * </p>
+     */
+    public static String deDupDelimiters(final String str,
+                                         final char delimiter) {
+        if (NullSafe.isEmptyString(str)) {
+            return str;
+        } else {
+            final char[] outputArray = new char[str.length()];
+            final char[] charArray = str.toCharArray();
+            boolean lastCharWasDelimiter = false;
+            boolean seenNonDelimiterChar = false;
+            boolean hasChanged = false;
+            int outputIdx = -1;
+            int startIdxInc = 0;
+            for (final char chr : charArray) {
+                if (chr == delimiter) {
+                    if (!lastCharWasDelimiter && seenNonDelimiterChar) {
+                        // Only append first delimiter
+                        outputArray[++outputIdx] = chr;
+                    } else {
+                        // Skip this delimiter
+                        hasChanged = true;
+                    }
+                    lastCharWasDelimiter = true;
+                } else {
+                    outputArray[++outputIdx] = chr;
+                    lastCharWasDelimiter = false;
+                    seenNonDelimiterChar = true;
+                }
+            }
+            int endIdxInc = outputIdx;
+
+            // Remove any trailing delimiters
+            for (int i = endIdxInc; i >= 0; i--) {
+                final char chr = outputArray[i];
+                if (chr == delimiter) {
+                    endIdxInc--;
+                    hasChanged = true;
+                } else {
+                    break;
+                }
+            }
+            if (!hasChanged) {
+                // Optimisation to avoid a string creation if we haven't removed anything
+                return str;
+            } else {
+                return new String(outputArray, 0, endIdxInc - startIdxInc + 1);
+            }
+        }
+    }
 }

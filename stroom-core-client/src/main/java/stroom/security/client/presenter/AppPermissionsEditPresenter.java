@@ -106,12 +106,14 @@ public class AppPermissionsEditPresenter
     }
 
     public void setUserRef(final UserRef userRef) {
+//        GWT.log("setUserRef " + userRef);
         this.relatedUser = userRef;
         getView().setUserRef(userRef);
         refresh();
     }
 
     public void refresh() {
+//        GWT.log("refresh for relatedUser: " + relatedUser);
         if (relatedUser == null) {
             currentPermissions = null;
             // Update details panel.
@@ -122,7 +124,6 @@ public class AppPermissionsEditPresenter
             updateDetails();
         } else {
             // Fetch permissions and populate table.
-//            GWT.log("Fetching app perms for " + relatedUser);
             restFactory
                     .create(APP_PERMISSION_RESOURCE)
                     .method(res -> res.getAppUserPermissionsReport(relatedUser))
@@ -156,19 +157,11 @@ public class AppPermissionsEditPresenter
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
-        // Selection.
-//        final Column<AppPermission, TickBoxState> selectionColumn = new Column<AppPermission, TickBoxState>(
-//                TickBoxCell.create(appearance, true, true, updateable)) {
-//            @Override
-//            public TickBoxState getValue(final AppPermission permission) {
-//                return getTickBoxState(permission);
-//            }
-//        };
-
         final Column<AppPermission, TickBoxState> selectionColumn = DataGridUtil.columnBuilder(
                         this::getTickBoxState, () -> TickBoxCell.create(
                                 appearance, true, true, updateable))
                 .centerAligned()
+                .enabledWhen(this::hasPermission)
                 .build();
 
         if (updateable) {
@@ -206,6 +199,7 @@ public class AppPermissionsEditPresenter
         // Perm name
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(AppPermission::getDisplayValue)
+                        .enabledWhen(this::hasPermission)
                         .build(),
                 DataGridUtil.headingBuilder("Permission")
                         .withToolTip("The name of the application permission.")
@@ -215,6 +209,7 @@ public class AppPermissionsEditPresenter
         // Description
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.textColumnBuilder(AppPermission::getDescription)
+                        .enabledWhen(this::hasPermission)
                         .build(),
                 DataGridUtil.headingBuilder("Description")
                         .withToolTip("Description of what the permission allows the user/group to do.")
@@ -222,6 +217,12 @@ public class AppPermissionsEditPresenter
                 700);
 
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private boolean hasPermission(final AppPermission permission) {
+        final TickBoxState tickBoxState = getTickBoxState(permission);
+        return TickBoxState.TICK == tickBoxState
+               || TickBoxState.HALF_TICK == tickBoxState;
     }
 
     private TickBoxState getTickBoxState(final AppPermission permission) {
@@ -261,6 +262,7 @@ public class AppPermissionsEditPresenter
     }
 
     void updateDetails() {
+        GWT.log("updateDetails for relatedUser: " + relatedUser);
         final SafeHtml details = getDetails();
         getView().setDetails(details);
     }
@@ -294,6 +296,8 @@ public class AppPermissionsEditPresenter
             if (sb.toSafeHtml().asString().isEmpty()) {
                 sb.addTitle("No Permission");
             }
+        } else {
+            sb.addLine("No application permission selected");
         }
 
         return sb.toSafeHtml();

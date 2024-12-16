@@ -15,6 +15,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -25,8 +26,11 @@ import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record7;
 import org.jooq.Select;
 import org.jooq.Table;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.DataTypeException;
 import org.jooq.impl.DSL;
 import org.jooq.types.UByte;
 
@@ -46,6 +50,8 @@ import static stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GR
 public class AppPermissionDaoImpl implements AppPermissionDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppPermissionDaoImpl.class);
+    private static final Field<String> COMMA = DSL.val(",");
+    private static final String CONTAINS_NUMBER_PATTERN = "[0-9]";
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final AppPermissionIdDao appPermissionIdDao;
@@ -137,8 +143,10 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                     .select(
                             su.UUID.as("user_uuid"),
                             sug.GROUP_UUID,
-                            DSL.groupConcatDistinct(pa.PERMISSION_ID).as("perms"),
-                            DSL.groupConcatDistinct(paParent.PERMISSION_ID).as("parent_perms"))
+                            DSL.groupConcatDistinct(DSL.ifnull(pa.PERMISSION_ID, ""))
+                                    .as("perms"),
+                            DSL.groupConcatDistinct(DSL.ifnull(paParent.PERMISSION_ID, ""))
+                                    .as("parent_perms"))
                     .from(su)
                     .leftOuterJoin(sug)
                     .on(sug.USER_UUID.eq(su.UUID))
@@ -174,13 +182,10 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                                                     vUserUuid,
                                                     vGroupUuid,
                                                     vPerms,
-                                                    DSL.if_(cteInheritedPerms.isNull(), vParentPerms,
-                                                            DSL.if_(vParentPerms.isNull(),
-                                                                    cteInheritedPerms,
-                                                                    DSL.concat(
-                                                                            DSL.concat(cteInheritedPerms,
-                                                                                    ","),
-                                                                            vParentPerms))))
+                                                    DSL.concat(
+                                                            DSL.ifnull(cteInheritedPerms, ""),
+                                                            COMMA,
+                                                            DSL.ifnull(vParentPerms, "")))
                                             .from(DSL.table(cte))
                                             .join(v).on(vGroupUuid.eq(cteUserUuid))));
 
@@ -190,8 +195,9 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                     .select(
                             cteUserUuid,
                             cteGroupUuid,
-                            DSL.groupConcatDistinct(ctePerms).as("perms"),
-                            DSL.groupConcatDistinct(cteInheritedPerms).as("inherited_perms"))
+                            DSL.groupConcatDistinct(DSL.ifnull(ctePerms, "")).as("perms"),
+                            DSL.groupConcatDistinct(DSL.ifnull(cteInheritedPerms, ""))
+                                    .as("inherited_perms"))
                     .from(commonTableExpression)
                     .groupBy(cteUserUuid, cteGroupUuid)
                     .asTable();
@@ -207,35 +213,59 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
             // Add additional conditions if we want to just show effective or explicit permissions.
             switch (request.getShowLevel()) {
-                case SHOW_EFFECTIVE -> conditions.add(recPerms.isNotNull()
-                        .or(recInheritedPerms.isNotNull()));
-                case SHOW_EXPLICIT -> conditions.add(recPerms.isNotNull());
+//                case SHOW_EFFECTIVE -> conditions.add(recPerms.isNotNull()
+//                        .or(recInheritedPerms.isNotNull()));
+//                case SHOW_EXPLICIT -> conditions.add(recPerms.isNotNull());
+
+                // Because we have treated nulls as empty strings, we may have a value like ',,,,,'
+                // so use presence of numbers to indicate presence of a perm
+                case SHOW_EFFECTIVE -> conditions.add(recPerms.likeRegex(CONTAINS_NUMBER_PATTERN)
+                        .or(recInheritedPerms.likeRegex(CONTAINS_NUMBER_PATTERN)));
+                case SHOW_EXPLICIT -> conditions.add(recPerms.likeRegex(CONTAINS_NUMBER_PATTERN));
             }
 
             // Join recursive select to user.
-            return context
-                    .select(STROOM_USER.UUID,
-                            STROOM_USER.NAME,
-                            STROOM_USER.DISPLAY_NAME,
-                            STROOM_USER.FULL_NAME,
-                            STROOM_USER.IS_GROUP,
-                            recPerms,
-                            recInheritedPerms)
-                    .from(STROOM_USER)
-                    .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
-                    .where(conditions)
-                    .orderBy(orderFields)
-                    .offset(offset)
-                    .limit(limit)
-                    .fetch();
+            try {
+                var sql = context
+                        .select(STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP,
+                                DSL.groupConcatDistinct(DSL.ifnull(recPerms, ""))
+                                        .as(ctePerms.getName()),
+                                DSL.groupConcatDistinct(DSL.ifnull(recInheritedPerms, ""))
+                                        .as(cteInheritedPerms.getName()))
+                        .from(STROOM_USER)
+                        .join(recursive).on(recUserUuid.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .groupBy(
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit);
 
-        }).map(r -> {
-            final UserRef userRef = recordToUserRef(r);
-            final String perms = r.get(ctePerms);
-            final String inheritedPerms = r.get(cteInheritedPerms);
-            final Set<AppPermission> permissions = getAppPermissionSet(perms);
-            final Set<AppPermission> inherited = getAppPermissionSet(inheritedPerms);
-            return new AppUserPermissions(userRef, permissions, inherited);
+                LOGGER.debug("fetchAppUserPermissions sql:\n{}", sql);
+                return sql.fetch();
+            } catch (DataAccessException e) {
+                throw new RuntimeException(e);
+            }
+
+        }).map((Record7<?, ?, ?, ?, ?, ?, ?> r) -> {
+            try {
+                final UserRef userRef = recordToUserRef(r);
+                final String perms = r.get(ctePerms.getName(), String.class);
+                final String inheritedPerms = r.get(cteInheritedPerms.getName(), String.class);
+                final Set<AppPermission> permissions = getAppPermissionSet(perms);
+                final Set<AppPermission> inherited = getAppPermissionSet(inheritedPerms);
+                return new AppUserPermissions(userRef, permissions, inherited);
+            } catch (IllegalArgumentException | DataTypeException e) {
+                throw new RuntimeException(e);
+            }
         });
 
         return ResultPage.createCriterialBasedList(list, request);
@@ -256,7 +286,10 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
             return Collections.emptySet();
         }
 
-        final String[] parts = perms.split(",");
+        // To simplify the concatenation, we treat nulls as empty strings, so we may get
+        // repeated/leading/trailing delimiters. Therefore we remove them now.
+        final String[] parts = StringUtil.deDupDelimiters(perms, ',')
+                .split(",");
         final Set<AppPermission> permissions = new HashSet<>(parts.length);
         for (final String part : parts) {
             final String trimmed = part.trim();

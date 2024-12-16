@@ -26,6 +26,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
 
+import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
@@ -73,6 +74,8 @@ public class AppPermissionsPresenter
                 .addSelectionHandler(e -> appPermissionsEditPresenter.updateDetails()));
 
         registerHandler(appPermissionsEditPresenter.addValueChangeHandler(e -> {
+            GWT.log("valueChange, isRefreshUsers: " + e.getValue().isRefreshUsers()
+                    + ", isRefreshDetails: " + e.getValue().isRefreshDetails());
             if (e.getValue().isRefreshUsers()) {
                 refresh();
             }

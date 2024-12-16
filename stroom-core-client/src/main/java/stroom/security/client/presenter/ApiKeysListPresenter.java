@@ -347,7 +347,7 @@ public class ApiKeysListPresenter
                 .build();
 
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar
-        dataGrid.addResizableColumn(
+        dataGrid.addColumn(
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);

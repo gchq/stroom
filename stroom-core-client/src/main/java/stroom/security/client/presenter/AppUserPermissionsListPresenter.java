@@ -21,6 +21,7 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -28,6 +29,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.UsersAndGroupsPlugin;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
@@ -43,6 +45,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -64,6 +67,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -78,21 +82,25 @@ public class AppUserPermissionsListPresenter
     private final MyDataGrid<AppUserPermissions> dataGrid;
     private final PagerView pagerView;
     private final UiConfigCache uiConfigCache;
+    private final ClientSecurityContext securityContext;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
     private ResultPage<AppUserPermissions> currentData = null;
     private boolean isExternalIdp = false;
+    private boolean resetSelection = false;
 
     @Inject
     public AppUserPermissionsListPresenter(final EventBus eventBus,
                                            final QuickFilterPageView view,
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
-                                           final UiConfigCache uiConfigCache) {
+                                           final UiConfigCache uiConfigCache,
+                                           final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
         this.uiConfigCache = uiConfigCache;
+        this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
@@ -129,10 +137,14 @@ public class AppUserPermissionsListPresenter
             }
         }
 
+        final ExpressionOperator existingExpr = requestBuilder.getExpression();
         final ExpressionOperator expression = QuickFilterExpressionParser
                 .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        requestBuilder.expression(expression);
-        refresh();
+        if (!Objects.equals(existingExpr, expression)) {
+            resetSelection = true;
+            requestBuilder.expression(expression);
+            refresh();
+        }
     }
 
     public void setQuickFilter(final String quickFilterText) {
@@ -150,7 +162,6 @@ public class AppUserPermissionsListPresenter
                 isExternalIdp = extendedUiConfig.isExternalIdentityProvider();
                 initDataProvider();
             });
-            initDataProvider();
         } else {
             dataProvider.refresh();
         }
@@ -184,7 +195,10 @@ public class AppUserPermissionsListPresenter
                         super.changeData(data);
                         currentData = data;
                         if (!data.isEmpty()) {
-                            selectionModel.setSelected(data.getFirst());
+                            if (resetSelection) {
+                                selectionModel.setSelected(data.getFirst());
+                            }
+                            resetSelection = false;
                         } else {
                             selectionModel.clear();
                         }
@@ -219,12 +233,6 @@ public class AppUserPermissionsListPresenter
 
         DataGridUtil.addColumnSortHandler(dataGrid, requestBuilder, this::refresh);
 
-//        final DefaultHeaderOrFooterBuilder<AppUserPermissions> headerBuilder = new DefaultHeaderOrFooterBuilder<>(
-//                dataGrid,
-//                false);
-//        headerBuilder.setSortIconStartOfLine(false);
-//        dataGrid.setHeaderBuilder(headerBuilder);
-
         // Permissions col contains a lot of text, so we need multiline rows
         dataGrid.setMultiLine(true);
 
@@ -236,6 +244,7 @@ public class AppUserPermissionsListPresenter
                                         : SvgPresets.USER)
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
+                        .enabledWhen(this::isUserEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("")
                         .headingText(buildIconHeader())
@@ -244,30 +253,23 @@ public class AppUserPermissionsListPresenter
                         .build(),
                 (ColumnSizeConstants.ICON_COL * 2) + 20);
 
-        // Display name
-//        final Column<AppUserPermissions, CommandLink> displayNameCol = DataGridUtil.commandLinkColumnBuilder(
-//                        buildOpenAppPermissionsCommandLink())
-//                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
-//                .build();
-//        dataGrid.addResizableColumn(
-//                displayNameCol,
-//                DataGridUtil.headingBuilder("Display Name")
-//                        .withToolTip("The name of the user or group.")
-//                        .build(),
-//                400);
+        final Column<AppUserPermissions, UserRefProvider<AppUserPermissions>> displayNameCol =
+                DataGridUtil.userRefColumnBuilder(
+                                AppUserPermissions::getUserRef,
+                                getEventBus(),
+                                securityContext,
+                                false,
+                                DisplayType.DISPLAY_NAME)
+                        .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                        .enabledWhen(this::isUserEnabled)
+                        .build();
 
-        final Column<AppUserPermissions, String> displayNameCol = DataGridUtil.copyTextColumnBuilder(
-                        (AppUserPermissions appUsrPerms) ->
-                                GwtNullSafe.get(appUsrPerms, AppUserPermissions::getUserRef, UserRef::getDisplayName))
-                .enabledWhen(this::isUserEnabled)
-                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
-                .build();
         dataGrid.addResizableColumn(
                 displayNameCol,
                 DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip("The name of the user or group.")
                         .build(),
-                350);
+                ColumnSizeConstants.USER_DISPLAY_NAME_COL);
 
         // Show it as the default sort
         dataGrid.getColumnSortList().push(displayNameCol);
@@ -298,7 +300,7 @@ public class AppUserPermissionsListPresenter
 //                .enabledWhen(User::isEnabled)
                 .build();
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar
-        dataGrid.addResizableColumn(
+        dataGrid.addColumn(
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);

@@ -366,5 +366,25 @@ class TestStringUtil {
                 .build();
     }
 
-
+    @TestFactory
+    Stream<DynamicTest> deDupDelimiters() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        StringUtil.deDupDelimiters(testCase.getInput(), ','))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase("", "")
+                .addCase("foo", "foo")
+                .addCase(",foo", "foo")
+                .addCase("foo,", "foo")
+                .addCase(",foo,", "foo")
+                .addCase("foo,bar", "foo,bar")
+                .addCase("foo,,bar", "foo,bar")
+                .addCase(",foo,bar,", "foo,bar")
+                .addCase(",,foo,,bar,,", "foo,bar")
+                .addCase(",,,foo,,,bar,,,", "foo,bar")
+                .addCase(",,a,,b,,c,,", "a,b,c")
+                .build();
+    }
 }
