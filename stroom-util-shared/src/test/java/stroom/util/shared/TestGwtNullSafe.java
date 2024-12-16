@@ -1193,6 +1193,26 @@ class TestGwtNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testUnmodifiableList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        GwtNullSafe.unmodifiableList(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {

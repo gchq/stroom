@@ -577,6 +577,15 @@ public class GwtNullSafe {
     }
 
     /**
+     * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
+     */
+    public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
+        return list != null
+                ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an empty list.
      */
     public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {

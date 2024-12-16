@@ -41,4 +41,13 @@ public class ExecutionTracker {
     public long getNextEffectiveExecutionTimeMs() {
         return nextEffectiveExecutionTimeMs;
     }
+
+    @Override
+    public String toString() {
+        return "ExecutionTracker{" +
+               "actualExecutionTimeMs=" + actualExecutionTimeMs +
+               ", lastEffectiveExecutionTimeMs=" + lastEffectiveExecutionTimeMs +
+               ", nextEffectiveExecutionTimeMs=" + nextEffectiveExecutionTimeMs +
+               '}';
+    }
 }

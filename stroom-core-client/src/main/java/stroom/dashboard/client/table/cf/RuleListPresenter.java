@@ -39,12 +39,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class RuleListPresenter extends MyPresenterWidget<PagerView> implements HasDirtyHandlers {
 
     private final MyDataGrid<ConditionalFormattingRule> dataGrid;
     private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
+    private List<ConditionalFormattingRule> rules = new ArrayList<>();
+    private Runnable dataChangeHandler = null;
 
     @Inject
     public RuleListPresenter(final EventBus eventBus,
@@ -106,9 +110,13 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build();
 
         enabledColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            row.setEnabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()));
-            setDirty(true);
-            dataGrid.redraw();
+            if (row != null) {
+                final ConditionalFormattingRule newRow = row
+                        .copy()
+                        .enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                        .build();
+                replaceDataGridRow(row, newRow);
+            }
         });
 
         dataGrid.addColumn(
@@ -128,9 +136,13 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .build();
 
         hideColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            row.setHide(GwtNullSafe.isTrue(tickBoxState.toBoolean()));
-            setDirty(true);
-            dataGrid.redraw();
+            if (row != null) {
+                final ConditionalFormattingRule newRow = row
+                        .copy()
+                        .hide(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                        .build();
+                replaceDataGridRow(row, newRow);
+            }
         });
 
         dataGrid.addColumn(hideColumn,
@@ -140,9 +152,32 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                 70);
     }
 
+    private void replaceDataGridRow(final ConditionalFormattingRule oldRule,
+                                    final ConditionalFormattingRule newRule) {
+        final int idx = rules.indexOf(oldRule);
+        rules.remove(idx);
+        rules.add(idx, newRule);
+
+        setDirty(true);
+        dataGrid.setRowData(0, rules);
+        final ConditionalFormattingRule selected = getSelectionModel().getSelected();
+        if (Objects.equals(selected, oldRule)) {
+            getSelectionModel().setSelected(newRule);
+        }
+        GwtNullSafe.run(dataChangeHandler);
+    }
+
     public void setData(final List<ConditionalFormattingRule> data) {
         dataGrid.setRowData(0, data);
         dataGrid.setRowCount(data.size());
+        rules = data;
+    }
+
+    /**
+     * A dataChangeHandler to be called if the dataGrid data is changed
+     */
+    public void setDataChangeHandler(final Runnable dataChangeHandler) {
+        this.dataChangeHandler = dataChangeHandler;
     }
 
     public MultiSelectionModel<ConditionalFormattingRule> getSelectionModel() {

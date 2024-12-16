@@ -36,6 +36,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * If you are upgrading from a previous v7.6 beta release you will need to run the following SQL. `update analytics_schema_history set checksum = '-86554219' where version = '07.06.00.405';` and `update processor_schema_history set checksum = '-175036745' where version = '07.06.00.305';`.
 
+* Issue **#4627** : Fix StroomQL function character escaping.
+
+* Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
+
+* Issue **#4612** : Fix stroomQL query not including all data points in the visualisation.
+
+* Issue **#4617** : Add debug to try to diagnose issue.
+
 * Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
 
 

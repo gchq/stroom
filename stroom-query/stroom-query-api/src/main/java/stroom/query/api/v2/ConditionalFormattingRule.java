@@ -23,13 +23,13 @@ public class ConditionalFormattingRule {
     @JsonProperty("expression")
     private final ExpressionOperator expression;
     @JsonProperty("hide")
-    private boolean hide;
+    private final boolean hide;
     @JsonProperty("backgroundColor")
     private final String backgroundColor;
     @JsonProperty("textColor")
     private final String textColor;
     @JsonProperty("enabled")
-    private boolean enabled;
+    private final boolean enabled;
 
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
@@ -58,10 +58,6 @@ public class ConditionalFormattingRule {
         return hide;
     }
 
-    public void setHide(final boolean hide) {
-        this.hide = hide;
-    }
-
     public String getBackgroundColor() {
         return backgroundColor;
     }
@@ -74,10 +70,6 @@ public class ConditionalFormattingRule {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -88,11 +80,11 @@ public class ConditionalFormattingRule {
         }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
         return hide == that.hide &&
-                enabled == that.enabled &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(expression, that.expression) &&
-                Objects.equals(backgroundColor, that.backgroundColor) &&
-                Objects.equals(textColor, that.textColor);
+               enabled == that.enabled &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(expression, that.expression) &&
+               Objects.equals(backgroundColor, that.backgroundColor) &&
+               Objects.equals(textColor, that.textColor);
     }
 
     @Override
@@ -103,13 +95,13 @@ public class ConditionalFormattingRule {
     @Override
     public String toString() {
         return "ConditionalFormattingRule{" +
-                "id='" + id + '\'' +
-                ", expression=" + expression +
-                ", hide=" + hide +
-                ", backgroundColor='" + backgroundColor + '\'' +
-                ", textColor='" + textColor + '\'' +
-                ", enabled=" + enabled +
-                '}';
+               "id='" + id + '\'' +
+               ", expression=" + expression +
+               ", hide=" + hide +
+               ", backgroundColor='" + backgroundColor + '\'' +
+               ", textColor='" + textColor + '\'' +
+               ", enabled=" + enabled +
+               '}';
     }
 
     public static Builder builder() {

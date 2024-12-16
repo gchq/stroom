@@ -215,9 +215,10 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
     private void execAnalytic(final AnalyticRuleDoc analytic,
                               final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
+        final DocRef analyticDocRef = analytic.asDocRef();
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
                 .builder()
-                .ownerDocRef(analytic.asDocRef())
+                .ownerDocRef(analyticDocRef)
                 .enabled(true)
                 .nodeName(StringMatch.equals(nodeInfo.getThisNodeName(), true))
                 .build();
@@ -229,6 +230,9 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
                     // running within a new thread.
+                    LOGGER.debug(() -> LogUtil.message("analyticRuleDoc: {}, running as user: {}",
+                            analyticDocRef.toShortString(), executionSchedule.getRunAsUser()));
+
                     securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
                         boolean success = true;
                         while (success && !parentTaskContext.isTerminated()) {
@@ -329,6 +333,10 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
                             final Instant effectiveExecutionTime,
                             final ExecutionSchedule executionSchedule,
                             final ExecutionTracker currentTracker) {
+        LOGGER.debug(() -> LogUtil.message(
+                "Executing analytic: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
+                analytic.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
+
         boolean success = false;
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
         ExecutionResult executionResult = new ExecutionResult(null, null);
