@@ -13,6 +13,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.6] - 2024-12-16
+
+* Issue **#4632** : Fix conditional formatting styles.
+
+* Issue **#4634** : Make icons on highlighted rows white.
+
+* Issue **#4605** : Allow embedded queried to be re-run independently.
+
+* Issue **#4631** : Fix simple expression wildcards.
+
+* Issue **#4641** : Reset selections when dashboard table data changes.
+
+* Issue **#4642** : Show current dashboard selections to help create selection filters.
+
+* Issue **#4637** : Fix StroomQL filter in dictionary.
+
+* Issue **#4645** : Add feature to disable notifications.
+
 * Issue **#4594** : Various changes to the permissions screens. Added a new User screen to show all a user's permissions, api keys, and dependencies. Added links between the various permission and user screens. Improved the tables of some of the permissions screens.
 
 * Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
@@ -1039,7 +1057,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.6...HEAD
+[v7.7-beta.6]: https://github.com/gchq/stroom/compare/v7.7-beta.5...v7.7-beta.6
 [v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
 [v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
 [v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
