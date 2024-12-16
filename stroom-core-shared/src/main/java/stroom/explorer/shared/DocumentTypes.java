@@ -61,10 +61,16 @@ public class DocumentTypes {
                 .collect(Collectors.toMap(DocumentType::getType, Function.identity()));
     }
 
+    /**
+     * @return All document types
+     */
     public List<DocumentType> getTypes() {
         return types;
     }
 
+    /**
+     * @return Only those types that the user has VIEW permission on
+     */
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
     }

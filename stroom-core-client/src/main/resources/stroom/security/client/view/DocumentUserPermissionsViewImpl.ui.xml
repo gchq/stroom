@@ -8,7 +8,7 @@
             <form:FormGroup ui:field="detailsFormGroup"
                             addStyleNames="form-label-padding">
                 <g:SimplePanel styleName="max form-padding">
-                    <g:HTML ui:field="details" styleName="max"/>
+                    <g:HTML ui:field="details" styleName="max permissionDetails"/>
                 </g:SimplePanel>
             </form:FormGroup>
         </g:south>

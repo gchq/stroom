@@ -19,6 +19,9 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentPermission;
@@ -30,6 +33,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -37,7 +42,13 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -49,6 +60,7 @@ public class DocumentUserPermissionsPresenter
     private final DocPermissionRestClient docPermissionClient;
     private final ButtonView docEdit;
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
+    private final DocumentTypeCache documentTypeCache;
     private DocRef docRef;
 
     @Inject
@@ -57,12 +69,14 @@ public class DocumentUserPermissionsPresenter
             final DocPermissionRestClient docPermissionClient,
             final DocumentUserPermissionsView view,
             final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
-            final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
+            final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider,
+            final DocumentTypeCache documentTypeCache) {
 
         super(eventBus, view);
         this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.docPermissionClient = docPermissionClient;
+        this.documentTypeCache = documentTypeCache;
         view.setDocUserPermissionListView(documentUserPermissionsListPresenter.getView());
 
         docEdit = documentUserPermissionsListPresenter.addButton(new Preset(
@@ -147,9 +161,11 @@ public class DocumentUserPermissionsPresenter
         // Fetch detailed permissions report.
         if (selection != null) {
             docPermissionClient.getDocUserPermissionsReport(docRef, selection.getUserRef(), response -> {
-                final SafeHtml details = getDetails(response);
-                getView().setUserRef(selection.getUserRef());
-                getView().setDetails(details);
+                documentTypeCache.fetch(documentTypes -> {
+                    final SafeHtml details = getDetails(documentTypes, response);
+                    getView().setUserRef(selection.getUserRef());
+                    getView().setDetails(details);
+                }, this);
             }, this);
         } else {
             getView().setUserRef(null);
@@ -157,7 +173,8 @@ public class DocumentUserPermissionsPresenter
         }
     }
 
-    private SafeHtml getDetails(final DocumentUserPermissionsReport permissions) {
+    private SafeHtml getDetails(final DocumentTypes documentTypes,
+                                final DocumentUserPermissionsReport permissions) {
         DocumentPermission maxPermission = null;
 
         DescriptionBuilder sb = new DescriptionBuilder();
@@ -202,11 +219,90 @@ public class DocumentUserPermissionsPresenter
             sb = sb2;
         }
 
+        final Set<String> explicitCreatePerms = permissions.getExplicitCreatePermissions();
+        final SafeHtml explicitTypesHtml = docTypesToSortedDisplayList(explicitCreatePerms, documentTypes);
+
+        if (explicitTypesHtml != null) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle("Explicit Create Document Permissions:");
+            sb.append(explicitTypesHtml);
+        }
+
+        final Map<String, List<String>> inheritedCreatePermPaths = permissions.getInheritedCreatePermissionPaths();
+        if (GwtNullSafe.hasEntries(inheritedCreatePermPaths)) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle("Inherited Create Document Permissions:");
+
+            final DescriptionBuilder finalSb = sb;
+            inheritedCreatePermPaths.entrySet()
+                    .stream()
+                    .sorted(Entry.comparingByKey())
+                    .forEach(entry -> {
+                        final String type = entry.getKey();
+                        final List<String> path = entry.getValue();
+                        final DocumentType docType = documentTypes.getDocumentType(type);
+                        if (docType != null && GwtNullSafe.hasItems(path)) {
+                            final SvgImage icon = docType.getIcon();
+                            final String pathStr = String.join(" & ", path);
+                            Objects.requireNonNull(docType);
+                            final HtmlBuilder htmlBuilder = HtmlBuilder.builder()
+                                    .span(spanBuilder -> spanBuilder
+                                                    .append(SafeHtmlUtils.fromTrustedString(icon.getSvg())),
+                                            Attribute.title(docType.getDisplayType()),
+                                            Attribute.className(
+                                                    "svg-icon svgCell-icon " + icon.getClassName()))
+                                    .italic(docType.getDisplayType())
+                                    .append(" from: ")
+                                    .append(pathStr);
+
+                            finalSb.addNewLine();
+                            finalSb.append(htmlBuilder.toSafeHtml());
+                        }
+                    });
+        }
+
         if (maxPermission == null) {
             sb.addTitle("No Permission");
         }
         return sb.toSafeHtml();
     }
+
+    /**
+     * May return null
+     */
+    private SafeHtml docTypesToSortedDisplayList(final Set<String> types,
+                                                 final DocumentTypes documentTypes) {
+        if (GwtNullSafe.hasItems(types)) {
+            //noinspection SimplifyStreamApiCallChains // Cos GWT
+            final List<DocumentType> sortedDocTypes = documentTypes.getTypes()
+                    .stream()
+                    .filter(docType -> types.contains(docType.getType()))
+                    .sorted(Comparator.comparing(DocumentType::getType))
+                    .collect(Collectors.toList());
+            if (GwtNullSafe.hasItems(sortedDocTypes)) {
+                final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+                for (int i = 0; i < sortedDocTypes.size(); i++) {
+                    final DocumentType docType = sortedDocTypes.get(i);
+                    final SvgImage icon = docType.getIcon();
+                    htmlBuilder.br()
+                            .span(spanBuilder -> spanBuilder
+                                            .append(SafeHtmlUtils.fromTrustedString(icon.getSvg())),
+                                    Attribute.title(docType.getDisplayType()),
+                                    Attribute.className(
+                                            "svg-icon svgCell-icon " + icon.getClassName()))
+                            .italic(docType.getDisplayType());
+                }
+                return htmlBuilder.toSafeHtml();
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
 
     private String toDisplayValue(final DocumentPermission documentPermission) {
         return GwtNullSafe.get(documentPermission,

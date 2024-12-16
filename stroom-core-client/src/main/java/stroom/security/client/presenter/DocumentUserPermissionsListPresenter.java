@@ -39,6 +39,7 @@ import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -48,10 +49,14 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
@@ -60,7 +65,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -256,115 +263,84 @@ public class DocumentUserPermissionsListPresenter
             final int docTypeCount = documentTypes.getTypes().size();
 
             // Explicit doc create types
-            dataGrid.addAutoResizableColumn(
-                    DataGridUtil.textColumnBuilder(
-                                    (DocumentUserPermissions row) -> {
-                                        final Set<String> explicit = row
-                                                .getDocumentCreatePermissions();
-                                        if ((GwtNullSafe.hasItems(explicit))) {
-                                            if (GwtNullSafe.size(explicit) == docTypeCount) {
-                                                return "ALL";
-                                            } else {
-                                                return documentTypes.getTypes()
-                                                        .stream()
-                                                        .filter(docType -> explicit.contains(docType.getType()))
-                                                        .map(DocumentType::getDisplayType)
-                                                        .sorted()
-                                                        .collect(Collectors.joining(", "));
-                                            }
-                                        } else {
-                                            return null;
-                                        }
-                                    })
-                            .build(),
+            dataGrid.addResizableColumn(
+                    DataGridUtil.safeHtmlColumn((DocumentUserPermissions row) ->
+                            permissionsToExplicitTypeIcons(row, documentTypes, docTypeCount)),
                     DataGridUtil.headingBuilder("Explicit Create Document Types")
                             .withToolTip("The document types that this user/group has explicit permission to create. " +
-                                         "Ignores inherited permissions.")
+                                         "Ignores inherited permissions. 'ALL' will be displayed if the user/group " +
+                                         "has permission on all document types.")
                             .build(),
-                    300);
+                    400);
 
-            dataGrid.addAutoResizableColumn(
-                    DataGridUtil.textColumnBuilder(
-                                    (DocumentUserPermissions row) -> {
-                                        final Set<String> effective = new HashSet<>(
-                                                GwtNullSafe.set(row.getDocumentCreatePermissions()));
-                                        effective.addAll(row.getInheritedDocumentCreatePermissions());
-                                        if ((!effective.isEmpty())) {
-                                            if (effective.size() == docTypeCount) {
-                                                return "ALL";
-                                            } else {
-                                                return documentTypes.getTypes()
-                                                        .stream()
-                                                        .filter(docType -> effective.contains(docType.getType()))
-                                                        .map(DocumentType::getDisplayType)
-                                                        .sorted()
-                                                        .collect(Collectors.joining(", "));
-                                            }
-                                        } else {
-                                            return null;
-                                        }
-                                    })
-                            .build(),
+            // Effective doc create types
+            dataGrid.addResizableColumn(
+                    DataGridUtil.safeHtmlColumn((DocumentUserPermissions row) ->
+                            permissionsToEffectiveTypeIcons(row, documentTypes, docTypeCount)),
                     DataGridUtil.headingBuilder("Effective Create Document Types")
-                            .withToolTip("The document types that this user/group has explicit or inherited " +
-                                         "permission to create.")
+                            .withToolTip("The document types that this user/group has permission to create. " +
+                                         "Includes both explicit and inherited permissions. 'ALL' will be " +
+                                         "displayed if the user/group has permission on all document types.")
                             .build(),
-                    300);
-
-            // Document Create Permissions.
-//            final Column<DocumentUserPermissions, SafeHtml> documentCreateTypeCol =
-//                    new Column<DocumentUserPermissions, SafeHtml>(new SafeHtmlCell()) {
-//                        @Override
-//                        public SafeHtml getValue(final DocumentUserPermissions documentUserPermissions) {
-//                            final DescriptionBuilder sb = new DescriptionBuilder();
-//                            final Set<String> explicit = documentUserPermissions
-//                                    .getDocumentCreatePermissions();
-//                            final Set<String> inherited = documentUserPermissions
-//                                    .getInheritedDocumentCreatePermissions();
-//                            if ((GwtNullSafe.hasItems(explicit)) || (GwtNullSafe.hasItems(inherited))) {
-//                                if (GwtNullSafe.size(explicit) == docTypeCount) {
-//                                    sb.addLine(true, false, "ALL");
-//                                } else if (GwtNullSafe.size(inherited) == docTypeCount) {
-//                                    sb.addLine(true, true, "ALL");
-//                                } else {
-//                                    boolean notEmpty = false;
-//                                    boolean lastInherited = false;
-//                                    //noinspection SimplifyStreamApiCallChains // Cos GWT
-//                                    final List<DocumentType> types = documentTypes.getTypes()
-//                                            .stream()
-//                                            .sorted(Comparator.comparing(DocumentType::getDisplayType))
-//                                            .collect(Collectors.toList());
-//                                    for (final DocumentType documentType : types) {
-//                                        if (GwtNullSafe.collectionContains(explicit, documentType.getType())) {
-//                                            if (notEmpty) {
-//                                                sb.addLine(false, lastInherited, ", ");
-//                                            }
-//                                            sb.addLine(documentType.getDisplayType());
-//                                            lastInherited = false;
-//                                            notEmpty = true;
-//                                        } else if (GwtNullSafe.collectionContains(inherited, documentType.getType())) {
-//                                            if (notEmpty) {
-//                                                sb.addLine(false, lastInherited, ", ");
-//                                            }
-//                                            sb.addLine(false, true, documentType.getDisplayType());
-//                                            lastInherited = true;
-//                                            notEmpty = true;
-//                                        }
-//                                    }
-//                                }
-//                            }
-//
-//                            return sb.toSafeHtml();
-//                        }
-//                    };
-//            dataGrid.addAutoResizableColumn(documentCreateTypeCol,
-//                    "Effective Create Document Types",
-//                    300);
+                    400);
         }
 
         DataGridUtil.addEndColumn(dataGrid);
 
         dataGrid.getColumnSortList().push(new ColumnSortInfo(displayNameCol, true));
+    }
+
+    public SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,
+                                                   final DocumentTypes documentTypes,
+                                                   final int docTypeCount) {
+        final Set<String> explicit = row
+                .getDocumentCreatePermissions();
+        return permissionsToTypeIcons(explicit, documentTypes, docTypeCount);
+    }
+
+    public SafeHtml permissionsToEffectiveTypeIcons(final DocumentUserPermissions row,
+                                                    final DocumentTypes documentTypes,
+                                                    final int docTypeCount) {
+        final Set<String> effective = new HashSet<>(GwtNullSafe.set(row
+                .getDocumentCreatePermissions()));
+        effective.addAll(GwtNullSafe.set(row.getInheritedDocumentCreatePermissions()));
+
+        return permissionsToTypeIcons(effective, documentTypes, docTypeCount);
+    }
+
+    public SafeHtml permissionsToTypeIcons(final Set<String> createTypes,
+                                           final DocumentTypes documentTypes,
+                                           final int docTypeCount) {
+        if ((GwtNullSafe.hasItems(createTypes))) {
+            if (GwtNullSafe.size(createTypes) == docTypeCount) {
+                return SafeHtmlUtils.fromTrustedString("ALL");
+            } else {
+                //noinspection SimplifyStreamApiCallChains // Cos GWT
+                final List<DocumentType> typeIcons = documentTypes.getTypes()
+                        .stream()
+                        .filter(docType -> createTypes.contains(docType.getType()))
+                        .sorted(Comparator.comparing(DocumentType::getType))
+                        .collect(Collectors.toList());
+
+                return HtmlBuilder.builder()
+                        .div(divBuilder -> {
+                                    typeIcons.forEach(type -> {
+                                        final SvgImage typeIcon = type.getIcon();
+                                        divBuilder.div(divBuilder2 ->
+                                                        divBuilder2.append(
+                                                                SafeHtmlUtils.fromTrustedString(typeIcon.getSvg())),
+                                                Attribute.title(type.getDisplayType()),
+                                                Attribute.className(
+                                                        "svg-icon svgCell-icon create-document-types-icon "
+                                                        + typeIcon.getClassName()));
+                                    });
+                                },
+                                Attribute.className("create-document-types-container"))
+                        .toSafeHtml();
+            }
+        } else {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
     }
 
     public ButtonView addButton(final Preset preset) {

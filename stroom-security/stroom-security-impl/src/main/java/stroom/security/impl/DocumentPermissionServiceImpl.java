@@ -360,13 +360,16 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             if (parentGroups != null) {
                 for (final UserRef group : parentGroups) {
 
-                    final List<UserRef> path = new ArrayList<>(parentPath);
+                    final List<UserRef> path = new ArrayList<>(parentPath.size() + 1);
+                    // Add the ancestor at the head of the list, so we get 'grandparent --> parent'
                     path.add(group);
+                    path.addAll(parentPath);
 
                     final DocumentPermission permission = documentPermissionDao
                             .getDocumentUserPermission(docRef.getUuid(), group.getUuid());
                     if (permission != null) {
-                        inheritedPermissions.computeIfAbsent(permission, k -> new ArrayList<>()).add(path);
+                        inheritedPermissions.computeIfAbsent(permission, k -> new ArrayList<>())
+                                .add(path);
                     }
 
                     final Set<String> createPermissions = documentPermissionDao
@@ -374,7 +377,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     if (createPermissions != null) {
                         createPermissions.forEach(createPermission -> {
                             inheritedCreatePermissions.computeIfAbsent(createPermission, k ->
-                                    new ArrayList<>()).add(path);
+                                            new ArrayList<>())
+                                    .add(path);
                         });
                     }
 

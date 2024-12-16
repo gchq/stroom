@@ -8,7 +8,7 @@
             <form:FormGroup ui:field="detailsFormGroup"
                             helpText="Explains how the user/group has obtained the selected permission."
                             addStyleNames="form-label-padding">
-                <g:SimplePanel styleName="max form-padding">
+                <g:SimplePanel styleName="max form-padding permissionDetails">
                     <g:HTML ui:field="details" styleName="max"/>
                 </g:SimplePanel>
             </form:FormGroup>

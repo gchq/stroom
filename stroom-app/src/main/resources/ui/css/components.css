@@ -2402,3 +2402,14 @@ button.main-menu svg {
     overflow-y: scroll;
     height: 300px;
 }
+
+.create-document-types-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2em;
+    flex-wrap: wrap;
+}
+
+.permissionDetails {
+    overflow-y: scroll;
+}
