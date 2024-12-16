@@ -323,7 +323,8 @@ public class DocumentUserPermissionsListPresenter
                         .collect(Collectors.toList());
 
                 return HtmlBuilder.builder()
-                        .div(divBuilder -> {
+                        .div(
+                                divBuilder -> {
                                     typeIcons.forEach(type -> {
                                         final SvgImage typeIcon = type.getIcon();
                                         divBuilder.div(divBuilder2 ->
