@@ -16,45 +16,56 @@
 
 package stroom.util.shared;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.IntSummaryStatistics;
+import java.util.Objects;
 
-public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
+public interface PrimitiveValueConverter<E extends HasPrimitiveValue> {
 
-    private final Map<Byte, E> map;
-
-    public PrimitiveValueConverter(E[] values) {
-        map = new HashMap<>(values.length);
-        for (E value : values) {
-            final byte primitiveValue = value.getPrimitiveValue();
-            final E previousValue = map.put(primitiveValue, value);
-            if (previousValue != null) {
-                throw new IllegalArgumentException(
-                        "Values: " + previousValue
-                                + " and " + value
-                                + " have the same primitive value " + primitiveValue);
-            }
+    /**
+     * Factory method to create an instance of a {@link PrimitiveValueConverter} appropriate
+     * to the values passed.
+     */
+    static <T extends HasPrimitiveValue> PrimitiveValueConverter<T> create(final Class<T> clazz,
+                                                                           final T[] values) {
+        Objects.requireNonNull(values);
+        if (values.length == 0) {
+            throw new IllegalArgumentException("Empty values supplied");
         }
-    }
+        final IntSummaryStatistics stats = Arrays.stream(values)
+                .map(HasPrimitiveValue::getPrimitiveValue)
+                .mapToInt(Byte::intValue)
+                .summaryStatistics();
 
-    public E fromPrimitiveValue(final Byte i) {
-        if (i == null) {
-            return null;
+        final int min = stats.getMin();
+        final int max = stats.getMax();
+
+        // We don't want to hold massive arrays and most of our primitives are in this
+        // range
+        final PrimitiveValueConverter<T> converter;
+        if (min >= 0 && max <= 100) {
+            converter = new PrimitiveValueConverterArrayImpl<>(clazz, values);
+        } else {
+            converter = new PrimitiveValueConverterMapImpl<>(clazz, values);
         }
-        return map.get(i);
+        return converter;
     }
 
     /**
-     * Converts a primitive or returns defaultValue if it is null
+     * @return The value corresponding to primitive value i or null if an unknown
+     * primitive value is supplied.
      */
-    public E fromPrimitiveValue(final Byte i, final E defaultValue) {
-        if (i == null) {
-            return defaultValue;
-        }
-        return map.get(i);
-    }
+    E fromPrimitiveValue(final byte i);
 
-    public void put(final Byte key, final E value) {
-        map.put(key, value);
-    }
+    /**
+     * @return The value corresponding to primitive value i or null if an unknown
+     * primitive value is supplied or i is null.
+     */
+    E fromPrimitiveValue(final Byte i);
+
+    /**
+     * Converts a primitive or returns defaultValue if i is null.
+     * If i is an unknown primitive value then null will be returned.
+     */
+    E fromPrimitiveValue(final Byte i, final E defaultValue);
 }

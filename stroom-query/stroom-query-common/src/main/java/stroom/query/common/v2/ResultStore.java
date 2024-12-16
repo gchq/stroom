@@ -188,7 +188,7 @@ public class ResultStore {
     }
 
     public List<String> getErrors() {
-        if (errors.size() == 0 && !coprocessors.getErrorConsumer().hasErrors()) {
+        if (errors.isEmpty() && !coprocessors.getErrorConsumer().hasErrors()) {
             return Collections.emptyList();
         }
 
@@ -198,7 +198,7 @@ public class ResultStore {
             final ErrorConsumer errorConsumer = entry.getValue();
             final List<String> errors = errorConsumer.getErrors();
 
-            if (errors.size() > 0) {
+            if (!errors.isEmpty()) {
                 err.add("Node: " + nodeName);
                 for (final String error : errors) {
                     err.add("\t" + error);
@@ -261,8 +261,8 @@ public class ResultStore {
     @Override
     public String toString() {
         return "StoreImpl{" +
-                ", complete=" + coprocessors.getCompletionState() +
-                '}';
+               ", complete=" + coprocessors.getCompletionState() +
+               '}';
     }
 
     public void addHighlights(final Set<String> highlights) {

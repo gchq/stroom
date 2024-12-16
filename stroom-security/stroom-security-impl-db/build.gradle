@@ -1,10 +1,12 @@
 ext.moduleName = 'stroom.security.impl.db'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
+    implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-explorer:stroom-collection-api')

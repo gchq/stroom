@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.script.shared.ScriptDoc;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -42,6 +43,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData SCRIPT = new TabDataImpl("Script");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private int loadCount;
 
@@ -50,7 +52,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
                            final LinkTabPanelView view,
                            final Provider<ScriptSettingsPresenter> settingsPresenterProvider,
                            final Provider<EditorPresenter> editorPresenterProvider,
-                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                           final DocumentUserPermissionsTabProvider<ScriptDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SCRIPT, new AbstractTabProvider<ScriptDoc, EditorPresenter>(eventBus) {
@@ -108,11 +111,22 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(SCRIPT);
     }
 
     @Override
     public String getType() {
         return ScriptDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
     }
 }

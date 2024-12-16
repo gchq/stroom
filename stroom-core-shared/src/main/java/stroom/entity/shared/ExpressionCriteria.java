@@ -87,6 +87,10 @@ public class ExpressionCriteria extends BaseCriteria {
                '}';
     }
 
+    public static Builder criteriaBuilder() {
+        return new Builder();
+    }
+
 
     // --------------------------------------------------------------------------------
 

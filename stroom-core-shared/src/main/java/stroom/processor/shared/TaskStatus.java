@@ -54,8 +54,8 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
      */
     DELETED("Deleted", 99);
 
-    public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-            TaskStatus.values());
+    public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(TaskStatus.class, TaskStatus.values());
 
     private final String displayValue;
     private final byte primitiveValue;

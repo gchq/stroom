@@ -51,4 +51,6 @@ public interface AnnotationDao {
     Integer setAssignedTo(SetAssignedToRequest request, UserRef currentUser);
 
     void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
+
+    List<Annotation> fetchByAssignedUser(final String userUuid);
 }

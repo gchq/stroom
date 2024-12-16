@@ -35,6 +35,7 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -72,7 +73,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final AtomicBoolean updatingState = new AtomicBoolean();
     private final AtomicBoolean pendingUpdate = new AtomicBoolean();
     private final NodeInfo nodeInfo;
-    private final NodeService nodeService;
+    // Provider to fix guice circular dep
+    private final Provider<NodeService> nodeServiceProvider;
     private final SecurityContext securityContext;
     private final BuildInfo buildInfo;
     private final NodeResource nodeResource;
@@ -81,14 +83,14 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
 
     @Inject
     ClusterNodeManagerImpl(final NodeInfo nodeInfo,
-                           final NodeService nodeService,
+                           final Provider<NodeService> nodeServiceProvider,
                            final SecurityContext securityContext,
                            final BuildInfo buildInfo,
                            final NodeResource nodeResource,
                            final Executor executor,
                            final TaskContextFactory taskContextFactory) {
         this.nodeInfo = nodeInfo;
-        this.nodeService = nodeService;
+        this.nodeServiceProvider = nodeServiceProvider;
         this.securityContext = securityContext;
         this.buildInfo = buildInfo;
         this.nodeResource = nodeResource;
@@ -233,7 +235,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(clusterState.getUpdateTime(),
                 buildInfo,
                 thisNodeName,
-                nodeService.getBaseEndpointUrl(thisNodeName));
+                nodeServiceProvider.get().getBaseEndpointUrl(thisNodeName));
 
         if (masterNodeName != null) {
             for (final String nodeName : allNodeList) {
@@ -326,6 +328,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
 
         // Not ideal having to hit the service and db twice like this but the service no longer
         // exposes the Node object so limited options.
+        final NodeService nodeService = nodeServiceProvider.get();
         final List<String> allNodeNames = Objects.requireNonNullElse(
                 nodeService.findNodeNames(new FindNodeCriteria()),
                 Collections.emptyList());
@@ -395,7 +398,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                             try {
                                 final Long responseMs = nodeResource.ping(nodeName);
                                 LOGGER.debug(() -> "Got ping response in " +
-                                        ModelStringUtil.formatDurationString(responseMs));
+                                                   ModelStringUtil.formatDurationString(responseMs));
                                 clusterState.addEnabledActiveNode(nodeName);
 
                             } catch (final RuntimeException e) {

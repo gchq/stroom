@@ -21,9 +21,9 @@ import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
@@ -32,14 +32,19 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     private final Widget widget;
 
     @UiField
+    ThinSplitLayoutPanel outerSplitLayoutPanel;
+    @UiField
     SimplePanel userList;
+
     @UiField
-    SimplePanel memberOf;
+    ThinSplitLayoutPanel innerSplitLayoutPanel;
     @UiField
-    SimplePanel membersIn;
+    SimplePanel parents;
+    @UiField
+    SimplePanel children;
 
     @Inject
-    public UserAndGroupsViewImpl(final EventBus eventBus, final Binder binder) {
+    public UserAndGroupsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -49,26 +54,54 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
+    public void setUserListVisible(final boolean visible) {
+        userList.setVisible(visible);
+        outerSplitLayoutPanel.setWidgetHidden(userList.asWidget(), !visible);
+        if (visible) {
+            outerSplitLayoutPanel.setVSplits(0.5);
+        } else {
+            outerSplitLayoutPanel.setVSplits();
+        }
+        outerSplitLayoutPanel.onResize();
+    }
+
+    @Override
     public void setUserList(final View view) {
         this.userList.setWidget(view.asWidget());
     }
 
     @Override
-    public void setMemberOfView(View view) {
-        memberOf.setWidget(view.asWidget());
+    public void setParentsView(final View view) {
+        parents.setWidget(view.asWidget());
     }
 
     @Override
-    public void setMembersInView(final View view) {
-        membersIn.setWidget(view.asWidget());
-    }
-
-    @Override
-    public void setMembersInVisible(final boolean visible) {
-        membersIn.getElement().getStyle().setOpacity(visible
+    public void setParentsVisible(final boolean visible) {
+        parents.getElement().getStyle().setOpacity(visible
                 ? 1
                 : 0.4);
     }
+
+    @Override
+    public void setChildrenView(final View view) {
+        children.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setChildrenVisible(final boolean visible) {
+        children.setVisible(visible);
+        innerSplitLayoutPanel.setWidgetHidden(children.asWidget(), !visible);
+        if (visible) {
+            innerSplitLayoutPanel.setHSplits(0.5);
+        } else {
+            innerSplitLayoutPanel.setHSplits();
+        }
+        innerSplitLayoutPanel.onResize();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, UserAndGroupsViewImpl> {
 

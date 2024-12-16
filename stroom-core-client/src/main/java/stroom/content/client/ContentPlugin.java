@@ -37,18 +37,15 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
     private P presenter;
 
     @Inject
-    public ContentPlugin(final EventBus eventBus, final ContentManager contentManager,
+    public ContentPlugin(final EventBus eventBus,
+                         final ContentManager contentManager,
                          final Provider<P> presenterProvider) {
         super(eventBus);
         this.contentManager = contentManager;
         this.presenterProvider = presenterProvider;
     }
 
-    protected P getPresenter() {
-        return presenter;
-    }
-
-    public final void open() {
+    public void open() {
         open(presenter -> {
         });
     }

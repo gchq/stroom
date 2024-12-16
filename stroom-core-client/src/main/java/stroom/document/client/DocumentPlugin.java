@@ -24,13 +24,17 @@ import stroom.core.client.HasSave;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
+import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -41,6 +45,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 
+import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -104,6 +109,19 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final TaskMonitorFactory taskMonitorFactory) {
+        return open(docRef, forceOpen, fullScreen, null, taskMonitorFactory);
+    }
+
+    /**
+     * 4. This method will open a document and show it in the content pane with the desired
+     * selectedTab
+     */
+    @SuppressWarnings("unchecked")
+    public MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final CommonDocLinkTab selectedLinkTab,
+                                     final TaskMonitorFactory taskMonitorFactory) {
         MyPresenterWidget<?> presenter = null;
         final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
         final Task task = new SimpleTask("Opening: " + docRef);
@@ -122,13 +140,21 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     presenter = (DocumentEditPresenter<?, D>) existing;
                 }
 
+                if (selectedLinkTab != null) {
+                    GWT.log("existing - " + existing.getClass().getName());
+                    if (existing instanceof DocumentEditTabPresenter<?, ?>) {
+                        ((DocumentEditTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
+                    } else if (existing instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) existing).selectCommonTab(selectedLinkTab);
+                    }
+                }
             } else if (forceOpen) {
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
                 final MyPresenterWidget<?> documentEditPresenter = createEditor();
                 presenter = documentEditPresenter;
 
-                if (documentEditPresenter instanceof HasTaskMonitorFactory) {
+                if (documentEditPresenter != null) {
                     ((HasTaskMonitorFactory) documentEditPresenter).setTaskMonitorFactory(taskMonitorFactory);
                 }
 
@@ -141,7 +167,14 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
                     // Load the document and show the tab.
                     final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
-                    showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskMonitorFactory);
+                    showDocument(
+                            docRef,
+                            documentEditPresenter,
+                            closeHandler,
+                            tabData,
+                            fullScreen,
+                            selectedLinkTab,
+                            taskMonitorFactory);
                 }
             }
 
@@ -156,9 +189,27 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     @SuppressWarnings("unchecked")
     protected void showDocument(final DocRef docRef,
                                 final MyPresenterWidget<?> documentEditPresenter,
-                                final CloseContentEvent.Handler closeHandler,
+                                final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
+                                final TaskMonitorFactory taskMonitorFactory) {
+        showDocument(
+                docRef,
+                documentEditPresenter,
+                closeHandler,
+                tabData,
+                fullScreen,
+                null,
+                taskMonitorFactory);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void showDocument(final DocRef docRef,
+                                final MyPresenterWidget<?> documentEditPresenter,
+                                final Handler closeHandler,
+                                final DocumentTabData tabData,
+                                final boolean fullScreen,
+                                final CommonDocLinkTab selectedTab,
                                 final TaskMonitorFactory taskMonitorFactory) {
         final RestErrorHandler errorHandler = caught ->
                 AlertEvent.fireError(
@@ -170,6 +221,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             if (doc == null) {
                 AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
             } else {
+                if (selectedTab != null) {
+                    if (documentEditPresenter instanceof DocumentEditTabPresenter<?, ?>) {
+                        ((DocumentEditTabPresenter<?, ?>) documentEditPresenter).selectCommonTab(selectedTab);
+                    } else if (documentEditPresenter instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) documentEditPresenter).selectCommonTab(selectedTab);
+                    }
+                }
                 // Read the newly loaded document.
                 if (documentEditPresenter instanceof HasDocumentRead) {
                     // Check document permissions and read.
@@ -569,7 +627,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                             final DocRef docRef = getDocRef(presenter.getEntity());
                             ConfirmEvent.fire(DocumentPlugin.this,
                                     docRef.getType() + " '" + docRef.getName()
-                                            + "' has unsaved changes. Are you sure you want to close this item?",
+                                    + "' has unsaved changes. Are you sure you want to close this item?",
                                     result ->
                                             actuallyClose(tabData, event.getCallback(), presenter, result));
                         } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {

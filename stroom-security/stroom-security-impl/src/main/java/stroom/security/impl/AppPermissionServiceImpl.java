@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -65,27 +66,28 @@ class AppPermissionServiceImpl implements AppPermissionService {
         this.userGroupsCache = userGroupsCache;
     }
 
-    private void checkGetPermission() {
-        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to fetch " +
-                    "application permissions");
-        }
+    private boolean canUserChangePermission() {
+        return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
     }
 
     @Override
     public ResultPage<AppUserPermissions> fetchAppUserPermissions(final FetchAppUserPermissionsRequest request) {
-        checkGetPermission();
-        final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
+        return securityContext.secureResult(() -> {
+            final UserRef userRef = securityContext.getUserRef();
+            Objects.requireNonNull(userRef, "Null user");
 
-        // Add inherited permissions.
-        for (final AppUserPermissions permissions : resultPage.getValues()) {
-            final Set<AppPermission> inheritedPermissions = new HashSet<>();
-            final Set<UserRef> cyclicPrevention = new HashSet<>();
-            addDeepPermissions(permissions.getUserRef(), inheritedPermissions, cyclicPrevention);
-            permissions.setInherited(inheritedPermissions);
-        }
+            FetchAppUserPermissionsRequest modified = request;
 
-        return resultPage;
+            // If the current user is not allowed to change permissions then only show them permissions for themselves.
+            if (!canUserChangePermission()) {
+                modified = new FetchAppUserPermissionsRequest
+                        .Builder(request)
+                        .userRef(userRef)
+                        .build();
+            }
+
+            return appPermissionDao.fetchAppUserPermissions(modified);
+        });
     }
 
     @Override
@@ -143,21 +145,6 @@ class AppPermissionServiceImpl implements AppPermissionService {
                     });
 
                     addDeepPermissionsAndPaths(group, path, inheritedPermissions, cyclicPrevention);
-                }
-            }
-        }
-    }
-
-    private void addDeepPermissions(final UserRef userRef,
-                                    final Set<AppPermission> inheritedPermissions,
-                                    final Set<UserRef> cyclicPrevention) {
-        if (cyclicPrevention.add(userRef)) {
-            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
-            if (parentGroups != null) {
-                for (final UserRef group : parentGroups) {
-                    final Set<AppPermission> permissions = appPermissionDao.getPermissionsForUser(group.getUuid());
-                    inheritedPermissions.addAll(permissions);
-                    addDeepPermissions(group, inheritedPermissions, cyclicPrevention);
                 }
             }
         }

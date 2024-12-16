@@ -59,7 +59,7 @@ public class UserPreferencesPlugin extends Plugin {
         MenuKeys.addUserMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
-                        .priority(1)
+                        .priority(10)
                         .icon(SvgImage.SETTINGS)
                         .text("Preferences")
                         .action(getOpenAction())

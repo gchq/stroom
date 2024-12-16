@@ -123,6 +123,19 @@ public abstract class BaseCriteria {
         return sortList;
     }
 
+    /**
+     * @return True if fieldId is included in the sortList
+     */
+    public boolean isFieldInSort(final String fieldId) {
+        if (sortList != null && GwtNullSafe.isNonBlankString(fieldId)) {
+            return sortList.stream()
+                    .map(CriteriaFieldSort::getId)
+                    .anyMatch(fieldId::equals);
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

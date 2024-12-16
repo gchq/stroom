@@ -118,6 +118,27 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     }
 
     @Override
+    public List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid) {
+        return JooqUtil.contextResult(analyticsDbConnProvider, context -> context
+                        .select(EXECUTION_SCHEDULE.ID,
+                                EXECUTION_SCHEDULE.NAME,
+                                EXECUTION_SCHEDULE.ENABLED,
+                                EXECUTION_SCHEDULE.NODE_NAME,
+                                EXECUTION_SCHEDULE.SCHEDULE_TYPE,
+                                EXECUTION_SCHEDULE.EXPRESSION,
+                                EXECUTION_SCHEDULE.CONTIGUOUS,
+                                EXECUTION_SCHEDULE.START_TIME_MS,
+                                EXECUTION_SCHEDULE.END_TIME_MS,
+                                EXECUTION_SCHEDULE.DOC_TYPE,
+                                EXECUTION_SCHEDULE.DOC_UUID,
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
+                        .from(EXECUTION_SCHEDULE)
+                        .where(EXECUTION_SCHEDULE.RUN_AS_USER_UUID.eq(userUuid))
+                        .fetch())
+                .map(this::recordToExecutionSchedule);
+    }
+
+    @Override
     public ExecutionSchedule createExecutionSchedule(final ExecutionSchedule executionSchedule) {
         final UserRef runAsUser = checkRunAs(executionSchedule);
 
@@ -164,12 +185,12 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
             // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
             return currentUser;
         } else if (!Objects.equals(executionSchedule.getRunAsUser(), currentUser) &&
-                !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+                   !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to set the run as user to '" +
-                            executionSchedule.getRunAsUser().toDisplayString() +
-                            "'. You can only run a filter as " +
-                            "yourself unless you have manage users permission");
+                    executionSchedule.getRunAsUser().toDisplayString() +
+                    "'. You can only run a filter as " +
+                    "yourself unless you have manage users permission");
         }
         return executionSchedule.getRunAsUser();
     }

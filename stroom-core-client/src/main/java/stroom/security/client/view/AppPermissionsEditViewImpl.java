@@ -17,6 +17,10 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
+import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,10 +36,18 @@ public final class AppPermissionsEditViewImpl
         extends ViewImpl
         implements AppPermissionsEditView {
 
+    private static final String APP_PERM_BASE_LABEL = "Application Permissions";
+    private static final String APP_PERM_DETAILS_BASE_LABEL = "Application Permission Details";
+
     private final Widget widget;
 
     @UiField
+    FormGroup appPermissionsFormGroup;
+    @UiField
     SimplePanel permissions;
+
+    @UiField
+    FormGroup detailsFormGroup;
     @UiField
     HTML details;
 
@@ -56,8 +68,24 @@ public final class AppPermissionsEditViewImpl
 
     @Override
     public void setDetails(final SafeHtml details) {
-        this.details.setHTML(details);
+        this.details.setHTML(SafeHtmlUtil.nullSafe(details));
     }
+
+    public void setUserRef(final UserRef userRef) {
+        if (userRef == null) {
+            appPermissionsFormGroup.setLabel(APP_PERM_BASE_LABEL + ":");
+            detailsFormGroup.setLabel(APP_PERM_DETAILS_BASE_LABEL + ":");
+        } else {
+            final String suffix = " for " + userRef.getType(CaseType.LOWER)
+                                  + " \"" + userRef.getDisplayName() + "\":";
+            appPermissionsFormGroup.setLabel(APP_PERM_BASE_LABEL + suffix);
+            detailsFormGroup.setLabel(APP_PERM_DETAILS_BASE_LABEL + suffix);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, AppPermissionsEditViewImpl> {
 

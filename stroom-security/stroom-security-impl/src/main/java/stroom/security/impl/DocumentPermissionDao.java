@@ -28,27 +28,29 @@ public interface DocumentPermissionDao {
 
     void removeDocumentUserCreatePermission(String documentUuid, String userUuid, String documentType);
 
-    void removeDocumentUserCreatePermissions(String documentUuid, String userUuid);
+    void setDocumentUserCreatePermissions(String documentUuid, String userUuid, Set<String> documentTypes);
+
+    void removeAllDocumentUserCreatePermissions(String documentUuid, String userUuid);
 
     void removeAllDocumentCreatePermissions(String documentUuid);
 
     /**
-     * BULK operation to add all permssions from a source document to a target document.
+     * BULK operation to add all permissions from a source document to a target document.
      */
     void addDocumentPermissions(String sourceDocUuid, String destDocUuid);
 
     /**
-     * BULK operation to add all create permssions from a source document to a target document.
+     * BULK operation to add all create permissions from a source document to a target document.
      */
     void addDocumentCreatePermissions(String sourceDocUuid, String destDocUuid);
 
     /**
-     * BULK operation to set all permssions from a source document to a target document.
+     * BULK operation to set all permissions from a source document to a target document.
      */
     void setDocumentPermissions(String sourceDocUuid, String destDocUuid);
 
     /**
-     * BULK operation to set all create permssions from a source document to a target document.
+     * BULK operation to set all create permissions from a source document to a target document.
      */
     void setDocumentCreatePermissions(String sourceDocUuid, String destDocUuid);
 

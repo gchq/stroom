@@ -4,7 +4,9 @@ import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Hold all the document permissions that a user holds.
@@ -49,5 +51,19 @@ public class UserDocumentPermissions {
 
     public void clearPermission(final String docUuid) {
         permissions.remove(docUuid);
+    }
+
+    /**
+     * Mostly for use in tests
+     *
+     * @return A map of docUUID => {@link DocumentPermission}.
+     */
+    public Map<String, DocumentPermission> getPermissions() {
+        return permissions.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        entry ->
+                                DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(entry.getValue())));
     }
 }

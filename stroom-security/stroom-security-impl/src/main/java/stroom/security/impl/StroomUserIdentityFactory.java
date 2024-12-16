@@ -20,6 +20,7 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -35,6 +36,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserDocRefUtil;
 
 import jakarta.inject.Inject;
@@ -128,7 +131,7 @@ public class StroomUserIdentityFactory
             getProcessingUser(jwtContext)
                     .orElseThrow(() -> new AuthenticationException(
                             "Expecting request to be made by processing user identity. url: "
-                                    + request.getRequestURI()));
+                            + request.getRequestURI()));
 
             final UserIdentity runAsUserIdentity = userCache.getByUuid(runAsUserUuid)
                     .map(User::asRef)
@@ -202,7 +205,7 @@ public class StroomUserIdentityFactory
 
         final Predicate<User> hasUserInfoChangedPredicate = aUser ->
                 !Objects.equals(displayName, aUser.getDisplayName())
-                        || !Objects.equals(fullName, aUser.getFullName());
+                || !Objects.equals(fullName, aUser.getFullName());
 
         if (hasUserInfoChangedPredicate.test(user)) {
             synchronized (this) {
@@ -318,7 +321,7 @@ public class StroomUserIdentityFactory
         addTokenToRefreshManager(updatableToken);
 
         LOGGER.info(() -> "Authenticated user " + userIdentity
-                + " for sessionId " + NullSafe.get(session, HttpSession::getId));
+                          + " for sessionId " + NullSafe.get(session, HttpSession::getId));
         return userIdentity;
     }
 
@@ -336,15 +339,15 @@ public class StroomUserIdentityFactory
             final String userUuid;
 
             if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())
-                    && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
-                    && subjectId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
+                && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
+                && subjectId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
                 LOGGER.debug("Authenticating using default API key. DO NOT USE IN PRODUCTION!");
                 // Using default creds so just fake a user
                 userUuid = UUID.randomUUID().toString();
             } else {
                 User user = getOrCreateUserBySubjectId(subjectId).orElseThrow(() ->
                         new AuthenticationException("Unable to find user with id: " + subjectId
-                                + "(displayName: " + optDisplayName + ")"));
+                                                    + "(displayName: " + optDisplayName + ")"));
                 user = updateUserInfo(user, jwtClaims);
                 userUuid = user.getUuid();
             }
@@ -398,7 +401,7 @@ public class StroomUserIdentityFactory
             return Optional.ofNullable(hasJwtClaims.getJwtClaims())
                     .map(ThrowingFunction.unchecked(jwtClaims -> {
                         final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
-                                && Objects.equals(issuer, jwtClaims.getIssuer());
+                                                         && Objects.equals(issuer, jwtClaims.getIssuer());
 
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
@@ -414,7 +417,7 @@ public class StroomUserIdentityFactory
         } else {
             final String requiredIssuer = openIdConfigProvider.get().getIssuer();
             final boolean isProcessingUser = Objects.equals(subject, serviceUser.getSubjectId())
-                    && Objects.equals(issuer, requiredIssuer);
+                                             && Objects.equals(issuer, requiredIssuer);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
                         subject,
@@ -452,6 +455,30 @@ public class StroomUserIdentityFactory
     @Override
     public void clear() {
         cacheBySubjectId.clear();
+    }
+
+    @Override
+    public void ensureUserIdentity(final UserDesc userDesc) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You are not authorised to ensure a stroom user.");
+        }
+        NullSafe.requireNonNull(userDesc, UserDesc::getSubjectId, () -> "subjectId required");
+        final UserService userService = userServiceProvider.get();
+        final String newDisplayName = userDesc.getDisplayName();
+        final String newFullName = userDesc.getFullName();
+
+        final User user = userService.getOrCreateUser(userDesc);
+
+        if (!Objects.equals(newDisplayName, user.getDisplayName())
+            || !Objects.equals(newFullName, user.getFullName())) {
+
+            LOGGER.debug("Updating user {} with displayName: '{}' and fullName: '{}'",
+                    user, newDisplayName, newFullName);
+            user.setDisplayName(newDisplayName);
+            user.setFullName(newFullName);
+            userService.update(user);
+        }
     }
 
     @Override

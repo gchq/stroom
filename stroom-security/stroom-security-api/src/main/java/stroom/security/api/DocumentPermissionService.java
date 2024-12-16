@@ -12,35 +12,9 @@ import java.util.Set;
 
 public interface DocumentPermissionService {
 
-//
-//    /**
-//     * Clear the permissions for an existing document, i.e. change the permissions.
-//     * Same as {@link DocumentPermissionService#deleteDocumentPermissions(DocRef)} except it
-//     * requires Owner permission.
-//     */
-//    void clearAllPermissions(DocRef docRef);
-//
-//    void clearAllPermissions(Set<DocRef> docRefs);
-//
-
-
     DocumentPermission getPermission(DocRef docRef, UserRef userRef);
 
     void setPermission(DocRef docRef, UserRef userRef, DocumentPermission permission);
-
-//    void clearPermission(DocRef docRef, UserRef userRef);
-
-
-//    Set<String> getDocumentCreatePermissions(DocRef docRef, UserRef userRef);
-//
-//    void addDocumentCreatePermission(DocRef docRef, UserRef userRef, String documentType);
-//
-//    void removeDocumentCreatePermission(DocRef docRef, UserRef userRef, String documentType);
-//
-//    void clearDocumentCreatePermissions(DocRef docRef, UserRef userRef);
-//
-//    void clearDocumentCreatePermissionsForDocs(Set<DocRef> docRefs);
-
 
     void removeAllDocumentPermissions(DocRef docRef);
 
@@ -58,6 +32,4 @@ public interface DocumentPermissionService {
     Boolean changeDocumentPermissions(SingleDocumentPermissionChangeRequest request);
 
     ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(FetchDocumentUserPermissionsRequest request);
-
-    DocumentUserPermissions getPermissions(DocRef docRef, UserRef userRef);
 }

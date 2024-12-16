@@ -67,6 +67,25 @@
 	font-weight: 500;
 }
 
+.dataGridSortableHeader .single-icon-column-header,
+.dataGridSortableHeader .two-icon-column-header,
+.dataGridSortableHeader .single-icon-column-header .svgCell-icon,
+.dataGridSortableHeader .two-icon-column-header .svgCell-icon {
+    cursor: pointer;
+}
+
+.dataGridHeader .single-icon-column-header,
+.dataGridHeader .two-icon-column-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.dataGridHeader:has(.single-icon-column-header),
+.dataGridHeader:has(.two-icon-column-header) {
+    text-decoration: none;
+}
+
 .dataGridCell {
 	overflow: hidden;
 	white-space: nowrap;
@@ -321,4 +340,26 @@ table .dataGridOddRow.dataGridSelectedRow {
 	opacity: 0;
 	z-index: 10;
 	cursor: default;
+}
+
+
+
+/*
+ Sortable header styles.
+*/
+.dataGridSortableHeaderOuterDiv {
+    display: flex;
+    gap: 5px;
+    padding: 0 !important;
+}
+
+.dataGridSortableHeaderNameHolder {
+}
+
+.dataGridSortableHeaderImageHolder {
+}
+
+.dataGridSortableHeaderImageHolder svg {
+    width: 10px;
+    height: 10px;
 }

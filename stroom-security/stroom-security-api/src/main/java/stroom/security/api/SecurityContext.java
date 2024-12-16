@@ -22,6 +22,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.UserRef;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public interface SecurityContext extends HasAuditableUserIdentity {
@@ -52,6 +53,29 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * @return A user ref object representing the current authenticated user.
      */
     UserRef getUserRef();
+
+    /**
+     * Determine if the passed {@link UserRef} is the same user as the current
+     * authenticated user. Being administrator has no bearing on the result of this method.
+     *
+     * @param userRef The user to compare against the current authenticated user.
+     * @return True if userRef is equal to the current authenticated user.
+     */
+    default boolean isCurrentUser(final UserRef userRef) {
+        return Objects.equals(getUserRef(), userRef);
+    }
+
+    /**
+     * Determine if the passed userUuid is the same user as the current
+     * authenticated user. Being administrator has no bearing on the result of this method.
+     *
+     * @param userUuid The user to compare against the current authenticated user.
+     * @return True if userUuid is equal to the userUuid of the current authenticated user.
+     */
+    default boolean isCurrentUser(final String userUuid) {
+        final String currentUserUuid = getUserRef().getUuid();
+        return Objects.equals(currentUserUuid, userUuid);
+    }
 
     /**
      * This is a convenience method to check that the user has system administrator privileges.

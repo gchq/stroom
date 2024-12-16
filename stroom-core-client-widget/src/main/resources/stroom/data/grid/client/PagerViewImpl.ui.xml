@@ -6,7 +6,7 @@
 >
     <g:FlowPanel addStyleNames="max dock-container-vertical">
         <g:FlowPanel ui:field="pagerContainer" styleName="pager dock-container-horizontal dock-min align-center">
-            <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-max"/>
+            <g:FlowPanel ui:field="toolbarWidgets" addStyleNames="pager-toolbar"/>
             <p:Pager ui:field="pager" addStyleNames="dock-min"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="listContainer" addStyleNames="listContainer dock-max"/>

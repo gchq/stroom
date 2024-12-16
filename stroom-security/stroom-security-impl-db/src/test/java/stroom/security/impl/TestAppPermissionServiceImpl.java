@@ -86,13 +86,13 @@ class TestAppPermissionServiceImpl {
 
         // Check user permissions.
         final User user = createUser(FileSystemTestUtil.getUniqueTestString());
-        userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
-        userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
+        userService.addUserToGroup(user.asRef(), userGroup1.asRef());
+        userService.addUserToGroup(user.asRef(), userGroup3.asRef());
         checkUserPermissions(user, c1, p1);
 
         addPermissions(userGroup2, c1, p2);
 
-        userService.addUserToGroup(user.getUuid(), userGroup2.getUuid());
+        userService.addUserToGroup(user.asRef(), userGroup2.asRef());
         checkUserPermissions(user, c1, p1, p2);
 
         removePermissions(userGroup2, p2);

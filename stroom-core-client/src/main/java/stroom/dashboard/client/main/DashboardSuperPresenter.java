@@ -26,6 +26,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.query.api.v2.ResultStoreInfo;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -44,6 +45,7 @@ public class DashboardSuperPresenter
 
     private static final TabData DASHBOARD = new TabDataImpl("Dashboard", DashboardDoc.DOCUMENT_TYPE);
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final DashboardPresenter dashboardPresenter;
 
@@ -51,7 +53,9 @@ public class DashboardSuperPresenter
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
                                    final DashboardPresenter dashboardPresenter,
-                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                   final DocumentUserPermissionsTabProvider<DashboardDoc>
+                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
         this.dashboardPresenter = dashboardPresenter;
 
@@ -73,17 +77,18 @@ public class DashboardSuperPresenter
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(DASHBOARD);
     }
 
     @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
-                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
+            && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
             dashboardPresenter.start();
             return true;
         } else if (Action.CLOSE == action
-                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
+                   && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
             dashboardPresenter.stop();
             return true;
 //        } else if (Action.DOCUMENTATION == action
@@ -124,5 +129,15 @@ public class DashboardSuperPresenter
 
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
         dashboardPresenter.setResultStoreInfo(resultStoreInfo);
+    }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
     }
 }

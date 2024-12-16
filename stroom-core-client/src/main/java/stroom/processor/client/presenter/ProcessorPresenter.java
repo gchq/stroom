@@ -229,7 +229,7 @@ public class ProcessorPresenter
                 batchProcessorFilterEditPresenterProvider.get();
         presenter.show(processorListPresenter.getExpression(),
                 GwtNullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
-                () -> processorListPresenter.refresh());
+                processorListPresenter::refresh);
     }
 
     private void onFilter() {

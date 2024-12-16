@@ -319,11 +319,15 @@ class DynamicTestBuilder {
                 final O expectedOutput = testOutcome.getExpectedOutput();
                 final O actualOutput = testOutcome.getActualOutput();
                 if (expectedOutput instanceof Set<?>
-                        && actualOutput instanceof Set<?>) {
-                    Assertions.assertThat((Set<O>) actualOutput)
+                    && actualOutput instanceof Collection<?>) {
+                    Assertions.assertThat((Collection<O>) actualOutput)
                             .containsExactlyInAnyOrderElementsOf((Set<O>) expectedOutput);
+                } else if (expectedOutput instanceof List<?>
+                           && actualOutput instanceof Collection<?>) {
+                    Assertions.assertThat((Collection<O>) actualOutput)
+                            .containsExactlyElementsOf((List<O>) expectedOutput);
                 } else if (expectedOutput instanceof Collection<?>
-                        && actualOutput instanceof Collection<?>) {
+                           && actualOutput instanceof Collection<?>) {
                     // Using contains will give a better error message
                     Assertions.assertThat((Collection<O>) actualOutput)
                             .containsExactlyElementsOf((Collection<O>) expectedOutput);
@@ -355,11 +359,11 @@ class DynamicTestBuilder {
                                 .isInstanceOf(expectedThrowableType);
                     } else {
                         LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}. " +
-                                        "Actual output: '{}'",
+                                     "Actual output: '{}'",
                                 expectedThrowableType.getSimpleName(),
                                 testOutcome.getActualOutput());
                         Assertions.fail("Expecting test to throw "
-                                + expectedThrowableType.getSimpleName());
+                                        + expectedThrowableType.getSimpleName());
                     }
                 } else {
                     LOGGER.debug("Actual output: '{}'", testOutcome.getActualOutput());

@@ -5,9 +5,13 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.event.OpenAppPermissionsScreenEvent;
 import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.shared.SvgImage;
+import stroom.security.shared.UserFields;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
+import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -21,12 +25,30 @@ import javax.inject.Singleton;
 @Singleton
 public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresenter> {
 
+    public static final String SCREEN_NAME = "Application Permissions";
+    public static final Preset ICON = SvgPresets.SHIELD;
+
     @Inject
     public AppPermissionsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
                                 final Provider<AppPermissionsPresenter> presenterProvider,
                                 final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event -> {
+            open(appPermissionsPresenter ->
+                    appPermissionsPresenter.showUser(event.getUserRef()));
+        }));
+    }
+
+    private String buildFilterInput(final UserRef userRef) {
+        if (userRef == null) {
+            return "";
+        } else if (userRef.getDisplayName() != null) {
+            return UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName();
+        } else {
+            return UserFields.FIELD_UNIQUE_ID + ":" + userRef.getSubjectId();
+        }
     }
 
     @Override
@@ -35,9 +57,9 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
             MenuKeys.addSecurityMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new Builder()
-                            .priority(20)
-                            .icon(SvgImage.SHIELD)
-                            .text("Application Permissions")
+                            .priority(40)
+                            .icon(ICON)
+                            .text(SCREEN_NAME)
                             .action(getOpenAction())
                             .command(this::open)
                             .build());

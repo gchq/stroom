@@ -16,7 +16,7 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.widget.form.client.FormLabel;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -29,13 +29,14 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers>
         implements QuickFilterPageView {
 
     @UiField
-    FormLabel label;
+    FormGroup formGroup;
     @UiField
     QuickFilter quickFilter;
     @UiField
@@ -46,13 +47,17 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
     @Inject
     public QuickFilterPageViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        label.setVisible(false);
+        formGroup.setLabel(null);
     }
 
     @Override
     public void setLabel(final String label) {
-        this.label.setLabel(label);
-        this.label.setVisible(true);
+        formGroup.setLabel(label);
+    }
+
+    @Override
+    public void setHelpText(final SafeHtml helpText) {
+        formGroup.overrideHelpText(helpText);
     }
 
     @Override
@@ -70,15 +75,29 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
         data.setWidget(view.asWidget());
     }
 
+    @Override
+    public void setQuickFilterText(final String quickFilterText) {
+        final String currVal = quickFilter.getText();
+        quickFilter.setText(quickFilterText);
+        if (!Objects.equals(currVal, quickFilterText)) {
+            getUiHandlers().onFilterChange(quickFilterText);
+        }
+    }
+
     @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().onFilterChange(quickFilter.getText());
     }
 
+
     @Override
     public Widget asWidget() {
         return widget;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, QuickFilterPageViewImpl> {
 
