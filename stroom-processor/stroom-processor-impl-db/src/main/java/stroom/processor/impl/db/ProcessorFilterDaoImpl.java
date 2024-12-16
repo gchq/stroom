@@ -220,7 +220,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
         if (count == 0) {
             throw new DataChangedException("Failed to update processor filter, " +
-                    "it may have been updated by another user or deleted");
+                                           "it may have been updated by another user or deleted");
         }
 
         return fetch(context, filter.getId()).map(this::mapRecord).orElseThrow(() ->
@@ -307,7 +307,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final int count = query.execute();
 
         LOGGER.debug("Logically deleted {} processor filters with a state of COMPLETE with no outstanding tasks and " +
-                        "last poll before {}",
+                     "last poll before {}",
                 count, deleteThreshold);
         return count;
     }
@@ -375,8 +375,23 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             }
         });
         LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: "
-                + processorFilterUuids.size() + " UUIDs");
+                                  + processorFilterUuids.size() + " UUIDs");
         return processorFilterUuids;
+    }
+
+    @Override
+    public List<ProcessorFilter> fetchByRunAsUser(final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select()
+                        .from(PROCESSOR_FILTER)
+                        .join(PROCESSOR_FILTER_TRACKER)
+                        .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                        .join(PROCESSOR)
+                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                        .where(PROCESSOR_FILTER.RUN_AS_USER_UUID.eq(userUuid))
+                        .fetch())
+                .map(this::mapRecord);
     }
 
     @Override

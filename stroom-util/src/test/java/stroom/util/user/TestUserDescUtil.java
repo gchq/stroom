@@ -65,14 +65,19 @@ class TestUserDescUtil {
     }
 
     private UserDesc user(final String uniqueIdentity) {
-        return UserDesc.builder().subjectId(uniqueIdentity).build();
+        return UserDesc.forSubjectId(uniqueIdentity);
     }
 
     private UserDesc user(final String uniqueIdentity, final String displayName) {
-        return UserDesc.builder().subjectId(uniqueIdentity).displayName(displayName).build();
+        return UserDesc.builder(uniqueIdentity)
+                .displayName(displayName)
+                .build();
     }
 
     private UserDesc user(final String uniqueIdentity, final String displayName, final String fullName) {
-        return UserDesc.builder().subjectId(uniqueIdentity).displayName(displayName).fullName(fullName).build();
+        return UserDesc.builder(uniqueIdentity)
+                .displayName(displayName)
+                .fullName(fullName)
+                .build();
     }
 }

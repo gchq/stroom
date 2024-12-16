@@ -25,6 +25,10 @@ public abstract class AbstractToken {
     final int start;
     final int end;
 
+    /**
+     * @param start Inclusive array index
+     * @param end   Inclusive array index
+     */
     public AbstractToken(final TokenType tokenType,
                          final char[] chars,
                          final int start,
@@ -48,10 +52,16 @@ public abstract class AbstractToken {
         return chars;
     }
 
+    /**
+     * @return Inclusive array index
+     */
     public int getStart() {
         return start;
     }
 
+    /**
+     * @return Inclusive array index
+     */
     public int getEnd() {
         return end;
     }
@@ -134,11 +144,17 @@ public abstract class AbstractToken {
             return self();
         }
 
+        /**
+         * @param start Inclusive array index
+         */
         public B start(final int start) {
             this.start = start;
             return self();
         }
 
+        /**
+         * @param end Inclusive array index
+         */
         public B end(final int end) {
             this.end = end;
             return self();

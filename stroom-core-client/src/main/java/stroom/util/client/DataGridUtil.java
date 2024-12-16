@@ -16,11 +16,15 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
+import stroom.data.client.presenter.UserRefCell;
+import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.explorer.shared.DocumentTypes;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
@@ -29,6 +33,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeAction;
+import stroom.util.shared.UserRef;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
@@ -42,6 +47,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
@@ -57,6 +63,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -278,40 +285,62 @@ public class DataGridUtil {
         view.addEndColumn(new EndColumn<>());
     }
 
+    private static CriteriaFieldSort getSortFromEvent(final ColumnSortEvent event) {
+        final Column<?, ?> column = GwtNullSafe.get(event, ColumnSortEvent::getColumn);
+        if (column instanceof OrderByColumn<?, ?> && column.isSortable()) {
+            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+            return new CriteriaFieldSort(
+                    orderByColumn.getField(),
+                    !event.isSortAscending(),
+                    orderByColumn.isIgnoreCase());
+        } else {
+            return null;
+        }
+    }
+
     public static void addColumnSortHandler(final MyDataGrid<?> view,
                                             final BaseCriteria criteria,
                                             final Runnable onSortChange) {
-
         view.addColumnSortHandler(event -> {
-            if (event != null
-                    && event.getColumn() instanceof OrderByColumn<?, ?>
-                    && event.getColumn().isSortable()) {
-
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
+                criteria.setSort(sort);
                 onSortChange.run();
             }
         });
     }
 
     public static void addColumnSortHandler(final MyDataGrid<?> view,
-                                            final BaseCriteria.AbstractBuilder criteria,
+                                            final BaseCriteria.AbstractBuilder<?, ?> criteria,
                                             final Runnable onSortChange) {
-
         view.addColumnSortHandler(event -> {
-            if (event != null
-                    && event.getColumn() instanceof OrderByColumn<?, ?>
-                    && event.getColumn().isSortable()) {
-
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                final CriteriaFieldSort sort = new CriteriaFieldSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
                 criteria.sortList(List.of(sort));
+                onSortChange.run();
+            }
+        });
+    }
+
+    public static void addColumnSortHandler(final MyDataGrid<?> view,
+                                            final Consumer<List<CriteriaFieldSort>> fieldSortConsumer,
+                                            final Runnable onSortChange) {
+        view.addColumnSortHandler(event -> {
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
+                fieldSortConsumer.accept(List.of(sort));
+                onSortChange.run();
+            }
+        });
+    }
+
+    public static void addColumnSortHandler(final DataGrid<?> view,
+                                            final BaseCriteria criteria,
+                                            final Runnable onSortChange) {
+        view.addColumnSortHandler(event -> {
+            final CriteriaFieldSort sort = getSortFromEvent(event);
+            if (sort != null) {
+                criteria.setSort(sort);
                 onSortChange.run();
             }
         });
@@ -319,25 +348,6 @@ public class DataGridUtil {
 
     public static void addEndColumn(final DataGrid<?> view) {
         view.addColumn(new EndColumn<>());
-    }
-
-    public static void addColumnSortHandler(final DataGrid<?> view,
-                                            final BaseCriteria criteria,
-                                            final Runnable onSortChange) {
-
-        view.addColumnSortHandler(event -> {
-            if (event != null
-                    && event.getColumn() instanceof OrderByColumn<?, ?>
-                    && event.getColumn().isSortable()) {
-
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
-                onSortChange.run();
-            }
-        });
     }
 
     /**
@@ -488,18 +498,10 @@ public class DataGridUtil {
      * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
      * @param <T_ROW>       The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
-            final Function<T_ROW, Boolean> cellExtractor) {
-        return new ColumnBuilder<>(
-                cellExtractor,
-                bool -> GwtNullSafe.isTrue(bool)
-                        ? TickBoxState.TICK
-                        : TickBoxState.UNTICK,
-                () -> TickBoxCell.create(
-                        new NoBorderAppearance(),
-                        false,
-                        false,
-                        false));
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> cellExtractor) {
+
+        return updatableTickBoxColumnBuilder(cellExtractor, false);
     }
 
     /**
@@ -508,18 +510,42 @@ public class DataGridUtil {
      * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
      * @param <T_ROW>       The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
-            final Function<T_ROW, Boolean> cellExtractor) {
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> cellExtractor) {
+
+        return updatableTickBoxColumnBuilder(cellExtractor, true);
+    }
+
+    /**
+     * Builds an updatable tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> cellExtractor,
+            final boolean isUpdatable) {
+
+        final DefaultAppearance defaultAppearance = isUpdatable
+                ? new DefaultAppearance()
+                : new NoBorderAppearance();
+
         return new ColumnBuilder<>(
                 cellExtractor,
-                bool -> GwtNullSafe.isTrue(bool)
-                        ? TickBoxState.TICK
-                        : TickBoxState.UNTICK,
+                Function.identity(),
                 () -> TickBoxCell.create(
-                        new DefaultAppearance(),
+                        defaultAppearance,
                         false,
                         false,
-                        true));
+                        isUpdatable));
+    }
+
+    public static <T_ROW> Function<T_ROW, TickBoxState> createTickBoxExtractor(
+            final Function<T_ROW, Boolean> booleanExtractor) {
+        return row -> {
+            final Boolean bool = Objects.requireNonNull(booleanExtractor).apply(row);
+            return TickBoxState.fromBoolean(bool);
+        };
     }
 
     /**
@@ -556,6 +582,45 @@ public class DataGridUtil {
                 cellExtractor,
                 Function.identity(),
                 () -> new PercentBarCell(warningThreshold, dangerThreshold));
+    }
+
+    /**
+     * A builder for creating a column for a {@link UserRef} with hover icons to copy the name of the doc
+     * and to open the user/group.
+     *
+     * @param cellExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, UserRefProvider<T_ROW>, UserRefProvider<T_ROW>, Cell<UserRefProvider<T_ROW>>> userRefColumnBuilder(
+            final Function<T_ROW, UserRef> cellExtractor,
+            final EventBus eventBus,
+            final ClientSecurityContext securityContext,
+            final UserRef.DisplayType displayType) {
+        return userRefColumnBuilder(cellExtractor, eventBus, securityContext, false, displayType);
+    }
+
+    /**
+     * A builder for creating a column for a {@link UserRef} with hover icons to copy the name of the doc
+     * and to open the user/group.
+     *
+     * @param cellExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    public static <T_ROW> ColumnBuilder<T_ROW, UserRefProvider<T_ROW>, UserRefProvider<T_ROW>, Cell<UserRefProvider<T_ROW>>> userRefColumnBuilder(
+            final Function<T_ROW, UserRef> cellExtractor,
+            final EventBus eventBus,
+            final ClientSecurityContext securityContext,
+            final boolean showIcon,
+            final UserRef.DisplayType displayType) {
+
+        Objects.requireNonNull(cellExtractor);
+
+        return new ColumnBuilder<>(
+                row -> new UserRefProvider<>(row, cellExtractor),
+                Function.identity(),
+                () -> new UserRefCell<>(eventBus, securityContext, showIcon, displayType, null));
     }
 
     /**
@@ -610,14 +675,23 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
             final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
             final EventBus eventBus,
+            final DocumentTypes documentTypes,
             final boolean allowLinkByName,
+            final boolean showIcon,
+            final DocRef.DisplayType displayType,
             final Function<T_ROW, String> cssClassFunc,
             final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunc) {
 
         return new ColumnBuilder<>(
                 cellExtractor,
                 Function.identity(),
-                () -> new DocRefCell<>(eventBus, allowLinkByName, cssClassFunc, cellTextFunc));
+                () -> new DocRefCell<>(eventBus,
+                        documentTypes,
+                        allowLinkByName,
+                        showIcon,
+                        displayType,
+                        cssClassFunc,
+                        cellTextFunc));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(
@@ -628,7 +702,7 @@ public class DataGridUtil {
 
     public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
         column.setFieldUpdater((index, object, value) -> {
-            if (value != null && value.getCommand() != null) {
+            if (GwtNullSafe.allNonNull(value, value.getCommand())) {
                 value.getCommand().execute();
             }
         });
@@ -664,6 +738,10 @@ public class DataGridUtil {
 
     public static HeadingBuilder headingBuilder(final String headingText) {
         return new HeadingBuilder(headingText);
+    }
+
+    public static HeadingBuilder headingBuilder() {
+        return new HeadingBuilder("");
     }
 
 
@@ -716,6 +794,17 @@ public class DataGridUtil {
                 final String fieldName,
                 final boolean isIgnoreCase) {
             this.isSorted = true;
+            this.isIgnoreCaseOrdering = isIgnoreCase;
+            this.isSortableSupplier = () -> true;
+            this.fieldName = Objects.requireNonNull(fieldName);
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
+                final String fieldName,
+                final boolean isIgnoreCase,
+                final boolean isSorted) {
+            this.isSorted = isSorted;
             this.isIgnoreCaseOrdering = isIgnoreCase;
             this.isSortableSupplier = () -> true;
             this.fieldName = Objects.requireNonNull(fieldName);
@@ -905,11 +994,21 @@ public class DataGridUtil {
     public static class HeadingBuilder {
 
         private HeadingAlignment headingAlignment = null;
-        private String headingText;
+        private SafeHtml headingText = SafeHtmlUtils.EMPTY_SAFE_HTML;
         private String toolTip;
 
         public HeadingBuilder(final String headingText) {
-            this.headingText = headingText;
+            this.headingText = SafeHtmlUtil.getSafeHtml(headingText);
+        }
+
+        public HeadingBuilder headingText(final String headingText) {
+            this.headingText = SafeHtmlUtil.getSafeHtml(headingText);
+            return this;
+        }
+
+        public HeadingBuilder headingText(final SafeHtml headingText) {
+            this.headingText = GwtNullSafe.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
+            return this;
         }
 
         public HeadingBuilder leftAligned() {
@@ -935,11 +1034,8 @@ public class DataGridUtil {
         public Header<SafeHtml> build() {
 
             final boolean hasToolTip = !GwtNullSafe.isBlankString(toolTip);
-            final boolean hasAlignment = headingAlignment != null && headingAlignment != HeadingAlignment.LEFT;
-            if (headingText == null) {
-                headingText = "";
-            }
-
+            final boolean hasAlignment = headingAlignment != null
+                                         && headingAlignment != HeadingAlignment.LEFT;
             final Header<SafeHtml> header;
             String headingStyle = null;
             if (hasAlignment) {
@@ -954,7 +1050,7 @@ public class DataGridUtil {
             if (hasToolTip) {
 
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder()
-                        .appendHtmlConstant("<span");
+                        .appendHtmlConstant("<div");
 //                if (hasToolTip) {
                 builder.appendHtmlConstant(" title=\"")
                         .appendEscaped(toolTip)
@@ -970,14 +1066,20 @@ public class DataGridUtil {
 //                    }
 //                }
 
+                builder.appendHtmlConstant(">")
+                        .append(headingText);
+//                if (GwtNullSafe.isBlankString(headingText)) {
+//                    builder.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
+//                } else {
+//                    builder.appendEscaped(headingText);
+//                }
+
                 final SafeHtml safeHtml = builder
-                        .appendHtmlConstant(">")
-                        .appendEscaped(headingText)
-                        .appendHtmlConstant("</span>")
+                        .appendHtmlConstant("</div>")
                         .toSafeHtml();
                 header = new SafeHtmlHeader(safeHtml);
             } else {
-                header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headingText));
+                header = new SafeHtmlHeader(headingText);
             }
 
             // Apply a class to the header itself

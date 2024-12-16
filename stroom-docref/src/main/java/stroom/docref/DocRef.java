@@ -31,6 +31,7 @@ import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * {@value #CLASS_DESC}
@@ -44,7 +45,8 @@ import java.util.UUID;
 public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, HasUuid, HasNameMutable {
 
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
-            "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";
+                                            "A 'document' is an entity in stroom such as a data source dictionary " +
+                                            "or pipeline.";
 
     @Schema(description = "The type of the 'document' that this DocRef refers to",
             example = "StroomStatsStore")
@@ -138,6 +140,20 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         return name;
     }
 
+    public String getDisplayValue(final DisplayType displayType) {
+        final DisplayType dispType = displayType != null
+                ? displayType
+                : DisplayType.AUTO;
+        final Function<DocRef, String> displayTextFunc = dispType.getDisplayTextFunc();
+        return displayTextFunc.apply(this);
+    }
+
+    private String getNameOrUuid() {
+        return name != null
+                ? name
+                : uuid;
+    }
+
     @Override
     public int compareTo(final DocRef o) {
         int diff = 0;
@@ -210,10 +226,10 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         //  if we have any code that relies on the format.
 //        return "{" + name + ":" + type + ":" + uuid + "}";
         return "DocRef{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "type='" + type + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
     /**
@@ -239,8 +255,8 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
             return false;
         } else {
             return Objects.equals(docRef1.type, docRef2.type) &&
-                    Objects.equals(docRef1.uuid, docRef2.uuid) &&
-                    Objects.equals(docRef1.name, docRef2.name);
+                   Objects.equals(docRef1.uuid, docRef2.uuid) &&
+                   Objects.equals(docRef1.name, docRef2.name);
         }
     }
 
@@ -266,6 +282,52 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
      */
     public DocRef withoutName() {
         return new DocRef(type, uuid);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum DisplayType {
+        /**
+         * Displays the first non-null value in this order:
+         * <p>name</p>
+         * <p>UUID</p>
+         */
+        AUTO(DocRef::getNameOrUuid, "value"),
+        /**
+         * The name of the {@link DocRef}
+         */
+        NAME(DocRef::getName, "name"),
+        /**
+         * The type of the {@link DocRef}
+         */
+        TYPE(DocRef::getType, "type"),
+        /**
+         * The UUID of the {@link DocRef}
+         */
+        UUID(DocRef::getUuid, "UUID"),
+        ;
+
+        private final Function<DocRef, String> displayTextFunc;
+        private final String typeName;
+
+        DisplayType(final Function<DocRef, String> displayTextFunc,
+                    final String typeName) {
+            this.displayTextFunc = displayTextFunc;
+            this.typeName = typeName;
+        }
+
+        public Function<DocRef, String> getDisplayTextFunc() {
+            return displayTextFunc;
+        }
+
+        /**
+         * @return The name of the display type for use in UI text.
+         */
+        public String getTypeName() {
+            return typeName;
+        }
     }
 
 

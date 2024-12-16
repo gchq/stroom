@@ -50,10 +50,13 @@ import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Expander;
+import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -69,7 +72,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Singleton
-class ProcessorFilterServiceImpl implements ProcessorFilterService {
+class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDependencies {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterServiceImpl.class);
 
@@ -198,12 +201,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
             processorFilter.setRunAsUser(currentUser);
         } else if (!Objects.equals(processorFilter.getRunAsUser(), currentUser) &&
-                !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+                   !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to set the run as user to '" +
-                            processorFilter.getRunAsUser().toDisplayString() +
-                            "'. You can only run a filter as " +
-                            "yourself unless you have manage users permission");
+                    processorFilter.getRunAsUser().toDisplayString() +
+                    "'. You can only run a filter as " +
+                    "yourself unless you have manage users permission");
         }
     }
 
@@ -362,7 +365,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
                                 // If the user is not an admin then only show them filters that are set to run as them.
                                 if (securityContext.isAdmin() ||
-                                        Objects.equals(currentUser, processorFilter.getRunAsUser())) {
+                                    Objects.equals(currentUser, processorFilter.getRunAsUser())) {
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
                                     if (queryData != null && queryData.getExpression() != null) {
@@ -401,13 +404,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     processor.getPipelineUuid());
             processor.setPipelineName(pipelineName.orElseGet(() -> {
                 LOGGER.warn("Unable to find Pipeline " +
-                        processor.getPipelineUuid() +
-                        " associated with Processor " +
-                        processor.getUuid() +
-                        " (id: " +
-                        processor.getId() +
-                        ")" +
-                        " Has it been deleted?");
+                            processor.getPipelineUuid() +
+                            " associated with Processor " +
+                            processor.getUuid() +
+                            " (id: " +
+                            processor.getId() +
+                            ")" +
+                            " Has it been deleted?");
                 return null;
             }));
         }
@@ -443,14 +446,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         if (!PipelineDoc.DOCUMENT_TYPE.equals(pipelineDocRef.getType())) {
             throw new IllegalArgumentException("Supplied pipeline reference cannot be of type " +
-                    pipelineDocRef.getType());
+                                               pipelineDocRef.getType());
         }
 
         // First try to find the associated processors
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
                 .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
-        if (processorResultPage.size() == 0) {
+        if (processorResultPage.isEmpty()) {
             return new ResultPage<>(new ArrayList<>());
         }
 
@@ -520,7 +523,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         processorService.fetchByUuid(processorUuid).ifPresent(processor -> {
                             final ProcessorFilter processorFilter = create(processor, request);
 
-                            info.add(new ReprocessDataInfo(Severity.INFO, "Added reprocess filter to " +
+                            info.add(new ReprocessDataInfo(Severity.INFO,
+                                    "Added reprocess filter to " +
                                     getPipelineDetails(processor.getPipelineUuid()) +
                                     " with priority " +
                                     processorFilter.getPriority(),
@@ -529,7 +533,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     } catch (final RuntimeException e) {
                         info.add(new ReprocessDataInfo(Severity.ERROR,
                                 "Unable to add reprocess filter for processor " +
-                                        processorUuid, e.getMessage()));
+                                processorUuid, e.getMessage()));
                     }
                 });
             } catch (final RuntimeException e) {
@@ -604,5 +608,39 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         AuditUtil.stamp(securityContext, processorFilter);
         return processorFilter;
+    }
+
+    @Override
+    public List<UserDependency> getUserDependencies(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+            && !securityContext.isCurrentUser(userRef)) {
+            throw new PermissionException(
+                    userRef,
+                    "You do not have permission to view the Pipeline Filters that are configured to run-as user "
+                    + userRef.toInfoString());
+        }
+
+        return NullSafe.stream(processorFilterDao.fetchByRunAsUser(userRef.getUuid()))
+                .map(processorFilter -> {
+                    final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
+
+                    DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
+                    pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
+
+                    final String details = LogUtil.message(
+                            "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
+                    return new UserDependency(
+                            userRef,
+                            details,
+                            processorFilter.getPipeline());
+                })
+//                    .filter(userDependency ->
+//                            NullSafe.getOrElse(
+//                                    userDependency.getDocRef(),
+//                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
+//                                    true))
+                .toList();
     }
 }

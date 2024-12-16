@@ -142,7 +142,8 @@ public class PermissionDoc extends TableImpl<PermissionDocRecord> {
     private transient PermissionDocId _permissionDocId;
 
     /**
-     * Get the implicit join path to the <code>stroom.stroom_user</code> table.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.stroom_user</code> table.
      */
     public StroomUser stroomUser() {
         if (_stroomUser == null)
@@ -152,8 +153,8 @@ public class PermissionDoc extends TableImpl<PermissionDocRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.permission_doc_id</code>
-     * table.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.permission_doc_id</code> table.
      */
     public PermissionDocId permissionDocId() {
         if (_permissionDocId == null)

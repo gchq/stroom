@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,16 @@ public class StringUtil {
             "0123456789ABCDEF".toCharArray();
     // See Base58Check. This is NOT base58Check, but uses the same chars, ie. no 'o0il1' for readability
     public static final char[] ALLOWED_CHARS_BASE_58_STYLE = Base58.ALPHABET;
+
+    // Hold values as both upper and lower to make lookup faster
+    private static final Set<String> TRUE_VALUES = Stream.of(
+                    "y", "yes", "true", "on", "enabled", "1"
+            )
+            .flatMap(str -> Stream.of(
+                    str.toLowerCase(),
+                    str.toUpperCase()
+            ))
+            .collect(Collectors.toSet());
 
     private StringUtil() {
     }
@@ -199,6 +210,96 @@ public class StringUtil {
             }
         } catch (Exception e) {
             throw e;
+        }
+    }
+
+    /**
+     * @return True if str is non-null and equal to one of (y|yes|true|on|enabled|1)
+     * ignoring case. All other values return false.
+     */
+    public static boolean asBoolean(final String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        } else {
+            // Assume the user has not used mixed case, else incur the cost of lower casing the string
+            return TRUE_VALUES.contains(str)
+                   || TRUE_VALUES.contains(str.toLowerCase());
+        }
+    }
+
+    /**
+     * @return Null if str is null. True if str is equal to one of (y|yes|true|on|enabled|1)
+     * ignoring case, else false.
+     */
+    public static Boolean asNullableBoolean(final String str) {
+        if (str == null) {
+            return null;
+        } else {
+            return asBoolean(str);
+        }
+    }
+
+    /**
+     * Replaces repeated delimiters with a single delimiter and removes
+     * any trailing or leading delimiters (repeated or not).
+     * Useful for tidying up after a dumb join operation that adds delimiters
+     * for null/empty values.
+     * <p>
+     * E.g. {@code ',,foo,,bar,,'} becomes {@code 'foo,bar'}
+     * </p>
+     * <p>
+     * NOT to be used if you want null/empty items in your delimited list.
+     * </p>
+     * <p>
+     * If str is null, returns null.
+     * </p>
+     */
+    public static String deDupDelimiters(final String str,
+                                         final char delimiter) {
+        if (NullSafe.isEmptyString(str)) {
+            return str;
+        } else {
+            final char[] outputArray = new char[str.length()];
+            final char[] charArray = str.toCharArray();
+            boolean lastCharWasDelimiter = false;
+            boolean seenNonDelimiterChar = false;
+            boolean hasChanged = false;
+            int outputIdx = -1;
+            int startIdxInc = 0;
+            for (final char chr : charArray) {
+                if (chr == delimiter) {
+                    if (!lastCharWasDelimiter && seenNonDelimiterChar) {
+                        // Only append first delimiter
+                        outputArray[++outputIdx] = chr;
+                    } else {
+                        // Skip this delimiter
+                        hasChanged = true;
+                    }
+                    lastCharWasDelimiter = true;
+                } else {
+                    outputArray[++outputIdx] = chr;
+                    lastCharWasDelimiter = false;
+                    seenNonDelimiterChar = true;
+                }
+            }
+            int endIdxInc = outputIdx;
+
+            // Remove any trailing delimiters
+            for (int i = endIdxInc; i >= 0; i--) {
+                final char chr = outputArray[i];
+                if (chr == delimiter) {
+                    endIdxInc--;
+                    hasChanged = true;
+                } else {
+                    break;
+                }
+            }
+            if (!hasChanged) {
+                // Optimisation to avoid a string creation if we haven't removed anything
+                return str;
+            } else {
+                return new String(outputArray, 0, endIdxInc - startIdxInc + 1);
+            }
         }
     }
 }

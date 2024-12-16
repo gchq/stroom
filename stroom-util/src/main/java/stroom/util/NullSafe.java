@@ -308,8 +308,8 @@ public class NullSafe {
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.contains(subStr);
+               && subStr != null
+               && str.contains(subStr);
     }
 
     /**
@@ -318,8 +318,8 @@ public class NullSafe {
      */
     public static boolean containsIgnoringCase(final String str, final String subStr) {
         return str != null
-                && subStr != null
-                && str.toLowerCase().contains(subStr.toLowerCase());
+               && subStr != null
+               && str.toLowerCase().contains(subStr.toLowerCase());
     }
 
     /**
@@ -625,6 +625,18 @@ public class NullSafe {
                 : Collections.emptyMap();
     }
 
+    public static <M extends Map<K, V>, K, V> Collection<K> keySetOf(final Map<K, V> map) {
+        return map != null
+                ? map.keySet()
+                : Collections.emptySet();
+    }
+
+    public static <M extends Map<K, V>, K, V> Collection<V> valuesOf(final Map<K, V> map) {
+        return map != null
+                ? map.values()
+                : Collections.emptySet();
+    }
+
     /**
      * Returns the passed string if it is non-null else returns an empty string.
      */
@@ -869,8 +881,8 @@ public class NullSafe {
             final R result = Objects.requireNonNull(getter)
                     .apply(value);
             return result != null
-                    && Objects.requireNonNull(predicate)
-                    .test(result);
+                   && Objects.requireNonNull(predicate)
+                           .test(result);
         }
     }
 
@@ -1081,8 +1093,8 @@ public class NullSafe {
             } else {
                 final R result = Objects.requireNonNull(getter2).apply(value2);
                 return result != null
-                        && Objects.requireNonNull(predicate)
-                        .test(result);
+                       && Objects.requireNonNull(predicate)
+                               .test(result);
             }
         }
     }
@@ -1216,8 +1228,8 @@ public class NullSafe {
                 } else {
                     final R result = Objects.requireNonNull(getter3).apply(value3);
                     return result != null
-                            && Objects.requireNonNull(predicate)
-                            .test(result);
+                           && Objects.requireNonNull(predicate)
+                                   .test(result);
                 }
             }
         }
@@ -1410,13 +1422,13 @@ public class NullSafe {
     private static String buildNullValueMsg(final String variableName,
                                             final Supplier<String> messageSupplier) {
         return messageSupplier.get()
-                + LogUtil.message(" (Value of argument {} is null)", variableName);
+               + LogUtil.message(" (Value of argument {} is null)", variableName);
     }
 
     private static String buildNullGetterResultMsg(final int getterNo,
                                                    final Supplier<String> messageSupplier) {
         return messageSupplier.get()
-                + LogUtil.message(" (Result of applying getter{} is null)",
+               + LogUtil.message(" (Result of applying getter{} is null)",
                 (getterNo == 0
                         ? ""
                         : getterNo));

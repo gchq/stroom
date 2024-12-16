@@ -37,6 +37,25 @@ public class CrossModuleDbMigrationsModule
         // Don't call super.configure() else it will try to multi-bind AppDbConnProvider as
         // a Datasource which will result in a circular dependency
 
+
+        // * *******************************************************
+        // * ********************** WARNING ************************
+        // * *******************************************************
+        // *
+        // * This approach of having a cross-module module is problematic.
+        // * It gets run after all the other modules, so it has
+        // * no idea what state each of the other modules is in, e.g. a
+        // * cross-module mig written for v7.5 may get run after all the
+        // * other modules have been brought up to v7.10 and thus
+        // * look different to what this mig expects.
+        // *
+        // * Leaving it here in case it is we find a way to safely use it.
+        // *
+        // * *******************************************************
+        // * *******************************************************
+        // * *******************************************************
+
+
         // Bind all the cross-module java migrations here so flyway knows what to run.
         // Don't do any SQL migrations as you can't guarantee that each module is in
         // the same DB/host. Java migrations must inject the dbConnProvider for each

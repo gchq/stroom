@@ -27,53 +27,57 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     /**
      * Uses UUID for any {@link stroom.datasource.api.v2.DocRefField}s
      */
-    public <T> void map(final QueryField dataSourceField,
-                        final Field<T> field,
-                        final Converter<T> converter) {
+    public <T> ExpressionMapper map(final QueryField dataSourceField,
+                                    final Field<T> field,
+                                    final Converter<T> converter) {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 MultiConverter.wrapConverter(converter)));
+        return this;
     }
 
     /**
      * Uses UUID or name for any {@link stroom.datasource.api.v2.DocRefField}s depending on useName
      */
-    public <T> void map(final QueryField dataSourceField,
-                        final Field<T> field,
-                        final Converter<T> converter,
-                        final boolean useName) {
+    public <T> ExpressionMapper map(final QueryField dataSourceField,
+                                    final Field<T> field,
+                                    final Converter<T> converter,
+                                    final boolean useName) {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 MultiConverter.wrapConverter(converter),
                 useName));
+        return this;
     }
 
     /**
      * Uses UUID for any {@link stroom.datasource.api.v2.DocRefField}s
      */
-    public <T> void multiMap(final QueryField dataSourceField,
-                             final Field<T> field,
-                             final MultiConverter<T> converter) {
+    public <T> ExpressionMapper multiMap(final QueryField dataSourceField,
+                                         final Field<T> field,
+                                         final MultiConverter<T> converter) {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 converter));
+        return this;
     }
 
     /**
      * Uses UUID or name for any {@link stroom.datasource.api.v2.DocRefField}s depending on useName
      */
-    public <T> void multiMap(final QueryField dataSourceField,
-                             final Field<T> field,
-                             final MultiConverter<T> converter,
-                             final boolean useName) {
+    public <T> ExpressionMapper multiMap(final QueryField dataSourceField,
+                                         final Field<T> field,
+                                         final MultiConverter<T> converter,
+                                         final boolean useName) {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 converter,
                 useName));
+        return this;
     }
 
     public void ignoreField(final QueryField dataSourceField) {

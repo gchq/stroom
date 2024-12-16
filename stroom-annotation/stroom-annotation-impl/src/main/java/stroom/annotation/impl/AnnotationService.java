@@ -37,16 +37,20 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-public class AnnotationService implements Searchable, AnnotationCreator {
+public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
     private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Searchable", "Annotations", "Annotations");
 
@@ -157,5 +161,30 @@ public class AnnotationService implements Searchable, AnnotationCreator {
                     securityContext.getUserRef(),
                     "You do not have permission to use annotations");
         }
+    }
+
+    @Override
+    public List<UserDependency> getUserDependencies(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+            && !securityContext.isCurrentUser(userRef)) {
+            throw new PermissionException(
+                    userRef,
+                    "You do not have permission to view the Annotations that are assigned to user "
+                    + userRef.toInfoString());
+        }
+
+        return NullSafe.stream(annotationDao.fetchByAssignedUser(userRef.getUuid()))
+                .map(annotation -> {
+                    final String details = LogUtil.message(
+                            "Annotation with title '{}' and subject '{}' is assigned to the user.",
+                            annotation.getTitle(),
+                            annotation.getSubject());
+                    return new UserDependency(
+                            userRef,
+                            details);
+                })
+                .toList();
     }
 }

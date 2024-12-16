@@ -20,6 +20,10 @@ import java.util.Objects;
 
 public class Token extends AbstractToken {
 
+    /**
+     * @param start Inclusive array index
+     * @param end   Inclusive array index
+     */
     public Token(final TokenType tokenType, final char[] chars, final int start, final int end) {
         super(tokenType, chars, start, end);
     }

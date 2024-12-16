@@ -19,6 +19,8 @@ package stroom.security.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.explorer.client.presenter.DocumentListPresenter;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.shared.FindResult;
@@ -56,7 +58,6 @@ public class BatchDocumentPermissionsPresenter
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
     private final DocumentListPresenter documentListPresenter;
-    private final Provider<DocumentUserPermissionsPresenter> documentPermissionsPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
     private final ButtonView docFilter;
     private final ButtonView docEdit;
@@ -71,13 +72,10 @@ public class BatchDocumentPermissionsPresenter
                                              final QuickFilterPageView view,
                                              final Provider<ExpressionPresenter> docFilterPresenterProvider,
                                              final DocumentListPresenter documentListPresenter,
-                                             final Provider<DocumentUserPermissionsPresenter>
-                                                     documentPermissionsPresenterProvider,
                                              final Provider<BatchDocumentPermissionsEditPresenter>
                                                      batchDocumentPermissionsEditPresenterProvider) {
         super(eventBus, view);
         this.documentListPresenter = documentListPresenter;
-        this.documentPermissionsPresenterProvider = documentPermissionsPresenterProvider;
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
@@ -175,8 +173,10 @@ public class BatchDocumentPermissionsPresenter
     private void onEdit() {
         final FindResult selected = documentListPresenter.getSelected();
         if (selected != null) {
-            final DocumentUserPermissionsPresenter presenter = documentPermissionsPresenterProvider.get();
-            presenter.show(selected.getDocRef());
+//            ShowDocumentPermissionsEvent.fire(this, selected.getDocRef());
+            OpenDocumentEvent.builder(this, selected.getDocRef())
+                    .selectedTab(CommonDocLinkTab.PERMISSIONS)
+                    .fire();
         }
     }
 

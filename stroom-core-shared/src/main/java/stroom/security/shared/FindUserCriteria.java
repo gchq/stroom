@@ -46,6 +46,10 @@ public class FindUserCriteria extends ExpressionCriteria {
         super(pageRequest, sortList, expression);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractBuilder<FindUserCriteria, Builder> {
 
         public Builder() {

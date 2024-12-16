@@ -845,6 +845,11 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+      userInfoByUuidCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+        refreshAfterWrite: null
     crypto:
       secretEncryptionKey: ""
     identity:

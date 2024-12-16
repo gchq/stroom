@@ -26,6 +26,7 @@ import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.IndexConstants;
 import stroom.node.api.NodeInfo;
@@ -60,6 +61,7 @@ import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -74,8 +76,12 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
 import stroom.util.scheduler.TriggerFactory;
+import stroom.util.shared.HasUserDependencies;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.UserDependency;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 
 import jakarta.inject.Inject;
@@ -85,12 +91,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class ScheduledQueryAnalyticExecutor {
+public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledQueryAnalyticExecutor.class);
 
@@ -110,6 +117,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactory duplicateCheckFactory;
     private final DuplicateCheckDirs duplicateCheckDirs;
+    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -127,7 +135,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final SecurityContext securityContext,
                                    final ExecutionScheduleDao executionScheduleDao,
                                    final DuplicateCheckFactory duplicateCheckFactory,
-                                   final DuplicateCheckDirs duplicateCheckDirs) {
+                                   final DuplicateCheckDirs duplicateCheckDirs,
+                                   final Provider<DocRefInfoService> docRefInfoServiceProvider) {
         this.analyticHelper = analyticHelper;
         this.analyticRuleStore = analyticRuleStore;
         this.executorProvider = executorProvider;
@@ -144,6 +153,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
         this.duplicateCheckDirs = duplicateCheckDirs;
+        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
     }
 
     public void exec() {
@@ -560,8 +570,38 @@ public class ScheduledQueryAnalyticExecutor {
         return success;
     }
 
-    private record ExecutionResult(String status, String message) {
+    @Override
+    public List<UserDependency> getUserDependencies(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
 
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+            && !securityContext.isCurrentUser(userRef)) {
+            throw new PermissionException(
+                    userRef,
+                    "You do not have permission to view the Analytic rules that have scheduled executors " +
+                    "configured to run-as user "
+                    + userRef.toInfoString());
+        }
+
+        final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+        return NullSafe.stream(executionScheduleDao.fetchSchedulesByRunAsUser(userRef.getUuid()))
+                .map(executionSchedule -> {
+                    DocRef owningDocRef = executionSchedule.getOwningDoc();
+                    owningDocRef = docRefInfoService.decorate(owningDocRef);
+                    final String details = LogUtil.message(
+                            "{} '{}' has as a scheduled executor named '{}' " +
+                            "with a run-as dependency.",
+                            owningDocRef.getType(),
+                            owningDocRef.getName(),
+                            executionSchedule.getName());
+                    return new UserDependency(userRef, details, executionSchedule.getOwningDoc());
+                })
+//                    .filter(userDependency ->
+//                            NullSafe.getOrElse(
+//                                    userDependency.getDocRef(),
+//                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
+//                                    true))
+                .toList();
     }
 
     private void addExecutionHistory(final ExecutionSchedule executionSchedule,
@@ -600,5 +640,13 @@ public class ScheduledQueryAnalyticExecutor {
     private void info(final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
         taskContextFactory.current().info(messageSupplier);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ExecutionResult(String status, String message) {
+
     }
 }

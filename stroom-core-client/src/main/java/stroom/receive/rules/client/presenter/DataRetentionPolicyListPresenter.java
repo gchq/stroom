@@ -19,6 +19,7 @@ package stroom.receive.rules.client.presenter;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -79,7 +80,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
      */
     private void initTableColumns() {
 
-        addTickBoxColumn("Enabled", 50, DataRetentionRule::isEnabled);
+        addTickBoxColumn("Enabled", ColumnSizeConstants.ENABLED_COL, DataRetentionRule::isEnabled);
         addColumn("Rule", 40, row -> String.valueOf(row.getRuleNumber()));
         addColumn("Name", 200, DataRetentionRule::getName);
         addColumn("Retention", 90, DataRetentionRule::getAgeString);

@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -43,6 +44,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private MetaPresenter metaPresenter;
 
@@ -53,7 +55,8 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
                          final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider,
-                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                         final DocumentUserPermissionsTabProvider<FeedDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         TabData selectedTab = SETTINGS;
@@ -112,6 +115,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
 
         selectTab(selectedTab);
     }
@@ -133,7 +137,17 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
         return FeedDoc.DOCUMENT_TYPE;
     }
 
-//    @Override
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
+    }
+
+    //    @Override
 //    public boolean handleKeyAction(final Action action) {
 //        if (Action.DOCUMENTATION == action) {
 //            selectTab(DOCUMENTATION);

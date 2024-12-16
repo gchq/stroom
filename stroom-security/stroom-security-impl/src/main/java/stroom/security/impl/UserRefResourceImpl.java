@@ -28,7 +28,7 @@ public class UserRefResourceImpl implements UserRefResource {
         // Apply default sort
         if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
             criteria.addSort(UserFields.FIELD_IS_GROUP);
-            criteria.addSort(UserFields.FIELD_NAME);
+            criteria.addSort(UserFields.FIELD_UNIQUE_ID);
         }
         final ResultPage<User> userResultPage = userServiceProvider
                 .get()
@@ -38,6 +38,6 @@ public class UserRefResourceImpl implements UserRefResource {
                 .stream()
                 .map(User::asRef)
                 .toList();
-        return new ResultPage(list, userResultPage.getPageResponse());
+        return new ResultPage<>(list, userResultPage.getPageResponse());
     }
 }

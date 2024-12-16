@@ -9,7 +9,6 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
-import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
@@ -22,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.string.Base58;
 
@@ -100,7 +100,7 @@ public class ApiKeyService {
                 this::doFetchVerifiedIdentity);
     }
 
-    public ApiKeyResultPage find(final FindApiKeyCriteria criteria) {
+    public ResultPage<HashedApiKey> find(final FindApiKeyCriteria criteria) {
         return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(criteria.getOwner());
             return apiKeyDao.find(criteria);
@@ -121,7 +121,7 @@ public class ApiKeyService {
         // We need to do a basic check to see if it looks like an API key else we will fill the cache with
         // JWT tokens mapped to empty Optionals.
         if (!NullSafe.isBlankString(authHeaderVal)
-                && authHeaderVal.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
+            && authHeaderVal.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
             return fetchVerifiedIdentity(authHeaderVal);
         } else {
             return Optional.empty();
@@ -211,7 +211,7 @@ public class ApiKeyService {
             } while (attempts < MAX_CREATION_ATTEMPTS);
 
             throw new RuntimeException(LogUtil.message("Unable to create API key with unique prefix and hash " +
-                    "after {} attempts", attempts));
+                                                       "after {} attempts", attempts));
         });
     }
 
@@ -258,7 +258,7 @@ public class ApiKeyService {
             }
             if (expireTimeEpochMs > maxExpireTimeEpochMs) {
                 throw new RuntimeException(LogUtil.message("Requested key expireTime {} ({}) is after the configured " +
-                                "maximum expireTime {} ({})",
+                                                           "maximum expireTime {} ({})",
                         Instant.ofEpochMilli(expireTimeEpochMs),
                         Duration.ofMillis(expireTimeEpochMs - now.toEpochMilli()),
                         Instant.ofEpochMilli(maxExpireTimeEpochMs),
@@ -372,7 +372,7 @@ public class ApiKeyService {
                     throw new PermissionException(
                             securityContext.getUserRef(),
                             LogUtil.message("'{}' permission is additionally required to manage " +
-                                    "the API keys of other users.", AppPermission.MANAGE_USERS_PERMISSION));
+                                            "the API keys of other users.", AppPermission.MANAGE_USERS_PERMISSION));
                 }
             }
         }

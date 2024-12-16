@@ -16,26 +16,27 @@
 
 package stroom.security.client.view;
 
+import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.item.client.SelectionBox;
-import stroom.security.client.presenter.ChangeUiHandlers;
 import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
+import stroom.security.client.presenter.DocumentUserPermissionsEditUiHandler;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.UserRef;
+import stroom.widget.button.client.Button;
+import stroom.widget.form.client.FormGroup;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public final class DocumentUserPermissionsEditViewImpl
-        extends ViewWithUiHandlers<ChangeUiHandlers>
+        extends ViewWithUiHandlers<DocumentUserPermissionsEditUiHandler>
         implements DocumentUserPermissionsEditView {
 
     private static final String NONE_TITLE = "[ none ]";
@@ -43,11 +44,17 @@ public final class DocumentUserPermissionsEditViewImpl
     private final Widget widget;
 
     @UiField
+    FormGroup userFormGroup;
+    @UiField
+    Label document;
+    @UiField
+    Label user;
+    @UiField
     SelectionBox<DocumentPermission> permission;
     @UiField
-    SimplePanel permissions;
+    Button editCreatePermissions;
     @UiField
-    HTML details;
+    Button applyPermissionToDescendants;
 
     @Inject
     public DocumentUserPermissionsEditViewImpl(final Binder binder) {
@@ -67,6 +74,23 @@ public final class DocumentUserPermissionsEditViewImpl
     }
 
     @Override
+    public void setDocument(final DocRef docRef) {
+        this.document.setText(docRef.getName());
+        editCreatePermissions.setVisible(ExplorerConstants.isFolderOrSystem(docRef));
+        applyPermissionToDescendants.setVisible(ExplorerConstants.isFolderOrSystem(docRef));
+    }
+
+    @Override
+    public void setUser(final UserRef userRef) {
+        if (userRef.isGroup()) {
+            userFormGroup.setLabel("User Group");
+        } else {
+            userFormGroup.setLabel("User");
+        }
+        this.user.setText(userRef.getDisplayName());
+    }
+
+    @Override
     public void setPermission(final DocumentPermission permission) {
         this.permission.setValue(permission);
     }
@@ -76,19 +100,14 @@ public final class DocumentUserPermissionsEditViewImpl
         return permission.getValue();
     }
 
-    @Override
-    public void setDocumentTypeView(final View view) {
-        permissions.setWidget(view.asWidget());
+    @UiHandler("editCreatePermissions")
+    void onEditCreatePermissions(final ClickEvent e) {
+        getUiHandlers().onEditCreatePermissions(editCreatePermissions);
     }
 
-    @Override
-    public void setDetails(final SafeHtml details) {
-        this.details.setHTML(details);
-    }
-
-    @UiHandler("permission")
-    public void onPermission(final ValueChangeEvent<DocumentPermission> event) {
-        getUiHandlers().onChange();
+    @UiHandler("applyPermissionToDescendants")
+    void onApplyPermissionToDescendants(final ClickEvent e) {
+        getUiHandlers().onApplyToDescendants(applyPermissionToDescendants);
     }
 
     public interface Binder extends UiBinder<Widget, DocumentUserPermissionsEditViewImpl> {

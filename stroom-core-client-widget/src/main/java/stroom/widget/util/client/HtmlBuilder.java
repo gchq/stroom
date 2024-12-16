@@ -29,6 +29,10 @@ public class HtmlBuilder {
         return elem(content, "b", attributes);
     }
 
+    public HtmlBuilder bold(final String textContent, final Attribute... attributes) {
+        return elem(htmlBuilder -> htmlBuilder.append(textContent), "b", attributes);
+    }
+
     public HtmlBuilder br() {
         return emptyElement("br");
     }
@@ -53,8 +57,16 @@ public class HtmlBuilder {
         return elem(content, "i", attributes);
     }
 
+    public HtmlBuilder italic(final String textContent, final Attribute... attributes) {
+        return elem(htmlBuilder -> htmlBuilder.append(textContent), "i", attributes);
+    }
+
     public HtmlBuilder para(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, "p", attributes);
+    }
+
+    public HtmlBuilder para(final String textContent, final Attribute... attributes) {
+        return elem(htmlBuilder -> htmlBuilder.append(textContent), "p", attributes);
     }
 
     public HtmlBuilder span(final Consumer<HtmlBuilder> content, final Attribute... attributes) {

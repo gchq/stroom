@@ -19,10 +19,10 @@ package stroom.event.logging.rs.impl;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.event.logging.api.ThreadLocalLogState;
 import stroom.event.logging.impl.LoggingConfig;
-import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -38,6 +38,7 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.message.MessageUtils;
 
@@ -102,7 +103,11 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                 final RequestInfo requestInfo = (RequestInfo) object;
                 if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
                     if (!ThreadLocalLogState.hasLogged()) {
-                        LOGGER.error("Expected manual logging to have happened: " + requestInfo);
+                        LOGGER.error("Expected manual logging to have happened: "
+                                     + NullSafe.get(requestInfo.getContainerResourceInfo(),
+                                ContainerResourceInfo::getRequestContext,
+                                ContainerRequestContext::getUriInfo,
+                                UriInfo::getRequestUri));
                     }
                 } else {
                     requestEventLogProvider.get().log(requestInfo, null, exception);
@@ -137,7 +142,11 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             final RequestInfo requestInfo = (RequestInfo) object;
             if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
                 if (!ThreadLocalLogState.hasLogged()) {
-                    LOGGER.error("Expected manual logging to have happened: " + requestInfo);
+                    LOGGER.error("Expected manual logging to have happened: "
+                                 + NullSafe.get(requestInfo.getContainerResourceInfo(),
+                            ContainerResourceInfo::getRequestContext,
+                            ContainerRequestContext::getUriInfo,
+                            UriInfo::getRequestUri));
                 }
             } else {
                 requestEventLogProvider.get().log(requestInfo, writerInterceptorContext.getEntity());

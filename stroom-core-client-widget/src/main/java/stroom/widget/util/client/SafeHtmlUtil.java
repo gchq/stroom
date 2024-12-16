@@ -9,8 +9,15 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 public class SafeHtmlUtil {
 
     public static final SafeHtml NBSP = SafeHtmlUtils.fromSafeConstant("&nbsp;");
+    public static final SafeHtml ENSP = SafeHtmlUtils.fromSafeConstant("&ensp;");
 
     private SafeHtmlUtil() {
+    }
+
+    public static SafeHtml nullSafe(final SafeHtml safeHtml) {
+        return safeHtml != null
+                ? safeHtml
+                : SafeHtmlUtils.EMPTY_SAFE_HTML;
     }
 
     /**

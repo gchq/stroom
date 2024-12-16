@@ -32,6 +32,10 @@ public class UserDesc {
         this.fullName = fullName;
     }
 
+    public static UserDesc forSubjectId(final String subjectId) {
+        return new UserDesc(subjectId, null, null);
+    }
+
     public String getSubjectId() {
         return subjectId;
     }
@@ -53,8 +57,9 @@ public class UserDesc {
             return false;
         }
         final UserDesc that = (UserDesc) o;
-        return Objects.equals(subjectId, that.subjectId) && Objects.equals(displayName,
-                that.displayName) && Objects.equals(fullName, that.fullName);
+        return Objects.equals(subjectId, that.subjectId) &&
+               Objects.equals(displayName, that.displayName) &&
+               Objects.equals(fullName, that.fullName);
     }
 
     @Override
@@ -65,38 +70,38 @@ public class UserDesc {
     @Override
     public String toString() {
         return "ExternalUser{" +
-                "subjectId='" + subjectId + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                '}';
+               "subjectId='" + subjectId + '\'' +
+               ", displayName='" + displayName + '\'' +
+               ", fullName='" + fullName + '\'' +
+               '}';
     }
 
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static Builder builder(final String subjectId) {
+        return new Builder(subjectId);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
-        private String subjectId;
+        private final String subjectId;
         private String displayName;
         private String fullName;
 
-        private Builder() {
+        private Builder(final String subjectId) {
+            this.subjectId = Objects.requireNonNull(subjectId);
         }
 
         private Builder(final UserDesc externalUser) {
-            this.subjectId = externalUser.subjectId;
+            this.subjectId = Objects.requireNonNull(externalUser.subjectId);
             this.displayName = externalUser.displayName;
             this.fullName = externalUser.fullName;
-        }
-
-        public Builder subjectId(final String subjectId) {
-            this.subjectId = subjectId;
-            return this;
         }
 
         public Builder displayName(final String displayName) {

@@ -16,7 +16,10 @@
 
 package stroom.security.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
+import stroom.security.shared.PermissionShowLevel;
+import stroom.util.shared.UserRef;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -30,14 +33,27 @@ public final class AppPermissionsViewImpl
         extends ViewImpl
         implements AppPermissionsView {
 
+    private static final String APP_PERM_BASE_LABEL = "Application Permissions";
+    private static final String APP_PERM_DETAILS_BASE_LABEL = "Application Permission Details";
     private final Widget widget;
 
     @UiField
-    SimplePanel permissions;
+    SelectionBox<PermissionShowLevel> permissionVisibility;
+    @UiField
+    SimplePanel appUserPermissionsList;
+
+    @UiField
+    SimplePanel appPermissionsEdit;
+
+//    @UiField
+//    FormGroup detailsFormGroup;
+//    @UiField
+//    HTML details;
 
     @Inject
     public AppPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setUserRef(null);
     }
 
     @Override
@@ -46,9 +62,32 @@ public final class AppPermissionsViewImpl
     }
 
     @Override
-    public void setPermissionsView(View view) {
-        permissions.setWidget(view.asWidget());
+    public SelectionBox<PermissionShowLevel> getPermissionVisibility() {
+        return permissionVisibility;
     }
+
+    @Override
+    public void setAppUserPermissionListView(View view) {
+        appUserPermissionsList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setAppPermissionsEditView(final View view) {
+        appPermissionsEdit.setWidget(view.asWidget());
+    }
+
+//    @Override
+//    public void setDetails(final SafeHtml details) {
+//        appPermissionsEdit.serDetails(details);
+//    }
+
+    public void setUserRef(final UserRef userRef) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, AppPermissionsViewImpl> {
 

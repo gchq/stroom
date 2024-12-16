@@ -112,7 +112,12 @@ class AbstractProcessorTest {
                         bind(UserRefLookup.class).toInstance(new UserRefLookup() {
                             @Override
                             public Optional<UserRef> getByUuid(final String userUuid) {
-                                return Optional.of(UserRef.builder().uuid(userUuid).build());
+                                return Optional.of(UserRef.forUserUuid(userUuid));
+                            }
+
+                            @Override
+                            public UserRef decorate(final UserRef userRef) {
+                                return userRef;
                             }
                         });
                     }

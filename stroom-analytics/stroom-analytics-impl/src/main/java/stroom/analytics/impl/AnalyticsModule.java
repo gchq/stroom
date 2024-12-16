@@ -30,6 +30,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
@@ -92,7 +93,14 @@ public class AnalyticsModule extends AbstractModule {
 
         ProcessorTaskExecutorBinder.create(binder())
                 .bind(ProcessorType.STREAMING_ANALYTIC, StreamingAnalyticProcessorExecutor.class);
+
+        GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
+                .addBinding(ScheduledQueryAnalyticExecutor.class.getName(), ScheduledQueryAnalyticExecutor.class);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {
 
@@ -102,6 +110,10 @@ public class AnalyticsModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
@@ -109,6 +121,10 @@ public class AnalyticsModule extends AbstractModule {
             super(executor::exec);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ExecutionHistoryRetentionRunnable extends RunnableWrapper {
 

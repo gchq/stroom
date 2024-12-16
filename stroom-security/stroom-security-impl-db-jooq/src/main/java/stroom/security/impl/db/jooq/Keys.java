@@ -18,6 +18,7 @@ import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
 import stroom.security.impl.db.jooq.tables.PermissionDocId;
 import stroom.security.impl.db.jooq.tables.PermissionDocTypeId;
 import stroom.security.impl.db.jooq.tables.StroomUser;
+import stroom.security.impl.db.jooq.tables.StroomUserArchive;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.impl.db.jooq.tables.records.PermissionAppIdRecord;
@@ -26,6 +27,7 @@ import stroom.security.impl.db.jooq.tables.records.PermissionDocCreateRecord;
 import stroom.security.impl.db.jooq.tables.records.PermissionDocIdRecord;
 import stroom.security.impl.db.jooq.tables.records.PermissionDocRecord;
 import stroom.security.impl.db.jooq.tables.records.PermissionDocTypeIdRecord;
+import stroom.security.impl.db.jooq.tables.records.StroomUserArchiveRecord;
 import stroom.security.impl.db.jooq.tables.records.StroomUserGroupRecord;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 
@@ -59,6 +61,8 @@ public class Keys {
     public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_PRIMARY = Internal.createUniqueKey(StroomUser.STROOM_USER, DSL.name("KEY_stroom_user_PRIMARY"), new TableField[] { StroomUser.STROOM_USER.ID }, true);
     public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_STROOM_USER_NAME_IS_GROUP_IDX = Internal.createUniqueKey(StroomUser.STROOM_USER, DSL.name("KEY_stroom_user_stroom_user_name_is_group_idx"), new TableField[] { StroomUser.STROOM_USER.NAME, StroomUser.STROOM_USER.IS_GROUP }, true);
     public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_STROOM_USER_UUID_IDX = Internal.createUniqueKey(StroomUser.STROOM_USER, DSL.name("KEY_stroom_user_stroom_user_uuid_idx"), new TableField[] { StroomUser.STROOM_USER.UUID }, true);
+    public static final UniqueKey<StroomUserArchiveRecord> KEY_STROOM_USER_ARCHIVE_PRIMARY = Internal.createUniqueKey(StroomUserArchive.STROOM_USER_ARCHIVE, DSL.name("KEY_stroom_user_archive_PRIMARY"), new TableField[] { StroomUserArchive.STROOM_USER_ARCHIVE.ID }, true);
+    public static final UniqueKey<StroomUserArchiveRecord> KEY_STROOM_USER_ARCHIVE_STROOM_USER_ARCHIVE_UUID_IDX = Internal.createUniqueKey(StroomUserArchive.STROOM_USER_ARCHIVE, DSL.name("KEY_stroom_user_archive_stroom_user_archive_uuid_idx"), new TableField[] { StroomUserArchive.STROOM_USER_ARCHIVE.UUID }, true);
     public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_PRIMARY = Internal.createUniqueKey(StroomUserGroup.STROOM_USER_GROUP, DSL.name("KEY_stroom_user_group_PRIMARY"), new TableField[] { StroomUserGroup.STROOM_USER_GROUP.ID }, true);
     public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX = Internal.createUniqueKey(StroomUserGroup.STROOM_USER_GROUP, DSL.name("KEY_stroom_user_group_stroom_user_group_group_uuid_user_uuid_IDX"), new TableField[] { StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID, StroomUserGroup.STROOM_USER_GROUP.USER_UUID }, true);
     public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_USER_UUID_GROUP_UUID_IDX = Internal.createUniqueKey(StroomUserGroup.STROOM_USER_GROUP, DSL.name("KEY_stroom_user_group_stroom_user_group_user_uuid_group_uuid_idx"), new TableField[] { StroomUserGroup.STROOM_USER_GROUP.USER_UUID, StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID }, true);

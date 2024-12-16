@@ -129,8 +129,9 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
     private transient StroomUser _stroomUserGroupFkGroupUuid;
 
     /**
-     * Get the implicit join path to the <code>stroom.stroom_user</code> table,
-     * via the <code>stroom_user_group_fk_user_uuid</code> key.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.stroom_user</code> table, via the
+     * <code>stroom_user_group_fk_user_uuid</code> key.
      */
     public StroomUser stroomUserGroupFkUserUuid() {
         if (_stroomUserGroupFkUserUuid == null)
@@ -140,8 +141,9 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.stroom_user</code> table,
-     * via the <code>stroom_user_group_fk_group_uuid</code> key.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.stroom_user</code> table, via the
+     * <code>stroom_user_group_fk_group_uuid</code> key.
      */
     public StroomUser stroomUserGroupFkGroupUuid() {
         if (_stroomUserGroupFkGroupUuid == null)
