@@ -9,14 +9,14 @@ import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
-public class HttpClientFactoryImpl implements HttpClientFactory {
+public class DropwizardHttpClientFactory implements HttpClientFactory {
 
     private final Environment environment;
     private final HttpClientConfigConverter httpClientConfigConverter;
 
     @Inject
-    public HttpClientFactoryImpl(final Environment environment,
-                                 final HttpClientConfigConverter httpClientConfigConverter) {
+    public DropwizardHttpClientFactory(final Environment environment,
+                                       final HttpClientConfigConverter httpClientConfigConverter) {
         this.environment = environment;
         this.httpClientConfigConverter = httpClientConfigConverter;
     }

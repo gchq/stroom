@@ -98,7 +98,7 @@ public final class ErrorDataFeedClient {
 
             httpPost.setEntity(new EntityTemplate(
                     -1,
-                    ContentType.DEFAULT_TEXT,
+                    ContentType.create("application/audit"),
                     null,
                     outputStream -> {
                         // Using Zip Compression we just have 1 file (called 1)

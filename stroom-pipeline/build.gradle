@@ -61,7 +61,6 @@ dependencies {
     implementation libs.jetty_http
     implementation libs.kryo
     implementation libs.lmdbjava
-    implementation libs.okhttp
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.slf4j_api

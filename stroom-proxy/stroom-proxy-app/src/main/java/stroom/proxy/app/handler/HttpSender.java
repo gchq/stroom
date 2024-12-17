@@ -124,7 +124,7 @@ public class HttpSender implements StreamDestination {
                     .forEach(httpPost::addHeader);
         }
 
-        httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.DEFAULT_TEXT, true));
+        httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.create("application/audit"), true));
 
         // Execute and get the response.
         final int code = post(httpPost, startTime, attributeMap);

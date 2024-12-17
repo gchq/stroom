@@ -30,7 +30,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;

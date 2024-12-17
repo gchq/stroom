@@ -22,8 +22,8 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,7 +233,7 @@ public class HTTPAppender extends AbstractAppender {
                     getElementId()));
         } else if (!VALID_REQUEST_METHODS.contains(requestMethod)) {
             fatal(LogUtil.message("Property requestMethod has an invalid value '{}'. " +
-                            "Valid values are [{}]",
+                                  "Valid values are [{}]",
                     requestMethod, setToSortedCsvStr(VALID_REQUEST_METHODS)));
         }
 
@@ -241,7 +241,7 @@ public class HTTPAppender extends AbstractAppender {
         if (NullSafe.isNonEmptyString(sslProtocol)) {
             final Set<String> activeSSLProtocols = getActiveSSLProtocols();
             if (!NullSafe.isEmptyCollection(activeSSLProtocols)
-                    && !activeSSLProtocols.contains(sslProtocol)) {
+                && !activeSSLProtocols.contains(sslProtocol)) {
                 fatal(LogUtil.message("Property sslProtocol has an invalid value '{}'. Valid values are [{}]",
                         sslProtocol, setToSortedCsvStr(activeSSLProtocols)));
             }
@@ -249,21 +249,21 @@ public class HTTPAppender extends AbstractAppender {
 
         if (httpHeadersIncludeStreamMetaData) {
             if (NullSafe.isNonBlankString(httpHeadersStreamMetaDataAllowList)
-                    && NullSafe.isNonBlankString(httpHeadersStreamMetaDataDenyList)) {
+                && NullSafe.isNonBlankString(httpHeadersStreamMetaDataDenyList)) {
                 warn("Properties httpHeadersStreamMetaDataAllowList and httpHeadersStreamMetaDataDenyList both " +
-                        "have a value. The value of httpHeadersStreamMetaDataDenyList will be ignored.");
+                     "have a value. The value of httpHeadersStreamMetaDataDenyList will be ignored.");
             }
         } else {
             if (NullSafe.isNonBlankString(httpHeadersStreamMetaDataAllowList)) {
                 warn(LogUtil.message(
                         "Property httpHeadersStreamMetaDataAllowList has value '{}' but this will be ignored " +
-                                "because httpHeadersIncludeStreamMetaData is false.",
+                        "because httpHeadersIncludeStreamMetaData is false.",
                         httpHeadersStreamMetaDataAllowList));
             }
             if (NullSafe.isNonBlankString(httpHeadersStreamMetaDataDenyList)) {
                 warn(LogUtil.message(
                         "Property httpHeadersStreamMetaDataDenyList has value '{}' but this will be ignored " +
-                                "because httpHeadersIncludeStreamMetaData is false.",
+                        "because httpHeadersIncludeStreamMetaData is false.",
                         httpHeadersStreamMetaDataDenyList));
             }
         }
@@ -372,9 +372,9 @@ public class HTTPAppender extends AbstractAppender {
                 } else {
                     final String validCompressionMethods = keySetToSortedCsvStr(COMPRESSION_TO_ENCODING_MAP);
                     fatal("Properties useCompression and useContentEncodingHeader are both 'true', but '" +
-                            compressionMethod + "' is not a valid compressionMethod for use with the '" +
-                            StandardHeaderArguments.CONTENT_ENCODING + "' HTTP header. Valid " +
-                            "compressionMethod values are [" + validCompressionMethods + "].");
+                          compressionMethod + "' is not a valid compressionMethod for use with the '" +
+                          StandardHeaderArguments.CONTENT_ENCODING + "' HTTP header. Valid " +
+                          "compressionMethod values are [" + validCompressionMethods + "].");
                 }
             } else {
                 // use 'Compression' header for sending to a stroom(-proxy)?
@@ -384,9 +384,9 @@ public class HTTPAppender extends AbstractAppender {
                 } else {
                     final String validCompressionMethods = keySetToSortedCsvStr(COMPRESSION_TO_STROOM_COMPRESSION_MAP);
                     fatal("Property useCompression is 'true' and useContentEncodingHeader is 'false', but '" +
-                            compressionMethod + "' is not a valid compressionMethod for use with the '" +
-                            StandardHeaderArguments.COMPRESSION + "' HTTP header. Valid " +
-                            "compressionMethod values are [" + validCompressionMethods + "].");
+                          compressionMethod + "' is not a valid compressionMethod for use with the '" +
+                          StandardHeaderArguments.COMPRESSION + "' HTTP header. Valid " +
+                          "compressionMethod values are [" + validCompressionMethods + "].");
                 }
             }
         } else {
@@ -443,8 +443,8 @@ public class HTTPAppender extends AbstractAppender {
 
     private void logConnectionToDebug() {
         LOGGER.debug(() -> LogUtil.message("About to connect to {} with requestMethod: {}, contentType: {}, " +
-                        "readTimeout: {}, connectionTimeout: {}, useCompression: {}, compressionMethod: {}, " +
-                        "forwardChunkSize: {}, request properties:\n{}",
+                                           "readTimeout: {}, connectionTimeout: {}, useCompression: {}, " +
+                                           "compressionMethod: {}, forwardChunkSize: {}, request properties:\n{}",
                 forwardUrl,
                 requestMethod,
                 contentType,
@@ -457,9 +457,9 @@ public class HTTPAppender extends AbstractAppender {
                         .entrySet()
                         .stream()
                         .map(entry -> "  "
-                                + entry.getKey() + ": ["
-                                + String.join(", ", NullSafe.set(entry.getValue()))
-                                + "]")
+                                      + entry.getKey() + ": ["
+                                      + String.join(", ", NullSafe.set(entry.getValue()))
+                                      + "]")
                         .collect(Collectors.joining("\n"))));
     }
 
@@ -469,7 +469,7 @@ public class HTTPAppender extends AbstractAppender {
         }
         if (!headerText.contains(":")) {
             throw new IllegalArgumentException("Additional Headers must be specified as 'Name: Value', but '"
-                    + headerText + "' supplied.");
+                                               + headerText + "' supplied.");
         }
 
         int delimiterPos = headerText.indexOf(':');
@@ -520,16 +520,16 @@ public class HTTPAppender extends AbstractAppender {
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
             final String kvPairs = CSVFormatter.format(filteredMap);
             final String message = CSVFormatter.escape(type) +
-                    "," +
-                    CSVFormatter.escape(url) +
-                    "," +
-                    responseCode +
-                    "," +
-                    bytes +
-                    "," +
-                    duration +
-                    "," +
-                    kvPairs;
+                                   "," +
+                                   CSVFormatter.escape(url) +
+                                   "," +
+                                   responseCode +
+                                   "," +
+                                   bytes +
+                                   "," +
+                                   duration +
+                                   "," +
+                                   kvPairs;
             logger.info(message);
         }
     }
@@ -554,8 +554,9 @@ public class HTTPAppender extends AbstractAppender {
 
     @Override
     @PipelineProperty(description = "When the current output exceeds this size it will be closed and a " +
-            "new one created. " +
-            "Size is either specified in bytes e.g. '1024' or with a IEC unit suffix, e.g. '1K', '1M', '1G', etc.",
+                                    "new one created. " +
+                                    "Size is either specified in bytes e.g. '1024' or with a IEC unit suffix, e.g. " +
+                                    "'1K', '1M', '1G', etc.",
             displayPriority = 2)
     public void setRollSize(final String size) {
         super.setRollSize(size);
@@ -584,8 +585,8 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout. " +
-            "The timeout is specified as either milliseconds, e.g. '60000' or with a duration suffix, e.g. '500ms', " +
-            "'2s', '1m', etc.",
+                                    "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
+                                    "duration suffix, e.g. '500ms', '2s', '1m', etc.",
             displayPriority = 6)
     public void setConnectionTimeout(final String string) {
         connectionTimeout = null;
@@ -595,8 +596,8 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "How long to wait for data to be available before closing the connection. " +
-            "The timeout is specified as either milliseconds, e.g. '60000' or with a duration suffix, e.g. '500ms', " +
-            "'2s', '1m', etc.",
+                                    "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
+                                    "duration suffix, e.g. '500ms', '2s', '1m', etc.",
             displayPriority = 7)
     public void setReadTimeout(final String string) {
         readTimeout = null;
@@ -606,7 +607,8 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be. " +
-            "Size is either specified in bytes e.g. '1024' or with a IEC unit suffix, e.g. '1K', '1M', '1G', etc.",
+                                    "Size is either specified in bytes e.g. '1024' or with a IEC unit suffix, " +
+                                    "e.g. '1K', '1M', '1G', etc.",
             displayPriority = 8)
     public void setForwardChunkSize(final String string) {
         this.forwardChunkSize = ModelStringUtil.parseIECByteSizeString(string);
@@ -620,10 +622,11 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "Whether to use the 'Content-Encoding' HTTP header when " +
-            "useCompression is 'true'. If 'false' (the default), the 'Compression' header will be used, " +
-            "which is supported by ." +
-            "Stroom/Stroom-Proxy destinations. 'Content-Encoding' would be required for other destinations, " +
-            "but is only applicable for compression types 'gz', 'zstd' or 'deflate'.",
+                                    "useCompression is 'true'. If 'false' (the default), the 'Compression' header " +
+                                    "will be used, which is supported by ." +
+                                    "Stroom/Stroom-Proxy destinations. 'Content-Encoding' would be required for " +
+                                    "other destinations, but is only applicable for compression types " +
+                                    "'gz', 'zstd' or 'deflate'.",
             defaultValue = DEFAULT_USE_CONTENT_ENCODING_PROP_VALUE,
             displayPriority = 10)
     public void setUseContentEncodingHeader(final boolean useContentEncodingHeader) {
@@ -632,7 +635,7 @@ public class HTTPAppender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Compression method to apply, if compression is enabled. Supported values: " +
-                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+                          CompressionUtil.SUPPORTED_COMPRESSORS + ".",
             defaultValue = DEFAULT_COMPRESSION_METHOD_PROP_VALUE,
             displayPriority = 11)
     public void setCompressionMethod(final String compressionMethod) {
@@ -646,7 +649,7 @@ public class HTTPAppender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Specifies Which meta data keys will have their values logged in the send log. A Comma " +
-                    "delimited string of keys.",
+                          "delimited string of keys.",
             defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
             displayPriority = 12)
     public void setLogMetaKeys(final String string) {
@@ -654,9 +657,10 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "Use JVM SSL config. " +
-            "Set this to true if the Stroom node has been configured with key/trust stores using java system " +
-            "properties like 'javax.net.ssl.keyStore'." +
-            "Set this to false if you are explicitly setting key/trust store properties on this HttpAppender.",
+                                    "Set this to true if the Stroom node has been configured with key/trust stores " +
+                                    "using java system properties like 'javax.net.ssl.keyStore'." +
+                                    "Set this to false if you are explicitly setting key/trust store properties on " +
+                                    "this HttpAppender.",
             defaultValue = "true",
             displayPriority = 13)
     public void setUseJvmSslConfig(final boolean useJvmSslConfig) {
@@ -670,7 +674,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "The key store type. " +
-            "Valid values are ['JCEKS', 'JKS', 'DKS', 'PKCS11', 'PKCS12'].",
+                                    "Valid values are ['JCEKS', 'JKS', 'DKS', 'PKCS11', 'PKCS12'].",
             defaultValue = "JKS",
             displayPriority = 15)
     public void setKeyStoreType(final String keyStoreType) {
@@ -690,7 +694,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "The trust store type " +
-            "Valid values are ['JCEKS', 'JKS', 'DKS', 'PKCS11', 'PKCS12'].",
+                                    "Valid values are ['JCEKS', 'JKS', 'DKS', 'PKCS11', 'PKCS12'].",
             defaultValue = "JKS",
             displayPriority = 18)
     public void setTrustStoreType(final String trustStoreType) {
@@ -704,7 +708,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "Set this to true to verify that the destination host name matches against " +
-            "the host names in the certificate supplied by the destination server.",
+                                    "the host names in the certificate supplied by the destination server.",
             defaultValue = "true",
             displayPriority = 20)
     public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
@@ -719,7 +723,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "The HTTP request method. Valid values are " +
-            "GET, POST, HEAD, OPTIONS, PUT, DELETE and TRACE.",
+                                    "GET, POST, HEAD, OPTIONS, PUT, DELETE and TRACE.",
             defaultValue = DEFAULT_REQUEST_METHOD_PROP_VALUE,
             displayPriority = 22)
     public void setRequestMethod(String requestMethod) {
@@ -741,9 +745,10 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "Comma delimited list of stream meta data keys to include as HTTP headers. " +
-            "Only works when httpHeadersIncludeStreamMetaData is set to true. If empty all headers are sent, " +
-            "unless httpHeadersStreamMetaDataDenyList is used. " +
-            "If httpHeadersStreamMetaDataAllowList contains keys, httpHeadersStreamMetaDataDenyList is ignored.",
+                                    "Only works when httpHeadersIncludeStreamMetaData is set to true. If empty all " +
+                                    "headers are sent, unless httpHeadersStreamMetaDataDenyList is used. " +
+                                    "If httpHeadersStreamMetaDataAllowList contains keys, " +
+                                    "httpHeadersStreamMetaDataDenyList is ignored.",
             defaultValue = "",
             displayPriority = 25)
     public void setHttpHeadersStreamMetaDataAllowList(final String newValue) {
@@ -751,9 +756,10 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "Comma delimited list of stream meta data keys to exclude as HTTP headers. " +
-            "Only works when httpHeadersIncludeStreamMetaData is set to true. If empty all headers are sent, " +
-            "unless httpHeadersStreamMetaDataAllowList is used. " +
-            "If httpHeadersStreamMetaDataAllowList contains keys, httpHeadersStreamMetaDataDenyList is ignored.",
+                                    "Only works when httpHeadersIncludeStreamMetaData is set to true. If empty all " +
+                                    "headers are sent, unless httpHeadersStreamMetaDataAllowList is used. " +
+                                    "If httpHeadersStreamMetaDataAllowList contains keys, " +
+                                    "httpHeadersStreamMetaDataDenyList is ignored.",
             defaultValue = "",
             displayPriority = 26)
     public void setHttpHeadersStreamMetaDataDenyList(final String newValue) {

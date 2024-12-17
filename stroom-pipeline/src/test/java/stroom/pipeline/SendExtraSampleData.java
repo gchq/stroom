@@ -45,7 +45,9 @@ public class SendExtraSampleData {
                 httpPost.addHeader("Content-Type", "application/audit");
                 httpPost.addHeader("Feed", "XML-EVENTS");
                 httpPost.setEntity(new BasicHttpEntity(
-                        new ByteArrayInputStream(xml.getBytes()), ContentType.TEXT_XML, true));
+                        new ByteArrayInputStream(xml.getBytes()),
+                        ContentType.create("application/audit"),
+                        true));
                 httpClient.execute(httpPost, response -> {
                     String msg = response.getReasonPhrase();
                     System.out.println("Client Got Response " + response.getCode());

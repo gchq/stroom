@@ -103,7 +103,7 @@ public class TestEventResource {
             httpPost.setEntity(
                     new InputStreamEntity(
                             new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)),
-                            ContentType.DEFAULT_TEXT));
+                            ContentType.create("application/audit")));
 
             // Execute and get the response.
             return httpClient.execute(httpPost, response -> {

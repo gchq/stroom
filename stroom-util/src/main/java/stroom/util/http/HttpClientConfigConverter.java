@@ -21,7 +21,7 @@ public class HttpClientConfigConverter {
     private final Map<TypeMapping, Function<?, ?>> mappingFunctionMap = new HashMap<>();
 
     @Inject
-    HttpClientConfigConverter(final PathCreator pathCreator) {
+    public HttpClientConfigConverter(final PathCreator pathCreator) {
 
         // Converters for HttpClientConfiguration
         put(stroom.util.http.HttpClientConfiguration.class, io.dropwizard.client.HttpClientConfiguration.class, in -> {

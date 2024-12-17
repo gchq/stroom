@@ -97,7 +97,7 @@ public final class DataFeedClient {
 
             httpPost.setEntity(new EntityTemplate(
                     -1,
-                    ContentType.DEFAULT_TEXT,
+                    ContentType.create("application/audit"),
                     null,
                     outputStream -> {
                         try (final InputStream inputStream = Files.newInputStream(inputFile)) {

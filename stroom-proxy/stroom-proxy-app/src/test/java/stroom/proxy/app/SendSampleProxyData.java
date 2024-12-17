@@ -66,7 +66,7 @@ public class SendSampleProxyData {
         httpPost.addHeader("Connection", "Keep-Alive");
 
         final InputStream inputStream = getInputStream();
-        httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.DEFAULT_TEXT, true));
+        httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.create("application/audit"), true));
         return httpPost;
     }
 

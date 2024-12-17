@@ -160,7 +160,7 @@ public class BenchmarkDataFeed {
 
             httpPost.setEntity(new EntityTemplate(
                     -1,
-                    ContentType.DEFAULT_TEXT,
+                    ContentType.create("application/audit"),
                     null,
                     outputStream -> {
 

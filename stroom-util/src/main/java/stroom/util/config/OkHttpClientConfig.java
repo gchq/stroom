@@ -17,6 +17,7 @@ import java.util.List;
  */
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
+@Deprecated // Clients should use HttpClientConfiguration
 public class OkHttpClientConfig {
 
     @JsonProperty

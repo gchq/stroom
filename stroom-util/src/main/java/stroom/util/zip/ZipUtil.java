@@ -108,16 +108,14 @@ public final class ZipUtil {
     private static void putEntry(final ZipArchiveOutputStream zipOutputStream, final Path file, final String name)
             throws IOException {
         LOGGER.debug("zip() - Putting entry {}", name);
-        final ZipArchiveEntry zipEntry = new ZipArchiveEntry(name);
         try {
-            zipOutputStream.putArchiveEntry(zipEntry);
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
             try (final InputStream is = new BufferedInputStream(Files.newInputStream(file))) {
                 StreamUtil.streamToStream(is, zipOutputStream);
             }
         } finally {
             zipOutputStream.closeArchiveEntry();
         }
-        zipOutputStream.closeArchiveEntry();
     }
 
     public static void unzip(final Path zipFile, final Path dir) throws IOException {
