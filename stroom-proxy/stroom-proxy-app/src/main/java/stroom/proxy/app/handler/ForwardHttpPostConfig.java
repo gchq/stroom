@@ -1,8 +1,6 @@
 package stroom.proxy.app.handler;
 
-import stroom.util.NullSafe;
-import stroom.util.cert.SSLConfig;
-import stroom.util.io.ByteSize;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -20,8 +18,6 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConfig {
 
-    private static final ByteSize DEFAULT_CHUNK_SIZE_BYTES = ByteSize.ofMebibytes(1);
-
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
     private static final Integer DEFAULT_MAX_RETRIES = 3;
     private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofSeconds(10);
@@ -30,31 +26,27 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     private final boolean enabled;
     private final boolean instant;
     private final String name;
-    private final String userAgent;
     private final String forwardUrl;
     private final String apiKey;
     private final StroomDuration forwardTimeout;
     private final StroomDuration forwardDelay;
     private final StroomDuration retryDelay;
     private final Integer maxRetries;
-    private final ByteSize forwardChunkSize;
-    private final SSLConfig sslConfig;
     private final boolean addOpenIdAccessToken;
+    private final HttpClientConfiguration httpClient;
 
     public ForwardHttpPostConfig() {
         enabled = true;
         instant = false;
         name = null;
-        userAgent = null;
         forwardUrl = null;
         apiKey = null;
         forwardTimeout = DEFAULT_FORWARD_TIMEOUT;
         forwardDelay = DEFAULT_FORWARD_DELAY;
         retryDelay = DEFAULT_RETRY_DELAY;
         maxRetries = DEFAULT_MAX_RETRIES;
-        forwardChunkSize = DEFAULT_CHUNK_SIZE_BYTES;
-        sslConfig = null;
         addOpenIdAccessToken = false;
+        httpClient = null;
     }
 
     @SuppressWarnings("unused")
@@ -62,20 +54,17 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     public ForwardHttpPostConfig(@JsonProperty("enabled") final boolean enabled,
                                  @JsonProperty("instant") final boolean instant,
                                  @JsonProperty("name") final String name,
-                                 @JsonProperty("userAgent") final String userAgent,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("apiKey") final String apiKey,
                                  @JsonProperty("forwardTimeout") final StroomDuration forwardTimeout,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
                                  @JsonProperty("retryDelay") final StroomDuration retryDelay,
                                  @JsonProperty("maxRetries") final Integer maxRetries,
-                                 @JsonProperty("forwardChunkSize") final ByteSize forwardChunkSize,
-                                 @JsonProperty("sslConfig") final SSLConfig sslConfig,
-                                 @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken) {
+                                 @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
+                                 @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
-        this.userAgent = userAgent;
         this.forwardUrl = forwardUrl;
         this.apiKey = apiKey;
         this.forwardTimeout = forwardTimeout == null
@@ -90,9 +79,8 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         this.maxRetries = maxRetries == null
                 ? DEFAULT_MAX_RETRIES
                 : maxRetries;
-        this.forwardChunkSize = NullSafe.byteSize(forwardChunkSize);
-        this.sslConfig = sslConfig;
         this.addOpenIdAccessToken = addOpenIdAccessToken;
+        this.httpClient = httpClient;
     }
 
     /**
@@ -106,7 +94,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("Should data be forwarded instantly during the receipt process, i.e. must we" +
-            " successfully forward before returning a success response to the sender.")
+                             " successfully forward before returning a success response to the sender.")
     public boolean isInstant() {
         return instant;
     }
@@ -115,15 +103,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     @JsonProperty
     public String getName() {
         return name;
-    }
-
-    /**
-     * The string to use for the User-Agent request property when forwarding data.
-     * If a user-agent is not defined a default user-agent will be used instead.
-     */
-    @JsonProperty
-    public String getUserAgent() {
-        return userAgent;
     }
 
     /**
@@ -178,23 +157,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     }
 
     /**
-     * Chunk size in bytes to use over http(s).
-     * If set to zero, no chunking is used, so requires buffer to be fully loaded into memory,
-     * risking out of memory errors for large POSTs.
-     * Default is {@link ForwardHttpPostConfig#DEFAULT_CHUNK_SIZE_BYTES}.
-     * It can be parsed from IEC byte units, e.g. 5Kib, 10MiB, etc.
-     */
-    @JsonProperty
-    public ByteSize getForwardChunkSize() {
-        return forwardChunkSize;
-    }
-
-    @JsonProperty
-    public SSLConfig getSslConfig() {
-        return sslConfig;
-    }
-
-    /**
      * If true, add Open ID authentication headers to the request. Only works if the identityProviderType
      * is EXTERNAL_IDP and the destination is in the same Open ID Connect realm as the OIDC client that this
      * proxy instance is using.
@@ -204,29 +166,12 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         return addOpenIdAccessToken;
     }
 
-    public ForwardHttpPostConfig withSslConfig(final SSLConfig sslConfig) {
-        return new ForwardHttpPostConfig(
-                enabled,
-                instant,
-                name,
-                userAgent,
-                forwardUrl,
-                apiKey,
-                forwardTimeout,
-                forwardDelay,
-                retryDelay,
-                maxRetries,
-                forwardChunkSize,
-                sslConfig,
-                addOpenIdAccessToken);
-    }
-
-    public static ForwardHttpPostConfig withForwardUrl(final String name,
-                                                       final String forwardUrl) {
-        return ForwardHttpPostConfig.builder()
-                .name(name)
-                .forwardUrl(forwardUrl)
-                .build();
+    /**
+     * Get teh configuration for the HttpClient.
+     */
+    @JsonProperty("httpClient")
+    public HttpClientConfiguration getHttpClient() {
+        return httpClient;
     }
 
     public static Builder builder() {
@@ -242,18 +187,16 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             return false;
         }
         return enabled == that.enabled &&
-                instant == that.instant &&
-                Objects.equals(maxRetries, that.maxRetries) &&
-                addOpenIdAccessToken == that.addOpenIdAccessToken &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(userAgent, that.userAgent) &&
-                Objects.equals(forwardUrl, that.forwardUrl) &&
-                Objects.equals(apiKey, that.apiKey) &&
-                Objects.equals(forwardTimeout, that.forwardTimeout) &&
-                Objects.equals(forwardDelay, that.forwardDelay) &&
-                Objects.equals(retryDelay, that.retryDelay) &&
-                Objects.equals(forwardChunkSize, that.forwardChunkSize) &&
-                Objects.equals(sslConfig, that.sslConfig);
+               instant == that.instant &&
+               Objects.equals(maxRetries, that.maxRetries) &&
+               addOpenIdAccessToken == that.addOpenIdAccessToken &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(forwardUrl, that.forwardUrl) &&
+               Objects.equals(apiKey, that.apiKey) &&
+               Objects.equals(forwardTimeout, that.forwardTimeout) &&
+               Objects.equals(forwardDelay, that.forwardDelay) &&
+               Objects.equals(retryDelay, that.retryDelay) &&
+               Objects.equals(httpClient, that.httpClient);
     }
 
     @Override
@@ -262,34 +205,30 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                 enabled,
                 instant,
                 name,
-                userAgent,
                 forwardUrl,
                 apiKey,
                 forwardTimeout,
                 forwardDelay,
                 retryDelay,
                 maxRetries,
-                forwardChunkSize,
-                sslConfig,
-                addOpenIdAccessToken);
+                addOpenIdAccessToken,
+                httpClient);
     }
 
     @Override
     public String toString() {
         return "ForwardHttpPostConfig{" +
-                "enabled=" + enabled +
-                ", instant=" + instant +
-                ", name='" + name + '\'' +
-                ", userAgent='" + userAgent + '\'' +
-                ", forwardUrl='" + forwardUrl + '\'' +
-                ", forwardTimeout=" + forwardTimeout +
-                ", forwardDelay=" + forwardDelay +
-                ", retryDelay=" + retryDelay +
-                ", maxRetries=" + maxRetries +
-                ", forwardChunkSize=" + forwardChunkSize +
-                ", sslConfig=" + sslConfig +
-                ", addOpenIdAccessToken=" + addOpenIdAccessToken +
-                '}';
+               "enabled=" + enabled +
+               ", instant=" + instant +
+               ", name='" + name + '\'' +
+               ", forwardUrl='" + forwardUrl + '\'' +
+               ", forwardTimeout=" + forwardTimeout +
+               ", forwardDelay=" + forwardDelay +
+               ", retryDelay=" + retryDelay +
+               ", maxRetries=" + maxRetries +
+               ", addOpenIdAccessToken=" + addOpenIdAccessToken +
+               ", httpClientConfiguration=" + httpClient +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -300,16 +239,14 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         private boolean enabled;
         private boolean instant;
         private String name;
-        private String userAgent;
         private String forwardUrl;
         private String apiKey;
         private StroomDuration forwardTimeout = DEFAULT_FORWARD_TIMEOUT;
         private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
         private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
         private Integer maxRetries = DEFAULT_MAX_RETRIES;
-        private ByteSize forwardChunkSize;
-        private SSLConfig sslConfig;
         private boolean addOpenIdAccessToken;
+        private HttpClientConfiguration httpClient;
 
         public Builder() {
             final ForwardHttpPostConfig forwardHttpPostConfig = new ForwardHttpPostConfig();
@@ -317,16 +254,14 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             this.enabled = forwardHttpPostConfig.enabled;
             this.instant = forwardHttpPostConfig.instant;
             this.name = forwardHttpPostConfig.name;
-            this.userAgent = forwardHttpPostConfig.userAgent;
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
             this.apiKey = forwardHttpPostConfig.apiKey;
             this.forwardTimeout = forwardHttpPostConfig.forwardTimeout;
             this.forwardDelay = forwardHttpPostConfig.forwardDelay;
             this.retryDelay = forwardHttpPostConfig.retryDelay;
             this.maxRetries = forwardHttpPostConfig.maxRetries;
-            this.forwardChunkSize = forwardHttpPostConfig.forwardChunkSize;
-            this.sslConfig = forwardHttpPostConfig.sslConfig;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
+            this.httpClient = forwardHttpPostConfig.httpClient;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -341,11 +276,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
 
         public Builder name(final String name) {
             this.name = name;
-            return this;
-        }
-
-        public Builder userAgent(final String userAgent) {
-            this.userAgent = userAgent;
             return this;
         }
 
@@ -379,18 +309,13 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             return this;
         }
 
-        public Builder forwardChunkSize(final ByteSize forwardChunkSize) {
-            this.forwardChunkSize = forwardChunkSize;
-            return this;
-        }
-
-        public Builder sslConfig(final SSLConfig sslConfig) {
-            this.sslConfig = sslConfig;
-            return this;
-        }
-
         public Builder addOpenIdAccessToken(final boolean addOpenIdAccessToken) {
             this.addOpenIdAccessToken = addOpenIdAccessToken;
+            return this;
+        }
+
+        public Builder httpClient(final HttpClientConfiguration httpClient) {
+            this.httpClient = httpClient;
             return this;
         }
 
@@ -399,16 +324,14 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                     enabled,
                     instant,
                     name,
-                    userAgent,
                     forwardUrl,
                     apiKey,
                     forwardTimeout,
                     forwardDelay,
                     retryDelay,
                     maxRetries,
-                    forwardChunkSize,
-                    sslConfig,
-                    addOpenIdAccessToken);
+                    addOpenIdAccessToken,
+                    httpClient);
         }
     }
 }

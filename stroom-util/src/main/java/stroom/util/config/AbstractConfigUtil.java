@@ -40,7 +40,8 @@ public class AbstractConfigUtil {
             final Map<PropertyPath, Object> replacementValueMap) {
 
         final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
-        final ObjectMapper objectMapper = JsonUtil.getMapper();;
+        final ObjectMapper objectMapper = JsonUtil.getMapper();
+        ;
 
         // Walk the tree to get the object info for each branch
         buildObjectInfoMap(objectMapper, config, basePath, objectInfoMap);
@@ -152,7 +153,7 @@ public class AbstractConfigUtil {
                     final Object existingPropValue = prop.getValueFromConfigObject();
 
                     if (existingPropValue != null
-                            && AbstractConfig.class.isAssignableFrom(valueClass)) {
+                        && AbstractConfig.class.isAssignableFrom(valueClass)) {
                         // Branch so recurse
                         Object newPropValue = mutateBranch((AbstractConfig) existingPropValue,
                                 objectInfoMap,

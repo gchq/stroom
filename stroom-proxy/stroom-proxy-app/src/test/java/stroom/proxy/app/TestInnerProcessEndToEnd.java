@@ -149,7 +149,9 @@ class TestInnerProcessEndToEnd {
             assertThat(maxId).isLessThanOrEqualTo(expectedOutputStreamCount + 1);
 
         } finally {
-            proxyLifecycle.stop();
+            if (proxyLifecycle != null) {
+                proxyLifecycle.stop();
+            }
             FileUtil.deleteContents(root);
         }
     }

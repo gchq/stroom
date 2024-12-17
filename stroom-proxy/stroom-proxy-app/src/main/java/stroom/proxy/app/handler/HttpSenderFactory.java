@@ -2,18 +2,18 @@ package stroom.proxy.app.handler;
 
 import stroom.proxy.repo.LogStream;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.cert.SSLUtil;
-import stroom.util.io.PathCreator;
+import stroom.util.http.HttpClientFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLSocketFactory;
+import java.util.UUID;
 
 @Singleton
 public class HttpSenderFactory {
@@ -23,18 +23,18 @@ public class HttpSenderFactory {
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
     private final LogStream logStream;
-    private final PathCreator pathCreator;
     private final String defaultUserAgent;
     private final UserIdentityFactory userIdentityFactory;
+    private final HttpClientFactory httpClientFactory;
 
     @Inject
     public HttpSenderFactory(final LogStream logStream,
-                             final PathCreator pathCreator,
                              final Provider<BuildInfo> buildInfoProvider,
-                             final UserIdentityFactory userIdentityFactory) {
+                             final UserIdentityFactory userIdentityFactory,
+                             final HttpClientFactory httpClientFactory) {
         this.logStream = logStream;
-        this.pathCreator = pathCreator;
         this.userIdentityFactory = userIdentityFactory;
+        this.httpClientFactory = httpClientFactory;
 
         // Construct something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
@@ -44,26 +44,26 @@ public class HttpSenderFactory {
 
     public HttpSender create(final ForwardHttpPostConfig config) {
         final String userAgentString;
-        if (config.getUserAgent() != null && !config.getUserAgent().isEmpty()) {
-            userAgentString = config.getUserAgent();
+        if (config.getHttpClient() != null &&
+            config.getHttpClient().getUserAgent() != null) {
+            userAgentString = config.getHttpClient().getUserAgent();
         } else {
             userAgentString = defaultUserAgent;
         }
 
-        final SSLSocketFactory sslSocketFactory;
-        LOGGER.info("Configuring SSLSocketFactory for URL {}", config.getForwardUrl());
-        if (config.getSslConfig() != null) {
-            sslSocketFactory = SSLUtil.createSslSocketFactory(config.getSslConfig(), pathCreator);
-        } else {
-            sslSocketFactory = null;
-        }
-
         LOGGER.info("Initialising \"" +
-                config.getName() +
-                "\" ForwardHttpPostHandlers with user agent string [" +
-                userAgentString +
-                "]");
+                    config.getName() +
+                    "\" ForwardHttpPostHandlers with user agent string [" +
+                    userAgentString +
+                    "]");
 
-        return new HttpSender(logStream, config, sslSocketFactory, userAgentString, userIdentityFactory);
+        String name = "HttpSender";
+        if (config.getName() != null) {
+            name += "-" + config.getName();
+        }
+        name += "-" + UUID.randomUUID();
+
+        final HttpClient httpClient = httpClientFactory.get(name, config.getHttpClient());
+        return new HttpSender(logStream, config, userAgentString, userIdentityFactory, httpClient);
     }
 }

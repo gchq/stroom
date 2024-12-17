@@ -39,16 +39,14 @@ proxyConfig:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
-    forwardChunkSize: "1M"
     forwardDelay: "PT0S"
     forwardTimeout: "PT30S"
     forwardUrl: null
+    httpClient: null
     instant: false
     maxRetries: 3
     name: null
     retryDelay: "PT10S"
-    sslConfig: null
-    userAgent: null
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
@@ -93,6 +91,7 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        httpClient: null
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null

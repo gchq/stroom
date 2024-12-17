@@ -24,7 +24,6 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalServiceUserFactory;
-import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.RefreshManager;
@@ -46,11 +45,11 @@ import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.http.HttpClientFactory;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class SecurityModule extends AbstractModule {
 
@@ -66,7 +65,6 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
         bind(ContentPackUserService.class).to(UserServiceImpl.class);
         bind(UserIdentityFactory.class).to(StroomUserIdentityFactory.class);
-        bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
         bind(JwtContextFactory.class).to(DelegatingJwtContextFactory.class);
         bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);
         // Now bind OpenIdConfiguration to the iface from prev bind

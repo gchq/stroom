@@ -8,32 +8,33 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
-import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.ProtocolException;
+import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Handler class that forwards the request to a URL.
@@ -45,24 +46,23 @@ public class HttpSender implements StreamDestination {
 
     private final LogStream logStream;
     private final ForwardHttpPostConfig config;
-    private final SSLSocketFactory sslSocketFactory;
     private final String userAgent;
     private final UserIdentityFactory userIdentityFactory;
+    private final HttpClient httpClient;
     private final String forwardUrl;
     private final StroomDuration forwardDelay;
     private final String forwarderName;
 
-
     public HttpSender(final LogStream logStream,
                       final ForwardHttpPostConfig config,
-                      final SSLSocketFactory sslSocketFactory,
                       final String userAgent,
-                      final UserIdentityFactory userIdentityFactory) {
+                      final UserIdentityFactory userIdentityFactory,
+                      final HttpClient httpClient) {
         this.logStream = logStream;
         this.config = config;
-        this.sslSocketFactory = sslSocketFactory;
         this.userAgent = userAgent;
         this.userIdentityFactory = userIdentityFactory;
+        this.httpClient = httpClient;
         this.forwardUrl = config.getForwardUrl();
         this.forwardDelay = NullSafe.duration(config.getForwardDelay());
         this.forwarderName = config.getName();
@@ -72,8 +72,6 @@ public class HttpSender implements StreamDestination {
     public void send(final AttributeMap attributeMap,
                      final InputStream inputStream) throws IOException {
         final StroomDuration forwardTimeout = config.getForwardTimeout();
-        final ByteSize forwardChunkSize = config.getForwardChunkSize();
-
         final Instant startTime = Instant.now();
 
         if (NullSafe.isEmptyString(attributeMap.get(StandardHeaderArguments.FEED))) {
@@ -88,43 +86,20 @@ public class HttpSender implements StreamDestination {
 
         LOGGER.debug(() -> LogUtil.message(
                 "'{}' - Opening connection, forwardUrl: {}, userAgent: {}, forwardTimeout: {}, attributeMap (" +
-                        "values truncated):\n{}",
+                "values truncated):\n{}",
                 forwarderName, forwardUrl, userAgent, forwardTimeout, formatAttributeMapLogging(attributeMap)));
 
-        final URL url = URI.create(forwardUrl).toURL();
-
-        final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestProperty("User-Agent", userAgent);
-        if (sslSocketFactory != null) {
-            SSLUtil.applySSLConfiguration(connection, sslSocketFactory, config.getSslConfig());
-        }
-
-        if (forwardTimeout != null) {
-            connection.setConnectTimeout((int) forwardTimeout.toMillis());
-            connection.setReadTimeout(0);
-            // Don't set a read time out else big files will fail
-            // connection.setReadTimeout(forwardTimeoutMs);
-        } else {
-            LOGGER.debug(() ->
-                    LogUtil.message("'{}' - Using default connect timeout: {}",
-                            forwarderName,
-                            Duration.ofMillis(connection.getConnectTimeout())));
-        }
-
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/audit");
+        final HttpPost httpPost = new HttpPost(forwardUrl);
+        httpPost.addHeader("User-Agent", userAgent);
+        httpPost.addHeader("Content-Type", "application/audit");
         final String apiKey = config.getApiKey();
         if (apiKey != null && !apiKey.isBlank()) {
-            connection.setRequestProperty("Authorization", "Bearer " + apiKey.trim());
+            httpPost.addHeader("Authorization", "Bearer " + apiKey.trim());
         }
-        connection.setDoOutput(true);
-        connection.setDoInput(true);
-
-        connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-
+        httpPost.addHeader(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
         final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
-            connection.addRequestProperty(entry.getKey(), entry.getValue());
+            httpPost.addHeader(entry.getKey(), entry.getValue());
         }
 
         // Allows sending to systems on the same OpenId realm as us using an access token
@@ -146,40 +121,55 @@ public class HttpSender implements StreamDestination {
                             .collect(Collectors.joining("\n"))));
 
             userIdentityFactory.getServiceUserAuthHeaders()
-                    .forEach(connection::setRequestProperty);
+                    .forEach(httpPost::addHeader);
         }
 
-        if (forwardChunkSize.isNonZero() && forwardChunkSize.getBytes() <= Integer.MAX_VALUE) {
-            LOGGER.debug("'{}' - setting ChunkedStreamingMode: {}", forwarderName, forwardChunkSize);
-            connection.setChunkedStreamingMode((int) forwardChunkSize.getBytes());
-        }
-        connection.connect();
-        try {
-            // Get a buffer to help us transfer data.
-            final byte[] buffer = LocalByteBuffer.get();
-            TransferUtil.transfer(inputStream, connection.getOutputStream(), buffer);
+        httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.DEFAULT_TEXT, true));
 
-            if (!forwardDelay.isZero()) {
-                LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
-                ThreadUtil.sleep(forwardDelay);
-            }
-
-            LOGGER.debug(() -> LogUtil.message("'{}' - Closing stream, response header fields:\n{}",
-                    forwarderName,
-                    formatHeaderEntryListForLogging(connection.getHeaderFields())));
-
-        } finally {
-            logAndDisconnect(startTime, connection, attributeMap);
+        // Execute and get the response.
+        final int code = post(httpPost, startTime, attributeMap);
+        if (code != 200) {
+            // We technically shouldn't get here but put here to be extra safe.
+            throw new RuntimeException("Bad response");
         }
     }
 
-    private String formatHeaderEntryListForLogging(final Map<String, List<String>> headerFields) {
-        return headerFields
-                .entrySet()
-                .stream()
-                .map(entry -> new SimpleEntry<>(
-                        Objects.requireNonNullElse(entry.getKey(), "null"),
-                        entry.getValue())
+    private int post(final HttpPost httpPost,
+                     final Instant startTime,
+                     final AttributeMap attributeMap) {
+        // Execute and get the response.
+        try {
+            return httpClient.execute(httpPost, response -> {
+                try {
+                    if (!forwardDelay.isZero()) {
+                        LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
+                        ThreadUtil.sleep(forwardDelay);
+                    }
+
+                    LOGGER.debug(() -> LogUtil.message("'{}' - Closing stream, response header fields:\n{}",
+                            forwarderName,
+                            formatHeaderEntryListForLogging(response.getHeaders())));
+                } finally {
+                    logResponse(startTime, response, attributeMap);
+                }
+
+                return response.getCode();
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private String formatHeaderEntryListForLogging(final Header[] headers) {
+        return Arrays
+                .stream(headers)
+                .map(header -> new SimpleEntry<>(
+                        Objects.requireNonNullElse(header.getName(), "null"),
+                        header.getValue())
                 )
                 .sorted(Entry.comparingByKey())
                 .map(entry -> "  " + String.join(
@@ -208,42 +198,120 @@ public class HttpSender implements StreamDestination {
                 .collect(Collectors.joining("\n"));
     }
 
-    private void logAndDisconnect(final Instant startTime,
-                                  final HttpURLConnection connection,
-                                  final AttributeMap attributeMap) {
-        if (connection != null) {
-            int responseCode = -1;
-            String errorMsg = null;
-            try {
-                responseCode = StroomStreamException.checkConnectionResponse(connection, attributeMap);
-                LOGGER.debug("'{}' - Response code: {}", forwarderName, responseCode);
-            } catch (StroomStreamException e) {
-                responseCode = e.getStroomStreamStatus().getStroomStatusCode().getHttpCode();
-                errorMsg = e.getMessage();
-                throw e;
-            } catch (Exception e) {
-                try {
-                    responseCode = connection.getResponseCode();
-                    errorMsg = e.getMessage();
-                } catch (IOException ex) {
-                    // swallow, not much we can do about this
-                }
-                throw e;
-            } finally {
-                final Duration duration = Duration.between(startTime, Instant.now());
-                long totalBytesSent = 0;
-                logStream.log(
-                        SEND_LOG,
-                        attributeMap,
-                        "SEND",
-                        forwardUrl,
-                        responseCode,
-                        totalBytesSent,
-                        duration.toMillis(),
-                        errorMsg);
+    private void logResponse(final Instant startTime,
+                             final ClassicHttpResponse response,
+                             final AttributeMap attributeMap) {
+        int responseCode = -1;
+        String errorMsg = null;
+        try {
+            responseCode = checkConnectionResponse(response, attributeMap);
+            LOGGER.debug("'{}' - Response code: {}", forwarderName, responseCode);
+        } catch (StroomStreamException e) {
+            responseCode = e.getStroomStreamStatus().getStroomStatusCode().getHttpCode();
+            errorMsg = e.getMessage();
+            throw e;
+        } catch (Exception e) {
+            responseCode = response.getCode();
+            errorMsg = e.getMessage();
+            throw e;
+        } finally {
+            final Duration duration = Duration.between(startTime, Instant.now());
+            long totalBytesSent = 0;
+            logStream.log(
+                    SEND_LOG,
+                    attributeMap,
+                    "SEND",
+                    forwardUrl,
+                    responseCode,
+                    totalBytesSent,
+                    duration.toMillis(),
+                    errorMsg);
+        }
+    }
 
-                connection.disconnect();
+    private String getHeader(final ClassicHttpResponse response, final String name) {
+        try {
+            final Header header = response.getHeader(name);
+            return NullSafe.get(header, Header::getValue);
+        } catch (final ProtocolException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return null;
+    }
+
+    private int getHeaderInt(final ClassicHttpResponse response, final String name, final int def) {
+        try {
+            final String value = getHeader(response, name);
+            if (value != null) {
+                return Integer.parseInt(value);
             }
+        } catch (NumberFormatException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return def;
+    }
+
+    /**
+     * Checks the response code and stroom status for the connection and attributeMap.
+     * Either returns 200 or throws a {@link StroomStreamException}.
+     *
+     * @return The HTTP response code
+     * @throws StroomStreamException if a non-200 response is received
+     */
+    public int checkConnectionResponse(final ClassicHttpResponse response,
+                                       final AttributeMap attributeMap) {
+        int responseCode;
+        int stroomStatus;
+        try {
+            responseCode = response.getCode();
+            final String stroomError = getHeader(response, StandardHeaderArguments.STROOM_ERROR);
+
+            final String responseMessage = stroomError != null && !NullSafe.isBlankString(stroomError)
+                    ? stroomError
+                    : response.getReasonPhrase();
+
+            stroomStatus = getHeaderInt(response, StandardHeaderArguments.STROOM_STATUS, -1);
+
+            final InputStream inputStream = response.getEntity().getContent();
+            if (responseCode == 200) {
+                readAndCloseStream(inputStream);
+            } else {
+//                final InputStream errorStream = connection.getErrorStream();
+//                final String errorDetail = readInputStream(errorStream);
+//                final String body = readInputStream(connection.getInputStream());
+//                LOGGER.info("errorDetail: {}", errorDetail);
+//                LOGGER.info("body: {}", body);
+                readAndCloseStream(inputStream);
+
+                if (stroomStatus != -1) {
+                    throw new StroomStreamException(
+                            StroomStatusCode.getStroomStatusCode(stroomStatus),
+                            attributeMap,
+                            responseMessage);
+                } else {
+                    throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR,
+                            attributeMap,
+                            responseMessage);
+                }
+            }
+        } catch (final Exception ioEx) {
+            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR,
+                    attributeMap,
+                    ioEx.getMessage());
+        }
+        return responseCode;
+    }
+
+    private void readAndCloseStream(final InputStream inputStream) {
+        final byte[] buffer = new byte[1024];
+        try {
+            if (inputStream != null) {
+                while (inputStream.read(buffer) > 0) {
+                }
+                inputStream.close();
+            }
+        } catch (final IOException ioex) {
+            LOGGER.debug(ioex.getMessage(), ioex);
         }
     }
 }

@@ -395,10 +395,9 @@ public class MockHttpDestination {
                 .enabled(true)
                 .instant(instant)
                 .forwardUrl("http://localhost:"
-                        + MockHttpDestination.DEFAULT_STROOM_PORT
-                        + getDataFeedPath())
+                            + MockHttpDestination.DEFAULT_STROOM_PORT
+                            + getDataFeedPath())
                 .name("Stroom datafeed")
-                .userAgent("Junit test")
                 .build();
     }
 
@@ -407,8 +406,8 @@ public class MockHttpDestination {
                 true,
                 FeedStatus.Receive,
                 "http://localhost:"
-                        + MockHttpDestination.DEFAULT_STROOM_PORT
-                        + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
+                + MockHttpDestination.DEFAULT_STROOM_PORT
+                + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
                 null,
                 null);
     }

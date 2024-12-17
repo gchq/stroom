@@ -173,14 +173,15 @@ proxyConfig:
     - enabled: {{ true | envVar('FORWARDING_ENABLED') }}
       name: "downstream"
       forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
-      sslConfig:
-        keyStorePath: "certs/client.jks"
-        keyStorePassword: "password"
-        trustStorePath: "certs/ca.jks"
-        trustStorePassword: "password"
-        {% if distribution == "docker" %}
-        hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
-        {% endif %}
+      httpClient:
+        tls:
+            keyStorePath: "certs/client.jks"
+            keyStorePassword: "password"
+            trustStorePath: "certs/ca.jks"
+            trustStorePassword: "password"
+            {% if distribution == "docker" %}
+            verifyHostname: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
+            {% endif %}
 
   logStream:
     metaKeys:

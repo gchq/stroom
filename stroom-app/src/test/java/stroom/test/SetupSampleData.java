@@ -26,6 +26,7 @@ import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hc.client5.http.classic.HttpClient;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,7 +91,8 @@ public final class SetupSampleData {
 
     private static void downloadContent(final Path contentPacksDefinition,
                                         final PathCreator pathCreator,
-                                        final ContentPackImportConfig contentPackImportConfig) {
+                                        final ContentPackImportConfig contentPackImportConfig,
+                                        final HttpClient httpClient) {
         try {
             final Path downloadDir =
                     pathCreator.toAppPath(ContentPackZipDownloader.CONTENT_PACK_DOWNLOAD_DIR);
@@ -103,7 +105,8 @@ public final class SetupSampleData {
             ContentPackZipDownloader.downloadZipPacks(
                     contentPacksDefinition,
                     downloadDir,
-                    importDir);
+                    importDir,
+                    httpClient);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

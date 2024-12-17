@@ -16,29 +16,24 @@
 
 package stroom.core.tools;
 
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import javax.net.ssl.HttpsURLConnection;
+import java.io.UncheckedIOException;
 
 public class URLTestTool {
 
     public static void main(String[] args) {
-        try {
-            URL url = new URL(args[0]);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setHostnameVerifier((arg0, arg1) -> true);
-            }
-
-            connection.getInputStream();
-            connection.disconnect();
-
-            System.out.println("Opened " + args[0]);
-
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            final HttpGet httpGet = new HttpGet(args[0]);
+            httpClient.execute(httpGet, response -> {
+                System.out.println("Opened " + args[0]);
+                return response.getCode();
+            });
         } catch (final IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
         }
     }
 }

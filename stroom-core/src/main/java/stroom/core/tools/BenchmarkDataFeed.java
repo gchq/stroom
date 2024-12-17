@@ -24,13 +24,19 @@ import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityTemplate;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,7 +47,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.net.ssl.HttpsURLConnection;
 
 public class BenchmarkDataFeed {
 
@@ -136,70 +141,55 @@ public class BenchmarkDataFeed {
 
     }
 
-    public void sendFile() {
+    public void sendFile(final HttpClient httpClient) {
         final long startTime = System.currentTimeMillis();
         boolean connected = false;
         boolean sent = false;
         try {
             logDebug("Sending to " + serverUrl);
 
-            final URL url = new URL(serverUrl);
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setHostnameVerifier((arg0, arg1) -> true);
-            }
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/audit");
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
-
-            if (batchChunkedLength > 0) {
-                connection.setChunkedStreamingMode(batchChunkedLength);
-            }
-
-            connection.addRequestProperty("Feed", feed);
+            final HttpPost httpPost = new HttpPost(serverUrl);
+            httpPost.addHeader("Content-Type", "application/audit");
+            httpPost.addHeader("Feed", feed);
             if (compression.equalsIgnoreCase("gzip")) {
-                connection.addRequestProperty("Compression", "gzip");
+                httpPost.addHeader("Compression", "gzip");
             }
-
-            connection.connect();
 
             connectedCount.incrementAndGet();
             connected = true;
 
-            final byte[] sampleData = buildSampleData();
+            httpPost.setEntity(new EntityTemplate(
+                    -1,
+                    ContentType.DEFAULT_TEXT,
+                    null,
+                    outputStream -> {
 
-            OutputStream out = connection.getOutputStream();
+                        // Compress data and replace sample.
+                        if ("gzip".equalsIgnoreCase(compression)) {
+                            try (GzipCompressorOutputStream gzipCompressorOutputStream =
+                                    new GzipCompressorOutputStream(
+                                            outputStream)) {
+                                byte[] sampleData = buildSampleData();
+                                StreamUtil.streamToStream(new ByteArrayInputStream(sampleData),
+                                        gzipCompressorOutputStream);
+                            }
+                        } else {
+                            try (final BufferedOutputStream bufferedOutputStream =
+                                    new BufferedOutputStream(outputStream)) {
+                                byte[] sampleData = buildSampleData();
+                                StreamUtil.streamToStream(new ByteArrayInputStream(sampleData),
+                                        bufferedOutputStream);
+                            }
+                        }
+                    }));
 
-            if (compression.equalsIgnoreCase("gzip")) {
-                out = new GzipCompressorOutputStream(out);
-            }
-
-            long bytesWritten = 0;
-            while (bytesWritten < batchFileSize) {
-                if (bytesWritten == 0) {
-                    sendingCount.incrementAndGet();
-                    sent = true;
-                }
-                final int writeSize = (int) Math.min(batchFileSize, sampleData.length);
-
-                out.write(sampleData, 0, writeSize);
-                bytesWritten += writeSize;
-                sendSize.addAndGet(writeSize);
-            }
-
-            out.flush();
-            out.close();
-
-            final int response = connection.getResponseCode();
-            final String msg = connection.getResponseMessage();
-
-            connection.disconnect();
-
-            final DataFeedResult result = new DataFeedResult();
-            result.time = System.currentTimeMillis() - startTime;
-            result.response = response;
-            result.message = msg;
+            final DataFeedResult result = httpClient.execute(httpPost, response -> {
+                final DataFeedResult res = new DataFeedResult();
+                res.time = System.currentTimeMillis() - startTime;
+                res.response = response.getCode();
+                res.message = response.getReasonPhrase();
+                return res;
+            });
             batchResults.add(result);
 
             logDebug("Finished in " + result.time + " response was " + result.response);
@@ -230,10 +220,10 @@ public class BenchmarkDataFeed {
 
     }
 
-    public Runnable buildClient() {
+    public Runnable buildClient(final HttpClient httpClient) {
         return () -> {
             do {
-                sendFile();
+                sendFile(httpClient);
             } while (isBatchRunning());
             logDebug("Finished");
         };
@@ -256,8 +246,13 @@ public class BenchmarkDataFeed {
 
         threadPoolExecutor = Executors.newFixedThreadPool(batchSize, threadFactory);
 
-        for (int i = 0; i < batchSize; i++) {
-            threadPoolExecutor.submit(buildClient());
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            for (int i = 0; i < batchSize; i++) {
+                threadPoolExecutor.submit(buildClient(httpClient));
+            }
+            threadPoolExecutor.shutdown();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
         log("Submitted " + batchSize + " jobs");
 
@@ -278,7 +273,7 @@ public class BenchmarkDataFeed {
         log("BatchChunkedLength=" + formatBytes(batchChunkedLength));
         if (threadPoolExecutor != null) {
             log("ThreadPoolExecutor.shutdown=" + threadPoolExecutor.isShutdown() + ",terminated="
-                    + threadPoolExecutor.isTerminated());
+                + threadPoolExecutor.isTerminated());
         }
         log("ConnectedCount=" + connectedCount);
         log("SendingCount=" + sendingCount);

@@ -4,6 +4,7 @@ import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,8 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -59,7 +61,8 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
-                expectedSignerPrefixes);
+                expectedSignerPrefixes,
+                httpClient);
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
@@ -71,12 +74,12 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "Invalid value for identityProviderType. Supported values are EXTERNAL_IDP, " +
-            "INTERNAL_IDP and TEST_CREDENTIALS.")
+                                "INTERNAL_IDP and TEST_CREDENTIALS.")
     public boolean isIdentityProviderTypeValid() {
         final IdpType idpType = getIdentityProviderType();
         return IdpType.EXTERNAL_IDP.equals(idpType)
-                || IdpType.INTERNAL_IDP.equals(idpType)
-                || IdpType.TEST_CREDENTIALS.equals(idpType);
+               || IdpType.INTERNAL_IDP.equals(idpType)
+               || IdpType.TEST_CREDENTIALS.equals(idpType);
     }
 
     public StroomOpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {
@@ -98,6 +101,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
-                getExpectedSignerPrefixes());
+                getExpectedSignerPrefixes(),
+                getHttpClient());
     }
 }

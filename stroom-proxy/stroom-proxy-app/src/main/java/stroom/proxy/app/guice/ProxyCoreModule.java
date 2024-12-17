@@ -11,6 +11,7 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
+import stroom.dropwizard.common.HttpClientFactoryImpl;
 import stroom.importexport.api.ImportConverter;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.DataDirProviderImpl;
@@ -36,6 +37,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.http.HttpClientFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
@@ -59,6 +61,7 @@ public class ProxyCoreModule extends AbstractModule {
 
         bind(ProxyId.class).asEagerSingleton();
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
+        bind(HttpClientFactory.class).to(HttpClientFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
