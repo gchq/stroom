@@ -89,6 +89,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -932,6 +933,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Update the page size for the data grid.
         updatePageSize();
 
+        // Fix historic conditional formatting rule ids.
+        fixRuleIds(getTableSettings().getConditionalFormattingRules());
+
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
         if (getTableComponentSettings().getColumns() != null) {
@@ -956,6 +960,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Change value filter state.
         setApplyValueFilters(getTableComponentSettings().applyValueFilters());
+    }
+
+    /**
+     * Fix for old rules that contained duplicate rule ids.
+     *
+     * @param rules The rule list to fix.
+     */
+    private void fixRuleIds(final List<ConditionalFormattingRule> rules) {
+        if (rules != null) {
+            final Set<String> idSet = new HashSet<>();
+            for (int i = 0; i < rules.size(); i++) {
+                ConditionalFormattingRule rule = rules.get(i);
+                while (!idSet.add(rule.getId())) {
+                    rule = rule.copy().id(RandomId.createId(5)).build();
+                    rules.set(i, rule);
+                }
+            }
+        }
     }
 
     public TableComponentSettings getTableComponentSettings() {
