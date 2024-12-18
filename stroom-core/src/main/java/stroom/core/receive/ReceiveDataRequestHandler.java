@@ -31,6 +31,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.NullSafe;
@@ -91,13 +92,13 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
             // Authenticate the request using token or cert depending on configuration
             // Adds sender details to the attributeMap
-            requestAuthenticator.authenticate(request, attributeMap);
+            final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
             // Validate the supplied attributes.
             AttributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             final String feedName;
-            if (attributeMapFilter.filter(attributeMap)) {
+            if (attributeMapFilter.filter(attributeMap, userIdentity)) {
                 debug("Receiving data", attributeMap);
 
                 feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));

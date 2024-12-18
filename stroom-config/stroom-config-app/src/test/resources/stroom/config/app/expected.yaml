@@ -701,6 +701,7 @@ appConfig:
   receive:
     authenticationRequired: true
     certificateAuthenticationEnabled: true
+    dataFeedKeysDir: "data_feed_keys"
     datafeedKeyAuthenticationEnabled: false
     metaTypes:
     - "Context"

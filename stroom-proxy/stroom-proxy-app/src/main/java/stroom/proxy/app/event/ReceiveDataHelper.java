@@ -82,7 +82,7 @@ public class ReceiveDataHelper {
                             receiveDataConfig::getMetaTypes);
 
                     // Test to see if we are going to accept this stream or drop the data.
-                    if (attributeMapFilter.filter(attributeMap)) {
+                    if (attributeMapFilter.filter(attributeMap, userIdentity)) {
                         consumeHandler.handle(request, attributeMap, requestUuid);
 
                     } else {
