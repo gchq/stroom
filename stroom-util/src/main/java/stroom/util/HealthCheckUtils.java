@@ -5,15 +5,16 @@ import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,44 +28,24 @@ public class HealthCheckUtils {
         Preconditions.checkNotNull(httpMethod, "Missing a httpMethod, e.g. GET");
         Preconditions.checkNotNull(urlStr, "Missing a url");
 
-        URL url = null;
-        try {
-            url = new URL(urlStr);
-        } catch (MalformedURLException e) {
-            return LogUtil.message("Malformed URL: [{}]", e.getMessage());
-        }
-
-        URLConnection connection = null;
-        try {
-            connection = url.openConnection();
-        } catch (IOException e) {
-            return LogUtil.message("Invalid URL: [{}]", e.getMessage());
-        }
-
-        if (connection instanceof HttpURLConnection) {
-            HttpURLConnection http = (HttpURLConnection) connection;
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            final URI uri;
             try {
-                http.setRequestMethod(httpMethod);
-            } catch (ProtocolException e) {
-                return LogUtil.message("Invalid protocol during test: [{}]", e.getMessage());
+                uri = URI.create(urlStr);
+            } catch (Exception e) {
+                return LogUtil.message("Malformed URL: [{}]", e.getMessage());
             }
-            http.setDoOutput(true);
+            final HttpUriRequestBase httpPost = new HttpUriRequestBase(httpMethod, uri);
 
             try {
-                http.connect();
-            } catch (IOException e) {
-                return LogUtil.message("Unable to connect: [{}]", e.getMessage());
-            }
-
-            try {
-                int responseCode = http.getResponseCode();
+                int responseCode = httpClient.execute(httpPost, HttpResponse::getCode);
                 return String.valueOf(responseCode);
             } catch (IOException e) {
                 return LogUtil.message("Unable to get response code: [{}]", e.getMessage());
             }
-        } else {
-            return LogUtil.message("Unknown connection type: [{}]",
-                    connection.getClass().getName());
+
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

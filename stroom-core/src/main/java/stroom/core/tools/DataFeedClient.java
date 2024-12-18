@@ -22,19 +22,19 @@ import stroom.util.zip.ZipUtil;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.io.entity.EntityTemplate;
 
-import java.io.IOException;
+import java.io.BufferedOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.net.ssl.HttpsURLConnection;
 
 /**
  * <p>
@@ -63,8 +63,8 @@ public final class DataFeedClient {
     /**
      * @param args program args
      */
-    public static void main(final String[] args) {
-        try {
+    public static void main(final String[] args) throws Exception {
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
             final HashMap<String, String> argsMap = new HashMap<>();
             for (int i = 0; i < args.length; i++) {
                 final String[] split = args[i].split("=");
@@ -75,116 +75,94 @@ public final class DataFeedClient {
                 }
             }
 
-            final String urlS = argsMap.get(ARG_URL);
+            final String url = argsMap.get(ARG_URL);
             final String inputFileS = argsMap.get(ARG_INPUTFILE);
 
             final long startTime = System.currentTimeMillis();
 
-            System.out.println("Using url=" + urlS + " and inputFile=" + inputFileS);
+            System.out.println("Using url=" + url + " and inputFile=" + inputFileS);
 
             final Path inputFile = Paths.get(inputFileS);
 
-            final URL url = new URL(urlS);
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setHostnameVerifier((arg0, arg1) -> {
-                    System.out.println("HostnameVerifier - " + arg0);
-                    return true;
-                });
-            }
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/audit");
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
+            final HttpPost httpPost = new HttpPost(url);
+            httpPost.addHeader("Content-Type", "application/audit");
 
             // Also add all our command options.
-            argsMap.entrySet().forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
+            argsMap.forEach(httpPost::addHeader);
 
             // Here we allow for the input file already being compressed.
             if (argsMap.containsKey(ARG_INPUT_COMPRESSION)) {
-                connection.addRequestProperty(ARG_COMPRESSION, argsMap.get(ARG_INPUT_COMPRESSION));
+                httpPost.addHeader(ARG_COMPRESSION, argsMap.get(ARG_INPUT_COMPRESSION));
             }
 
-            connection.connect();
+            httpPost.setEntity(new EntityTemplate(
+                    -1,
+                    ContentType.create("application/audit"),
+                    null,
+                    outputStream -> {
+                        try (final InputStream inputStream = Files.newInputStream(inputFile)) {
+                            // Using Zip Compression we just have 1 file (called 1)
+                            if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
+                                System.out.println("Using ZIP");
+                                try (final ZipArchiveOutputStream out = ZipUtil.createOutputStream(outputStream)) {
+                                    out.putArchiveEntry(new ZipArchiveEntry("1"));
+                                    try {
+                                        // Write the output
+                                        StreamUtil.streamToStream(inputStream, out);
+                                    } finally {
+                                        out.closeArchiveEntry();
+                                    }
+                                }
 
-            try (final InputStream inputStream = Files.newInputStream(inputFile)) {
-                // Using Zip Compression we just have 1 file (called 1)
-                if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                    System.out.println("Using ZIP");
-                    try (final ZipArchiveOutputStream out = ZipUtil.createOutputStream(connection.getOutputStream())) {
-                        out.putArchiveEntry(new ZipArchiveEntry("1"));
-                        try {
-                            // Write the output
-                            StreamUtil.streamToStream(inputStream, out);
-                        } finally {
-                            out.closeArchiveEntry();
+                            } else if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
+                                System.out.println("Using GZIP");
+                                try (final GzipCompressorOutputStream out =
+                                        new GzipCompressorOutputStream(outputStream)) {
+                                    // Write the output
+                                    StreamUtil.streamToStream(inputStream, out);
+                                }
+                            } else {
+                                try (final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
+                                        outputStream)) {
+                                    StreamUtil.streamToStream(inputStream, bufferedOutputStream);
+                                }
+                            }
                         }
-                    }
-                } else if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                    System.out.println("Using GZIP");
-                    try (final GzipCompressorOutputStream out =
-                            new GzipCompressorOutputStream(connection.getOutputStream())) {
-                        // Write the output
-                        StreamUtil.streamToStream(inputStream, out);
-                    }
-                } else {
-                    try (final OutputStream out = connection.getOutputStream()) {
-                        // Write the output
-                        StreamUtil.streamToStream(inputStream, out);
-                    }
+                    }));
+
+            httpClient.execute(httpPost, response -> {
+
+                final int code = response.getCode();
+                final String msg = response.getReasonPhrase();
+
+                System.out.println(
+                        "Client Got Response " + code + " in " + (System.currentTimeMillis() - startTime) + "ms");
+                if (msg != null && !msg.isEmpty()) {
+                    System.out.println(msg);
                 }
-            }
 
-            final int response = connection.getResponseCode();
+                System.out.println();
+                System.out.println("RESPONSE HEADER");
+                System.out.println("===============");
 
-            final String msg = connection.getResponseMessage();
-
-            System.out.println(
-                    "Client Got Response " + response + " in " + (System.currentTimeMillis() - startTime) + "ms");
-            if (msg != null && !msg.isEmpty()) {
-                System.out.println(msg);
-            }
-
-            System.out.println();
-            System.out.println("RESPONSE HEADER");
-            System.out.println("===============");
-
-            for (final Map.Entry<String, List<String>> entry : connection.getHeaderFields().entrySet()) {
-                final StringBuilder line = new StringBuilder();
-                if (entry.getKey() != null) {
-                    line.append(entry.getKey());
-                    line.append(":");
+                for (final Header entry : response.getHeaders()) {
+                    final String line = entry.getName() +
+                                        ":" +
+                                        entry.getValue();
+                    System.out.println(line);
                 }
-                boolean doneOne = false;
-                for (final String val : entry.getValue()) {
-                    if (doneOne) {
-                        line.append(",");
-                    }
-                    line.append(val);
-                    doneOne = true;
+
+                System.out.println();
+                System.out.println("RESPONSE BODY");
+                System.out.println("=============");
+
+                final String errR = StreamUtil.streamToString(response.getEntity().getContent());
+                if (errR != null) {
+                    System.out.println(errR);
                 }
-                System.out.println(line);
-            }
 
-            System.out.println();
-            System.out.println("RESPONSE BODY");
-            System.out.println("=============");
-
-            final String errR = StreamUtil.streamToString(connection.getErrorStream());
-            if (errR != null) {
-                System.out.println(errR);
-            } else {
-                final String outR = StreamUtil.streamToString(connection.getInputStream());
-                if (outR != null) {
-                    System.out.println(outR);
-                }
-            }
-
-            connection.disconnect();
-
-        } catch (final RuntimeException | IOException e) {
-            e.printStackTrace();
+                return code;
+            });
         }
     }
 }

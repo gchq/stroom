@@ -1,5 +1,6 @@
 package stroom.security.openid.api;
 
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.AllMatchPattern;
 
@@ -16,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public abstract class AbstractOpenIdConfig
@@ -130,6 +130,8 @@ public abstract class AbstractOpenIdConfig
 
     private final Set<String> expectedSignerPrefixes;
 
+    private final HttpClientConfiguration httpClient;
+
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
@@ -149,6 +151,7 @@ public abstract class AbstractOpenIdConfig
         uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
         userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
         expectedSignerPrefixes = Collections.emptySet();
+        httpClient = null;
     }
 
     @JsonIgnore
@@ -173,7 +176,8 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
 
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -193,6 +197,7 @@ public abstract class AbstractOpenIdConfig
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
         this.expectedSignerPrefixes = expectedSignerPrefixes;
+        this.httpClient = httpClient;
     }
 
     /**
@@ -201,19 +206,19 @@ public abstract class AbstractOpenIdConfig
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The type of Open ID Connect identity provider that stroom/proxy" +
-            "will use for authentication. Valid values are: " +
-            "INTERNAL_IDP - Stroom's own built in IDP (not valid for stroom-proxy)," +
-            "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be used as " +
-            "stroom-proxy's external IDP) and" +
-            "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only. " +
-            "Changing this property will require a restart of the application.")
+                             "will use for authentication. Valid values are: " +
+                             "INTERNAL_IDP - Stroom's own built in IDP (not valid for stroom-proxy)," +
+                             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be " +
+                             "used as stroom-proxy's external IDP) and" +
+                             "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only. " +
+                             "Changing this property will require a restart of the application.")
     public IdpType getIdentityProviderType() {
         return identityProviderType;
     }
 
     @Override
     @JsonPropertyDescription("You can set an openid-configuration URL to automatically configure much of the openid " +
-            "settings. Without this the other endpoints etc must be set manually.")
+                             "settings. Without this the other endpoints etc must be set manually.")
     @JsonProperty
     public String getOpenIdConfigurationEndpoint() {
         return openIdConfigurationEndpoint;
@@ -222,7 +227,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("The issuer used in OpenId authentication." +
-            "Should only be set if not using a configuration endpoint.")
+                             "Should only be set if not using a configuration endpoint.")
     public String getIssuer() {
         return issuer;
     }
@@ -230,7 +235,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("The authentication endpoint used in OpenId authentication." +
-            "Should only be set if not using a configuration endpoint.")
+                             "Should only be set if not using a configuration endpoint.")
     public String getAuthEndpoint() {
         return authEndpoint;
     }
@@ -238,7 +243,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("The token endpoint used in OpenId authentication." +
-            "Should only be set if not using a configuration endpoint.")
+                             "Should only be set if not using a configuration endpoint.")
     public String getTokenEndpoint() {
         return tokenEndpoint;
     }
@@ -246,7 +251,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("The URI to obtain the JSON Web Key Set from in OpenId authentication." +
-            "Should only be set if not using a configuration endpoint.")
+                             "Should only be set if not using a configuration endpoint.")
     public String getJwksUri() {
         return jwksUri;
     }
@@ -254,7 +259,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("The logout endpoint for the identity provider." +
-            "This is not typically provided by the configuration endpoint.")
+                             "This is not typically provided by the configuration endpoint.")
     public String getLogoutEndpoint() {
         return logoutEndpoint;
     }
@@ -263,7 +268,8 @@ public abstract class AbstractOpenIdConfig
     @Pattern(regexp = "(" + OpenId.REDIRECT_URI + "|" + OpenId.POST_LOGOUT_REDIRECT_URI + ")")
     @JsonProperty
     @JsonPropertyDescription("The name of the URI parameter to use when passing the logout redirect URI to the IDP. "
-            + "This is here as the spec seems to have changed from 'redirect_uri' to 'post_logout_redirect_uri'.")
+                             + "This is here as the spec seems to have changed from 'redirect_uri' to " +
+                             "'post_logout_redirect_uri'.")
     public String getLogoutRedirectParamName() {
         return logoutRedirectParamName;
     }
@@ -294,7 +300,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("If custom auth flow request scopes are required then this should be set to replace " +
-            "the defaults of 'openid' and 'email'.")
+                             "the defaults of 'openid' and 'email'.")
     public List<String> getRequestScopes() {
         return requestScopes;
     }
@@ -302,8 +308,8 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("If custom scopes are required for client_credentials requests then this should be " +
-            "set to replace the default of 'openid'. E.g. for Azure AD you will likely need to set this to 'openid' " +
-            "and '<your-app-id-uri>/.default>'.")
+                             "set to replace the default of 'openid'. E.g. for Azure AD you will likely need to set " +
+                             "this to 'openid' and '<your-app-id-uri>/.default>'.")
     public List<String> getClientCredentialsScopes() {
         return clientCredentialsScopes;
     }
@@ -311,7 +317,7 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("Whether to validate the audience in JWT token, when the audience is expected " +
-            "to be the clientId.")
+                             "to be the clientId.")
     public boolean isValidateAudience() {
         return validateAudience;
     }
@@ -319,9 +325,10 @@ public abstract class AbstractOpenIdConfig
     @Override
     @JsonProperty
     @JsonPropertyDescription("A set of issuers (in addition to the 'issuer' property that is provided by the IDP " +
-            "that are deemed valid when seen in a token. If no additional valid issuers are required then set this " +
-            "to an empty set. Also this is used to validate the 'issuer' returned by the IDP when it is not a " +
-            "sub path of 'openIdConfigurationEndpoint'. If this set is empty then Stroom will verify that the ")
+                             "that are deemed valid when seen in a token. If no additional valid issuers are " +
+                             "required then set this to an empty set. Also this is used to validate the 'issuer' " +
+                             "returned by the IDP when it is not a sub path of 'openIdConfigurationEndpoint'. If " +
+                             "this set is empty then Stroom will verify that the ")
     public Set<String> getValidIssuers() {
         return validIssuers;
     }
@@ -330,7 +337,8 @@ public abstract class AbstractOpenIdConfig
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The Open ID Connect claim used to link an identity on the IDP to a stroom user. " +
-            "Must uniquely identify the user on the IDP and not be subject to change. Uses 'sub' by default.")
+                             "Must uniquely identify the user on the IDP and not be subject to change. Uses 'sub' by " +
+                             "default.")
     public String getUniqueIdentityClaim() {
         return uniqueIdentityClaim;
     }
@@ -339,7 +347,8 @@ public abstract class AbstractOpenIdConfig
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The Open ID Connect claim used to provide a more human friendly username for a user " +
-            "than that provided by uniqueIdentityClaim. It is not guaranteed to be unique and may change.")
+                             "than that provided by uniqueIdentityClaim. It is not guaranteed to be unique and may " +
+                             "change.")
     public String getUserDisplayNameClaim() {
         return userDisplayNameClaim;
     }
@@ -353,12 +362,15 @@ public abstract class AbstractOpenIdConfig
     @SuppressWarnings("checkstyle:lineLength")
     @JsonProperty
     @JsonPropertyDescription("If using an AWS load balancer to handle the authentication, set this to the Amazon " +
-            "Resource Names (ARN) of the load balancer(s) fronting stroom, which will be something like " +
-            "'arn:aws:elasticloadbalancing:region-code:account-id:loadbalancer/app/load-balancer-name/load-balancer-id'. " +
-            "This config value will be used to verify the 'signer' in the JWT header. " +
-            "Each value is the first N characters of the ARN and as a minimum must include up to the colon after " +
-            "the account-id, i.e. 'arn:aws:elasticloadbalancing:region-code:account-id:'." +
-            "See https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html#user-claims-encoding")
+                             "Resource Names (ARN) of the load balancer(s) fronting stroom, which will be something " +
+                             "like 'arn:aws:elasticloadbalancing:region-code:account-id:loadbalancer" +
+                             "/app/load-balancer-name/load-balancer-id'. " +
+                             "This config value will be used to verify the 'signer' in the JWT header. " +
+                             "Each value is the first N characters of the ARN and as a minimum must include up to " +
+                             "the colon after the account-id, i.e. " +
+                             "'arn:aws:elasticloadbalancing:region-code:account-id:'." +
+                             "See https://docs.aws.amazon.com/elasticloadbalancing/" +
+                             "latest/application/listener-authenticate-users.html#user-claims-encoding")
     public Set<String> getExpectedSignerPrefixes() {
         return expectedSignerPrefixes;
     }
@@ -366,32 +378,38 @@ public abstract class AbstractOpenIdConfig
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "If " + PROP_NAME_IDP_TYPE + " is set to 'EXTERNAL', property "
-            + PROP_NAME_CONFIGURATION_ENDPOINT + " must be set.")
+                                + PROP_NAME_CONFIGURATION_ENDPOINT + " must be set.")
     public boolean isConfigurationEndpointValid() {
         return !IdpType.EXTERNAL_IDP.equals(identityProviderType)
-                || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
+               || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Configuration for the HTTP client to communicate with the external IDP")
+    public HttpClientConfiguration getHttpClient() {
+        return httpClient;
+    }
 
     @Override
     public String toString() {
         return "OpenIdConfig{" +
-                "identityProviderType=" + identityProviderType +
-                ", openIdConfigurationEndpoint='" + openIdConfigurationEndpoint + '\'' +
-                ", issuer='" + issuer + '\'' +
-                ", authEndpoint='" + authEndpoint + '\'' +
-                ", tokenEndpoint='" + tokenEndpoint + '\'' +
-                ", jwksUri='" + jwksUri + '\'' +
-                ", logoutEndpoint='" + logoutEndpoint + '\'' +
-                ", logoutRedirectParamName='" + logoutRedirectParamName + '\'' +
-                ", formTokenRequest=" + formTokenRequest +
-                ", clientId='" + clientId + '\'' +
-                ", clientSecret='" + clientSecret + '\'' +
-                ", requestScopes='" + requestScopes + '\'' +
-                ", validateAudience=" + validateAudience +
-                ", uniqueIdentityClaim=" + uniqueIdentityClaim +
-                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
-                '}';
+               "identityProviderType=" + identityProviderType +
+               ", openIdConfigurationEndpoint='" + openIdConfigurationEndpoint + '\'' +
+               ", issuer='" + issuer + '\'' +
+               ", authEndpoint='" + authEndpoint + '\'' +
+               ", tokenEndpoint='" + tokenEndpoint + '\'' +
+               ", jwksUri='" + jwksUri + '\'' +
+               ", logoutEndpoint='" + logoutEndpoint + '\'' +
+               ", logoutRedirectParamName='" + logoutRedirectParamName + '\'' +
+               ", formTokenRequest=" + formTokenRequest +
+               ", clientId='" + clientId + '\'' +
+               ", clientSecret='" + clientSecret + '\'' +
+               ", requestScopes='" + requestScopes + '\'' +
+               ", validateAudience=" + validateAudience +
+               ", uniqueIdentityClaim=" + uniqueIdentityClaim +
+               ", expectedSignerPrefixes=" + expectedSignerPrefixes +
+               ", httpClientConfiguration=" + httpClient +
+               '}';
     }
 
     @Override
@@ -403,21 +421,22 @@ public abstract class AbstractOpenIdConfig
             return false;
         }
         final AbstractOpenIdConfig that = (AbstractOpenIdConfig) o;
-        return formTokenRequest == that.formTokenRequest
-                && validateAudience == that.validateAudience
-                && identityProviderType == that.identityProviderType
-                && Objects.equals(openIdConfigurationEndpoint, that.openIdConfigurationEndpoint)
-                && Objects.equals(issuer, that.issuer)
-                && Objects.equals(authEndpoint, that.authEndpoint)
-                && Objects.equals(tokenEndpoint, that.tokenEndpoint)
-                && Objects.equals(jwksUri, that.jwksUri)
-                && Objects.equals(logoutEndpoint, that.logoutEndpoint)
-                && Objects.equals(logoutRedirectParamName, that.logoutRedirectParamName)
-                && Objects.equals(clientId, that.clientId)
-                && Objects.equals(clientSecret, that.clientSecret)
-                && Objects.equals(requestScopes, that.requestScopes)
-                && Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim)
-                && Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes);
+        return formTokenRequest == that.formTokenRequest &&
+               validateAudience == that.validateAudience &&
+               identityProviderType == that.identityProviderType &&
+               Objects.equals(openIdConfigurationEndpoint, that.openIdConfigurationEndpoint) &&
+               Objects.equals(issuer, that.issuer) &&
+               Objects.equals(authEndpoint, that.authEndpoint) &&
+               Objects.equals(tokenEndpoint, that.tokenEndpoint) &&
+               Objects.equals(jwksUri, that.jwksUri) &&
+               Objects.equals(logoutEndpoint, that.logoutEndpoint) &&
+               Objects.equals(logoutRedirectParamName, that.logoutRedirectParamName) &&
+               Objects.equals(clientId, that.clientId) &&
+               Objects.equals(clientSecret, that.clientSecret) &&
+               Objects.equals(requestScopes, that.requestScopes) &&
+               Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim) &&
+               Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes) &&
+               Objects.equals(httpClient, that.httpClient);
     }
 
     @Override
@@ -436,6 +455,7 @@ public abstract class AbstractOpenIdConfig
                 requestScopes,
                 validateAudience,
                 uniqueIdentityClaim,
-                expectedSignerPrefixes);
+                expectedSignerPrefixes,
+                httpClient);
     }
 }

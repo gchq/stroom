@@ -18,9 +18,12 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpStatus;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
@@ -31,54 +34,56 @@ public class TestSchemaEventResource {
     public static void main(final String[] args) {
         System.out.println("AVAILABLE PROCESSORS = " + Runtime.getRuntime().availableProcessors());
 
-        final HttpClient httpClient = HttpClients.createDefault();
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            final int threadCount = 10;
+            final LongAdder count = new LongAdder();
+            final CompletableFuture[] arr = new CompletableFuture[threadCount];
 
-        final int threadCount = 10;
-        final LongAdder count = new LongAdder();
-        final CompletableFuture[] arr = new CompletableFuture[threadCount];
-
-        final long startTime = System.currentTimeMillis();
+            final long startTime = System.currentTimeMillis();
 //        for (int i = 0; i < threadCount; i++) {
 //            arr[i] = CompletableFuture.runAsync(() -> {
 //                while (true) {
-        if (post(httpClient)) {
-            count.increment();
-        }
+            if (post(httpClient)) {
+                count.increment();
+            }
 //                }
 //            });
 //        }
 
-        CompletableFuture.runAsync(() -> {
-            long lastTime = startTime;
-            long lastCount = 0;
-            while (true) {
-                ThreadUtil.sleep(10000);
+            CompletableFuture.runAsync(() -> {
+                long lastTime = startTime;
+                long lastCount = 0;
+                while (true) {
+                    ThreadUtil.sleep(10000);
 
-                final long now = System.currentTimeMillis();
-                final long totalCount = count.longValue();
-                final long deltaCount = totalCount - lastCount;
-                final double totalSeconds = (now - startTime) / 1000D;
-                final double deltaSeconds = (now - lastTime) / 1000D;
+                    final long now = System.currentTimeMillis();
+                    final long totalCount = count.longValue();
+                    final long deltaCount = totalCount - lastCount;
+                    final double totalSeconds = (now - startTime) / 1000D;
+                    final double deltaSeconds = (now - lastTime) / 1000D;
 
-                System.out.println("Posts " +
-                        "Delta: " +
-                        deltaCount +
-                        " in " +
-                        ModelStringUtil.formatDurationString(now - lastTime) +
-                        " " +
-                        (long) (deltaCount / deltaSeconds) + "pps" +
-                        " " +
-                        "Total: " + totalCount +
-                        " in " +
-                        ModelStringUtil.formatDurationString(now - startTime) +
-                        " " +
-                        (long) (totalCount / totalSeconds) + "pps");
+                    System.out.println("Posts " +
+                                       "Delta: " +
+                                       deltaCount +
+                                       " in " +
+                                       ModelStringUtil.formatDurationString(now - lastTime) +
+                                       " " +
+                                       (long) (deltaCount / deltaSeconds) + "pps" +
+                                       " " +
+                                       "Total: " + totalCount +
+                                       " in " +
+                                       ModelStringUtil.formatDurationString(now - startTime) +
+                                       " " +
+                                       (long) (totalCount / totalSeconds) + "pps");
 
-                lastTime = now;
-                lastCount = totalCount;
-            }
-        });
-        CompletableFuture.allOf(arr).join();
+                    lastTime = now;
+                    lastCount = totalCount;
+                }
+            });
+            CompletableFuture.allOf(arr).join();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static boolean post(final HttpClient httpClient) {
@@ -115,17 +120,23 @@ public class TestSchemaEventResource {
             System.out.println(event2);
 
             final Client client = ClientBuilder.newClient();
-            final WebTarget webTarget = client.target("http://127.0.0.1:8090/api/event/schema_v4_0");
-            final Response response = webTarget
-                    .request(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .header("Feed", "TEST-EVENTS")
-                    .header("System", "EXAMPLE_SYSTEM")
-                    .header("Environment", "EXAMPLE_ENVIRONMENT")
-                    .post(Entity.entity(json, MediaType.APPLICATION_JSON));
+            try {
+                final WebTarget webTarget = client.target("http://127.0.0.1:8090/api/event/schema_v4_0");
+                final Response response = webTarget
+                        .request(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Feed", "TEST-EVENTS")
+                        .header("System", "EXAMPLE_SYSTEM")
+                        .header("Environment", "EXAMPLE_ENVIRONMENT")
+                        .post(Entity.entity(json, MediaType.APPLICATION_JSON));
 
-            if (response.getStatus() != HttpStatus.SC_OK) {
-                throw new RuntimeException("Not ok: " + response.getEntity().toString());
+                if (response.getStatus() != HttpStatus.SC_OK) {
+                    throw new RuntimeException("Not ok: " + response.getEntity().toString());
+                }
+            } finally {
+                if (client != null) {
+                    client.close();
+                }
             }
 //
 //

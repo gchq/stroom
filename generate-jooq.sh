@@ -16,9 +16,6 @@ cd -
 cd stroom-security/stroom-security-impl-db-jooq
 ../../gradlew generateJooq
 cd -
-cd stroom-proxy/stroom-proxy-repo-db-jooq
-../../gradlew generateJooq
-cd -
 cd stroom-annotation/stroom-annotation-impl-db-jooq
 ../../gradlew generateJooq
 cd -
@@ -50,9 +47,6 @@ cd stroom-index/stroom-index-impl-db-jooq
 ../../gradlew generateJooq
 cd -
 cd stroom-job/stroom-job-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-proxy/stroom-proxy-repo-db-jooq
 ../../gradlew generateJooq
 cd -
 cd stroom-analytics/stroom-analytics-impl-db-jooq

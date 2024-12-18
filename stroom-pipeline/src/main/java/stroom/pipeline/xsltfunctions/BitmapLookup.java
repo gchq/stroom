@@ -29,11 +29,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;

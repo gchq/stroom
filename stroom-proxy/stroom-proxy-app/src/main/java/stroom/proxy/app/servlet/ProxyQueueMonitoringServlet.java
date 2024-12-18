@@ -1,6 +1,5 @@
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.repo.dao.SqliteJooqHelper;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.shared.IsServlet;
@@ -25,15 +24,12 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsServle
             ResourcePaths.addLegacyUnauthenticatedServletPrefix("/queues"));
 
     private final Provider<QueueMonitors> queueMonitorsProvider;
-    private final Provider<SqliteJooqHelper> sqliteJooqHelperProvider;
     private final Provider<FileStores> fileStoresProvider;
 
     @Inject
     public ProxyQueueMonitoringServlet(final Provider<QueueMonitors> queueMonitorsProvider,
-                                       final Provider<SqliteJooqHelper> sqliteJooqHelperProvider,
                                        final Provider<FileStores> fileStoresProvider) {
         this.queueMonitorsProvider = queueMonitorsProvider;
-        this.sqliteJooqHelperProvider = sqliteJooqHelperProvider;
         this.fileStoresProvider = fileStoresProvider;
     }
 
@@ -54,8 +50,6 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsServle
                 "<body>\n");
         writer.write("<h1>Queues</h1>");
         writer.write(queueMonitors.log());
-        writer.write("<h1>DB Records</h1>");
-        writer.write(sqliteJooqHelperProvider.get().printTableRecordCounts());
         writer.write("<h1>File Stores</h1>");
         writer.write(fileStoresProvider.get().log());
 

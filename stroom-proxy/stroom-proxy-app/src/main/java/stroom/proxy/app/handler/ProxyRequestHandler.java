@@ -1,30 +1,28 @@
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.event.ReceiveDataHelper;
-import stroom.proxy.repo.CSVFormatter;
-import stroom.proxy.repo.LogStream;
-import stroom.receive.common.ProgressHandler;
+import stroom.proxy.StroomStatusCode;
+import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
-import stroom.receive.common.StroomStreamProcessor;
-import stroom.util.io.ByteCountInputStream;
+import stroom.util.cert.CertificateExtractor;
+import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.net.HostNameUtil;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hc.core5.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Main entry point to handling proxy requests.
@@ -35,36 +33,75 @@ import java.time.Instant;
 public class ProxyRequestHandler implements RequestHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRequestHandler.class);
-    private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
+    private static final String ZERO_CONTENT = "0";
 
-    private final ReceiveStreamHandlers receiveStreamHandlerProvider;
-    private final LogStream logStream;
+    private final RequestAuthenticator requestAuthenticator;
     private final ProxyId proxyId;
-    private final ReceiveDataHelper receiveDataHelper;
+    private final CertificateExtractor certificateExtractor;
+    private final ReceiverFactory receiverFactory;
+    private final String hostName;
 
     @Inject
-    public ProxyRequestHandler(final ReceiveStreamHandlers receiveStreamHandlerProvider,
-                               final LogStream logStream,
+    public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
                                final ProxyId proxyId,
-                               final ReceiveDataHelper receiveDataHelper) {
-        this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
-        this.logStream = logStream;
+                               final CertificateExtractor certificateExtractor,
+                               final ReceiverFactory receiverFactory) {
+        this.requestAuthenticator = requestAuthenticator;
         this.proxyId = proxyId;
-        this.receiveDataHelper = receiveDataHelper;
+        this.certificateExtractor = certificateExtractor;
+        this.receiverFactory = receiverFactory;
+        this.hostName = HostNameUtil.determineHostName();
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         try {
-            final String proxyId = receiveDataHelper.process(
-                    request,
-                    this::readInputStream,
-                    this::readAndDropInputStream);
+            final Instant startTime = Instant.now();
+
+            // Create attribute map from headers.
+            final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
+
+            // Create a new proxy id for the request so we can track progress and report back the UUID to the sender,
+            final String requestUuid = UUID.randomUUID().toString();
+            final String proxyIdString = proxyId.getId();
+            final String result = proxyIdString + ": " + requestUuid;
+
+            // Authorise request.
+            requestAuthenticator.authenticate(request, attributeMap);
+
+            LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
+            attributeMap.put(proxyIdString, requestUuid);
+
+            // Save the time the data was received.
+            attributeMap.computeIfAbsent(StandardHeaderArguments.RECEIVED_TIME, k ->
+                    DateUtil.createNormalDateTimeString());
+
+            // Append the hostname.
+            appendReceivedPath(attributeMap);
+
+            // Treat differently depending on compression type.
+            String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
+            if (compression != null && !compression.isEmpty()) {
+                compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
+                if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
+                    throw new StroomStreamException(
+                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
+                }
+            }
+
+            if (ZERO_CONTENT.equals(attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH))) {
+                LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
+
+            } else {
+                final Receiver receiver = receiverFactory.get(attributeMap);
+                receiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
+            }
+
             response.setStatus(HttpStatus.SC_OK);
 
-            LOGGER.debug(() -> "Writing proxy id attribute to response: " + proxyId);
+            LOGGER.debug(() -> "Writing proxy id attribute to response: " + result);
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(proxyId);
+                writer.println(result);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -74,71 +111,22 @@ public class ProxyRequestHandler implements RequestHandler {
         }
     }
 
-    private void readInputStream(final HttpServletRequest request,
-                                 final AttributeMap attributeMap,
-                                 final String requestUuid) {
-        final String proxyIdString = proxyId.getId();
-        LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
-        attributeMap.put(proxyIdString, requestUuid);
+    private void appendReceivedPath(final AttributeMap attributeMap) {
+//        if (appendReceivedPath) {
+        // Here we build up a list of stroom servers that have received
+        // the message
 
-        final Instant receivedTime = Instant.now();
-        try (final ByteCountInputStream inputStream =
-                new ByteCountInputStream(request.getInputStream())) {
-            // Consume the data
-            Metrics.measure("ProxyRequestHandler - handle", () -> {
-                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-                receiveStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
-                    final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                            attributeMap,
-                            handler,
-                            new ProgressHandler("Receiving data"));
-                    stroomStreamProcessor.processRequestHeader(request, receivedTime);
-                    stroomStreamProcessor.processInputStream(inputStream, "", receivedTime);
-                });
-            });
+        // The initial one will be initially set at the boundary proxy/stroom server
+        final String entryReceivedServer = attributeMap.get(StandardHeaderArguments.RECEIVED_PATH);
 
-            final long durationMs = System.currentTimeMillis() - receivedTime.toEpochMilli();
-            logStream.log(
-                    RECEIVE_LOG,
-                    attributeMap,
-                    "RECEIVE",
-                    request.getRequestURI(),
-                    HttpStatus.SC_OK,
-                    inputStream.getCount(),
-                    durationMs);
-        } catch (final IOException e) {
-            throw StroomStreamException.create(e, attributeMap);
-        }
-    }
-
-    private void readAndDropInputStream(final HttpServletRequest request,
-                                        final AttributeMap attributeMap,
-                                        final String requestUuid) {
-        final long startTimeMs = System.currentTimeMillis();
-        try (final ByteCountInputStream inputStream =
-                new ByteCountInputStream(request.getInputStream())) {
-            // Just read the stream in and ignore it
-            final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-            while (inputStream.read(buffer) >= 0) {
-                // Ignore data.
-                if (LOGGER.isTraceEnabled()) {
-                    LOGGER.trace(new String(buffer));
-                }
+        if (entryReceivedServer != null) {
+            if (!entryReceivedServer.contains(hostName)) {
+                attributeMap.put(StandardHeaderArguments.RECEIVED_PATH,
+                        entryReceivedServer + "," + hostName);
             }
-            LOGGER.warn("\"Dropped\",{}", CSVFormatter.format(attributeMap));
-
-            final long duration = System.currentTimeMillis() - startTimeMs;
-            logStream.log(
-                    RECEIVE_LOG,
-                    attributeMap,
-                    "DROP",
-                    request.getRequestURI(),
-                    HttpStatus.SC_OK,
-                    inputStream.getCount(),
-                    duration);
-        } catch (final IOException e) {
-            throw StroomStreamException.create(e, attributeMap);
+        } else {
+            attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, hostName);
         }
+//        }
     }
 }

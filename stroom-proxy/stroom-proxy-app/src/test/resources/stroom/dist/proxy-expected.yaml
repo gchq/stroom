@@ -6,29 +6,13 @@ proxyConfig:
     maxAggregateAge: "PT10M"
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
+    splitSources: true
   contentDir: "content"
   contentSync:
     apiKey: null
     contentSyncEnabled: false
     syncFrequency: "PT1M"
     upstreamUrl: null
-  db:
-    batchSize: 1000000
-    cleanupFrequency: "PT1S"
-    connectionPragma:
-    - "pragma synchronous = normal;"
-    - "pragma temp_store = memory;"
-    - "pragma mmap_size = 30000000000;"
-    dbDir: "db"
-    flushFrequency: "PT1S"
-    globalPragma:
-    - "pragma journal_mode = WAL;"
-    libraryDir: "sqlite_library"
-    maintenancePragma:
-    - "pragma wal_checkpoint(truncate);"
-    - "pragma vacuum;"
-    - "pragma optimize;"
-    maintenancePragmaFrequency: "PT1M"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"
@@ -46,28 +30,23 @@ proxyConfig:
       maximumSize: 1000
       refreshAfterWrite: null
     url: null
-  fileScanners:
-  - path: null
-    scanFrequency: "PT1M"
   forwardFileDestinations:
   - enabled: true
+    instant: false
     name: null
     path: null
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
+    apiKey: null
     enabled: true
-    forwardChunkSize: "1M"
     forwardDelay: "PT0S"
     forwardTimeout: "PT30S"
     forwardUrl: null
+    httpClient: null
+    instant: false
+    maxRetries: 3
     name: null
-    sslConfig: null
-    userAgent: null
-  forwardRetry:
-    failedForwardDir: "failures"
-    maxRetryDelay: "PT1H"
-    maxTries: 10
-    retryFrequency: "PT1M"
+    retryDelay: "PT10S"
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
@@ -80,6 +59,7 @@ proxyConfig:
     - "remotehost"
     - "system"
   path:
+    data: "data"
     home: null
     temp: null
   proxyId: null
@@ -100,9 +80,6 @@ proxyConfig:
     - "Records"
     receiptPolicyUuid: null
     tokenAuthenticationEnabled: false
-  repository:
-    repoDir: "repo"
-    storingEnabled: true
   security:
     authentication:
       authenticationRequired: true
@@ -114,6 +91,7 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        httpClient: null
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null
@@ -135,6 +113,5 @@ proxyConfig:
     queueName: null
     queueUrl: null
   threads:
-    examineSourceThreadCount: 3
-    forwardRetryThreadCount: 2
-    forwardThreadCount: 10
+    forwardRetryThreadCount: 1
+    forwardThreadCount: 5

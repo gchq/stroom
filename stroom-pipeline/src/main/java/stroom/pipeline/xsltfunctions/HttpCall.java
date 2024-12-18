@@ -1,6 +1,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -17,17 +18,19 @@ import net.sf.saxon.om.Item;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map.Entry;
+import java.io.InputStream;
 import java.util.Optional;
 
 class HttpCall extends StroomExtensionFunctionCall {
@@ -40,11 +43,11 @@ class HttpCall extends StroomExtensionFunctionCall {
     private static final String HEADER_DELIMITER = "\n";
     private static final String HEADER_KV_DELIMITER = ":";
 
-    private final HttpClientCache httpClientCache;
+    private final CommonHttpClient commonHttpClient;
 
     @Inject
     HttpCall(final HttpClientCache httpClientCache) {
-        this.httpClientCache = httpClientCache;
+        commonHttpClient = new CommonHttpClient(httpClientCache);
     }
 
     @Override
@@ -56,16 +59,17 @@ class HttpCall extends StroomExtensionFunctionCall {
         final String headers = getOptionalString(arguments, 1).orElse("");
         final String mediaType = getOptionalString(arguments, 2).orElse("application/json; charset=utf-8");
         final String data = getOptionalString(arguments, 3).orElse("");
-        final String clientConfig = getOptionalString(arguments, 4).orElse("");
+        final String clientConfigStr = getOptionalString(arguments, 4).orElse("");
 
         if (url.isEmpty()) {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
 
         } else {
             try {
-                try (final Response response = execute(url, headers, mediaType, data, clientConfig)) {
-                    sequence = createSequence(context, response);
-                }
+                final HttpClient httpClient = commonHttpClient.createClient(clientConfigStr);
+                sequence = execute(url, headers, mediaType, data, httpClient, response ->
+                        createSequence(context, response));
+
             } catch (final Exception e) {
                 final String msg = buildErrorMessage(e);
                 LOGGER.trace(msg, e);
@@ -92,92 +96,93 @@ class HttpCall extends StroomExtensionFunctionCall {
                 "Error calling XSLT function {}(): {}", FUNCTION_NAME, cleanedErrorMsg);
     }
 
-    Response execute(final String url,
-                     final String headers,
-                     final String mediaType,
-                     final String data,
-                     final String clientConfig) throws IOException {
-        LOGGER.debug(() -> "Creating client");
-        final OkHttpClient client = httpClientCache.get(clientConfig);
-
+    <T> T execute(final String url,
+                  final String headers,
+                  final String mediaType,
+                  final String data,
+                  final HttpClient httpClient,
+                  HttpClientResponseHandler<T> responseHandler) {
         LOGGER.debug(() -> "Creating request builder");
-        Request.Builder builder = new Request.Builder().url(url);
+        final HttpPost httpPost = new HttpPost(url);
 
-        if (data != null && data.length() > 0) {
-            final RequestBody body = RequestBody.create(data, MediaType.parse(mediaType));
-            builder = builder.post(body);
+        if (data != null && !data.isEmpty()) {
+            final ContentType contentType = ContentType.create(mediaType);
+            httpPost.setEntity(new StringEntity(data, contentType));
         }
 
-        if (headers != null && headers.length() > 0) {
+        if (headers != null && !headers.isEmpty()) {
             final String[] parts = headers.split(HEADER_DELIMITER);
             for (final String part : parts) {
                 int index = part.indexOf(HEADER_KV_DELIMITER);
                 if (index > 0) {
                     final String key = part.substring(0, index).trim();
                     final String value = part.substring(index + HEADER_KV_DELIMITER.length()).trim();
-                    builder = builder.addHeader(key, value);
+                    httpPost.setHeader(key, value);
                 }
             }
         }
 
-        final Request request = builder.build();
-
         try {
-            return client.newCall(request).execute();
-        } catch (IOException e) {
+            return httpClient.execute(httpPost, responseHandler);
+        } catch (final IOException e) {
             throw ProcessException.create(LogUtil.message(
                     "Error sending request to \"{}\": {}", url, e.getMessage()), e);
         }
     }
 
-    private Sequence createSequence(final XPathContext context, final Response response) throws SAXException {
-        final Configuration configuration = context.getConfiguration();
-        final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
-        final Builder builder = new TinyBuilder(pipe);
+    private Sequence createSequence(final XPathContext context, final ClassicHttpResponse response) {
+        try {
+            final Configuration configuration = context.getConfiguration();
+            final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+            final Builder builder = new TinyBuilder(pipe);
 
-        final ReceivingContentHandler contentHandler = new ReceivingContentHandler();
-        contentHandler.setPipelineConfiguration(pipe);
-        contentHandler.setReceiver(builder);
+            final ReceivingContentHandler contentHandler = new ReceivingContentHandler();
+            contentHandler.setPipelineConfiguration(pipe);
+            contentHandler.setReceiver(builder);
 
-        contentHandler.startDocument();
-        startElement(contentHandler, "response");
-        data(contentHandler, "successful", String.valueOf(response.isSuccessful()));
-        data(contentHandler, "code", String.valueOf(response.code()));
-        data(contentHandler, "message", response.message());
+            contentHandler.startDocument();
+            startElement(contentHandler, "response");
+            data(contentHandler, "successful", String.valueOf(response.getCode() == 200));
+            data(contentHandler, "code", String.valueOf(response.getCode()));
+            data(contentHandler, "message", response.getReasonPhrase());
 
-        // Write headers.
-        if (response.headers() != null && response.headers().size() > 0) {
-            startElement(contentHandler, "headers");
-            for (final Entry<String, List<String>> entry : response.headers().toMultimap().entrySet()) {
-                final String key = entry.getKey();
-                for (final String value : entry.getValue()) {
+            // Write headers.
+            if (response.getHeaders() != null && response.getHeaders().length > 0) {
+                startElement(contentHandler, "headers");
+                for (final Header header : response.getHeaders()) {
                     startElement(contentHandler, "header");
-                    data(contentHandler, "key", key);
-                    data(contentHandler, "value", value);
+                    data(contentHandler, "key", header.getName());
+                    data(contentHandler, "value", header.getValue());
                     endElement(contentHandler, "header");
                 }
+                endElement(contentHandler, "headers");
             }
-            endElement(contentHandler, "headers");
-        }
 
-        try {
-            if (response.body() != null) {
-                data(contentHandler, "body", response.body().string());
+            try {
+                final HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    try (final InputStream inputStream = entity.getContent()) {
+                        final String string = StreamUtil.streamToString(inputStream);
+                        data(contentHandler, "body", string);
+                    }
+                }
+            } catch (final NullPointerException | IOException e) {
+                LOGGER.debug(e::getMessage, e);
             }
-        } catch (final NullPointerException | IOException e) {
-            LOGGER.debug(e::getMessage, e);
+
+            endElement(contentHandler, "response");
+            contentHandler.endDocument();
+
+            Sequence sequence = builder.getCurrentRoot();
+
+            // Reset the builder, detaching it from the constructed
+            // document.
+            builder.reset();
+
+            return sequence;
+        } catch (final SAXException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        endElement(contentHandler, "response");
-        contentHandler.endDocument();
-
-        Sequence sequence = builder.getCurrentRoot();
-
-        // Reset the builder, detaching it from the constructed
-        // document.
-        builder.reset();
-
-        return sequence;
     }
 
     private Sequence createError(final XPathContext context, final String message) throws SAXException {

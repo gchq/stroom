@@ -1,7 +1,7 @@
 package stroom.pipeline.refdata.store;
 
+import jakarta.validation.constraints.NotNull;
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;

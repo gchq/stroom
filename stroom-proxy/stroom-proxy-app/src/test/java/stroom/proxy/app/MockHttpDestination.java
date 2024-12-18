@@ -2,17 +2,17 @@ package stroom.proxy.app;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
-import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.FileName;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
@@ -33,17 +33,18 @@ import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.io.FilenameUtils;
 import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -172,34 +173,34 @@ public class MockHttpDestination {
 
         final byte[] body = request.getBody();
         if (body.length > 0) {
-            final AttributeMap attributeMap = buildAttributeMap(request);
             final List<DataFeedRequestItem> dataFeedRequestItems = new ArrayList<>();
-            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                    attributeMap,
-                    (entry, inputStream, progressHandler) -> {
-                        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
-                        // Assumes UTF8 content to save us inspecting the meta, fine for testing
-                        final String content = new String(byteCountInputStream.readAllBytes(), StandardCharsets.UTF_8);
-                        LOGGER.info("""
-                                        datafeed entry: {}, content:
-                                        -------------------------------------------------
-                                        {}
-                                        -------------------------------------------------""",
-                                entry, content);
-                        final String type = FilenameUtils.getExtension(entry);
-                        final String baseName = entry.substring(0, entry.indexOf('.'));
-                        final DataFeedRequestItem item = new DataFeedRequestItem(
-                                entry,
-                                baseName,
-                                type,
-                                content);
-                        dataFeedRequestItems.add(item);
-                        return byteCountInputStream.getCount();
-                    },
-                    val -> {
-                    });
 
-            stroomStreamProcessor.processInputStream(new ByteArrayInputStream(body), "");
+            try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(new ByteArrayInputStream(
+                    body))) {
+                ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
+                while (entry != null) {
+                    final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(zipArchiveInputStream);
+                    // Assumes UTF8 content to save us inspecting the meta, fine for testing
+                    final String content = new String(byteCountInputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    LOGGER.info("""
+                                    datafeed entry: {}, content:
+                                    -------------------------------------------------
+                                    {}
+                                    -------------------------------------------------""",
+                            entry, content);
+                    final FileName fileName = FileName.parse(entry.getName());
+                    final DataFeedRequestItem item = new DataFeedRequestItem(
+                            fileName.getFullName(),
+                            fileName.getBaseName(),
+                            fileName.getExtension(),
+                            content);
+                    dataFeedRequestItems.add(item);
+                    entry = zipArchiveInputStream.getNextEntry();
+                }
+
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
 
             final DataFeedRequest dataFeedRequest = new DataFeedRequest(dataFeedRequestItems);
             dataFeedRequests.add(dataFeedRequest);
@@ -233,7 +234,7 @@ public class MockHttpDestination {
             final List<String> entries = new ArrayList<>();
             while (true) {
                 try {
-                    final ZipArchiveEntry entry = zipInputStream.getNextZipEntry();
+                    final ZipArchiveEntry entry = zipInputStream.getNextEntry();
                     if (entry == null) {
                         break;
                     }
@@ -323,42 +324,48 @@ public class MockHttpDestination {
     }
 
 
-    void assertPosts() {
+    void assertPosts(final int count) {
         final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
+
+        // Check feed names.
+        final String[] feedNames = new String[count];
+        for (int i = 0; i < count; i++) {
+            feedNames[i++] = TestConstants.FEED_TEST_EVENTS_1;
+            feedNames[i] = TestConstants.FEED_TEST_EVENTS_2;
+        }
 
         // Check feed names.
         Assertions.assertThat(postsToStroomDataFeed)
                 .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
-                .containsExactlyInAnyOrder(
-                        TestConstants.FEED_TEST_EVENTS_1,
-                        TestConstants.FEED_TEST_EVENTS_2,
-                        TestConstants.FEED_TEST_EVENTS_1,
-                        TestConstants.FEED_TEST_EVENTS_2);
+                .containsExactlyInAnyOrder(feedNames);
 
         // Check zip content file count.
-        Assertions.assertThat(dataFeedRequests)
-                .hasSize(4);
+        Assertions.assertThat(dataFeedRequests).hasSize(count);
+
+        final Integer[] sizes = new Integer[count];
+        Arrays.fill(sizes, 6);
+        sizes[sizes.length - 1] = 2;
+        sizes[sizes.length - 2] = 2;
 
         // Can't be sure of the order they are sent,
         Assertions.assertThat(dataFeedRequests.stream()
                         .map(dataFeedRequest -> dataFeedRequest.getDataFeedRequestItems().size())
                         .toList())
-                .containsExactlyInAnyOrder(7, 7, 3, 3);
+                .containsExactlyInAnyOrder(sizes);
 
         assertDataFeedRequestContent(dataFeedRequests);
     }
 
     private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests) {
         final List<String> expectedFiles = List.of(
-                "001.mf",
-                "001.meta",
-                "001.dat",
-                "002.meta",
-                "002.dat",
-                "003.meta",
-                "003.dat",
-                "004.meta",
-                "004.dat");
+                "0000000001.meta",
+                "0000000001.dat",
+                "0000000002.meta",
+                "0000000002.dat",
+                "0000000003.meta",
+                "0000000003.dat",
+                "0000000004.meta",
+                "0000000004.dat");
         assertDataFeedRequestContent(dataFeedRequests, expectedFiles);
     }
 
@@ -383,14 +390,14 @@ public class MockHttpDestination {
 //        isRequestLoggingEnabled = requestLoggingEnabled;
 //    }
 
-    static ForwardHttpPostConfig createForwardHttpPostConfig() {
+    static ForwardHttpPostConfig createForwardHttpPostConfig(final boolean instant) {
         return ForwardHttpPostConfig.builder()
                 .enabled(true)
+                .instant(instant)
                 .forwardUrl("http://localhost:"
-                        + MockHttpDestination.DEFAULT_STROOM_PORT
-                        + getDataFeedPath())
+                            + MockHttpDestination.DEFAULT_STROOM_PORT
+                            + getDataFeedPath())
                 .name("Stroom datafeed")
-                .userAgent("Junit test")
                 .build();
     }
 
@@ -399,8 +406,8 @@ public class MockHttpDestination {
                 true,
                 FeedStatus.Receive,
                 "http://localhost:"
-                        + MockHttpDestination.DEFAULT_STROOM_PORT
-                        + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
+                + MockHttpDestination.DEFAULT_STROOM_PORT
+                + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
                 null,
                 null);
     }
@@ -419,8 +426,8 @@ public class MockHttpDestination {
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,
                 () -> "Forward to stroom datafeed count",
-                Duration.ofSeconds(30),
-                Duration.ofMillis(50),
+                Duration.ofMinutes(1),
+                Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
         WireMock.verify(expectedRequestCount, WireMock.postRequestedFor(

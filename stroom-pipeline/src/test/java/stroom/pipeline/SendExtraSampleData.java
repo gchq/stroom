@@ -18,11 +18,14 @@ package stroom.pipeline;
 
 import stroom.util.io.StreamUtil;
 
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import javax.net.ssl.HttpsURLConnection;
 
 public class SendExtraSampleData {
 
@@ -31,41 +34,28 @@ public class SendExtraSampleData {
     }
 
     public static void main(final String[] args) {
-        try {
-            String urlS = "http://localhost:8056/datafeed";
-
-            URL url = new URL(urlS);
+        String url = "http://localhost:8056/datafeed";
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
 
             String xml = StreamUtil
                     .streamToString(ClassLoader.getSystemResourceAsStream("samples/input/XML-EVENTS~1.in"));
 
             for (int i = 0; i < 100; i++) {
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-                if (connection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) connection).setHostnameVerifier((arg0, arg1) -> true);
-                }
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/audit");
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setChunkedStreamingMode(100);
-                connection.addRequestProperty("Feed", "XML-EVENTS");
-                connection.connect();
-
-                OutputStream out = connection.getOutputStream();
-                out.write(xml.getBytes());
-                out.close();
-
-                int response = connection.getResponseCode();
-                String msg = connection.getResponseMessage();
-
-                connection.disconnect();
-
-                System.out.println("Client Got Response " + response);
-                if (msg != null && !msg.isEmpty()) {
-                    System.out.println(msg);
-                }
+                final HttpPost httpPost = new HttpPost(url);
+                httpPost.addHeader("Content-Type", "application/audit");
+                httpPost.addHeader("Feed", "XML-EVENTS");
+                httpPost.setEntity(new BasicHttpEntity(
+                        new ByteArrayInputStream(xml.getBytes()),
+                        ContentType.create("application/audit"),
+                        true));
+                httpClient.execute(httpPost, response -> {
+                    String msg = response.getReasonPhrase();
+                    System.out.println("Client Got Response " + response.getCode());
+                    if (msg != null && !msg.isEmpty()) {
+                        System.out.println(msg);
+                    }
+                    return response.getCode();
+                });
 
                 Thread.sleep(100);
             }

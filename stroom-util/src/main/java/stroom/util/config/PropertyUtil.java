@@ -160,7 +160,8 @@ public final class PropertyUtil {
 //                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 //    }
     public static Map<String, Prop> getProperties(final Object object) {
-        final ObjectMapper objectMapper = JsonUtil.getMapper();;
+        final ObjectMapper objectMapper = JsonUtil.getMapper();
+        ;
         return getProperties(objectMapper, object);
     }
 
@@ -188,7 +189,8 @@ public final class PropertyUtil {
                         prop.setGetter(propDef.getGetter().getAnnotated());
                     } else {
                         throw new RuntimeException("Property " + propDef.getName() + " on " + clazz.getName() +
-                                " has no getter. Do the constructor and field/getter @JsonProperty names match up?");
+                                                   " has no getter. Do the constructor and field/getter " +
+                                                   "@JsonProperty names match up?");
                     }
                     if (propDef.hasSetter()) {
                         prop.setSetter(propDef.getSetter().getAnnotated());
@@ -442,8 +444,8 @@ public final class PropertyUtil {
                     // Boolean Getter.
 
                     if (methodName.length() > 2
-                            && method.getParameterTypes().length == 0
-                            && !method.getReturnType().equals(Void.TYPE)) {
+                        && method.getParameterTypes().length == 0
+                        && !method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 2);
 //                        final String name = getName(method, () ->
 //                                getPropertyName(methodName, 2));
@@ -456,9 +458,9 @@ public final class PropertyUtil {
                     // Getter.
 
                     if (methodName.length() > 3
-                            && !methodName.equals("getClass")
-                            && method.getParameterTypes().length == 0
-                            && !method.getReturnType().equals(Void.TYPE)) {
+                        && !methodName.equals("getClass")
+                        && method.getParameterTypes().length == 0
+                        && !method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 3);
 //                        final String name = getName(method, () ->
 //                                getPropertyName(methodName, 3));
@@ -470,8 +472,8 @@ public final class PropertyUtil {
                     // Setter.
 
                     if (methodName.length() > 3
-                            && method.getParameterTypes().length == 1
-                            && method.getReturnType().equals(Void.TYPE)) {
+                        && method.getParameterTypes().length == 1
+                        && method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 3);
 //                        final String name = getName(method, () -> getPropertyName(methodName, 3));
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
@@ -569,9 +571,9 @@ public final class PropertyUtil {
         @Override
         public String toString() {
             return "ObjectInfo{" +
-                    "name='" + name + '\'' +
-                    ", objectClass=" + objectClass +
-                    '}';
+                   "name='" + name + '\'' +
+                   ", objectClass=" + objectClass +
+                   '}';
         }
     }
 
@@ -722,7 +724,9 @@ public final class PropertyUtil {
 
         public void setValueOnConfigObject(final Object newValue) {
             try {
-                setter.invoke(parentObject, newValue);
+                if (setter != null) {
+                    setter.invoke(parentObject, newValue);
+                }
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error setting value for prop {}", name), e);
             }
@@ -749,9 +753,9 @@ public final class PropertyUtil {
         @Override
         public String toString() {
             return "Prop{" +
-                    "name='" + name + '\'' +
-                    ", parentObject=" + parentObject +
-                    '}';
+                   "name='" + name + '\'' +
+                   ", parentObject=" + parentObject +
+                   '}';
         }
 
         @Override
@@ -764,9 +768,9 @@ public final class PropertyUtil {
             }
             final Prop prop = (Prop) o;
             return Objects.equals(name, prop.name) &&
-                    Objects.equals(parentObject, prop.parentObject) &&
-                    Objects.equals(getter, prop.getter) &&
-                    Objects.equals(setter, prop.setter);
+                   Objects.equals(parentObject, prop.parentObject) &&
+                   Objects.equals(getter, prop.getter) &&
+                   Objects.equals(setter, prop.setter);
         }
 
         @Override

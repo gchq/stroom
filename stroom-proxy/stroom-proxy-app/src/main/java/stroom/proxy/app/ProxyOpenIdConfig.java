@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
 
         super(identityProviderType,
                 openIdConfigurationEndpoint,
@@ -60,7 +62,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
-                expectedSignerPrefixes);
+                expectedSignerPrefixes,
+                httpClient);
     }
 
     @JsonIgnore
@@ -74,11 +77,11 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The type of Open ID Connect identity provider that stroom/proxy" +
-            "will use for authentication. Valid values are: " +
-            "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito, " +
-            "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only and " +
-            "NO_IDP - No IDP is used. API keys are set in config for feed status checks. " +
-            "Changing this property will require a restart of the application.")
+                             "will use for authentication. Valid values are: " +
+                             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito, " +
+                             "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only and " +
+                             "NO_IDP - No IDP is used. API keys are set in config for feed status checks. " +
+                             "Changing this property will require a restart of the application.")
     @Override
     public IdpType getIdentityProviderType() {
         return super.getIdentityProviderType();
@@ -110,6 +113,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
-                getExpectedSignerPrefixes());
+                getExpectedSignerPrefixes(),
+                getHttpClient());
     }
 }

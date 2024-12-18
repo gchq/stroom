@@ -20,17 +20,12 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
 
@@ -90,94 +85,6 @@ public class StroomStreamException extends RuntimeException {
             return (RuntimeException) ex;
         } else {
             return new RuntimeException(ex);
-        }
-    }
-
-    /**
-     * Checks the response code and stroom status for the connection and attributeMap.
-     * Either returns 200 or throws a {@link StroomStreamException}.
-     * @return The HTTP response code
-     * @throws StroomStreamException if a non-200 response is received
-     */
-    public static int checkConnectionResponse(final HttpURLConnection connection,
-                                              final AttributeMap attributeMap) {
-        int responseCode = -1;
-        int stroomStatus = -1;
-        try {
-            responseCode = connection.getResponseCode();
-            final String stroomError = connection.getHeaderField(StandardHeaderArguments.STROOM_ERROR);
-
-            final String responseMessage = !NullSafe.isBlankString(stroomError)
-                    ? stroomError
-                    : connection.getResponseMessage();
-
-            stroomStatus = connection.getHeaderFieldInt(StandardHeaderArguments.STROOM_STATUS, -1);
-
-            if (responseCode == 200) {
-                readAndCloseStream(connection.getInputStream());
-                closeStream(connection.getInputStream());
-            } else {
-//                final InputStream errorStream = connection.getErrorStream();
-//                final String errorDetail = readInputStream(errorStream);
-//                final String body = readInputStream(connection.getInputStream());
-//                LOGGER.info("errorDetail: {}", errorDetail);
-//                LOGGER.info("body: {}", body);
-                closeStream(connection.getErrorStream());
-
-                if (stroomStatus != -1) {
-                    throw new StroomStreamException(
-                            StroomStatusCode.getStroomStatusCode(stroomStatus),
-                            attributeMap,
-                            responseMessage);
-                } else {
-                    throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR,
-                            attributeMap,
-                            responseMessage);
-                }
-            }
-        } catch (final IOException ioEx) {
-            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR,
-                    attributeMap,
-                    ioEx.getMessage());
-        }
-        return responseCode;
-    }
-
-    private static String readInputStream(final InputStream inputStream) throws IOException {
-        if (inputStream != null) {
-            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            final StringBuilder responseString = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                responseString.append(line);
-            }
-            bufferedReader.close();
-            return responseString.toString();
-        } else {
-            return "";
-        }
-    }
-
-    private static void closeStream(final InputStream inputStream) {
-        try {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-        } catch (final IOException ioex) {
-            LOGGER.debug("Error closing stream", ioex);
-        }
-    }
-
-    private static void readAndCloseStream(final InputStream inputStream) {
-        final byte[] buffer = new byte[1024];
-        try {
-            if (inputStream != null) {
-                while (inputStream.read(buffer) > 0) {
-                }
-                inputStream.close();
-            }
-        } catch (final IOException ioex) {
-            // TODO @AT Should we be swallowing this
         }
     }
 

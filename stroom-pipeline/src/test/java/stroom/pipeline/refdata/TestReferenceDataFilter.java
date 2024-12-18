@@ -53,12 +53,12 @@ import stroom.util.shared.Range;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
+import jakarta.validation.constraints.NotNull;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.serialize.XMLEmitter;
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.jvnet.fastinfoset.FastInfosetException;
@@ -179,9 +179,11 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .forEach(fastInfosetValue -> {
 
                     consumeFastInfoset(fastInfosetValue, "" +
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
-                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
-                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                                                         "<evt:Room>room[0-9]+<\\/evt:Room>" +
+                                                         "<evt:Desk>desk[0-9]+<\\/evt:Desk>" +
+                                                         "<\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -219,9 +221,11 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .forEach(fastInfosetValue -> {
 
                     consumeFastInfoset(fastInfosetValue, "" +
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
-                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
-                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                                                         "<evt:Room>room[0-9]+<\\/evt:Room>" +
+                                                         "<evt:Desk>desk[0-9]+<\\/evt:Desk>" +
+                                                         "<\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -304,9 +308,11 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .forEach(fastInfosetValue -> {
 
                     consumeFastInfoset(fastInfosetValue, "" +
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
-                            "<Location xmlns=\"stroom\">(.|\\n)*<Room>room[0-9]+<\\/Room>" +
-                            "<Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<Location xmlns=\"stroom\">(.|\\n)*" +
+                                                         "<Room>room[0-9]+<\\/Room>" +
+                                                         "<Desk>desk[0-9]+<\\/Desk>" +
+                                                         "<\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -343,9 +349,11 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .forEach(fastInfosetValue -> {
 
                     consumeFastInfoset(fastInfosetValue, "" +
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
-                            "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
-                            "<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
+                                                         "<Room>room[0-9]+<\\/Room>" +
+                                                         "<Desk>desk[0-9]+<\\/Desk>" +
+                                                         "<\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -383,11 +391,14 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .forEach(fastInfosetValue -> {
 
                     consumeFastInfoset(fastInfosetValue, "" +
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
-                            "<Location xmlns=\"stroom\" xmlns:s=\"stroom\" xmlns:xxx=\"extra-namespace\">(.|\\n)*" +
-                            "<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" " +
-                            "xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room>" +
-                            "<xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<Location " +
+                                                         "xmlns=\"stroom\" " +
+                                                         "xmlns:s=\"stroom\" " +
+                                                         "xmlns:xxx=\"extra-namespace\">(.|\\n)*" +
+                                                         "<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" " +
+                                                         "xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room>" +
+                                                         "<xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 

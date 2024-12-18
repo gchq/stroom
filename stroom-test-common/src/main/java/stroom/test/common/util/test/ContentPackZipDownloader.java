@@ -10,6 +10,8 @@ import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -20,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
@@ -44,7 +45,8 @@ public class ContentPackZipDownloader {
 
     private static void downloadZip(final ContentPackZip contentPackZip,
                                     final Path contentPackDownloadDir,
-                                    final Path contentPackImportDir) {
+                                    final Path contentPackImportDir,
+                                    final HttpClient httpClient) {
 
         final Path downloadFile = buildDestFilePath(contentPackZip, contentPackDownloadDir);
         final Path importFile = buildDestFilePath(contentPackZip, contentPackImportDir);
@@ -54,7 +56,7 @@ public class ContentPackZipDownloader {
         if (!Files.isRegularFile(importFile)) {
 
             // Do the download (if it is not there already)
-            downloadContentPackZip(contentPackZip, contentPackDownloadDir);
+            downloadContentPackZip(contentPackZip, contentPackDownloadDir, httpClient);
 
             LOGGER.info("Copying from " + downloadFile + " to " + importFile);
             try {
@@ -79,7 +81,8 @@ public class ContentPackZipDownloader {
 
     public static synchronized void downloadZipPacks(final Path contentPacksDefinition,
                                                      final Path contentPackDownloadDir,
-                                                     final Path contentPackImportDir) {
+                                                     final Path contentPackImportDir,
+                                                     final HttpClient httpClient) {
         LOGGER.info("Downloading content packs using definition {}, with download dir {} and import dir {}",
                 contentPacksDefinition.toAbsolutePath(),
                 contentPackDownloadDir.toAbsolutePath(),
@@ -103,15 +106,17 @@ public class ContentPackZipDownloader {
                     ContentPackZipCollection.class);
 
             contentPacks.getContentPacks().forEach(contentPack ->
-                    downloadZip(contentPack, contentPackDownloadDir, contentPackImportDir));
+                    downloadZip(contentPack, contentPackDownloadDir, contentPackImportDir, httpClient));
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public static Path downloadContentPackZip(final ContentPackZip contentPackZip, final Path destDir) {
-        return downloadContentPackZip(contentPackZip, destDir, ConflictMode.KEEP_EXISTING);
+    public static Path downloadContentPackZip(final ContentPackZip contentPackZip,
+                                              final Path destDir,
+                                              final HttpClient httpClient) {
+        return downloadContentPackZip(contentPackZip, destDir, ConflictMode.KEEP_EXISTING, httpClient);
     }
 
     public static synchronized Path downloadContentPack(final ContentPack contentPack,
@@ -188,7 +193,8 @@ public class ContentPackZipDownloader {
      */
     public static synchronized Path downloadContentPackZip(final ContentPackZip contentPackZip,
                                                            final Path destDir,
-                                                           final ConflictMode conflictMode) {
+                                                           final ConflictMode conflictMode,
+                                                           final HttpClient httpClient) {
         Preconditions.checkNotNull(contentPackZip);
         Preconditions.checkNotNull(destDir);
         Preconditions.checkNotNull(conflictMode);
@@ -233,7 +239,7 @@ public class ContentPackZipDownloader {
                             fileUrl,
                             FileUtil.getCanonicalPath(destFilePath));
 
-                    downloadFile(fileUrl, destFilePath);
+                    downloadFile(fileUrl, destFilePath, httpClient);
                 }
             }
         });
@@ -246,12 +252,12 @@ public class ContentPackZipDownloader {
             return new URL(contentPackZip.getUrl());
         } catch (MalformedURLException e) {
             throw new RuntimeException("Url " +
-                    contentPackZip.getUrl() +
-                    " for content pack " +
-                    contentPackZip.getName() +
-                    " and version " +
-                    contentPackZip.getVersion() +
-                    " is badly formed", e);
+                                       contentPackZip.getUrl() +
+                                       " for content pack " +
+                                       contentPackZip.getName() +
+                                       " and version " +
+                                       contentPackZip.getVersion() +
+                                       " is badly formed", e);
         }
     }
 
@@ -268,42 +274,40 @@ public class ContentPackZipDownloader {
     private static boolean isRedirected(Map<String, List<String>> header) {
         for (String hv : header.get(null)) {
             if (hv.contains(" 301 ")
-                    || hv.contains(" 302 ")) {
+                || hv.contains(" 302 ")) {
                 return true;
             }
         }
         return false;
     }
 
-    private static void downloadFile(final URL fileUrl, final Path destFilename) {
-        URL effectiveUrl = fileUrl;
+    private static void downloadFile(final URL fileUrl,
+                                     final Path destFilename,
+                                     final HttpClient httpClient) {
         try {
-            HttpURLConnection http = (HttpURLConnection) effectiveUrl.openConnection();
-            Map<String, List<String>> header = http.getHeaderFields();
-            while (isRedirected(header)) {
-                effectiveUrl = new URL(header.get("Location").get(0));
-                http = (HttpURLConnection) effectiveUrl.openConnection();
-                header = http.getHeaderFields();
-            }
+            final HttpGet httpGet = new HttpGet(fileUrl.toString());
+            httpClient.execute(httpGet, response -> {
+                try (final InputStream inputStream = response.getEntity().getContent()) {
+                    // Create a temp file as the download destination to avoid overwriting an existing file.
+                    final Path tempFile = Files.createTempFile("stroom", "download");
+                    try (final OutputStream fos = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
+                        StreamUtil.streamToStream(inputStream, fos);
+                    }
 
-            // Create a temp file as the download destination to avoid overwriting an existing file.
-            final Path tempFile = Files.createTempFile("stroom", "download");
-            try (final OutputStream fos = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
-                StreamUtil.streamToStream(http.getInputStream(), fos);
-            }
-
-            // Atomically move the downloaded file to the destination so that
-            // concurrent tests don't overwrite the file.
-            try {
-                Files.move(tempFile, destFilename);
-            } catch (FileAlreadyExistsException e) {
-                // Don't see why we should get here as the methods are synchronized
-                LOGGER.warn("Unable to move {} to {} as file already exists, ignoring the error.",
-                        tempFile.toAbsolutePath().normalize(),
-                        destFilename.toAbsolutePath().normalize(),
-                        e);
-            }
-
+                    // Atomically move the downloaded file to the destination so that
+                    // concurrent tests don't overwrite the file.
+                    try {
+                        Files.move(tempFile, destFilename);
+                    } catch (FileAlreadyExistsException e) {
+                        // Don't see why we should get here as the methods are synchronized
+                        LOGGER.warn("Unable to move {} to {} as file already exists, ignoring the error.",
+                                tempFile.toAbsolutePath().normalize(),
+                                destFilename.toAbsolutePath().normalize(),
+                                e);
+                    }
+                }
+                return response.getCode();
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(String.format("Error downloading url %s to %s",
                     fileUrl.toString(), FileUtil.getCanonicalPath(destFilename)), e);
