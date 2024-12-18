@@ -51,29 +51,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
 
     private static volatile Template template;
 
-    public DocRefCell(final EventBus eventBus,
-                      final boolean allowLinkByName) {
-        this(eventBus,
-                null,
-                allowLinkByName,
-                false,
-                DisplayType.NAME,
-                null,
-                null);
-    }
-
-    public DocRefCell(final EventBus eventBus,
-                      final boolean allowLinkByName,
-                      final Function<T_ROW, String> cssClassFunction) {
-        this(eventBus,
-                null,
-                allowLinkByName,
-                false,
-                DisplayType.NAME,
-                cssClassFunction,
-                null);
-    }
-
     /**
      * @param documentTypes    Must be non-null to show the icon. Can be null.
      * @param showIcon         Set to true to show the type icon next to the text
@@ -81,13 +58,13 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
      * @param cellTextFunction Can be null. Function to provide the cell 'text' in HTML form. If null
      *                         then displayType will be used to derive the text from the {@link DocRef}.
      */
-    public DocRefCell(final EventBus eventBus,
-                      final DocumentTypes documentTypes,
-                      final boolean allowLinkByName,
-                      final boolean showIcon,
-                      final DocRef.DisplayType displayType,
-                      final Function<T_ROW, String> cssClassFunction,
-                      final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction) {
+    private DocRefCell(final EventBus eventBus,
+                       final DocumentTypes documentTypes,
+                       final boolean allowLinkByName,
+                       final boolean showIcon,
+                       final DocRef.DisplayType displayType,
+                       final Function<T_ROW, String> cssClassFunction,
+                       final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction) {
         super(MOUSEDOWN);
         this.documentTypes = documentTypes;
         this.eventBus = eventBus;
@@ -108,7 +85,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5) ||
-                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
+                   ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
         }
         return false;
     }
@@ -286,6 +263,67 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
 
         public DocRef getDocRef() {
             return GwtNullSafe.get(row, docRefExtractor);
+        }
+    }
+
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    public static class Builder<T> {
+
+        private EventBus eventBus;
+        private DocumentTypes documentTypes;
+        private boolean allowLinkByName = false;
+        private boolean showIcon = false;
+        private DocRef.DisplayType displayType = DisplayType.NAME;
+        private Function<T, String> cssClassFunction;
+        private Function<DocRefProvider<T>, SafeHtml> cellTextFunction;
+
+        public Builder<T> eventBus(final EventBus eventBus) {
+            this.eventBus = eventBus;
+            return this;
+        }
+
+        public Builder<T> documentTypes(final DocumentTypes documentTypes) {
+            this.documentTypes = documentTypes;
+            return this;
+        }
+
+        public Builder<T> allowLinkByName(final boolean allowLinkByName) {
+            this.allowLinkByName = allowLinkByName;
+            return this;
+        }
+
+        public Builder<T> showIcon(final boolean showIcon) {
+            this.showIcon = showIcon;
+            return this;
+        }
+
+        public Builder<T> displayType(final DisplayType displayType) {
+            this.displayType = displayType;
+            return this;
+        }
+
+        public Builder<T> cssClassFunction(final Function<T, String> cssClassFunction) {
+            this.cssClassFunction = cssClassFunction;
+            return this;
+        }
+
+        public Builder<T> cellTextFunction(final Function<DocRefProvider<T>, SafeHtml> cellTextFunction) {
+            this.cellTextFunction = cellTextFunction;
+            return this;
+        }
+
+        public DocRefCell<T> build() {
+            return new DocRefCell<>(
+                    eventBus,
+                    documentTypes,
+                    allowLinkByName,
+                    showIcon,
+                    displayType,
+                    cssClassFunction,
+                    cellTextFunction);
         }
     }
 }

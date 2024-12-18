@@ -1,5 +1,6 @@
 package stroom.explorer.client.presenter;
 
+import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -7,7 +8,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef.DisplayType;
 import stroom.explorer.client.event.FocusEvent;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest.Builder;
@@ -83,6 +83,11 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
 
         // Display Name
+        final DocRefCell.Builder<FindResultWithPermissions> cellBuilder =
+                new DocRefCell.Builder<FindResultWithPermissions>()
+                        .eventBus(getEventBus())
+                        .documentTypes(documentTypes)
+                        .showIcon(true);
         final Column<FindResultWithPermissions, DocRefProvider<FindResultWithPermissions>> docNameCol =
                 DataGridUtil.docRefColumnBuilder(
                                 (FindResultWithPermissions row) ->
@@ -90,13 +95,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                                                 row2,
                                                 FindResultWithPermissions::getFindResult,
                                                 FindResult::getDocRef)),
-                                getEventBus(),
-                                documentTypes,
-                                false,
-                                true,
-                                DisplayType.NAME,
-                                null,
-                                null)
+                                cellBuilder)
                         .build();
 
         dataGrid.addResizableColumn(docNameCol, "Document", 400);

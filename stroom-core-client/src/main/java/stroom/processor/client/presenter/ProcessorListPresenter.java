@@ -29,7 +29,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -354,21 +353,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             return docRef;
         };
 
-        final Function<ProcessorListRow, DocRefProvider<ProcessorListRow>> extractionFunction2 = row ->
-                new DocRefProvider<>(row, extractionFunction);
-        dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder(
-                                extractionFunction2,
-                                getEventBus(),
-                                documentTypes,
-                                false,
-                                true,
-                                DocRef.DisplayType.NAME,
-                                null,
-                                null)
-                        .build(),
-                "Pipeline",
-                ColumnSizeConstants.BIG_COL);
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, extractionFunction);
     }
 
 //    private void addTrackerColumns() {

@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
@@ -183,21 +182,8 @@ public class ProcessorTaskListPresenter
                 return null;
             }
         };
-        final Function<ProcessorTask, DocRefProvider<ProcessorTask>> feedExtractionFunction2 = row ->
-                new DocRefProvider<>(row, feedExtractionFunction);
-        dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder(
-                                feedExtractionFunction2,
-                                getEventBus(),
-                                documentTypes,
-                                false,
-                                true,
-                                DocRef.DisplayType.NAME,
-                                null,
-                                null)
-                        .build(),
-                "Feed",
-                ColumnSizeConstants.BIG_COL);
+
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", documentTypes, feedExtractionFunction);
 
         dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
@@ -216,21 +202,9 @@ public class ProcessorTaskListPresenter
             }
             return null;
         };
-        final Function<ProcessorTask, DocRefProvider<ProcessorTask>> pipelineExtractionFunction2 = row ->
-                new DocRefProvider<>(row, pipelineExtractionFunction);
-        dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder(
-                                pipelineExtractionFunction2,
-                                getEventBus(),
-                                documentTypes,
-                                false,
-                                true,
-                                DocRef.DisplayType.NAME,
-                                null,
-                                null)
-                        .build(),
-                "Pipeline",
-                ColumnSizeConstants.BIG_COL);
+
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, pipelineExtractionFunction);
+
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_START_TIME, false) {
