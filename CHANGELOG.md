@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.7] - 2024-12-18
+
+* Issue **#4655** : Allow selection of no conditional style.
+
+* Issue **#4632** : Fix conditional formatting rule id clash.
+
+* Issue **#4657** : Fix middle pane stream delete.
+
+* Issue **#4660** : Show pipelines and rules on processor and task panes.
+
+
 ## [v7.7-beta.6] - 2024-12-16
 
 * Issue **#4632** : Fix conditional formatting styles.
@@ -1057,7 +1068,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.7...HEAD
+[v7.7-beta.7]: https://github.com/gchq/stroom/compare/v7.7-beta.6...v7.7-beta.7
 [v7.7-beta.6]: https://github.com/gchq/stroom/compare/v7.7-beta.5...v7.7-beta.6
 [v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
 [v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
