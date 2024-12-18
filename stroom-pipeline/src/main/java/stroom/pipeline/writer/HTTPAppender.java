@@ -9,31 +9,41 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.xsltfunctions.HttpClientCache;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
 import stroom.util.cert.SSLConfig;
-import stroom.util.cert.SSLUtil;
+import stroom.util.http.HttpClientConfiguration;
+import stroom.util.http.HttpClientUtil;
+import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.io.CompressionUtil;
-import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.io.entity.FileEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,11 +55,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-
-// TODO: 03/05/2023 Consider changing this to use Jersey clients for consistency with the rest of the app.
 
 /**
  * Handler class that forwards the request to a URL.
@@ -95,7 +101,8 @@ public class HTTPAppender extends AbstractAppender {
             "GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE");
 
     private final MetaDataHolder metaDataHolder;
-    private final PathCreator pathCreator;
+    private final TempDirProvider tempDirProvider;
+    private final HttpClientCache httpClientCache;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private String forwardUrl;
@@ -104,11 +111,9 @@ public class HTTPAppender extends AbstractAppender {
     private Long forwardChunkSize;
     private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
 
-    private HttpURLConnection connection;
     private final OutputFactory outputStreamSupport;
     private long startTimeMs;
 
-    private boolean useJvmSslConfig = true;
     private final SSLConfig.Builder sslConfigBuilder = SSLConfig.builder();
 
     private String requestMethod = DEFAULT_REQUEST_METHOD_PROP_VALUE;
@@ -124,15 +129,17 @@ public class HTTPAppender extends AbstractAppender {
     // Comma delimited meta keys
     private String httpHeadersStreamMetaDataDenyList;
     private boolean useContentEncodingHeader = DEFAULT_USE_CONTENT_ENCODING_PROP_VALUE_BOOL;
-
+    private Path currentPath;
 
     @Inject
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
                  final MetaDataHolder metaDataHolder,
-                 final PathCreator pathCreator) {
+                 final TempDirProvider tempDirProvider,
+                 final HttpClientCache httpClientCache) {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
-        this.pathCreator = pathCreator;
+        this.tempDirProvider = tempDirProvider;
+        this.httpClientCache = httpClientCache;
         this.outputStreamSupport = new OutputFactory(metaDataHolder);
         this.errorReceiverProxy = errorReceiverProxy;
 
@@ -159,67 +166,132 @@ public class HTTPAppender extends AbstractAppender {
 
             LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + effectiveAttributeMap);
 
-            URL url = URI.create(forwardUrl).toURL();
-            connection = (HttpURLConnection) url.openConnection();
+
+            final HttpTlsConfiguration httpTlsConfiguration = HttpClientUtil
+                    .getHttpTlsConfiguration(sslConfigBuilder.build());
+            final HttpClientConfiguration.Builder builder = HttpClientConfiguration.builder();
+            builder.tlsConfiguration(httpTlsConfiguration);
+
+            if (connectionTimeout != null) {
+                builder.connectionTimeout(StroomDuration.ofMillis(connectionTimeout.intValue()));
+            }
+            if (readTimeout != null) {
+                builder.connectionRequestTimeout(StroomDuration.ofMillis(readTimeout.intValue()));
+            }
+
+            final HttpClientConfiguration httpClientConfiguration = builder.build();
             if (LOGGER.isDebugEnabled()) {
                 requestProperties.clear();
             }
 
-            if (connection instanceof final HttpsURLConnection httpsURLConnection) {
-                final SSLConfig sslConfig = sslConfigBuilder.build();
-                if (!useJvmSslConfig) {
-                    LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
-                    final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(
-                            sslConfig, pathCreator);
-                    SSLUtil.applySSLConfiguration(connection, sslSocketFactory, sslConfig);
-                } else if (!sslConfig.isHostnameVerificationEnabled()) {
-                    SSLUtil.disableHostnameVerification(httpsURLConnection);
+            currentPath = tempDirProvider.get().resolve("HTTPAppender-" + UUID.randomUUID());
+            final FilterOutputStream outputStream = new FilterOutputStream(
+                    new BufferedOutputStream(Files.newOutputStream(currentPath))) {
+                @Override
+                public void close() throws IOException {
+                    super.close();
+                    postFile(httpClientConfiguration, currentPath, effectiveAttributeMap);
                 }
-            }
-
-            if (connectionTimeout != null) {
-                connection.setConnectTimeout(connectionTimeout.intValue());
-            }
-            if (readTimeout != null) {
-                connection.setReadTimeout(readTimeout.intValue());
-            } else {
-                connection.setReadTimeout(0);
-            }
-
-            connection.setRequestMethod(requestMethod);
-            connection.setRequestProperty("Content-Type", contentType);
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
-
-            setCompressionProperties(outputStreamSupport, connection);
-
-            for (Entry<String, String> entry : effectiveAttributeMap.entrySet()) {
-                addRequestProperty(connection, entry.getKey(), entry.getValue());
-            }
-
-            if (forwardChunkSize != null) {
-                LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
-                connection.setChunkedStreamingMode(forwardChunkSize.intValue());
-            }
-            if (LOGGER.isDebugEnabled()) {
-                logConnectionToDebug();
-            }
-            // Be careful! Lots of methods on HttpURLConnection will do an implicit connect(), e.g.
-            // getResponseCode(), and some will throw if already connected.
-            connection.connect();
-
-            final FilterOutputStream filterOutputStream = createOutputStream(connection);
-
-            return outputStreamSupport.create(filterOutputStream, effectiveAttributeMap);
+            };
+            return outputStreamSupport.create(outputStream, effectiveAttributeMap);
         } catch (final IOException e) {
             LOGGER.debug(e::getMessage, e);
-            closeConnection();
             throw new UncheckedIOException(e);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            closeConnection();
             throw e;
         }
+    }
+
+    private void postFile(final HttpClientConfiguration httpClientConfiguration,
+                          final Path file,
+                          final AttributeMap effectiveAttributeMap) throws IOException {
+        try {
+            final HttpUriRequestBase request =
+                    new HttpUriRequestBase(requestMethod, URI.create(forwardUrl));
+            request.addHeader("Content-Type", contentType);
+            request.setEntity(new FileEntity(file.toFile(), ContentType.create(contentType)));
+
+            setCompressionProperties(outputStreamSupport, request);
+
+            for (Entry<String, String> entry : effectiveAttributeMap.entrySet()) {
+                addRequestProperty(request, entry.getKey(), entry.getValue());
+            }
+
+//        if (forwardChunkSize != null) {
+//            LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
+//            connection.setChunkedStreamingMode(forwardChunkSize.intValue());
+//        }
+            if (LOGGER.isDebugEnabled()) {
+                logConnectionToDebug();
+            }
+
+
+            final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
+            httpClient.execute(request, response -> {
+
+                LOGGER.debug(() -> "closeConnection() - header fields " +
+                                   Arrays.toString(response.getHeaders()));
+                int responseCode = response.getCode();
+                try {
+                    responseCode = checkResponse(response);
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                } finally {
+                    long bytes = getCurrentOutputSize();
+                    final long duration = System.currentTimeMillis() - startTimeMs;
+                    final AttributeMap attributeMap = metaDataHolder.getMetaData();
+                    log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytes, duration);
+                }
+
+                return response.getCode();
+            });
+        } finally {
+            Files.deleteIfExists(file);
+        }
+    }
+
+    public static int checkResponse(final HttpResponse response) {
+        int responseCode;
+        try {
+            LOGGER.debug(() -> "Connection response " + response.getCode() + ": " + response.getReasonPhrase());
+
+            responseCode = response.getCode();
+            if (responseCode != 200) {
+                final String message = response.getReasonPhrase();
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Connection response " + responseCode + ": " + message);
+                }
+
+                int stroomStatus = -1;
+                final Header[] headers = response.getHeaders(StandardHeaderArguments.STROOM_STATUS);
+                if (headers.length > 0) {
+                    final String value = headers[0].getValue();
+                    if (value != null) {
+                        try {
+                            stroomStatus = Integer.parseInt(value);
+                        } catch (final NumberFormatException e) {
+                            LOGGER.debug(e::getMessage, e);
+                        }
+                    }
+                }
+
+                if (stroomStatus != -1) {
+                    throw new StroomStreamException(StroomStatusCode.getStroomStatusCode(stroomStatus), message);
+                } else {
+                    throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, message);
+                }
+            }
+        } catch (final Exception ioEx) {
+            LOGGER.debug(ioEx.getMessage(), ioEx);
+            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR,
+                    ioEx.getMessage() != null
+                            ? ioEx.getMessage()
+                            : ioEx.toString());
+        }
+        return responseCode;
     }
 
     private void validateElementProperties() {
@@ -271,21 +343,6 @@ public class HTTPAppender extends AbstractAppender {
 
     private void warn(final String message) {
         errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, null);
-    }
-
-    /**
-     * A slightly hacky way of checking if connection is actually connected, as {@link URLConnection}
-     * doesn't provide a method to do that. Lot of methods on {@link HttpURLConnection} will do
-     * an implicit connect() so it is otherwise hard to know if a connection is established or not.
-     */
-    public static boolean isConnected(final URLConnection connection) {
-        try {
-            // Essentially a no-op if not currently connected
-            connection.setDoOutput(connection.getDoOutput()); // throws IllegalStateException if connected
-            return false;
-        } catch (IllegalStateException e) {
-            return true;
-        }
     }
 
     @NotNull
@@ -350,7 +407,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private void setCompressionProperties(final OutputFactory outputStreamSupport,
-                                          final HttpURLConnection connection) {
+                                          final HttpUriRequestBase request) {
         if (outputStreamSupport.isUseCompression()) {
             // This is the method as configured in the pipe elm. It may correspond to a different
             // value in 'Compression' and 'Content-Encoding' headers, e.g. `gz' => `gzip`.
@@ -368,7 +425,7 @@ public class HTTPAppender extends AbstractAppender {
                 // use Content-Encoding if sending to a non-stroom end point as it is a HTTP standard
                 // Only some of the supported compression methods are valid content-encoding values.
                 if (NullSafe.isNonEmptyString(contentEncoding)) {
-                    addRequestProperty(connection, StandardHeaderArguments.CONTENT_ENCODING, contentEncoding);
+                    addRequestProperty(request, StandardHeaderArguments.CONTENT_ENCODING, contentEncoding);
                 } else {
                     final String validCompressionMethods = keySetToSortedCsvStr(COMPRESSION_TO_ENCODING_MAP);
                     fatal("Properties useCompression and useContentEncodingHeader are both 'true', but '" +
@@ -380,7 +437,7 @@ public class HTTPAppender extends AbstractAppender {
                 // use 'Compression' header for sending to a stroom(-proxy)?
                 // Stroom only supports gzip/zip at the mo.
                 if (NullSafe.isNonEmptyString(stroomCompression)) {
-                    addRequestProperty(connection, StandardHeaderArguments.COMPRESSION, stroomCompression);
+                    addRequestProperty(request, StandardHeaderArguments.COMPRESSION, stroomCompression);
                 } else {
                     final String validCompressionMethods = keySetToSortedCsvStr(COMPRESSION_TO_STROOM_COMPRESSION_MAP);
                     fatal("Property useCompression is 'true' and useContentEncodingHeader is 'false', but '" +
@@ -413,21 +470,21 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
-    @NotNull
-    private FilterOutputStream createOutputStream(final HttpURLConnection connection) throws IOException {
-        return new FilterOutputStream(connection.getOutputStream()) {
-            @Override
-            public void close() throws IOException {
-                super.close();
-                closeConnection();
-            }
-        };
-    }
+//    @NotNull
+//    private FilterOutputStream createOutputStream(final HttpURLConnection connection) throws IOException {
+//        return new FilterOutputStream(connection.getOutputStream()) {
+//            @Override
+//            public void close() throws IOException {
+//                super.close();
+//                closeConnection();
+//            }
+//        };
+//    }
 
-    private void addRequestProperty(final HttpURLConnection connection,
+    private void addRequestProperty(final HttpUriRequestBase request,
                                     final String key,
                                     final String value) {
-        connection.addRequestProperty(key, value);
+        request.addHeader(key, value);
 
         // It's not possible to inspect the connection to see what req props have been set
         // as that implicitly opens the connection, so store them in our own map for logging later
@@ -475,36 +532,6 @@ public class HTTPAppender extends AbstractAppender {
         int delimiterPos = headerText.indexOf(':');
         attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
         LOGGER.debug("Added '{}' to {}", headerText, attributeMap);
-    }
-
-    private void closeConnection() {
-        // Exception may have happened before the connection was opened
-        if (connection != null) {
-            if (isConnected(connection)) {
-                LOGGER.debug(() -> "closeConnection() - header fields " + connection.getHeaderFields());
-                int responseCode = -1;
-                try {
-                    // This will call getResponseCode() which implicitly calls connect(). Not what we
-                    // want if we haven't already connected.
-                    responseCode = StroomStreamException.checkConnectionResponse(connection);
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    throw e;
-                } finally {
-                    long bytes = getCurrentOutputSize();
-                    final long duration = System.currentTimeMillis() - startTimeMs;
-                    final AttributeMap attributeMap = metaDataHolder.getMetaData();
-                    log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytes, duration);
-
-                    connection.disconnect();
-                    connection = null;
-                }
-            } else {
-                LOGGER.debug("Not connected");
-            }
-        } else {
-            LOGGER.debug("connection is null");
-        }
     }
 
     private void log(final Logger logger,
@@ -663,8 +690,9 @@ public class HTTPAppender extends AbstractAppender {
                                     "this HttpAppender.",
             defaultValue = "true",
             displayPriority = 13)
+    @Deprecated
     public void setUseJvmSslConfig(final boolean useJvmSslConfig) {
-        this.useJvmSslConfig = useJvmSslConfig;
+//        this.useJvmSslConfig = useJvmSslConfig;
     }
 
     @PipelineProperty(description = "The key store file path on the server",
