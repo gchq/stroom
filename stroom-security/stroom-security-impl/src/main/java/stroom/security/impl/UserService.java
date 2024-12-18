@@ -18,9 +18,12 @@
 package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserRef;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -28,7 +31,9 @@ import java.util.function.Consumer;
 public interface UserService {
 
     default User getOrCreateUser(String subjectId) {
-        return getOrCreateUser(UserDesc.builder().subjectId(subjectId).displayName(subjectId).build(), null);
+        return getOrCreateUser(UserDesc.builder(subjectId)
+                .displayName(subjectId)
+                .build(), null);
     }
 
     default User getOrCreateUser(UserDesc userDesc) {
@@ -57,7 +62,14 @@ public interface UserService {
 
     ResultPage<User> findGroupsForUser(String userUuid, FindUserCriteria criteria);
 
-    Boolean addUserToGroup(String userUuid, String groupUuid);
+    Boolean addUserToGroup(UserRef userOrGroupRef, UserRef groupRef);
 
-    Boolean removeUserFromGroup(String userUuid, String groupUuid);
+    Boolean removeUserFromGroup(UserRef userOrGroupRef, UserRef groupRef);
+
+    /**
+     * Physically delete a user
+     */
+    boolean delete(String userUuid);
+
+    ResultPage<UserDependency> fetchUserDependencies(FindUserDependenciesCriteria criteria);
 }

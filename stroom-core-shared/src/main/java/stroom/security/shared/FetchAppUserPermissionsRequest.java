@@ -20,6 +20,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,36 +33,53 @@ import java.util.List;
 public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
 
     @JsonProperty
-    private boolean allUsers;
+    private final UserRef userRef;
+    @JsonProperty
+    private final PermissionShowLevel showLevel;
 
     @JsonCreator
     public FetchAppUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                           @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                           @JsonProperty("expression") final ExpressionOperator expression,
-                                          @JsonProperty("allUsers") boolean allUsers) {
+                                          @JsonProperty("userRef") final UserRef userRef,
+                                          @JsonProperty("showLevel") PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
-        this.allUsers = allUsers;
+        this.userRef = userRef;
+        this.showLevel = showLevel;
     }
 
-    public boolean isAllUsers() {
-        return allUsers;
+    public UserRef getUserRef() {
+        return userRef;
     }
+
+    public PermissionShowLevel getShowLevel() {
+        return showLevel;
+    }
+
 
     public static class Builder extends AbstractBuilder<FetchAppUserPermissionsRequest, Builder> {
 
-        private boolean allUsers;
+        private UserRef userRef;
+        private PermissionShowLevel showLevel;
 
         public Builder() {
 
         }
 
-        public Builder(final FetchAppUserPermissionsRequest expressionCriteria) {
-            super(expressionCriteria);
+        public Builder(final FetchAppUserPermissionsRequest request) {
+            super(request);
+            this.userRef = request.userRef;
+            this.showLevel = request.showLevel;
         }
 
-        public Builder allUsers(final boolean allUsers) {
-            this.allUsers = allUsers;
-            return this;
+        public Builder userRef(final UserRef userRef) {
+            this.userRef = userRef;
+            return self();
+        }
+
+        public Builder showLevel(final PermissionShowLevel showLevel) {
+            this.showLevel = showLevel;
+            return self();
         }
 
         @Override
@@ -75,7 +93,8 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    allUsers);
+                    userRef,
+                    showLevel);
         }
     }
 }

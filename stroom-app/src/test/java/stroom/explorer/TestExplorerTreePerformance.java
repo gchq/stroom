@@ -126,7 +126,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
 
             final User user = userService.getOrCreateUser("testuser");
             final User userGroup = userService.getOrCreateUserGroup("testusergroup");
-            userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
+            userService.addUserToGroup(user.asRef(), userGroup.asRef());
             documentPermissionService.setPermission(
                     lastChild.getDocRef(),
                     user.asRef(),

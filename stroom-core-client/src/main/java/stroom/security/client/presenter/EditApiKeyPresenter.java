@@ -62,15 +62,18 @@ public class EditApiKeyPresenter
     }
 
     private void setMode(final Mode mode) {
-        final boolean isOwnerSelectionEnabled = Mode.PRE_CREATE.equals(mode)
-                && securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
+        final boolean isOwnerSelectionEnabled = Mode.PRE_CREATE.equals(mode) && securityContext.hasAppPermission(
+                AppPermission.MANAGE_USERS_PERMISSION);
+
         ownerPresenter.setEnabled(isOwnerSelectionEnabled);
         getView().setMode(mode);
         reset();
     }
 
     public void showCreateDialog(final Mode mode,
-                                 final Runnable onChangeHandler) {
+                                 final Runnable onChangeHandler,
+                                 final boolean allowOwnerSelection) {
+        GWT.log("showCreateDialog called");
         this.onChangeHandler = onChangeHandler;
         setMode(mode);
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
@@ -81,6 +84,7 @@ public class EditApiKeyPresenter
             caption = "Create new API key";
             // Default to current user
             ownerPresenter.setSelected(securityContext.getUserRef());
+            ownerPresenter.setEnabled(allowOwnerSelection);
         } else if (Mode.POST_CREATE.equals(mode)) {
             caption = "View created API key";
         } else {
@@ -184,7 +188,7 @@ public class EditApiKeyPresenter
                         })
                         .onFailure(throwable ->
                                 AlertEvent.fireError(this, "Error updating API key: "
-                                        + throwable.getMessage(), e::reset))
+                                                           + throwable.getMessage(), e::reset))
                         .taskMonitorFactory(this)
                         .exec();
             }
@@ -197,8 +201,8 @@ public class EditApiKeyPresenter
         if (e.isOk()) {
             ConfirmEvent.fire(this,
                     "You will never be able to view the API Key after you close " +
-                            "this dialog. Stroom does not store the API Key. You must copy it elsewhere first. " +
-                            "Are you sure you want to close this dialog?",
+                    "this dialog. Stroom does not store the API Key. You must copy it elsewhere first. " +
+                    "Are you sure you want to close this dialog?",
                     ok -> {
                         if (ok) {
                             onChangeHandler.run();
@@ -222,7 +226,7 @@ public class EditApiKeyPresenter
                                     })
                                     .onFailure(throwable ->
                                             AlertEvent.fireError(this, "Error deleting API key: "
-                                                    + throwable.getMessage(), e::reset))
+                                                                       + throwable.getMessage(), e::reset))
                                     .taskMonitorFactory(this)
                                     .exec();
                         } else {
@@ -240,10 +244,10 @@ public class EditApiKeyPresenter
         final UserRef owner = ownerPresenter.getSelected();
         if (expireTimeEpochMs < now) {
             AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
-                    + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
+                                       + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
         } else if (expireTimeEpochMs > maxExpiryEpochMs) {
             AlertEvent.fireError(this, "API Key expiry date cannot be after "
-                    + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
+                                       + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
         } else if (GwtNullSafe.isBlankString(getView().getName())) {
             AlertEvent.fireError(this, "A name must be provided for the API key.", event::reset);
         } else if (owner == null) {
@@ -279,7 +283,7 @@ public class EditApiKeyPresenter
                     })
                     .onFailure(throwable ->
                             AlertEvent.fireError(this, "Error creating API key: "
-                                    + throwable.getMessage(), event::reset))
+                                                       + throwable.getMessage(), event::reset))
                     .taskMonitorFactory(this)
                     .exec();
         }

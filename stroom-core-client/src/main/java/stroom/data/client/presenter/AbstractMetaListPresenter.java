@@ -355,7 +355,8 @@ public abstract class AbstractMetaListPresenter
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getFeed)
                                                 .orElse(null),
-                                getEventBus(), true)
+                                getEventBus(),
+                                true)
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -845,9 +846,9 @@ public abstract class AbstractMetaListPresenter
                             if (selection.isMatchAll()) {
                                 ConfirmEvent.fireWarn(AbstractMetaListPresenter.this,
                                         "You have clicked the select all checkbox.  " +
-                                                "If you continue Stroom will " +
-                                                actionType + " all items that match the filter, not just those " +
-                                                "visible on screen.\n\nAre you sure you want to continue?",
+                                        "If you continue Stroom will " +
+                                        actionType + " all items that match the filter, not just those " +
+                                        "visible on screen.\n\nAre you sure you want to continue?",
                                         confirm1 -> {
                                             if (confirm1) {
                                                 runnable.run();

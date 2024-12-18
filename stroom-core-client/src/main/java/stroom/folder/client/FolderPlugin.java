@@ -24,6 +24,8 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
+import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -89,11 +91,16 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
+                                final CommonDocLinkTab selectedTab,
                                 final TaskMonitorFactory taskMonitorFactory) {
         if (documentEditPresenter instanceof FolderPresenter) {
             ((FolderPresenter) documentEditPresenter).read(docRef);
         } else if (documentEditPresenter instanceof FolderRootPresenter) {
             ((FolderRootPresenter) documentEditPresenter).read();
+        }
+
+        if (selectedTab != null && documentEditPresenter instanceof LinkTabPanelPresenter) {
+            ((LinkTabPanelPresenter) documentEditPresenter).selectCommonTab(selectedTab);
         }
 
         // Open the tab.

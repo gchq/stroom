@@ -1,16 +1,29 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="max default-min-sizes">
-        <g:south size="200">
-            <form:FormGroup label="Application Permission Details">
-                <g:HTML ui:field="details" styleName="max form-control-border form-control-background form-padding"/>
+
+    <g:ThinSplitLayoutPanel styleName="max">
+        <g:south size="300">
+            <form:FormGroup ui:field="detailsFormGroup"
+                            helpText="Explains how the user/group has obtained the selected permission."
+                            addStyleNames="form-label-padding">
+                <g:SimplePanel styleName="max form-padding permissionDetails">
+                    <g:HTML ui:field="details" styleName="max"/>
+                </g:SimplePanel>
             </form:FormGroup>
         </g:south>
         <g:center>
-            <form:FormGroup label="Application Permissions">
-                <g:SimplePanel ui:field="permissions" styleName="max form-control-border form-control-background"/>
+            <form:FormGroup ui:field="appPermissionsFormGroup"
+                            addStyleNames="form-label-padding">
+                <form:HelpHTML>
+                    <p>Lists all available application level permissions.</p>
+                    <p>Ticked items are explicitly held by the user/group.</p>
+                    <p>Half-ticked (solid box) items are inferred from group membership.</p>
+                </form:HelpHTML>
+                <g:SimplePanel ui:field="permissions"
+                               styleName="max"/>
             </form:FormGroup>
         </g:center>
-    </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+    </g:ThinSplitLayoutPanel>
+</ui:UiBinder>

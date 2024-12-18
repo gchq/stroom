@@ -68,10 +68,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     public AbstractTabBar() {
         sinkEvents(Event.ONMOUSEDOWN |
-                Event.ONMOUSEUP |
-                Event.ONMOUSEOVER |
-                Event.ONMOUSEOUT |
-                Event.ONKEYDOWN);
+                   Event.ONMOUSEUP |
+                   Event.ONMOUSEOVER |
+                   Event.ONMOUSEOUT |
+                   Event.ONKEYDOWN);
     }
 
     protected abstract AbstractTab createTab(TabData tabData);
@@ -84,7 +84,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void addTab(final TabData tabData) {
-        if (tabs.size() == 0) {
+        if (tabs.isEmpty()) {
             keyboardSelectedTab = tabData;
         }
 
@@ -113,7 +113,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             tabs.remove(tabData);
             tabPriority.remove(tabData);
 
-            if (tabPriority.size() > 0) {
+            if (!tabPriority.isEmpty()) {
                 keyboardSelectedTab = tabPriority.get(0);
                 fireTabSelection(tabPriority.get(0));
                 onResize();

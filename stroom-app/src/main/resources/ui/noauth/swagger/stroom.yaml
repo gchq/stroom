@@ -22,7 +22,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountResultPage"
+                $ref: "#/components/schemas/ResultPageAccount"
           description: default response
       summary: Get all accounts.
       tags:
@@ -62,7 +62,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountResultPage"
+                $ref: "#/components/schemas/ResultPageAccount"
           description: default response
       summary: Search for an account by email.
       tags:
@@ -906,7 +906,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiKeyResultPage"
+                $ref: "#/components/schemas/ResultPageHashedApiKey"
           description: default response
       summary: Find the API keys matching the supplied criteria
       tags:
@@ -6959,6 +6959,25 @@ paths:
       summary: Update a text converter doc
       tags:
       - Text Converters
+  /userInfo/v1/{userUuid}:
+    get:
+      operationId: fetchUser
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+          description: default response
+      summary: Fetches the userInfo with the supplied user UUID
+      tags:
+      - Authorisation
   /userRef/v1/find:
     post:
       operationId: findUserRefs
@@ -7045,6 +7064,25 @@ paths:
         \ optional"
       tags:
       - Authorisation
+  /users/v1/fetchBySubjectId/{subjectId}:
+    get:
+      operationId: fetchBySubjectId
+      parameters:
+      - in: path
+        name: subjectId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: default response
+      summary: Fetches the user with the supplied subjectId (aka Unique ID)
+      tags:
+      - Authorisation
   /users/v1/find:
     post:
       operationId: findUsersByCriteria
@@ -7067,6 +7105,25 @@ paths:
         is admin or has Manage Users permission then they can see all users.
       tags:
       - Authorisation
+  /users/v1/findDependencies:
+    post:
+      operationId: findUserDependenciesByCriteria
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindUserDependenciesCriteria"
+        description: criteria
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageUserDependency"
+          description: default response
+      summary: Find the items that depend on this user
+      tags:
+      - Authorisation
   /users/v1/updateUser:
     post:
       operationId: updateUser
@@ -7085,6 +7142,43 @@ paths:
                 $ref: "#/components/schemas/User"
           description: default response
       summary: Updates a user
+      tags:
+      - Authorisation
+  /users/v1/{userUuid}:
+    delete:
+      operationId: deleteUser
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete the user with the supplied user UUID
+      tags:
+      - Authorisation
+    get:
+      operationId: fetchUser_1
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: default response
+      summary: Fetches the user with the supplied UUID
       tags:
       - Authorisation
   /users/v1/{userUuid}/{groupUuid}:
@@ -7108,7 +7202,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Removes user with UUID userUuid from the group with UUID groupUuid
+      summary: Removes user/group with UUID userUuid from the group with UUID groupUuid
       tags:
       - Authorisation
     put:
@@ -7131,7 +7225,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Adds user with UUID userUuid to the group with UUID groupUuid
+      summary: Adds user/group with UUID userUuid to the group with UUID groupUuid
       tags:
       - Authorisation
   /view/v1/list:
@@ -7498,17 +7592,6 @@ components:
         version:
           type: integer
           format: int32
-    AccountResultPage:
-      type: object
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        qualifiedFilterInput:
-          type: string
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/Account"
     AcknowledgeSplashRequest:
       type: object
       properties:
@@ -7566,7 +7649,7 @@ components:
           type: string
         valid:
           type: boolean
-    AddAllDocumentCreatePermissions:
+    AddAllDocumentUserCreatePermissions:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
@@ -7586,14 +7669,14 @@ components:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractAppPermissionChange"
-    AddDocumentCreatePermission:
+    AddDocumentUserCreatePermission:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
       - type: object
         properties:
           documentType:
-            $ref: "#/components/schemas/DocumentType"
+            type: string
           userRef:
             $ref: "#/components/schemas/UserRef"
     AddRemoveTagsRequest:
@@ -7636,8 +7719,6 @@ components:
     AdvancedDocumentFindWithPermissionsRequest:
       type: object
       properties:
-        explicitPermission:
-          type: boolean
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
@@ -7653,6 +7734,12 @@ components:
             - VIEW
             - USE
           uniqueItems: true
+        showLevel:
+          type: string
+          enum:
+          - SHOW_EXPLICIT
+          - SHOW_EFFECTIVE
+          - SHOW_ALL
         sort:
           type: string
           writeOnly: true
@@ -7872,7 +7959,7 @@ components:
         values:
           type: array
           items:
-            $ref: "#/components/schemas/HashedApiKey"
+            $ref: "#/components/schemas/ApiKey"
     AppUserPermissions:
       type: object
       properties:
@@ -10581,12 +10668,16 @@ components:
     FetchAppUserPermissionsRequest:
       type: object
       properties:
-        allUsers:
-          type: boolean
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        showLevel:
+          type: string
+          enum:
+          - SHOW_EXPLICIT
+          - SHOW_EFFECTIVE
+          - SHOW_ALL
         sort:
           type: string
           writeOnly: true
@@ -10594,6 +10685,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     FetchDataRequest:
       type: object
       properties:
@@ -10643,14 +10736,18 @@ components:
     FetchDocumentUserPermissionsRequest:
       type: object
       properties:
-        allUsers:
-          type: boolean
         docRef:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        showLevel:
+          type: string
+          enum:
+          - SHOW_EXPLICIT
+          - SHOW_EFFECTIVE
+          - SHOW_ALL
         sort:
           type: string
           writeOnly: true
@@ -10658,6 +10755,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     FetchExplorerNodeResult:
       type: object
       properties:
@@ -10789,10 +10888,10 @@ components:
     FindAccountRequest:
       type: object
       properties:
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        quickFilter:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -10819,12 +10918,12 @@ components:
     FindApiKeyCriteria:
       type: object
       properties:
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
         owner:
           $ref: "#/components/schemas/UserRef"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
-        quickFilterInput:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -11509,6 +11608,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindUserDependenciesCriteria:
+      type: object
+      properties:
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     FlatResult:
       type: object
       allOf:
@@ -12574,6 +12689,8 @@ components:
           enum:
           - STREAM
           - EMAIL
+        enabled:
+          type: boolean
         limitNotifications:
           type: boolean
         maxNotifications:
@@ -14230,7 +14347,7 @@ components:
       required:
       - loaderPipeline
       - referenceFeed
-    RemoveAllDocumentCreatePermissions:
+    RemoveAllDocumentUserCreatePermissions:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
@@ -14242,22 +14359,26 @@ components:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
-      - type: object
-        properties:
-          ignore:
-            type: boolean
     RemoveAppPermission:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractAppPermissionChange"
-    RemoveDocumentCreatePermission:
+    RemoveDocumentUserCreatePermission:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
       - type: object
         properties:
           documentType:
-            $ref: "#/components/schemas/DocumentType"
+            type: string
+          userRef:
+            $ref: "#/components/schemas/UserRef"
+    RemovePermission:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
+      - type: object
+        properties:
           userRef:
             $ref: "#/components/schemas/UserRef"
     ReprocessDataInfo:
@@ -14313,6 +14434,16 @@ components:
       required:
       - componentId
       - type
+    ResultPageAccount:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Account"
     ResultPageActivity:
       type: object
       description: A page of results.
@@ -14483,6 +14614,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FsVolumeGroup"
+    ResultPageHashedApiKey:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/HashedApiKey"
     ResultPageIndexShard:
       type: object
       description: A page of results.
@@ -14593,6 +14734,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/User"
+    ResultPageUserDependency:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDependency"
     ResultPageUserRef:
       type: object
       description: A page of results.
@@ -15240,6 +15391,19 @@ components:
             format: int64
         assignedTo:
           $ref: "#/components/schemas/UserRef"
+    SetDocumentUserCreatePermissions:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
+      - type: object
+        properties:
+          documentTypes:
+            type: array
+            items:
+              type: string
+            uniqueItems: true
+          userRef:
+            $ref: "#/components/schemas/UserRef"
     SetPermission:
       type: object
       allOf:
@@ -16629,6 +16793,15 @@ components:
         version:
           type: integer
           format: int32
+    UserDependency:
+      type: object
+      properties:
+        details:
+          type: string
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     UserDesc:
       type: object
       properties:
@@ -16637,6 +16810,23 @@ components:
         fullName:
           type: string
         subjectId:
+          type: string
+    UserInfo:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        displayName:
+          type: string
+        enabled:
+          type: boolean
+        fullName:
+          type: string
+        group:
+          type: boolean
+        subjectId:
+          type: string
+        uuid:
           type: string
     UserPreferences:
       type: object
@@ -16676,6 +16866,8 @@ components:
       properties:
         displayName:
           type: string
+        enabled:
+          type: boolean
         fullName:
           type: string
         group:

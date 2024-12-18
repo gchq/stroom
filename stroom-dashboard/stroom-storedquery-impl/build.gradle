@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.storedquery.impl'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')

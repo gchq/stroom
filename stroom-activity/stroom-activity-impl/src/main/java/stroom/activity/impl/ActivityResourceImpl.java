@@ -83,8 +83,8 @@ class ActivityResourceImpl implements ActivityResource {
     private Query buildRawQuery(final String userInput) {
         return Query.builder()
                 .withRaw("Activity matches \""
-                        + Objects.requireNonNullElse(userInput, "")
-                        + "\"")
+                         + Objects.requireNonNullElse(userInput, "")
+                         + "\"")
                 .build();
     }
 
@@ -114,7 +114,7 @@ class ActivityResourceImpl implements ActivityResource {
 
     @Override
     public Boolean delete(final Integer id) {
-        activityServiceProvider.get().delete(id);
+        activityServiceProvider.get().deleteAllByOwner(id);
         return true;
     }
 

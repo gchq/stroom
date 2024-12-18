@@ -292,6 +292,13 @@ class TestGwtNullSafe {
                 nonNullLevel1,
                 Level1::getLevel))
                 .isEqualTo(1L);
+
+        assertThat(
+                GwtNullSafe.requireNonNull(
+                        nonNullLevel1,
+                        Level1::getLevel,
+                        () -> "foo"))
+                .isEqualTo(1L);
     }
 
     @Test
@@ -557,6 +564,25 @@ class TestGwtNullSafe {
                 .addCase(null, 0)
                 .addCase(emptyList, 0)
                 .addCase(nonEmptyList, 2)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasOneItem() {
+        final List<String> emptyList = Collections.emptyList();
+        final List<String> nonEmptyList = List.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        GwtNullSafe.hasOneItem(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(Collections.emptyList(), false)
+                .addCase(List.of("foo"), true)
+                .addCase(List.of("foo", "bar"), false)
                 .build();
     }
 
@@ -948,6 +974,49 @@ class TestGwtNullSafe {
                 .addCase(Tuple.of("foobar", "foo"), true)
                 .addCase(Tuple.of("foobar", "ob"), true)
                 .addCase(Tuple.of("foobar", "foobar"), true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCollectionContains() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Set<String>, String>>() {
+                })
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    var collection = testCase.getInput()._1;
+                    var item = testCase.getInput()._2;
+                    return GwtNullSafe.collectionContains(collection, item);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addCase(Tuple.of(null, "foo"), false)
+                .addCase(Tuple.of(Set.of(), "foo"), false)
+                .addCase(Tuple.of(Set.of("bar"), "foo"), false)
+                .addCase(Tuple.of(Set.of("foo", "bar"), "foo"), true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsKey() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Map<String, String>, String>>() {
+                })
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    var map = testCase.getInput()._1;
+                    var key = testCase.getInput()._2;
+                    return GwtNullSafe.containsKey(map, key);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addCase(Tuple.of(null, "foo"), false)
+                .addCase(Tuple.of(Map.of(), "foo"), false)
+                .addCase(Tuple.of(Map.of("bar", "BAR"), "foo"), false)
+                .addCase(Tuple.of(Map.of(
+                                "foo", "FOO",
+                                "bar", "BAR"),
+                        "foo"), true)
                 .build();
     }
 
@@ -1387,6 +1456,65 @@ class TestGwtNullSafe {
                 .addCase("", "")
                 .addCase("foo", "foo")
                 .addCase(obj, "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonNull2() {
+        final var inputType = new TypeLiteral<Tuple2<
+                Level1,
+                Function<Level1, Level2>
+                >>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    return GwtNullSafe.requireNonNull(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            () -> "Oh dear!").getLevel();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2), 2L)
+                .addThrowsCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2), NullPointerException.class)
+                .addThrowsCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2), NullPointerException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonNull3() {
+        final var inputType = new TypeLiteral<Tuple3<
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Level3>
+                >>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    return GwtNullSafe.requireNonNull(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            () -> "Oh dear!").getLevel();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        3L)
+                .addThrowsCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNullLevel3),
+                        NullPointerException.class)
+                .addThrowsCase(
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getNonNullLevel3),
+                        NullPointerException.class)
+                .addThrowsCase(
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        NullPointerException.class)
                 .build();
     }
 

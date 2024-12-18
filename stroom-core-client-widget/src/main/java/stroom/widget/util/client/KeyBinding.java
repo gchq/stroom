@@ -335,7 +335,10 @@ public class KeyBinding {
                     final boolean ctrl,
                     final int... keyCode) {
         for (int code : keyCode) {
-            add(action, Shortcut.builder().ctrl(ctrl).keyCode(code).build());
+            add(action, Shortcut.builder()
+                    .ctrl(ctrl)
+                    .keyCode(code)
+                    .build());
         }
     }
 
@@ -528,6 +531,8 @@ public class KeyBinding {
         GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
         GOTO_USER_ACCOUNTS,
+        GOTO_USER_PROFILE,
+        GOTO_USERS,
         GOTO_USER_GROUPS,
         GOTO_USER_PREFERENCES,
         GOTO_USER_PERMISSION_REPORT,

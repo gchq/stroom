@@ -1,5 +1,6 @@
 package stroom.security.impl.db;
 
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
@@ -8,6 +9,7 @@ import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
+import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -162,8 +164,15 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_withFilter() {
-        final FindApiKeyCriteria criteria = FindApiKeyCriteria.create(
-                "\"user1 key 3 inv\"", user1ApiKey3.getOwner());
+        final ExpressionOperator expr = QuickFilterExpressionParser.parse(
+                "\"user1 key 3 inv\"",
+                FindApiKeyCriteria.DEFAULT_FIELDS,
+                FindApiKeyCriteria.ALL_FIELDs_MAP);
+
+        final FindApiKeyCriteria criteria = FindApiKeyCriteria.builder()
+                .owner(user1ApiKey3.getOwner())
+                .expression(expr)
+                .build();
 
         final ResultPage<HashedApiKey> resultPage = apiKeyDao.find(criteria);
         assertThat(resultPage.size())
@@ -185,7 +194,13 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_withFilter2() {
-        final FindApiKeyCriteria criteria = FindApiKeyCriteria.create("\"key 1\"");
+        final ExpressionOperator expr = QuickFilterExpressionParser.parse(
+                "\"key 1\"",
+                FindApiKeyCriteria.DEFAULT_FIELDS,
+                FindApiKeyCriteria.ALL_FIELDs_MAP);
+        final FindApiKeyCriteria criteria = FindApiKeyCriteria.builder()
+                .expression(expr)
+                .build();
 
         final ResultPage<HashedApiKey> resultPage = apiKeyDao.find(criteria);
         assertThat(resultPage.size())

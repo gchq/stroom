@@ -219,7 +219,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             final SearchProvider storeFactory = optionalStoreFactory
                     .orElseThrow(() ->
                             new RuntimeException("No store factory found for " +
-                                    searchRequest.getQuery().getDataSource().getType()));
+                                                 searchRequest.getQuery().getDataSource().getType()));
 
 
             // Create a new search UUID.
@@ -381,7 +381,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                         } else if (result instanceof final TableResult tableResult) {
                             return LogUtil.message(
                                     "  TableResult - componentId: {}, rows: {}, totalResults: {}, " +
-                                            "resultRange: {}",
+                                    "resultRange: {}",
                                     tableResult.getComponentId(),
                                     tableResult.getRows().size(),
                                     tableResult.getTotalResults(),
@@ -396,7 +396,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         }
 
         return LogUtil.message("Return search response, key: {}, result sets: {}, " +
-                        "complete: {}, errors: {}, results: {}",
+                               "complete: {}, errors: {}, results: {}",
                 request.getKey().toString(),
                 searchResponse.getResults(),
                 searchResponse.complete(),
@@ -526,19 +526,37 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 final ResultStoreSettings settings = resultStore.getResultStoreSettings();
                 final Instant createTime = resultStore.getCreationTime();
                 final Instant accessTime = resultStore.getLastAccessTime();
+                final UserRef userRef = resultStore.getUserRef();
 
                 if (settings.getStoreLifespan().getTimeToLive() != null &&
-                        now.isAfter(createTime.plus(settings.getStoreLifespan().getTimeToLive()))) {
+                    now.isAfter(createTime.plus(settings.getStoreLifespan().getTimeToLive()))) {
+                    LOGGER.debug("Destroying resultStore for queryKey {} for user {} that is beyond the store TTL",
+                            queryKey, resultStore);
                     destroyAndRemove(queryKey, resultStore);
                 } else if (settings.getStoreLifespan().getTimeToIdle() != null &&
-                        now.isAfter(accessTime.plus(settings.getStoreLifespan().getTimeToIdle()))) {
+                           now.isAfter(accessTime.plus(settings.getStoreLifespan().getTimeToIdle()))) {
+                    LOGGER.debug("Destroying resultStore for queryKey {} for user {} that is beyond the store TTI",
+                            queryKey, resultStore);
                     destroyAndRemove(queryKey, resultStore);
                 } else if (settings.getSearchProcessLifespan().getTimeToLive() != null &&
-                        now.isAfter(createTime.plus(settings.getSearchProcessLifespan().getTimeToLive()))) {
+                           now.isAfter(createTime.plus(settings.getSearchProcessLifespan().getTimeToLive()))) {
+                    LOGGER.debug("Terminating resultStore for queryKey {} for user {} that is beyond the " +
+                                 "search process TTL", queryKey, resultStore);
                     resultStore.terminate();
                 } else if (settings.getSearchProcessLifespan().getTimeToIdle() != null &&
-                        now.isAfter(accessTime.plus(settings.getSearchProcessLifespan().getTimeToIdle()))) {
+                           now.isAfter(accessTime.plus(settings.getSearchProcessLifespan().getTimeToIdle()))) {
+                    LOGGER.debug("Terminating resultStore for queryKey {} for user {} that is beyond the " +
+                                 "search process TTI", queryKey, resultStore);
                     resultStore.terminate();
+                } else {
+                    final String ownerUuid = NullSafe.get(userRef, UserRef::getUuid);
+                    final Optional<UserRef> optUserRef = userRefLookup.getByUuid(ownerUuid);
+                    if (optUserRef.isEmpty()) {
+                        // User has been deleted so destroy the store
+                        LOGGER.debug("Destroying resultStore for queryKey {} for deleted user {}",
+                                queryKey, resultStore);
+                        destroyAndRemove(queryKey, resultStore);
+                    }
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);

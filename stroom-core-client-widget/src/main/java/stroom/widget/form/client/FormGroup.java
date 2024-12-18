@@ -2,11 +2,13 @@ package stroom.widget.form.client;
 
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.help.client.HelpButton;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -23,13 +25,15 @@ import java.util.Objects;
  * <p>
  * To add a help button to the right of the label you have two options:
  * <p>
- * For plain text help (or if you want to escape html special chars) use
- * the {@code helpText} attr:
+ * <p/>
+ * For plain text help use the {@code helpText} attr (any HTML will be escaped):
  * <pre>{@code
  * <form:FormGroup ... helpText="This is my help text">
  * }</pre>
+ * <p/>
  * <p>
- * For rich help text then add a {@link HelpHTML} element containing the HTML help content:
+ * For rich HTML help text then add a <strong>single</strong> {@link HelpHTML} element
+ * containing the HTML help content:
  * <pre>{@code
  * <form:FormGroup ...>
  *     <form:HelpHTML>
@@ -39,13 +43,17 @@ import java.util.Objects;
  *     <g:TextBox ui:field="textBox" addStyleNames="w-100"/>
  * </form:FormGroup>
  * }</pre>
+ * <p>If you have both helpText and a HelpHTML element, then helpText will be used.</p>
+ * <p>If you want to programmatically set the help text then use
+ * {@link FormGroup#overrideHelpText(SafeHtml)}</p>
  * <p>
  * {@code formLabel} will be automatically added as a {@code <h4>} heading
  * at the top of the help popup.
  * </p>
+ * <p/>
  * <p>
  * To add descriptive text below the label (that is always visible, unlike the help),
- * use {@link DescriptionHTML} like this:
+ * use a <strong>single</strong> {@link DescriptionHTML} element like this:
  * <pre>{@code
  * <form:FormGroup ...>
  *     <form:DescriptionHTML>
@@ -59,6 +67,7 @@ import java.util.Objects;
  */
 public class FormGroup extends Composite implements HasWidgets {
 
+    public static final String CLASS_NAME_FORM_GROUP_HELP = "form-group-help";
     private final FlowPanel formGroupPanel = new FlowPanel();
     private final FormLabel formLabel = new FormLabel();
     private final HelpButton helpButton = HelpButton.create();
@@ -68,8 +77,14 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private String id;
     private Widget childWidget = null;
+    // Set by the presence of a <HelpHTML> element in the ui.xml
     private HelpHTML helpHTML = null;
+    // The plain help text bound to the attribute in the ui.xml, or set programmatically.
+    // Trumps helpHTML
     private String helpText = null;
+    // HTML help text set programmatically, that overrides the other two
+    // Trumps helpText and helpHTML
+    private SafeHtml helpTextOverride = null;
     private DescriptionHTML descriptionHTML = null;
 
     public FormGroup() {
@@ -78,6 +93,7 @@ public class FormGroup extends Composite implements HasWidgets {
         labelPanel.addStyleName("form-group-label-container");
         formLabel.addStyleName("form-group-label");
         descriptionPanel.addStyleName("form-group-description-container");
+        helpButton.addStyleName("form-group-help");
 
         // Don't want the user to have to tab over each help btn when you can
         // call up the help with F1
@@ -112,9 +128,9 @@ public class FormGroup extends Composite implements HasWidgets {
             formLabel.setLabel(label);
 
             if (GwtNullSafe.isBlankString(label)) {
-                helpButton.setTitle("Help");
+                helpButton.setTitle("Click for help");
             } else {
-                helpButton.setTitle(label + " - Help");
+                helpButton.setTitle(label + " - Click for help");
                 helpButton.setHelpContentHeading(label);
             }
             updateLabelPanel();
@@ -126,11 +142,27 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     /**
-     * The helpText attr trumps the {@code <label class="helpText">}.
+     * Plain text, any HTML will be escaped.
+     * The helpText attr trumps the {@code <form:HelpHTML>} element.
+     * <p>
+     * To programmatically set HTML help text, use {@link FormGroup#overrideHelpText(SafeHtml)}.
+     * </p>
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // Bound to UI attr
     public void setHelpText(final String helpText) {
         this.helpText = helpText;
+
+//        // This allows us to have hard coded help in the ui.xml but override it
+//        // using helpText, or set helpText back to null to use the hardcoded
+//        // ui.xml content
+//        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+//            this.helpText = helpHTML.getHTML();
+//        }
+        updateHelpButton();
+    }
+
+    public void overrideHelpText(final SafeHtml helpTextOverride) {
+        this.helpTextOverride = helpTextOverride;
         updateHelpButton();
     }
 
@@ -138,13 +170,66 @@ public class FormGroup extends Composite implements HasWidgets {
         return helpText;
     }
 
+    private SafeHtml getHelpTextOverride() {
+        return helpTextOverride;
+    }
+
+    private HelpHTML getHelpHTML() {
+        return helpHTML;
+    }
+
     private void updateHelpButton() {
-        if (!GwtNullSafe.isBlankString(getHelpText())) {
-            helpButton.setHelpContent(SafeHtmlUtils.fromSafeConstant(getHelpText()));
+        final String plainHelpText = getHelpText();
+        final SafeHtml helpTextOverride = getHelpTextOverride();
+        final HelpHTML helpHTML = getHelpHTML();
+
+        final SafeHtml effectiveHelpText;
+//        final boolean haveHelpText;
+
+        if (helpTextOverride != null) {
+//            haveHelpText = true;
+            effectiveHelpText = helpTextOverride;
+        } else if (GwtNullSafe.isNonBlankString(plainHelpText)) {
+//            haveHelpText = true;
+            // Escape any html in there, wrap it in a para so styling is consistent
+            effectiveHelpText = HtmlBuilder.builder()
+                    .para(paraBuilder -> paraBuilder.append(SafeHtmlUtils.fromString(plainHelpText)))
+                    .toSafeHtml();
+        } else if (helpHTML != null) {
+//            haveHelpText = true;
+            effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
         } else {
-            helpButton.setHelpContent(null);
+//            haveHelpText = false;
+            effectiveHelpText = null;
         }
+
+        helpButton.setHelpContent(effectiveHelpText);
+
+//        if (haveHelpText) {
+//            helpButton.setHelpContent(effectiveHelpText);
+//        } else {
+//            helpButton.setHelpContent(null);
+//        }
         updateLabelPanel();
+
+//        if (GwtNullSafe.isNonBlankString(plainHelpText)) {
+//            haveHelpText = true;
+//            // Escape any html in there
+//            effectiveHelpText = SafeHtmlUtils.fromString(plainHelpText);
+//        }
+//
+//        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+//            effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
+//            haveHelpText = true;
+//        } else {
+//
+//        }
+//        if (!GwtNullSafe.isBlankString(getHelpText())) {
+//            helpButton.setHelpContent(SafeHtmlUtils.fromSafeConstant(getHelpText()));
+//        } else {
+//            helpButton.setHelpContent(null);
+//        }
+//        updateLabelPanel();
     }
 
     @Override
@@ -159,7 +244,7 @@ public class FormGroup extends Composite implements HasWidgets {
             // Not a HelpHTML so must be the childWidget
             if (childWidget != null) {
                 throw new IllegalStateException("FormGroup can only contain one child widget that is not a HelpHTML. " +
-                        "Class: " + widget.getClass().getName());
+                                                "Class: " + widget.getClass().getName());
             }
             this.childWidget = widget;
             if (id != null) {
@@ -180,7 +265,7 @@ public class FormGroup extends Composite implements HasWidgets {
     private void addDescriptionHtml(final DescriptionHTML descriptionHTML) {
         if (this.descriptionHTML != null) {
             throw new IllegalStateException("FormGroup can only contain one child DescriptionHTML widget. " +
-                    "Class: " + descriptionHTML.getClass().getName());
+                                            "Class: " + descriptionHTML.getClass().getName());
         }
         this.descriptionHTML = descriptionHTML;
         this.descriptionHTML.setStyleName("form-group-description");
@@ -190,13 +275,16 @@ public class FormGroup extends Composite implements HasWidgets {
     private void addHelpHtml(final HelpHTML helpHTML) {
         if (this.helpHTML != null) {
             throw new IllegalStateException("FormGroup can only contain one child HelpHTML widget. " +
-                    "Class: " + helpHTML.getClass().getName());
+                                            "Class: " + helpHTML.getClass().getName());
         }
         this.helpHTML = helpHTML;
-        this.helpText = this.helpHTML.getHTML();
-        this.helpHTML.setStyleName("form-group-help");
+        this.helpHTML.setStyleName(CLASS_NAME_FORM_GROUP_HELP);
+
         updateHelpButton();
-        updateLabelPanel();
+//        // helpText trumps helpHTML
+//        if (GwtNullSafe.isBlankString(helpText)) {
+//            this.helpText = this.helpHTML.getHTML();
+//        }
     }
 
     @Override
@@ -229,7 +317,9 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private void updateLabelPanel() {
         labelPanel.clear();
-        labelPanel.add(formLabel);
+        if (GwtNullSafe.isNonBlankString(formLabel.getLabel())) {
+            labelPanel.add(formLabel);
+        }
 
         if (helpButton.hasHelpContent()) {
             labelPanel.add(helpButton);

@@ -29,7 +29,7 @@ import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.identity.shared.UpdateAccountRequest;
-import stroom.util.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -76,7 +76,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public AccountResultPage list() {
+    public ResultPage<Account> list() {
         final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
         return eventLoggingService.loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
@@ -102,36 +102,43 @@ class AccountResourceImpl implements AccountResource {
                 .getResultAndLog();
     }
 
+    @AutoLogged(OperationType.VIEW)
     @Timed
     @Override
-    public AccountResultPage find(final FindAccountRequest request) {
-        if (NullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
-                && NullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
-            return list();
-        } else {
+    public ResultPage<Account> find(final FindAccountRequest request) {
 
-            final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
-            return eventLoggingService.loggedWorkBuilder()
-                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "search"))
-                    .withDescription("Search for accounts with quick filter")
-                    .withDefaultEventAction(SearchEventAction.builder()
-                            .withQuery(buildRawQuery(request.getQuickFilter()))
-                            .build())
-                    .withComplexLoggedResult(searchEventAction -> {
-                        // Do the work
-                        final AccountResultPage result = serviceProvider.get()
-                                .search(request);
+        final ResultPage<Account> result = serviceProvider.get()
+                .search(request);
 
-                        final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
-                                .withQuery(buildRawQuery(result.getQualifiedFilterInput()))
-                                .withResultPage(StroomEventLoggingUtil.createResultPage(result))
-                                .withTotalResults(BigInteger.valueOf(result.size()))
-                                .build();
+        return result;
 
-                        return ComplexLoggedOutcome.success(result, newSearchEventAction);
-                    })
-                    .getResultAndLog();
-        }
+//        if (NullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
+//                && NullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
+//            return list();
+//        } else {
+//
+//            final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
+//            return eventLoggingService.loggedWorkBuilder()
+//                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "search"))
+//                    .withDescription("Search for accounts with quick filter")
+//                    .withDefaultEventAction(SearchEventAction.builder()
+//                            .withQuery(buildRawQuery(request.getQuickFilter()))
+//                            .build())
+//                    .withComplexLoggedResult(searchEventAction -> {
+//                        // Do the work
+//                        final AccountResultPage result = serviceProvider.get()
+//                                .search(request);
+//
+//                        final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+//                                .withQuery(buildRawQuery(result.getQualifiedFilterInput()))
+//                                .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+//                                .withTotalResults(BigInteger.valueOf(result.size()))
+//                                .build();
+//
+//                        return ComplexLoggedOutcome.success(result, newSearchEventAction);
+//                    })
+//                    .getResultAndLog();
+//        }
     }
 
     private Query buildRawQuery(final String userInput) {
@@ -139,8 +146,8 @@ class AccountResourceImpl implements AccountResource {
                 ? new Query()
                 : Query.builder()
                         .withRaw("Account matches \""
-                                + Objects.requireNonNullElse(userInput, "")
-                                + "\"")
+                                 + Objects.requireNonNullElse(userInput, "")
+                                 + "\"")
                         .build();
     }
 
@@ -236,7 +243,7 @@ class AccountResourceImpl implements AccountResource {
                     .withState((account.isEnabled()
                             ? "Enabled"
                             : "Disabled") + "/"
-                            + (account.isInactive()
+                               + (account.isInactive()
                             ? "Inactive"
                             : "Active") + "/" + (account.isLocked()
                             ? "Locked"

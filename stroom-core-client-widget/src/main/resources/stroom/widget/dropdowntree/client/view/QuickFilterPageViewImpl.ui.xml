@@ -3,11 +3,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max dock-container-vertical">
-        <g:FlowPanel styleName="dock-min form-padding">
-            <form:FormLabel ui:field="label"/>
+    <g:FlowPanel styleName="max dock-container-vertical form-padding">
+        <form:FormGroup ui:field="formGroup"
+                        addStyleNames="form-label-padding">
             <view:QuickFilter ui:field="quickFilter"/>
-        </g:FlowPanel>
+        </form:FormGroup>
+
         <g:SimplePanel ui:field="data" styleName="dock-max overflow-hidden"/>
     </g:FlowPanel>
 </ui:UiBinder>

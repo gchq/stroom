@@ -23,6 +23,7 @@ import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.HasUserDependencies;
 
 import com.google.inject.AbstractModule;
 
@@ -43,5 +44,8 @@ public class AnnotationModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(AnnotationService.class);
+
+        GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
+                .addBinding(AnnotationService.class.getName(), AnnotationService.class);
     }
 }

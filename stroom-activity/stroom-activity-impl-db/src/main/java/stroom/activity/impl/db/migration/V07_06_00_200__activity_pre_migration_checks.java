@@ -41,17 +41,18 @@ public class V07_06_00_200__activity_pre_migration_checks extends BaseJavaMigrat
                     """
                             SELECT DISTINCT(a.user_id)
                             FROM activity a
-                            LEFT OUTER JOIN stroom_user su
-                            ON (su.name = a.user_id)
-                            WHERE su.name IS NULL;""")) {
+                            WHERE NOT EXISTS (
+                                SELECT NULL
+                                FROM stroom_user su
+                                WHERE su.name = a.user_id);""")) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         try {
                             final String user = resultSet.getString(1);
                             LOGGER.error(() ->
                                     "Pre migration check failure:\n`activity.user_id` '" +
-                                            user +
-                                            "' not found in `stroom_user`");
+                                    user +
+                                    "' not found in `stroom_user`");
                             error = true;
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);

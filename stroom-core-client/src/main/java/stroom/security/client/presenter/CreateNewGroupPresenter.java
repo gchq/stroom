@@ -52,6 +52,15 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
         getView().setUiHandlers(dialogActionUiHandlers);
     }
 
+    public void editGroupName(final User user,
+                              final Consumer<User> consumer,
+                              final HidePopupRequestEvent event,
+                              final TaskMonitorFactory taskMonitorFactory) {
+        user.setSubjectId(getView().getName());
+        user.setDisplayName(getView().getName());
+        update(user, consumer, event, taskMonitorFactory);
+    }
+
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
                        final TaskMonitorFactory taskMonitorFactory) {
@@ -77,7 +86,7 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
                         final TaskMonitorFactory taskMonitorFactory) {
         ConfirmEvent.fire(this,
                 "A deleted group already exists with the same name, " +
-                        "would you like to restore the existing group?",
+                "would you like to restore the existing group?",
                 ok -> {
                     if (ok) {
                         user.setEnabled(true);

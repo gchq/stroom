@@ -13,6 +13,9 @@ import java.util.stream.Collectors;
 
 public class DocumentPermissionFields {
 
+    public static final String FIELD_EXPLICIT_DOC_PERMISSION = "explicitdocperm";
+    public static final String FIELD_EFFECTIVE_DOC_PERMISSION = "effectivedocperm";
+
     public static final String DOCUMENT_STORE_TYPE = "DocumentStore";
     public static final DocRef DOCUMENT_STORE_DOC_REF = DocRef.builder()
             .type(DOCUMENT_STORE_TYPE)
@@ -80,6 +83,9 @@ public class DocumentPermissionFields {
             .queryable(true)
             .build();
 
+    public static final QueryField EXPLICIT_DOC_PERMISSION = QueryField.createText(FIELD_EXPLICIT_DOC_PERMISSION);
+    public static final QueryField EFFECTIVE_DOC_PERMISSION = QueryField.createText(FIELD_EFFECTIVE_DOC_PERMISSION);
+
     static {
         FIELDS.add(DOCUMENT);
         FIELDS.add(CHILDREN);
@@ -89,8 +95,11 @@ public class DocumentPermissionFields {
         FIELDS.add(DOCUMENT_UUID);
         FIELDS.add(DOCUMENT_TAG);
         FIELDS.add(USER);
+        FIELDS.add(EXPLICIT_DOC_PERMISSION);
+        FIELDS.add(EFFECTIVE_DOC_PERMISSION);
 
-        ALL_FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+        ALL_FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {

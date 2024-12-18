@@ -63,7 +63,7 @@ class TestActivityServiceImpl {
     void test() {
         // Delete all existing.
         ResultPage<Activity> list = activityService.find(null);
-        list.forEach(activity -> activityService.delete(activity.getId()));
+        list.forEach(activity -> activityService.deleteAllByOwner(activity.getId()));
 
         // Create 1
         Activity activity1 = activityService.create();
@@ -106,12 +106,12 @@ class TestActivityServiceImpl {
         assertThat(list3.getFirst().getId()).isEqualTo(activity2.getId());
 
         // Delete one
-        activityService.delete(activity1.getId());
+        activityService.deleteAllByOwner(activity1.getId());
         final ResultPage<Activity> list4 = activityService.find(null);
         assertThat(list4.size()).isEqualTo(1);
 
         // Delete the other
-        activityService.delete(activity2.getId());
+        activityService.deleteAllByOwner(activity2.getId());
         final ResultPage<Activity> list5 = activityService.find(null);
         assertThat(list5.size()).isEqualTo(0);
     }
