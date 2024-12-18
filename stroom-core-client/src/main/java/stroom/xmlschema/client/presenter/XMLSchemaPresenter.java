@@ -25,6 +25,7 @@ import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
@@ -44,6 +45,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     private static final TabData GRAPHICAL = new TabDataImpl("Graphical");
     private static final TabData TEXT = new TabDataImpl("Text");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private XSDBrowserPresenter xsdBrowserPresenter;
     private EditorPresenter codePresenter;
@@ -56,7 +58,9 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                               final Provider<XMLSchemaSettingsPresenter> settingsPresenterProvider,
                               final Provider<XSDBrowserPresenter> xsdBrowserPresenterProvider,
                               final Provider<EditorPresenter> codePresenterProvider,
-                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                              final DocumentUserPermissionsTabProvider<XmlSchemaDoc>
+                                      documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(GRAPHICAL, new AbstractTabProvider<XmlSchemaDoc, XSDBrowserPresenter>(eventBus) {
@@ -125,6 +129,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(GRAPHICAL);
     }
 
@@ -153,5 +158,15 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     @Override
     public String getType() {
         return XmlSchemaDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
     }
 }

@@ -2,6 +2,7 @@ package stroom.explorer.shared;
 
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.UserRef;
@@ -21,7 +22,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     @JsonProperty
     private final UserRef userRef;
     @JsonProperty
-    private final boolean explicitPermission;
+    private final PermissionShowLevel showLevel;
 
     @JsonCreator
     public AdvancedDocumentFindWithPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -30,19 +31,18 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission>
                                                               requiredPermissions,
                                                       @JsonProperty("userRef") final UserRef userRef,
-                                                      @JsonProperty("explicitPermission") final boolean
-                                                              explicitPermission) {
+                                                      @JsonProperty("showLevel") PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression, requiredPermissions);
         this.userRef = userRef;
-        this.explicitPermission = explicitPermission;
+        this.showLevel = showLevel;
     }
 
     public UserRef getUserRef() {
         return userRef;
     }
 
-    public boolean isExplicitPermission() {
-        return explicitPermission;
+    public PermissionShowLevel getShowLevel() {
+        return showLevel;
     }
 
     @Override
@@ -57,12 +57,12 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
             return false;
         }
         final AdvancedDocumentFindWithPermissionsRequest that = (AdvancedDocumentFindWithPermissionsRequest) object;
-        return explicitPermission == that.explicitPermission && Objects.equals(userRef, that.userRef);
+        return showLevel == that.showLevel && Objects.equals(userRef, that.userRef);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), userRef, explicitPermission);
+        return Objects.hash(super.hashCode(), userRef, showLevel);
     }
 
     // --------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
 
         private Set<DocumentPermission> requiredPermissions;
         private UserRef userRef;
-        private boolean explicitPermission = true;
+        private PermissionShowLevel showLevel;
 
         public Builder() {
 
@@ -82,6 +82,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
             super(expressionCriteria);
             this.requiredPermissions = expressionCriteria.getRequiredPermissions();
             this.userRef = expressionCriteria.userRef;
+            this.showLevel = expressionCriteria.showLevel;
         }
 
         public Builder requiredPermissions(final Set<DocumentPermission> requiredPermissions) {
@@ -94,8 +95,8 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
             return self();
         }
 
-        public Builder explicitPermission(final boolean explicitPermission) {
-            this.explicitPermission = explicitPermission;
+        public Builder showLevel(final PermissionShowLevel showLevel) {
+            this.showLevel = showLevel;
             return self();
         }
 
@@ -112,7 +113,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                     expression,
                     requiredPermissions,
                     userRef,
-                    explicitPermission);
+                    showLevel);
         }
     }
 }

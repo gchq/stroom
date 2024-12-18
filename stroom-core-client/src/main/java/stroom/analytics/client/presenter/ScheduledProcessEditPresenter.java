@@ -15,6 +15,7 @@ import stroom.node.client.NodeManager;
 import stroom.schedule.client.SchedulePopup;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -89,7 +90,7 @@ public class ScheduledProcessEditPresenter
 
         nodeManager.listAllNodes(
                 list -> {
-                    if (list != null && list.size() > 0) {
+                    if (GwtNullSafe.hasItems(list)) {
                         getView().setNodes(list);
                     }
                 },

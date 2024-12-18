@@ -39,6 +39,7 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
+import stroom.security.user.api.UserInfoLookup;
 import stroom.security.user.api.UserRefLookup;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -70,6 +71,7 @@ public class SecurityModule extends AbstractModule {
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(UserRefLookup.class).to(UserRefLookupImpl.class);
+        bind(UserInfoLookup.class).to(UserInfoLookupImpl.class);
         bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
@@ -104,6 +106,7 @@ public class SecurityModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
                 .addBinding(UserCache.class)
+                .addBinding(UserInfoCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(StroomUserIdentityFactory.class)
@@ -116,6 +119,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
                 .bind(UserRefResourceImpl.class)
+                .bind(UserInfoResourceImpl.class)
                 .bind(AuthProxyResourceImpl.class);
 
         ObjectInfoProviderBinder.create(binder())

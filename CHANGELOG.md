@@ -13,6 +13,45 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.6] - 2024-12-16
+
+* Issue **#4632** : Fix conditional formatting styles.
+
+* Issue **#4634** : Make icons on highlighted rows white.
+
+* Issue **#4605** : Allow embedded queried to be re-run independently.
+
+* Issue **#4631** : Fix simple expression wildcards.
+
+* Issue **#4641** : Reset selections when dashboard table data changes.
+
+* Issue **#4642** : Show current dashboard selections to help create selection filters.
+
+* Issue **#4637** : Fix StroomQL filter in dictionary.
+
+* Issue **#4645** : Add feature to disable notifications.
+
+* Issue **#4594** : Various changes to the permissions screens. Added a new User screen to show all a user's permissions, api keys, and dependencies. Added links between the various permission and user screens. Improved the tables of some of the permissions screens.
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+* Fix error when creating a document as a user without `Administrator` or `Manager Users`.
+
+* Issue **#4588** : Fix the API allowing documents to be moved with only VIEW permission. The UI requires EDIT permission. The API is now in line with that.
+
+* Fix the `Copy As` menu item for ancestor folders that the user does not have VIEW permission on. For these cases, the `Copy As` sub menu now only displays the `Copy as name` entry.
+
+* Change the explorer context menu to include the entries for `Dependencies` and `Dependants` if the user has at least VIEW permission. Previously required OWNER.
+
+* Issue **#4586** : Fix error when changing filter on Document Permissions Report.
+
+* Make account creation also create a stroom user. Make an update to an account also update the stroom user if the full name has changed.
+
+* Fix bug in DB migration `V07_06_00_100__annotation_pre_migration_checks`.
+
+* If you are upgrading from a previous v7.6 beta release you will need to run the following SQL. `update analytics_schema_history set checksum = '-86554219' where version = '07.06.00.405';` and `update processor_schema_history set checksum = '-175036745' where version = '07.06.00.305';`.
+
+
 ## [v7.7-beta.5] - 2024-12-05
 
 * Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
@@ -1042,7 +1081,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.6...HEAD
+[v7.7-beta.6]: https://github.com/gchq/stroom/compare/v7.7-beta.5...v7.7-beta.6
 [v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
 [v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
 [v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3

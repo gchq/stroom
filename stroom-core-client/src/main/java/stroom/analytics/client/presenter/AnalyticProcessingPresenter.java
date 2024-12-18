@@ -32,7 +32,6 @@ import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -100,11 +99,14 @@ public class AnalyticProcessingPresenter
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                final DocRef selectedDocRef = GwtNullSafe.requireNonNullElseGet(
-                        analyticRuleDoc.getErrorFeed(),
-                        () -> extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
+                DocRef selectedDocRef = analyticRuleDoc.getErrorFeed();
+                if (selectedDocRef == null) {
+                    selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
+                }
 
-                errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
+                if (selectedDocRef != null) {
+                    errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
+                }
 
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
                 final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null

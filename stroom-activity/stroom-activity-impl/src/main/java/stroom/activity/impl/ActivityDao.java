@@ -3,6 +3,7 @@ package stroom.activity.impl;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.util.shared.HasIntCrud;
+import stroom.util.shared.UserRef;
 
 import java.util.List;
 import java.util.function.Function;
@@ -15,4 +16,6 @@ public interface ActivityDao extends HasIntCrud<Activity> {
     List<Activity> find(
             final FindActivityCriteria criteria,
             final Function<Stream<Activity>, Stream<Activity>> streamFunction);
+
+    int deleteAllByOwner(UserRef ownerRef);
 }

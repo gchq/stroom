@@ -10,7 +10,6 @@ import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.UserDesc;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -162,34 +161,11 @@ public class EditAccountPresenter
                 .create(ACCOUNT_RESOURCE)
                 .method(res -> res.create(request))
                 .onSuccess(id -> {
-
-                    // If we successfully created the account then also automatically create a permissions
-                    // user
-                    createUser(request.getUserId(), e);
-
-                })
-                .onFailure(throwable ->
-                        AlertEvent.fireError(this, "Error creating account: "
-                                                   + throwable.getMessage(), e::reset))
-                .taskMonitorFactory(this)
-                .exec();
-    }
-
-    private void createUser(final String userId,
-                            final HidePopupRequestEvent e) {
-        final UserDesc userDesc = new UserDesc(
-                userId,
-                userId,
-                userId);
-        restFactory
-                .create(USER_RESOURCE)
-                .method(res -> res.createUser(userDesc))
-                .onSuccess(user -> {
                     onChangeHandler.run();
                     e.hide();
                 })
                 .onFailure(throwable ->
-                        AlertEvent.fireError(this, "Error creating user: "
+                        AlertEvent.fireError(this, "Error creating account: "
                                                    + throwable.getMessage(), e::reset))
                 .taskMonitorFactory(this)
                 .exec();
@@ -220,6 +196,9 @@ public class EditAccountPresenter
                 .taskMonitorFactory(this)
                 .exec();
     }
+
+
+    // --------------------------------------------------------------------------------
 
 
     public interface EditAccountView extends View, Focus, HasUiHandlers<EditAccountUiHandlers> {

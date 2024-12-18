@@ -20,8 +20,10 @@ package stroom.storedquery.api;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 public interface StoredQueryService {
+
     StoredQuery fetch(int id);
 
     StoredQuery create(StoredQuery storedQuery);
@@ -30,5 +32,11 @@ public interface StoredQueryService {
 
     boolean delete(int id);
 
+    /**
+     * Delete all stored queries for a given owner.
+     */
+    int deleteByOwner(UserRef ownerUuid);
+
     ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria);
+
 }

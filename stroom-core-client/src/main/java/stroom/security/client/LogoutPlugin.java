@@ -43,10 +43,10 @@ public class LogoutPlugin extends Plugin {
         super.onReveal(event);
 
         MenuKeys.addUserMenu(event.getMenuItems());
-        event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(2));
+        event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(30));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
-                        .priority(3)
+                        .priority(40)
                         .icon(SvgImage.LOGOUT)
                         .text("Logout")
                         .command(() ->

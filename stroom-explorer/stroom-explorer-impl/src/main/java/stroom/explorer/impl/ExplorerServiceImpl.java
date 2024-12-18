@@ -61,6 +61,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
@@ -1710,18 +1711,18 @@ class ExplorerServiceImpl
         // First find the results then decorate them with user permissions.
         final List<FindResultWithPermissions> results = new ArrayList<>();
         applyExpressionFilter(request, (path, node) -> {
-            final DocumentUserPermissions permissions = documentPermissionService
-                    .getPermissions(node.getDocRef(), request.getUserRef());
-            if (request.isExplicitPermission()) {
-                if (permissions.getPermission() != null ||
-                    (permissions.getDocumentCreatePermissions() != null &&
-                     !permissions.getDocumentCreatePermissions().isEmpty())) {
-                    results.add(new FindResultWithPermissions(createFindResult(path, node), permissions));
-                }
-            } else {
-                results.add(new FindResultWithPermissions(createFindResult(path, node), permissions));
+            final FetchDocumentUserPermissionsRequest fetchDocumentUserPermissionsRequest =
+                    new FetchDocumentUserPermissionsRequest.Builder()
+                            .userRef(request.getUserRef())
+                            .showLevel(request.getShowLevel())
+                            .docRef(node.getDocRef())
+                            .build();
+            final ResultPage<DocumentUserPermissions> permissions = documentPermissionService
+                    .fetchDocumentUserPermissions(fetchDocumentUserPermissionsRequest);
+            if (!permissions.isEmpty()) {
+                final DocumentUserPermissions documentUserPermissions = permissions.getFirst();
+                results.add(new FindResultWithPermissions(createFindResult(path, node), documentUserPermissions));
             }
-
             return true;
         });
 

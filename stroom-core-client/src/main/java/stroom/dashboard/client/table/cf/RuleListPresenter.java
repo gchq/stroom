@@ -97,7 +97,8 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
     private void addEnabledColumn() {
         // Enabled.
         final Column<ConditionalFormattingRule, TickBoxState> enabledColumn =
-                DataGridUtil.updatableTickBoxColumnBuilder(ConditionalFormattingRule::isEnabled)
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                ConditionalFormattingRule::isEnabled))
                         .centerAligned()
                         .build();
 
@@ -118,7 +119,8 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
 
     private void addHideColumn() {
         final Column<ConditionalFormattingRule, TickBoxState> hideColumn =
-                DataGridUtil.updatableTickBoxColumnBuilder(ConditionalFormattingRule::isHide)
+                DataGridUtil.updatableTickBoxColumnBuilder(
+                                TickBoxState.createTickBoxFunc(ConditionalFormattingRule::isHide))
                         .centerAligned()
                         .enabledWhen(ConditionalFormattingRule::isEnabled)
                         .build();

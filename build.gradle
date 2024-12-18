@@ -1,4 +1,7 @@
+import org.yaml.snakeyaml.Yaml
+
 buildscript {
+    ext.jooqVer = '3.18.7'
     repositories {
         mavenLocal()
         mavenCentral()
@@ -14,6 +17,18 @@ buildscript {
         //classpath 'javax.activation:activation:1.1.1'
         //classpath 'javax.xml.bind:jaxb-api:2.3.1'
         //classpath 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+
+        // Needed for parsing local.yml to get the jdbcUrl
+        classpath 'org.yaml:snakeyaml:2.2'
+    }
+    // This was borrowed from
+    // https://github.com/etiennestuder/gradle-jooq-plugin/blob/main/example/specify_jooq_config_xml_schema_version/build.gradle
+    // and ensures we are only using one jooq ver througout
+    configurations['classpath'].resolutionStrategy.eachDependency {
+        if (requested.group.startsWith('org.jooq') && requested.name.startsWith('jooq')) {
+            // set jOOQ version used at configuration time to enforce a specific jOOQ config XML schema version
+            useVersion jooqVer
+        }
     }
 }
 
@@ -28,7 +43,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "8.1.1" apply false
 
-    id 'nu.studer.jooq' version '8.2.1' apply false
+    id 'nu.studer.jooq' version '8.2.3' apply false
 
     id 'org.flywaydb.flyway' version '10.0.0' apply false
 
@@ -76,6 +91,28 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
         logger.info("Property [$propName] has no value, using default value [$val]")
     }
     return val;
+}
+
+// Try to determine the jdbc url from local.yml so that when using
+// Jooq code generator with a locally named database (from SetupDevEnv),
+// joow will point to the correct DB.
+def localYamlFile = new File("${rootDir}/local.yml")
+//println "YAML file: ${localYamlFile}"
+ext.dbSchema = 'stroom'
+ext.jdbcUrl = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
+if (localYamlFile.exists()) {
+    def localYaml = new org.yaml.snakeyaml.Yaml().load(localYamlFile.newInputStream())
+    String yamlVal = localYaml?.appConfig?.commonDbDetails?.connection?.jdbcDriverUrl
+    //println "yamlVal: ${yamlVal}"
+    if (yamlVal != null) {
+        // Strip all the param sunstitution stuff
+        yamlVal = yamlVal.replaceAll('^\\$\\{STROOM_JDBC_DRIVER_URL:-', '')
+            .replaceAll('\\}$', '')
+        ext.jdbcUrl = yamlVal
+        // Extract the schema name from the url
+        ext.dbSchema = (yamlVal =~ /jdbc:mysql:\/\/[^:]+:[0-9]+\/([^?]+)\?.*/)[0][1]
+        println "Using jdbc url [${jdbcUrl}] and dbSchema [${dbSchema}] from local.yml"
+    }
 }
 
 // Convert the abs root project dir into a string that can be used as a dir
@@ -135,7 +172,7 @@ ext.versions = [
         gwt               : '2.11.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jmh               : '1.37',
-        jooq              : '3.18.7',
+        jooq              : "${jooqVer}",  // Defined at the top of this file
         junit_jupiter     : '5.10.1',
         kafka             : '3.6.0',
         poi               : '5.2.4',

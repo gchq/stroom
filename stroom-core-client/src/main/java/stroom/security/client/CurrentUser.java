@@ -38,6 +38,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
@@ -94,6 +95,11 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     @Override
     public UserRef getUserRef() {
         return userRef;
+    }
+
+    @Override
+    public boolean isCurrentUser(final UserRef userRef) {
+        return Objects.equals(getUserRef(), userRef);
     }
 
     @Override

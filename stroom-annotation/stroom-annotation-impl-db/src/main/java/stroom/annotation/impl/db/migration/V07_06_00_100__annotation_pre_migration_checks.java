@@ -41,17 +41,18 @@ public class V07_06_00_100__annotation_pre_migration_checks extends BaseJavaMigr
                     """
                             SELECT DISTINCT(ae.create_user)
                             FROM annotation_entry ae
-                            LEFT OUTER JOIN stroom_user su
-                            ON (su.name = ae.create_user)
-                            WHERE su.name IS NULL;""")) {
+                            WHERE NOT EXISTS (
+                                SELECT NULL
+                                FROM stroom_user su
+                                WHERE su.name = ae.create_user);""")) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         try {
                             final String user = resultSet.getString(1);
                             LOGGER.error(() ->
                                     "Pre migration check failure:\n`annotation_entry.create_user` '" +
-                                            user +
-                                            "' not found in `stroom_user`");
+                                    user +
+                                    "' not found in `stroom_user`");
                             error = true;
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
@@ -65,18 +66,20 @@ public class V07_06_00_100__annotation_pre_migration_checks extends BaseJavaMigr
                     """
                             SELECT DISTINCT(ae.data)
                             FROM annotation_entry ae
-                            LEFT OUTER JOIN stroom_user su
-                            ON (su.name = ae.data)
-                            WHERE ae.type = "Assigned"
-                            AND su.name IS NULL;""")) {
+                            WHERE ae.data IS NOT NULL
+                            AND ae.type = "Assigned"
+                            AND NOT EXISTS (
+                                SELECT NULL
+                                FROM stroom_user su
+                                WHERE su.uuid = ae.data);""")) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         try {
                             final String user = resultSet.getString(1);
                             LOGGER.error(() ->
                                     "Pre migration check failure:\n`annotation_entry.data` for 'Assigned' " +
-                                            user +
-                                            "' not found in `stroom_user`");
+                                    user +
+                                    "' not found in `stroom_user`");
                             error = true;
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);

@@ -1,40 +1,48 @@
 package stroom.security.impl.db;
 
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
-import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
-import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.string.StringUtil;
 
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.SelectFieldOrAsterisk;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -51,13 +59,14 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
     // We need a db field to mirror the Owner column in the UI so we can sort on it
     private static final Name OWNER_UI_VALUE_JOOQ_FIELD_NAME = DSL.name("owner_ui_value");
+
     private static final Field<String> OWNER_UI_VALUE_JOOQ_FIELD = DSL.field(
             DSL.coalesce(STROOM_USER.DISPLAY_NAME, STROOM_USER.NAME).as(OWNER_UI_VALUE_JOOQ_FIELD_NAME));
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindApiKeyCriteria.FIELD_NAME, API_KEY.NAME,
             FindApiKeyCriteria.FIELD_PREFIX, API_KEY.API_KEY_PREFIX,
-            FindApiKeyCriteria.FIELD_OWNER, OWNER_UI_VALUE_JOOQ_FIELD,
+            FindApiKeyCriteria.FIELD_OWNER, STROOM_USER.DISPLAY_NAME,
             FindApiKeyCriteria.FIELD_COMMENTS, API_KEY.COMMENTS,
             FindApiKeyCriteria.FIELD_EXPIRE_TIME, API_KEY.EXPIRES_ON_MS,
             FindApiKeyCriteria.FIELD_STATE, API_KEY.ENABLED,
@@ -65,15 +74,36 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
     public static final int INITIAL_VERSION = 1;
 
+
+    private static final Field<String> HASH_NAME;
+
     private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<ApiKeyRecord, HashedApiKey, Integer> genericDao;
     private final UserCache userCache;
     private final SecurityContext securityContext;
+    private final ExpressionMapper expressionMapper;
+
+    static {
+        // Make a SQL field for the hash algo name so the QF can work on it
+        CaseConditionStep<String> step = null;
+        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
+            final Condition condition = API_KEY.HASH_ALGORITHM.eq(hashAlgorithm.getPrimitiveValue());
+            final String valIfTrue = hashAlgorithm.getDisplayValue();
+            if (step == null) {
+                step = DSL.when(condition, valIfTrue);
+            } else {
+                step = step.when(condition, valIfTrue);
+            }
+        }
+        HASH_NAME = Objects.requireNonNull(step)
+                .as(DSL.field("hash_name", String.class));
+    }
 
     @Inject
     public ApiKeyDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
                          final UserCache userCache,
-                         final SecurityContext securityContext) {
+                         final SecurityContext securityContext,
+                         final ExpressionMapperFactory expressionMapperFactory) {
         this.securityDbConnProvider = securityDbConnProvider;
         this.genericDao = new GenericDao<>(
                 securityDbConnProvider,
@@ -83,42 +113,61 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 this::mapRecordToApiKey);
         this.userCache = userCache;
         this.securityContext = securityContext;
+
+        expressionMapper = expressionMapperFactory.create()
+                .map(FindApiKeyCriteria.OWNER, STROOM_USER.DISPLAY_NAME, String::valueOf)
+                .map(FindApiKeyCriteria.NAME, API_KEY.NAME, String::valueOf)
+                .map(FindApiKeyCriteria.PREFIX, API_KEY.API_KEY_PREFIX, String::valueOf)
+                .map(FindApiKeyCriteria.COMMENTS, API_KEY.COMMENTS, String::valueOf)
+                .map(FindApiKeyCriteria.STATE, API_KEY.ENABLED, StringUtil::asBoolean)
+                .map(FindApiKeyCriteria.HASH_ALGORITHM, HASH_NAME, String::valueOf);
     }
 
     @Override
-    public ApiKeyResultPage find(final FindApiKeyCriteria criteria) {
+    public ResultPage<HashedApiKey> find(final FindApiKeyCriteria criteria) {
 
+        Objects.requireNonNull(criteria);
+        final PageRequest pageRequest = criteria.getPageRequest();
         final Condition ownerCondition = NullSafe.getOrElseGet(
                 criteria.getOwner(),
                 owner -> API_KEY.FK_OWNER_UUID.eq(owner.getUuid()),
                 DSL::trueCondition);
 
-        final String fullyQualifyFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
-                criteria.getQuickFilterInput(),
-                ApiKeyDao.FILTER_FIELD_MAPPERS);
+        final ExpressionOperator expressionOperator = criteria.getExpression();
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
                 FIELD_MAP,
                 criteria,
                 API_KEY.EXPIRES_ON_MS);
+        final int limit = JooqUtil.getLimit(pageRequest, true);
+        final int offset = JooqUtil.getOffset(pageRequest);
 
-        final ApiKeyResultPage resultPage = QuickFilterPredicateFactory.filterStream(
-                        criteria.getQuickFilterInput(),
-                        FILTER_FIELD_MAPPERS,
-                        JooqUtil.contextResult(securityDbConnProvider, context -> context
-                                        .select(API_KEY.asterisk(), OWNER_UI_VALUE_JOOQ_FIELD)
-                                        .from(API_KEY)
-                                        .innerJoin(STROOM_USER).on(API_KEY.FK_OWNER_UUID.eq(STROOM_USER.UUID))
-                                        .where(ownerCondition)
-                                        .orderBy(orderFields)
-                                        .fetch())
-                                .stream()
-                                .map(this::mapRecordToApiKey)
-                )
-                .collect(ApiKeyResultPage.collector(
-                        criteria.getPageRequest(),
-                        (apiKeys, pageResponse) ->
-                                new ApiKeyResultPage(apiKeys, pageResponse, fullyQualifyFilterInput)));
+        final List<SelectFieldOrAsterisk> selectFields = new ArrayList<>();
+        selectFields.add(API_KEY.asterisk());
+        // Only add it if we need it to save the cost of evaluating it
+        final Condition exprCondition;
+        if (expressionOperator != null) {
+            if (expressionOperator.containsField(FindApiKeyCriteria.HASH_ALGORITHM.getFldName())) {
+                selectFields.add(HASH_NAME);
+            }
+            exprCondition = expressionMapper.apply(expressionOperator);
+        } else {
+            exprCondition = DSL.trueCondition();
+        }
+
+        final ResultPage<HashedApiKey> resultPage = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select(selectFields)
+                        .from(API_KEY)
+                        .innerJoin(STROOM_USER).on(API_KEY.FK_OWNER_UUID.eq(STROOM_USER.UUID))
+                        .where(ownerCondition)
+                        .and(exprCondition)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch())
+                .stream()
+                .map(this::mapRecordToApiKey)
+                .collect(ResultPage.collector(pageRequest));
 
         LOGGER.debug(() -> LogUtil.message("Returning {} results", resultPage.size()));
         return resultPage;
@@ -164,7 +213,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                             API_KEY.UPDATE_USER,
                             API_KEY.FK_OWNER_UUID,
                             API_KEY.API_KEY_HASH,
-                                    API_KEY.HASH_ALGORITHM,
+                            API_KEY.HASH_ALGORITHM,
                             API_KEY.API_KEY_PREFIX,
                             API_KEY.EXPIRES_ON_MS,
                             API_KEY.NAME,
@@ -177,7 +226,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                             userIdentityForAudit,
                             Objects.requireNonNull(createHashedApiKeyRequest.getOwner().getUuid()),
                             hashedApiKeyParts.apiKeyHash(),
-                                    createHashedApiKeyRequest.getHashAlgorithm().getPrimitiveValue(),
+                            createHashedApiKeyRequest.getHashAlgorithm().getPrimitiveValue(),
                             hashedApiKeyParts.apiKeyPrefix(),
                             createHashedApiKeyRequest.getExpireTimeMs(),
                             createHashedApiKeyRequest.getName(),
@@ -197,8 +246,8 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                                 "Duplicate API key hash and prefix value to an existing key.", e);
                     } else if (msg.contains("api_key_owner_name_idx")) {
                         throw new RuntimeException("Duplicate API key name '"
-                                + createHashedApiKeyRequest.getName() + "' for owner "
-                                + createHashedApiKeyRequest.getOwner(), e);
+                                                   + createHashedApiKeyRequest.getName() + "' for owner "
+                                                   + createHashedApiKeyRequest.getOwner(), e);
                     }
                 }
             }
@@ -223,10 +272,10 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         } catch (DataAccessException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             if (rootCause instanceof SQLIntegrityConstraintViolationException &&
-                    rootCause.getMessage().contains(API_KEY.NAME.getName())) {
+                rootCause.getMessage().contains(API_KEY.NAME.getName())) {
                 throw new RuntimeException(LogUtil.message(
                         "An API key already exists for user '{}' with API Key Name '{}'. " +
-                                "A user's API keys must all have unique names.",
+                        "A user's API keys must all have unique names.",
                         apiKey.getOwner().toInfoString(), apiKey.getName()));
             } else {
                 throw e;
@@ -237,6 +286,17 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     @Override
     public boolean delete(final int id) {
         return genericDao.delete(id);
+    }
+
+    int deleteByOwner(final DSLContext dslContext, final String userUuid) {
+        Objects.requireNonNull(userUuid);
+
+        final int delCount = dslContext.deleteFrom(API_KEY)
+                .where(API_KEY.FK_OWNER_UUID.eq(userUuid))
+                .execute();
+        LOGGER.debug(() -> LogUtil.message("Deleted {} {} records for userUuid {}",
+                delCount, API_KEY.getName(), userUuid));
+        return delCount;
     }
 
     @Override

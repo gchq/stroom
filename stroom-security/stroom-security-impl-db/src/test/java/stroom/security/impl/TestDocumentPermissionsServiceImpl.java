@@ -103,13 +103,13 @@ class TestDocumentPermissionsServiceImpl {
 
         // Check user permissions.
         final User user = createUser(FileSystemTestUtil.getUniqueTestString());
-        userService.addUserToGroup(user.getUuid(), userGroup1.getUuid());
-        userService.addUserToGroup(user.getUuid(), userGroup3.getUuid());
+        userService.addUserToGroup(user.asRef(), userGroup1.asRef());
+        userService.addUserToGroup(user.asRef(), userGroup3.asRef());
         checkUserPermissions(docRef, user, DocumentPermission.OWNER);
 
         setPermission(docRef, userGroup2, DocumentPermission.EDIT);
 
-        userService.addUserToGroup(user.getUuid(), userGroup2.getUuid());
+        userService.addUserToGroup(user.asRef(), userGroup2.asRef());
         checkUserPermissions(docRef, user, DocumentPermission.OWNER);
 
         setPermission(docRef, userGroup2, DocumentPermission.EDIT);
@@ -148,7 +148,7 @@ class TestDocumentPermissionsServiceImpl {
                     .getPermission(docRef, u.asRef());
             if (documentPermission != null) {
                 if (combinedPermission == null ||
-                        documentPermission.isEqualOrHigher(combinedPermission)) {
+                    documentPermission.isEqualOrHigher(combinedPermission)) {
                     combinedPermission = documentPermission;
                 }
             }

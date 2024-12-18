@@ -5,12 +5,15 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserRef;
 import stroom.util.user.UserDescUtil;
 
 import event.logging.CreateEventAction;
@@ -20,6 +23,7 @@ import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @AutoLogged
@@ -43,9 +47,32 @@ public class UserResourceImpl implements UserResource {
         return userServiceProvider.get().find(criteria);
     }
 
-    private User fetch(String userUuid) {
+    @Override
+    public ResultPage<UserDependency> findDependencies(final FindUserDependenciesCriteria criteria) {
+
+        Objects.requireNonNull(criteria.getUserRef());
+        return userServiceProvider.get()
+                .fetchUserDependencies(criteria);
+    }
+
+    @Override
+    public User fetch(String userUuid) {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
+    }
+
+    @Override
+    public User fetchBySubjectId(final String subjectId) {
+        Objects.requireNonNull(subjectId);
+        return userServiceProvider.get()
+                .getUserBySubjectId(subjectId)
+                .orElseThrow(() -> new NotFoundException("User " + subjectId + " does not exist"));
+    }
+
+    @Override
+    public boolean delete(final String userUuid) {
+        return userServiceProvider.get()
+                .delete(Objects.requireNonNull(userUuid));
     }
 
     @Override
@@ -143,20 +170,22 @@ public class UserResourceImpl implements UserResource {
     public Boolean addUserToGroup(final String userUuid,
                                   final String groupUuid) {
         final User userIdForLogging = fetch(userUuid);
+        final UserRef userOrGroupRef = userIdForLogging.asRef();
         final User groupIdForLogging = fetch(groupUuid);
+        final UserRef groupRef = groupIdForLogging.asRef();
 
         try {
-            final Boolean result = userServiceProvider.get().addUserToGroup(userUuid, groupUuid);
+            final Boolean result = userServiceProvider.get().addUserToGroup(userOrGroupRef, groupRef);
             authorisationEventLogProvider.get().addPermission(
-                    userIdForLogging.asRef(),
-                    groupIdForLogging.asRef().toDisplayString(),
+                    userOrGroupRef,
+                    groupRef.toDisplayString(),
                     result,
                     null);
             return result;
         } catch (final Exception e) {
             authorisationEventLogProvider.get().addPermission(
-                    userIdForLogging.asRef(),
-                    groupIdForLogging.asRef().toDisplayString(),
+                    userOrGroupRef,
+                    groupRef.toDisplayString(),
                     false,
                     e.getMessage());
             throw e;
@@ -168,10 +197,12 @@ public class UserResourceImpl implements UserResource {
     public Boolean removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
         final User userIdForLogging = fetch(userUuid);
+        final UserRef userRef = userIdForLogging.asRef();
         final User groupIdForLogging = fetch(groupUuid);
+        final UserRef groupRef = groupIdForLogging.asRef();
 
         try {
-            final Boolean result = userServiceProvider.get().removeUserFromGroup(userUuid, groupUuid);
+            final Boolean result = userServiceProvider.get().removeUserFromGroup(userRef, groupRef);
             authorisationEventLogProvider.get().removePermission(
                     userIdForLogging.asRef(),
                     groupIdForLogging.asRef().toDisplayString(),

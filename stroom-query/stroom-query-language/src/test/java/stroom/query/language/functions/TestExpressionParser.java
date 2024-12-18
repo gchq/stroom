@@ -115,6 +115,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     }
 
     @Test
+    void testMatch5() {
+        compute("match(${val1}, '[A-F]\\\\d+')",
+                Val.of("A123456"),
+                ValAssertions.valTrue());
+    }
+
+    @Test
     void testTrue() {
         compute("true()",
                 ValAssertions.valTrue());

@@ -33,6 +33,7 @@ import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ResultCallback;
@@ -43,7 +44,6 @@ import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
-import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
@@ -335,6 +335,7 @@ public class DocumentPluginEventManager extends Plugin {
                 open(event.getDocRef(),
                         event.isForceOpen(),
                         event.isFullScreen(),
+                        event.getSelectedTab().orElse(null),
                         explorerListener)));
 
         // 8.2. Handle entity copy events.
@@ -740,6 +741,7 @@ public class DocumentPluginEventManager extends Plugin {
     public void open(final DocRef docRef,
                      final boolean forceOpen,
                      final boolean fullScreen,
+                     final CommonDocLinkTab selectedLinkTab,
                      final TaskMonitorFactory taskMonitorFactory) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
@@ -749,7 +751,11 @@ public class DocumentPluginEventManager extends Plugin {
                     .method(res ->
                             res.decorate(DecorateRequest.create(docRef)))
                     .onSuccess(decoratedDocRef -> {
-                        documentPlugin.open(decoratedDocRef, forceOpen, fullScreen,
+                        documentPlugin.open(
+                                decoratedDocRef,
+                                forceOpen,
+                                fullScreen,
+                                selectedLinkTab,
                                 new DefaultTaskMonitorFactory(this));
                         highlight(decoratedDocRef, explorerListener);
                     })
@@ -1495,7 +1501,10 @@ public class DocumentPluginEventManager extends Plugin {
                                                final boolean enabled) {
         final Command command = () -> {
             if (docRef != null) {
-                ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, docRef);
+//                ShowDocumentPermissionsEvent.fire(DocumentPluginEventManager.this, docRef);
+                OpenDocumentEvent.builder(DocumentPluginEventManager.this, docRef)
+                        .selectedTab(CommonDocLinkTab.PERMISSIONS)
+                        .fire();
             }
         };
 

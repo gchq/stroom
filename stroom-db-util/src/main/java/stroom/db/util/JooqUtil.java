@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
@@ -62,9 +63,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -460,7 +459,7 @@ public final class JooqUtil {
                 }
                 if (conditionList.isEmpty()) {
                     throw new RuntimeException("You must supplied at least one key field so the persisted record can " +
-                            "be retrieved.");
+                                               "be retrieved.");
                 }
 
                 final Table<R> table = record.getTable();
@@ -662,7 +661,7 @@ public final class JooqUtil {
                 return result;
             } catch (DataAccessException e) {
                 if (e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
-                        && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+                    && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
 
                     if (attempt.get() >= MAX_DEADLOCK_RETRY_ATTEMPTS) {
                         throw new RuntimeException(LogUtil.message("Gave up retrying '{}' after {} deadlocks",
@@ -671,7 +670,7 @@ public final class JooqUtil {
 
                     LOGGER.warn(() -> LogUtil.message(
                             "Deadlock trying to run '{}' on attempt {}. Will retry in {} ms. " +
-                                    "Enable DEBUG for full stacktrace.",
+                            "Enable DEBUG for full stacktrace.",
                             NullSafe.supply(messageSupplier),
                             attempt.get(),
                             sleepMs));
@@ -867,11 +866,8 @@ public final class JooqUtil {
 
     public static Optional<Condition> getBooleanCondition(final Field<Boolean> field,
                                                           final Boolean value) {
-        if (value == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(field.eq(value));
-        }
+        return Optional.ofNullable(value)
+                .map(field::eq);
     }
 
     private static Optional<Condition> convertMatchNull(final Field<?> field,
@@ -879,45 +875,50 @@ public final class JooqUtil {
                                                         final Optional<Condition> condition) {
         if (matchNull == null) {
             return condition;
+        } else if (matchNull) {
+            return condition.map(c -> c.or(field.isNull()))
+                    .or(() -> Optional.of(field.isNull()));
+        } else {
+            return condition.or(() -> Optional.of(field.isNotNull()));
         }
-        if (matchNull) {
-            return condition.map(c -> c.or(field.isNull())).or(() -> Optional.of(field.isNull()));
-        }
-        return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
     public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
                                                            final BaseCriteria criteria,
                                                            final OrderField<?>... defaultSortFields) {
-        if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
-            if (defaultSortFields != null && defaultSortFields.length > 0) {
-                return new ArrayList<>(Arrays.asList(defaultSortFields));
-            } else {
-                return Collections.emptyList();
-            }
+        final List<OrderField<?>> defaults = GwtNullSafe.asList(defaultSortFields);
+        if (GwtNullSafe.isEmptyCollection(criteria.getSortList())) {
+            return defaults;
         } else {
-            return criteria.getSortList()
+            final List<OrderField<?>> defaultsNotSeen = new ArrayList<>(defaults);
+
+            final ArrayList<OrderField<?>> sortList = criteria.getSortList()
                     .stream()
                     .map(s -> getOrderField(fieldMap, s))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
+                    .filter(Objects::nonNull)
+                    .peek(defaultsNotSeen::remove)
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            // If the default sort fields are not in the sort list then add them at the end, so they act
+            // as a secondary sort, e.g. if user is sorting on 'enabled' then it makes sense to secondary
+            // sort on the default sort fields.
+            if (!defaultsNotSeen.isEmpty()) {
+                sortList.addAll(defaultsNotSeen);
+            }
+
+            return sortList;
         }
     }
 
-    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,
-                                                         final CriteriaFieldSort sort) {
-        final Field<?> field = fieldMap.get(sort.getId());
-
-        if (field != null) {
-            if (sort.isDesc()) {
-                return Optional.of(field.desc());
-            } else {
-                return Optional.of(field.asc());
-            }
-        }
-
-        return Optional.empty();
+    private static OrderField<?> getOrderField(final Map<String, Field<?>> fieldMap,
+                                               final CriteriaFieldSort sort) {
+        final Field<?> field = GwtNullSafe.map(fieldMap)
+                .get(sort.getId());
+        return GwtNullSafe.get(
+                field,
+                fld -> (sort.isDesc()
+                        ? fld.desc()
+                        : fld.asc()));
     }
 
     /**
@@ -1163,8 +1164,8 @@ public final class JooqUtil {
         // 1062 is a duplicate key exception so someone else has already inserted it
         return NullSafe.test(throwable, e ->
                 e instanceof DataAccessException
-                        && e.getCause() instanceof SQLIntegrityConstraintViolationException sqlEx
-                        && sqlEx.getErrorCode() == 1062);
+                && e.getCause() instanceof SQLIntegrityConstraintViolationException sqlEx
+                && sqlEx.getErrorCode() == 1062);
     }
 
 

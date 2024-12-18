@@ -18,37 +18,52 @@
 package stroom.document.client.event;
 
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class OpenDocumentEvent extends GwtEvent<OpenDocumentEvent.Handler> {
+import java.util.Objects;
+import java.util.Optional;
+
+public class OpenDocumentEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
     private final DocRef docRef;
     private final boolean forceOpen;
     private final boolean fullScreen;
+    private final CommonDocLinkTab selectedTab;
 
     private OpenDocumentEvent(final DocRef docRef,
                               final boolean forceOpen,
-                              final boolean fullScreen) {
+                              final boolean fullScreen,
+                              final CommonDocLinkTab selectedTab) {
         this.docRef = docRef;
         this.forceOpen = forceOpen;
         this.fullScreen = fullScreen;
+        this.selectedTab = selectedTab;
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null));
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen,
                             final boolean fullScreen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null));
+    }
+
+    public static void fire(final HasHandlers handlers,
+                            final DocRef docRef,
+                            final boolean forceOpen,
+                            final boolean fullScreen,
+                            final CommonDocLinkTab selectedTab) {
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab));
     }
 
     public static Type<Handler> getType() {
@@ -79,6 +94,79 @@ public class OpenDocumentEvent extends GwtEvent<OpenDocumentEvent.Handler> {
     public boolean isFullScreen() {
         return fullScreen;
     }
+
+    public Optional<CommonDocLinkTab> getSelectedTab() {
+        return Optional.ofNullable(selectedTab);
+    }
+
+    public static Builder builder(final HasHandlers handlers, final DocRef docRef) {
+        return new Builder(handlers, docRef);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A link/sub tab that is common to all document presenters
+     */
+    public enum CommonDocLinkTab {
+        /**
+         * The link/sub tab that the presenter deems to be its default tab.
+         */
+        DEFAULT,
+        /**
+         * The Documentation tab
+         */
+        DOCUMENTATION,
+        /**
+         * The Permissions tab
+         */
+        PERMISSIONS,
+        ;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+    public static final class Builder {
+
+        private final HasHandlers hasHandlers;
+        private final DocRef docRef;
+        private boolean forceOpen = true;
+        private boolean fullScreen = false;
+        private CommonDocLinkTab selectedTab = null;
+
+        private Builder(final HasHandlers hasHandlers, final DocRef docRef) {
+            this.hasHandlers = Objects.requireNonNull(hasHandlers);
+            this.docRef = Objects.requireNonNull(docRef);
+        }
+
+        public Builder forceOpen(final boolean forceOpen) {
+            this.forceOpen = forceOpen;
+            return this;
+        }
+
+        public Builder fullScreen(final boolean fullScreen) {
+            this.fullScreen = fullScreen;
+            return this;
+        }
+
+        /**
+         * The sub/link tab to select on opening
+         */
+        public Builder selectedTab(final CommonDocLinkTab selectedTab) {
+            this.selectedTab = selectedTab;
+            return this;
+        }
+
+        public void fire() {
+            hasHandlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab));
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 

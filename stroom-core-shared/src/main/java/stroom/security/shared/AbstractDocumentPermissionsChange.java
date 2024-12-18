@@ -2,13 +2,15 @@ package stroom.security.shared;
 
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentType;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.util.shared.UserRef;
 
@@ -20,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Objects;
+import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 @JsonTypeInfo(
@@ -28,12 +31,17 @@ import java.util.Objects;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SetPermission.class, name = "SetPermission"),
-//        @JsonSubTypes.Type(value = RemovePermission.class, name = "RemovePermission"),
-        @JsonSubTypes.Type(value = AddDocumentCreatePermission.class, name = "AddDocumentCreatePermission"),
-        @JsonSubTypes.Type(value = RemoveDocumentCreatePermission.class, name = "RemoveDocumentCreatePermission"),
-        @JsonSubTypes.Type(value = AddAllDocumentCreatePermissions.class, name = "AddAllDocumentCreatePermissions"),
-        @JsonSubTypes.Type(value = RemoveAllDocumentCreatePermissions.class,
-                name = "RemoveAllDocumentCreatePermissions"),
+        @JsonSubTypes.Type(value = RemovePermission.class, name = "RemovePermission"),
+        @JsonSubTypes.Type(value = AddDocumentUserCreatePermission.class,
+                name = "AddDocumentUserCreatePermission"),
+        @JsonSubTypes.Type(value = RemoveDocumentUserCreatePermission.class,
+                name = "RemoveDocumentUserCreatePermission"),
+        @JsonSubTypes.Type(value = SetDocumentUserCreatePermissions.class,
+                name = "SetDocumentUserCreatePermissions"),
+        @JsonSubTypes.Type(value = AddAllDocumentUserCreatePermissions.class,
+                name = "AddAllDocumentUserCreatePermissions"),
+        @JsonSubTypes.Type(value = RemoveAllDocumentUserCreatePermissions.class,
+                name = "RemoveAllDocumentUserCreatePermissions"),
         @JsonSubTypes.Type(value = AddAllPermissionsFrom.class, name = "AddAllPermissionsFrom"),
         @JsonSubTypes.Type(value = SetAllPermissionsFrom.class, name = "SetAllPermissionsFrom"),
         @JsonSubTypes.Type(value = RemoveAllPermissions.class, name = "RemoveAllPermissions"),
@@ -66,43 +74,35 @@ public abstract class AbstractDocumentPermissionsChange {
         }
     }
 
-//    @JsonInclude(Include.NON_NULL)
-//    public static class RemovePermission extends AbstractDocumentPermissionsChange {
-//
-//        @JsonProperty
-//        private final UserRef userRef;
-//        @JsonProperty
-//        private final DocumentPermission permission;
-//
-//        @JsonCreator
-//        public RemovePermission(@JsonProperty("userRef") final UserRef userRef,
-//                                @JsonProperty("permission") final DocumentPermission permission) {
-//            Objects.requireNonNull(userRef, "Null user ref");
-//            Objects.requireNonNull(permission, "Null permission");
-//            this.userRef = userRef;
-//            this.permission = permission;
-//        }
-//
-//        public UserRef getUserRef() {
-//            return userRef;
-//        }
-//
-//        public DocumentPermission getPermission() {
-//            return permission;
-//        }
-//    }
+    @JsonInclude(Include.NON_NULL)
+    public static class RemovePermission extends AbstractDocumentPermissionsChange {
+
+        @JsonProperty
+        private final UserRef userRef;
+
+        @JsonCreator
+        public RemovePermission(
+                @JsonProperty("userRef") final UserRef userRef) {
+            Objects.requireNonNull(userRef, "Null user ref");
+            this.userRef = userRef;
+        }
+
+        public UserRef getUserRef() {
+            return userRef;
+        }
+    }
 
     @JsonInclude(Include.NON_NULL)
-    public static class AddDocumentCreatePermission extends AbstractDocumentPermissionsChange {
+    public static class AddDocumentUserCreatePermission extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
         @JsonProperty
-        private final DocumentType documentType;
+        private final String documentType;
 
         @JsonCreator
-        public AddDocumentCreatePermission(@JsonProperty("userRef") final UserRef userRef,
-                                           @JsonProperty("documentType") final DocumentType documentType) {
+        public AddDocumentUserCreatePermission(@JsonProperty("userRef") final UserRef userRef,
+                                               @JsonProperty("documentType") final String documentType) {
             Objects.requireNonNull(userRef, "Null user ref");
             Objects.requireNonNull(documentType, "Null documentType");
             this.userRef = userRef;
@@ -113,22 +113,22 @@ public abstract class AbstractDocumentPermissionsChange {
             return userRef;
         }
 
-        public DocumentType getDocumentType() {
+        public String getDocumentType() {
             return documentType;
         }
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemoveDocumentCreatePermission extends AbstractDocumentPermissionsChange {
+    public static class RemoveDocumentUserCreatePermission extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
         @JsonProperty
-        private final DocumentType documentType;
+        private final String documentType;
 
         @JsonCreator
-        public RemoveDocumentCreatePermission(@JsonProperty("userRef") final UserRef userRef,
-                                              @JsonProperty("documentType") final DocumentType documentType) {
+        public RemoveDocumentUserCreatePermission(@JsonProperty("userRef") final UserRef userRef,
+                                                  @JsonProperty("documentType") final String documentType) {
             Objects.requireNonNull(userRef, "Null user ref");
             Objects.requireNonNull(documentType, "Null documentType");
             this.userRef = userRef;
@@ -139,20 +139,46 @@ public abstract class AbstractDocumentPermissionsChange {
             return userRef;
         }
 
-        public DocumentType getDocumentType() {
+        public String getDocumentType() {
             return documentType;
+        }
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    public static class SetDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
+
+        @JsonProperty
+        private final UserRef userRef;
+        @JsonProperty
+        private final Set<String> documentTypes;
+
+        @JsonCreator
+        public SetDocumentUserCreatePermissions(@JsonProperty("userRef") final UserRef userRef,
+                                                @JsonProperty("documentTypes") final Set<String> documentTypes) {
+            Objects.requireNonNull(userRef, "Null user ref");
+            Objects.requireNonNull(documentTypes, "Null documentTypes");
+            this.userRef = userRef;
+            this.documentTypes = documentTypes;
+        }
+
+        public UserRef getUserRef() {
+            return userRef;
+        }
+
+        public Set<String> getDocumentTypes() {
+            return documentTypes;
         }
     }
 
 
     @JsonInclude(Include.NON_NULL)
-    public static class AddAllDocumentCreatePermissions extends AbstractDocumentPermissionsChange {
+    public static class AddAllDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
 
         @JsonCreator
-        public AddAllDocumentCreatePermissions(@JsonProperty("userRef") final UserRef userRef) {
+        public AddAllDocumentUserCreatePermissions(@JsonProperty("userRef") final UserRef userRef) {
             Objects.requireNonNull(userRef, "Null user ref");
             this.userRef = userRef;
         }
@@ -163,13 +189,13 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemoveAllDocumentCreatePermissions extends AbstractDocumentPermissionsChange {
+    public static class RemoveAllDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
 
         @JsonCreator
-        public RemoveAllDocumentCreatePermissions(@JsonProperty("userRef") final UserRef userRef) {
+        public RemoveAllDocumentUserCreatePermissions(@JsonProperty("userRef") final UserRef userRef) {
             Objects.requireNonNull(userRef, "Null user ref");
             this.userRef = userRef;
         }
@@ -217,19 +243,7 @@ public abstract class AbstractDocumentPermissionsChange {
     @JsonInclude(Include.NON_NULL)
     public static class RemoveAllPermissions extends AbstractDocumentPermissionsChange {
 
-        /**
-         * We need to include at least one field for RestyGWT to work.
-         **/
-        @JsonProperty
-        private final Boolean ignore;
-
         public RemoveAllPermissions() {
-            ignore = null;
-        }
-
-        @JsonCreator
-        public RemoveAllPermissions(@JsonProperty("ignore") final Boolean ignore) {
-            this.ignore = ignore;
         }
     }
 }
