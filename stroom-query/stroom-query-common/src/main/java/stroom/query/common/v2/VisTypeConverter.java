@@ -22,8 +22,6 @@ import java.math.BigDecimal;
 
 public final class VisTypeConverter {
 
-    private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
-
     private VisTypeConverter() {
         // Utility class
     }

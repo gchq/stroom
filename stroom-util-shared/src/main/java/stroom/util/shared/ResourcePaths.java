@@ -88,7 +88,6 @@ public interface ResourcePaths {
     static String buildUnauthenticatedServletPath(final String... parts) {
         return new Builder()
                 .addPathPart(ROOT_PATH)
-                .addPathPart(NO_AUTH)
                 .addPathParts(parts)
                 .build();
     }

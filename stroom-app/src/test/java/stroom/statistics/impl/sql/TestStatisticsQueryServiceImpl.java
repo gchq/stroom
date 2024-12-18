@@ -431,6 +431,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private void addColumn(String name, final TableSettings.Builder tableSettingsBuilder) {
         final Column column = Column.builder()
+                .id(name)
                 .name(name)
                 .expression(ParamSubstituteUtil.makeParam(name))
                 .build();

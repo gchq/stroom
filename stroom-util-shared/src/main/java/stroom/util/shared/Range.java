@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Class that holds a range of some number type. A null upper or lower bound
@@ -227,20 +228,6 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
         return from != null || to != null || matchNull;
     }
 
-    @Override
-    public final boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof Range<?>)) {
-            return false;
-        }
-
-        final Range<?> other = (Range<?>) obj;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(this.from, other.from);
-        builder.append(this.to, other.to);
-        builder.append(this.matchNull, other.matchNull);
-        return builder.isEquals();
-    }
-
     /**
      * Determine if a supplied time is within this period. Used for mock stream
      * store.
@@ -259,12 +246,22 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     }
 
     @Override
-    public final int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(from);
-        builder.append(to);
-        builder.append(matchNull);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Range<?> range = (Range<?>) o;
+        return Objects.equals(from, range.from) &&
+                Objects.equals(to, range.to) &&
+                matchNull == range.matchNull;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(from, to, matchNull);
     }
 
     @Override

@@ -1385,6 +1385,38 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testValuesOf() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Map<Integer, String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Collection<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.valuesOf(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptyMap(), Collections.emptySet())
+                .addCase(Map.of(1, "foo", 2, "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testKeySetOf() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Map<Integer, String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Collection<Integer>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.keySetOf(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptyMap(), Collections.emptySet())
+                .addCase(Map.of(1, "foo", 2, "bar"), Set.of(1, 2))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testString() {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
@@ -1971,8 +2003,8 @@ class TestNullSafe {
             long i = 0;
             for (i = 0; i < iterations; i++) {
                 if (nonNullLevel1 != null
-                        && nonNullLevel1.getNonNullLevel2() != null
-                        && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
+                    && nonNullLevel1.getNonNullLevel2() != null
+                    && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
                     i++;
                 }
             }

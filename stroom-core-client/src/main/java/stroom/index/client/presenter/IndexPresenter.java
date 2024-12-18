@@ -25,7 +25,8 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -40,6 +41,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData SHARDS = new TabDataImpl("Shards");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public IndexPresenter(final EventBus eventBus,
@@ -48,12 +50,13 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
                           final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
                           final Provider<IndexShardPresenter> indexShardPresenterProvider,
                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                          final DocumentUserPermissionsTabProvider<LuceneIndexDoc> documentUserPermissionsTabProvider,
                           final ClientSecurityContext securityContext) {
         super(eventBus, view);
 
         TabData selectFirst = FIELDS;
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
             selectFirst = SHARDS;
             addTab(SHARDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
         }
@@ -77,11 +80,22 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(selectFirst);
     }
 
     @Override
     public String getType() {
         return LuceneIndexDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
     }
 }

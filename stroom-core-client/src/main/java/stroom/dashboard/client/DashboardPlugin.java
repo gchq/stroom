@@ -30,6 +30,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.query.api.v2.ResultStoreInfo;
@@ -81,11 +82,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
+                                     final CommonDocLinkTab selectedLinkTab,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final String href) {
@@ -122,7 +124,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskMonitorFactory(this));
+            showDocument(docRef,
+                    presenter,
+                    closeHandler,
+                    presenter,
+                    false,
+                    new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -159,7 +166,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private void reopen(final ResultStoreInfo resultStoreInfo) {
         final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
         if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
-            final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, source.getOwnerDocUuid());
+            final DocRef docRef = source.getOwnerDocRef();
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
@@ -173,7 +180,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 // Actually close the tab.
                 event.getCallback().closeTab(true);
             };
-            showDocument(docRef, presenter, closeHandler, presenter, false, new DefaultTaskMonitorFactory(this));
+            showDocument(docRef,
+                    presenter,
+                    closeHandler,
+                    presenter,
+                    false,
+                    new DefaultTaskMonitorFactory(this));
         }
     }
 

@@ -23,7 +23,6 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
 import stroom.util.NullSafe;
-import stroom.util.shared.HasAuditableUserIdentity;
 
 import org.slf4j.Logger;
 
@@ -35,7 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
+public class TaskContextImpl implements TaskContext {
 
     private final TaskId taskId;
     private final String name;
@@ -139,11 +138,6 @@ public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
     boolean isUseAsRead() {
         return useAsRead;
-    }
-
-    @Override
-    public String getUserIdentityForAudit() {
-        return NullSafe.get(userIdentity, UserIdentity::getUserIdentityForAudit);
     }
 
     String getSessionId() {

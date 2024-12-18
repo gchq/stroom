@@ -22,7 +22,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.script.shared.ScriptDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -49,7 +49,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         this.editorPresenter = editorPresenter;
 
         scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
-        scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        scriptPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setScriptView(scriptPresenter.getView());
         view.setSettingsView(editorPresenter.getView());

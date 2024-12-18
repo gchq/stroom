@@ -4,13 +4,14 @@ import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -23,6 +24,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         implements SelectionBoxView<T, I>, Focus, HasValueChangeHandlers<T> {
 
     public static final String POINTER_CLASS_NAME = "pointer";
+    private final SimplePanel renderBox;
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
@@ -34,8 +36,8 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
-            registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
+            registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 int keyCode = event.getNativeKeyCode();
                 if (KeyCodes.KEY_ENTER == keyCode) {
@@ -51,9 +53,17 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         textBox = new TextBox();
         textBox.addStyleName("SelectionBox-textBox stroom-control allow-focus");
 
+        renderBox = new SimplePanel();
+        renderBox.addStyleName("SelectionBox-renderBox stroom-control allow-focus");
+
+        final FlowPanel outer = new FlowPanel();
+        outer.addStyleName("SelectionBox-outer");
+        outer.add(renderBox);
+        outer.add(textBox);
+
         svgIconBox = new SvgIconBox();
         svgIconBox.addStyleName("SelectionBox");
-        svgIconBox.setWidget(textBox, SvgImage.DROP_DOWN);
+        svgIconBox.setWidget(outer, SvgImage.DROP_DOWN);
 
         initWidget(svgIconBox);
         setAllowTextEntry(false);
@@ -62,6 +72,12 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
         textBox.setReadOnly(!allowTextEntry);
+        textBox.getElement().getStyle().setOpacity(allowTextEntry
+                ? 1
+                : 0);
+        renderBox.getElement().getStyle().setOpacity(allowTextEntry
+                ? 0
+                : 1);
         updatePointer();
     }
 
@@ -106,7 +122,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     private void showPopup() {
         if (popup != null) {
-            GWT.log("Hiding popup");
+//            GWT.log("Hiding popup");
             hidePopup();
 
         } else {
@@ -160,6 +176,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         this.isEnabled = enabled;
         textBox.setEnabled(enabled);
         svgIconBox.setReadonly(!enabled);
+        renderBox.getElement().getStyle().setOpacity(enabled ? 1 : 0.2);
         updatePointer();
     }
 
@@ -172,17 +189,21 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     public void setValue(final T value, final boolean fireEvents) {
+        final boolean changed = !Objects.equals(this.value, value);
         this.value = value;
 
-        String currentText = textBox.getText();
         String newText = "";
+        String newHTML = "";
         if (value != null) {
-            newText = model.wrap(value).getLabel();
+            final SelectionItem selectionItem = model.wrap(value);
+            newText = selectionItem.getLabel();
+            newHTML = selectionItem.getRenderedLabel().asString();
         }
 
         textBox.setValue(newText);
+        renderBox.getElement().setInnerHTML(newHTML);
 
-        if (fireEvents && !Objects.equals(currentText, newText)) {
+        if (fireEvents && changed) {
             ValueChangeEvent.fire(this, value);
         }
     }

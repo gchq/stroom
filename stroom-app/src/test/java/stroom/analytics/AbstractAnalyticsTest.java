@@ -36,7 +36,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
+import stroom.security.mock.MockUserSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
 import stroom.util.shared.ResultPage;
@@ -63,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
-@IncludeModule(MockSecurityContextModule.class)
+@IncludeModule(MockUserSecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
@@ -89,7 +89,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     @BeforeEach
     final void setup() {
         // Delete existing rules.
-        analyticRuleStore.list().forEach(docRef -> analyticRuleStore.deleteDocument(docRef.getUuid()));
+        analyticRuleStore.list().forEach(docRef -> analyticRuleStore.deleteDocument(docRef));
 
         // Delete existing detections.
         final ResultPage<Meta> metaList = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.DETECTIONS));

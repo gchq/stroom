@@ -181,7 +181,7 @@ public class QueryFavouritesPresenter
                                     if (e.isOk()) {
                                         final StoredQuery query = selectionModel.getSelectedObject();
                                         if (query != null && query.getQuery() != null &&
-                                                query.getQuery().getExpression() != null) {
+                                            query.getQuery().getExpression() != null) {
                                             queryPresenter.setExpression(query.getQuery().getExpression());
                                         }
                                     }
@@ -206,6 +206,10 @@ public class QueryFavouritesPresenter
                 .taskMonitorFactory(this)
                 .exec();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface QueryFavouritesView extends View {
 

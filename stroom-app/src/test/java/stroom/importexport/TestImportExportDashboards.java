@@ -116,12 +116,12 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         deleteAllAndCheck();
 
         final ExplorerNode folder1 = explorerService.create(
-                ExplorerConstants.FOLDER,
+                ExplorerConstants.FOLDER_TYPE,
                 "Group1",
                 null,
                 null);
         final ExplorerNode folder2 = explorerService.create(
-                ExplorerConstants.FOLDER,
+                ExplorerConstants.FOLDER_TYPE,
                 "Group2",
                 null,
                 null);
@@ -205,7 +205,6 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create visualisation.
         final VisComponentSettings visSettings = VisComponentSettings.builder()
                 .tableId("table-1234")
-                .tableSettings(tableSettings)
                 .visualisation(visNode != null
                         ? visNode.getDocRef()
                         : null)

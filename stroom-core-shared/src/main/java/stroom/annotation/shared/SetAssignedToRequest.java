@@ -1,6 +1,6 @@
 package stroom.annotation.shared;
 
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,11 +15,11 @@ public class SetAssignedToRequest {
     @JsonProperty
     private final List<Long> annotationIdList;
     @JsonProperty
-    private final UserName assignedTo;
+    private final UserRef assignedTo;
 
     @JsonCreator
     public SetAssignedToRequest(@JsonProperty("annotationIdList") final List<Long> annotationIdList,
-                                @JsonProperty("assignedTo") final UserName assignedTo) {
+                                @JsonProperty("assignedTo") final UserRef assignedTo) {
         this.annotationIdList = annotationIdList;
         this.assignedTo = assignedTo;
     }
@@ -28,7 +28,7 @@ public class SetAssignedToRequest {
         return annotationIdList;
     }
 
-    public UserName getAssignedTo() {
+    public UserRef getAssignedTo() {
         return assignedTo;
     }
 }

@@ -22,8 +22,7 @@ run_java_build() {
     --no-daemon \
     shadowJar \
     -x test \
-    -x gwtCompile \
-    -x copyYarnBuild
+    -x gwtCompile
 
   echo -e "${GREEN}Java build complete${NC}"
 }

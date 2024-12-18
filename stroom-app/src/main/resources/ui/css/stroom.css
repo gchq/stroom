@@ -884,17 +884,6 @@ textarea.clipboardCopy {
   border-style: solid;*/
 }
 
-.user-batch-example {
-    font-family: monospace;
-    font-size: 12px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
-
-.user-batch-text {
-    overflow-y: scroll;
-}
-
 .lower-case-input {
     text-transform: lowercase;
 }

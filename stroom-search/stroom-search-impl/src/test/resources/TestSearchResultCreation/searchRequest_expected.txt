@@ -131,6 +131,7 @@
       "maxResults" : [ 1000000 ]
     }, {
       "fields" : [ {
+        "id" : "1",
         "sort" : {
           "direction" : "ASCENDING"
         },
@@ -142,6 +143,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "2",
         "expression" : "${UserId}",
         "format" : {
           "type" : "GENERAL"
@@ -150,6 +152,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "3",
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
@@ -306,6 +309,7 @@
       "maxResults" : [ 1000000 ]
     }, {
       "fields" : [ {
+        "id" : "1",
         "expression" : "${EventTime}",
         "sort" : {
           "order" : 0,
@@ -319,6 +323,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "2",
         "expression" : "${UserId}",
         "sort" : {
           "order" : 1,
@@ -332,6 +337,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "3",
         "expression" : "${UserId}",
         "sort" : {
           "order" : 2,
@@ -344,6 +350,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "4",
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
@@ -428,6 +435,7 @@
       "maxResults" : [ 1000000 ]
     }, {
       "fields" : [ {
+        "id" : "1",
         "sort" : {
           "order" : 0,
           "direction" : "ASCENDING"
@@ -440,6 +448,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "2",
         "expression" : "${UserId}",
         "sort" : {
           "order" : 1,
@@ -453,6 +462,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "3",
         "expression" : "${EventTime}",
         "sort" : {
           "order" : 2,
@@ -465,6 +475,7 @@
         "visible" : true,
         "special" : false
       }, {
+        "id" : "4",
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"

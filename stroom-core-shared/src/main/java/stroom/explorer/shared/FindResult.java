@@ -18,6 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -70,8 +71,8 @@ public class FindResult {
         }
         final FindResult that = (FindResult) o;
         return Objects.equals(docRef, that.docRef) &&
-                Objects.equals(path, that.path) &&
-                Objects.equals(icon, that.icon);
+               Objects.equals(path, that.path) &&
+               Objects.equals(icon, that.icon);
     }
 
     @Override
@@ -89,11 +90,7 @@ public class FindResult {
 
     @Override
     public String toString() {
-        return "FindResult{" +
-                "docRef=" + docRef +
-                ", path='" + path + '\'' +
-                ", icon=" + icon +
-                '}';
+        return path + " / " + GwtNullSafe.get(docRef, DocRef::toShortString);
     }
 
     // --------------------------------------------------------------------------------

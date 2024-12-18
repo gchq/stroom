@@ -19,6 +19,7 @@ package stroom.activity.api;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.List;
@@ -31,7 +32,9 @@ public interface ActivityService {
 
     Activity update(Activity activity);
 
-    boolean delete(int id);
+    boolean deleteAllByOwner(int id);
+
+    int deleteAllByOwner(UserRef ownerRef);
 
     QuickFilterResultPage<Activity> find(final String filter);
 

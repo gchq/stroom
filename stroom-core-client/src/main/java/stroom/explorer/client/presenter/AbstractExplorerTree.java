@@ -418,7 +418,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                     final Element element = nativeEvent.getEventTarget().cast();
 
                     // Expander
-                    if ((ElementUtil.hasClassName(element, expanderClassName, 0, 5))) {
+                    if ((ElementUtil.hasClassName(element, expanderClassName, 5))) {
                         treeModel.toggleOpenState(selectedItem);
                     } else {
                         final boolean doubleClick = doubleClickTest.test(selectedItem);

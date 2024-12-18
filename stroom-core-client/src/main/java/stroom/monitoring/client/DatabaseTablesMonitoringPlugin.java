@@ -22,7 +22,7 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -59,8 +59,8 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_DB_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_DB_PERMISSION;
     }
 
     @Override

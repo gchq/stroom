@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
@@ -55,24 +56,23 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(requiredPermission);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final FindDocumentEntityCriteria that = (FindDocumentEntityCriteria) o;
+        return Objects.equals(requiredPermission, that.requiredPermission);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (o == null || !(o instanceof FindDocumentEntityCriteria)) {
-            return false;
-        }
-
-        final FindDocumentEntityCriteria criteria = (FindDocumentEntityCriteria) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(requiredPermission, criteria.requiredPermission);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), requiredPermission);
     }
 
     @Override

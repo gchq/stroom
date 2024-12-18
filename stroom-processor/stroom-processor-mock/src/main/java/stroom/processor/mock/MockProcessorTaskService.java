@@ -6,8 +6,6 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ResultPage;
 
-import java.util.Collections;
-
 public class MockProcessorTaskService implements ProcessorTaskService {
 
     @Override

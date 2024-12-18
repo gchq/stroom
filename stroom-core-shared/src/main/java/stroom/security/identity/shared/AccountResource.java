@@ -21,6 +21,7 @@ package stroom.security.identity.shared;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,7 +59,7 @@ public interface AccountResource extends RestResource, DirectRestService, FetchW
     @GET
     @Path("/")
     @NotNull
-    AccountResultPage list();
+    ResultPage<Account> list();
 
     @Operation(
             summary = "Search for an account by email.",
@@ -66,7 +67,7 @@ public interface AccountResource extends RestResource, DirectRestService, FetchW
     @POST
     @Path("search")
     @NotNull
-    AccountResultPage find(@Parameter(description = "account", required = true) FindAccountRequest request);
+    ResultPage<Account> find(@Parameter(description = "account", required = true) FindAccountRequest request);
 
     @Operation(
             summary = "Create an account.",

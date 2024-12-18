@@ -29,5 +29,9 @@
                         label="Enable Transparency">
             <tickbox:CustomCheckBox ui:field="enableTransparency"/>
         </form:FormGroup>
+        <form:FormGroup identity="userPreferencesHideConditionalStyles"
+                        label="Hide Conditional Styles">
+            <tickbox:CustomCheckBox ui:field="hideConditionalStyles"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

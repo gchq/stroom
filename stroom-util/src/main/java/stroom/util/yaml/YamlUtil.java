@@ -8,13 +8,13 @@ import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +25,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class YamlUtil {
+
+    private static final ObjectMapper VANILLA_OBJECT_MAPPER = createVanillaObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = createYamlObjectMapper(true);
+    private static final ObjectMapper NO_INDENT_MAPPER = createYamlObjectMapper(false);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(YamlUtil.class);
 
@@ -43,7 +47,7 @@ public class YamlUtil {
                     // NOTE if you are getting here while running in IJ then you have probable not run
                     // local.yaml.sh
                     LOGGER.warn("YAML config file [{}] from arguments [{}] is not a valid file.\n" +
-                                    "You need to supply a valid stroom configuration YAML file.",
+                                "You need to supply a valid stroom configuration YAML file.",
                             yamlFile, Arrays.asList(args));
                 }
             }
@@ -216,13 +220,38 @@ public class YamlUtil {
         }
     }
 
-    public static ObjectMapper createYamlObjectMapper() {
-        final YAMLFactory yamlFactory = new YAMLFactory();
+    public static ObjectMapper getMapper() {
+        return OBJECT_MAPPER;
+    }
 
+    public static ObjectMapper getNoIndentMapper() {
+        return NO_INDENT_MAPPER;
+    }
+
+    public static ObjectMapper getVanillaObjectMapper() {
+        return VANILLA_OBJECT_MAPPER;
+    }
+
+    private static ObjectMapper createYamlObjectMapper() {
+        return createYamlObjectMapper(false);
+    }
+
+    /**
+     * No configurations apart from registering {@link Jdk8Module} for {@link java.util.Optional}
+     * use.
+     */
+    private static ObjectMapper createVanillaObjectMapper() {
+        return new ObjectMapper(new YAMLFactory())
+                .registerModule(new Jdk8Module()); // Needed to deal with Optional<...>
+    }
+
+    private static ObjectMapper createYamlObjectMapper(final boolean indent) {
+        final YAMLFactory yamlFactory = new YAMLFactory();
         return new ObjectMapper(yamlFactory)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .registerModule(new Jdk8Module()) // Needed to deal with Optional<...>
+//                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 //        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
-                .configure(SerializationFeature.INDENT_OUTPUT, false)
+                .configure(SerializationFeature.INDENT_OUTPUT, indent)
                 .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
 //        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
                 .setSerializationInclusion(Include.NON_NULL);

@@ -25,7 +25,7 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
@@ -128,7 +128,7 @@ public class GlobalConfigService {
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
         Objects.requireNonNull(criteria);
 
-        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
 
             // This will only update if something has changed in the db config
             globalConfigBootstrapService.updateConfigFromDb(false);
@@ -179,7 +179,7 @@ public class GlobalConfigService {
      * DB. If it doesn't exist in the db then the property will be obtained from the object model.
      */
     public Optional<ConfigProperty> fetch(final PropertyPath propertyPath) {
-        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
@@ -199,7 +199,7 @@ public class GlobalConfigService {
      * This means a valid prop can return an empty if the prop only has a default/yaml value.
      */
     public Optional<ConfigProperty> fetch(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
 
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
@@ -237,7 +237,7 @@ public class GlobalConfigService {
 //    }
 
     public ConfigProperty update(final ConfigProperty configProperty) {
-        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
 
             LOGGER.debug(() -> LogUtil.message(
                     "Saving property [{}] with new database value [{}]",

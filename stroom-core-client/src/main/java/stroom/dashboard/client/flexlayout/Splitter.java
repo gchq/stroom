@@ -18,22 +18,21 @@ package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.SplitLayoutConfig;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.Objects;
+
 public class Splitter extends Widget {
 
     private final SplitInfo splitInfo;
-    private final Element element;
 
     public Splitter(final SplitInfo splitInfo) {
         this.splitInfo = splitInfo;
 
-        element = DOM.createDiv();
+        final Element element = DOM.createDiv();
         element.setClassName("flexLayout-splitter");
 
         if (splitInfo.layoutConfig.getDimension() == Dimension.X) {
@@ -54,37 +53,12 @@ public class Splitter extends Widget {
     }
 
     public static class SplitInfo {
-
-        // private Widget widget;
-        private SplitLayoutConfig layoutConfig;
-        private int index;
+        private final SplitLayoutConfig layoutConfig;
+        private final int index;
 
         public SplitInfo(final SplitLayoutConfig layoutConfig, final int index) {
             this.layoutConfig = layoutConfig;
             this.index = index;
-        }
-
-        @Override
-        public int hashCode() {
-            final HashCodeBuilder builder = new HashCodeBuilder();
-            builder.append(layoutConfig);
-            builder.append(index);
-            return builder.toHashCode();
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (o == this) {
-                return true;
-            } else if (o == null || !(o instanceof SplitInfo)) {
-                return false;
-            }
-
-            final SplitInfo splitInfo = (SplitInfo) o;
-            final EqualsBuilder builder = new EqualsBuilder();
-            builder.append(layoutConfig, splitInfo.layoutConfig);
-            builder.append(index, splitInfo.index);
-            return builder.isEquals();
         }
 
         public SplitLayoutConfig getLayoutConfig() {
@@ -93,6 +67,23 @@ public class Splitter extends Widget {
 
         public int getIndex() {
             return index;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final SplitInfo splitInfo = (SplitInfo) o;
+            return index == splitInfo.index && Objects.equals(layoutConfig, splitInfo.layoutConfig);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(layoutConfig, index);
         }
     }
 }

@@ -16,12 +16,6 @@
 
 package stroom.processor.impl;
 
-import stroom.processor.shared.ProcessorFilterTracker;
-
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 class TestProcessorFilterTracker {
 
 //    @Test

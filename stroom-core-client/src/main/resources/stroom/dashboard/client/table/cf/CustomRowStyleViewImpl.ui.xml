@@ -1,0 +1,73 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfLightBackgroundColour"
+                        label="Light Background Colour">
+            <form:HelpHTML>
+                <p>Sets the background colour of matching rows when using the light theme.</p>
+                <p>
+                    The colour is a valid CSS colour name (e.g. <code>red</code>) or a colour in RGB
+                    Hexadecimal form (e.g. <code>#FF0000</code>).
+                </p>
+            </form:HelpHTML>
+            <g:TextBox ui:field="lightBackgroundColour"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfLightTextColour"
+                        label="Light Text Colour">
+            <form:HelpHTML>
+                <p>Sets the text colour of matching rows when using the light theme.</p>
+                <p>
+                    The colour is a valid CSS colour name (e.g. <code>red</code>) or a colour in RGB
+                    Hexadecimal form (e.g. <code>#FF0000</code>).
+                </p>
+            </form:HelpHTML>
+            <g:TextBox ui:field="lightTextColour"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfLightExample"
+                        label="Light Example">
+            <g:SimplePanel ui:field="lightExample" addStyleNames="cf-light-example" width="200px"/>
+        </form:FormGroup>
+
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfDarkBackgroundColour"
+                        label="Dark Background Colour">
+            <form:HelpHTML>
+                <p>Sets the background colour of matching rows when using the dark theme.</p>
+                <p>
+                    The colour is a valid CSS colour name (e.g. <code>red</code>) or a colour in RGB
+                    Hexadecimal form (e.g. <code>#FF0000</code>).
+                </p>
+            </form:HelpHTML>
+            <g:TextBox ui:field="darkBackgroundColour"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfDarkTextColour"
+                        label="Dark Text Colour">
+            <form:HelpHTML>
+                <p>Sets the text colour of matching rows when using the dark theme.</p>
+                <p>
+                    The colour is a valid CSS colour name (e.g. <code>red</code>) or a colour in RGB
+                    Hexadecimal form (e.g. <code>#FF0000</code>).
+                </p>
+            </form:HelpHTML>
+            <g:TextBox ui:field="darkTextColour"/>
+        </form:FormGroup>
+
+        <form:FormGroup addStyleNames="dock-min"
+                        identity="cfDarkExample"
+                        label="Dark Example">
+            <g:SimplePanel ui:field="darkExample" addStyleNames="cf-dark-example" width="200px"/>
+        </form:FormGroup>
+
+    </g:FlowPanel>
+</ui:UiBinder>

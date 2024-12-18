@@ -73,7 +73,8 @@ public class KeyValueInputComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder extends ComponentSettings
+            .AbstractBuilder<KeyValueInputComponentSettings, KeyValueInputComponentSettings.Builder> {
 
         private String text;
 
@@ -86,6 +87,11 @@ public class KeyValueInputComponentSettings implements ComponentSettings {
 
         public Builder text(final String text) {
             this.text = text;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

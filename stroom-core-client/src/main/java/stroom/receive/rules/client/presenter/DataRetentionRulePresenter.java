@@ -34,8 +34,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
+
     private final EditExpressionPresenter editExpressionPresenter;
-    private  final DynamicFieldSelectionListModel fieldSelectionBoxModel;
+    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private DataRetentionRule originalRule;
 
     @Inject
@@ -49,7 +50,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        fieldSelectionBoxModel.setDataSourceRef(MetaFields.STREAM_STORE_DOC_REF);
+        fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(MetaFields.STREAM_STORE_DOC_REF));
         editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
     }
 

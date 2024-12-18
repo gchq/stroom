@@ -131,9 +131,10 @@
 
 .cellTableOddRow:focus-within,
 .cellTableEvenRow:focus-within {
-    background-color: var(--row__background-color--focussed);
+    box-shadow: var(--row__background-color--selected--focussed);
 }
 
 .cellTableSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected--focussed);
+    /*background-color: var(--row__background-color--selected--focussed);*/
+    box-shadow: inset 0 0 2px var(--row__text-color--selected);
 }

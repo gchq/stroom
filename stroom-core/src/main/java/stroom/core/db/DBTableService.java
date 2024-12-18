@@ -19,7 +19,7 @@ package stroom.core.db;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
@@ -77,7 +77,7 @@ class DBTableService {
     }
 
     private ResultPage<DBTableStatus> doFind(final FindDBTableCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_DB_PERMISSION, () -> {
             // We need the results distinct by key (db name, table name)
             final Map<TableKey, DBTableStatus> rtnMap = new HashMap<>();
 

@@ -156,6 +156,8 @@ General button styles
   transition: .2s cubic-bezier(0.3, 0, 0.5, 1);
   transition-property: color,background-color,border-color;
   overflow: hidden;
+
+  flex-shrink: 0;
 }
 
 

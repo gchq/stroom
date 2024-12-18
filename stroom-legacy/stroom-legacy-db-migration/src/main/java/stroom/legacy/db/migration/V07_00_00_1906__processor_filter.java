@@ -1,8 +1,7 @@
 package stroom.legacy.db.migration;
 
 import stroom.legacy.impex_6_1.MappingUtil;
-import stroom.processor.impl.db.ProcessorFilterMarshaller;
-import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.impl.db.QueryDataXMLSerialiser;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import jakarta.xml.bind.JAXBContext;
@@ -24,6 +23,7 @@ public class V07_00_00_1906__processor_filter extends BaseJavaMigration {
     @Override
     public void migrate(final Context context) throws Exception {
         final JAXBContext jaxbContext = JAXBContext.newInstance(stroom.legacy.model_6_1.QueryData.class);
+        final QueryDataXMLSerialiser queryDataXMLSerialiser = new QueryDataXMLSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
                 "SELECT " +
@@ -41,25 +41,19 @@ public class V07_00_00_1906__processor_filter extends BaseJavaMigration {
                                     stroom.legacy.model_6_1.QueryData.class,
                                     data);
                             final stroom.processor.shared.QueryData mapped = MappingUtil.map(queryData);
+                            final String xml = queryDataXMLSerialiser.serialise(mapped);
 
-                            ProcessorFilter processorFilter = new ProcessorFilter();
-                            processorFilter.setQueryData(mapped);
-                            ProcessorFilterMarshaller marshaller = new ProcessorFilterMarshaller();
-                            processorFilter = marshaller.marshal(processorFilter);
-                            final String newData = processorFilter.getData();
-
-                            if (!Objects.equals(data, newData)) {
+                            if (!Objects.equals(data, xml)) {
                                 // Update the record.
                                 try (final PreparedStatement ps = context.getConnection().prepareStatement(
                                         "UPDATE processor_filter SET " +
                                                 "  data = ? " +
                                                 "WHERE id = ?")) {
-                                    ps.setString(1, newData);
+                                    ps.setString(1, xml);
                                     ps.setInt(2, id);
                                     ps.executeUpdate();
                                 } catch (final SQLException e) {
                                     throw new RuntimeException(e.getMessage(), e);
-
                                 }
                             }
                         }

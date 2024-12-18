@@ -21,6 +21,7 @@ import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -29,7 +30,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
@@ -37,6 +40,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -60,10 +64,10 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity create() {
         return securityContext.secureResult(() -> {
-            final String userId = securityContext.getSubjectId();
+            final UserRef userRef = securityContext.getUserRef();
 
             final Activity activity = Activity.create();
-            activity.setUserId(userId);
+            activity.setUserRef(userRef);
 
             AuditUtil.stamp(securityContext, activity);
 
@@ -76,7 +80,7 @@ public class ActivityServiceImpl implements ActivityService {
         return securityContext.secureResult(() -> {
             final Activity result = dao.fetch(id).orElseThrow(() ->
                     new EntityServiceException("Activity not found with id=" + id));
-            if (!securityContext.isProcessingUser() && !result.getUserId().equals(securityContext.getSubjectId())) {
+            if (!securityContext.isProcessingUser() && !result.getUserRef().equals(securityContext.getUserRef())) {
                 throw new EntityServiceException("Attempt to read another persons activity");
             }
 
@@ -88,7 +92,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity update(final Activity activity) {
         return securityContext.secureResult(() -> {
-            if (!securityContext.getSubjectId().equals(activity.getUserId())) {
+            if (!securityContext.getUserRef().equals(activity.getUserRef())) {
                 throw new EntityServiceException("Attempt to update another persons activity");
             }
 
@@ -98,19 +102,37 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public boolean delete(final int id) {
+    public boolean deleteAllByOwner(final int id) {
         return securityContext.secureResult(() -> {
-            if (!securityContext.isLoggedIn()) {
-                throw new EntityServiceException("No user is logged in");
+            final Activity activity = fetch(id);
+            if (activity != null) {
+                if (!securityContext.isCurrentUser(activity.getUserRef())) {
+                    throw new EntityServiceException("Attempt to update another persons activity");
+                }
+                return dao.delete(id);
             }
+            return false;
+        });
+    }
 
-            return dao.delete(id);
+    @Override
+    public int deleteAllByOwner(final UserRef ownerRef) {
+        Objects.requireNonNull(ownerRef);
+        return securityContext.secureResult(() -> {
+            if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+                || securityContext.isCurrentUser(ownerRef)) {
+                return dao.deleteAllByOwner(ownerRef);
+
+            } else {
+                throw new PermissionException(securityContext.getUserRef(),
+                        LogUtil.message("You must be the owner to delete all activities for {} or hold {}",
+                                ownerRef, AppPermission.MANAGE_USERS_PERMISSION));
+            }
         });
     }
 
     @Override
     public QuickFilterResultPage<Activity> find(final String filter) {
-
         return securityContext.secureResult(() -> {
             // We have to deser all the activities to be able to search them but hopefully
             // there are not that many to worry about
@@ -125,7 +147,7 @@ public class ActivityServiceImpl implements ActivityService {
                 final FilterFieldMappers<Activity> fieldMappers = buildFieldMappers(fieldDefinitions);
 
                 filteredActivities = QuickFilterPredicateFactory.filterStream(
-                        filter, fieldMappers, allActivities.stream())
+                                filter, fieldMappers, allActivities.stream())
                         .collect(Collectors.toList());
 
                 fullyQualifiedInput = QuickFilterPredicateFactory.fullyQualifyInput(filter, fieldMappers);
@@ -159,8 +181,8 @@ public class ActivityServiceImpl implements ActivityService {
                 .stream()
                 .flatMap(activity -> {
                     if (activity != null
-                            && activity.getDetails() != null
-                            && activity.getDetails().getProperties() != null) {
+                        && activity.getDetails() != null
+                        && activity.getDetails().getProperties() != null) {
                         // We want to search all fields by default
                         return activity.getDetails().getProperties().stream()
                                 .map(prop -> FilterFieldDefinition.defaultField(prop.getName()));
@@ -173,17 +195,11 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private List<Activity> getAllUserActivities() {
-        if (!securityContext.isLoggedIn()) {
-            throw new EntityServiceException("No user is logged in");
-        }
-
-        FindActivityCriteria criteria = new FindActivityCriteria();
-
         // Only find activities for this user
-        criteria.setUserId(securityContext.getSubjectId());
-
-        LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserId()));
-
+        final UserRef userRef = securityContext.getUserRef();
+        FindActivityCriteria criteria = new FindActivityCriteria();
+        criteria.setUserRef(userRef);
+        LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserRef()));
         return dao.find(criteria);
     }
 
@@ -206,8 +222,8 @@ public class ActivityServiceImpl implements ActivityService {
                         valid = false;
                         if (Strings.isNullOrEmpty(prop.getValidationMessage())) {
                             messages.add("Invalid value '" + value
-                                    + "' for property '" + prop.getId()
-                                    + "' must match '" + prop.getValidation() + "'");
+                                         + "' for property '" + prop.getId()
+                                         + "' must match '" + prop.getValidation() + "'");
                         } else {
                             messages.add(prop.getValidationMessage());
                         }
@@ -215,8 +231,8 @@ public class ActivityServiceImpl implements ActivityService {
                 } catch (final PatternSyntaxException e) {
                     valid = false;
                     messages.add("Unable to parse validation regex '"
-                            + prop.getValidation() + "' for property '"
-                            + prop.getId() + "'");
+                                 + prop.getValidation() + "' for property '"
+                                 + prop.getId() + "'");
                 }
             }
         }

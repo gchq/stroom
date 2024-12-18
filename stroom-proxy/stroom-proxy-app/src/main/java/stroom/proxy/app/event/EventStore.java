@@ -2,12 +2,10 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.handler.ReceiveStreamHandlers;
-import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
-import stroom.receive.common.ProgressHandler;
-import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -42,7 +40,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
 
-    private final ReceiveStreamHandlers receiveStreamHandlerProvider;
+    private final ReceiverFactory receiverFactory;
     private final Path dir;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<EventStoreConfig> eventStoreConfigProvider;
@@ -52,25 +50,25 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
     private final LinkedBlockingQueue<Path> forwardQueue;
 
     @Inject
-    public EventStore(final ReceiveStreamHandlers receiveStreamHandlerProvider,
+    public EventStore(final ReceiverFactory receiverFactory,
                       final Provider<ProxyConfig> proxyConfigProvider,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
-                      final RepoDirProvider repoDirProvider,
+                      final DataDirProvider dataDirProvider,
                       final FileStores fileStores) {
         this.eventStoreConfigProvider = eventStoreConfigProvider;
         final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
         this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
-        final Path repoDir = repoDirProvider.get();
+        final Path dataDir = dataDirProvider.get();
 
-        // Create the root directory
-        ensureDirExists(repoDir);
+        // Create the data directory
+        ensureDirExists(dataDir);
 
         // Create the event directory.
-        dir = repoDir.resolve("event");
+        dir = dataDir.resolve("event");
         ensureDirExists(dir);
         fileStores.add(0, "Event Store", dir);
 
-        this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
+        this.receiverFactory = receiverFactory;
         this.proxyConfigProvider = proxyConfigProvider;
         final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
         cacheBuilder.maximumSize(eventStoreConfig.getMaxOpenFiles());
@@ -169,14 +167,10 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
             Metrics.measure("ProxyRequestHandler - handle", () -> {
                 final AtomicBoolean success = new AtomicBoolean();
                 try (final BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
-                    receiveStreamHandlerProvider.handle(feedKey.feed(), feedKey.type(), attributeMap, handler -> {
-                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                                attributeMap,
-                                handler,
-                                new ProgressHandler("Receiving data"));
-                        stroomStreamProcessor.processInputStream(inputStream, "");
-                        success.set(true);
-                    });
+                    receiverFactory
+                            .get(attributeMap)
+                            .receive(Instant.now(), attributeMap, "event-store", () -> inputStream);
+                    success.set(true);
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                     throw new UncheckedIOException(e);

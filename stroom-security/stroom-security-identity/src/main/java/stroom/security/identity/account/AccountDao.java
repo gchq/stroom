@@ -7,6 +7,7 @@ import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
+import stroom.util.shared.ResultPage;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public interface AccountDao {
 
     AccountResultPage list();
 
-    AccountResultPage search(FindAccountRequest request);
+    ResultPage<Account> search(FindAccountRequest request);
 
     Account create(Account account, String password);
 

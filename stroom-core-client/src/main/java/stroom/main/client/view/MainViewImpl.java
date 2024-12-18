@@ -20,7 +20,6 @@ import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.main.client.presenter.MainUiHandlers;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
@@ -40,6 +39,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.Objects;
 
 public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements MainPresenter.MainView {
 
@@ -192,7 +193,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
 
     @Override
     public void setBanner(final String text) {
-        if (!EqualsUtil.isEquals(currentBanner, text)) {
+        if (!Objects.equals(currentBanner, text)) {
             currentBanner = text;
             if (text == null || text.trim().length() == 0) {
                 main.getElement().getStyle().setTop(0, Unit.PX);

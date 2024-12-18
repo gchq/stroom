@@ -25,5 +25,8 @@
         <form:FormGroup identity="endTime" label="End Time (Optional)">
             <datetimebox:DateTimeBox ui:field="endTime" addStyleNames="w-100"/>
         </form:FormGroup>
+        <form:FormGroup identity="runAsUser" label="Run As User">
+            <g:SimplePanel ui:field="runAsUser" addStyleNames="w-100"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

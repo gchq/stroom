@@ -425,7 +425,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
         // Finally check that all of the schema locations are valid.
         final FindXMLSchemaCriteria findXMLSchemaCriteria = new FindXMLSchemaCriteria();
-        findXMLSchemaCriteria.setUser(schemaConstraint.getUser());
+        findXMLSchemaCriteria.setUserRef(schemaConstraint.getUserRef());
         final SchemaSet allSchemas = xmlSchemaCache.getSchemaSet(findXMLSchemaCriteria);
         for (final Entry<String, String> entry : schemaLocations.entrySet()) {
             final String namespaceURI = entry.getKey();

@@ -67,6 +67,25 @@
 	font-weight: 500;
 }
 
+.dataGridSortableHeader .single-icon-column-header,
+.dataGridSortableHeader .two-icon-column-header,
+.dataGridSortableHeader .single-icon-column-header .svgCell-icon,
+.dataGridSortableHeader .two-icon-column-header .svgCell-icon {
+    cursor: pointer;
+}
+
+.dataGridHeader .single-icon-column-header,
+.dataGridHeader .two-icon-column-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.dataGridHeader:has(.single-icon-column-header),
+.dataGridHeader:has(.two-icon-column-header) {
+    text-decoration: none;
+}
+
 .dataGridCell {
 	overflow: hidden;
 	white-space: nowrap;
@@ -182,7 +201,6 @@
 }
 
 .dataGridKeyboardSelectedRowCell {
-
 }
 
 /*
@@ -213,7 +231,9 @@ don't want the open link to appear
     opacity: 0.3;
 }
 
-.dataGridSelectedRow {
+.dataGridSelectedRow,
+table .dataGridEvenRow.dataGridSelectedRow,
+table .dataGridOddRow.dataGridSelectedRow {
     background-color: var(--row__background-color--selected);
     color: var(--row__text-color--selected);
 }
@@ -227,13 +247,25 @@ don't want the open link to appear
     background-color: var(--row__background-color--selected--hovered);
 }
 
+
+/*
+.dataGridOddRow:hover .dataGridCell,
+.dataGridEvenRow:hover .dataGridCell {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.dataGridSelectedRow:hover .dataGridCell {
+    background-color: rgba(255,255,255,0.1);
+}
+*/
+
 .dataGridOddRow:focus-within,
 .dataGridEvenRow:focus-within {
-    background-color: var(--row__background-color--focussed);
+    box-shadow: var(--row__box-shadow--focussed);
 }
 
 .dataGridSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected--focussed);
+    box-shadow: var(--row__box-shadow--selected--focussed);
 }
 
 .dataGridSelectedRowCell {
@@ -308,4 +340,26 @@ don't want the open link to appear
 	opacity: 0;
 	z-index: 10;
 	cursor: default;
+}
+
+
+
+/*
+ Sortable header styles.
+*/
+.dataGridSortableHeaderOuterDiv {
+    display: flex;
+    gap: 5px;
+    padding: 0 !important;
+}
+
+.dataGridSortableHeaderNameHolder {
+}
+
+.dataGridSortableHeaderImageHolder {
+}
+
+.dataGridSortableHeaderImageHolder svg {
+    width: 10px;
+    height: 10px;
 }

@@ -32,7 +32,6 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -40,6 +39,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -83,8 +83,8 @@ public class DataProcessorTaskHandler {
 
     public ProcessorResult exec(final ProcessorTask task) {
         // Perform processing as the filter owner.
-        final UserIdentity userIdentity = getFilterOwnerIdentity(task.getProcessorFilter());
-        return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
+        final UserRef runAsUser = getFilterRunAs(task.getProcessorFilter());
+        return securityContext.asUserResult(runAsUser, () -> securityContext.useAsReadResult(() -> {
             // Execute with a task context.
             return taskContextFactory.contextResult(
                     "Data Processor",
@@ -93,14 +93,12 @@ public class DataProcessorTaskHandler {
         }));
     }
 
-    private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
-        try {
-            return securityContext.getIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
-                    filter.asDocRef()));
-        } catch (final RuntimeException e) {
+    private UserRef getFilterRunAs(final ProcessorFilter filter) {
+        if (filter.getRunAsUser() == null) {
             throw new RuntimeException(
-                    LogUtil.message("No owner found for filter uuid: {}", filter.getUuid()));
+                    LogUtil.message("No run as user specified for filter uuid: {}", filter.getUuid()));
         }
+        return filter.getRunAsUser();
     }
 
     private ProcessorResult exec(final TaskContext taskContext, final ProcessorTask task) {

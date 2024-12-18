@@ -1,18 +1,18 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.queue.Batch;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import io.dropwizard.lifecycle.Managed;
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@Singleton
 public class ProxyServices implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyServices.class);
@@ -33,26 +33,13 @@ public class ProxyServices implements Managed {
     public void addFrequencyExecutor(final String threadName,
                                      final Supplier<Runnable> runnableSupplier,
                                      final long frequencyMs) {
-        LOGGER.info("Creating frequency executor  '{}', frequencyMs: {}",
+        LOGGER.info("Creating frequency executor  '{}', frequency: {}",
                 threadName,
-                ModelStringUtil.formatCsv(frequencyMs));
+                ModelStringUtil.formatDurationString(frequencyMs, true));
         final FrequencyExecutor executor = new FrequencyExecutor(
                 threadName,
                 runnableSupplier,
                 frequencyMs);
-        addManaged(executor);
-    }
-
-    public <T> void addBatchExecutor(final String threadName,
-                                     final int threadCount,
-                                     final Supplier<Batch<T>> supplier,
-                                     final Consumer<T> consumer) {
-        LOGGER.info("Creating batch executor      '{}', threadCount: {}", threadName, threadCount);
-        final BatchExecutor<T> executor = new BatchExecutor<>(
-                threadName,
-                threadCount,
-                supplier,
-                consumer);
         addManaged(executor);
     }
 

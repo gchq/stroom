@@ -80,6 +80,8 @@ public final class ThemePreferencesPresenter
         getView().setFontSize(userPreferences.getFontSize());
         getView().setEnableTransparency(
                 GwtNullSafe.requireNonNullElse(userPreferences.getEnableTransparency(), true));
+        getView().setHideConditionalStyles(
+                GwtNullSafe.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
     }
 
     public void write(final UserPreferences.Builder builder) {
@@ -88,7 +90,8 @@ public final class ThemePreferencesPresenter
                 .density(getView().getDensity())
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
-                .enableTransparency(getView().isEnableTransparency());
+                .enableTransparency(getView().isEnableTransparency())
+                .hideConditionalStyles(getView().isHideConditionalStyles());
     }
 
     @Override
@@ -125,5 +128,9 @@ public final class ThemePreferencesPresenter
         boolean isEnableTransparency();
 
         void setEnableTransparency(boolean enableTransparency);
+
+        boolean isHideConditionalStyles();
+
+        void setHideConditionalStyles(boolean hideConditionalStyles);
     }
 }

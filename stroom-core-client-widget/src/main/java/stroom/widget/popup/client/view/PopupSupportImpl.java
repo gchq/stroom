@@ -98,10 +98,7 @@ public class PopupSupportImpl implements PopupSupport {
             popupPanel.addAutoHidePartner(element);
         }
 
-        final String uniqueId = createUniqueId(event);
-
         PopupUtil.showPopup(
-                uniqueId,
                 popup,
                 GwtNullSafe.isTrue(modal),
                 popupPosition,
@@ -118,85 +115,6 @@ public class PopupSupportImpl implements PopupSupport {
                     }
                 });
     }
-
-//    @Override
-//    public void show(final ShowPopupEvent event) {
-//        final PopupType popupType = event.getPopupType();
-//        final PopupPosition popupPosition = event.getPopupPosition();
-//        final PopupSize popupSize = event.getPopupSize();
-//        hideRequestHandler = event.getHideRequestHandler();
-//        hideHandler = event.getHideHandler();
-//
-//        if (popup == null) {
-//            final HideRequestUiHandlers uiHandlers = new DefaultHideRequestUiHandlers(event.getPresenterWidget());
-//            popup = createPopup(popupType, popupSize, uiHandlers);
-//        }
-//
-//        // Add auto hide partners.
-//        final PopupPanel popupPanel = (PopupPanel) popup;
-//        for (final Element element : GwtNullSafe.list(autoHidePartners)) {
-//            popupPanel.addAutoHidePartner(element);
-//        }
-//
-//        final String uniqueId = createUniqueId(event);
-//
-//        PopupUtil.showPopup(
-//                uniqueId,
-//                popup,
-//                GwtNullSafe.isTrue(modal),
-//                popupPosition,
-//                popupSize,
-//                popupType,
-//                () -> {
-//                    if (event.getShowHandler() != null) {
-//                        event.getShowHandler().onShow(event);
-//                    } else if (dialogButtons != null) {
-//                        // If no custom handler is specified then focus the buttons
-//                        dialogButtons.focus();
-//                    }
-//                });
-//    }
-
-    private String createUniqueId(final ShowPopupEvent event) {
-//        GWT.log("popupPosition: " + event.getPopupPosition());
-
-        // Create an id to uniquely identify the show popup call, in this case
-        // the presenter that launched it and the position rect of that presenter.
-        // The position is to support context menus where multiple popups are spawned
-        // from the same presenter
-        final String className = GwtNullSafe.getOrElse(
-                event.getPresenterWidget(),
-                Object::getClass,
-                Class::getName,
-                "UNKNOWN_CLASS");
-        final String position = GwtNullSafe.get(
-                event.getPopupPosition(),
-                PopupPosition::getRelativeRect,
-                rect ->
-                        rect.getTop() + "_" +
-                                rect.getLeft() + "_" +
-                                rect.getBottom() + "_" +
-                                rect.getRight());
-        final String id = className + "__" + position;
-//        GWT.log("id: " + id);
-        return id;
-    }
-
-//    private int getSize(final int current, Size size) {
-//        int newSize = current;
-//        if (size != null) {
-//            if (size.getInitial() == null) {
-//                size.setInitial(current);
-//            }
-//
-//            if (size.getMin() == null) {
-//                size.setMin(Math.min(current, size.getInitial()));
-//            }
-//
-//            newSize = Math.max(size.getMin(), size.getInitial());
-//        }
-//        return newSize;
-//    }
 
     @Override
     public void hideRequest(final HidePopupRequestEvent event) {

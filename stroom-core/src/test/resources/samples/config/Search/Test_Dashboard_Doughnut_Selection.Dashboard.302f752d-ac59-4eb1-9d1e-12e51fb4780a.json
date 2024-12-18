@@ -100,58 +100,7 @@
         "uuid" : "ce55cb67-22ef-4146-b866-f8ba955b9ba6",
         "name" : "Doughnut"
       },
-      "json" : "{\"names\":\"UserId\", \"values\":\"Count\", \"maxValues\":\"20\", \"sort\":\"true\", \"synchNames\":\"True\", \"nameDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"20\", \"gridSeriesDateFormat\":\"\", \"showLabels\":\"False\"}",
-      "tableSettings" : {
-        "type" : "table",
-        "queryId" : "query-MRGPM",
-        "fields" : [ {
-          "id" : "table-BKJT6|NPU80",
-          "name" : "UserId",
-          "expression" : "${UserId}",
-          "format" : {
-            "type" : "GENERAL"
-          },
-          "group" : 0,
-          "width" : 106,
-          "visible" : true,
-          "special" : false
-        }, {
-          "id" : "table-BKJT6|ON0QW",
-          "name" : "Count",
-          "expression" : "count()",
-          "sort" : {
-            "order" : 0,
-            "direction" : "DESCENDING"
-          },
-          "format" : {
-            "type" : "NUMBER"
-          },
-          "width" : 200,
-          "visible" : true,
-          "special" : false
-        }, {
-          "id" : "__stream_id__",
-          "name" : "__stream_id__",
-          "expression" : "${StreamId}",
-          "width" : 200,
-          "visible" : false,
-          "special" : true
-        }, {
-          "id" : "__event_id__",
-          "name" : "__event_id__",
-          "expression" : "${EventId}",
-          "width" : 200,
-          "visible" : false,
-          "special" : true
-        } ],
-        "extractionPipeline" : {
-          "type" : "Pipeline",
-          "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-          "name" : "Example extraction"
-        },
-        "maxResults" : [ 1000000 ],
-        "modelVersion" : "6.1.26"
-      }
+      "json" : "{\"names\":\"UserId\", \"values\":\"Count\", \"maxValues\":\"20\", \"sort\":\"true\", \"synchNames\":\"True\", \"nameDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"20\", \"gridSeriesDateFormat\":\"\", \"showLabels\":\"False\"}"
     }
   }, {
     "type" : "table",
@@ -214,19 +163,11 @@
       "type" : "text",
       "streamIdField" : {
         "id" : "__stream_id__",
-        "name" : "__stream_id__",
-        "expression" : "${StreamId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
+        "name" : "__stream_id__"
       },
       "recordNoField" : {
         "id" : "__event_id__",
-        "name" : "__event_id__",
-        "expression" : "${EventId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
+        "name" : "__event_id__"
       },
       "showAsHtml" : false,
       "showStepping" : false,

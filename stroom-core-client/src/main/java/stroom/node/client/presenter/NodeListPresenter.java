@@ -1,6 +1,7 @@
 package stroom.node.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
@@ -291,9 +292,10 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
 
         // Master.
         dataGrid.addColumn(
-                DataGridUtil.readOnlyTickBoxColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
-                                result,
-                                NodeStatusResult::isMaster))
+                DataGridUtil.readOnlyTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                (NodeStatusResult result) -> GwtNullSafe.get(
+                                        result,
+                                        NodeStatusResult::isMaster)))
                         .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .centerAligned()
                         .build(),
@@ -319,17 +321,18 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                         .build(),
                 DataGridUtil.headingBuilder("Priority")
                         .withToolTip("Defines how important the node is when it comes to " +
-                                "assigning a master. The larger the number the more chance it will become " +
-                                "the master.")
+                                     "assigning a master. The larger the number the more chance it will become " +
+                                     "the master.")
                         .build(),
                 80);
 
         // Enabled
         dataGrid.addColumn(
-                DataGridUtil.updatableTickBoxColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
-                                result,
-                                NodeStatusResult::getNode,
-                                Node::isEnabled))
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                (NodeStatusResult result) -> GwtNullSafe.get(
+                                        result,
+                                        NodeStatusResult::getNode,
+                                        Node::isEnabled)))
                         .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater((index, row, value) -> {
@@ -351,7 +354,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                         .withToolTip("Whether the node is enabled for processing and background jobs.")
                         .centerAligned()
                         .build(),
-                70);
+                ColumnSizeConstants.ENABLED_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
     }
@@ -377,7 +380,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
             } else if (ping == null || ping < 0) {
                 ping = Long.MAX_VALUE;
                 pingMsg = "Invalid ping value: "
-                        + GwtNullSafe.requireNonNullElse(ping, "null");
+                          + GwtNullSafe.requireNonNullElse(ping, "null");
             }
 
             return buildPingBar(ping, pingMsg, pingResult.getNodeMonitoringConfig());
@@ -419,8 +422,8 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
             isErrorMsg = false;
         } else {
             if (msg.startsWith("Unable to connect")
-                    || msg.startsWith("Error calling node")
-                    || msg.startsWith("Request failed")) {
+                || msg.startsWith("Error calling node")
+                || msg.startsWith("Request failed")) {
                 text = "Unable to connect";
             } else {
                 text = "Error";

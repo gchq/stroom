@@ -130,7 +130,7 @@ public class Tokeniser {
         tokens = categorise(TokenType.STRING, tokens);
     }
 
-    private List<Token> tagKeyword(final String pattern, final TokenType tokenType, final List<Token> tokens) {
+    public static List<Token> tagKeyword(final String pattern, final TokenType tokenType, final List<Token> tokens) {
         return split("(^\\s*|[^=]\\s+|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType, tokens);
     }
 
@@ -138,7 +138,7 @@ public class Tokeniser {
         return new Tokeniser(string).tokens;
     }
 
-    private List<Token> categorise(final TokenType tokenType,
+    public static List<Token> categorise(final TokenType tokenType,
                                    final List<Token> tokens) {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
@@ -156,7 +156,7 @@ public class Tokeniser {
         return out;
     }
 
-    private List<Token> split(final String regex,
+    public static List<Token> split(final String regex,
                               final int group,
                               final TokenType tokenType,
                               final List<Token> tokens) {
@@ -171,7 +171,7 @@ public class Tokeniser {
         return out;
     }
 
-    private List<Token> splitUnknown(final String regex,
+    private static List<Token> splitUnknown(final String regex,
                                      final int group,
                                      final TokenType tokenType,
                                      final Token token) {
@@ -269,7 +269,7 @@ public class Tokeniser {
         return out;
     }
 
-    private List<Token> extractQuotedTokens(final List<Token> tokens) {
+    public static List<Token> extractQuotedTokens(final List<Token> tokens) {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
             if (TokenType.UNKNOWN.equals(token.getTokenType())) {
@@ -364,7 +364,7 @@ public class Tokeniser {
         return out;
     }
 
-    private boolean testChars(Token token, char[] test, int pos) {
+    private static boolean testChars(Token token, char[] test, int pos) {
         if (pos + test.length - 1 > token.getEnd()) {
             return false;
         }

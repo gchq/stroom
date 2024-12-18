@@ -18,8 +18,6 @@ package stroom.pipeline.shared.data;
 
 import stroom.docref.DocRef;
 import stroom.util.shared.Copyable;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,6 +28,8 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
+
+import java.util.Objects;
 
 /**
  * <p>
@@ -153,31 +153,23 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
+        if (this == o) {
             return true;
-        } else if (!(o instanceof PipelinePropertyValue)) {
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        final PipelinePropertyValue pipelinePropertyValue = (PipelinePropertyValue) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(string, pipelinePropertyValue.string);
-        builder.append(integer, pipelinePropertyValue.integer);
-        builder.append(_long, pipelinePropertyValue._long);
-        builder.append(_boolean, pipelinePropertyValue._boolean);
-        builder.append(entity, pipelinePropertyValue.entity);
-        return builder.isEquals();
+        final PipelinePropertyValue that = (PipelinePropertyValue) o;
+        return Objects.equals(string, that.string) &&
+                Objects.equals(integer, that.integer) &&
+                Objects.equals(_long, that._long) &&
+                Objects.equals(_boolean, that._boolean) &&
+                Objects.equals(entity, that.entity);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(string);
-        builder.append(integer);
-        builder.append(_long);
-        builder.append(_boolean);
-        builder.append(entity);
-        return builder.toHashCode();
+        return Objects.hash(string, integer, _long, _boolean, entity);
     }
 
     @Override

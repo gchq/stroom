@@ -286,18 +286,18 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         }
         final FsVolume volume = (FsVolume) o;
         return Objects.equals(id, volume.id) &&
-                Objects.equals(version, volume.version) &&
-                Objects.equals(createTimeMs, volume.createTimeMs) &&
-                Objects.equals(createUser, volume.createUser) &&
-                Objects.equals(updateTimeMs, volume.updateTimeMs) &&
-                Objects.equals(updateUser, volume.updateUser) &&
-                Objects.equals(path, volume.path) &&
-                status == volume.status &&
-                Objects.equals(byteLimit, volume.byteLimit) &&
-                volumeType == volume.volumeType &&
-                Objects.equals(s3ClientConfig, volume.s3ClientConfig) &&
-                Objects.equals(s3ClientConfigData, volume.s3ClientConfigData) &&
-                Objects.equals(volumeGroupId, volume.volumeGroupId);
+               Objects.equals(version, volume.version) &&
+               Objects.equals(createTimeMs, volume.createTimeMs) &&
+               Objects.equals(createUser, volume.createUser) &&
+               Objects.equals(updateTimeMs, volume.updateTimeMs) &&
+               Objects.equals(updateUser, volume.updateUser) &&
+               Objects.equals(path, volume.path) &&
+               status == volume.status &&
+               Objects.equals(byteLimit, volume.byteLimit) &&
+               volumeType == volume.volumeType &&
+               Objects.equals(s3ClientConfig, volume.s3ClientConfig) &&
+               Objects.equals(s3ClientConfigData, volume.s3ClientConfigData) &&
+               Objects.equals(volumeGroupId, volume.volumeGroupId);
     }
 
     @Override
@@ -341,7 +341,7 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
         public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER =
-                new PrimitiveValueConverter<>(VolumeUseStatus.values());
+                PrimitiveValueConverter.create(VolumeUseStatus.class, VolumeUseStatus.values());
 
         private final String displayValue;
         private final byte primitiveValue;

@@ -304,7 +304,7 @@ public class ProcessorTaskListPresenter
             setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(docRef));
         } else if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createFeedExpression(docRef));
-        } else if (ExplorerConstants.FOLDER.equals(docRef.getType())) {
+        } else if (ExplorerConstants.FOLDER_TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createFolderExpression(docRef));
         }
     }

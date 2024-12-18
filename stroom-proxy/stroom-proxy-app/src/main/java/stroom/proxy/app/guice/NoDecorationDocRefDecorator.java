@@ -18,6 +18,7 @@ package stroom.proxy.app.guice;
 
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefDecorator;
+import stroom.security.shared.DocumentPermission;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +39,9 @@ public class NoDecorationDocRefDecorator implements DocRefDecorator {
     }
 
     @Override
-    public DocRef decorate(final DocRef docRef, final boolean force, final Set<String> requiredPermissions) {
+    public DocRef decorate(final DocRef docRef,
+                           final boolean force,
+                           final Set<DocumentPermission> requiredPermissions) {
         return null;
     }
 }

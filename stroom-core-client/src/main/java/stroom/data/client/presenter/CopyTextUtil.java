@@ -20,6 +20,8 @@ public class CopyTextUtil {
 
     public static final String ICON_NAME = "svgIcon";
     public static final String COPY_CLASS_NAME = "docRefLinkCopy";
+    private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
+    private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
     private static final Template TEMPLATE;
     private static final int TRUNCATE_THRESHOLD = 30;
 
@@ -40,11 +42,19 @@ public class CopyTextUtil {
             final SafeHtml textSafeHtml = TEMPLATE
                     .div("docRefLinkText", SafeHtmlUtils.fromString(value));
 
-            sb.appendHtmlConstant("<div class=\"docRefLinkContainer\">");
+            final String containerClasses = String.join(
+                    " ",
+                    HOVER_ICON_CONTAINER_CLASS_NAME,
+                    "docRefLinkContainer");
+            sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
             sb.append(textSafeHtml);
 
             GwtNullSafe.consumeNonBlankString(value, str -> {
-                final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_NAME, COPY_CLASS_NAME);
+                final SafeHtml copy = SvgImageUtil.toSafeHtml(
+                        SvgImage.COPY,
+                        ICON_NAME,
+                        COPY_CLASS_NAME,
+                        HOVER_ICON_CLASS_NAME);
                 // Cell values could be huge so truncate big ones
                 final String truncatedStr = str.length() > TRUNCATE_THRESHOLD
                         ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
@@ -62,10 +72,10 @@ public class CopyTextUtil {
         if (BrowserEvents.MOUSEDOWN.equals(e.getType()) && MouseUtil.isPrimary(e)) {
             final Element element = e.getEventTarget().cast();
             final Element copy =
-                    ElementUtil.findMatching(element, CopyTextUtil.COPY_CLASS_NAME, 0, 5);
+                    ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5);
             if (copy != null) {
-                final Element container = ElementUtil.findMatching(
-                        element, "docRefLinkContainer", 0, 5);
+                final Element container = ElementUtil.findParent(
+                        element, "docRefLinkContainer", 5);
 
                 GwtNullSafe.consumeNonBlankString(container, Element::getInnerText, text ->
                         ClipboardUtil.copy(text.trim()));

@@ -181,7 +181,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipelineWithProcessorFilter() {
-        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
@@ -228,7 +228,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipeline() throws IOException {
-        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);

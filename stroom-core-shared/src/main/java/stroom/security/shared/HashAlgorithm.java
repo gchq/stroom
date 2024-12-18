@@ -19,7 +19,7 @@ public enum HashAlgorithm implements HasDisplayValue, HasPrimitiveValue {
     public static final HashAlgorithm DEFAULT = HashAlgorithm.SHA3_256;
 
     public static final PrimitiveValueConverter<HashAlgorithm> PRIMITIVE_VALUE_CONVERTER =
-            new PrimitiveValueConverter<>(HashAlgorithm.values());
+            PrimitiveValueConverter.create(HashAlgorithm.class, HashAlgorithm.values());
 
     private final String displayValue;
     private final byte primitiveValue;

@@ -67,11 +67,6 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
         });
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-    }
-
     public void show() {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -126,7 +121,7 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
     private void changePassword(final HidePopupRequestEvent event,
                                 final ChangePasswordPresenter changePasswordPresenter) {
         final ChangePasswordRequest request = new ChangePasswordRequest(
-                currentUser.getUserName().getSubjectId(),
+                currentUser.getUserRef().getSubjectId(),
                 getView().getPassword(),
                 changePasswordPresenter.getPassword(),
                 changePasswordPresenter.getConfirmPassword());

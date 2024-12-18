@@ -14,5 +14,8 @@
         <form:FormGroup identity="processorEditMaxMetaCreateTimeMs" label="Max Create Time">
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
+        <form:FormGroup identity="runAsUser" label="Run As User">
+            <g:SimplePanel ui:field="runAsUser"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

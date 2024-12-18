@@ -4,11 +4,10 @@ import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.HashAlgorithm;
 import stroom.svg.client.SvgPresets;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -21,15 +20,16 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class EditApiKeyViewImpl
@@ -37,15 +37,10 @@ public class EditApiKeyViewImpl
         implements EditApiKeyView {
 
     private final Widget widget;
-    private final UiConfigCache uiConfigCache;
     private Mode mode;
-    private UserName owner = null;
-    private boolean canSelectOwner;
 
     @UiField
-    Label ownerLabel;
-    @UiField
-    SelectionBox<UserName> ownerSelectionBox;
+    SimplePanel ownerPanel;
     @UiField
     TextBox nameTextBox;
     @UiField
@@ -72,19 +67,20 @@ public class EditApiKeyViewImpl
     @UiField
     Label copyToClipboardLabel;
 
+    private UserRefSelectionBoxPresenter ownerSelectionView = null;
+
     @Inject
     public EditApiKeyViewImpl(final Binder binder,
-                              final UserPreferencesManager userPreferencesManager,
-                              final UiConfigCache uiConfigCache) {
+                              final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
-        this.uiConfigCache = uiConfigCache;
+//        this.uiConfigCache = uiConfigCache;
 
         hashAlgorithmSelectionBox.addItems(Arrays.stream(HashAlgorithm.values())
                 .sorted(Comparator.comparing(HashAlgorithm::getDisplayValue))
                 .collect(Collectors.toList()));
 
-        ownerSelectionBox.setDisplayValueFunction(UserName::getUserIdentityForAudit);
+//        ownerSelectionBox.setDisplayValueFunction(UserName::getUserIdentityForAudit);
 
         apiKeyTextArea.setEnabled(false);
         prefixTextBox.setEnabled(false);
@@ -104,22 +100,6 @@ public class EditApiKeyViewImpl
             };
             timer.schedule(3_000);
         });
-    }
-
-    @Override
-    public void setCanSelectOwner(final boolean canSelectOwner) {
-        this.canSelectOwner = canSelectOwner;
-        setOwnerControlsVisibility();
-    }
-
-    private void setOwnerControlsVisibility() {
-        if (canSelectOwner && Mode.PRE_CREATE.equals(mode)) {
-            ownerSelectionBox.setVisible(true);
-            ownerLabel.setVisible(false);
-        } else {
-            ownerSelectionBox.setVisible(false);
-            ownerLabel.setVisible(true);
-        }
     }
 
     @Override
@@ -143,7 +123,6 @@ public class EditApiKeyViewImpl
         apiKeyFormGroup.setVisible(isApiKeyVisible);
         apiKeyButtonPanel.setVisible(isApiKeyVisible);
         setEnabledStates(mode);
-        setOwnerControlsVisibility();
     }
 
     private void setEnabledStates(final Mode mode) {
@@ -175,28 +154,8 @@ public class EditApiKeyViewImpl
     }
 
     @Override
-    public void setUserNames(final List<UserName> userNames) {
-        ownerSelectionBox.clear();
-        if (userNames != null) {
-            ownerSelectionBox.addItems(userNames);
-        }
-        if (owner != null) {
-            ownerSelectionBox.setValue(owner);
-        }
-    }
-
-    @Override
-    public void setOwner(final UserName owner) {
-        this.owner = owner;
-        this.ownerLabel.setText(owner.getUserIdentityForAudit());
-        this.ownerSelectionBox.setValue(owner);
-    }
-
-    @Override
-    public UserName getOwner() {
-        return canSelectOwner
-                ? ownerSelectionBox.getValue()
-                : owner;
+    public void setOwnerView(final View ownerSelectionView) {
+        ownerPanel.setWidget(ownerSelectionView.asWidget());
     }
 
     @Override
@@ -260,8 +219,6 @@ public class EditApiKeyViewImpl
     public void reset(final Long milliseconds) {
         nameTextBox.setText("");
         commentsTextArea.setText("");
-        ownerLabel.setText("");
-        owner = null;
         expiresOnDateBox.setMilliseconds(milliseconds);
         enabledCheckBox.setValue(true);
         prefixTextBox.setText("");

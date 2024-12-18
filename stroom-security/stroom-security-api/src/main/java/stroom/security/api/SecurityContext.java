@@ -17,28 +17,15 @@
 package stroom.security.api;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.HasAuditableUserIdentity;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public interface SecurityContext extends HasAuditableUserIdentity {
-
-    /**
-     * Get the id of the user associated with this security context.
-     * If using an external IDP this may not be a very user-friendly value so for anything
-     * where the user identity is going to be shown in the UI, use {@link SecurityContext#getUserIdentityForAudit()}
-     *
-     * @return The id of the user associated with this security context.
-     */
-    String getSubjectId();
-
-    /**
-     * Retrieve the user's UUID if supported by the type of user.
-     * This is the Stroom User UUID.
-     */
-    String getUserUuid();
 
     /**
      * @return The user identity in a form suitable for use in audit events, for display
@@ -54,52 +41,41 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     }
 
     /**
-     * Gets the {@link UserIdentity} of a user identified by the subjectId or creates a
-     * stroom_user record for them if it doesn't already exist.
-     */
-    UserIdentity getOrCreateUserIdentity(String subjectId);
-
-    /**
-     * Gets the {@link UserIdentity} of a user or group identified by the subjectId.
-     *
-     * @throws stroom.security.api.exception.AuthenticationException if the user/group can't be found
-     */
-    UserIdentity getIdentityBySubjectId(String subjectId, boolean isGroup);
-
-    /**
-     * Gets the {@link UserIdentity} of a user or group identified by the userUuid.
-     *
-     * @throws stroom.security.api.exception.AuthenticationException if the user/group can't be found
-     */
-    UserIdentity getIdentityByUserUuid(String userUuid);
-
-    /**
      * Gets the identity of the current user.
      *
      * @return The identity of the current user.
      */
     UserIdentity getUserIdentity();
 
-    default UserName getUserName() {
-        final UserIdentity userIdentity = getUserIdentity();
-        final String displayName;
-        final String fullName;
-        if (userIdentity != null) {
-            displayName = userIdentity.getDisplayName();
-            fullName = userIdentity.getFullName().orElse(null);
-        } else {
-            displayName = null;
-            fullName = null;
-        }
-        return new SimpleUserName(getSubjectId(), displayName, fullName, getUserUuid());
+    /**
+     * Get the current user identity as a user ref object.
+     *
+     * @return A user ref object representing the current authenticated user.
+     */
+    UserRef getUserRef();
+
+    /**
+     * Determine if the passed {@link UserRef} is the same user as the current
+     * authenticated user. Being administrator has no bearing on the result of this method.
+     *
+     * @param userRef The user to compare against the current authenticated user.
+     * @return True if userRef is equal to the current authenticated user.
+     */
+    default boolean isCurrentUser(final UserRef userRef) {
+        return Objects.equals(getUserRef(), userRef);
     }
 
     /**
-     * Check if the user associated with this security context is logged in.
+     * Determine if the passed userUuid is the same user as the current
+     * authenticated user. Being administrator has no bearing on the result of this method.
      *
-     * @return True if the user is logged in.
+     * @param userUuid The user to compare against the current authenticated user.
+     * @return True if userUuid is equal to the userUuid of the current authenticated user.
      */
-    boolean isLoggedIn();
+    default boolean isCurrentUser(final String userUuid) {
+        final String currentUserUuid = getUserRef().getUuid();
+        return Objects.equals(currentUserUuid, userUuid);
+    }
 
     /**
      * This is a convenience method to check that the user has system administrator privileges.
@@ -130,19 +106,7 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    boolean hasAppPermission(String permission);
-
-    /**
-     * Check if the user associated with this security context has the requested
-     * permission on the document specified by the document type and document
-     * id.
-     *
-     * @param documentUuid The uuid of the document.
-     * @param permission   The permission we are checking for.
-     * @return True if the user associated with the security context has the
-     * requested permission.
-     */
-    boolean hasDocumentPermission(String documentUuid, String permission);
+    boolean hasAppPermission(AppPermission permission);
 
     /**
      * Check if the user associated with this security context has the requested
@@ -153,23 +117,34 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    default boolean hasDocumentPermission(DocRef docRef, String permission) {
-        return docRef != null && hasDocumentPermission(docRef.getUuid(), permission);
-    }
+    boolean hasDocumentPermission(DocRef docRef, DocumentPermission permission);
 
     /**
-     * Get the user UUID of the owner of a document. Throws authentication exception if there are multiple users with
-     * ownership or no owners.
+     * Check if the user associated with this security context has the requested
+     * permission on the document specified by the document docRef.
      *
-     * @param docRef The uuid of the document.
-     * @return The UUID of the document owner.
+     * @param docRef       The docRef of the parent folder.
+     * @param documentType The document type we want to create.
+     * @return True if the user associated with the security context has the
+     * requested permission.
      */
-    String getDocumentOwnerUuid(DocRef docRef);
+    boolean hasDocumentCreatePermission(DocRef docRef, String documentType);
 
     /**
      * Run the supplied code as the specified user.
      */
     <T> T asUserResult(UserIdentity userIdentity, Supplier<T> supplier);
+
+    /**
+     * Run the supplied code as the specified user.
+     */
+    <T> T asUserResult(UserRef userRef, Supplier<T> supplier);
+
+    /**
+     * Run the supplied code as the specified user.
+     */
+    void asUser(UserRef userRef, Runnable runnable);
+
 
     /**
      * Run the supplied code as the specified user.
@@ -187,16 +162,6 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     void asProcessingUser(Runnable runnable);
 
     /**
-     * Run the supplied code as an admin user.
-     */
-    <T> T asAdminUserResult(Supplier<T> supplier);
-
-    /**
-     * Run the supplied code as an admin user.
-     */
-    void asAdminUser(Runnable runnable);
-
-    /**
      * Allow the current user to read items that they only have 'Use' permission on.
      */
     <T> T useAsReadResult(Supplier<T> supplier);
@@ -209,12 +174,12 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     /**
      * Secure the supplied code with the supplied application permission.
      */
-    void secure(String permission, Runnable runnable);
+    void secure(AppPermission permission, Runnable runnable);
 
     /**
      * Secure the supplied code with the supplied application permission.
      */
-    <T> T secureResult(String permission, Supplier<T> supplier);
+    <T> T secureResult(AppPermission permission, Supplier<T> supplier);
 
     /**
      * Secure the supplied code to ensure that there is a current authenticated user.

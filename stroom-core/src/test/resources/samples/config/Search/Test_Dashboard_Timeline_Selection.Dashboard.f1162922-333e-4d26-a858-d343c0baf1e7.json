@@ -160,19 +160,11 @@
       "type" : "text",
       "streamIdField" : {
         "id" : "__stream_id__",
-        "name" : "__stream_id__",
-        "expression" : "${StreamId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
+        "name" : "__stream_id__"
       },
       "recordNoField" : {
         "id" : "__event_id__",
-        "name" : "__event_id__",
-        "expression" : "${EventId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
+        "name" : "__event_id__"
       },
       "showAsHtml" : false,
       "showStepping" : false,
@@ -231,60 +223,7 @@
         "uuid" : "547b440d-4bb1-4d3b-86b7-ff2e41b49311",
         "name" : "BarChart"
       },
-      "json" : "{\"x\":\"EventTime\", \"y\":\"Count\", \"series\":\"Count\", \"gridSeries\":\"\", \"maxValues\":\"500\", \"sortXAxis\":\"Ascending\", \"sortSeries\":\"Ascending\", \"maxSeries\":\"100\", \"seriesDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"36\", \"gridSeriesDateFormat\":\"\", \"synchXAxis\":\"True\", \"displayXAxis\":\"True\", \"synchYAxis\":\"True\", \"displayYAxis\":\"True\", \"synchSeries\":\"True\", \"bucketSize\":\"hour\"}",
-      "tableSettings" : {
-        "type" : "table",
-        "queryId" : "query-MRGPM",
-        "fields" : [ {
-          "id" : "table-BKJT6|GEJY0",
-          "name" : "EventTime",
-          "expression" : "floorMinute(${EventTime})",
-          "sort" : {
-            "order" : 0,
-            "direction" : "ASCENDING"
-          },
-          "format" : {
-            "type" : "DATE_TIME"
-          },
-          "group" : 0,
-          "width" : 200,
-          "visible" : true,
-          "special" : false
-        }, {
-          "id" : "table-BKJT6|ON0QW",
-          "name" : "Count",
-          "expression" : "count()",
-          "format" : {
-            "type" : "NUMBER"
-          },
-          "width" : 200,
-          "visible" : true,
-          "special" : false
-        }, {
-          "id" : "__stream_id__",
-          "name" : "__stream_id__",
-          "expression" : "${StreamId}",
-          "width" : 200,
-          "visible" : false,
-          "special" : true
-        }, {
-          "id" : "__event_id__",
-          "name" : "__event_id__",
-          "expression" : "${EventId}",
-          "width" : 200,
-          "visible" : false,
-          "special" : true
-        } ],
-        "extractionPipeline" : {
-          "type" : "Pipeline",
-          "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-          "name" : "Example extraction"
-        },
-        "maxResults" : [ 1000000 ],
-        "showDetail" : false,
-        "conditionalFormattingRules" : [ ],
-        "modelVersion" : "6.1.26"
-      }
+      "json" : "{\"x\":\"EventTime\", \"y\":\"Count\", \"series\":\"Count\", \"gridSeries\":\"\", \"maxValues\":\"500\", \"sortXAxis\":\"Ascending\", \"sortSeries\":\"Ascending\", \"maxSeries\":\"100\", \"seriesDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"36\", \"gridSeriesDateFormat\":\"\", \"synchXAxis\":\"True\", \"displayXAxis\":\"True\", \"synchYAxis\":\"True\", \"displayYAxis\":\"True\", \"synchSeries\":\"True\", \"bucketSize\":\"hour\"}"
     }
   } ],
   "layout" : {

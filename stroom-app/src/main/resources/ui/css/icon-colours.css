@@ -64,8 +64,16 @@
     color: var(--icon-colour__blue);
 }
 
+.icon-colour__info-blue svg {
+    color: var(--icon-colour__info-blue);
+}
+
 .icon-colour__green svg {
     color: var(--icon-colour__green);
+}
+
+.icon-colour__dark-green svg {
+    color: var(--icon-colour__dark-green);
 }
 
 .icon-colour__grey svg {
@@ -75,3 +83,24 @@
 .icon-colour__red svg {
     color: var(--icon-colour__red);
 }
+
+.icon-colour__purple svg {
+    color: var(--icon-colour__purple);
+}
+
+.icon-colour__orange svg {
+    color: var(--icon-colour__orange);
+}
+
+.icon-colour__dirty-amber svg {
+    color: var(--icon-colour__dirty-amber);
+}
+
+.icon-colour__yellow svg {
+    color: var(--icon-colour__yellow);
+}
+
+.icon-colour__off-white svg {
+    color: var(--icon-colour__off-white);
+}
+

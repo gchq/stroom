@@ -7,6 +7,7 @@ import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.UpdateAccountRequest;
+import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -29,6 +30,7 @@ public class EditAccountPresenter
         implements EditAccountUiHandlers, HasHandlers {
 
     private static final AccountResource ACCOUNT_RESOURCE = GWT.create(AccountResource.class);
+    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final RestFactory restFactory;
 
@@ -129,63 +131,74 @@ public class EditAccountPresenter
             } else if (getView().getUserId().length() < 3) {
                 AlertEvent.fireError(this, "A user id must be at least 3 characters.", e::reset);
             } else if (!GwtNullSafe.isBlankString(getView().getEmail()) &&
-                    !EmailValidator.validate(getView().getEmail())) {
+                       !EmailValidator.validate(getView().getEmail())) {
                 AlertEvent.fireError(this, "Invalid email address.", e::reset);
             } else {
                 if (account == null) {
-                    final CreateAccountRequest request = new CreateAccountRequest(
-                            getView().getFirstName(),
-                            getView().getLastName(),
-                            getView().getUserId(),
-                            getView().getEmail(),
-                            getView().getComments(),
-                            password,
-                            confirmPassword,
-                            true,
-                            getView().isNeverExpires());
-                    restFactory
-                            .create(ACCOUNT_RESOURCE)
-                            .method(res -> res.create(request))
-                            .onSuccess(account -> {
-                                onChangeHandler.run();
-                                e.hide();
-                            })
-                            .onFailure(throwable ->
-                                    AlertEvent.fireError(this, "Error creating account: "
-                                            + throwable.getMessage(), e::reset))
-                            .taskMonitorFactory(this)
-                            .exec();
+                    createAccount(e);
 
                 } else {
-                    account.setUserId(getView().getUserId());
-                    account.setEmail(getView().getEmail());
-                    account.setFirstName(getView().getFirstName());
-                    account.setLastName(getView().getLastName());
-                    account.setComments(getView().getComments());
-                    account.setNeverExpires(getView().isNeverExpires());
-                    account.setEnabled(getView().isEnabled());
-                    account.setInactive(getView().isInactive());
-                    account.setLocked(getView().isLocked());
-
-                    final UpdateAccountRequest request = new UpdateAccountRequest(account, password, confirmPassword);
-                    restFactory
-                            .create(ACCOUNT_RESOURCE)
-                            .method(res -> res.update(request, account.getId()))
-                            .onSuccess(account -> {
-                                onChangeHandler.run();
-                                e.hide();
-                            })
-                            .onFailure(throwable ->
-                                    AlertEvent.fireError(this, "Error updating account: "
-                                            + throwable.getMessage(), e::reset))
-                            .taskMonitorFactory(this)
-                            .exec();
+                    updateAccount(e);
                 }
             }
         } else {
             e.hide();
         }
     }
+
+    private void createAccount(final HidePopupRequestEvent e) {
+        final CreateAccountRequest request = new CreateAccountRequest(
+                getView().getFirstName(),
+                getView().getLastName(),
+                getView().getUserId(),
+                getView().getEmail(),
+                getView().getComments(),
+                password,
+                confirmPassword,
+                true,
+                getView().isNeverExpires());
+        restFactory
+                .create(ACCOUNT_RESOURCE)
+                .method(res -> res.create(request))
+                .onSuccess(id -> {
+                    onChangeHandler.run();
+                    e.hide();
+                })
+                .onFailure(throwable ->
+                        AlertEvent.fireError(this, "Error creating account: "
+                                                   + throwable.getMessage(), e::reset))
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void updateAccount(final HidePopupRequestEvent e) {
+        account.setUserId(getView().getUserId());
+        account.setEmail(getView().getEmail());
+        account.setFirstName(getView().getFirstName());
+        account.setLastName(getView().getLastName());
+        account.setComments(getView().getComments());
+        account.setNeverExpires(getView().isNeverExpires());
+        account.setEnabled(getView().isEnabled());
+        account.setInactive(getView().isInactive());
+        account.setLocked(getView().isLocked());
+
+        final UpdateAccountRequest request = new UpdateAccountRequest(account, password, confirmPassword);
+        restFactory
+                .create(ACCOUNT_RESOURCE)
+                .method(res -> res.update(request, account.getId()))
+                .onSuccess(account -> {
+                    onChangeHandler.run();
+                    e.hide();
+                })
+                .onFailure(throwable ->
+                        AlertEvent.fireError(this, "Error updating account: "
+                                                   + throwable.getMessage(), e::reset))
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+
+    // --------------------------------------------------------------------------------
 
 
     public interface EditAccountView extends View, Focus, HasUiHandlers<EditAccountUiHandlers> {

@@ -18,6 +18,7 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -28,9 +29,9 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -70,7 +71,7 @@ public class SearchRequestTestData {
                         .name("name1")
                         .expression("expression1")
                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
-                        .filter(new Filter("include1", "exclude1"))
+                        .filter(new IncludeExcludeFilter("include1", "exclude1"))
                         .format(Format.builder()
                                 .type(Format.Type.NUMBER)
                                 .settings(new NumberFormatSettings(
@@ -87,7 +88,7 @@ public class SearchRequestTestData {
                         .name("name2")
                         .expression("expression2")
                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
-                        .filter(new Filter("include2", "exclude2"))
+                        .filter(new IncludeExcludeFilter("include2", "exclude2"))
                         .format(Format.builder()
                                 .type(Type.DATE_TIME)
                                 .settings(createDateTimeFormat())
@@ -135,7 +136,11 @@ public class SearchRequestTestData {
                         SearchRequestSource
                                 .builder()
                                 .sourceType(SourceType.DASHBOARD_UI)
-                                .ownerDocUuid("dashboardUuid")
+                                .ownerDocRef(DocRef
+                                        .builder()
+                                        .type(DashboardDoc.DOCUMENT_TYPE)
+                                        .uuid("dashboardUuid")
+                                        .build())
                                 .componentId(componentId)
                                 .build())
                 .search(search)

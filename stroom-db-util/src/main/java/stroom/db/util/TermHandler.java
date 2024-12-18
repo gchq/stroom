@@ -136,6 +136,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     }
                 }
             }
+            case IS_USER_REF -> {
+                if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
+                    return field.isNull();
+                } else {
+                    final String docValue = getDocValue(term, term.getDocRef());
+                    final List<T> value = getValues(docValue);
+                    // IS_DOC_REF does not support wild carding so should only get one thing back
+                    // else fall through and match nothing
+                    if (value.size() == 1) {
+                        return field.equal(value.getFirst());
+                    }
+                }
+            }
             case IS_NULL -> {
                 return field.isNull();
             }

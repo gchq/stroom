@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,11 +35,11 @@ public class DecorateRequest {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final Set<String> requiredPermissions;
+    private final Set<DocumentPermission> requiredPermissions;
 
     @JsonCreator
     DecorateRequest(@JsonProperty("docRef") final DocRef docRef,
-                    @JsonProperty("requiredPermissions") final Set<String> requiredPermissions) {
+                    @JsonProperty("requiredPermissions") final Set<DocumentPermission> requiredPermissions) {
         this.docRef = Objects.requireNonNull(docRef);
         this.requiredPermissions = requiredPermissions;
     }
@@ -48,7 +49,7 @@ public class DecorateRequest {
     }
 
     public static DecorateRequest createWithPermCheck(final DocRef docRef,
-                                                      final Set<String> requiredPermissions) {
+                                                      final Set<DocumentPermission> requiredPermissions) {
         return new DecorateRequest(docRef, requiredPermissions);
     }
 
@@ -56,7 +57,7 @@ public class DecorateRequest {
         return docRef;
     }
 
-    public Set<String> getRequiredPermissions() {
+    public Set<DocumentPermission> getRequiredPermissions() {
         return requiredPermissions;
     }
 

@@ -18,51 +18,47 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.docref.DocRef;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
+import stroom.security.impl.event.PermissionChangeEvent;
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
-class UserGroupsCache implements EntityEvent.Handler, Clearable {
+class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable {
 
-    private static final String CACHE_NAME = "User Groups Cache";
+    private static final String USER_GROUPS_CACHE_NAME = "User Groups Cache";
 
-    private final Provider<EntityEventBus> eventBusProvider;
-    private final LoadingStroomCache<String, Set<String>> cache;
+    private final Provider<UserDao> userDaoProvider;
+    private final LoadingStroomCache<UserRef, Set<UserRef>> cache;
 
     @Inject
     UserGroupsCache(final CacheManager cacheManager,
-                    final UserService userService,
-                    final Provider<EntityEventBus> eventBusProvider,
+                    final Provider<UserDao> userDaoProvider,
                     final Provider<AuthorisationConfig> authorisationConfigProvider) {
-        this.eventBusProvider = eventBusProvider;
+        this.userDaoProvider = userDaoProvider;
         cache = cacheManager.createLoadingCache(
-                CACHE_NAME,
+                USER_GROUPS_CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserGroupsCache(),
-                userService::findGroupUuidsForUser);
+                this::create);
     }
 
-    Set<String> get(final String userUuid) {
-        return cache.get(userUuid);
+    private Set<UserRef> create(final UserRef userRef) {
+        final FindUserCriteria criteria = new FindUserCriteria();
+        final ResultPage<User> users = userDaoProvider.get().findGroupsForUser(userRef.getUuid(), criteria);
+        return users.getValues().stream().map(User::asRef).collect(Collectors.toSet());
     }
 
-    void remove(final String userUuid) {
-        cache.invalidate(userUuid);
-        final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(
-                entityEventBus,
-                UserDocRefUtil.createDocRef(userUuid),
-                EntityAction.CLEAR_CACHE);
+    Set<UserRef> getGroups(final UserRef userRef) {
+        return cache.get(userRef);
     }
 
     @Override
@@ -71,10 +67,10 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        if (docRef != null && UserDocRefUtil.USER.equals(docRef.getType())) {
-            cache.invalidate(docRef.getUuid());
+    public void onChange(final PermissionChangeEvent event) {
+        final UserRef userRef = event.getUserRef();
+        if (userRef != null) {
+            cache.invalidate(userRef);
         }
     }
 }

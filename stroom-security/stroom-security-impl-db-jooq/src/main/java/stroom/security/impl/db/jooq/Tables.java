@@ -5,9 +5,14 @@ package stroom.security.impl.db.jooq;
 
 
 import stroom.security.impl.db.jooq.tables.ApiKey;
-import stroom.security.impl.db.jooq.tables.AppPermission;
-import stroom.security.impl.db.jooq.tables.DocPermission;
+import stroom.security.impl.db.jooq.tables.PermissionApp;
+import stroom.security.impl.db.jooq.tables.PermissionAppId;
+import stroom.security.impl.db.jooq.tables.PermissionDoc;
+import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
+import stroom.security.impl.db.jooq.tables.PermissionDocId;
+import stroom.security.impl.db.jooq.tables.PermissionDocTypeId;
 import stroom.security.impl.db.jooq.tables.StroomUser;
+import stroom.security.impl.db.jooq.tables.StroomUserArchive;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 
@@ -23,19 +28,44 @@ public class Tables {
     public static final ApiKey API_KEY = ApiKey.API_KEY;
 
     /**
-     * The table <code>stroom.app_permission</code>.
+     * The table <code>stroom.permission_app</code>.
      */
-    public static final AppPermission APP_PERMISSION = AppPermission.APP_PERMISSION;
+    public static final PermissionApp PERMISSION_APP = PermissionApp.PERMISSION_APP;
 
     /**
-     * The table <code>stroom.doc_permission</code>.
+     * The table <code>stroom.permission_app_id</code>.
      */
-    public static final DocPermission DOC_PERMISSION = DocPermission.DOC_PERMISSION;
+    public static final PermissionAppId PERMISSION_APP_ID = PermissionAppId.PERMISSION_APP_ID;
+
+    /**
+     * The table <code>stroom.permission_doc</code>.
+     */
+    public static final PermissionDoc PERMISSION_DOC = PermissionDoc.PERMISSION_DOC;
+
+    /**
+     * The table <code>stroom.permission_doc_create</code>.
+     */
+    public static final PermissionDocCreate PERMISSION_DOC_CREATE = PermissionDocCreate.PERMISSION_DOC_CREATE;
+
+    /**
+     * The table <code>stroom.permission_doc_id</code>.
+     */
+    public static final PermissionDocId PERMISSION_DOC_ID = PermissionDocId.PERMISSION_DOC_ID;
+
+    /**
+     * The table <code>stroom.permission_doc_type_id</code>.
+     */
+    public static final PermissionDocTypeId PERMISSION_DOC_TYPE_ID = PermissionDocTypeId.PERMISSION_DOC_TYPE_ID;
 
     /**
      * The table <code>stroom.stroom_user</code>.
      */
     public static final StroomUser STROOM_USER = StroomUser.STROOM_USER;
+
+    /**
+     * The table <code>stroom.stroom_user_archive</code>.
+     */
+    public static final StroomUserArchive STROOM_USER_ARCHIVE = StroomUserArchive.STROOM_USER_ARCHIVE;
 
     /**
      * The table <code>stroom.stroom_user_group</code>.

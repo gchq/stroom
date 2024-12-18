@@ -22,7 +22,6 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class StringValue implements RefDataValue {

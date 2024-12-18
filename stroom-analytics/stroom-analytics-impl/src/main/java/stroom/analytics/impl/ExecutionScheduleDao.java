@@ -8,6 +8,7 @@ import stroom.analytics.shared.ExecutionTracker;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface ExecutionScheduleDao {
@@ -15,6 +16,8 @@ public interface ExecutionScheduleDao {
     ResultPage<ExecutionSchedule> fetchExecutionSchedule(ExecutionScheduleRequest request);
 
     Optional<ExecutionSchedule> fetchScheduleById(int id);
+
+    List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid);
 
     ExecutionSchedule createExecutionSchedule(ExecutionSchedule executionSchedule);
 

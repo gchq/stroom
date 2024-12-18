@@ -10,10 +10,10 @@ import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -295,7 +295,7 @@ public class SetupDevEnv {
             String yamlStr = Files.readString(configFile);
             // Parse the YAML into a map, so we can get the current values to make the
             // string replace a bit more robust
-            final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+            final ObjectMapper objectMapper = YamlUtil.getVanillaObjectMapper();
             final Map<String, Object> map = objectMapper.readValue(file, new TypeReference<>() {
             });
             final FileType fileType = getFileType(configFile);

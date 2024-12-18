@@ -190,7 +190,8 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     private transient StroomUser _stroomUser;
 
     /**
-     * Get the implicit join path to the <code>stroom.stroom_user</code> table.
+     * Get the implicit join path to the
+     * <code>stroom_oidc_v7_6.stroom_user</code> table.
      */
     public StroomUser stroomUser() {
         if (_stroomUser == null)

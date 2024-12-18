@@ -1151,11 +1151,6 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.authentication.required")
-                .value("true")
-                .description("Choose whether Stroom requires authenticated access")
-                .build());
-        list.add(new GlobalProperty.Builder()
                 .name("stroom.auth.clientId")
                 .value("PZnJr8kHRKqnlJRQThSI")
                 .description("The client id shared with the auth service")

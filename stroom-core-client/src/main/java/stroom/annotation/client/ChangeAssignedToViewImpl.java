@@ -17,36 +17,32 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedToUiHandlers>
+public class ChangeAssignedToViewImpl
+        extends ViewWithUiHandlers<ChangeAssignedToUiHandlers>
         implements ChangeAssignedToView {
 
     private final Widget widget;
 
     @UiField
-    Label assignedToLabel;
-    @UiField
-    InlineSvgButton assignedToIcon;
-    @UiField
-    Label assignedTo;
+    SimplePanel assignedTo;
     @UiField
     Label assignYourself;
 
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
     }
 
     @Override
@@ -55,40 +51,8 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
     }
 
     @Override
-    public void focus() {
-        assignedToIcon.setFocus(true);
-    }
-
-    @Override
-    public void setAssignedTo(final String assignedTo) {
-        if (assignedTo == null || assignedTo.trim().isEmpty()) {
-            this.assignedTo.setText("Nobody");
-            this.assignedTo.getElement().getStyle().setOpacity(0.5);
-        } else {
-            this.assignedTo.setText(assignedTo);
-            this.assignedTo.getElement().getStyle().setOpacity(1);
-        }
-    }
-
-    @UiHandler("assignedToLabel")
-    public void onAssignedToLabel(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
-    }
-
-    @UiHandler("assignedTo")
-    public void onAssignedTo(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
-    }
-
-    @UiHandler("assignedToIcon")
-    public void onAssignedToIcon(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
+    public void setUserView(final View view) {
+        assignedTo.setWidget(view.asWidget());
     }
 
     @UiHandler("assignYourself")

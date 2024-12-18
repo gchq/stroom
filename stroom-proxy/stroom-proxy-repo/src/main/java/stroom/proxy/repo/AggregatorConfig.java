@@ -23,6 +23,7 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
     public static final String PROP_NAME_ENABLED = "enabled";
     public static final String PROP_NAME_MAX_ITEMS_PER_AGGREGATE = "maxItemsPerAggregate";
+    public static final String PROP_NAME_SPLIT_SOURCES = "splitSources";
 
     protected static final boolean DEFAULT_ENABLED = true;
     protected static final int DEFAULT_MAX_ITEMS_PER_AGGREGATE = 1_000;
@@ -31,12 +32,14 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
             DEFAULT_MAX_UNCOMPRESSED_SIZE_STR);
     protected static final StroomDuration DEFAULT_MAX_AGGREGATE_AGE = StroomDuration.of(Duration.ofMinutes(10));
     protected static final StroomDuration DEFAULT_MAX_AGGREGATION_FREQUENCY = StroomDuration.of(Duration.ofMinutes(1));
+    protected static final boolean DEFAULT_SPLIT_SOURCES = true;
 
     private final boolean enabled;
     private final int maxItemsPerAggregate;
     private final long maxUncompressedByteSize;
     private final StroomDuration maxAggregateAge;
     private final StroomDuration aggregationFrequency;
+    private final boolean splitSources;
 
     public AggregatorConfig() {
         enabled = DEFAULT_ENABLED;
@@ -44,6 +47,7 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_SIZE;
         maxAggregateAge = DEFAULT_MAX_AGGREGATE_AGE;
         aggregationFrequency = DEFAULT_MAX_AGGREGATION_FREQUENCY;
+        splitSources = DEFAULT_SPLIT_SOURCES;
     }
 
     @SuppressWarnings("unused")
@@ -52,24 +56,28 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
                             @JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final int maxItemsPerAggregate,
                             @JsonProperty("maxUncompressedByteSize") final String maxUncompressedByteSizeString,
                             @JsonProperty("maxAggregateAge") final StroomDuration maxAggregateAge,
-                            @JsonProperty("aggregationFrequency") final StroomDuration aggregationFrequency) {
+                            @JsonProperty("aggregationFrequency") final StroomDuration aggregationFrequency,
+                            @JsonProperty(PROP_NAME_SPLIT_SOURCES) final boolean splitSources) {
         this.enabled = enabled;
         this.maxItemsPerAggregate = maxItemsPerAggregate;
         this.maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString(maxUncompressedByteSizeString);
         this.maxAggregateAge = maxAggregateAge;
         this.aggregationFrequency = aggregationFrequency;
+        this.splitSources = splitSources;
     }
 
     private AggregatorConfig(final boolean enabled,
                              final int maxItemsPerAggregate,
                              final long maxUncompressedByteSize,
                              final StroomDuration maxAggregateAge,
-                             final StroomDuration aggregationFrequency) {
+                             final StroomDuration aggregationFrequency,
+                             final boolean splitSources) {
         this.enabled = enabled;
         this.maxItemsPerAggregate = maxItemsPerAggregate;
         this.maxUncompressedByteSize = maxUncompressedByteSize;
         this.maxAggregateAge = maxAggregateAge;
         this.aggregationFrequency = aggregationFrequency;
+        this.splitSources = splitSources;
     }
 
     @RequiresProxyRestart
@@ -115,6 +123,20 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         return aggregationFrequency;
     }
 
+    @NotNull
+    @JsonPropertyDescription("In order to form aggregates that do not exceed the max item count or max uncompressed" +
+            " byte size we can split sources into parts." +
+            " Note that if a single zip entry exceeds the max uncompressed size then an aggregate will still be" +
+            " produced containing the single entry but will obviously exceed the max uncompressed size." +
+            " If we do not split sources then all aggregates produced will exceed or equal the max uncompressed byte" +
+            " size unless they reach an item limit first." +
+            " Splitting sources only occurs when needed, but as it requires additional processing and IO it may be" +
+            " preferable to turn it off in some environments.")
+    @JsonProperty(PROP_NAME_SPLIT_SOURCES)
+    public boolean isSplitSources() {
+        return splitSources;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -124,7 +146,8 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
                 this.maxItemsPerAggregate,
                 this.maxUncompressedByteSize,
                 this.maxAggregateAge,
-                this.aggregationFrequency);
+                this.aggregationFrequency,
+                splitSources);
     }
 
     @Override
@@ -174,6 +197,7 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         private Long maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_SIZE;
         private StroomDuration maxAggregateAge = DEFAULT_MAX_AGGREGATE_AGE;
         private StroomDuration aggregationFrequency = DEFAULT_MAX_AGGREGATION_FREQUENCY;
+        private boolean splitSources = DEFAULT_SPLIT_SOURCES;
 
         private Builder() {
         }
@@ -181,12 +205,15 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         private Builder(final boolean enabled,
                         final int maxItemsPerAggregate,
                         final Long maxUncompressedByteSize,
-                        final StroomDuration maxAggregateAge, final StroomDuration aggregationFrequency) {
+                        final StroomDuration maxAggregateAge,
+                        final StroomDuration aggregationFrequency,
+                        final boolean splitSources) {
             this.enabled = enabled;
             this.maxItemsPerAggregate = maxItemsPerAggregate;
             this.maxUncompressedByteSize = maxUncompressedByteSize;
             this.maxAggregateAge = maxAggregateAge;
             this.aggregationFrequency = aggregationFrequency;
+            this.splitSources = splitSources;
         }
 
         public Builder withEnabled(final boolean enabled) {
@@ -219,13 +246,19 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
             return this;
         }
 
+        public Builder splitSources(final boolean splitSources) {
+            this.splitSources = splitSources;
+            return this;
+        }
+
         public AggregatorConfig build() {
             return new AggregatorConfig(
                     enabled,
                     maxItemsPerAggregate,
                     maxUncompressedByteSize,
                     maxAggregateAge,
-                    aggregationFrequency);
+                    aggregationFrequency,
+                    splitSources);
         }
     }
 }

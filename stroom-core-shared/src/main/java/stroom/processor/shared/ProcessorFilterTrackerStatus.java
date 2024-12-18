@@ -38,7 +38,7 @@ public enum ProcessorFilterTrackerStatus implements HasDisplayValue, HasPrimitiv
     ERROR("Error", 22);
 
     public static final PrimitiveValueConverter<ProcessorFilterTrackerStatus> PRIMITIVE_VALUE_CONVERTER =
-            new PrimitiveValueConverter<>(ProcessorFilterTrackerStatus.values());
+            PrimitiveValueConverter.create(ProcessorFilterTrackerStatus.class, ProcessorFilterTrackerStatus.values());
 
     private final String displayValue;
     private final byte primitiveValue;

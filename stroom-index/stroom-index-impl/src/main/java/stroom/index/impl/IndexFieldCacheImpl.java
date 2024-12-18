@@ -24,7 +24,7 @@ import stroom.docref.DocRef;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
@@ -68,9 +68,9 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
         Objects.requireNonNull(docRef.getType(), "Null DocRef type supplied");
         Objects.requireNonNull(fieldName, "Null field name supplied");
 
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
         final Key key = new Key(docRef, fieldName);

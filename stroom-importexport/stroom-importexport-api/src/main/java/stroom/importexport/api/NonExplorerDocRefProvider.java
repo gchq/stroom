@@ -49,8 +49,8 @@ public interface NonExplorerDocRefProvider {
     /**
      * Retrieve the audit information for a particular doc ref
      *
-     * @param uuid The UUID to return the information for
+     * @param docRef The docRef to return the information for
      * @return The Audit information about the given DocRef.
      */
-    DocRefInfo info(String uuid);
+    DocRefInfo info(DocRef docRef);
 }

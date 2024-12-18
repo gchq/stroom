@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -48,6 +49,8 @@ public class CreateProcessFilterRequest {
     private final Long minMetaCreateTimeMs;
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
+    @JsonProperty
+    private final UserRef runAsUser;
 
     @JsonCreator
     public CreateProcessFilterRequest(@JsonProperty("processorType") final ProcessorType processorType,
@@ -59,7 +62,8 @@ public class CreateProcessFilterRequest {
                                       @JsonProperty("reprocess") final boolean reprocess,
                                       @JsonProperty("enabled") final boolean enabled,
                                       @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
-                                      @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
+                                      @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
+                                      @JsonProperty("runAsUser") final UserRef runAsUser) {
         this.processorType = processorType;
         this.pipeline = pipeline;
         this.queryData = queryData;
@@ -70,6 +74,7 @@ public class CreateProcessFilterRequest {
         this.enabled = enabled;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+        this.runAsUser = runAsUser;
     }
 
     public ProcessorType getProcessorType() {
@@ -110,6 +115,10 @@ public class CreateProcessFilterRequest {
 
     public Long getMaxMetaCreateTimeMs() {
         return maxMetaCreateTimeMs;
+    }
+
+    public UserRef getRunAsUser() {
+        return runAsUser;
     }
 
     public static Builder builder() {
@@ -177,6 +186,7 @@ public class CreateProcessFilterRequest {
         private boolean enabled = true;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
+        private UserRef runAsUser;
 
         public Builder() {
         }
@@ -192,6 +202,7 @@ public class CreateProcessFilterRequest {
             this.enabled = request.enabled;
             this.minMetaCreateTimeMs = request.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = request.maxMetaCreateTimeMs;
+            this.runAsUser = request.runAsUser;
         }
 
         public Builder processorType(final ProcessorType processorType) {
@@ -244,6 +255,11 @@ public class CreateProcessFilterRequest {
             return this;
         }
 
+        public Builder runAsUser(final UserRef runAsUser) {
+            this.runAsUser = runAsUser;
+            return this;
+        }
+
         public CreateProcessFilterRequest build() {
             return new CreateProcessFilterRequest(
                     processorType,
@@ -255,7 +271,8 @@ public class CreateProcessFilterRequest {
                     reprocess,
                     enabled,
                     minMetaCreateTimeMs,
-                    maxMetaCreateTimeMs);
+                    maxMetaCreateTimeMs,
+                    runAsUser);
         }
     }
 }

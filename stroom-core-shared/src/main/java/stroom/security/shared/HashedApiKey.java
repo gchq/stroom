@@ -3,7 +3,7 @@ package stroom.security.shared;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,7 +33,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     @JsonProperty
     private final String updateUser;
     @JsonProperty
-    private final UserName owner;
+    private final UserRef owner;
     @JsonProperty
     private final String apiKeyHash;
     @JsonProperty
@@ -56,7 +56,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("createUser") final String createUser,
                         @JsonProperty("updateTimeMs") final Long updateTimeMs,
                         @JsonProperty("updateUser") final String updateUser,
-                        @JsonProperty("owner") final UserName owner,
+                        @JsonProperty("owner") final UserRef owner,
                         @JsonProperty("apiKeyHash") final String apiKeyHash,
                         @JsonProperty("apiKeyPrefix") final String apiKeyPrefix,
                         @JsonProperty("expireTimeMs") final Long expireTimeMs,
@@ -149,7 +149,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         return version;
     }
 
-    public UserName getOwner() {
+    public UserRef getOwner() {
         return owner;
     }
 
@@ -247,7 +247,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String createUser;
         private Long updateTimeMs;
         private String updateUser;
-        private UserName owner;
+        private UserRef owner;
         private String apiKeyHash;
         private String apiKeyPrefix;
         private Long expireTimeMs;
@@ -305,7 +305,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public Builder withOwner(final UserName val) {
+        public Builder withOwner(final UserRef val) {
             owner = val;
             return this;
         }

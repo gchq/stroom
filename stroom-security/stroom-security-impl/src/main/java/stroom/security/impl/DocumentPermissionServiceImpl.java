@@ -18,312 +18,377 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
-import stroom.security.impl.event.AddPermissionEvent;
-import stroom.security.impl.event.ClearDocumentPermissionsEvent;
+import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
-import stroom.security.impl.event.RemovePermissionEvent;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.HasStroomUserIdentity;
-import stroom.security.shared.User;
-import stroom.util.NullSafe;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
+import stroom.security.shared.AbstractDocumentPermissionsChange;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentUserCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentUserCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.security.shared.DocumentUserPermissionsRequest;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
-
     private final DocumentPermissionDao documentPermissionDao;
-    private final UserDao userDao;
+    private final UserGroupsCache userGroupsCache;
     private final PermissionChangeEventBus permissionChangeEventBus;
     private final SecurityContext securityContext;
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
-                                  final UserDao userDao,
+                                  final UserGroupsCache userGroupsCache,
                                   final PermissionChangeEventBus permissionChangeEventBus,
                                   final SecurityContext securityContext) {
         this.documentPermissionDao = documentPermissionDao;
-        this.userDao = userDao;
+        this.userGroupsCache = userGroupsCache;
         this.permissionChangeEventBus = permissionChangeEventBus;
         this.securityContext = securityContext;
     }
 
-    public Set<String> getPermissionsForDocumentForUser(final String docUuid,
-                                                        final String userUuid) {
-        return documentPermissionDao.getPermissionsForDocumentForUser(docUuid, userUuid);
-    }
-
-    private DocumentPermissions getPermissionsForDocument(final String docUuid,
-                                                          final BasicDocPermissions docPermissions,
-                                                          final Map<String, User> userUuidToUserMap) {
-        final List<User> users = new ArrayList<>();
-        final List<User> groups = new ArrayList<>();
-        final Map<String, Set<String>> userPermissions = new HashMap<>();
-
-        // Filters out any perms for users that don't exist anymore
-        docPermissions.forEachUserUuid((userUuid, permissions) ->
-                Optional.ofNullable(userUuidToUserMap.get(userUuid))
-                        .ifPresent(user -> {
-                            if (user.isGroup()) {
-                                groups.add(user);
-                            } else {
-                                users.add(user);
-                            }
-                            userPermissions.put(user.getUuid(), permissions);
-                        }));
-
-        return new DocumentPermissions(docUuid, users, groups, userPermissions);
-    }
-
-    public DocumentPermissions getPermissionsForDocument(final String docUuid) {
-        try {
-            final BasicDocPermissions docPermissions = documentPermissionDao.getPermissionsForDocument(
-                    docUuid);
-            // Temporary cache of the users involved
-            final Map<String, User> userUuidToUserMap = getUsersMap(Collections.singleton(docPermissions));
-
-            return getPermissionsForDocument(docUuid, docPermissions, userUuidToUserMap);
-
-        } catch (final RuntimeException e) {
-            LOGGER.error("getPermissionsForDocument()", e);
-            throw e;
-        }
-    }
-
-    public Map<String, DocumentPermissions> getPermissionsForDocuments(final Collection<String> docUuids) {
-        if (NullSafe.isEmptyCollection(docUuids)) {
-            return Collections.emptyMap();
-        } else {
-            final Map<String, DocumentPermissions> docUuidToDocumentPermissionsMap = new HashMap<>(docUuids.size());
-            try {
-                final Map<String, BasicDocPermissions> docUuidToDocPermsMap =
-                        documentPermissionDao.getPermissionsForDocuments(docUuids);
-                // Temporary cache of the users involved
-                final Map<String, User> userUuidToUserMap = getUsersMap(docUuidToDocPermsMap.values());
-
-                docUuidToDocPermsMap.forEach((docUuid, docPermissions) -> {
-
-                    final DocumentPermissions documentPermissions = getPermissionsForDocument(docUuid,
-                            docPermissions,
-                            userUuidToUserMap);
-
-                    docUuidToDocumentPermissionsMap.put(docUuid, documentPermissions);
-                });
-
-            } catch (final RuntimeException e) {
-                LOGGER.error("getPermissionsForDocument()", e);
-                throw e;
-            }
-
-            return docUuidToDocumentPermissionsMap;
-        }
-    }
-
-    /**
-     * Get a map of userUuid => User from all the users in the collection of docPermissions
-     */
-    private Map<String, User> getUsersMap(final Collection<BasicDocPermissions> docPermissionsCollection) {
-        if (NullSafe.isEmptyCollection(docPermissionsCollection)) {
-            return Collections.emptyMap();
-        } else {
-            final Set<String> userUuids = NullSafe.stream(docPermissionsCollection)
-                    .flatMap(docPermissions -> docPermissions.getUserUuids().stream())
-                    .collect(Collectors.toSet());
-
-            final Set<User> users = userDao.getByUuids(userUuids);
-
-            return users.stream()
-                    .collect(Collectors.toMap(User::getUuid, Function.identity()));
-        }
-    }
-
-    public void addPermission(final String docUuid,
-                              final String userUuid,
-                              final String permission) {
-        documentPermissionDao.addPermission(docUuid, userUuid, permission);
-        AddPermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
-    }
-
-    public void removePermissions(final String docUuid,
-                                  final String userUuid,
-                                  final Set<String> permissions) {
-        documentPermissionDao.removePermissions(docUuid, userUuid, permissions);
-        permissions.forEach(permission ->
-                RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission)
-        );
-    }
-
-    void clearDocumentPermissionsForUser(final String docUuid,
-                                         final String userUuid) {
-        documentPermissionDao.clearDocumentPermissionsForUser(docUuid, userUuid);
-        RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, null);
+    @Override
+    public DocumentPermission getPermission(final DocRef docRef, final UserRef userRef) {
+        checkGetPermission(docRef);
+        return documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
     }
 
     @Override
-    public void clearDocumentPermissions(final String docUuid) {
-        LOGGER.debug("clearDocumentPermissions() - docUuid: {}", docUuid);
-        // This is changing the perms of an existing doc, so needs OWNER perms.
-        clearDocumentPermissions(docUuid, DocumentPermissionNames.OWNER);
+    public void setPermission(final DocRef docRef, final UserRef userRef, final DocumentPermission permission) {
+        checkSetPermission(docRef);
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), userRef.getUuid(), permission);
+        PermissionChangeEvent.fire(permissionChangeEventBus, userRef, docRef);
     }
 
     @Override
-    public void deleteDocumentPermissions(final String docUuid) {
-        LOGGER.debug("deleteDocumentPermissions() - docUuid: {}", docUuid);
-        // This is deleting perms of a deleted doc, so only needs DELETE perms.
-        clearDocumentPermissions(docUuid, DocumentPermissionNames.DELETE);
-    }
+    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+        final DocRef docRef = request.getDocRef();
+        final AbstractDocumentPermissionsChange change = request.getChange();
+        Objects.requireNonNull(docRef, "docRef is null");
+        Objects.requireNonNull(docRef.getUuid(), "docRef UUID is null");
 
-    @Override
-    public void deleteDocumentPermissions(final Set<String> docUuids) {
-        if (NullSafe.hasItems(docUuids)) {
-            documentPermissionDao.clearDocumentPermissionsForDocs(docUuids);
-            docUuids.forEach(docUuid ->
-                    ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid));
-        }
-    }
+        // Check we have permission to change permissions of the supplied document.
+        checkSetPermission(docRef);
 
-    private void clearDocumentPermissions(final String docUuid, final String requireDocPermission) {
-        // Get the current user.
-        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        switch (change) {
+            case final SetPermission req -> {
+                if (req.getPermission() == null) {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    documentPermissionDao.removeDocumentUserPermission(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid());
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
 
-        // If no user is present then don't clear permissions.
-        if (userIdentity != null) {
-            if (securityContext.hasDocumentPermission(docUuid, requireDocPermission)) {
-                documentPermissionDao.clearDocumentPermissionsForDoc(docUuid);
-            }
-        }
-        ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid);
-    }
-
-    @Override
-    public void addDocumentPermissions(DocRef sourceDocRef,
-                                       DocRef documentDocRef,
-                                       boolean owner) {
-        LOGGER.debug("addDocumentPermissions() - sourceDocRef: {}, documentDocRef: {}, owner: {}",
-                sourceDocRef, documentDocRef, owner);
-        Objects.requireNonNull(documentDocRef, "documentDocRef not provided");
-        // Get the current user.
-        final UserIdentity userIdentity = securityContext.getUserIdentity();
-
-        // If no user is present or doesn't have a UUID then don't create permissions.
-        if (userIdentity instanceof final HasStroomUserIdentity stroomUserIdentity) {
-            if (owner || securityContext.hasDocumentPermission(documentDocRef, DocumentPermissionNames.OWNER)) {
-                if (owner) {
-                    // Make the current user the owner of the new document.
-                    try {
-                        addPermission(documentDocRef.getUuid(),
-                                stroomUserIdentity.getUuid(),
-                                DocumentPermissionNames.OWNER);
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
+                } else {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    documentPermissionDao.setDocumentUserPermission(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid(),
+                            req.getPermission());
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
                 }
-
-                // Inherit permissions from the parent folder if there is one.
-                // TODO : This should be part of the explorer service.
-                final boolean excludeCreatePermissions = !DocumentTypes.isFolder(documentDocRef.getType());
-                copyPermissions(
-                        NullSafe.get(sourceDocRef, DocRef::getUuid),
-                        documentDocRef.getUuid(),
-                        excludeCreatePermissions,
-                        owner);
             }
-        } else {
-            LOGGER.debug(() -> LogUtil.message(
-                    "User {} of type {} does not have a stroom user identity",
-                    userIdentity, NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));
+            case final RemovePermission req -> {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                documentPermissionDao.removeDocumentUserPermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid());
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+            }
+            case final AddDocumentUserCreatePermission req -> {
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    Objects.requireNonNull(req.getDocumentType(), "Null documentType");
+                    documentPermissionDao.addDocumentUserCreatePermission(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid(),
+                            req.getDocumentType());
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+                }
+            }
+            case final RemoveDocumentUserCreatePermission req -> {
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    Objects.requireNonNull(req.getDocumentType(), "Null documentType");
+                    documentPermissionDao.removeDocumentUserCreatePermission(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid(),
+                            req.getDocumentType());
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+                }
+            }
+            case final SetDocumentUserCreatePermissions req -> {
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    Objects.requireNonNull(req.getDocumentTypes(), "Null documentType");
+                    documentPermissionDao.setDocumentUserCreatePermissions(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid(),
+                            req.getDocumentTypes());
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+                }
+            }
+            case final AddAllDocumentUserCreatePermissions req -> {
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    documentPermissionDao.removeAllDocumentUserCreatePermissions(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid());
+                    documentPermissionDao.addDocumentUserCreatePermission(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid(),
+                            ExplorerConstants.ALL_CREATE_PERMISSIONS);
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+                }
+            }
+            case final RemoveAllDocumentUserCreatePermissions req -> {
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                    documentPermissionDao.removeAllDocumentUserCreatePermissions(
+                            docRef.getUuid(),
+                            req.getUserRef().getUuid());
+                    PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+                }
+            }
+            case final AddAllPermissionsFrom req -> {
+                Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                documentPermissionDao.addDocumentPermissions(
+                        req.getSourceDocRef().getUuid(),
+                        docRef.getUuid());
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    documentPermissionDao.addDocumentCreatePermissions(
+                            req.getSourceDocRef().getUuid(),
+                            docRef.getUuid());
+                }
+                PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
+            }
+            case final SetAllPermissionsFrom req -> {
+                Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                documentPermissionDao.setDocumentPermissions(
+                        req.getSourceDocRef().getUuid(),
+                        docRef.getUuid());
+                // Only applies to folders.
+                if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                    documentPermissionDao.setDocumentCreatePermissions(
+                            req.getSourceDocRef().getUuid(),
+                            docRef.getUuid());
+                }
+                PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
+            }
+            case RemoveAllPermissions ignored -> {
+                documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
+                PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
+            }
+            case null, default ->
+                    throw new RuntimeException("Unexpected request type: " + request.getClass().getName());
+        }
+
+        return true;
+    }
+
+    @Override
+    public void removeAllDocumentPermissions(final DocRef docRef) {
+        checkSetPermission(docRef);
+        documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
+        if (ExplorerConstants.isFolderOrSystem(docRef)) {
+            documentPermissionDao.removeAllDocumentCreatePermissions(docRef.getUuid());
+        }
+        PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
+    }
+
+    @Override
+    public void removeAllDocumentPermissions(final Set<DocRef> docRefs) {
+        docRefs.forEach(this::removeAllDocumentPermissions);
+    }
+
+    @Override
+    public void addDocumentPermissions(final DocRef sourceDocRef, final DocRef destDocRef) {
+        checkSetPermission(destDocRef);
+        documentPermissionDao.addDocumentPermissions(sourceDocRef.getUuid(), destDocRef.getUuid());
+        // Copy create permissions if the source is a folder.
+        if (ExplorerConstants.isFolderOrSystem(sourceDocRef)) {
+            documentPermissionDao.addDocumentCreatePermissions(sourceDocRef.getUuid(), destDocRef.getUuid());
+        }
+        PermissionChangeEvent.fire(permissionChangeEventBus, null, destDocRef);
+    }
+
+    private boolean canUserChangePermission(final DocRef docRef) {
+        return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) ||
+               securityContext.hasDocumentPermission(docRef, DocumentPermission.OWNER);
+    }
+
+    private void checkSetPermission(final DocRef docRef) {
+        if (!canUserChangePermission(docRef)) {
+            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to change " +
+                                                                        "permissions of " +
+                                                                        docRef.getDisplayValue());
+        }
+    }
+
+    private void checkGetPermission(final DocRef docRef) {
+        if (!canUserChangePermission(docRef)) {
+            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to get " +
+                                                                        "permissions of " +
+                                                                        docRef.getDisplayValue());
         }
     }
 
     @Override
-    public void setDocumentOwner(final String documentUuid, final String userUuid) {
-        final Set<String> currentOwnerUuids = documentPermissionDao.getDocumentOwnerUuids(documentUuid);
-        final Set<String> ownersToRemove = new HashSet<>(currentOwnerUuids);
-        ownersToRemove.remove(userUuid);
+    public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
+            final FetchDocumentUserPermissionsRequest request) {
+        return securityContext.secureResult(() -> {
+            final UserRef userRef = securityContext.getUserRef();
+            Objects.requireNonNull(userRef, "Null user");
 
-        documentPermissionDao.setOwner(documentUuid, userUuid);
+            FetchDocumentUserPermissionsRequest modified = request;
 
-        ownersToRemove.forEach(ownerUuid -> {
-            RemovePermissionEvent.fire(
-                    permissionChangeEventBus,
-                    ownerUuid,
-                    documentUuid,
-                    DocumentPermissionNames.OWNER);
+            // If the current user is not allowed to change permissions then only show them permissions for themselves.
+            if (!canUserChangePermission(request.getDocRef())) {
+                modified = new FetchDocumentUserPermissionsRequest
+                        .Builder(request)
+                        .userRef(userRef)
+                        .build();
+            }
+
+            return documentPermissionDao.fetchDocumentUserPermissions(modified);
         });
-        AddPermissionEvent.fire(
-                permissionChangeEventBus,
-                userUuid,
-                documentUuid,
-                DocumentPermissionNames.OWNER);
-
     }
 
-    @Override
-    public Set<String> getDocumentOwnerUuids(final String documentUuid) {
-        return documentPermissionDao.getDocumentOwnerUuids(documentUuid);
+    public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {
+        final DocRef docRef = request.getDocRef();
+        final UserRef userRef = request.getUserRef();
+
+        // If the current user is not allowed to change the permissions of the specified document then only allow them
+        // to see a permissions report for themselves.
+        if (!canUserChangePermission(request.getDocRef())) {
+            final UserRef currentUser = securityContext.getUserRef();
+            if (currentUser == null) {
+                throw new PermissionException(currentUser, "No user logged in");
+            } else if (!currentUser.equals(userRef)) {
+                throw new PermissionException(currentUser, "You can only get a permissions report for yourself");
+            }
+        }
+
+        final Map<DocumentPermission, List<List<UserRef>>> inheritedPermissions = new HashMap<>();
+        final Map<String, List<List<UserRef>>> inheritedCreatePermissions = new HashMap<>();
+        final Set<UserRef> cyclicPrevention = new HashSet<>();
+        final List<UserRef> parentPath = Collections.emptyList();
+        addDeepPermissionsAndPaths(
+                userRef,
+                docRef,
+                parentPath,
+                inheritedPermissions,
+                inheritedCreatePermissions,
+                cyclicPrevention);
+
+        final DocumentPermission explicitPermission = documentPermissionDao
+                .getDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
+        final Set<String> explicitCreatePermissions = documentPermissionDao
+                .getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
+
+        return new DocumentUserPermissionsReport(
+                explicitPermission,
+                explicitCreatePermissions,
+                convertToPaths(inheritedPermissions),
+                convertToPaths(inheritedCreatePermissions));
     }
 
-    private void copyPermissions(final String sourceUuid,
-                                 final String destUuid,
-                                 final boolean excludeCreatePermissions,
-                                 final boolean owner) {
-        LOGGER.debug("copyPermissions() - sourceUuid: {}, destUuid: {}", sourceUuid, destUuid);
-        if (sourceUuid != null) {
-            final stroom.security.shared.DocumentPermissions sourceDocumentPermissions =
-                    getPermissionsForDocument(sourceUuid);
+    private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
+        return map.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Entry::getKey, entry -> {
+                    return entry.getValue()
+                            .stream()
+                            .map(list -> list.stream()
+                                    .map(UserRef::toDisplayString)
+//                                    .map(userRef ->
+//                                            userRef.getType(CaseType.SENTENCE)
+//                                            + ": \""
+//                                            + userRef.toDisplayString()
+//                                            + "\""
+//                                    )
+                                    .collect(Collectors.joining(" --> ")))
+                            .toList();
+                }));
+    }
 
-            if (sourceDocumentPermissions != null) {
-                final Map<String, Set<String>> userPermissions = sourceDocumentPermissions.getPermissions();
-                if (NullSafe.hasEntries(userPermissions)) {
-                    for (final Map.Entry<String, Set<String>> entry : userPermissions.entrySet()) {
-                        final String userUuid = entry.getKey();
+    private void addDeepPermissionsAndPaths(final UserRef userRef,
+                                            final DocRef docRef,
+                                            final List<UserRef> parentPath,
+                                            final Map<DocumentPermission, List<List<UserRef>>> inheritedPermissions,
+                                            final Map<String, List<List<UserRef>>> inheritedCreatePermissions,
+                                            final Set<UserRef> cyclicPrevention) {
+        if (cyclicPrevention.add(userRef)) {
+            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
+            if (parentGroups != null) {
+                for (final UserRef group : parentGroups) {
 
-                        Set<String> sourcePermissions = excludeCreatePermissions
-                                ? DocumentPermissionNames.excludeCreatePermissions(entry.getValue())
-                                : entry.getValue();
+                    final List<UserRef> path = new ArrayList<>(parentPath.size() + 1);
+                    // Add the ancestor at the head of the list, so we get 'grandparent --> parent'
+                    path.add(group);
+                    path.addAll(parentPath);
 
-                        if (owner) {
-                            // We don't want to copy the ownership from the source as current user is
-                            // the owner
-                            sourcePermissions = DocumentPermissionNames.excludePermissions(
-                                    sourcePermissions,
-                                    DocumentPermissionNames.OWNER);
-                        }
-
-                        for (final String permission : sourcePermissions) {
-                            try {
-                                addPermission(destUuid,
-                                        userUuid,
-                                        permission);
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e.getMessage(), e);
-                            }
-                        }
+                    final DocumentPermission permission = documentPermissionDao
+                            .getDocumentUserPermission(docRef.getUuid(), group.getUuid());
+                    if (permission != null) {
+                        inheritedPermissions.computeIfAbsent(permission, k -> new ArrayList<>())
+                                .add(path);
                     }
+
+                    final Set<String> createPermissions = documentPermissionDao
+                            .getDocumentUserCreatePermissions(docRef.getUuid(), group.getUuid());
+                    if (createPermissions != null) {
+                        createPermissions.forEach(createPermission -> {
+                            inheritedCreatePermissions.computeIfAbsent(createPermission, k ->
+                                            new ArrayList<>())
+                                    .add(path);
+                        });
+                    }
+
+                    addDeepPermissionsAndPaths(
+                            group,
+                            docRef,
+                            path,
+                            inheritedPermissions,
+                            inheritedCreatePermissions,
+                            cyclicPrevention);
                 }
             }
         }

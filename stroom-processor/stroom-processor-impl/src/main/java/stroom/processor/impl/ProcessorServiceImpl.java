@@ -23,8 +23,8 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorType;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -40,7 +40,7 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorServiceImpl.class);
 
-    private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+    private static final AppPermission PERMISSION = AppPermission.MANAGE_PROCESSORS_PERMISSION;
 
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
@@ -67,10 +67,9 @@ public class ProcessorServiceImpl implements ProcessorService {
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
-                processor.getPipelineUuid(),
-                DocumentPermissionNames.READ)) {
-
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                pipelineRef,
+                DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to create this processor");
         }
 
@@ -105,9 +104,9 @@ public class ProcessorServiceImpl implements ProcessorService {
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
-                processor.getPipelineUuid(),
-                DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                pipelineDocRef,
+                DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to create this processor");
         }
         return create(processor);

@@ -16,6 +16,7 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,7 +38,7 @@ public class DocumentTypes {
 
     public static final String[] FOLDER_TYPES = new String[]{
             ExplorerConstants.SYSTEM,
-            ExplorerConstants.FOLDER
+            ExplorerConstants.FOLDER_TYPE
     };
 
     public static final Set<String> FOLDER_TYPES_SET = Collections.unmodifiableSet(Arrays.stream(FOLDER_TYPES)
@@ -60,10 +61,16 @@ public class DocumentTypes {
                 .collect(Collectors.toMap(DocumentType::getType, Function.identity()));
     }
 
+    /**
+     * @return All document types
+     */
     public List<DocumentType> getTypes() {
         return types;
     }
 
+    /**
+     * @return Only those types that the user has VIEW permission on
+     */
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
     }
@@ -72,11 +79,15 @@ public class DocumentTypes {
         return typeToDocumentTypeMap.get(type);
     }
 
+    public static boolean isFolder(final DocRef docRef) {
+        return isFolder(docRef.getType());
+    }
+
     public static boolean isFolder(final String type) {
         return FOLDER_TYPES_SET.contains(type);
     }
 
     public static boolean isSystem(final String type) {
-        return ExplorerConstants.SYSTEM.equals(type);
+        return ExplorerConstants.SYSTEM_TYPE.equals(type);
     }
 }

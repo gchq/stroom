@@ -26,7 +26,6 @@ class SessionResourceImpl implements SessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
 
-    private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final Provider<OpenIdManager> openIdManagerProvider;
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final Provider<AuthenticationEventLog> authenticationEventLogProvider;
@@ -34,13 +33,11 @@ class SessionResourceImpl implements SessionResource {
     private final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider;
 
     @Inject
-    SessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
-                        final Provider<OpenIdManager> openIdManagerProvider,
+    SessionResourceImpl(final Provider<OpenIdManager> openIdManagerProvider,
                         final Provider<HttpServletRequest> httpServletRequestProvider,
                         final Provider<AuthenticationEventLog> authenticationEventLogProvider,
                         final Provider<SessionListService> sessionListService,
                         final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider) {
-        this.authenticationConfigProvider = authenticationConfigProvider;
         this.openIdManagerProvider = openIdManagerProvider;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.authenticationEventLogProvider = authenticationEventLogProvider;
@@ -51,7 +48,6 @@ class SessionResourceImpl implements SessionResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ValidateSessionResponse validateSession(final String postAuthRedirectUri) {
-        final AuthenticationConfig authenticationConfig = authenticationConfigProvider.get();
         final OpenIdManager openIdManager = openIdManagerProvider.get();
         final HttpServletRequest request = httpServletRequestProvider.get();
         Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
@@ -60,29 +56,20 @@ class SessionResourceImpl implements SessionResource {
             return new ValidateSessionResponse(true, userIdentity.get().getSubjectId(), null);
         }
 
-        if (!authenticationConfig.isAuthenticationRequired()) {
-            return createValidResponse("admin");
+        // If the session doesn't have a user ref then attempt login.
+        try {
+            LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
 
-//        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
-//            LOGGER.error("We are expecting requests that contain authenticated tokens");
-//            return new ValidateSessionResponse(false, null, null);
+            // We might have completed the back channel authentication now so see if we have a user session.
+            userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+            return userIdentity
+                    .map(identity ->
+                            createValidResponse(identity.getSubjectId()))
+                    .orElseGet(() -> createRedirectResponse(request, postAuthRedirectUri));
 
-        } else {
-            // If the session doesn't have a user ref then attempt login.
-            try {
-                LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
-
-                // We might have completed the back channel authentication now so see if we have a user session.
-                userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
-                return userIdentity
-                        .map(identity ->
-                                createValidResponse(identity.getSubjectId()))
-                        .orElseGet(() -> createRedirectResponse(request, postAuthRedirectUri));
-
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw e;
-            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
         }
     }
 

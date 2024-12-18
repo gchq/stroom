@@ -58,7 +58,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
@@ -240,7 +240,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         KeyBinding.addCommand(Action.CREATE_FEED, () ->
                 CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
         KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
-                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER));
+                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER_TYPE));
         KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
                 CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
         KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
@@ -324,8 +324,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     event.getSelectionType()));
             final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
             final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
-                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
-                    !ExplorerConstants.isSystemNode(selectedNode);
+                                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
+                                    !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
@@ -435,7 +435,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, getView().getTaskListener());
 
         explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
+        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermission.VIEW);
         explorerTree.getTreeModel().setIncludedTypeSet(null);
 
         // Show the tree.

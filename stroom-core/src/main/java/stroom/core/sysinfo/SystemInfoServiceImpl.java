@@ -1,7 +1,7 @@
 package stroom.core.sysinfo;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -88,8 +88,8 @@ public class SystemInfoServiceImpl implements SystemInfoService {
     }
 
     private void checkPermission() {
-        if (!securityContext.hasAppPermission(PermissionNames.VIEW_SYSTEM_INFO_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasAppPermission(AppPermission.VIEW_SYSTEM_INFO_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to view system information"
             );
         }

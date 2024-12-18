@@ -158,9 +158,9 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
         formatCustomFormat.setVisible(Type.DATE_TIME.equals(type));
         formatTimeZone.setVisible(Type.DATE_TIME.equals(type));
         formatTimeZoneId.setVisible(Type.DATE_TIME.equals(type) &&
-                Use.ID.equals(this.timeZoneUse.getValue()));
+                                    Use.ID.equals(this.timeZoneUse.getValue()));
         formatTimeZoneOffset.setVisible(Type.DATE_TIME.equals(type) &&
-                Use.OFFSET.equals(this.timeZoneUse.getValue()));
+                                        Use.OFFSET.equals(this.timeZoneUse.getValue()));
     }
 
     @Override

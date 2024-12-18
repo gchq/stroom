@@ -17,74 +17,35 @@
 package stroom.security.mock;
 
 import stroom.docref.DocRef;
+import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.AuthenticationService;
-import stroom.security.shared.User;
-import stroom.util.shared.UserName;
+import stroom.security.impl.BasicUserIdentity;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.UserRef;
 
-import com.google.inject.Inject;
-import jakarta.inject.Provider;
-
-import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
-public class MockSecurityContext implements SecurityContext {
+public class MockSecurityContext implements SecurityContext, ContentPackUserService {
 
-    private static final MockAdminUserIdentity ADMIN_USER_IDENTITY = new MockAdminUserIdentity();
-
-    // Non integration tests likely don't care about the admin user uuid and won't have
-    // AuthenticationService bound, so make it optional. Most users of SecurityContext
-    // are just after the secureXXX methods.
-    @Inject(optional = true)
-    private Provider<AuthenticationService> authenticationServiceProvider;
-
-    @Override
-    public String getSubjectId() {
-        return getUserIdentity().getSubjectId();
-    }
-
-    @Override
-    public String getUserUuid() {
-        // This gets set when the admin user is first created.
-        if (authenticationServiceProvider != null) {
-            final String subjectId = User.ADMIN_USER_SUBJECT_ID;
-            // This method ensures the internal admin user exists
-            return authenticationServiceProvider.get().getUser(subjectId)
-                    .map(UserName::getUuid)
-                    .orElseThrow(() ->
-                            new RuntimeException("Internal admin user '"
-                                    + subjectId + "' not found"));
-        } else {
-            throw new RuntimeException(AuthenticationService.class.getSimpleName()
-                    + "not injected so user UUID not available. " +
-                    "Bind it if you want this error to go away.");
-        }
-    }
+    private static final UserRef MOCK_ADMIN = UserRef
+            .builder()
+            .uuid(UUID.randomUUID().toString())
+            .subjectId("admin")
+            .displayName("admin")
+            .fullName("Ad Min")
+            .build();
 
     @Override
     public UserIdentity getUserIdentity() {
-        return ADMIN_USER_IDENTITY;
+        return new BasicUserIdentity(getUserRef());
     }
 
     @Override
-    public UserIdentity getOrCreateUserIdentity(final String subjectId) {
-        return ADMIN_USER_IDENTITY;
-    }
-
-    @Override
-    public UserIdentity getIdentityBySubjectId(final String subjectId, final boolean isGroup) {
-        return ADMIN_USER_IDENTITY;
-    }
-
-    @Override
-    public UserIdentity getIdentityByUserUuid(final String userUuid) {
-        return ADMIN_USER_IDENTITY;
-    }
-
-    @Override
-    public boolean isLoggedIn() {
-        return true;
+    public UserRef getUserRef() {
+        return MOCK_ADMIN;
     }
 
     @Override
@@ -103,18 +64,18 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public boolean hasAppPermission(final String permission) {
+    public boolean hasAppPermission(final AppPermission permission) {
         return true;
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
+    public boolean hasDocumentCreatePermission(final DocRef docRef, final String documentType) {
         return true;
     }
 
     @Override
-    public String getDocumentOwnerUuid(final DocRef docRef) {
-        return null;
+    public boolean hasDocumentPermission(final DocRef docRef, final DocumentPermission permission) {
+        return true;
     }
 
     @Override
@@ -123,7 +84,17 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
+    public <T> T asUserResult(final UserRef userRef, final Supplier<T> supplier) {
+        return supplier.get();
+    }
+
+    @Override
     public void asUser(final UserIdentity userIdentity, final Runnable runnable) {
+        runnable.run();
+    }
+
+    @Override
+    public void asUser(final UserRef userRef, final Runnable runnable) {
         runnable.run();
     }
 
@@ -138,15 +109,6 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public <T> T asAdminUserResult(final Supplier<T> supplier) {
-        return null;
-    }
-
-    @Override
-    public void asAdminUser(final Runnable runnable) {
-    }
-
-    @Override
     public <T> T useAsReadResult(final Supplier<T> supplier) {
         return supplier.get();
     }
@@ -157,12 +119,12 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public void secure(final String permission, final Runnable runnable) {
+    public void secure(final AppPermission permission, final Runnable runnable) {
         runnable.run();
     }
 
     @Override
-    public <T> T secureResult(final String permission, final Supplier<T> supplier) {
+    public <T> T secureResult(final AppPermission permission, final Supplier<T> supplier) {
         return supplier.get();
     }
 
@@ -186,25 +148,8 @@ public class MockSecurityContext implements SecurityContext {
         return supplier.get();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class MockAdminUserIdentity implements UserIdentity {
-
-        @Override
-        public String getSubjectId() {
-            return User.ADMIN_USER_SUBJECT_ID;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return User.ADMIN_USER_SUBJECT_ID;
-        }
-
-        @Override
-        public Optional<String> getFullName() {
-            return Optional.of("Ad Min");
-        }
+    @Override
+    public UserRef getUserRef(String subjectId, boolean isGroup) {
+        return getUserRef();
     }
 }

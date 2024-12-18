@@ -95,23 +95,23 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        return store.renameDocument(uuid, name);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        store.deleteDocument(uuid);
+    public void deleteDocument(final DocRef docRef) {
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(final DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override

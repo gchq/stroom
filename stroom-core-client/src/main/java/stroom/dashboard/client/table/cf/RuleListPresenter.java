@@ -33,22 +33,22 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class RuleListPresenter extends MyPresenterWidget<PagerView> implements HasDirtyHandlers {
 
     private final MyDataGrid<ConditionalFormattingRule> dataGrid;
     private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
-    private List<ConditionalFormattingRule> rules = new ArrayList<>();
-    private Runnable dataChangeHandler = null;
+    private List<ConditionalFormattingRule> currentData;
 
     @Inject
     public RuleListPresenter(final EventBus eventBus,
@@ -77,24 +77,17 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                         .withToolTip("Rows matching this expression will be formatted by this rule.")
                         .build(),
                 200);
-        // Background colour.
-        dataGrid.addColumn(
-                DataGridUtil.colourSwatchColumnBuilder(ConditionalFormattingRule::getBackgroundColor)
+        // Style.
+        // Had to put this here as GWT wasn't happy. I think it sometimes gets confused if generic types aren't
+        // explicitly declared.
+        final Function<ConditionalFormattingRule, SafeHtml> function = ConditionalFormattingSwatchUtil::createTableCell;
+        dataGrid.addColumn(DataGridUtil.htmlColumnBuilder(function)
                         .enabledWhen(ConditionalFormattingRule::isEnabled)
                         .build(),
-                DataGridUtil.headingBuilder("Background Colour")
-                        .withToolTip("The background colour of matching rows.")
+                DataGridUtil.headingBuilder("Style")
+                        .withToolTip("The style of matching rows.")
                         .build(),
-                150);
-        // Text colour.
-        dataGrid.addColumn(
-                DataGridUtil.colourSwatchColumnBuilder(ConditionalFormattingRule::getTextColor)
-                        .enabledWhen(ConditionalFormattingRule::isEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Text Colour")
-                        .withToolTip("The text colour of matching rows.")
-                        .build(),
-                150);
+                200);
         // Hide.
         addHideColumn();
 
@@ -104,18 +97,16 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
     private void addEnabledColumn() {
         // Enabled.
         final Column<ConditionalFormattingRule, TickBoxState> enabledColumn =
-                DataGridUtil.updatableTickBoxColumnBuilder(ConditionalFormattingRule::isEnabled)
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                ConditionalFormattingRule::isEnabled))
                         .centerAligned()
                         .build();
 
         enabledColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            if (row != null) {
-                final ConditionalFormattingRule newRow = row
-                        .copy()
-                        .enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
-                        .build();
-                replaceDataGridRow(row, newRow);
-            }
+            replaceRow(row, row
+                    .copy()
+                    .enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                    .build());
         });
 
         dataGrid.addColumn(
@@ -128,19 +119,17 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
 
     private void addHideColumn() {
         final Column<ConditionalFormattingRule, TickBoxState> hideColumn =
-                DataGridUtil.updatableTickBoxColumnBuilder(ConditionalFormattingRule::isHide)
+                DataGridUtil.updatableTickBoxColumnBuilder(
+                                TickBoxState.createTickBoxFunc(ConditionalFormattingRule::isHide))
                         .centerAligned()
                         .enabledWhen(ConditionalFormattingRule::isEnabled)
                         .build();
 
         hideColumn.setFieldUpdater((index, row, tickBoxState) -> {
-            if (row != null) {
-                final ConditionalFormattingRule newRow = row
-                        .copy()
-                        .hide(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
-                        .build();
-                replaceDataGridRow(row, newRow);
-            }
+            replaceRow(row, row
+                    .copy()
+                    .hide(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                    .build());
         });
 
         dataGrid.addColumn(hideColumn,
@@ -150,32 +139,31 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                 70);
     }
 
-    private void replaceDataGridRow(final ConditionalFormattingRule oldRule,
-                                    final ConditionalFormattingRule newRule) {
-        final int idx = rules.indexOf(oldRule);
-        rules.remove(idx);
-        rules.add(idx, newRule);
+    private void replaceRow(final ConditionalFormattingRule oldRow,
+                            final ConditionalFormattingRule newRow) {
+        final int i = currentData.indexOf(oldRow);
+        if (i != -1) {
+            currentData.set(i, newRow);
+            final boolean selected = Objects.equals(selectionModel.getSelected(), oldRow);
+            if (selected) {
+                selectionModel.setSelected(newRow);
+            }
 
-        setDirty(true);
-        dataGrid.setRowData(0, rules);
-        final ConditionalFormattingRule selected = getSelectionModel().getSelected();
-        if (Objects.equals(selected, oldRule)) {
-            getSelectionModel().setSelected(newRule);
+            final int keyboardSelected = dataGrid.getKeyboardSelectedRow();
+            refresh();
+            dataGrid.setKeyboardSelectedRow(keyboardSelected);
+            setDirty(true);
         }
-        GwtNullSafe.run(dataChangeHandler);
     }
 
     public void setData(final List<ConditionalFormattingRule> data) {
-        dataGrid.setRowData(0, data);
-        dataGrid.setRowCount(data.size());
-        rules = data;
+        this.currentData = data;
+        refresh();
     }
 
-    /**
-     * A dataChangeHandler to be called if the dataGrid data is changed
-     */
-    public void setDataChangeHandler(final Runnable dataChangeHandler) {
-        this.dataChangeHandler = dataChangeHandler;
+    private void refresh() {
+        dataGrid.setRowData(0, currentData);
+        dataGrid.setRowCount(currentData.size());
     }
 
     public MultiSelectionModel<ConditionalFormattingRule> getSelectionModel() {

@@ -20,8 +20,11 @@ public class NotificationStateImpl implements NotificationState {
     @Override
     public synchronized boolean incrementAndCheckEnabled() {
         if (enabled) {
-            if (analyticNotificationConfig != null && analyticNotificationConfig.isLimitNotifications()) {
-                if (count >= analyticNotificationConfig.getMaxNotifications()) {
+            if (analyticNotificationConfig != null) {
+                if (!analyticNotificationConfig.isEnabled()) {
+                    enabled = false;
+                } else if (analyticNotificationConfig.isLimitNotifications() &&
+                           count >= analyticNotificationConfig.getMaxNotifications()) {
                     enabled = false;
                 }
             }
@@ -65,10 +68,10 @@ public class NotificationStateImpl implements NotificationState {
     @Override
     public String toString() {
         return "NotificationState{" +
-                "analyticNotificationConfig=" + analyticNotificationConfig +
-                ", count=" + count +
-                ", enabled=" + enabled +
-                ", lastNotificationTimeMs=" + lastNotificationTimeMs +
-                '}';
+               "analyticNotificationConfig=" + analyticNotificationConfig +
+               ", count=" + count +
+               ", enabled=" + enabled +
+               ", lastNotificationTimeMs=" + lastNotificationTimeMs +
+               '}';
     }
 }

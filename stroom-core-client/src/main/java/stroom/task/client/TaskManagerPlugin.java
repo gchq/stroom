@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -46,11 +46,12 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
         super(eventBus, eventManager, presenterProvider, securityContext);
 
         registerHandler(getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
-            final TaskManagerPresenter taskManagerPresenter = open();
-            taskManagerPresenter.changeNameFilter(
-                    event.getNodeName(),
-                    event.getTaskName(),
-                    event.getUserName());
+            open(taskManagerPresenter -> {
+                taskManagerPresenter.changeNameFilter(
+                        event.getNodeName(),
+                        event.getTaskName(),
+                        event.getUserName());
+            });
         }));
     }
 
@@ -70,8 +71,8 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_TASKS_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_TASKS_PERMISSION;
     }
 
     @Override

@@ -29,7 +29,7 @@ public class NameValidationUtil {
 //        if (after != null && after instanceof HasName) {
 //            // Validate the entity name if it has been changed.
 //            if (before != null && before instanceof HasName) {
-//                if (!EqualsUtil.isEquals(((HasName) before).getName(), ((HasName) after).getName())) {
+//                if (!Objects.equals(((HasName) before).getName(), ((HasName) after).getName())) {
 //                    validate(providesNamePattern, ((HasName) after).getName());
 //                }
 //            } else {

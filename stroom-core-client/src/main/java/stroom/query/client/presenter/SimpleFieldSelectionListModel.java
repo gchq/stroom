@@ -2,6 +2,7 @@ package stroom.query.client.presenter;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.item.client.AbstractSelectionListModel;
+import stroom.task.client.TaskMonitorFactory;
 
 import java.util.function.Consumer;
 
@@ -34,5 +35,10 @@ public class SimpleFieldSelectionListModel
             return null;
         }
         return selectionItem.getField();
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+
     }
 }

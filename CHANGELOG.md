@@ -13,12 +13,60 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.5.4] - 2024-12-05
+## [v7.7-beta.6] - 2024-12-16
+
+* Issue **#4632** : Fix conditional formatting styles.
+
+* Issue **#4634** : Make icons on highlighted rows white.
+
+* Issue **#4605** : Allow embedded queried to be re-run independently.
+
+* Issue **#4631** : Fix simple expression wildcards.
+
+* Issue **#4641** : Reset selections when dashboard table data changes.
+
+* Issue **#4642** : Show current dashboard selections to help create selection filters.
+
+* Issue **#4637** : Fix StroomQL filter in dictionary.
+
+* Issue **#4645** : Add feature to disable notifications.
+
+* Issue **#4594** : Various changes to the permissions screens. Added a new User screen to show all a user's permissions, api keys, and dependencies. Added links between the various permission and user screens. Improved the tables of some of the permissions screens.
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+* Fix error when creating a document as a user without `Administrator` or `Manager Users`.
+
+* Issue **#4588** : Fix the API allowing documents to be moved with only VIEW permission. The UI requires EDIT permission. The API is now in line with that.
+
+* Fix the `Copy As` menu item for ancestor folders that the user does not have VIEW permission on. For these cases, the `Copy As` sub menu now only displays the `Copy as name` entry.
+
+* Change the explorer context menu to include the entries for `Dependencies` and `Dependants` if the user has at least VIEW permission. Previously required OWNER.
+
+* Issue **#4586** : Fix error when changing filter on Document Permissions Report.
+
+* Make account creation also create a stroom user. Make an update to an account also update the stroom user if the full name has changed.
+
+* Fix bug in DB migration `V07_06_00_100__annotation_pre_migration_checks`.
+
+* If you are upgrading from a previous v7.6 beta release you will need to run the following SQL. `update analytics_schema_history set checksum = '-86554219' where version = '07.06.00.405';` and `update processor_schema_history set checksum = '-175036745' where version = '07.06.00.305';`.
+
+
+## [v7.7-beta.5] - 2024-12-05
+
+* Fix `java.lang.NoClassDeffoundError: jakarta/el/ELManager` error when booting proxy.
+
+* Issue **#4596** : Add case-sensitive value filter conditions.
+
+* Issue **#4596** : Drive visualisations using table quick filters and selection handlers.
+
+* Issue **#4596** : Merge include/exclude and column value filter dialogs.
+
+* Issue **#4596** : Change conditional formatting to allow custom light and dark colours.
+
+* Issue **#4596** : Turn off conditional formatting with user preferences.
 
 * Issue **#4627** : Fix StroomQL function character escaping.
-
-
-## [v7.5.3] - 2024-11-22
 
 * Issue **#4611** : Fix problem of changes to the conditional formatting rules of a duplicated dashboard table affecting the original table. This only affected the enabled/hide properties of the formatting rule.
 
@@ -26,13 +74,64 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4617** : Add debug to try to diagnose issue.
 
-
-## [v7.5.2] - 2024-11-19
-
 * Issue **#4606** : Fix dashboard text pane that is set to Show as HTML not showing a vertical scrollbar.
 
 
-## [v7.5.1] - 2024-10-28
+## [v7.7-beta.4] - 2024-11-11
+
+* Issue **#4601** : Add null handling and better error logging to Excel download.
+
+
+## [v7.7-beta.3] - 2024-11-11
+
+* Issue **#4597** : Fix NPE when opening the Document Permissions Report screen for a user.
+
+* Change the code that counts expression terms and gets all fields/values from an expression tree to no longer ignore NOT operators.
+
+* Issue **#4596** : Fix demo bugs.
+
+* Issue **#4596** : Add table value filter dialog option.
+
+
+## [v7.7-beta.2] - 2024-11-06
+
+* Change the permission filtering to use a LinkedHashSet for children of and descendants of terms.
+
+* Fix error when creating a document as a user without `Administrator` or `Manager Users`.
+
+* Issue **#4588** : Fix the API allowing documents to be moved with only VIEW permission. The UI requires EDIT permission. The API is now in line with that.
+
+* Fix the `Copy As` menu item for ancestor folders that the user does not have VIEW permission on. For these cases, the `Copy As` sub menu now only displays the `Copy as name` entry.
+
+* Change the explorer context menu to include the entries for `Dependencies` and `Dependants` if the user has at least VIEW permission. Previously required OWNER.
+
+* Issue **#4586** : Fix error when changing filter on Document Permissions Report.
+
+
+## [v7.7-beta.1] - 2024-11-04
+
+* Issue **#4523** : Embed queries in dashboards.
+
+* Issue **#4504** : Add column value filters.
+
+* Issue **#4546** : Remove redundant dashboard tab options.
+
+* Issue **#4547** : Add selection handlers to dashboard tables to quick filter based on component selection.
+
+* Issue **#4071** : Add preset theme compatible styles for conditional formatting.
+
+* Issue **#4157** : Fix copy of conditional formatting rules.
+
+
+## [v7.6-beta.4] - 2024-11-04
+
+* Issue **#4550** : Fix datasource already in use issue.
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.5_11-jdk-alpine`.
+
+* Issue **#4580** : Auto add a permission user when an account is created.
+
+* Issue **#4582** : Show all users by default and not just ones with explicit permissions.
 
 * Issue **#4562** : Use Zip64 compatibility mode.
 
@@ -49,7 +148,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4570** : Fix error when clearing then filtering in a doc ref picker.
 
 
-## [v7.5.0] - 2024-10-16
+## [v7.6-beta.3] - 2024-10-18
 
 * Issue **#4501** : Fix Query editor syntax highlighting.
 
@@ -83,15 +182,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Improve the process of (re-)indexing content. It is now triggered by a user doing a content search. Users will get an error message if the index is still being initialised. The `stroom.contentIndex.enabled` property has been removed.
 
-
-## [v7.5-beta.20] - 2024-10-07
-
 * Issue **#4513** : Add primary key to `doc_permission_backup_V07_05_00_005` table for MySQL Cluster support.
 
 * Issue **#4514** : Fix HTTP 307 with calling `/api/authproxy/v1/noauth/fetchClientCredsToken`.
 
 
-## [v7.5-beta.19] - 2024-10-07
+## [v7.6-beta.2] - 2024-10-07
 
 * Issue **#4475** : Change `mask()` function to `period()` and add `using` to apply a function to window.
 
@@ -102,9 +198,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4510** : Fix right click in editor pane.
 
 * Issue **#4511** : Fix StreamId, EventId selection in query tables.
-
-
-## [v7.5-beta.18] - 2024-10-03
 
 * Issue **#4485** : Improve dialog move/resize behaviour.
 
@@ -122,17 +215,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4503** : Make the enabled state of the delete/restore buttons on the stream browser depend on the user's permissions. Now they will only be enabled if the user has the require permission (i.e. DELETE/UPDATE) on at least one of the selected items.
 
-
-## [v7.5-beta.17] - 2024-09-30
-
 * Issue **#4486** : Fix the `format-date` XSLT function for date strings with the day of week in, e.g. `stroom:format-date('Wed Aug 14 2024', 'E MMM dd yyyy')`.
 
 * Issue **#4458** : Fix explorer node tags not being copied. Also fix copy/move not selecting the parent folder of the source as the default destination folder.
 
 * Issue **#4478** : Fix boolean expression precedence in StroomQL.
-
-
-## [v7.5-beta.16] - 2024-09-30
 
 * Issue **#4454** : Show the source dictionary name for each _word_ in the Dashboard List Input selection box. Add sorting and de-duplication of _words_.
 
@@ -157,10 +244,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4412** : Fix `/` key not working in quick filter text input fields.
 
 * Issue **#4463** : Fix NPE with analytic rule email templating.
- 
-
-
-## [v7.5-beta.15] - 2024-09-24
 
 * Issue **#4146** : Fix audit events for deleting/restoring streams.
 
@@ -170,17 +253,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4471** : Fix NPE with stepping filter.
 
-
-## [v7.5-beta.14] - 2024-09-20
-
 * Issue **#4451** : Add S3 pipeline appender.
 
 * Issue **#4401** : Improve content search.
 
 * Issue **#4417** : Show stepping progress and allow termination.
-
-
-## [v7.5-beta.13] - 2024-09-19
 
 * Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
 
@@ -203,7 +280,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
 
 
+## [v7.5-proxy-beta.2] - 2024-09-16
+
+* Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
+
+
 ## [v7.5-beta.12] - 2024-09-06
+
+* Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
+
+* Issue **#4422** : Don't show _Edit Schedule_ in actions menu on Jobs screen for Distributed jobs.
+
+* Issue **#4418** : Fix missing css for `/stroom/sessionList`.
+
+* Issue **#4435** : Fix for progress spinner getting stuck on.
+
+
+## [v7.5-proxy-beta.1] - 2024-09-06
 
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 
@@ -221,15 +314,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
 
-
-## [v7.5-beta.11] - 2024-09-04
-
 * Issue **#4426** : Add INFO message when an index shard is created.
 
 * Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
-
-
-## [v7.5-beta.10] - 2024-09-04
 
 * Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
 
@@ -240,6 +327,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
 
 * Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
+## [v7.6-beta.1] - 2024-08-30
+
+* Issue **#4345** : Write analytic email notification failures to the analytic error feed.
+
+* Issue **#4379** : Improve Stroom permission model.
 
 
 ## [v7.5-beta.9] - 2024-08-30
@@ -741,6 +835,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4055** : Fix parsing/formatting of durations in query/dashboard expressions.
 
 
+## [v7.3-proxy-beta.1] - 2024-01-29
+
+* Issue **#2201** : New proxy implementation.
+
+
 ## [v7.3-beta.7] - 2024-01-24
 
 * Issue **#4029** : Remove the need to specify node name for query and dashboard API.
@@ -982,23 +1081,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.4...HEAD
-[v7.5.4]: https://github.com/gchq/stroom/compare/v7.5.3...v7.5.4
-[v7.5.3]: https://github.com/gchq/stroom/compare/v7.5.2...v7.5.3
-[v7.5.2]: https://github.com/gchq/stroom/compare/v7.5.1...v7.5.2
-[v7.5.1]: https://github.com/gchq/stroom/compare/v7.5.0...v7.5.1
-[v7.5.0]: https://github.com/gchq/stroom/compare/v7.5-beta.20...v7.5.0
-[v7.5-beta.20]: https://github.com/gchq/stroom/compare/v7.5-beta.19...v7.5-beta.20
-[v7.5-beta.19]: https://github.com/gchq/stroom/compare/v7.5-beta.18...v7.5-beta.19
-[v7.5-beta.18]: https://github.com/gchq/stroom/compare/v7.5-beta.17...v7.5-beta.18
-[v7.5-beta.17]: https://github.com/gchq/stroom/compare/v7.5-beta.16...v7.5-beta.17
-[v7.5-beta.16]: https://github.com/gchq/stroom/compare/v7.5-beta.15...v7.5-beta.16
-[v7.5-beta.15]: https://github.com/gchq/stroom/compare/v7.5-beta.14...v7.5-beta.15
-[v7.5-beta.14]: https://github.com/gchq/stroom/compare/v7.5-beta.13...v7.5-beta.14
-[v7.5-beta.13]: https://github.com/gchq/stroom/compare/v7.5-beta.12...v7.5-beta.13
-[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
-[v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
-[v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.6...HEAD
+[v7.7-beta.6]: https://github.com/gchq/stroom/compare/v7.7-beta.5...v7.7-beta.6
+[v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
+[v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
+[v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
+[v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
+[v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
+[v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
+[v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
+[v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
+[v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
 [v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7

@@ -12,6 +12,10 @@
             <l:SelectionBox ui:field="destinationType"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="destinationContainer" styleName="form-group"/>
+        <form:FormGroup identity="analyticNotificationEnabled"
+                        label="Enabled">
+            <tickbox:CustomCheckBox ui:field="enabled"/>
+        </form:FormGroup>
         <form:FormGroup identity="analyticNotificationLimitNotifications"
                         label="Limit Notifications">
             <tickbox:CustomCheckBox ui:field="limitNotifications"/>

@@ -39,7 +39,7 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
     }
 
     @Override
-    String getName() {
+    protected String getName() {
         return "Data Preview";
     }
 

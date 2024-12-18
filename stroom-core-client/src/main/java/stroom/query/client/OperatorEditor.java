@@ -51,7 +51,7 @@ public class OperatorEditor extends Composite {
         listBox = new SelectionBox<>();
         listBox.addItems(Op.values());
 
-        fixStyle(listBox, 50);
+        fixStyle(listBox, 55);
 
         final FlowPanel inner = new FlowPanel();
         inner.setStyleName("termEditor-inner");

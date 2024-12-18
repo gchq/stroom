@@ -443,22 +443,26 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
 
     private TableSettings createTableSettings(final boolean extractValues) {
         final Column streamIdColumn = Column.builder()
+                .id("Stream Id")
                 .name("Stream Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
+                .id("Event Id")
                 .name("Event Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
+                .id("Event Time")
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
+                .id("Status")
                 .name("Status")
                 .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
                 .build();

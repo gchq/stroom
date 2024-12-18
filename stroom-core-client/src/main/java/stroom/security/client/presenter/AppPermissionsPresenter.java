@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,171 +12,123 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.client.presenter;
 
-import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestFactory;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermissionResource;
-import stroom.security.shared.ChangeSet;
-import stroom.security.shared.ChangeUserRequest;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
-import stroom.security.shared.UserAndPermissions;
+import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.item.client.SelectionBox;
+import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
+import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.PermissionShowLevel;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserRef;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import javax.inject.Inject;
 
 public class AppPermissionsPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends ContentTabPresenter<AppPermissionsView> {
 
-    private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
+    private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
+    private final AppPermissionsEditPresenter appPermissionsEditPresenter;
 
-    private final RestFactory restFactory;
-    private final ClientSecurityContext securityContext;
-    private final MyDataGrid<String> dataGrid;
-
-    private UserAndPermissions userAppPermissions;
-    private List<String> allPermissions;
-
-    private User relatedUser;
+    private final SelectionBox<PermissionShowLevel> permissionVisibility;
 
     @Inject
-    public AppPermissionsPresenter(final EventBus eventBus,
-                                   final PagerView view,
-                                   final RestFactory restFactory,
-                                   final ClientSecurityContext securityContext) {
+    public AppPermissionsPresenter(
+            final EventBus eventBus,
+            final AppPermissionsView view,
+            final AppUserPermissionsListPresenter appUserPermissionsListPresenter,
+            final AppPermissionsEditPresenter appPermissionsEditPresenter) {
+
         super(eventBus, view);
-        this.restFactory = restFactory;
-        this.securityContext = securityContext;
+        this.appUserPermissionsListPresenter = appUserPermissionsListPresenter;
+        this.appPermissionsEditPresenter = appPermissionsEditPresenter;
+        view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());
+        view.setAppPermissionsEditView(appPermissionsEditPresenter.getView());
 
-        dataGrid = new MyDataGrid<>();
-        view.setDataWidget(dataGrid);
-
-        addColumns();
+        permissionVisibility = getView().getPermissionVisibility();
+        permissionVisibility.addItems(PermissionShowLevel.ITEMS);
+        permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
+        appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
     }
 
-    public void setUser(final User userRef) {
-        this.relatedUser = userRef;
-        refresh();
-    }
+    @Override
+    protected void onBind() {
+        super.onBind();
 
-    private void refresh() {
-        if (relatedUser == null) {
-            userAppPermissions = null;
-            final List<String> features = new ArrayList<>();
-            dataGrid.setRowData(0, features);
-            dataGrid.setRowCount(features.size(), true);
+        registerHandler(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+            editPermissions();
+        }));
+        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+            appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
+            appUserPermissionsListPresenter.refresh();
+        }));
+        registerHandler(appPermissionsEditPresenter.getSelectionModel()
+                .addSelectionHandler(e -> appPermissionsEditPresenter.updateDetails()));
 
-        } else {
-            // Fetch permissions and populate table.
-            restFactory
-                    .create(APP_PERMISSION_RESOURCE)
-                    .method(res -> res.fetchUserAppPermissions(relatedUser))
-                    .onSuccess(userAppPermissions -> {
-                        AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
-                        updateAllPermissions();
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }
-    }
-
-    private void updateAllPermissions() {
-        if (this.allPermissions != null) {
-            dataGrid.setRowData(0, allPermissions);
-            dataGrid.setRowCount(allPermissions.size(), true);
-
-        } else {
-            restFactory
-                    .create(APP_PERMISSION_RESOURCE)
-                    .method(AppPermissionResource::fetchAllPermissions)
-                    .onSuccess(allPermissions -> {
-                        Collections.sort(allPermissions);
-                        this.allPermissions = allPermissions;
-
-                        dataGrid.setRowData(0, allPermissions);
-                        dataGrid.setRowCount(allPermissions.size(), true);
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }
-    }
-
-    private void addColumns() {
-        final boolean updateable = isCurrentUserUpdate();
-        final TickBoxCell.Appearance appearance = updateable
-                ? new TickBoxCell.DefaultAppearance()
-                : new TickBoxCell.NoBorderAppearance();
-
-        // Selection.
-        final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                TickBoxCell.create(appearance, true, true, updateable)) {
-            @Override
-            public TickBoxState getValue(final String permission) {
-                final Set<String> permissions = userAppPermissions.getPermissions();
-                if (permissions != null && permissions.contains(permission)) {
-                    return TickBoxState.fromBoolean(true);
-                }
-
-                return TickBoxState.fromBoolean(false);
+        registerHandler(appPermissionsEditPresenter.addValueChangeHandler(e -> {
+            GWT.log("valueChange, isRefreshUsers: " + e.getValue().isRefreshUsers()
+                    + ", isRefreshDetails: " + e.getValue().isRefreshDetails());
+            if (e.getValue().isRefreshUsers()) {
+                refresh();
             }
-        };
-
-        if (updateable) {
-            selectionColumn.setFieldUpdater((index, permission, value) -> {
-                final ChangeUserRequest request = new ChangeUserRequest(
-                        relatedUser, new ChangeSet<>(), new ChangeSet<>());
-                if (value.toBoolean()) {
-                    request.getChangedAppPermissions().add(permission);
-                } else {
-                    request.getChangedAppPermissions().remove(permission);
-                }
-
-                restFactory
-                        .create(APP_PERMISSION_RESOURCE)
-                        .method(res -> res.changeUser(request))
-                        .onSuccess(result -> refresh())
-                        .taskMonitorFactory(this)
-                        .exec();
-            });
-        }
-
-        dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
-
-        // Perm name
-        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
-            @Override
-            public String getValue(final String permissionName) {
-                return permissionName;
+            if (e.getValue().isRefreshDetails()) {
+                appPermissionsEditPresenter.updateDetails();
             }
-        }, "Permission", 200);
-
-        // Description
-        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
-            @Override
-            public String getValue(final String permissionName) {
-                return PermissionNames.getDescription(permissionName);
-            }
-        }, "Description", 700);
+        }));
     }
 
-    protected boolean isCurrentUserUpdate() {
-        return securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
+    public void setFilterInput(final String filterInput) {
+        appUserPermissionsListPresenter.setQuickFilter(filterInput);
+    }
+
+    public void showUser(final UserRef userRef) {
+        appUserPermissionsListPresenter.showUser(userRef);
+    }
+
+    private void editPermissions() {
+        final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel()
+                .getSelected();
+        final UserRef userRef = GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
+        appPermissionsEditPresenter.setUserRef(userRef);
+    }
+
+    public void refresh() {
+        appUserPermissionsListPresenter.refresh();
+    }
+
+    @Override
+    public SvgImage getIcon() {
+        return SvgImage.SHIELD;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Application Permissions";
+    }
+
+    @Override
+    public String getType() {
+        return "ApplicationPermissions";
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface AppPermissionsView extends View {
+
+        SelectionBox<PermissionShowLevel> getPermissionVisibility();
+
+        void setAppUserPermissionListView(View view);
+
+        void setAppPermissionsEditView(View view);
     }
 }

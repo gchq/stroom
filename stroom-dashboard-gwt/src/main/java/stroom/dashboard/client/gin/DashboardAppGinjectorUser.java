@@ -24,6 +24,8 @@ import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
@@ -59,7 +61,8 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         UserPreferencesModule.class,
         QueryModule.class,
         DashboardModule.class,
-        VisModule.class})
+        VisModule.class,
+        EmbeddedQueryModule.class})
 public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
@@ -70,6 +73,7 @@ public interface DashboardAppGinjectorUser extends
         DashboardGinjector,
         UserPreferencesGinjector,
         VisGinjector,
+        EmbeddedQueryGinjector,
         ChangePasswordGinjector {
 
     // Default implementation of standard resources

@@ -18,7 +18,6 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
-import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -33,6 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class RenameTabPresenter
@@ -85,7 +85,7 @@ public class RenameTabPresenter
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final String name = getView().getName().getText();
-            if (name != null && !name.trim().isEmpty() && !EqualsUtil.isEquals(name, componentName)) {
+            if (name != null && !name.trim().isEmpty() && !Objects.equals(name, componentName)) {
                 nameChangeConsumer.accept(name);
 
 //                tabLayout.clear();

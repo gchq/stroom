@@ -16,6 +16,10 @@
 
 package stroom.util.shared;
 
+/**
+ * Something that can be represented by a primitive value, e.g. an enum that can be
+ * represented as a byte value.
+ */
 public interface HasPrimitiveValue {
 
     byte getPrimitiveValue();

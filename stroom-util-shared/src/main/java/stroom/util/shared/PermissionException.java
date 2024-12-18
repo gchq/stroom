@@ -18,24 +18,24 @@ package stroom.util.shared;
 
 public class PermissionException extends EntityServiceException {
 
-    private String user;
+    private UserRef userRef;
 
     public PermissionException() {
     }
 
-    public PermissionException(final String user,
+    public PermissionException(final UserRef userRef,
                                final String message) {
         super(message);
-        this.user = user;
+        this.userRef = userRef;
     }
 
-    public PermissionException(final String user,
+    public PermissionException(final UserRef userRef,
                                final String securedType,
                                final String name,
                                final String methodName,
                                final String message) {
         super(message, null, false);
-        this.user = user;
+        this.userRef = userRef;
         if (securedType != null || name != null || methodName != null) {
             setDetail(ModelStringUtil.toDisplayValue(securedType) + (name == null
                     ? ""
@@ -46,8 +46,8 @@ public class PermissionException extends EntityServiceException {
         }
     }
 
-    public String getUser() {
-        return user;
+    public UserRef getUser() {
+        return userRef;
     }
 
     @Override
@@ -56,8 +56,8 @@ public class PermissionException extends EntityServiceException {
         if (message != null) {
             message = message.replace("You do", "User does");
 
-            if (user != null && !user.isEmpty()) {
-                message = message.replace("User does", "User '" + user + "' does");
+            if (userRef != null) {
+                message = message.replace("User does", "User '" + userRef + "' does");
             }
         }
 

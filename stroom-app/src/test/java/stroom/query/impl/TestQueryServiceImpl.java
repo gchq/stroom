@@ -16,6 +16,7 @@
 
 package stroom.query.impl;
 
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.QueryHelpType;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.TestUtil;
@@ -50,7 +51,8 @@ class TestQueryServiceImpl {
                 null,
                 null,
                 null,
-                null);
+                null,
+                new ExpressionPredicateFactory(null));
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)

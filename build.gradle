@@ -1,4 +1,7 @@
+import org.yaml.snakeyaml.Yaml
+
 buildscript {
+    ext.jooqVer = '3.18.7'
     repositories {
         mavenLocal()
         mavenCentral()
@@ -14,6 +17,18 @@ buildscript {
         //classpath 'javax.activation:activation:1.1.1'
         //classpath 'javax.xml.bind:jaxb-api:2.3.1'
         //classpath 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+
+        // Needed for parsing local.yml to get the jdbcUrl
+        classpath 'org.yaml:snakeyaml:2.2'
+    }
+    // This was borrowed from
+    // https://github.com/etiennestuder/gradle-jooq-plugin/blob/main/example/specify_jooq_config_xml_schema_version/build.gradle
+    // and ensures we are only using one jooq ver througout
+    configurations['classpath'].resolutionStrategy.eachDependency {
+        if (requested.group.startsWith('org.jooq') && requested.name.startsWith('jooq')) {
+            // set jOOQ version used at configuration time to enforce a specific jOOQ config XML schema version
+            useVersion jooqVer
+        }
     }
 }
 
@@ -28,7 +43,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "8.1.1" apply false
 
-    id 'nu.studer.jooq' version '8.2.1' apply false
+    id 'nu.studer.jooq' version '8.2.3' apply false
 
     id 'org.flywaydb.flyway' version '10.0.0' apply false
 
@@ -76,6 +91,28 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
         logger.info("Property [$propName] has no value, using default value [$val]")
     }
     return val;
+}
+
+// Try to determine the jdbc url from local.yml so that when using
+// Jooq code generator with a locally named database (from SetupDevEnv),
+// joow will point to the correct DB.
+def localYamlFile = new File("${rootDir}/local.yml")
+//println "YAML file: ${localYamlFile}"
+ext.dbSchema = 'stroom'
+ext.jdbcUrl = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
+if (localYamlFile.exists()) {
+    def localYaml = new org.yaml.snakeyaml.Yaml().load(localYamlFile.newInputStream())
+    String yamlVal = localYaml?.appConfig?.commonDbDetails?.connection?.jdbcDriverUrl
+    //println "yamlVal: ${yamlVal}"
+    if (yamlVal != null) {
+        // Strip all the param sunstitution stuff
+        yamlVal = yamlVal.replaceAll('^\\$\\{STROOM_JDBC_DRIVER_URL:-', '')
+            .replaceAll('\\}$', '')
+        ext.jdbcUrl = yamlVal
+        // Extract the schema name from the url
+        ext.dbSchema = (yamlVal =~ /jdbc:mysql:\/\/[^:]+:[0-9]+\/([^?]+)\?.*/)[0][1]
+        println "Using jdbc url [${jdbcUrl}] and dbSchema [${dbSchema}] from local.yml"
+    }
 }
 
 // Convert the abs root project dir into a string that can be used as a dir
@@ -127,7 +164,7 @@ ext.versions = [
         aws               : '2.20.157',
         bnd               : '7.0.0',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
-        dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard        : '4.0.10', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '8.11.2',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
         flyway            : '10.0.0',
@@ -135,7 +172,7 @@ ext.versions = [
         gwt               : '2.11.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jmh               : '1.37',
-        jooq              : '3.18.7',
+        jooq              : "${jooqVer}",  // Defined at the top of this file
         junit_jupiter     : '5.10.1',
         kafka             : '3.6.0',
         okhttp            : '4.12.0',
@@ -231,6 +268,7 @@ ext.libs = [
         jackson_core                        : "com.fasterxml.jackson.core:jackson-core", // version controlled by dropwizard-dependencies
         jackson_databind                    : "com.fasterxml.jackson.core:jackson-databind", // version controlled by dropwizard-dependencies // files('libs/jackson-databind-2.10.5.1.jar'),//
         jackson_dataformat_yaml             : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by dropwizard-dependencies
+        jackson_datatype_jdk8               : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", // version controlled by dropwizard-dependencies
         jackson_datatype_jsr310             : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by dropwizard-dependencies
         jakarta_activation                  : "jakarta.activation:jakarta.activation-api", // version controlled by dropwizard-dependencies
         jakarta_annotation_api              : "jakarta.annotation:jakarta.annotation-api", // version controlled by dropwizard-dependencies
@@ -281,7 +319,10 @@ ext.libs = [
         // Potentially caused by https://github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
         // lmdbjava 0.9.0 has a cursor bug though, https://github.com/lmdbjava/lmdbjava/issues/228
         lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
+        // This is the bridge from log4j v1 to slf4j
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
+        // This is the bridge from log4j v2 to slf4j
+        //log4j_slf4j2_impl                   : "org.apache.logging.log4j:log4j-slf4j2-impl:2.24.1",
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
@@ -303,9 +344,8 @@ ext.libs = [
         simple_java_mail                    : "org.simplejavamail:simple-java-mail:${versions.simple_java_mail}",
         simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
-        snake_yaml                          : "org.yaml:snakeyaml:2.2",
+        snake_yaml                          : "org.yaml:snakeyaml:2.3",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
-        sqlite                              : "org.xerial:sqlite-jdbc:3.43.2.2",
         stax_api                            : "stax:stax-api:1.0.1",
         swagger_annotations                 : "io.swagger.core.v3:swagger-annotations-jakarta:$versions.swagger",
         swagger_core                        : "io.swagger.core.v3:swagger-core-jakarta:$versions.swagger",

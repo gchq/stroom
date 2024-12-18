@@ -21,7 +21,7 @@ import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.MetaService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -80,7 +80,7 @@ class FsOrphanFileFinder {
         final FsOrphanFileFinderProgress cleanProgress = new FsOrphanFileFinderProgress(
                 volumePathStr,
                 taskContext);
-        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DELETE_DATA_PERMISSION, () -> {
             final ScanVolumePathResult result = new ScanVolumePathResult();
             final Path directory = FileSystemUtil.createFileTypeRoot(volumePathStr);
 

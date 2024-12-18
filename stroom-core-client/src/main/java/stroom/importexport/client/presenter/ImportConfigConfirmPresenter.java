@@ -35,7 +35,7 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
@@ -98,8 +98,8 @@ public class ImportConfigConfirmPresenter extends
         this.rootFolderPresenter = rootFolderPresenter;
 
         rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF, false);
-        rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER);
-        rootFolderPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER_TYPE);
+        rootFolderPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         rootFolderPresenter.setAllowFolderSelection(true);
 
         this.tooltipPresenter = tooltipPresenter;
@@ -138,8 +138,8 @@ public class ImportConfigConfirmPresenter extends
 
         registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
             if (event.getSelectedItem() != null &&
-                    event.getSelectedItem().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
-                    event.getSelectedItem().getUuid().length() > 1) {
+                event.getSelectedItem().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
+                event.getSelectedItem().getUuid().length() > 1) {
                 setRootDocRef(event.getSelectedItem());
             } else {
                 setRootDocRef(null);

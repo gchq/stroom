@@ -43,7 +43,8 @@
 	flex-shrink: 0;
 }
 
-.termEditor-inner input {
+.termEditor-inner input,
+.termEditor-inner .SelectionBox-renderBox {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;

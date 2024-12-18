@@ -1,7 +1,7 @@
 package stroom.annotation.shared;
 
 import stroom.test.common.TestUtil;
-import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,22 +14,25 @@ class TestUserNameEntryValue {
     @Test
     void testSerDeser() {
         TestUtil.testSerialisation(
-                UserNameEntryValue.of(new SimpleUserName(
-                        "myId",
-                        "myDisplayName",
-                        "myFullName",
-                        UUID.randomUUID().toString())),
-                UserNameEntryValue.class);
+                UserRefEntryValue.of(UserRef
+                        .builder()
+                        .uuid(UUID.randomUUID().toString())
+                        .subjectId("myId")
+                        .displayName("myDisplayName")
+                        .fullName("myFullName")
+                        .build()),
+                UserRefEntryValue.class);
     }
 
     @Test
     void getAsUiValue() {
-        final UserNameEntryValue entryValue = UserNameEntryValue.of(new SimpleUserName(
-                "myId",
-                "myDisplayName",
-                "myFullName",
-                UUID.randomUUID().toString()));
-
+        final UserRefEntryValue entryValue = UserRefEntryValue.of(UserRef
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .subjectId("myId")
+                .displayName("myDisplayName")
+                .fullName("myFullName")
+                .build());
         assertThat(entryValue.asUiValue())
                 .isEqualTo("myDisplayName");
     }
@@ -37,12 +40,13 @@ class TestUserNameEntryValue {
     @Test
     void getAsPersistedValue() {
         final String uuid = UUID.randomUUID().toString();
-        final UserNameEntryValue entryValue = UserNameEntryValue.of(new SimpleUserName(
-                "myId",
-                "myDisplayName",
-                "myFullName",
-                uuid));
-
+        final UserRefEntryValue entryValue = UserRefEntryValue.of(UserRef
+                .builder()
+                .uuid(uuid)
+                .subjectId("myId")
+                .displayName("myDisplayName")
+                .fullName("myFullName")
+                .build());
         assertThat(entryValue.asPersistedValue())
                 .isEqualTo(uuid);
     }

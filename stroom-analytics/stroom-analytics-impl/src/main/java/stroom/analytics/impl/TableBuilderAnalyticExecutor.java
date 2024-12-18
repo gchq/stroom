@@ -33,10 +33,10 @@ import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.CurrentDbState;
 import stroom.query.common.v2.DeleteCommand;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -48,7 +48,6 @@ import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.FieldValueExtractorFactory;
 import stroom.search.extraction.MemoryIndex;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -61,6 +60,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
@@ -110,6 +110,7 @@ public class TableBuilderAnalyticExecutor {
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final FieldValueExtractorFactory fieldValueExtractorFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
 
@@ -135,7 +136,8 @@ public class TableBuilderAnalyticExecutor {
                                         final AnalyticHelper analyticHelper,
                                         final NodeInfo nodeInfo,
                                         final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
-                                        final FieldValueExtractorFactory fieldValueExtractorFactory) {
+                                        final FieldValueExtractorFactory fieldValueExtractorFactory,
+                                        final ExpressionPredicateFactory expressionPredicateFactory) {
         this.executorProvider = executorProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.securityContext = securityContext;
@@ -154,6 +156,7 @@ public class TableBuilderAnalyticExecutor {
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     public void exec() {
@@ -196,8 +199,7 @@ public class TableBuilderAnalyticExecutor {
         final Map<GroupKey, List<TableBuilderAnalytic>> analyticGroupMap = new HashMap<>();
         for (final TableBuilderAnalytic analytic : analytics) {
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc().asDocRef());
-                final GroupKey groupKey = new GroupKey(analytic.viewDoc().getPipeline(), ownerUuid);
+                final GroupKey groupKey = new GroupKey(analytic.viewDoc().getPipeline(), analytic.runAsUser);
                 analyticGroupMap
                         .computeIfAbsent(groupKey, k -> new ArrayList<>())
                         .add(analytic);
@@ -233,10 +235,9 @@ public class TableBuilderAnalyticExecutor {
                                                            final List<TableBuilderAnalytic> analytics,
                                                            final AtomicBoolean allComplete) {
         final DocRef pipelineRef = groupKey.pipeline();
-        final String ownerUuid = groupKey.ownerUuid();
+        final UserRef runAsUser = groupKey.runAsUser();
         if (!analytics.isEmpty()) {
-            final UserIdentity userIdentity = securityContext.getIdentityByUserUuid(ownerUuid);
-            return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
+            return securityContext.asUserResult(runAsUser, () -> securityContext.useAsReadResult(() -> {
                 final String pipelineIdentity = pipelineRef.toInfoString();
                 final Runnable runnable = taskContextFactory.childContext(
                         parentTaskContext,
@@ -637,9 +638,10 @@ public class TableBuilderAnalyticExecutor {
             final TableResultConsumer tableResultConsumer =
                     new TableResultConsumer(analytic.analyticRuleDoc(), detectionConsumer);
 
-            final ColumnFormatter columnFormatter =
-                    new ColumnFormatter(new FormatterFactory(null));
-            final TableResultCreator resultCreator = new TableResultCreator(columnFormatter) {
+            final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
+            final TableResultCreator resultCreator = new TableResultCreator(
+                    formatterFactory,
+                    expressionPredicateFactory) {
                 @Override
                 public TableResultBuilder createTableResultBuilder() {
                     return tableResultConsumer;
@@ -856,33 +858,26 @@ public class TableBuilderAnalyticExecutor {
                             viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
                         }
 
-                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                                instanceof TableBuilderAnalyticProcessConfig)) {
-                            LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
-                            tracker.getAnalyticTrackerData()
-                                    .setMessage("Error: Invalid process config.");
+                        final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
 
-                        } else {
-                            final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
+                        // Get or create LMDB data store.
+                        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
+                        final CurrentDbState currentDbState = lmdbDataStore.sync();
 
-                            // Get or create LMDB data store.
-                            final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
-                            final CurrentDbState currentDbState = lmdbDataStore.sync();
+                        // Update tracker state from LMDB.
+                        updateTrackerWithLmdbState(analyticProcessorTrackerData,
+                                currentDbState);
 
-                            // Update tracker state from LMDB.
-                            updateTrackerWithLmdbState(analyticProcessorTrackerData,
-                                    currentDbState);
-
-                            analyticList.add(new TableBuilderAnalytic(
-                                    ruleIdentity,
-                                    analyticRuleDoc,
-                                    (TableBuilderAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                    tracker,
-                                    analyticProcessorTrackerData,
-                                    searchRequest,
-                                    viewDoc,
-                                    dataStore));
-                        }
+                        analyticList.add(new TableBuilderAnalytic(
+                                ruleIdentity,
+                                analyticRuleDoc,
+                                tableBuilderAnalyticProcessConfig,
+                                tracker,
+                                analyticProcessorTrackerData,
+                                searchRequest,
+                                viewDoc,
+                                dataStore,
+                                tableBuilderAnalyticProcessConfig.getRunAsUser()));
 
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
@@ -912,11 +907,12 @@ public class TableBuilderAnalyticExecutor {
                                         TableBuilderAnalyticTrackerData trackerData,
                                         SearchRequest searchRequest,
                                         ViewDoc viewDoc,
-                                        AnalyticDataStore dataStore) {
+                                        AnalyticDataStore dataStore,
+                                        UserRef runAsUser) {
 
     }
 
-    private record GroupKey(DocRef pipeline, String ownerUuid) {
+    private record GroupKey(DocRef pipeline, UserRef runAsUser) {
 
     }
 }

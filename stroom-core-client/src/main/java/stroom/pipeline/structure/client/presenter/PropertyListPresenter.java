@@ -24,11 +24,14 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -96,7 +99,8 @@ public class PropertyListPresenter
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
-                                 final RestFactory restFactory) {
+                                 final RestFactory restFactory,
+                                 final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -109,7 +113,9 @@ public class PropertyListPresenter
 
         editButton = view.addButton(SvgPresets.EDIT);
 
-        addColumns();
+        documentTypeCache.fetch(documentTypes -> {
+            addColumns(documentTypes);
+        }, this);
         enableButtons();
     }
 
@@ -128,9 +134,9 @@ public class PropertyListPresenter
         }));
     }
 
-    private void addColumns() {
+    private void addColumns(final DocumentTypes documentTypes) {
         addNameColumn();
-        addValueColumn();
+        addValueColumn(documentTypes);
         addDescriptionColumn();
 
         addEndColumn();
@@ -146,7 +152,7 @@ public class PropertyListPresenter
         }, "Property Name", 300);
     }
 
-    private void addValueColumn() {
+    private void addValueColumn(final DocumentTypes documentTypes) {
         // Value.
         // Value could be a docRef, in which case it gets a hover link to open it) or a simple string
         final Column<PipelineProperty, DocRefProvider<PipelineProperty>> valueCol = DataGridUtil.docRefColumnBuilder(
@@ -161,7 +167,10 @@ public class PropertyListPresenter
                             });
                         },
                         getEventBus(),
+                        documentTypes,
                         false,
+                        true,
+                        DisplayType.NAME,
                         property1 -> getStateCssClass(property1, true),
                         docRefProvider -> {
                             if (docRefProvider == null) {

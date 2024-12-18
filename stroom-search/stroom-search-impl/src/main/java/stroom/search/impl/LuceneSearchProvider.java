@@ -39,7 +39,7 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -91,7 +91,7 @@ public class LuceneSearchProvider implements SearchProvider {
             final DocRef docRef = criteria.getDataSourceRef();
 
             // Check for read permission.
-            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 // If there is no read permission then return no fields.
                 return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
             }
@@ -116,7 +116,7 @@ public class LuceneSearchProvider implements SearchProvider {
     public int getFieldCount(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             // Check for read permission.
-            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 // If there is no read permission then return no fields.
                 return 0;
             } else {

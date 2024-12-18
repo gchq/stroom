@@ -1,29 +1,22 @@
 package stroom.security.identity.client.view;
 
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
-import stroom.security.identity.client.presenter.AccountsUiHandlers;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
-import java.util.function.Supplier;
+import com.gwtplatform.mvp.client.ViewImpl;
 
 public class AccountsViewImpl
-        extends ViewWithUiHandlers<AccountsUiHandlers>
+        extends ViewImpl
         implements AccountsView {
 
     private final Widget widget;
 
-    @UiField
-    QuickFilter quickFilter;
+    //    @UiField
+//    QuickFilter quickFilter;
     @UiField
     SimplePanel listContainer;
 
@@ -33,10 +26,10 @@ public class AccountsViewImpl
         widget.addAttachHandler(event -> focus());
     }
 
-    @Override
-    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
-        quickFilter.registerPopupTextProvider(popupTextSupplier);
-    }
+//    @Override
+//    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+//        quickFilter.registerPopupTextProvider(popupTextSupplier);
+//    }
 
     @Override
     public void focus() {
@@ -53,10 +46,10 @@ public class AccountsViewImpl
         return widget;
     }
 
-    @UiHandler("quickFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().changeQuickFilterInput(quickFilter.getText());
-    }
+//    @UiHandler("quickFilter")
+//    void onFilterChange(final ValueChangeEvent<String> event) {
+//        getUiHandlers().changeQuickFilterInput(quickFilter.getText());
+//    }
 
 
     // --------------------------------------------------------------------------------

@@ -5,7 +5,9 @@ import stroom.expression.api.UserTimeZone;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
@@ -205,7 +207,9 @@ public final class MappingUtil {
                 100,
                 value.getShowDetail(),
                 mapList(value.getConditionalFormattingRules(), MappingUtil::map),
-                value.getModelVersion());
+                value.getModelVersion(),
+                false,
+                null);
     }
 
     public static ConditionalFormattingRule map(stroom.legacy.model_6_1.ConditionalFormattingRule value) {
@@ -219,7 +223,11 @@ public final class MappingUtil {
                 value.isHide(),
                 value.getBackgroundColor(),
                 value.getTextColor(),
-                value.isEnabled());
+                value.isEnabled(),
+                null,
+                null,
+                null,
+                null);
     }
 
     public static stroom.dashboard.shared.VisComponentSettings map(stroom.legacy.model_6_1.VisComponentSettings value) {
@@ -230,8 +238,7 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.VisComponentSettings(
                 value.getTableId(),
                 map(value.getVisualisation()),
-                value.getJSON(),
-                map(value.getTableSettings()));
+                value.getJSON());
     }
 
     public static stroom.dashboard.shared.TextComponentSettings map(stroom.legacy.model_6_1.TextComponentSettings value) {
@@ -241,13 +248,13 @@ public final class MappingUtil {
 
         return new stroom.dashboard.shared.TextComponentSettings(
                 value.getTableId(),
-                map(value.getStreamIdField()),
-                map(value.getPartNoField()),
-                map(value.getRecordNoField()),
-                map(value.getLineFromField()),
-                map(value.getColFromField()),
-                map(value.getLineToField()),
-                map(value.getColToField()),
+                mapColumnRef(value.getStreamIdField()),
+                mapColumnRef(value.getPartNoField()),
+                mapColumnRef(value.getRecordNoField()),
+                mapColumnRef(value.getLineFromField()),
+                mapColumnRef(value.getColFromField()),
+                mapColumnRef(value.getLineToField()),
+                mapColumnRef(value.getColToField()),
                 map(value.getPipeline()),
                 value.isShowAsHtml(),
                 value.isShowStepping(),
@@ -335,7 +342,18 @@ public final class MappingUtil {
                 value.getGroup(),
                 value.getWidth(),
                 value.isVisible(),
-                value.isSpecial());
+                value.isSpecial(),
+                null);
+    }
+
+    public static ColumnRef mapColumnRef(stroom.legacy.model_6_1.Field value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new ColumnRef(
+                value.getId(),
+                value.getName());
     }
 
     public static stroom.query.api.v2.Sort map(stroom.legacy.model_6_1.Sort value) {
@@ -355,12 +373,12 @@ public final class MappingUtil {
         return stroom.query.api.v2.Sort.SortDirection.valueOf(value.name());
     }
 
-    public static stroom.query.api.v2.Filter map(stroom.legacy.model_6_1.Filter value) {
+    public static IncludeExcludeFilter map(stroom.legacy.model_6_1.Filter value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Filter(value.getIncludes(), value.getExcludes());
+        return new IncludeExcludeFilter(value.getIncludes(), value.getExcludes());
     }
 
     public static stroom.query.api.v2.Format map(stroom.legacy.model_6_1.Format value) {

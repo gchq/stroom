@@ -18,6 +18,7 @@ package stroom.query.shared;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.docref.DocRef;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
@@ -140,4 +141,11 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Fetch detail for help item",
             operationId = "fetchDetail")
     QueryHelpDetail fetchDetail(QueryHelpRow row);
+
+    @POST
+    @Path("/fetchQueryDataSource")
+    @Operation(
+            summary = "Fetch the datasource referenced by a query",
+            operationId = "fetchQueryDataSource")
+    DocRef fetchQueryDataSource(DocRef queryDocRef);
 }

@@ -32,7 +32,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
@@ -88,15 +88,15 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
             final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
             final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
 
-            documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
-            documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
+            documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
 
-            securityContext.asUser(securityContext.getOrCreateUserIdentity(user.getSubjectId()), () -> {
+            securityContext.asUser(user.asRef(), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
-                        DocumentPermissionNames.USE,
+                        DocumentPermission.USE,
                         FEED_FIELDS);
                 final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
-                        DocumentPermissionNames.READ,
+                        DocumentPermission.VIEW,
                         FEED_FIELDS);
 
                 assertThat(useExpression).isNotEmpty();

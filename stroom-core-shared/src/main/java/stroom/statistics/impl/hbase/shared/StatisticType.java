@@ -32,7 +32,7 @@ public enum StatisticType implements HasDisplayValue, HasPrimitiveValue, Seriali
     VALUE("Value", 2);
 
     public static final PrimitiveValueConverter<StatisticType> PRIMITIVE_VALUE_CONVERTER =
-            new PrimitiveValueConverter<>(StatisticType.values());
+            PrimitiveValueConverter.create(StatisticType.class, StatisticType.values());
     private final String displayValue;
     private final byte primitiveValue;
 

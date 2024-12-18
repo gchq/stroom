@@ -24,7 +24,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
-import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -39,21 +38,18 @@ import javax.inject.Inject;
 
 public class PagerViewImpl extends ViewImpl implements PagerView {
 
-    /**
-     * The pager used to change the range of data.
-     */
-    @UiField
-    FormGroup pagerFormGroup;
     @UiField
     FlowPanel pagerContainer;
     @UiField
     Pager pager;
     @UiField
-    ButtonPanel buttonPanel;
+    FlowPanel toolbarWidgets;
     @UiField
     SimplePanel listContainer;
 
     private int taskCount;
+    private ButtonPanel buttonPanel;
+    private boolean addedWidgets;
 
     private final Widget widget;
 
@@ -75,24 +71,37 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public void setHeading(final String string) {
-        pagerFormGroup.setLabel(string);
-    }
-
-    @Override
     public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+        return getButtonPanel().addButton(preset);
     }
 
     @Override
     public void addButton(final ButtonView buttonView) {
-        buttonPanel.addButton(buttonView);
+        getButtonPanel().addButton(buttonView);
     }
 
     @Override
     public ToggleButtonView addToggleButton(final Preset primaryPreset,
                                             final Preset secondaryPreset) {
-        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
+        return getButtonPanel().addToggleButton(primaryPreset, secondaryPreset);
+    }
+
+    @Override
+    public void addToolbarWidget(final Widget widget) {
+        if (!addedWidgets) {
+            addedWidgets = true;
+            toolbarWidgets.getElement().getStyle().setProperty("paddingLeft", "var(--control__gap--horizontal)");
+        }
+        toolbarWidgets.add(widget);
+    }
+
+    private ButtonPanel getButtonPanel() {
+        if (buttonPanel == null) {
+            buttonPanel = new ButtonPanel();
+            toolbarWidgets.add(buttonPanel);
+            addedWidgets = true;
+        }
+        return buttonPanel;
     }
 
     @Override

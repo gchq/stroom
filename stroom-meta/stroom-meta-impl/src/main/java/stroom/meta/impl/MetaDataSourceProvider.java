@@ -45,6 +45,9 @@ public class MetaDataSourceProvider implements DataSourceProvider {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        if (!MetaFields.STREAM_STORE_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria).addAll(MetaFields.getFields()).build();
     }
 

@@ -6,6 +6,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.meta.api.MetaService;
@@ -645,7 +646,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             final String feedName;
             try {
                 feedName = NullSafe.get(
-                        feedStore.info(feedDocUuid),
+                        feedStore.info(DocRef.builder().type(FeedDoc.DOCUMENT_TYPE).uuid(feedDocUuid).build()),
                         DocRefInfo::getDocRef,
                         DocRef::getName);
             } catch (DocumentNotFoundException e) {
@@ -786,7 +787,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             throw new RuntimeException(LogUtil.message("Found " + feedDocRefs.size() + " feed docs for name "
                     + feedName + ". Feed names should be unique."));
         }
-        final String feedDocUuid = feedDocRefs.get(0).getUuid();
+        final String feedDocUuid = feedDocRefs.getFirst().getUuid();
 
         // It is possible for two feed names to share the same cleaned name, so add a UUID on the end to make it
         // is involved, so it may tie up the fork join pool

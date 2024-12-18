@@ -17,10 +17,9 @@
 package stroom.pipeline.cache;
 
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class SchemaKey implements Serializable {
 
@@ -51,29 +50,22 @@ public class SchemaKey implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(schemaLanguage);
-        builder.append(data);
-        builder.append(findXMLSchemaCriteria);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SchemaKey schemaKey = (SchemaKey) o;
+        return Objects.equals(schemaLanguage, schemaKey.schemaLanguage) &&
+                Objects.equals(data, schemaKey.data) &&
+                Objects.equals(findXMLSchemaCriteria, schemaKey.findXMLSchemaCriteria);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof SchemaKey)) {
-            return false;
-        }
-
-        final SchemaKey schemaKey = (SchemaKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(schemaLanguage, schemaKey.schemaLanguage);
-        builder.append(data, schemaKey.data);
-        builder.append(findXMLSchemaCriteria, schemaKey.findXMLSchemaCriteria);
-
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(schemaLanguage, data, findXMLSchemaCriteria);
     }
 
     @Override

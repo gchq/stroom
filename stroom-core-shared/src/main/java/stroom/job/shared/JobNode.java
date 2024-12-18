@@ -221,19 +221,19 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
     @Override
     public String toString() {
         return "JobNode{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", job=" + job +
-                ", jobType=" + jobType +
-                ", nodeName='" + nodeName + '\'' +
-                ", taskLimit=" + taskLimit +
-                ", schedule='" + schedule + '\'' +
-                ", enabled=" + enabled +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", job=" + job +
+               ", jobType=" + jobType +
+               ", nodeName='" + nodeName + '\'' +
+               ", taskLimit=" + taskLimit +
+               ", schedule='" + schedule + '\'' +
+               ", enabled=" + enabled +
+               '}';
     }
 
     @Override
@@ -265,8 +265,8 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         DISTRIBUTED("Distributed", 3),
         ;
 
-        public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                JobType.values());
+        public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER =
+                PrimitiveValueConverter.create(JobType.class, JobType.values());
 
         private final String displayValue;
         private final byte primitiveValue;

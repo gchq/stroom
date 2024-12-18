@@ -37,7 +37,7 @@ public class ChangePasswordPlugin extends Plugin {
             if (result != null) {
                 final SvgImage icon = SvgImage.PASSWORD;
                 final IconMenuItem changePasswordMenuItem = new IconMenuItem.Builder()
-                        .priority(5)
+                        .priority(50)
                         .icon(icon)
                         .iconColour(IconColour.GREY)
                         .text("Change Password")
@@ -46,7 +46,8 @@ public class ChangePasswordPlugin extends Plugin {
                         })
                         .build();
 
-                event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
+                event.getMenuItems()
+                        .addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
             }
         }, new DefaultTaskMonitorFactory(this));
     }

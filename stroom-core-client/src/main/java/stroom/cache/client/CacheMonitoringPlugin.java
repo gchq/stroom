@@ -22,7 +22,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -60,8 +60,8 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_CACHE_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_CACHE_PERMISSION;
     }
 
     @Override

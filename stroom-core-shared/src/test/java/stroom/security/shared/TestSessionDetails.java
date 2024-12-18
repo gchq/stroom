@@ -2,7 +2,7 @@ package stroom.security.shared;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +20,9 @@ class TestSessionDetails {
     @Test
     void test() throws JsonProcessingException {
         SessionDetails sessionDetails1 = new SessionDetails(
-                SimpleUserName.builder()
+                UserRef
+                        .builder()
+                        .uuid(UUID.randomUUID().toString())
                         .subjectId(UUID.randomUUID().toString())
                         .displayName("jbloggs")
                         .fullName("Jow Bloggs")

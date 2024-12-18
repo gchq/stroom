@@ -43,19 +43,21 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
-import stroom.security.user.api.UserNameService;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Expander;
+import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserDependency;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -70,11 +72,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Singleton
-class ProcessorFilterServiceImpl implements ProcessorFilterService {
+class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDependencies {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterServiceImpl.class);
 
-    private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+    private static final AppPermission PERMISSION = AppPermission.MANAGE_PROCESSORS_PERMISSION;
 
     private final ProcessorService processorService;
     private final ProcessorFilterDao processorFilterDao;
@@ -82,8 +84,6 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private final MetaService metaService;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
-    private final UserNameService userNameService;
-    private final DocumentPermissionService documentPermissionService;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
@@ -91,24 +91,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final DocRefInfoService docRefInfoService,
-                               final UserNameService userNameService,
-                               final DocumentPermissionService documentPermissionService) {
+                               final DocRefInfoService docRefInfoService) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
-        this.userNameService = userNameService;
-        this.documentPermissionService = documentPermissionService;
     }
 
     @Override
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(request.getPipeline().getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(request.getPipeline(), DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to create this processor filter");
         }
 
@@ -123,15 +119,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     public ProcessorFilter create(final Processor processor,
                                   final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        final DocRef pipelineDocRef = DocRef
+                .builder()
+                .type(PipelineDoc.DOCUMENT_TYPE)
+                .uuid(processor.getPipelineUuid())
+                .build();
+        if (!securityContext.hasDocumentPermission(pipelineDocRef, DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to create this processor filter");
         }
 
         // If we are using auto priority then try and get a priority.
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
-        // now create the filter and tracker
+        // Create the filter and tracker
         final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker
         processorFilter.setReprocess(request.isReprocess());
@@ -142,7 +143,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, processorFilter);
         return create(processorFilter);
+    }
+
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
+        filter.setRunAsUser(NullSafe.getOrElse(request,
+                CreateProcessFilterRequest::getRunAsUser,
+                securityContext.getUserRef()));
     }
 
     @Override
@@ -150,8 +158,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                         final DocRef processorFilterDocRef,
                                         final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        final DocRef pipelineDocRef = DocRef
+                .builder()
+                .type(PipelineDoc.DOCUMENT_TYPE)
+                .uuid(processor.getPipelineUuid())
+                .build();
+        if (!securityContext.hasDocumentPermission(pipelineDocRef, DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to create this processor filter");
         }
 
@@ -173,6 +186,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, processorFilter);
         if (processorFilterDocRef != null) {
             processorFilter.setUuid(processorFilterDocRef.getUuid());
         }
@@ -180,14 +194,28 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         return create(processorFilter);
     }
 
+    private void checkRunAs(final ProcessorFilter processorFilter) {
+        final UserRef currentUser = securityContext.getUserRef();
+        if (processorFilter.getRunAsUser() == null) {
+            // By default the creator of the filter becomes the run as user for the filter
+            // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
+            processorFilter.setRunAsUser(currentUser);
+        } else if (!Objects.equals(processorFilter.getRunAsUser(), currentUser) &&
+                   !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to set the run as user to '" +
+                    processorFilter.getRunAsUser().toDisplayString() +
+                    "'. You can only run a filter as " +
+                    "yourself unless you have manage users permission");
+        }
+    }
+
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.create(ensureValid(processorFilter)));
+        checkRunAs(processorFilter);
 
-        // The creator of the filter becomes the owner and the processor tasks are run as the owner
-        // of the filter (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
-        documentPermissionService.setDocumentOwner(createdFilter.getUuid(), securityContext.getUserUuid());
+        final ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
+                processorFilterDao.create(ensureValid(processorFilter)));
         createdFilter.setProcessor(processorFilter.getProcessor());
 
         return createdFilter;
@@ -208,17 +236,21 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         // Check the user has update permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(
-                processorFilter.getProcessor().getPipelineUuid(),
-                DocumentPermissionNames.UPDATE)) {
-
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        final DocRef pipelineDocRef = DocRef
+                .builder()
+                .type(PipelineDoc.DOCUMENT_TYPE)
+                .uuid(processorFilter.getProcessor().getPipelineUuid())
+                .build();
+        if (!securityContext.hasDocumentPermission(pipelineDocRef, DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to update this processor filter");
         }
 
         if (processorFilter.getUuid() == null) {
             processorFilter.setUuid(UUID.randomUUID().toString());
         }
+
+        checkRunAs(processorFilter);
 
         AuditUtil.stamp(securityContext, processorFilter);
         return securityContext.secureResult(PERMISSION, () ->
@@ -274,6 +306,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Override
     public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
         return securityContext.secureResult(PERMISSION, () -> {
+            final UserRef currentUser = securityContext.getUserRef();
             final List<ProcessorListRow> values = new ArrayList<>();
 
             final ExpressionCriteria criteria = new ExpressionCriteria(request.getExpression());
@@ -323,7 +356,6 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     values.add(processorRow);
 
                     // If the job row is open then add child rows.
-                    final String userUuid = securityContext.getUserUuid();
                     if (request.getExpandedRows() == null || request.isRowExpanded(processorRow)) {
                         processorExpander.setExpanded(true);
 
@@ -331,23 +363,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                             if (processor.equals(processorFilter.getProcessor())) {
 
-                                // If the user is not an admin then only show them filters that are owned by them.
-                                boolean include = false;
-                                if (securityContext.isAdmin()) {
-                                    include = true;
-                                } else {
-                                    try {
-                                        final String ownerUuid = securityContext
-                                                .getDocumentOwnerUuid(processorFilter.asDocRef());
-                                        if (ownerUuid.equals(userUuid)) {
-                                            include = true;
-                                        }
-                                    } catch (final RuntimeException e) {
-                                        LOGGER.debug(e::getMessage, e);
-                                    }
-                                }
-
-                                if (include) {
+                                // If the user is not an admin then only show them filters that are set to run as them.
+                                if (securityContext.isAdmin() ||
+                                    Objects.equals(currentUser, processorFilter.getRunAsUser())) {
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
                                     if (queryData != null && queryData.getExpression() != null) {
@@ -376,20 +394,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public ProcessorFilterRow getRow(final ProcessorFilter processorFilter) {
-        String userDisplayName;
-        try {
-            final String ownerUuid = securityContext
-                    .getDocumentOwnerUuid(processorFilter.asDocRef());
-            userDisplayName = Optional.ofNullable(ownerUuid)
-                    .flatMap(userNameService::getByUuid)
-                    .map(UserName::getUserIdentityForAudit)
-                    .orElse(null);
-        } catch (final RuntimeException e) {
-            userDisplayName = e.getMessage();
-            LOGGER.debug(e::getMessage, e);
-        }
-
-        return new ProcessorFilterRow(processorFilter, userDisplayName);
+        return new ProcessorFilterRow(processorFilter);
     }
 
     private void updatePipelineName(final Processor processor) {
@@ -399,13 +404,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     processor.getPipelineUuid());
             processor.setPipelineName(pipelineName.orElseGet(() -> {
                 LOGGER.warn("Unable to find Pipeline " +
-                        processor.getPipelineUuid() +
-                        " associated with Processor " +
-                        processor.getUuid() +
-                        " (id: " +
-                        processor.getId() +
-                        ")" +
-                        " Has it been deleted?");
+                            processor.getPipelineUuid() +
+                            " associated with Processor " +
+                            processor.getUuid() +
+                            " (id: " +
+                            processor.getId() +
+                            ")" +
+                            " Has it been deleted?");
                 return null;
             }));
         }
@@ -441,14 +446,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         if (!PipelineDoc.DOCUMENT_TYPE.equals(pipelineDocRef.getType())) {
             throw new IllegalArgumentException("Supplied pipeline reference cannot be of type " +
-                    pipelineDocRef.getType());
+                                               pipelineDocRef.getType());
         }
 
         // First try to find the associated processors
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
                 .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
-        if (processorResultPage.size() == 0) {
+        if (processorResultPage.isEmpty()) {
             return new ResultPage<>(new ArrayList<>());
         }
 
@@ -518,7 +523,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         processorService.fetchByUuid(processorUuid).ifPresent(processor -> {
                             final ProcessorFilter processorFilter = create(processor, request);
 
-                            info.add(new ReprocessDataInfo(Severity.INFO, "Added reprocess filter to " +
+                            info.add(new ReprocessDataInfo(Severity.INFO,
+                                    "Added reprocess filter to " +
                                     getPipelineDetails(processor.getPipelineUuid()) +
                                     " with priority " +
                                     processorFilter.getPriority(),
@@ -527,7 +533,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     } catch (final RuntimeException e) {
                         info.add(new ReprocessDataInfo(Severity.ERROR,
                                 "Unable to add reprocess filter for processor " +
-                                        processorUuid, e.getMessage()));
+                                processorUuid, e.getMessage()));
                     }
                 });
             } catch (final RuntimeException e) {
@@ -602,5 +608,39 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         AuditUtil.stamp(securityContext, processorFilter);
         return processorFilter;
+    }
+
+    @Override
+    public List<UserDependency> getUserDependencies(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+            && !securityContext.isCurrentUser(userRef)) {
+            throw new PermissionException(
+                    userRef,
+                    "You do not have permission to view the Pipeline Filters that are configured to run-as user "
+                    + userRef.toInfoString());
+        }
+
+        return NullSafe.stream(processorFilterDao.fetchByRunAsUser(userRef.getUuid()))
+                .map(processorFilter -> {
+                    final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
+
+                    DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
+                    pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
+
+                    final String details = LogUtil.message(
+                            "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
+                    return new UserDependency(
+                            userRef,
+                            details,
+                            processorFilter.getPipeline());
+                })
+//                    .filter(userDependency ->
+//                            NullSafe.getOrElse(
+//                                    userDependency.getDocRef(),
+//                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
+//                                    true))
+                .toList();
     }
 }

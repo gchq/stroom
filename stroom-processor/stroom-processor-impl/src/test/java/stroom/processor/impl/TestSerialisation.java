@@ -19,13 +19,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSerialisation {
+
     @Test
     void test() throws Exception {
         final ObjectMapper objectMapper = JsonUtil.getMapper();
 
         final List<ProcessorListRow> rows = new ArrayList<>();
         rows.add(new ProcessorRow(new Expander(), new Processor()));
-        rows.add(new ProcessorFilterRow(new ProcessorFilter(), "My display name"));
+        rows.add(new ProcessorFilterRow(new ProcessorFilter()));
 
         final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(
                 rows,

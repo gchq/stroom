@@ -7,7 +7,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.SearchRequest;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -57,8 +57,8 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
     }
 
     public StreamingAnalytic get(final DocRef analyticRuleRef) {
-        if (!securityContext.hasDocumentPermission(analyticRuleRef.getUuid(), DocumentPermissionNames.USE)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(analyticRuleRef, DocumentPermission.USE)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to use this analytic doc");
         }
         return cache.get(analyticRuleRef);

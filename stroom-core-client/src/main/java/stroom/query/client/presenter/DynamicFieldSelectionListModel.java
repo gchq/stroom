@@ -27,7 +27,7 @@ public class DynamicFieldSelectionListModel
 
     private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;
-    private DocRef dataSourceRef;
+    private Consumer<Consumer<DocRef>> dataSourceRefConsumer;
     private Boolean queryable;
     private FindFieldCriteria lastCriteria;
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
@@ -45,7 +45,7 @@ public class DynamicFieldSelectionListModel
                               final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
-        if (dataSourceRef != null) {
+        consumeDataSource(dataSourceRef -> {
             final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
@@ -79,11 +79,11 @@ public class DynamicFieldSelectionListModel
                     }
                 }, taskMonitorFactory);
             }
-        }
+        });
     }
 
-    public void setDataSourceRef(final DocRef dataSourceRef) {
-        this.dataSourceRef = dataSourceRef;
+    public void setDataSourceRefConsumer(final Consumer<Consumer<DocRef>> dataSourceRefConsumer) {
+        this.dataSourceRefConsumer = dataSourceRefConsumer;
     }
 
     public void setQueryable(final Boolean queryable) {
@@ -97,7 +97,14 @@ public class DynamicFieldSelectionListModel
 
     @Override
     public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
-        dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer, taskMonitorFactory);
+        consumeDataSource(dataSourceRef ->
+                dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer, taskMonitorFactory));
+    }
+
+    private void consumeDataSource(final Consumer<DocRef> dsc) {
+        if (dataSourceRefConsumer != null) {
+            dataSourceRefConsumer.accept(dsc);
+        }
     }
 
     @Override

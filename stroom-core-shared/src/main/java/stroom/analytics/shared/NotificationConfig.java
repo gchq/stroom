@@ -19,6 +19,7 @@ package stroom.analytics.shared;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +34,8 @@ public class NotificationConfig {
     @JsonProperty
     private final String uuid;
     @JsonProperty
+    private final Boolean enabled;
+    @JsonProperty
     private final boolean limitNotifications;
     @JsonProperty
     private final int maxNotifications;
@@ -46,12 +49,14 @@ public class NotificationConfig {
     @SuppressWarnings("checkstyle:lineLength")
     @JsonCreator
     public NotificationConfig(@JsonProperty("uuid") final String uuid,
+                              @JsonProperty("enabled") final Boolean enabled,
                               @JsonProperty("limitNotifications") final boolean limitNotifications,
                               @JsonProperty("maxNotifications") final int maxNotifications,
                               @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
                               @JsonProperty("destinationType") final NotificationDestinationType destinationType,
                               @JsonProperty("destination") final NotificationDestination destination) {
         this.uuid = uuid;
+        this.enabled = enabled;
         this.limitNotifications = limitNotifications;
         this.maxNotifications = maxNotifications;
         this.resumeAfter = resumeAfter;
@@ -61,6 +66,15 @@ public class NotificationConfig {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    @JsonIgnore
+    public boolean isEnabled() {
+        return enabled != Boolean.FALSE;
     }
 
     public boolean isLimitNotifications() {
@@ -103,13 +117,14 @@ public class NotificationConfig {
     @Override
     public String toString() {
         return "AnalyticNotificationConfig{" +
-                "uuid='" + uuid + '\'' +
-                ", limitNotifications=" + limitNotifications +
-                ", maxNotifications=" + maxNotifications +
-                ", resumeAfter=" + resumeAfter +
-                ", destinationType=" + destinationType +
-                ", destination=" + destination +
-                '}';
+               "uuid='" + uuid + '\'' +
+               ", enabled=" + enabled +
+               ", limitNotifications=" + limitNotifications +
+               ", maxNotifications=" + maxNotifications +
+               ", resumeAfter=" + resumeAfter +
+               ", destinationType=" + destinationType +
+               ", destination=" + destination +
+               '}';
     }
 
     public static Builder builder() {
@@ -127,6 +142,7 @@ public class NotificationConfig {
     public static class Builder {
 
         private String uuid;
+        private Boolean enabled = true;
         private boolean limitNotifications;
         private int maxNotifications = 1;
         private SimpleDuration resumeAfter;
@@ -138,6 +154,7 @@ public class NotificationConfig {
 
         public Builder(final NotificationConfig doc) {
             this.uuid = doc.uuid;
+            this.enabled = doc.enabled;
             this.limitNotifications = doc.limitNotifications;
             this.maxNotifications = doc.maxNotifications;
             this.resumeAfter = doc.resumeAfter;
@@ -147,6 +164,11 @@ public class NotificationConfig {
 
         public Builder uuid(final String uuid) {
             this.uuid = uuid;
+            return this;
+        }
+
+        public Builder enabled(final Boolean enabled) {
+            this.enabled = enabled;
             return this;
         }
 
@@ -178,6 +200,7 @@ public class NotificationConfig {
         public NotificationConfig build() {
             return new NotificationConfig(
                     uuid,
+                    enabled,
                     limitNotifications,
                     maxNotifications,
                     resumeAfter,

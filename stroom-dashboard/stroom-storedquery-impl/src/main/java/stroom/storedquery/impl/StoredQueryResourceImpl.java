@@ -57,7 +57,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
         addCriteria(andBuilder, "Favorite", criteria::getFavourite);
         addCriteria(andBuilder, "ComponentId", criteria::getComponentId);
-        addCriteria(andBuilder, "UserId", criteria::getOwnerUuid);
+        addCriteria(andBuilder, "UserId", criteria::getOwner);
         addCriteria(andBuilder, "DashboardUuid", criteria::getDashboardUuid);
 
         final Query query = Query.builder()

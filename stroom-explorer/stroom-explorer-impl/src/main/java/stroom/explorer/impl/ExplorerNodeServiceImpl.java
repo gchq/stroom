@@ -25,8 +25,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -190,7 +192,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case NONE:
                     // Remove all current permissions, ignore permissions of the destination folder, just make the
                     // new item owned by the current user.
-                    clearDocumentPermissions(docRef);
+                    removeAllDocumentPermissions(docRef);
                     addDocumentPermissions(null, docRef, true, true);
                     break;
                 case SOURCE:
@@ -199,7 +201,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case DESTINATION:
                     // Remove all current permissions, add permissions of the destination folder, and make the new
                     // item owned by the current user.
-                    clearDocumentPermissions(docRef);
+                    removeAllDocumentPermissions(docRef);
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 case COMBINED:
@@ -270,7 +272,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private synchronized void createRoot() {
         final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        if (roots == null || roots.size() == 0) {
+        if (NullSafe.isEmptyCollection(roots)) {
             // Insert System root node.
             final DocRef root = ExplorerConstants.SYSTEM_DOC_REF;
             addNode(root);
@@ -280,7 +282,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
         // Only return entries the user has permission to see.
-        if (docRef != null && securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.USE)) {
+        if (docRef != null && securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             return getNodeForDocRef(docRef)
                     .map(this::createExplorerNode);
         } else {
@@ -391,41 +393,45 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private void addDocumentPermissions(final DocRef source,
                                         final DocRef dest,
-                                        final boolean owner,
+                                        final boolean setOwnerPerm,
                                         final boolean cascade) {
-        final String sourceType = NullSafe.get(source, DocRef::getType);
-        final String sourceUuid = NullSafe.get(source, DocRef::getUuid);
+        final UserRef userRef = securityContext.getUserRef();
+        final boolean isFolder = NullSafe.test(source, DocRef::getType, DocumentTypes::isFolder);
 
-        if (cascade
-                && sourceType != null
-                && sourceUuid != null
-                && DocumentTypes.isFolder(sourceType)) {
-            final List<ExplorerNode> descendants = getDescendants(dest);
-            descendants.forEach(descendant ->
-                    documentPermissionService.addDocumentPermissions(
-                            source,
-                            descendant.getDocRef(),
-                            owner)
-            );
+        final Consumer<DocRef> docRefConsumer = destDocRef -> {
+            if (setOwnerPerm) {
+                // We are making them the owner therefore, they won't hold owner, and thus we will get
+                // a perm exception as they need owner to change the perms. Hence, run as proc user.
+                securityContext.asProcessingUser(() ->
+                        documentPermissionService.setPermission(destDocRef, userRef, DocumentPermission.OWNER));
+            }
+            // User should now be in a position to add other perms
+            documentPermissionService.addDocumentPermissions(source, destDocRef);
+        };
+
+        if (cascade && isFolder) {
+            getDescendants(dest).forEach(descendant -> {
+                final DocRef descendantDocRef = descendant.getDocRef();
+                docRefConsumer.accept(descendantDocRef);
+            });
         }
 
-        documentPermissionService.addDocumentPermissions(source, dest, owner);
+        docRefConsumer.accept(dest);
     }
 
-    private void clearDocumentPermissions(final DocRef docRef) {
-        documentPermissionService.clearDocumentPermissions(docRef.getUuid());
+    private void removeAllDocumentPermissions(final DocRef docRef) {
+        documentPermissionService.removeAllDocumentPermissions(docRef);
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        if (Objects.equals(ExplorerConstants.SYSTEM_NODE.getType(), explorerTreeNode.getType())
-                && Objects.equals(ExplorerConstants.SYSTEM_NODE.getUuid(), explorerTreeNode.getUuid())) {
+        if (ExplorerConstants.isSystemNode(explorerTreeNode.getType(), explorerTreeNode.getUuid())) {
             return ExplorerConstants.SYSTEM_NODE;
-        } else if (Objects.equals(ExplorerConstants.FAVOURITES_NODE.getType(), explorerTreeNode.getType())
-                && Objects.equals(ExplorerConstants.FAVOURITES_NODE.getUuid(), explorerTreeNode.getUuid())) {
+        } else if (ExplorerConstants.isFavouritesNode(explorerTreeNode.getType(), explorerTreeNode.getUuid())) {
             return ExplorerConstants.FAVOURITES_NODE;
         } else {
             return explorerTreeNode.buildExplorerNode()
-                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType()).orElse(null))
+                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType())
+                            .orElse(null))
                     .build();
         }
     }

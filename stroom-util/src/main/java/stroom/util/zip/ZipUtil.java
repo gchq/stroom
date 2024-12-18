@@ -117,6 +117,7 @@ public final class ZipUtil {
         } finally {
             zipOutputStream.closeArchiveEntry();
         }
+        zipOutputStream.closeArchiveEntry();
     }
 
     public static void unzip(final Path zipFile, final Path dir) throws IOException {
@@ -143,10 +144,10 @@ public final class ZipUtil {
         }
     }
 
-    public static List<String> pathList(final Path zipFile) throws IOException {
+    public static List<String> pathList(final Path zipFilePath) throws IOException {
         final List<String> pathList = new ArrayList<>();
         try (final ZipArchiveInputStream zip =
-                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFilePath)))) {
             ZipArchiveEntry zipEntry;
             while ((zipEntry = zip.getNextEntry()) != null) {
                 pathList.add(zipEntry.getName());

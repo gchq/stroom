@@ -34,7 +34,6 @@ import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.CommonTranslationTestHelper;
 
@@ -51,7 +50,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
-@IncludeModule(MockSecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)

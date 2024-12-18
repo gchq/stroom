@@ -16,8 +16,6 @@
 
 package stroom.query.language.functions;
 
-import java.time.Instant;
-
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Subtract.NAME,

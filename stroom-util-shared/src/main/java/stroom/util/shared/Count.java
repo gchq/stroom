@@ -109,9 +109,6 @@ public class Count<T extends Number> {
 
     @Override
     public String toString() {
-        final ToStringBuilder builder = new ToStringBuilder();
-        builder.append("count", count);
-        builder.append("exact", exact);
-        return builder.toString();
+        return "count=" + count + ", exact=" + exact;
     }
 }

@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -37,6 +38,7 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     @Inject
     public ElasticIndexPresenter(
@@ -44,7 +46,8 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
             final LinkTabPanelView view,
             final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenterProvider,
             final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
+            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final DocumentUserPermissionsTabProvider<ElasticIndexDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocumentEditTabProvider<>(indexSettingsPresenterProvider::get));
@@ -66,11 +69,22 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
                 return document;
             }
         });
+        addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(SETTINGS);
     }
 
     @Override
     public String getType() {
         return ElasticIndexDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected TabData getPermissionsTab() {
+        return PERMISSIONS;
+    }
+
+    @Override
+    protected TabData getDocumentationTab() {
+        return DOCUMENTATION;
     }
 }

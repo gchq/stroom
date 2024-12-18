@@ -16,20 +16,22 @@
 
 package stroom.util.shared;
 
+import stroom.docref.DocRef;
+
 public class DocumentOwnerException extends EntityServiceException {
 
-    private String documentUuid;
+    private DocRef docRef;
 
     public DocumentOwnerException() {
     }
 
-    public DocumentOwnerException(final String documentUuid,
+    public DocumentOwnerException(final DocRef docRef,
                                   final String message) {
         super(message);
-        this.documentUuid = documentUuid;
+        this.docRef = docRef;
     }
 
-    public String getDocumentUuid() {
-        return documentUuid;
+    public DocRef getDocRef() {
+        return docRef;
     }
 }

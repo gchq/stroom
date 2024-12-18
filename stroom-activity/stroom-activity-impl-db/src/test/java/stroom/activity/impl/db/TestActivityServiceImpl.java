@@ -29,6 +29,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.exception.DataChangedException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,8 +48,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestActivityServiceImpl {
 
     private ActivityService activityService;
-
-    private SecurityContext securityContext = new MockSecurityContext();
+    private final SecurityContext securityContext = new MockSecurityContext();
 
     @BeforeEach
     void before() {
@@ -61,7 +63,7 @@ class TestActivityServiceImpl {
     void test() {
         // Delete all existing.
         ResultPage<Activity> list = activityService.find(null);
-        list.forEach(activity -> activityService.delete(activity.getId()));
+        list.forEach(activity -> activityService.deleteAllByOwner(activity.getId()));
 
         // Create 1
         Activity activity1 = activityService.create();
@@ -104,30 +106,32 @@ class TestActivityServiceImpl {
         assertThat(list3.getFirst().getId()).isEqualTo(activity2.getId());
 
         // Delete one
-        activityService.delete(activity1.getId());
+        activityService.deleteAllByOwner(activity1.getId());
         final ResultPage<Activity> list4 = activityService.find(null);
         assertThat(list4.size()).isEqualTo(1);
 
         // Delete the other
-        activityService.delete(activity2.getId());
+        activityService.deleteAllByOwner(activity2.getId());
         final ResultPage<Activity> list5 = activityService.find(null);
         assertThat(list5.size()).isEqualTo(0);
     }
 
     @Test
     void testValidation() {
+        final UserRef userRef = UserRef.builder().uuid(UUID.randomUUID().toString()).subjectId("test").build();
+
         // Save 1
         Activity activity1 = Activity.create();
         activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
         activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
-        activity1.setUserId("test");
+        activity1.setUserRef(userRef);
         final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
         assertThat(activityValidationResult1.isValid()).isTrue();
 
         Activity activity2 = Activity.create();
         activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
         activity2.getDetails().add(createProp("this", ".{80,}"), "that");
-        activity2.setUserId("test");
+        activity2.setUserRef(userRef);
         final ActivityValidationResult activityValidationResult2 = activityService.validate(activity2);
         assertThat(activityValidationResult2.isValid()).isFalse();
     }

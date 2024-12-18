@@ -59,7 +59,7 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
                                   final NativeEvent event,
                                   final ValueUpdater<CommandLink> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5)) {
+        if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
             final Command command = GwtNullSafe.get(value, CommandLink::getCommand);
             if (command != null) {
                 command.execute();
@@ -72,7 +72,7 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
         final NativeEvent nativeEvent = event.getNativeEvent();
         if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
-            return ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 0, 5);
+            return ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
         }
         return false;
     }

@@ -26,7 +26,7 @@ import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -75,7 +75,7 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(jobNode);
 
-        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<JobNode> before = fetch(jobNode.getId());
 
             // We always want to update a job node instance even if we have a stale version.
@@ -90,14 +90,14 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(batchScheduleRequest.getJobType(), batchScheduleRequest.getSchedule().getExpression());
 
-        securityContext.secure(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             jobNodeDao.updateSchedule(batchScheduleRequest);
         });
     }
 
     JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(
-                PermissionNames.MANAGE_JOBS_PERMISSION,
+                AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> {
                     final JobNodeListResponse jobNodeListResponse = jobNodeDao.find(findJobNodeCriteria);
 

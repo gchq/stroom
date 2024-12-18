@@ -22,7 +22,7 @@ import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -116,7 +116,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
         return securityContext.useAsReadResult(() -> {
 
             // Check for read permission.
-            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 // If there is no read permission then return no fields.
                 return null;
             }

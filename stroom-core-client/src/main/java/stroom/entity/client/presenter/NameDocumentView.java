@@ -18,7 +18,6 @@
 package stroom.entity.client.presenter;
 
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.gwtplatform.mvp.client.HasUiHandlers;

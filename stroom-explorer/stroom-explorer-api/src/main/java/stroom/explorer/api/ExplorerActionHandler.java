@@ -58,32 +58,32 @@ public interface ExplorerActionHandler
     /**
      * Move an existing document identified by uuid, to the specified location.
      *
-     * @param uuid The uuid of the document you want to move.
+     * @param docRef The docRef of the document you want to move.
      * @return A doc ref for the moved document.
      */
-    DocRef moveDocument(String uuid);
+    DocRef moveDocument(DocRef docRef);
 
     /**
      * Change the name of an existing document identified by uuid, to the specified name.
      *
-     * @param uuid The uuid of the document you want to rename.
+     * @param docRef The docRef of the document you want to rename.
      * @param name The new name of the document.
      * @return A doc ref for the renamed document.
      */
-    DocRef renameDocument(String uuid, String name);
+    DocRef renameDocument(DocRef docRef, String name);
 
     /**
      * Delete an existing document identified by uuid.
      *
      * @param uuid The uuid of the document you want to delete.
      */
-    void deleteDocument(String uuid);
+    void deleteDocument(DocRef docRef);
 
     /**
      * Retrieve the audit information for a particular doc ref
      *
-     * @param uuid The UUID to return the information for
+     * @param docRef The docRef to return the information for
      * @return The Audit information about the given DocRef.
      */
-    DocRefInfo info(String uuid);
+    DocRefInfo info(DocRef docRef);
 }

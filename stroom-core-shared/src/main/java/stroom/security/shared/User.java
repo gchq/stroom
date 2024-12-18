@@ -3,8 +3,8 @@ package stroom.security.shared;
 
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,7 +18,7 @@ import java.util.Objects;
  * Represents a user or a named group of users.
  */
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo, HasIntegerId, UserName {
+public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
 
     /**
      * The unique subjectId of the default Admin user that gets created if
@@ -52,6 +52,8 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
     private String displayName;
     @JsonProperty
     private String fullName;
+    @JsonProperty
+    private boolean enabled;
 
     /**
      * Is this user a user group or a regular user?
@@ -73,7 +75,8 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
                 @JsonProperty("uuid") final String uuid,
                 @JsonProperty("group") final boolean group,
                 @JsonProperty("displayName") final String displayName,
-                @JsonProperty("fullName") final String fullName) {
+                @JsonProperty("fullName") final String fullName,
+                @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -85,6 +88,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         this.group = group;
         this.displayName = displayName;
         this.fullName = fullName;
+        this.enabled = enabled;
     }
 
     /**
@@ -155,7 +159,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      *
      * @return The unique identifier for this user or group.
      */
-    @Override
     public String getSubjectId() {
         return subjectId;
     }
@@ -174,7 +177,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
-    @Override
     public String getDisplayName() {
         return displayName;
     }
@@ -195,7 +197,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
-    @Override
     public String getFullName() {
         return fullName;
     }
@@ -213,7 +214,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Unrelated to any subjectId that an IDP may use to identify the user.
      * Unique across both users and groups, unlike {@code name}.
      */
-    @Override
     public String getUuid() {
         return uuid;
     }
@@ -236,12 +236,22 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         this.group = group;
     }
 
-    public UserName asUserName() {
-        return new SimpleUserName(subjectId, displayName, fullName, uuid);
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public String asCombinedName() {
-        return UserName.buildCombinedName(subjectId, displayName);
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public UserRef asRef() {
+        return new UserRef(uuid, subjectId, displayName, fullName, group, enabled);
+    }
+
+    @JsonIgnore
+    @Override
+    public UserRef getUserRef() {
+        return asRef();
     }
 
     /**
@@ -249,26 +259,40 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      */
     @JsonIgnore
     public String getType() {
-        return group
+        return getType(CaseType.SENTENCE);
+    }
+
+    public String getType(final CaseType caseType) {
+        Objects.requireNonNull(caseType);
+        final String type = group
                 ? "Group"
                 : "User";
+        if (CaseType.SENTENCE == caseType) {
+            return type;
+        } else if (CaseType.LOWER == caseType) {
+            return type.toLowerCase();
+        } else if (CaseType.UPPER == caseType) {
+            return type.toUpperCase();
+        } else {
+            throw new IllegalArgumentException("Unknown caseType: " + caseType);
+        }
     }
 
     @Override
     public String toString() {
         return "User{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", name='" + subjectId + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", group=" + group +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", name='" + subjectId + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", displayName='" + displayName + '\'' +
+               ", fullName='" + fullName + '\'' +
+               ", group=" + group +
+               '}';
     }
 
     @Override
@@ -313,6 +337,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         private boolean group;
         private String displayName;
         private String fullName;
+        private boolean enabled = true;
 
         private Builder() {
         }
@@ -329,10 +354,19 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
             this.group = user.group;
             this.displayName = user.displayName;
             this.fullName = user.fullName;
+            this.enabled = user.enabled;
         }
 
         public Builder id(final int value) {
             id = value;
+            return this;
+        }
+
+        /**
+         * A globally unique identifier for identifying this user in other areas of stroom code.
+         */
+        public Builder uuid(final String value) {
+            uuid = value;
             return this;
         }
 
@@ -346,11 +380,8 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
             return this;
         }
 
-        /**
-         * A globally unique identifier for identifying this user in other areas of stroom code.
-         */
-        public Builder uuid(final String value) {
-            uuid = value;
+        public Builder displayName(final String displayName) {
+            this.displayName = displayName;
             return this;
         }
 
@@ -359,6 +390,11 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
          */
         public Builder group(final boolean value) {
             group = value;
+            return this;
+        }
+
+        public Builder enabled(final boolean value) {
+            enabled = value;
             return this;
         }
 
@@ -373,7 +409,8 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
                     uuid,
                     group,
                     displayName,
-                    fullName);
+                    fullName,
+                    enabled);
         }
     }
 }

@@ -49,7 +49,7 @@ public class LSResourceResolverImpl implements LSResourceResolver {
         // If we couldn't find a schema then look at all available schemas.
         if (xmlSchema == null) {
             final FindXMLSchemaCriteria findXMLSchemaCriteria = new FindXMLSchemaCriteria();
-            findXMLSchemaCriteria.setUser(schemaConstraint.getUser());
+            findXMLSchemaCriteria.setUserRef(schemaConstraint.getUserRef());
             final SchemaSet allSchemas = xmlSchemaCache.getSchemaSet(findXMLSchemaCriteria);
             xmlSchema = allSchemas.getBestMatch(systemId, namespaceURI);
         }

@@ -28,7 +28,6 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 
 import jakarta.inject.Inject;
@@ -47,7 +46,6 @@ import java.time.ZoneOffset;
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
-@IncludeModule(MockSecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)

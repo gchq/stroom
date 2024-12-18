@@ -42,6 +42,8 @@ public class AnalyticNotificationEditViewImpl
     private final Widget widget;
 
     @UiField
+    CustomCheckBox enabled;
+    @UiField
     CustomCheckBox limitNotifications;
     @UiField
     ValueSpinner maxNotifications;
@@ -55,6 +57,7 @@ public class AnalyticNotificationEditViewImpl
     @Inject
     public AnalyticNotificationEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        enabled.setValue(true);
         maxNotifications.setMin(1);
         maxNotifications.setMax(1000);
         maxNotifications.setValue(1);
@@ -65,6 +68,16 @@ public class AnalyticNotificationEditViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled.getValue();
+    }
+
+    @Override
+    public void setEnabled(final boolean enabled) {
+        this.enabled.setValue(enabled);
     }
 
     @Override
@@ -110,6 +123,11 @@ public class AnalyticNotificationEditViewImpl
     @Override
     public void setDestinationView(final View view) {
         destinationContainer.setWidget(view.asWidget());
+    }
+
+    @UiHandler("enabled")
+    public void onEnabled(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onDirty();
     }
 
     @UiHandler("limitNotifications")

@@ -25,7 +25,6 @@ import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

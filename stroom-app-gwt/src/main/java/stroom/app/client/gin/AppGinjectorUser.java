@@ -32,6 +32,8 @@ import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
+import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.query.gin.QueryGinjector;
@@ -150,6 +152,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         StroomStatsStoreModule.class,
         TaskModule.class,
         VisModule.class,
+        EmbeddedQueryModule.class,
         VisualisationModule.class,
         ViewModule.class,
         WelcomeModule.class,
@@ -192,6 +195,7 @@ public interface AppGinjectorUser extends
         TaskGinjector,
         ViewGinjector,
         VisGinjector,
+        EmbeddedQueryGinjector,
         VisualisationGinjector,
         WelcomeGinjector,
         XMLSchemaGinjector,

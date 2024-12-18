@@ -173,12 +173,14 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private TableSettings createTableSettings(Boolean extractValues) {
 
         final Column groupedUserId = Column.builder()
+                .id("User")
                 .name("User")
                 .expression(ParamSubstituteUtil.makeParam("User"))
                 .group(0)
                 .build();
 
         final Column countColumn = Column.builder()
+                .id("Count")
                 .name("Count")
                 .expression("count()")
                 .format(Format.NUMBER)

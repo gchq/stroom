@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.IncludeExcludeFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,8 @@ import java.util.regex.Pattern;
 
 public class CompiledIncludeExcludeFilter {
 
-    public static Optional<Predicate<String>> create(final Filter filter, final Map<String, String> paramMap) {
+    public static Optional<Predicate<String>> create(final IncludeExcludeFilter filter,
+                                                     final Map<String, String> paramMap) {
         if (filter == null) {
             return Optional.empty();
         }

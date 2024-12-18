@@ -51,6 +51,9 @@ public class SearchableDual implements Searchable {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        if (!DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria).addAll(FIELDS).build();
     }
 

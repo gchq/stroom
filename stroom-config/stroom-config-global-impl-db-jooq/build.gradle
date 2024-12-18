@@ -25,7 +25,8 @@ jooq {
                 logging = org.jooq.meta.jaxb.Logging.WARN
                 jdbc {
                     driver = 'com.mysql.cj.jdbc.Driver'
-                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
+                    // Parsed from local.yml
+                    url = jdbcUrl
                     user = 'stroomuser'
                     password = 'stroompassword1'
                 }
@@ -33,7 +34,10 @@ jooq {
                     name = 'org.jooq.codegen.JavaGenerator'
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
-                        inputSchema = 'stroom'
+                        // Parsed from local.yml
+                        inputSchema = dbSchema
+                        // The schema name to use in the genned classes, instead of inputSchema
+                        outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
                         includes = 'config|config_update_tracker|preferences'

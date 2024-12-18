@@ -9,11 +9,16 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public abstract class AbstractQueryTest {
+
     private static final String PART_DELIMITER = "\n-----\n";
     private static final String IO_DELIMITER = "\n=====\n";
 
@@ -36,12 +41,39 @@ public abstract class AbstractQueryTest {
         }
 
         final String in = Files.readString(inFile);
-        final String[] inputs = in.split(PART_DELIMITER);
+        Pattern pattern = Pattern.compile("(?:^|\n)-----[^\n]*\n?");
+        final Matcher matcher = pattern.matcher(in);
+
+        final List<String> inputs = new ArrayList<>();
+        int end = 0;
+        while (matcher.find(end)) {
+            final String substring = in.substring(end, matcher.start());
+            if (!substring.isEmpty()) {
+                inputs.add(substring);
+            }
+            end = matcher.end();
+        }
+        final String substring = in.substring(end);
+        if (!substring.isEmpty()) {
+            inputs.add(substring);
+        }
+
+
+//        final String[] inputs = in.split(PART_DELIMITER);
 
         final AtomicInteger count = new AtomicInteger();
-        return Arrays
-                .stream(inputs)
-                .filter(input -> input.length() > 0)
+//        return Arrays
+//                .stream(inputs)
+//                .filter(input -> !input.isEmpty())
+//                .map(input -> {
+//                    final int testNum = count.incrementAndGet();
+//                    return DynamicTest.dynamicTest(
+//                            "Test " + testNum,
+//                            () -> testInput(input, outFile, expectedFile, testNum));
+//                });
+
+        return inputs
+                .stream()
                 .map(input -> {
                     final int testNum = count.incrementAndGet();
                     return DynamicTest.dynamicTest(

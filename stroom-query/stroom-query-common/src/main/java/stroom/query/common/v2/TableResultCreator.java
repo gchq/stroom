@@ -25,7 +25,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -42,19 +42,23 @@ public class TableResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultCreator.class);
 
-    private final ColumnFormatter columnFormatter;
+    private final FormatterFactory formatterFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private TableResult lastResult;
 
-    public TableResultCreator(final ColumnFormatter columnFormatter) {
-        this(columnFormatter, false);
+    public TableResultCreator(final FormatterFactory formatterFactory,
+                              final ExpressionPredicateFactory expressionPredicateFactory) {
+        this(formatterFactory, expressionPredicateFactory, false);
     }
 
-    public TableResultCreator(final ColumnFormatter columnFormatter,
+    public TableResultCreator(final FormatterFactory formatterFactory,
+                              final ExpressionPredicateFactory expressionPredicateFactory,
                               final boolean cacheLastResult) {
-        this.columnFormatter = columnFormatter;
+        this.formatterFactory = formatterFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -89,21 +93,25 @@ public class TableResultCreator implements ResultCreator {
                 optionalRowCreator = ConditionalFormattingRowCreator.create(
                         dataStore.getColumns(),
                         columns,
-                        columnFormatter,
+                        tableSettings.applyValueFilters(),
+                        formatterFactory,
                         keyFactory,
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
+                        expressionPredicateFactory,
                         errorConsumer);
                 if (optionalRowCreator.isEmpty()) {
                     optionalRowCreator = FilteredRowCreator.create(
                             dataStore.getColumns(),
                             columns,
-                            columnFormatter,
+                            tableSettings.applyValueFilters(),
+                            formatterFactory,
                             keyFactory,
                             tableSettings.getAggregateFilter(),
                             dataStore.getDateTimeSettings(),
-                            errorConsumer);
+                            errorConsumer,
+                            expressionPredicateFactory);
                 }
             }
 
@@ -111,7 +119,7 @@ public class TableResultCreator implements ResultCreator {
                 optionalRowCreator = SimpleRowCreator.create(
                         dataStore.getColumns(),
                         columns,
-                        columnFormatter,
+                        formatterFactory,
                         keyFactory,
                         errorConsumer);
             }

@@ -28,7 +28,7 @@ import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
@@ -80,7 +80,7 @@ class ContentServiceImpl implements ContentService {
 
     @Override
     public ImportConfigResponse importContent(final ImportConfigRequest request) {
-        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+        return securityContext.secureResult(AppPermission.IMPORT_CONFIGURATION, () -> {
             try {
                 // Import file.
                 final Path file = resourceStore.getTempFile(request.getResourceKey());
@@ -117,7 +117,7 @@ class ContentServiceImpl implements ContentService {
 //    public List<ImportState> confirmImport(final ResourceKey resourceKey,
 //                                           final ImportSettings importSettings,
 //                                           final List<ImportState> confirmList) {
-//        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+//        return securityContext.secureResult(AppPermissionEnum.IMPORT_CONFIGURATION, () -> {
 //            try {
 //                final Path tempPath = resourceStore.getTempFile(resourceKey);
 //                return importExportService.importConfig(tempPath, importSettings, confirmList);
@@ -133,7 +133,7 @@ class ContentServiceImpl implements ContentService {
     public ResourceGeneration exportContent(final DocRefs docRefs) {
         Objects.requireNonNull(docRefs);
 
-        return securityContext.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
+        return securityContext.secureResult(AppPermission.EXPORT_CONFIGURATION, () -> {
             final ResourceStore resourceStore = this.resourceStore;
             final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
             final Path file = resourceStore.getTempFile(guiKey);
@@ -156,16 +156,16 @@ class ContentServiceImpl implements ContentService {
 
     @Override
     public ResourceKey exportAll() {
-        if (!securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasAppPermission(AppPermission.EXPORT_CONFIGURATION)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to export all config");
         }
         final ExportConfig exportConfig = exportConfigProvider.get();
         if (!exportConfig.isEnabled()) {
             LOGGER.warn("Attempt by user '{}' to export all data when {} is not enabled.",
-                    securityContext.getSubjectId(),
+                    securityContext.getUserRef(),
                     exportConfig.getFullPathStr(ExportConfig.ENABLED_PROP_NAME));
-            throw new PermissionException(securityContext.getUserIdentityForAudit(), "Export is not enabled");
+            throw new PermissionException(securityContext.getUserRef(), "Export is not enabled");
         }
 
         final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");

@@ -26,7 +26,7 @@ public class CopyTextCell extends AbstractCell<String> implements EventCell {
         final NativeEvent nativeEvent = event.getNativeEvent();
         if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
-            return ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 0, 5);
+            return ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5);
         }
         return false;
     }
@@ -50,7 +50,7 @@ public class CopyTextCell extends AbstractCell<String> implements EventCell {
                                   final NativeEvent event,
                                   final ValueUpdater<String> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 0, 5)) {
+        if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
             if (value != null) {
                 ClipboardUtil.copy(value);
             }

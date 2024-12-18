@@ -8,6 +8,7 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -44,19 +45,19 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter, Clearable {
                 .build();
     }
 
-    private String getFilteredFeeds(final String permission) {
+    private String getFilteredFeeds(final DocumentPermission permission) {
         // Get all feeds as seen by the processing user.
         List<DocRef> feeds = getCachedFeeds();
         // Filter feeds that the current user has the requested permission on.
         return feeds
                 .stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef, permission))
                 .map(DocRef::getName)
                 .collect(Collectors.joining(","));
     }
 
     @Override
-    public Optional<ExpressionOperator> getExpression(final String permission,
+    public Optional<ExpressionOperator> getExpression(final DocumentPermission permission,
                                                       final List<String> fields) {
         Objects.requireNonNull(permission);
         Objects.requireNonNull(fields);

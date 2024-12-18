@@ -105,7 +105,7 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     /**
      * The column <code>stroom.stroom_user.display_name</code>.
      */
-    public final TableField<StroomUserRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255), this, "");
+    public final TableField<StroomUserRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.stroom_user.full_name</code>.

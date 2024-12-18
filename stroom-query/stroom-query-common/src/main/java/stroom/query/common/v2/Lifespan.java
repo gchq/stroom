@@ -60,9 +60,9 @@ public class Lifespan {
         }
         final Lifespan lifespan = (Lifespan) o;
         return destroyOnTabClose == lifespan.destroyOnTabClose &&
-                destroyOnWindowClose == lifespan.destroyOnWindowClose &&
-                Objects.equals(timeToIdle, lifespan.timeToIdle) &&
-                Objects.equals(timeToLive, lifespan.timeToLive);
+               destroyOnWindowClose == lifespan.destroyOnWindowClose &&
+               Objects.equals(timeToIdle, lifespan.timeToIdle) &&
+               Objects.equals(timeToLive, lifespan.timeToLive);
     }
 
     @Override
@@ -73,11 +73,11 @@ public class Lifespan {
     @Override
     public String toString() {
         return "Lifespan{" +
-                "timeToIdle=" + timeToIdle +
-                ", timeToLive=" + timeToLive +
-                ", destroyOnTabClose=" + destroyOnTabClose +
-                ", destroyOnWindowClose=" + destroyOnWindowClose +
-                '}';
+               "timeToIdle=" + timeToIdle +
+               ", timeToLive=" + timeToLive +
+               ", destroyOnTabClose=" + destroyOnTabClose +
+               ", destroyOnWindowClose=" + destroyOnWindowClose +
+               '}';
     }
 
     public Builder copy() {
@@ -87,6 +87,10 @@ public class Lifespan {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

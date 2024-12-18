@@ -19,6 +19,7 @@ package stroom.activity.api;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,7 +32,7 @@ import java.util.List;
 public class FindActivityCriteria extends BaseCriteria {
 
     @JsonProperty
-    private String userId;
+    private UserRef userRef;
     @JsonProperty
     private String filter;
 
@@ -41,10 +42,10 @@ public class FindActivityCriteria extends BaseCriteria {
     @JsonCreator
     public FindActivityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                @JsonProperty("userId") final String userId,
+                                @JsonProperty("userId") final UserRef userRef,
                                 @JsonProperty("name") final String filter) {
         super(pageRequest, sortList);
-        this.userId = userId;
+        this.userRef = userRef;
         this.filter = filter;
     }
 
@@ -54,12 +55,12 @@ public class FindActivityCriteria extends BaseCriteria {
         return criteria;
     }
 
-    public String getUserId() {
-        return userId;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
-    public void setUserId(final String userId) {
-        this.userId = userId;
+    public void setUserRef(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
     public String getFilter() {

@@ -253,6 +253,7 @@ class TestContentPackZipImport {
     private ContentPackImport getContentPackImport() {
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         return new ContentPackImport(
-                importExportService, contentPackImportConfig, securityContext, pathCreator);
+                importExportService, contentPackImportConfig, securityContext,
+                (subjectId, isGroup) -> securityContext.getUserRef(), pathCreator);
     }
 }

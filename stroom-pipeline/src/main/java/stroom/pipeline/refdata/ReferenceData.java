@@ -468,9 +468,7 @@ public class ReferenceData {
         // Check that the current user has permission to read the ref stream.
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
-                        documentPermissionCache.canUseDocument(
-                                pipelineReference.getFeed().getUuid()
-                        ));
+                        documentPermissionCache.canUseDocument(pipelineReference.getFeed()));
 
         if (hasPermission) {
             // Find the latest ref stream that is before our lookup time

@@ -84,6 +84,10 @@ public class SearchModule extends AbstractModule {
         return 0;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class EvictExpiredElements extends RunnableWrapper {
 
         @Inject

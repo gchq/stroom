@@ -1,5 +1,7 @@
 package stroom.query.api.v2;
 
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -15,7 +17,7 @@ public class ResultStoreInfo {
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
-    private final String createUser;
+    private final UserRef owner;
     @JsonProperty
     private final long creationTime;
     @JsonProperty
@@ -35,7 +37,7 @@ public class ResultStoreInfo {
     public ResultStoreInfo(
             @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
             @JsonProperty("queryKey") final QueryKey queryKey,
-            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("owner") final UserRef owner,
             @JsonProperty("creationTime") final long creationTime,
             @JsonProperty("nodeName") final String nodeName,
             @JsonProperty("storeSize") final long storeSize,
@@ -45,7 +47,7 @@ public class ResultStoreInfo {
             @JsonProperty("storeLifespan") final LifespanInfo storeLifespan) {
         this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
-        this.createUser = createUser;
+        this.owner = owner;
         this.creationTime = creationTime;
         this.nodeName = nodeName;
         this.storeSize = storeSize;
@@ -63,8 +65,8 @@ public class ResultStoreInfo {
         return queryKey;
     }
 
-    public String getCreateUser() {
-        return createUser;
+    public UserRef getOwner() {
+        return owner;
     }
 
     public long getCreationTime() {

@@ -13,7 +13,6 @@ import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.TokenResponse;
 
-import com.google.common.base.Objects;
 import event.logging.AuthenticateOutcomeReason;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +28,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -198,19 +198,19 @@ class OpenIdService {
         }
 
         final AccessCodeRequest accessCodeRequest = optionalAccessCodeRequest.get();
-        if (!Objects.equal(clientId, accessCodeRequest.getClientId())) {
+        if (!Objects.equals(clientId, accessCodeRequest.getClientId())) {
             throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER,
                     "Unexpected client id");
         }
 
-        if (!Objects.equal(redirectUri, accessCodeRequest.getRedirectUri())) {
+        if (!Objects.equals(redirectUri, accessCodeRequest.getRedirectUri())) {
             throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER,
                     "Unexpected redirect URI");
         }
 
         final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
 
-        if (!Objects.equal(clientSecret, oAuth2Client.getClientSecret())) {
+        if (!Objects.equals(clientSecret, oAuth2Client.getClientSecret())) {
             throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Incorrect secret");
         }
@@ -251,7 +251,7 @@ class OpenIdService {
 
         final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
 
-        if (!Objects.equal(clientSecret, oAuth2Client.getClientSecret())) {
+        if (!Objects.equals(clientSecret, oAuth2Client.getClientSecret())) {
             throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Incorrect secret");
         }

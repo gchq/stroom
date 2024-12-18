@@ -56,6 +56,7 @@ configurations.configureEach {
 // Declare a source set just for our GWT compile that is separate from the Java compilation source set.
 sourceSets {
     gwtSource
+    gwtDevSource
     jakartaTransformer
 }
 
@@ -81,13 +82,14 @@ dependencies {
     implementation libs.ws_rs_api__gwt
 
     gwtSourceImplementation libs.gin
-    gwtSourceImplementation libs.gwt_dev
     gwtSourceImplementation libs.gwt_user
     gwtSourceImplementation libs.gwtp_mvp_client
     gwtSourceImplementation libs.jaxb_api__gwt
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws_rs_api__gwt
+
+    gwtDevSourceImplementation libs.gwt_dev
 
     jakartaTransformerImplementation libs.eclipse_transformer_cli
 }
@@ -121,9 +123,12 @@ tasks.register('copySources') {
         // Delete current source output.
         delete inputProjectPath
 
+        def start = Instant.now()
+
         // Copy all code into source output.
+        println("copy project source (java/resources) => ${inputProjectPath}")
         clientProjects.each { prj ->
-            println('copy: ' + prj.projectDir)
+            println('  ' + prj.projectDir)
             copy {
                 from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
                 into inputProjectPath
@@ -133,6 +138,8 @@ tasks.register('copySources') {
                 into inputProjectPath
             }
         }
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
 
         // Transform code.
         println 'Running eclipse TransformerCLI'
@@ -149,6 +156,28 @@ tasks.register('copySources') {
                     '-tr', propFilePath,
             ]
         }
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        delete allSourceDir
+
+        println("copy dep jars => ${allSourceDir}")
+        sourceSets.gwtSource.compileClasspath.files.forEach {zipFile ->
+            println('  ' + zipFile)
+            copy {
+                from zipTree(zipFile)
+                into allSourceDir
+            }
+        }
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        println("copy ${transformedSourceDir} => ${allSourceDir}")
+        copy {
+            from transformedSourceDir
+            into allSourceDir
+        }
+        println("${Duration.between(start, Instant.now())}")
     }
 }
 
@@ -169,21 +198,66 @@ tasks.register('compileSources', JavaCompile) {
 
 tasks.register('makeGwtSourceDirs') {
     dependsOn compileSources
+    group "gwt"
 
     doLast {
+        def rsyncInputDir = "${gwtBuildDir}/rsync-input"
+        delete rsyncInputDir
+        new File(rsyncInputDir).mkdirs()
+
+        def start = Instant.now()
+
+        // Do this as two copies then one rsync rather than just two rsyncs
+        // so that we can be sure that any GWT classes that we have cloned and
+        // changed overwrite the original GWT version in  rsyncInputDir
+
+        println("copy ${allSourceDir} => ${rsyncInputDir}")
+        copy {
+            from allSourceDir
+            into rsyncInputDir
+        }
+
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        println("copy ${transformedBuildDir} => ${rsyncInputDir}")
+        copy {
+            from transformedBuildDir
+            into rsyncInputDir
+        }
+
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        // Rsync the files so that we don't delete all the files that superdev is monitoring,
+        // which it doesn't like. Rsync should only change the files that have actually changed
+        // i.e. when doing superdev code changes.
+        println "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
+        exec {
+            executable = 'rsync'
+            args = [
+                    "--recursive",
+                    "--checksum",
+                    "--delete",
+                    "--stats",
+                    rsyncInputDir + "/",
+                    rsyncOutputDir]
+        }
+
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        // Now assemble the sourceDirs array for GWT to compile
         gwtSourceDirs = []
-
         // Add all of the library sources from the gwtSource source set defined above.
-        gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
-
+        gwtSourceDirs.addAll(sourceSets.gwtDevSource.compileClasspath)
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
-
-        gwtSourceDirs.add(transformedSourceDir)
-        gwtSourceDirs.add(transformedBuildDir)
+        // Add the rsync clone of our transformed build
+        gwtSourceDirs.add(rsyncOutputDir)
 
         println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
-            println "${it.toString()}"
+            println "  ${it.toString()}"
         }
     }
 }
@@ -191,7 +265,6 @@ tasks.register('makeGwtSourceDirs') {
 tasks.register('gwtCompile', JavaExec) {
     dependsOn classes
     group "gwt"
-    dependsOn 'gwtClean'
     dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.dashboard.DashboardApp'
@@ -401,3 +474,6 @@ tasks.register('gwtClean') {
         new File(gwtTmpDir).mkdirs()
     }
 }
+
+tasks.clean.dependsOn(tasks.gwtClean)
+tasks.copySources.mustRunAfter(tasks.gwtClean)

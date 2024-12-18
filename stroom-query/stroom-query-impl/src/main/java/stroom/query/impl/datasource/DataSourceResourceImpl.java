@@ -23,6 +23,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.impl.QueryService;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -30,6 +32,8 @@ import jakarta.inject.Provider;
 
 @AutoLogged
 class DataSourceResourceImpl implements DataSourceResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSourceResourceImpl.class);
 
     private final Provider<QueryService> queryServiceProvider;
 
@@ -50,6 +54,11 @@ class DataSourceResourceImpl implements DataSourceResource {
 
     @Override
     public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return queryServiceProvider.get().fetchDefaultExtractionPipeline(dataSourceRef);
+        try {
+            return queryServiceProvider.get().fetchDefaultExtractionPipeline(dataSourceRef);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return null;
     }
 }

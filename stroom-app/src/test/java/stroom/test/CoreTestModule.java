@@ -9,7 +9,7 @@ import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
+import stroom.security.mock.MockUserSecurityContextModule;
 import stroom.util.io.DirProvidersModule;
 
 import com.google.inject.AbstractModule;
@@ -32,7 +32,7 @@ public class CoreTestModule extends AbstractModule {
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
         install(new VolumeTestConfigModule());
-        install(new MockSecurityContextModule());
+        install(new MockUserSecurityContextModule());
         install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
         install(new JerseyModule());

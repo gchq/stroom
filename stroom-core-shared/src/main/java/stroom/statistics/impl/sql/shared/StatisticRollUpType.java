@@ -28,7 +28,8 @@ public enum StatisticRollUpType implements HasDisplayValue, HasPrimitiveValue, S
     CUSTOM("Custom", 3);
 
     public static final PrimitiveValueConverter<StatisticRollUpType> PRIMITIVE_VALUE_CONVERTER =
-            new PrimitiveValueConverter<>(StatisticRollUpType.values());
+            PrimitiveValueConverter.create(StatisticRollUpType.class, StatisticRollUpType.values());
+
     private final String displayValue;
     private final byte primitiveValue;
 

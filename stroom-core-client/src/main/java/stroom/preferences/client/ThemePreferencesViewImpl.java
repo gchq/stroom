@@ -47,6 +47,8 @@ public final class ThemePreferencesViewImpl
     SelectionBox<String> fontSize;
     @UiField
     CustomCheckBox enableTransparency;
+    @UiField
+    CustomCheckBox hideConditionalStyles;
 
     @Inject
     public ThemePreferencesViewImpl(final Binder binder) {
@@ -136,6 +138,16 @@ public final class ThemePreferencesViewImpl
         this.enableTransparency.setValue(enableTransparency);
     }
 
+    @Override
+    public boolean isHideConditionalStyles() {
+        return this.hideConditionalStyles.getValue();
+    }
+
+    @Override
+    public void setHideConditionalStyles(final boolean hideConditionalStyles) {
+        this.hideConditionalStyles.setValue(hideConditionalStyles);
+    }
+
     @UiHandler("theme")
     public void onThemeValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
@@ -166,6 +178,13 @@ public final class ThemePreferencesViewImpl
 
     @UiHandler("enableTransparency")
     public void onEnableTransparency(final ValueChangeEvent<Boolean> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDirty();
+        }
+    }
+
+    @UiHandler("hideConditionalStyles")
+    public void onHideConditionalStyles(final ValueChangeEvent<Boolean> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }

@@ -1,32 +1,35 @@
 package stroom.security.api;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import java.util.Set;
 
 public interface DocumentPermissionService {
 
-    /**
-     * Clear the permissions for an existing document, i.e. change the permissions.
-     * Same as {@link DocumentPermissionService#deleteDocumentPermissions(String)} except it
-     * requires Owner permission.
-     */
-    void clearDocumentPermissions(String docUuid);
+    DocumentPermission getPermission(DocRef docRef, UserRef userRef);
+
+    void setPermission(DocRef docRef, UserRef userRef, DocumentPermission permission);
+
+    void removeAllDocumentPermissions(DocRef docRef);
+
+    void removeAllDocumentPermissions(Set<DocRef> docRefs);
 
     /**
-     * Delete the permissions for a document that has already been deleted.
-     * Same as {@link DocumentPermissionService#clearDocumentPermissions(String)} except it
-     * requires Delete permission.
+     * Add all permissions from one doc to another.
+     *
+     * @param sourceDocRef The source doc to copy permissions from.
+     * @param destDocRef   The dest doc to copy permissions to.
      */
-    void deleteDocumentPermissions(String docUuid);
-
-    void deleteDocumentPermissions(Set<String> docUuids);
-
     void addDocumentPermissions(DocRef sourceDocRef,
-                                DocRef documentDocRef,
-                                boolean owner);
+                                DocRef destDocRef);
 
-    void setDocumentOwner(String documentUuid, String userUuid);
+    Boolean changeDocumentPermissions(SingleDocumentPermissionChangeRequest request);
 
-    Set<String> getDocumentOwnerUuids(String documentUuid);
+    ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(FetchDocumentUserPermissionsRequest request);
 }

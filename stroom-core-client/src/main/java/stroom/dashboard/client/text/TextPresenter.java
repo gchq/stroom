@@ -22,11 +22,12 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
@@ -40,14 +41,12 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.query.api.v2.Column;
-import stroom.query.client.presenter.TableRow;
+import stroom.query.api.v2.ColumnRef;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.Version;
 
@@ -65,6 +64,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class TextPresenter
@@ -90,7 +90,7 @@ public class TextPresenter
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
-    private TablePresenter currentTablePresenter;
+    private HasComponentSelection currentTablePresenter;
 
     private EditorPresenter rawPresenter;
     private HtmlPresenter htmlPresenter;
@@ -127,7 +127,7 @@ public class TextPresenter
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
                     && getTextSettings().isShowStepping()
-                    && securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+                    && securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
             getView().setSteppingVisible(playButtonVisible);
@@ -302,13 +302,13 @@ public class TextPresenter
             if (getTextSettings() != null) {
                 final Component component = event.getComponent();
                 if (getTextSettings().getTableId() == null) {
-                    if (component instanceof TablePresenter) {
-                        currentTablePresenter = (TablePresenter) component;
+                    if (component instanceof HasComponentSelection) {
+                        currentTablePresenter = (HasComponentSelection) component;
                         update(currentTablePresenter);
                     }
-                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
-                    if (component instanceof TablePresenter) {
-                        currentTablePresenter = (TablePresenter) component;
+                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
+                    if (component instanceof HasComponentSelection) {
+                        currentTablePresenter = (HasComponentSelection) component;
                         update(currentTablePresenter);
                     }
                 }
@@ -316,7 +316,7 @@ public class TextPresenter
         }));
     }
 
-    private void update(final TablePresenter tablePresenter) {
+    private void update(final HasComponentSelection hasSelectedRows) {
         boolean updating = false;
         String message = "";
 
@@ -332,26 +332,30 @@ public class TextPresenter
             currentRecordIndex = null;
             currentHighlightStrings = null;
 
-            if (tablePresenter != null) {
-                final List<TableRow> selection = tablePresenter.getSelectedRows();
+            if (hasSelectedRows != null) {
+                final List<ComponentSelection> selection = hasSelectedRows.getSelection();
                 if (selection != null && selection.size() == 1) {
-                    final Column streamIdColumn = chooseBestCol(tablePresenter, getTextSettings().getStreamIdColumn());
-                    final Column partNoColumn = chooseBestCol(tablePresenter, getTextSettings().getPartNoColumn());
-                    final Column recordNoColumn = chooseBestCol(tablePresenter, getTextSettings().getRecordNoColumn());
-                    final Column lineFromColumn = chooseBestCol(tablePresenter, getTextSettings().getLineFromColumn());
-                    final Column colFromColumn = chooseBestCol(tablePresenter, getTextSettings().getColFromColumn());
-                    final Column lineToColumn = chooseBestCol(tablePresenter, getTextSettings().getLineToColumn());
-                    final Column colToColumn = chooseBestCol(tablePresenter, getTextSettings().getColToColumn());
-
                     // Just use the first row.
-                    final TableRow selected = selection.get(0);
-                    currentStreamId = getLong(streamIdColumn, selected);
-                    currentPartIndex = convertToIndex(getLong(partNoColumn, selected));
-                    currentRecordIndex = convertToIndex(getLong(recordNoColumn, selected));
-                    final Long currentLineFrom = getLong(lineFromColumn, selected);
-                    final Long currentColFrom = getLong(colFromColumn, selected);
-                    final Long currentLineTo = getLong(lineToColumn, selected);
-                    final Long currentColTo = getLong(colToColumn, selected);
+                    final ComponentSelection selected = selection.get(0);
+                    currentStreamId = getLong(getTextSettings().getStreamIdColumn(), selected);
+                    if (currentStreamId == null) {
+                        currentStreamId = getLong(selected.get(IndexConstants.STREAM_ID));
+                        if (currentStreamId == null) {
+                            currentStreamId = getLong(selected.get(IndexConstants.RESERVED_STREAM_ID_FIELD_NAME));
+                        }
+                    }
+                    currentPartIndex = convertToIndex(getLong(getTextSettings().getPartNoColumn(), selected));
+                    currentRecordIndex = convertToIndex(getLong(getTextSettings().getRecordNoColumn(), selected));
+                    if (currentRecordIndex == null) {
+                        currentRecordIndex = getLong(selected.get(IndexConstants.EVENT_ID));
+                        if (currentRecordIndex == null) {
+                            currentRecordIndex = getLong(selected.get(IndexConstants.RESERVED_EVENT_ID_FIELD_NAME));
+                        }
+                    }
+                    final Long currentLineFrom = getLong(getTextSettings().getLineFromColumn(), selected);
+                    final Long currentColFrom = getLong(getTextSettings().getColFromColumn(), selected);
+                    final Long currentLineTo = getLong(getTextSettings().getLineToColumn(), selected);
+                    final Long currentColTo = getLong(getTextSettings().getColToColumn(), selected);
 
 //                    GWT.log("TextPresenter - selected table row = " + selected);
 //                    GWT.log("TextPresenter - " +
@@ -412,7 +416,7 @@ public class TextPresenter
                                 .withHighlight(highlight)
                                 .build();
 
-                        currentHighlightStrings = tablePresenter.getHighlights();
+                        currentHighlightStrings = hasSelectedRows.getHighlights();
 
 //                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
 
@@ -469,26 +473,6 @@ public class TextPresenter
         if (!updating) {
             showData(message, null, null, isHtml);
         }
-    }
-
-    private Column chooseBestCol(final TablePresenter tablePresenter, final Column col) {
-        if (col != null) {
-            final TableComponentSettings tableComponentSettings = tablePresenter.getTableSettings();
-            final List<Column> columns = tableComponentSettings.getColumns();
-            // Try and choose by id.
-            for (final Column column : columns) {
-                if (column.getId() != null && column.getId().equals(col.getId())) {
-                    return column;
-                }
-            }
-            // Try and choose by name.
-            for (final Column column : columns) {
-                if (column.getName() != null && column.getName().equals(col.getName())) {
-                    return column;
-                }
-            }
-        }
-        return null;
     }
 
     private long getStartLine(final TextRange highlight) {
@@ -552,9 +536,13 @@ public class TextPresenter
         return null;
     }
 
-    private Long getLong(final Column column, final TableRow row) {
+    private Long getLong(final ColumnRef column, final ComponentSelection row) {
         if (column != null && row != null) {
-            return getLong(row.getText(column.getId()));
+            String val = row.get(column.getId());
+            if (val == null) {
+                val = row.get(column.getName());
+            }
+            return getLong(val);
         }
         return null;
     }
@@ -572,8 +560,8 @@ public class TextPresenter
     }
 
     private String checkPermissions() {
-        if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
-            if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
+        if (!securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
+            if (!securityContext.hasAppPermission(AppPermission.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
                 return "You do not have permission to display this item";
             } else if (getTextSettings().getPipeline() == null) {
                 return "You must choose a pipeline to display this item";
@@ -646,20 +634,18 @@ public class TextPresenter
             // special field names have changed from EventId to __event_id__ so we need to deal
             // with those and replace them, also rebuild existing special fields just in case
             if (textComponentSettings.getStreamIdColumn() == null
-                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))
-                    || (old && textComponentSettings.getStreamIdColumn().isSpecial())) {
-                builder.streamIdField(TablePresenter.buildSpecialColumn(IndexConstants.STREAM_ID));
+                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))) {
+                builder.streamIdField(new ColumnRef(IndexConstants.STREAM_ID, IndexConstants.STREAM_ID));
             }
             if (textComponentSettings.getRecordNoColumn() == null
-                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))
-                    || (old && textComponentSettings.getRecordNoColumn().isSpecial())) {
-                builder.recordNoField(TablePresenter.buildSpecialColumn(IndexConstants.EVENT_ID));
+                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))) {
+                builder.recordNoField(new ColumnRef(IndexConstants.EVENT_ID, IndexConstants.EVENT_ID));
             }
 
         } else {
             builder = TextComponentSettings.builder();
-            builder.streamIdField(TablePresenter.buildSpecialColumn(IndexConstants.STREAM_ID));
-            builder.recordNoField(TablePresenter.buildSpecialColumn(IndexConstants.EVENT_ID));
+            builder.streamIdField(new ColumnRef(IndexConstants.STREAM_ID, IndexConstants.STREAM_ID));
+            builder.recordNoField(new ColumnRef(IndexConstants.EVENT_ID, IndexConstants.EVENT_ID));
         }
 
         builder.modelVersion(CURRENT_MODEL_VERSION.toString());
@@ -676,7 +662,7 @@ public class TextPresenter
         String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
-        if (!EqualsUtil.isEquals(tableId, newTableId)) {
+        if (!Objects.equals(tableId, newTableId)) {
             newTableId = null;
         }
 

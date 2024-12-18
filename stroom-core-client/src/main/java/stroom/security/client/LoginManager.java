@@ -56,7 +56,7 @@ public class LoginManager implements HasHandlers {
         // When we start the application we will try and auto login using a client certificates.
         restFactory
                 .create(APP_PERMISSION_RESOURCE)
-                .method(AppPermissionResource::getUserAndPermissions)
+                .method(AppPermissionResource::getEffectiveAppPermissions)
                 .onSuccess(userAndPermissions -> {
                     if (userAndPermissions != null) {
                         currentUser.setUserAndPermissions(userAndPermissions);

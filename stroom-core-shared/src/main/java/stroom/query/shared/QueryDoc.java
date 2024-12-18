@@ -48,7 +48,8 @@ import java.util.Objects;
         "updateUser",
         "description",
         "timeRange",
-        "query"})
+        "query",
+        "queryTablePreferences"})
 @JsonInclude(Include.NON_NULL)
 public class QueryDoc extends Doc {
 
@@ -61,6 +62,8 @@ public class QueryDoc extends Doc {
     private TimeRange timeRange;
     @JsonProperty
     private String query;
+    @JsonProperty
+    private QueryTablePreferences queryTablePreferences;
 
     public QueryDoc() {
     }
@@ -76,11 +79,13 @@ public class QueryDoc extends Doc {
                     @JsonProperty("updateUser") final String updateUser,
                     @JsonProperty("description") final String description,
                     @JsonProperty("timeRange") TimeRange timeRange,
-                    @JsonProperty("query") final String query) {
+                    @JsonProperty("query") final String query,
+                    @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.timeRange = timeRange;
         this.query = query;
+        this.queryTablePreferences = queryTablePreferences;
     }
 
     /**
@@ -121,6 +126,14 @@ public class QueryDoc extends Doc {
 
     public void setQuery(final String query) {
         this.query = query;
+    }
+
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
+    }
+
+    public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+        this.queryTablePreferences = queryTablePreferences;
     }
 
     @Override

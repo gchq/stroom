@@ -1,5 +1,6 @@
 package stroom.query.api.v2;
 
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -15,17 +16,17 @@ public class SearchRequestSource {
     @JsonProperty
     private final SourceType sourceType;
     @JsonProperty
-    private final String ownerDocUuid;
+    private final DocRef ownerDocRef;
     @JsonProperty
     private final String componentId;
 
     @JsonCreator
     public SearchRequestSource(
             @JsonProperty("sourceType") final SourceType sourceType,
-            @JsonProperty("ownerDocUuid") final String ownerDocUuid,
+            @JsonProperty("ownerDocRef") final DocRef ownerDocRef,
             @JsonProperty("componentId") final String componentId) {
         this.sourceType = sourceType;
-        this.ownerDocUuid = ownerDocUuid;
+        this.ownerDocRef = ownerDocRef;
         this.componentId = componentId;
     }
 
@@ -37,8 +38,8 @@ public class SearchRequestSource {
         return sourceType;
     }
 
-    public String getOwnerDocUuid() {
-        return ownerDocUuid;
+    public DocRef getOwnerDocRef() {
+        return ownerDocRef;
     }
 
     public String getComponentId() {
@@ -49,7 +50,7 @@ public class SearchRequestSource {
     public String toString() {
         return "SearchRequestSource{" +
                 "sourceType=" + sourceType +
-                ", ownerDocUuid='" + ownerDocUuid + '\'' +
+                ", ownerDocRef='" + ownerDocRef + '\'' +
                 ", componentId='" + componentId + '\'' +
                 '}';
     }
@@ -65,7 +66,7 @@ public class SearchRequestSource {
     public static final class Builder {
 
         private SourceType sourceType;
-        private String ownerDocUuid;
+        private DocRef ownerDocRef;
         private String componentId;
 
         private Builder() {
@@ -73,7 +74,7 @@ public class SearchRequestSource {
 
         private Builder(final SearchRequestSource searchRequestSource) {
             this.sourceType = searchRequestSource.sourceType;
-            this.ownerDocUuid = searchRequestSource.ownerDocUuid;
+            this.ownerDocRef = searchRequestSource.ownerDocRef;
             this.componentId = searchRequestSource.componentId;
         }
 
@@ -82,8 +83,8 @@ public class SearchRequestSource {
             return this;
         }
 
-        public Builder ownerDocUuid(final String ownerDocUuid) {
-            this.ownerDocUuid = ownerDocUuid;
+        public Builder ownerDocRef(final DocRef ownerDocRef) {
+            this.ownerDocRef = ownerDocRef;
             return this;
         }
 
@@ -95,7 +96,7 @@ public class SearchRequestSource {
         public SearchRequestSource build() {
             return new SearchRequestSource(
                     sourceType,
-                    ownerDocUuid,
+                    ownerDocRef,
                     componentId);
         }
     }

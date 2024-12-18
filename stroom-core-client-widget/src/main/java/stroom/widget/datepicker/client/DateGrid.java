@@ -71,7 +71,7 @@ public class DateGrid extends Grid {
         } else if (event.getTypeInt() == Event.ONCLICK) {
             final Element element = event.getEventTarget().cast();
             if (element != null) {
-                final Element outer = ElementUtil.findMatching(element, "cellOuter", 0, 5);
+                final Element outer = ElementUtil.findParent(element, "cellOuter", 5);
                 if (outer != null) {
                     final AbstractCell cell = elementToCell.get(outer);
                     if (cell instanceof DateCell) {

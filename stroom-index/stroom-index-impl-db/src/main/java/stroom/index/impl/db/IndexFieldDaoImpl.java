@@ -97,15 +97,13 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     }
 
     private void createFieldSource(final DSLContext context, final DocRef docRef) {
-        // TODO Consider using JooqUtil.tryCreate() as onDuplicateKeyIgnore will
-        //  ignore any error, not just dup keys
         context
                 .insertInto(INDEX_FIELD_SOURCE)
                 .set(INDEX_FIELD_SOURCE.TYPE, docRef.getType())
                 .set(INDEX_FIELD_SOURCE.UUID, docRef.getUuid())
                 .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
-                .onDuplicateKeyIgnore()
-                .returningResult(INDEX_FIELD_SOURCE.ID)
+                .onDuplicateKeyUpdate()
+                .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
                 .execute();
     }
 

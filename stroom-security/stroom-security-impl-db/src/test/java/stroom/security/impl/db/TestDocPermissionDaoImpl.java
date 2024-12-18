@@ -1,15 +1,19 @@
 package stroom.security.impl.db;
 
 import stroom.docref.DocRef;
-import stroom.security.impl.BasicDocPermissions;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -18,23 +22,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDocPermissionDaoImpl {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDocPermissionDaoImpl.class);
-
-    private static final String PERMISSION_READ = "READ";
-    private static final String PERMISSION_USE = "USE";
-    private static final String PERMISSION_UPDATE = "UPDATE";
 
     @Inject
     private UserDao userDao;
@@ -59,37 +59,39 @@ class TestDocPermissionDaoImpl {
     }
 
     @Test
-    void testAddPermission() {
-        final User user = createUser("User1");
+    void testSetPermission() {
+        final UserRef user = createUser("User1");
         final DocRef docRef = createTestDocRef();
 
-        documentPermissionDao.addPermission(docRef.getUuid(), user.getUuid(), "USE");
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
 
-        BasicDocPermissions docPermissions = documentPermissionDao.getPermissionsForDocument(docRef.getUuid());
-        assertThat(docPermissions.getPermissionsMap().get(user.getUuid()))
-                .hasSize(1);
+        DocumentPermission docPermission = documentPermissionDao
+                .getDocumentUserPermission(docRef.getUuid(), user.getUuid());
+        assertThat(docPermission).isEqualTo(DocumentPermission.USE);
 
         // Check that we can add the same perm again without error
-        documentPermissionDao.addPermission(docRef.getUuid(), user.getUuid(), "USE");
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
 
-        docPermissions = documentPermissionDao.getPermissionsForDocument(docRef.getUuid());
-        assertThat(docPermissions.getPermissionsMap().get(user.getUuid()))
-                .hasSize(1);
+        docPermission = documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), user.getUuid());
+        assertThat(docPermission).isEqualTo(DocumentPermission.USE);
 
-        documentPermissionDao.addPermission(docRef.getUuid(), user.getUuid(), "READ");
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.VIEW);
 
-        docPermissions = documentPermissionDao.getPermissionsForDocument(docRef.getUuid());
-        assertThat(docPermissions.getPermissionsMap().get(user.getUuid()))
-                .hasSize(2);
+        docPermission = documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), user.getUuid());
+        assertThat(docPermission).isEqualTo(DocumentPermission.VIEW);
     }
 
-    private User createUser(final String name) {
-        User user = User.builder()
-                .subjectId(name)
-                .uuid(UUID.randomUUID().toString())
-                .build();
-        AuditUtil.stamp(() -> "test", user);
-        return userDao.create(user);
+    private Map<UserRef, Set<DocumentPermission>> getPermissionsForDocument(final DocRef docRef,
+                                                                            final Set<UserRef> users) {
+        return users.stream().collect(Collectors.toMap(Function.identity(), userRef -> {
+            final DocumentPermission documentPermission =
+                    documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
+            return Arrays
+                    .stream(DocumentPermission.values())
+                    .filter(permission -> documentPermission != null &&
+                                          documentPermission.isEqualOrHigher(permission))
+                    .collect(Collectors.toSet());
+        }));
     }
 
     @Test
@@ -100,289 +102,456 @@ class TestDocPermissionDaoImpl {
         final DocRef docRef1 = createTestDocRef();
         final DocRef docRef2 = createTestDocRef();
 
-        final User user1 = createUser(userName1);
-        final User user2 = createUser(userName2);
-        final User user3 = createUser(userName3);
+        final UserRef user1 = createUser(userName1);
+        final UserRef user2 = createUser(userName2);
+        final UserRef user3 = createUser(userName3);
 
         // Create permissions for multiple documents to check that document selection is working correctly
         Stream.of(docRef1, docRef2)
                 .map(DocRef::getUuid)
                 .forEach(docRefUuid -> {
-                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_READ);
-                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_USE);
-                    documentPermissionDao.addPermission(docRefUuid, user2.getUuid(), PERMISSION_USE);
-                    documentPermissionDao.addPermission(docRefUuid, user3.getUuid(), PERMISSION_USE);
-                    documentPermissionDao.addPermission(docRefUuid, user3.getUuid(), PERMISSION_UPDATE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.VIEW);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user2.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.EDIT);
                 });
 
         // Get the permissions for all users to this document
-        final Map<String, Set<String>> permissionsFound1 = documentPermissionDao.getPermissionsForDocument(
-                docRef1.getUuid()).getPermissionsMap();
-//        assertThat(permissionsFound1.getDocUuid()).isEqualTo(docRef1.getUuid());
+        final Map<UserRef, Set<DocumentPermission>> permissionsFound1 =
+                getPermissionsForDocument(docRef1, Set.of(user1, user2, user3));
 
-        final Set<String> permissionsFound1_user1 = permissionsFound1.get(user1.getUuid());
-        assertThat(permissionsFound1_user1).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound1_user1 = permissionsFound1.get(user1);
+        assertThat(permissionsFound1_user1).isEqualTo(Set.of(
+                DocumentPermission.VIEW,
+                DocumentPermission.USE));
 
-        final Set<String> permissionsFound1_user2 = permissionsFound1.get(user2.getUuid());
-        assertThat(permissionsFound1_user2).isEqualTo(Set.of(PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound1_user2 = permissionsFound1.get(user2);
+        assertThat(permissionsFound1_user2).isEqualTo(Set.of(
+                DocumentPermission.USE));
 
-        final Set<String> permissionsFound1_user3 = permissionsFound1.get(user3.getUuid());
-        assertThat(permissionsFound1_user3).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
+        final Set<DocumentPermission> permissionsFound1_user3 = permissionsFound1.get(user3);
+        assertThat(permissionsFound1_user3).isEqualTo(Set.of(
+                DocumentPermission.USE,
+                DocumentPermission.VIEW,
+                DocumentPermission.EDIT));
 
         // Check permissions per user per document
-        final Set<String> permissionsUser3Doc2_1 = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef2.getUuid(),
-                user3.getUuid());
-        assertThat(permissionsUser3Doc2_1).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
+        final DocumentPermission permissionsUser3Doc2_1 = documentPermissionDao
+                .getDocumentUserPermission(docRef2.getUuid(), user3.getUuid());
+        assertThat(permissionsUser3Doc2_1).isEqualTo(DocumentPermission.EDIT);
 
         // Remove a couple of permission from docRef1 (leaving docRef2 in place)
-        documentPermissionDao.removePermission(docRef1.getUuid(), user1.getUuid(), PERMISSION_READ);
-        documentPermissionDao.removePermission(docRef1.getUuid(), user3.getUuid(), PERMISSION_UPDATE);
+        documentPermissionDao.setDocumentUserPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.USE);
+        documentPermissionDao.setDocumentUserPermission(docRef1.getUuid(), user3.getUuid(), DocumentPermission.USE);
 
         // Get the permissions for all users to this document again
-        final Map<String, Set<String>> permissionsFound2 = documentPermissionDao.getPermissionsForDocument(
-                docRef1.getUuid()).getPermissionsMap();
-//        assertThat(permissionsFound2.getDocUuid()).isEqualTo(docRef1.getUuid());
+        final Map<UserRef, Set<DocumentPermission>> permissionsFound2 =
+                getPermissionsForDocument(docRef1, Set.of(user1, user2, user3));
 
-        final Set<String> permissionsFound2_user1 = permissionsFound2.get(user1.getUuid());
-        assertThat(permissionsFound2_user1).isEqualTo(Set.of(PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound2_user1 = permissionsFound2.get(user1);
+        assertThat(permissionsFound2_user1).isEqualTo(Set.of(DocumentPermission.USE));
 
-        final Set<String> permissionsFound2_user2 = permissionsFound2.get(user2.getUuid());
-        assertThat(permissionsFound2_user2).isEqualTo(Set.of(PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound2_user2 = permissionsFound2.get(user2);
+        assertThat(permissionsFound2_user2).isEqualTo(Set.of(DocumentPermission.USE));
 
-        final Set<String> permissionsFound2_user3 = permissionsFound2.get(user3.getUuid());
-        assertThat(permissionsFound2_user3).isEqualTo(Set.of(PERMISSION_USE));
-
-        // Check permissions per user per document
-        final Set<String> permissionsUser3Doc2_2 = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef2.getUuid(),
-                user3.getUuid());
-        assertThat(permissionsUser3Doc2_2).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
-
-        final Set<String> permissionsUser3Doc1_2 = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef1.getUuid(),
-                user3.getUuid());
-        assertThat(permissionsUser3Doc1_2).isEqualTo(Set.of(PERMISSION_USE));
-    }
-
-    @Test
-    void testDocPermissions2() {
-        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
-        final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
-        final String userName3 = String.format("SomePerson_3_%s", UUID.randomUUID());
-        final DocRef docRef1 = createTestDocRef();
-        final DocRef docRef2 = createTestDocRef();
-
-        final User user1 = createUser(userName1);
-        final User user2 = createUser(userName2);
-        final User user3 = createUser(userName3);
-
-        // Create permissions for multiple documents to check that document selection is working correctly
-        Stream.of(docRef1, docRef2)
-                .map(DocRef::getUuid)
-                .forEach(docRefUuid -> {
-                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_READ);
-                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_USE);
-                    documentPermissionDao.addPermission(docRefUuid, user2.getUuid(), PERMISSION_USE);
-                    documentPermissionDao.addPermission(docRefUuid, user3.getUuid(), PERMISSION_USE);
-                    documentPermissionDao.addPermission(docRefUuid, user3.getUuid(), PERMISSION_UPDATE);
-                });
-
-        // Get the permissions for all users to this document
-        final Map<String, Set<String>> permissionsFound1 = documentPermissionDao.getPermissionsForDocument(
-                docRef1.getUuid()).getPermissionsMap();
-//        assertThat(permissionsFound1.getDocUuid()).isEqualTo(docRef1.getUuid());
-
-        final Set<String> permissionsFound1_user1 = permissionsFound1.get(user1.getUuid());
-        assertThat(permissionsFound1_user1).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
-
-        final Set<String> permissionsFound1_user2 = permissionsFound1.get(user2.getUuid());
-        assertThat(permissionsFound1_user2).isEqualTo(Set.of(PERMISSION_USE));
-
-        final Set<String> permissionsFound1_user3 = permissionsFound1.get(user3.getUuid());
-        assertThat(permissionsFound1_user3).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
+        final Set<DocumentPermission> permissionsFound2_user3 = permissionsFound2.get(user3);
+        assertThat(permissionsFound2_user3).isEqualTo(Set.of(DocumentPermission.USE));
 
         // Check permissions per user per document
-        final Set<String> permissionsUser3Doc2_1 = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef2.getUuid(),
-                user3.getUuid());
-        assertThat(permissionsUser3Doc2_1).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
+        final DocumentPermission permissionsUser3Doc2_2 = documentPermissionDao
+                .getDocumentUserPermission(docRef2.getUuid(), user3.getUuid());
+        assertThat(permissionsUser3Doc2_2).isEqualTo(DocumentPermission.EDIT);
 
-        // Remove a couple of permission from docRef1 (leaving docRef2 in place)
-        documentPermissionDao.removePermission(docRef1.getUuid(), user1.getUuid(), PERMISSION_READ);
-        documentPermissionDao.removePermission(docRef1.getUuid(), user3.getUuid(), PERMISSION_UPDATE);
+        final DocumentPermission permissionsUser3Doc1_2 = documentPermissionDao
+                .getDocumentUserPermission(docRef1.getUuid(), user3.getUuid());
+        assertThat(permissionsUser3Doc1_2).isEqualTo(DocumentPermission.USE);
+
+        // Clear permission from docRef1 (leaving docRef2 in place)
+        documentPermissionDao.removeDocumentUserPermission(docRef1.getUuid(), user1.getUuid());
+        documentPermissionDao.removeDocumentUserPermission(docRef1.getUuid(), user3.getUuid());
 
         // Get the permissions for all users to this document again
-        final Map<String, BasicDocPermissions> allPermissions = documentPermissionDao.getPermissionsForDocuments(
-                List.of(docRef1.getUuid(), docRef2.getUuid()));
-        assertThat(allPermissions)
-                .hasSize(2);
-        assertThat(allPermissions.keySet())
-                .containsExactlyInAnyOrder(docRef1.getUuid(), docRef2.getUuid());
-        final Map<String, Set<String>> permissionsFound2 = allPermissions.get(docRef1.getUuid()).getPermissionsMap();
+        final Map<UserRef, Set<DocumentPermission>> permissionsFound3 =
+                getPermissionsForDocument(docRef1, Set.of(user1, user2, user3));
 
-        final Set<String> permissionsFound2_user1 = permissionsFound2.get(user1.getUuid());
-        assertThat(permissionsFound2_user1).isEqualTo(Set.of(PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound3_user1 = permissionsFound3.get(user1);
+        assertThat(permissionsFound3_user1).isEqualTo(Set.of());
 
-        final Set<String> permissionsFound2_user2 = permissionsFound2.get(user2.getUuid());
-        assertThat(permissionsFound2_user2).isEqualTo(Set.of(PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound3_user2 = permissionsFound3.get(user2);
+        assertThat(permissionsFound3_user2).isEqualTo(Set.of(DocumentPermission.USE));
 
-        final Set<String> permissionsFound2_user3 = permissionsFound2.get(user3.getUuid());
-        assertThat(permissionsFound2_user3).isEqualTo(Set.of(PERMISSION_USE));
+        final Set<DocumentPermission> permissionsFound3_user3 = permissionsFound3.get(user3);
+        assertThat(permissionsFound3_user3).isEqualTo(Set.of());
 
         // Check permissions per user per document
-        final Set<String> permissionsUser3Doc2_2 = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef2.getUuid(),
-                user3.getUuid());
-        assertThat(permissionsUser3Doc2_2).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
+        final DocumentPermission permissionsUser3Doc2_3 = documentPermissionDao
+                .getDocumentUserPermission(docRef2.getUuid(), user3.getUuid());
+        assertThat(permissionsUser3Doc2_3).isEqualTo(DocumentPermission.EDIT);
 
-        final Set<String> permissionsUser3Doc1_2 = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef1.getUuid(),
-                user3.getUuid());
-        assertThat(permissionsUser3Doc1_2).isEqualTo(Set.of(PERMISSION_USE));
+        final DocumentPermission permissionsUser3Doc1_3 = documentPermissionDao
+                .getDocumentUserPermission(docRef1.getUuid(), user3.getUuid());
+        assertThat(permissionsUser3Doc1_3).isNull();
     }
 
     @Test
-    void testClearDocumentPermissions() {
-        // Given
-        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
+    void testEffectivePermissions1() {
         final DocRef docRef1 = createTestDocRef();
-        final DocRef docRef2 = createTestDocRef();
+        final UserRef user1 = createUser("user1");
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.EDIT);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
 
-        final User user1 = createUser(userName1);
-
-        // Create permissions for multiple documents to check that document selection is working correctly
-        Stream.of(docRef1, docRef2)
-                .map(DocRef::getUuid)
-                .forEach(docRefUuid -> {
-                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_READ);
-                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_USE);
-                });
-
-        Stream.of(docRef1, docRef2).forEach(d -> {
-            final Set<String> permissionsBefore = documentPermissionDao.getPermissionsForDocumentForUser(
-                    docRef1.getUuid(),
-                    user1.getUuid());
-            assertThat(permissionsBefore).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
-        });
-
-        // When
-        documentPermissionDao.clearDocumentPermissionsForDoc(docRef1.getUuid());
-
-        // Then
-        // The two documents will now have different permissions
-        final Set<String> user1Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef1.getUuid(),
-                user1.getUuid());
-        assertThat(user1Doc1After).isEmpty();
-
-        final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(
-                docRef2.getUuid(),
-                user1.getUuid());
-        assertThat(user2Doc1After).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isOne();
+        validateDocPermissions(
+                resultPage,
+                "user1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of(),
+                Set.of());
     }
 
     @Test
-    void testClearDocumentPermissions_multiple() {
-        final int batchSize = 10;
-        final int docCntToDel = (int) (batchSize * 2.2);
-        final int totalDocCnt = docCntToDel * 2;
-        LOGGER.debug("Creating perms for {} docs", totalDocCnt);
+    void testEffectivePermissions1PlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), user1.getUuid(), "Dashboard");
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
 
-        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
-        final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
-
-        final String user1Uuid = createUser(userName1).getUuid();
-        final String user2Uuid = createUser(userName2).getUuid();
-
-        final List<PermRec> permRecs = new ArrayList<>(docCntToDel);
-        for (int i = 0; i < totalDocCnt; i++) {
-            String userUuid = i % 2 == 0
-                    ? user1Uuid
-                    : user2Uuid;
-            String docUuid = UUID.randomUUID().toString();
-            permRecs.add(new PermRec(userUuid, docUuid, PERMISSION_USE));
-            if (i % 2 == 0) {
-                permRecs.add(new PermRec(userUuid, docUuid, PERMISSION_READ));
-            }
-        }
-
-        permRecs.forEach(permRec -> {
-            documentPermissionDao.addPermission(permRec.docUuid, permRec.userUuid, permRec.perm);
-        });
-
-        final List<String> allDocs = permRecs.stream()
-                .map(PermRec::docUuid)
-                .distinct()
-                .toList();
-
-        final Set<String> docsToDel = new HashSet<>(allDocs.subList(0, docCntToDel));
-        final Set<String> docsToKeep = new HashSet<>(allDocs.subList(docCntToDel, allDocs.size()));
-
-        allDocs.forEach(docRef -> {
-            final BasicDocPermissions basicDocPerm = documentPermissionDao.getPermissionsForDocument(docRef);
-            assertThat(basicDocPerm.getPermissionsMap())
-                    .isNotEmpty();
-        });
-
-        // When
-        ((DocumentPermissionDaoImpl) documentPermissionDao).clearDocumentPermissionsForDocs(docsToDel, batchSize);
-
-        // Make sure the perms are gone.
-        docsToDel.forEach(docRef -> {
-            final BasicDocPermissions basicDocPerm = documentPermissionDao.getPermissionsForDocument(docRef);
-            assertThat(basicDocPerm.getPermissionsMap())
-                    .isEmpty();
-        });
-
-        // Make sure the perms are still there for the ones we didn't delete.
-        docsToKeep.forEach(docRef -> {
-            final BasicDocPermissions basicDocPerm = documentPermissionDao.getPermissionsForDocument(docRef);
-            assertThat(basicDocPerm.getPermissionsMap())
-                    .isNotEmpty();
-        });
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isOne();
+        validateDocPermissions(
+                resultPage,
+                "user1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Dashboard"),
+                Set.of());
     }
 
     @Test
-    void testSetOwner() {
-        // Given
-        final String userName1 = String.format("SomePerson_1_%s", UUID.randomUUID());
-        final String userName2 = String.format("SomePerson_2_%s", UUID.randomUUID());
+    void testEffectivePermissions2() {
         final DocRef docRef1 = createTestDocRef();
-        final DocRef docRef2 = createTestDocRef();
-        final List<DocRef> docRefs = List.of(docRef1, docRef2);
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
 
-        final User user1 = createUser(userName1);
-        final User user2 = createUser(userName2);
-        final List<User> users = List.of(user1, user2);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
 
-        // Make each user the owner of both docs, i.e. each doc has two owners
-        for (final User user : users) {
-            for (final DocRef docRef : docRefs) {
-                documentPermissionDao.addPermission(docRef.getUuid(), user.getUuid(), DocumentPermissionNames.OWNER);
-            }
-        }
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of());
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of(),
+                Set.of());
+    }
 
-        for (final User user : users) {
-            for (final DocRef docRef : docRefs) {
-                final Set<String> permissionsBefore = documentPermissionDao.getPermissionsForDocumentForUser(
-                        docRef.getUuid(),
-                        user.getUuid());
-                assertThat(permissionsBefore)
-                        .containsExactly(DocumentPermissionNames.OWNER);
-            }
-        }
+    @Test
+    void testEffectivePermissions2PlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Dashboard");
 
-        // When
-        final String userName3 = String.format("SomePerson_3_%s", UUID.randomUUID());
-        final User user3 = createUser(userName3);
-        documentPermissionDao.setOwner(docRef1.getUuid(), user3.getUuid());
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
 
-        assertThat(documentPermissionDao.getDocumentOwnerUuids(docRef1.getUuid()))
-                .containsExactly(user3.getUuid());
-        // docRef2 unchanged
-        assertThat(documentPermissionDao.getDocumentOwnerUuids(docRef2.getUuid()))
-                .containsExactlyInAnyOrder(user1.getUuid(), user2.getUuid());
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Dashboard"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3PlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group2.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group2.getUuid(), "Dashboard");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(3);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Dashboard"));
+        validateDocPermissions(resultPage,
+                "group2",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Dashboard"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3None() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid())).isNull();
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(0);
+    }
+
+    @Test
+    void testEffectivePermissions3SplitPlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group2.getUuid(), DocumentPermission.VIEW);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Dashboard");
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group2.getUuid(), "Query");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid()))
+                .isEqualTo(DocumentPermission.VIEW);
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(3);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Query", "Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                DocumentPermission.VIEW,
+                Set.of("Dashboard"),
+                Set.of("Query"));
+        validateDocPermissions(resultPage,
+                "group2",
+                DocumentPermission.VIEW,
+                null,
+                Set.of("Query"),
+                Set.of());
+    }
+
+    @Test
+    void testEffectivePermissions3MidPlusCreate() {
+        final DocRef docRef1 = createTestFolderDocRef();
+        final UserRef user1 = createUser("user1");
+        final UserRef group1 = createGroup("group1");
+        final UserRef group2 = createGroup("group2");
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(group1.getUuid(), group2.getUuid());
+        documentPermissionDao
+                .setDocumentUserPermission(docRef1.getUuid(), group1.getUuid(), DocumentPermission.EDIT);
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Dashboard");
+        documentPermissionDao
+                .addDocumentUserCreatePermission(docRef1.getUuid(), group1.getUuid(), "Query");
+
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), user1.getUuid())).isNull();
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group1.getUuid()))
+                .isEqualTo(DocumentPermission.EDIT);
+        assertThat(documentPermissionDao.getDocumentUserPermission(docRef1.getUuid(), group2.getUuid())).isNull();
+
+        final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
+                PageRequest.unlimited(),
+                Collections.emptyList(),
+                ExpressionOperator.builder().build(),
+                docRef1,
+                null,
+                PermissionShowLevel.SHOW_EFFECTIVE);
+        final ResultPage<DocumentUserPermissions> resultPage = documentPermissionDao.fetchDocumentUserPermissions(
+                request);
+        assertThat(resultPage.size()).isEqualTo(2);
+        validateDocPermissions(resultPage,
+                "user1",
+                null,
+                DocumentPermission.EDIT,
+                Set.of(),
+                Set.of("Query", "Dashboard"));
+        validateDocPermissions(resultPage,
+                "group1",
+                DocumentPermission.EDIT,
+                null,
+                Set.of("Query", "Dashboard"),
+                Set.of());
+    }
+
+
+    private void validateDocPermissions(final ResultPage<DocumentUserPermissions> resultPage,
+                                        final String userName,
+                                        final DocumentPermission expectedPermission,
+                                        final DocumentPermission expectedInherited,
+                                        final Set<String> expectedCreatePermissions,
+                                        final Set<String> expectedCreateInherited) {
+        final DocumentUserPermissions documentUserPermissions = get(resultPage, userName);
+        validateDocPermissions(
+                documentUserPermissions,
+                expectedPermission,
+                expectedInherited,
+                expectedCreatePermissions,
+                expectedCreateInherited);
+    }
+
+    private void validateDocPermissions(final DocumentUserPermissions appUserPermissions,
+                                        final DocumentPermission expectedPermission,
+                                        final DocumentPermission expectedInherited,
+                                        final Set<String> expectedCreatePermissions,
+                                        final Set<String> expectedCreateInherited) {
+        assertThat(appUserPermissions.getPermission()).isEqualTo(expectedPermission);
+        assertThat(appUserPermissions.getInheritedPermission()).isEqualTo(expectedInherited);
+        validatePermissionSet(appUserPermissions.getDocumentCreatePermissions(), expectedCreatePermissions);
+        validatePermissionSet(appUserPermissions.getInheritedDocumentCreatePermissions(), expectedCreateInherited);
+    }
+
+    private void validatePermissionSet(final Set<String> actual,
+                                       final Set<String> expected) {
+        assertThat(actual.size()).isEqualTo(expected.size());
+        assertThat(actual).containsAll(expected);
+    }
+
+    private DocumentUserPermissions get(final ResultPage<DocumentUserPermissions> resultPage,
+                                        final String userName) {
+        final Optional<DocumentUserPermissions> optional = resultPage
+                .getValues()
+                .stream()
+                .filter(aup -> userName.equals(aup.getUserRef().getSubjectId()))
+                .findAny();
+        assertThat(optional).isPresent();
+        return optional.get();
+    }
+
+    private DocRef createTestFolderDocRef() {
+        return DocRef.builder()
+                .type("Folder")
+                .uuid(UUID.randomUUID().toString())
+                .build();
     }
 
     private DocRef createTestDocRef() {
@@ -392,9 +561,22 @@ class TestDocPermissionDaoImpl {
                 .build();
     }
 
-    private record PermRec(String userUuid,
-                           String docUuid,
-                           String perm) {
+    private UserRef createUser(final String name) {
+        return createUserOrGroup(name, false);
+    }
 
+    private UserRef createGroup(final String name) {
+        return createUserOrGroup(name, true);
+    }
+
+    private UserRef createUserOrGroup(final String name, final boolean group) {
+        User user = User.builder()
+                .subjectId(name)
+                .displayName(name)
+                .uuid(UUID.randomUUID().toString())
+                .group(group)
+                .build();
+        AuditUtil.stamp(() -> "test", user);
+        return userDao.create(user).asRef();
     }
 }

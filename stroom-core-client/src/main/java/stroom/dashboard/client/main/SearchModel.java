@@ -64,7 +64,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final IndexLoader indexLoader;
-    private String dashboardUuid;
+    private DocRef dashboardDocRef;
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
@@ -92,9 +92,9 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         this.resultStoreModel = resultStoreModel;
     }
 
-    public void init(final String dashboardUuid,
+    public void init(final DocRef dashboardDocRef,
                      final String componentId) {
-        this.dashboardUuid = dashboardUuid;
+        this.dashboardDocRef = dashboardDocRef;
         this.componentId = componentId;
     }
 
@@ -476,7 +476,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         return SearchRequestSource
                 .builder()
                 .sourceType(SourceType.DASHBOARD_UI)
-                .ownerDocUuid(dashboardUuid)
+                .ownerDocRef(dashboardDocRef)
                 .componentId(componentId)
                 .build();
     }

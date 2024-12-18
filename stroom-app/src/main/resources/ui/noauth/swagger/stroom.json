@@ -28,7 +28,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AccountResultPage"
+                  "$ref" : "#/components/schemas/ResultPageAccount"
                 }
               }
             },
@@ -87,7 +87,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AccountResultPage"
+                  "$ref" : "#/components/schemas/ResultPageAccount"
                 }
               }
             },
@@ -1307,7 +1307,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ApiKeyResultPage"
+                  "$ref" : "#/components/schemas/ResultPageHashedApiKey"
                 }
               }
             },
@@ -3503,6 +3503,96 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/advancedFind" : {
+      "post" : {
+        "operationId" : "advancedFind",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AdvancedDocumentFindRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFindResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find documents with names and types matching the supplied request",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/advancedFindWithPermissions" : {
+      "post" : {
+        "operationId" : "advancedFindWithPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AdvancedDocumentFindWithPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFindResultWithPermissions"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find documents with names and types matching the supplied request and the accociated permissions for a given user",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/changeDocumentPermissions" : {
+      "post" : {
+        "operationId" : "changeDocumentPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkDocumentPermissionChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Change document permissions",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/copy" : {
       "post" : {
         "operationId" : "copyExplorerItems",
@@ -3842,7 +3932,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindRequest"
+                "$ref" : "#/components/schemas/DocumentFindRequest"
               }
             }
           },
@@ -6140,13 +6230,13 @@
     },
     "/permission/app/v1" : {
       "get" : {
-        "operationId" : "getUserAndPermissions",
+        "operationId" : "getEffectiveAppPermissions",
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserAndPermissions"
+                  "$ref" : "#/components/schemas/AppUserPermissions"
                 }
               }
             },
@@ -6157,14 +6247,14 @@
         "tags" : [ "Application Permissions" ]
       }
     },
-    "/permission/app/v1/changeUser" : {
+    "/permission/app/v1/changeAppPermission" : {
       "post" : {
-        "operationId" : "changeUserPermissions",
+        "operationId" : "changeAppPermission",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChangeUserRequest"
+                "$ref" : "#/components/schemas/AbstractAppPermissionChange"
               }
             }
           },
@@ -6187,36 +6277,44 @@
         "tags" : [ "Application Permissions" ]
       }
     },
-    "/permission/app/v1/fetchAllPermissions" : {
-      "get" : {
-        "operationId" : "fetchAllPermissions",
+    "/permission/app/v1/fetchAppUserPermissions" : {
+      "post" : {
+        "operationId" : "fetchAppUserPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchAppUserPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
+                  "$ref" : "#/components/schemas/ResultPageAppUserPermissions"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Get all possible permissions",
+        "summary" : "Fetch app user permissions",
         "tags" : [ "Application Permissions" ]
       }
     },
-    "/permission/app/v1/fetchUserAppPermissions" : {
+    "/permission/app/v1/getAppUserPermissionsReport" : {
       "post" : {
-        "operationId" : "fetchUserAppPermissions",
+        "operationId" : "getAppUserPermissionsReport",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/User"
+                "$ref" : "#/components/schemas/UserRef"
               }
             }
           },
@@ -6228,14 +6326,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserAndPermissions"
+                  "$ref" : "#/components/schemas/AppUserPermissionsReport"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "User and app permissions for the specified user",
+        "summary" : "Get a detailed report of app permissions for the specified user",
         "tags" : [ "Application Permissions" ]
       }
     },
@@ -6254,11 +6352,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PermissionChangeRequest"
+                "$ref" : "#/components/schemas/PermissionChangeEvent"
               }
             }
           },
-          "description" : "request",
+          "description" : "event",
           "required" : true
         },
         "responses" : {
@@ -6275,36 +6373,6 @@
         },
         "summary" : "Fires a permission change event",
         "tags" : [ "Application Permissions" ]
-      }
-    },
-    "/permission/doc/v1/changeDocumentPermissions" : {
-      "post" : {
-        "operationId" : "changeDocumentPermissions",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Change document permissions",
-        "tags" : [ "Doc Permissions" ]
       }
     },
     "/permission/doc/v1/checkDocumentPermission" : {
@@ -6337,14 +6405,14 @@
         "tags" : [ "Doc Permissions" ]
       }
     },
-    "/permission/doc/v1/copyPermissionsFromParent" : {
+    "/permission/doc/v1/fetchDocumentUserPermissions" : {
       "post" : {
-        "operationId" : "copyPermissionFromParent",
+        "operationId" : "fetchDocumentUserPermissions",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CopyPermissionsFromParentRequest"
+                "$ref" : "#/components/schemas/FetchDocumentUserPermissionsRequest"
               }
             }
           },
@@ -6356,25 +6424,25 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocumentPermissions"
+                  "$ref" : "#/components/schemas/ResultPageDocumentUserPermissions"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Copy permissions from parent",
+        "summary" : "Fetch document user permissions",
         "tags" : [ "Doc Permissions" ]
       }
     },
-    "/permission/doc/v1/fetchAllDocumentPermissions" : {
+    "/permission/doc/v1/getDocUserPermissionsReport" : {
       "post" : {
-        "operationId" : "fetchAllDocumentPermissions",
+        "operationId" : "getDocUserPermissionsReport",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FetchAllDocumentPermissionsRequest"
+                "$ref" : "#/components/schemas/DocumentUserPermissionsRequest"
               }
             }
           },
@@ -6386,138 +6454,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocumentPermissions"
+                  "$ref" : "#/components/schemas/DocumentUserPermissionsReport"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Fetch document permissions",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/fetchPermissionChangeImpact" : {
-      "post" : {
-        "operationId" : "fetchPermissionChangeImpact",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PermissionChangeImpactSummary"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch impact summary for a change of document permissions",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/filterUsers" : {
-      "post" : {
-        "operationId" : "filterUsers",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FilterUsersRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/UserName"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get all permissions for a given document type",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/getDocumentOwners" : {
-      "post" : {
-        "operationId" : "getDocumentOwners",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string"
-              }
-            }
-          },
-          "description" : "documentUuid",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/UserName"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get the owners of the specified document",
-        "tags" : [ "Doc Permissions" ]
-      }
-    },
-    "/permission/doc/v1/getPermissionForDocType/${docType}" : {
-      "get" : {
-        "operationId" : "getPermissionForDocType",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "docType",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get all permissions for a given document type",
+        "summary" : "Get a detailed report of doc permissions for the specified user",
         "tags" : [ "Doc Permissions" ]
       }
     },
@@ -6911,6 +6855,36 @@
           }
         },
         "summary" : "Creates a filter",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
+    "/processorFilter/v1/bulkChange" : {
+      "post" : {
+        "operationId" : "bulkChange",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkProcessorFilterChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Bulk change processors",
         "tags" : [ "Processor Filters" ]
       }
     },
@@ -7436,6 +7410,34 @@
           }
         },
         "summary" : "Fetch detail for help item",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/fetchQueryDataSource" : {
+      "post" : {
+        "operationId" : "fetchQueryDataSource",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the datasource referenced by a query",
         "tags" : [ "Queries" ]
       }
     },
@@ -10145,96 +10147,9 @@
         "tags" : [ "Text Converters" ]
       }
     },
-    "/userNames/v1/find" : {
-      "post" : {
-        "operationId" : "findUserNames",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FindUserNameCriteria"
-              }
-            }
-          },
-          "description" : "criteria",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageUserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user names matching the supplied criteria",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/findAssociates" : {
-      "post" : {
-        "operationId" : "findAssociateUserNames",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FindUserNameCriteria"
-              }
-            }
-          },
-          "description" : "criteria",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageUserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/getByDisplayName/{displayName}" : {
+    "/userInfo/v1/{userUuid}" : {
       "get" : {
-        "operationId" : "getByDisplayName",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "displayName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserName"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the user name matching the supplied displayName",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/userNames/v1/getByUuid/{userUuid}" : {
-      "get" : {
-        "operationId" : "getByUuid",
+        "operationId" : "fetchUser",
         "parameters" : [ {
           "in" : "path",
           "name" : "userUuid",
@@ -10248,111 +10163,44 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserName"
+                  "$ref" : "#/components/schemas/UserInfo"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Find the user name matching the supplied unique Stroom user UUID",
+        "summary" : "Fetches the userInfo with the supplied user UUID",
         "tags" : [ "Authorisation" ]
       }
     },
-    "/userNames/v1/{subjectId}" : {
-      "get" : {
-        "operationId" : "getByUserId",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "subjectId",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+    "/userRef/v1/find" : {
+      "post" : {
+        "operationId" : "findUserRefs",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserName"
+                  "$ref" : "#/components/schemas/ResultPageUserRef"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Find the user name matching the supplied unique user subject ID",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1" : {
-      "get" : {
-        "operationId" : "findUsers",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "name",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "isGroup",
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "in" : "query",
-          "name" : "uuid",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/User"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Find the users matching the supplied criteria",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1/associates" : {
-      "get" : {
-        "operationId" : "getAssociatedUsers",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "filter",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/UserName"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets a list of associated users",
+        "summary" : "Find the users and groups matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10393,7 +10241,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/UserName"
+                "$ref" : "#/components/schemas/UserDesc"
               }
             }
           },
@@ -10449,6 +10297,33 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/users/v1/fetchBySubjectId/{subjectId}" : {
+      "get" : {
+        "operationId" : "fetchBySubjectId",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetches the user with the supplied subjectId (aka Unique ID)",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1/find" : {
       "post" : {
         "operationId" : "findUsersByCriteria",
@@ -10475,13 +10350,97 @@
             "description" : "default response"
           }
         },
-        "summary" : "Find the users matching the supplied criteria",
+        "summary" : "Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/users/v1/findDependencies" : {
+      "post" : {
+        "operationId" : "findUserDependenciesByCriteria",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserDependenciesCriteria"
+              }
+            }
+          },
+          "description" : "criteria"
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageUserDependency"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the items that depend on this user",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/users/v1/updateUser" : {
+      "post" : {
+        "operationId" : "updateUser",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/User"
+              }
+            }
+          },
+          "description" : "user",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Updates a user",
         "tags" : [ "Authorisation" ]
       }
     },
     "/users/v1/{userUuid}" : {
+      "delete" : {
+        "operationId" : "deleteUser",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete the user with the supplied user UUID",
+        "tags" : [ "Authorisation" ]
+      },
       "get" : {
-        "operationId" : "fetchUser",
+        "operationId" : "fetchUser_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "userUuid",
@@ -10536,7 +10495,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Removes user with UUID userUuid from the group with UUID groupUuid",
+        "summary" : "Removes user/group with UUID userUuid from the group with UUID groupUuid",
         "tags" : [ "Authorisation" ]
       },
       "put" : {
@@ -10568,34 +10527,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Adds user with UUID userUuid to the group with UUID groupUuid",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1/{uuid}" : {
-      "delete" : {
-        "operationId" : "deleteUser",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Deletes the user with the supplied UUID",
+        "summary" : "Adds user/group with UUID userUuid to the group with UUID groupUuid",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10922,6 +10854,37 @@
   },
   "components" : {
     "schemas" : {
+      "AbstractAppPermissionChange" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "permission" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "AbstractDocumentPermissionsChange" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
@@ -11048,23 +11011,6 @@
           }
         }
       },
-      "AccountResultPage" : {
-        "type" : "object",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "qualifiedFilterInput" : {
-            "type" : "string"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Account"
-            }
-          }
-        }
-      },
       "AcknowledgeSplashRequest" : {
         "type" : "object",
         "properties" : {
@@ -11093,9 +11039,6 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "json" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -11103,8 +11046,8 @@
           "updateUser" : {
             "type" : "string"
           },
-          "userId" : {
-            "type" : "string"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "version" : {
             "type" : "integer",
@@ -11154,21 +11097,50 @@
           }
         }
       },
-      "AddPermissionEvent" : {
+      "AddAllDocumentUserCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
-            "documentUuid" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "AddAllPermissionsFrom" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "sourceDocRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
+      "AddAppPermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAppPermissionChange"
+        } ]
+      },
+      "AddDocumentUserCreatePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "documentType" : {
               "type" : "string"
             },
-            "permission" : {
-              "type" : "string"
-            },
-            "userUuid" : {
-              "type" : "string"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
             }
           }
         } ]
@@ -11188,6 +11160,71 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          }
+        }
+      },
+      "AdvancedDocumentFindRequest" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "uniqueItems" : true
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "AdvancedDocumentFindWithPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "requiredPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "uniqueItems" : true
+          },
+          "showLevel" : {
+            "type" : "string",
+            "enum" : [ "SHOW_EXPLICIT", "SHOW_EFFECTIVE", "SHOW_ALL" ]
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -11350,7 +11387,7 @@
         "type" : "object",
         "properties" : {
           "assignedTo" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           },
           "comment" : {
             "type" : "string"
@@ -11408,15 +11445,15 @@
       "AnnotationEntry" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
+          "entryTime" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "createUser" : {
-            "type" : "string"
-          },
           "entryType" : {
             "type" : "string"
+          },
+          "entryUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "entryValue" : {
             "$ref" : "#/components/schemas/EntryValue"
@@ -11424,17 +11461,6 @@
           "id" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "integer",
-            "format" : "int32"
           }
         }
       },
@@ -11499,7 +11525,53 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/HashedApiKey"
+              "$ref" : "#/components/schemas/ApiKey"
+            }
+          }
+        }
+      },
+      "AppUserPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "inherited" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "permissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "AppUserPermissionsReport" : {
+        "type" : "object",
+        "properties" : {
+          "explicitPermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "inheritedPermissions" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
             }
           }
         }
@@ -11896,6 +11968,32 @@
           }
         }
       },
+      "BulkDocumentPermissionChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          }
+        }
+      },
+      "BulkProcessorFilterChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "type" : "string",
+            "enum" : [ "ENABLE", "DISABLE", "DELETE", "SET_RUN_AS_USER" ]
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
       "CacheIdentity" : {
         "type" : "object",
         "properties" : {
@@ -11955,21 +12053,6 @@
           }
         }
       },
-      "ChangeDocumentPermissionsRequest" : {
-        "type" : "object",
-        "properties" : {
-          "cascade" : {
-            "type" : "string",
-            "enum" : [ "NO", "CHANGES_ONLY", "ALL" ]
-          },
-          "changes" : {
-            "$ref" : "#/components/schemas/Changes"
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          }
-        }
-      },
       "ChangePasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -12001,106 +12084,17 @@
           }
         }
       },
-      "ChangeSetString" : {
-        "type" : "object",
-        "properties" : {
-          "addSet" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          },
-          "removeSet" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "ChangeSetUser" : {
-        "type" : "object",
-        "properties" : {
-          "addSet" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/User"
-            },
-            "uniqueItems" : true
-          },
-          "removeSet" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/User"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "ChangeUserRequest" : {
-        "type" : "object",
-        "properties" : {
-          "changedAppPermissions" : {
-            "$ref" : "#/components/schemas/ChangeSetString"
-          },
-          "changedLinkedUsers" : {
-            "$ref" : "#/components/schemas/ChangeSetUser"
-          },
-          "user" : {
-            "$ref" : "#/components/schemas/User"
-          }
-        }
-      },
-      "Changes" : {
-        "type" : "object",
-        "properties" : {
-          "add" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string"
-              },
-              "uniqueItems" : true
-            }
-          },
-          "remove" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string"
-              },
-              "uniqueItems" : true
-            }
-          }
-        }
-      },
       "CheckDocumentPermissionRequest" : {
         "type" : "object",
         "properties" : {
-          "documentUuid" : {
-            "type" : "string"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "permission" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
           }
         }
-      },
-      "ClearDocumentPermissionsEvent" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "documentUuid" : {
-              "type" : "string"
-            }
-          }
-        } ]
       },
       "ClientCredentials" : {
         "type" : "object",
@@ -12177,13 +12171,16 @@
         "type" : "object",
         "description" : "Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping",
         "properties" : {
+          "columnFilter" : {
+            "$ref" : "#/components/schemas/ColumnFilter"
+          },
           "expression" : {
             "type" : "string",
             "description" : "The expression to use to generate the value for this field",
             "example" : "SUM(${count})"
           },
           "filter" : {
-            "$ref" : "#/components/schemas/Filter"
+            "$ref" : "#/components/schemas/IncludeExcludeFilter"
           },
           "format" : {
             "$ref" : "#/components/schemas/Format"
@@ -12201,8 +12198,26 @@
           "sort" : {
             "$ref" : "#/components/schemas/Sort"
           }
-        },
-        "required" : [ "expression" ]
+        }
+      },
+      "ColumnFilter" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ColumnRef" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
       },
       "CompletionItem" : {
         "type" : "object",
@@ -12355,6 +12370,43 @@
         },
         "required" : [ "type" ]
       },
+      "ConditionalFormattingRule" : {
+        "type" : "object",
+        "properties" : {
+          "backgroundColor" : {
+            "type" : "string"
+          },
+          "customStyle" : {
+            "$ref" : "#/components/schemas/CustomConditionalFormattingStyle"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "formattingStyle" : {
+            "type" : "string",
+            "enum" : [ "RED", "PINK", "PURPLE", "DEEP_PURPLE", "INDIGO", "BLUE", "LIGHT_BLUE", "CYAN", "TEAL", "GREEN", "LIGHT_GREEN", "LIME", "YELLOW", "AMBER", "ORANGE", "DEEP_ORANGE", "BROWN", "GREY", "BLUE_GREY" ]
+          },
+          "formattingType" : {
+            "type" : "string",
+            "enum" : [ "BACKGROUND", "TEXT", "CUSTOM" ]
+          },
+          "hide" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "textAttributes" : {
+            "$ref" : "#/components/schemas/TextAttributes"
+          },
+          "textColor" : {
+            "type" : "string"
+          }
+        }
+      },
       "ConfigProperty" : {
         "type" : "object",
         "properties" : {
@@ -12446,14 +12498,6 @@
           }
         },
         "required" : [ "type" ]
-      },
-      "CopyPermissionsFromParentRequest" : {
-        "type" : "object",
-        "properties" : {
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          }
-        }
       },
       "CountLong" : {
         "type" : "object",
@@ -12563,7 +12607,7 @@
             "type" : "string"
           },
           "owner" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -12615,6 +12659,9 @@
           },
           "reprocess" : {
             "type" : "boolean"
+          },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -12629,6 +12676,17 @@
           },
           "ignoreCase" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "CustomConditionalFormattingStyle" : {
+        "type" : "object",
+        "properties" : {
+          "dark" : {
+            "$ref" : "#/components/schemas/CustomRowStyle"
+          },
+          "light" : {
+            "$ref" : "#/components/schemas/CustomRowStyle"
           }
         }
       },
@@ -12662,6 +12720,17 @@
               "format" : "int32"
             },
             "uniqueItems" : true
+          }
+        }
+      },
+      "CustomRowStyle" : {
+        "type" : "object",
+        "properties" : {
+          "backgroundColour" : {
+            "type" : "string"
+          },
+          "textColour" : {
+            "type" : "string"
           }
         }
       },
@@ -13059,7 +13128,8 @@
           "requiredPermissions" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
           }
@@ -13239,7 +13309,7 @@
             "example" : "9f6184b4-bd78-48bc-b0cd-6e51a357f6a6"
           }
         },
-        "required" : [ "name", "type", "uuid" ],
+        "required" : [ "uuid" ],
         "xml" : {
           "name" : "doc"
         }
@@ -13281,32 +13351,23 @@
           }
         }
       },
-      "DocumentPermissions" : {
+      "DocumentFindRequest" : {
         "type" : "object",
         "properties" : {
-          "docUuid" : {
-            "type" : "string"
+          "filter" : {
+            "$ref" : "#/components/schemas/ExplorerTreeFilter"
           },
-          "groups" : {
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/User"
-            }
-          },
-          "permissions" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string"
-              },
-              "uniqueItems" : true
-            }
-          },
-          "users" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/User"
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
           }
         }
@@ -13344,6 +13405,81 @@
             "items" : {
               "$ref" : "#/components/schemas/DocumentType"
             }
+          }
+        }
+      },
+      "DocumentUserPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "documentCreatePermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "inheritedDocumentCreatePermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "inheritedPermission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "permission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "DocumentUserPermissionsReport" : {
+        "type" : "object",
+        "properties" : {
+          "explicitCreatePermissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "explicitPermission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          },
+          "inheritedCreatePermissionPaths" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          },
+          "inheritedPermissionPaths" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        }
+      },
+      "DocumentUserPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -13630,14 +13766,14 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "fldName" : {
             "type" : "string"
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -13657,6 +13793,46 @@
             "type" : "boolean"
           }
         }
+      },
+      "EmbeddedQueryComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "automate" : {
+              "$ref" : "#/components/schemas/Automate"
+            },
+            "lastQueryKey" : {
+              "$ref" : "#/components/schemas/QueryKey"
+            },
+            "lastQueryNode" : {
+              "type" : "string"
+            },
+            "queryRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "queryTablePreferences" : {
+              "$ref" : "#/components/schemas/QueryTablePreferences"
+            },
+            "selectionFilter" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ComponentSelectionHandler"
+              }
+            },
+            "selectionHandlers" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ComponentSelectionHandler"
+              }
+            },
+            "showTable" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
       },
       "EntityEvent" : {
         "type" : "object",
@@ -13844,6 +14020,9 @@
           "owningDoc" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
+          },
           "schedule" : {
             "$ref" : "#/components/schemas/Schedule"
           },
@@ -13974,13 +14153,6 @@
           },
           "explorerNode" : {
             "$ref" : "#/components/schemas/ExplorerNode"
-          },
-          "owners" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/UserName"
-            },
-            "uniqueItems" : true
           }
         }
       },
@@ -14014,7 +14186,8 @@
           "documentPermissions" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
           },
@@ -14145,7 +14318,8 @@
           "requiredPermissions" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "uniqueItems" : true
           },
@@ -14233,7 +14407,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -14248,8 +14422,7 @@
             }
           }
         } ],
-        "description" : "A predicate term in a query expression tree",
-        "required" : [ "condition", "field" ]
+        "description" : "A predicate term in a query expression tree"
       },
       "ExtendedUiConfig" : {
         "type" : "object",
@@ -14329,11 +14502,31 @@
           }
         }
       },
-      "FetchAllDocumentPermissionsRequest" : {
+      "FetchAppUserPermissionsRequest" : {
         "type" : "object",
         "properties" : {
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "showLevel" : {
+            "type" : "string",
+            "enum" : [ "SHOW_EXPLICIT", "SHOW_EFFECTIVE", "SHOW_ALL" ]
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -14389,6 +14582,37 @@
             }
           }
         } ]
+      },
+      "FetchDocumentUserPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "showLevel" : {
+            "type" : "string",
+            "enum" : [ "SHOW_EXPLICIT", "SHOW_EFFECTIVE", "SHOW_ALL" ]
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
       },
       "FetchExplorerNodeResult" : {
         "type" : "object",
@@ -14567,22 +14791,6 @@
         },
         "required" : [ "dataSource", "field" ]
       },
-      "Filter" : {
-        "type" : "object",
-        "description" : "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied",
-        "properties" : {
-          "excludes" : {
-            "type" : "string",
-            "description" : "Only results NOT matching this filter will be included",
-            "example" : "^[0-9]{3}$"
-          },
-          "includes" : {
-            "type" : "string",
-            "description" : "Only results matching this filter will be included",
-            "example" : "^[0-9]{3}$"
-          }
-        }
-      },
       "FilterFieldDefinition" : {
         "type" : "object",
         "properties" : {
@@ -14597,28 +14805,14 @@
           }
         }
       },
-      "FilterUsersRequest" : {
-        "type" : "object",
-        "properties" : {
-          "quickFilterInput" : {
-            "type" : "string"
-          },
-          "users" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/UserName"
-            }
-          }
-        }
-      },
       "FindAccountRequest" : {
         "type" : "object",
         "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilter" : {
-            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -14659,14 +14853,14 @@
       "FindApiKeyCriteria" : {
         "type" : "object",
         "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "owner" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilterInput" : {
-            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -14964,27 +15158,6 @@
           }
         }
       },
-      "FindRequest" : {
-        "type" : "object",
-        "properties" : {
-          "filter" : {
-            "$ref" : "#/components/schemas/ExplorerTreeFilter"
-          },
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          }
-        }
-      },
       "FindResult" : {
         "type" : "object",
         "properties" : {
@@ -15021,6 +15194,17 @@
           }
         }
       },
+      "FindResultWithPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "findResult" : {
+            "$ref" : "#/components/schemas/FindResult"
+          },
+          "permissions" : {
+            "$ref" : "#/components/schemas/DocumentUserPermissions"
+          }
+        }
+      },
       "FindStoredQueryCriteria" : {
         "type" : "object",
         "properties" : {
@@ -15036,8 +15220,8 @@
           "name" : {
             "$ref" : "#/components/schemas/StringCriteria"
           },
-          "ownerUuid" : {
-            "type" : "string"
+          "owner" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -15121,17 +15305,11 @@
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
-          "group" : {
-            "type" : "boolean"
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilterInput" : {
-            "type" : "string"
-          },
-          "relatedUser" : {
-            "$ref" : "#/components/schemas/User"
           },
           "sort" : {
             "type" : "string",
@@ -15145,14 +15323,14 @@
           }
         }
       },
-      "FindUserNameCriteria" : {
+      "FindUserDependenciesCriteria" : {
         "type" : "object",
         "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilterInput" : {
-            "type" : "string"
           },
           "sort" : {
             "type" : "string",
@@ -15163,6 +15341,9 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -15479,7 +15660,7 @@
             "type" : "string"
           },
           "owner" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15602,6 +15783,22 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "IncludeExcludeFilter" : {
+        "type" : "object",
+        "description" : "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied",
+        "properties" : {
+          "excludes" : {
+            "type" : "string",
+            "description" : "Only results NOT matching this filter will be included",
+            "example" : "^[0-9]{3}$"
+          },
+          "includes" : {
+            "type" : "string",
+            "description" : "Only results matching this filter will be included",
+            "example" : "^[0-9]{3}$"
           }
         }
       },
@@ -16253,7 +16450,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -16537,6 +16734,9 @@
             "type" : "string",
             "enum" : [ "STREAM", "EMAIL" ]
           },
+          "enabled" : {
+            "type" : "boolean"
+          },
           "limitNotifications" : {
             "type" : "boolean"
           },
@@ -16724,32 +16924,12 @@
       },
       "PermissionChangeEvent" : {
         "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
         "properties" : {
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "type" ]
-      },
-      "PermissionChangeImpactSummary" : {
-        "type" : "object",
-        "properties" : {
-          "impactDetail" : {
-            "type" : "string"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
-          "impactSummary" : {
-            "type" : "string"
-          }
-        }
-      },
-      "PermissionChangeRequest" : {
-        "type" : "object",
-        "properties" : {
-          "event" : {
-            "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -17206,9 +17386,6 @@
           "createUser" : {
             "type" : "string"
           },
-          "data" : {
-            "type" : "string"
-          },
           "deleted" : {
             "type" : "boolean"
           },
@@ -17260,6 +17437,9 @@
           "reprocess" : {
             "type" : "boolean"
           },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
+          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -17283,9 +17463,6 @@
         }, {
           "type" : "object",
           "properties" : {
-            "ownerDisplayName" : {
-              "type" : "string"
-            },
             "processorFilter" : {
               "$ref" : "#/components/schemas/ProcessorFilter"
             }
@@ -17633,6 +17810,9 @@
       "QueryContext" : {
         "type" : "object",
         "properties" : {
+          "additionalQueryExpression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
           },
@@ -17695,6 +17875,9 @@
           "query" : {
             "type" : "string"
           },
+          "queryTablePreferences" : {
+            "$ref" : "#/components/schemas/QueryTablePreferences"
+          },
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           },
@@ -17721,7 +17904,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -17731,7 +17914,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "name" : {
             "type" : "string"
@@ -17945,6 +18128,9 @@
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
           },
+          "queryTablePreferences" : {
+            "$ref" : "#/components/schemas/QueryTablePreferences"
+          },
           "requestedRange" : {
             "$ref" : "#/components/schemas/OffsetRange"
           },
@@ -17957,6 +18143,33 @@
           "timeout" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "QueryTablePreferences" : {
+        "type" : "object",
+        "properties" : {
+          "applyValueFilters" : {
+            "type" : "boolean"
+          },
+          "columns" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Column"
+            }
+          },
+          "conditionalFormattingRules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalFormattingRule"
+            }
+          },
+          "pageSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "selectionFilter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           }
         }
       },
@@ -18180,21 +18393,56 @@
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
       },
-      "RemovePermissionEvent" : {
+      "RemoveAllDocumentUserCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
-            "documentUuid" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "RemoveAllPermissions" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        } ]
+      },
+      "RemoveAppPermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAppPermissionChange"
+        } ]
+      },
+      "RemoveDocumentUserCreatePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "documentType" : {
               "type" : "string"
             },
-            "permission" : {
-              "type" : "string"
-            },
-            "userUuid" : {
-              "type" : "string"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "RemovePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
             }
           }
         } ]
@@ -18264,6 +18512,21 @@
         },
         "required" : [ "componentId", "type" ]
       },
+      "ResultPageAccount" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Account"
+            }
+          }
+        }
+      },
       "ResultPageActivity" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -18290,6 +18553,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/AnalyticDataShard"
+            }
+          }
+        }
+      },
+      "ResultPageAppUserPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppUserPermissions"
             }
           }
         }
@@ -18369,6 +18647,21 @@
           }
         }
       },
+      "ResultPageDocumentUserPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocumentUserPermissions"
+            }
+          }
+        }
+      },
       "ResultPageDuplicateCheckRow" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -18444,6 +18737,21 @@
           }
         }
       },
+      "ResultPageFindResultWithPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FindResultWithPermissions"
+            }
+          }
+        }
+      },
       "ResultPageFsVolume" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -18470,6 +18778,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/FsVolumeGroup"
+            }
+          }
+        }
+      },
+      "ResultPageHashedApiKey" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HashedApiKey"
             }
           }
         }
@@ -18639,7 +18962,7 @@
           }
         }
       },
-      "ResultPageUserName" : {
+      "ResultPageUserDependency" : {
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
@@ -18649,7 +18972,22 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/UserName"
+              "$ref" : "#/components/schemas/UserDependency"
+            }
+          }
+        }
+      },
+      "ResultPageUserRef" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserRef"
             }
           }
         }
@@ -18692,8 +19030,7 @@
           "timeFilter" : {
             "$ref" : "#/components/schemas/TimeFilter"
           }
-        },
-        "required" : [ "componentId", "mappings", "openGroups", "requestedRange", "resultStyle" ]
+        }
       },
       "ResultStoreInfo" : {
         "type" : "object",
@@ -18701,15 +19038,15 @@
           "complete" : {
             "type" : "boolean"
           },
-          "createUser" : {
-            "type" : "string"
-          },
           "creationTime" : {
             "type" : "integer",
             "format" : "int64"
           },
           "nodeName" : {
             "type" : "string"
+          },
+          "owner" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
@@ -18756,9 +19093,6 @@
         "type" : "object",
         "description" : "A row of data in a result set",
         "properties" : {
-          "backgroundColor" : {
-            "type" : "string"
-          },
           "depth" : {
             "type" : "integer",
             "format" : "int32",
@@ -18766,10 +19100,9 @@
             "example" : 0
           },
           "groupKey" : {
-            "type" : "string",
-            "description" : "TODO"
+            "type" : "string"
           },
-          "textColor" : {
+          "matchingRule" : {
             "type" : "string"
           },
           "values" : {
@@ -18780,8 +19113,7 @@
               "description" : "The value for this row of data. The values in the list are in the same order as the fields in the ResultRequest"
             }
           }
-        },
-        "required" : [ "depth", "groupKey", "values" ]
+        }
       },
       "S3ClientConfig" : {
         "type" : "object",
@@ -19210,8 +19542,8 @@
           "componentId" : {
             "type" : "string"
           },
-          "ownerDocUuid" : {
-            "type" : "string"
+          "ownerDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "sourceType" : {
             "type" : "string",
@@ -19403,7 +19735,8 @@
             "$ref" : "#/components/schemas/FindMetaCriteria"
           },
           "requiredPermission" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
           }
         }
       },
@@ -19440,8 +19773,8 @@
           "nodeName" : {
             "type" : "string"
           },
-          "userName" : {
-            "$ref" : "#/components/schemas/UserName"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -19454,8 +19787,8 @@
           "nodeName" : {
             "type" : "string"
           },
-          "userName" : {
-            "$ref" : "#/components/schemas/UserName"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -19473,6 +19806,19 @@
           }
         }
       },
+      "SetAllPermissionsFrom" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "sourceDocRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
       "SetAssignedToRequest" : {
         "type" : "object",
         "properties" : {
@@ -19484,9 +19830,46 @@
             }
           },
           "assignedTo" : {
-            "$ref" : "#/components/schemas/UserName"
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
+      },
+      "SetDocumentUserCreatePermissions" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "documentTypes" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              },
+              "uniqueItems" : true
+            },
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "SetPermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "permission" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+            },
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
       },
       "SetStatusRequest" : {
         "type" : "object",
@@ -19695,7 +20078,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -20144,9 +20527,6 @@
           "dashboardUuid" : {
             "type" : "string"
           },
-          "data" : {
-            "type" : "string"
-          },
           "favourite" : {
             "type" : "boolean"
           },
@@ -20157,8 +20537,8 @@
           "name" : {
             "type" : "string"
           },
-          "ownerUuid" : {
-            "type" : "string"
+          "owner" : {
+            "$ref" : "#/components/schemas/UserRef"
           },
           "query" : {
             "$ref" : "#/components/schemas/Query"
@@ -20518,6 +20898,9 @@
             "node" : {
               "type" : "string"
             },
+            "runAsUser" : {
+              "$ref" : "#/components/schemas/UserRef"
+            },
             "timeToWaitForData" : {
               "$ref" : "#/components/schemas/SimpleDuration"
             }
@@ -20572,50 +20955,64 @@
       },
       "TableComponentSettings" : {
         "type" : "object",
-        "properties" : {
-          "dataSourceRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "extractValues" : {
-            "type" : "boolean",
-            "description" : "TODO"
-          },
-          "extractionPipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "fields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Column"
-            }
-          },
-          "maxResults" : {
-            "type" : "array",
-            "description" : "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply",
-            "example" : "1000,10,1",
-            "items" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "applyValueFilters" : {
+              "type" : "boolean"
+            },
+            "dataSourceRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "extractValues" : {
+              "type" : "boolean",
+              "description" : "TODO"
+            },
+            "extractionPipeline" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "fields" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Column"
+              }
+            },
+            "maxResults" : {
+              "type" : "array",
+              "description" : "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply",
+              "example" : "1000,10,1",
+              "items" : {
+                "type" : "integer",
+                "format" : "int64",
+                "description" : "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply"
+              }
+            },
+            "pageSize" : {
               "type" : "integer",
-              "format" : "int64",
-              "description" : "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply"
+              "format" : "int32",
+              "description" : "Defines the maximum number of rows to display in the table at once (default 100).",
+              "example" : 100
+            },
+            "queryId" : {
+              "type" : "string",
+              "description" : "TODO"
+            },
+            "selectionHandlers" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ComponentSelectionHandler"
+              }
+            },
+            "showDetail" : {
+              "type" : "boolean"
+            },
+            "useDefaultExtractionPipeline" : {
+              "type" : "boolean"
             }
-          },
-          "pageSize" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "Defines the maximum number of rows to display in the table at once (default 100).",
-            "example" : 100
-          },
-          "queryId" : {
-            "type" : "string",
-            "description" : "TODO"
-          },
-          "showDetail" : {
-            "type" : "boolean"
-          },
-          "useDefaultExtractionPipeline" : {
-            "type" : "boolean"
           }
-        }
+        } ]
       },
       "TableCoprocessorSettings" : {
         "type" : "object",
@@ -20700,6 +21097,9 @@
         "properties" : {
           "aggregateFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "applyValueFilters" : {
+            "type" : "boolean"
           },
           "extractValues" : {
             "type" : "boolean"
@@ -20819,6 +21219,17 @@
           }
         }
       },
+      "TextAttributes" : {
+        "type" : "object",
+        "properties" : {
+          "bold" : {
+            "type" : "boolean"
+          },
+          "italic" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "TextComponentSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -20827,28 +21238,28 @@
           "type" : "object",
           "properties" : {
             "colFromField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "colToField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "lineFromField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "lineToField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "modelVersion" : {
               "type" : "string"
             },
             "partNoField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "pipeline" : {
               "$ref" : "#/components/schemas/DocRef"
             },
             "recordNoField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "showAsHtml" : {
               "type" : "boolean"
@@ -20857,7 +21268,7 @@
               "type" : "boolean"
             },
             "streamIdField" : {
-              "$ref" : "#/components/schemas/Column"
+              "$ref" : "#/components/schemas/ColumnRef"
             },
             "tableId" : {
               "type" : "string"
@@ -20952,7 +21363,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
           },
           "from" : {
             "type" : "string"
@@ -21190,6 +21601,9 @@
           "displayName" : {
             "type" : "string"
           },
+          "enabled" : {
+            "type" : "boolean"
+          },
           "fullName" : {
             "type" : "string"
           },
@@ -21210,9 +21624,6 @@
           "updateUser" : {
             "type" : "string"
           },
-          "userIdentityForAudit" : {
-            "type" : "string"
-          },
           "uuid" : {
             "type" : "string"
           },
@@ -21222,22 +21633,21 @@
           }
         }
       },
-      "UserAndPermissions" : {
+      "UserDependency" : {
         "type" : "object",
         "properties" : {
-          "permissions" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
+          "details" : {
+            "type" : "string"
           },
-          "userName" : {
-            "$ref" : "#/components/schemas/UserName"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
-      "UserName" : {
+      "UserDesc" : {
         "type" : "object",
         "properties" : {
           "displayName" : {
@@ -21248,27 +21658,34 @@
           },
           "subjectId" : {
             "type" : "string"
+          }
+        }
+      },
+      "UserInfo" : {
+        "type" : "object",
+        "properties" : {
+          "deleted" : {
+            "type" : "boolean"
           },
-          "userIdentityForAudit" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "group" : {
+            "type" : "boolean"
+          },
+          "subjectId" : {
             "type" : "string"
           },
           "uuid" : {
             "type" : "string"
           }
         }
-      },
-      "UserNameEntryValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/EntryValue"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "userName" : {
-              "$ref" : "#/components/schemas/UserName"
-            }
-          }
-        } ]
       },
       "UserPreferences" : {
         "type" : "object",
@@ -21300,6 +21717,9 @@
           "fontSize" : {
             "type" : "string"
           },
+          "hideConditionalStyles" : {
+            "type" : "boolean"
+          },
           "theme" : {
             "type" : "string"
           },
@@ -21307,6 +21727,42 @@
             "$ref" : "#/components/schemas/UserTimeZone"
           }
         }
+      },
+      "UserRef" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "group" : {
+            "type" : "boolean"
+          },
+          "subjectId" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UserRefEntryValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/EntryValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
       },
       "UserTimeZone" : {
         "type" : "object",
@@ -21450,9 +21906,6 @@
             "tableId" : {
               "type" : "string"
             },
-            "tableSettings" : {
-              "$ref" : "#/components/schemas/TableComponentSettings"
-            },
             "visualisation" : {
               "$ref" : "#/components/schemas/DocRef"
             }
@@ -21484,11 +21937,17 @@
         }, {
           "type" : "object",
           "properties" : {
+            "json" : {
+              "type" : "string"
+            },
             "requestedRange" : {
               "$ref" : "#/components/schemas/OffsetRange"
             },
-            "visDashboardSettings" : {
-              "$ref" : "#/components/schemas/VisComponentSettings"
+            "tableSettings" : {
+              "$ref" : "#/components/schemas/TableSettings"
+            },
+            "visualisation" : {
+              "$ref" : "#/components/schemas/DocRef"
             }
           }
         } ],

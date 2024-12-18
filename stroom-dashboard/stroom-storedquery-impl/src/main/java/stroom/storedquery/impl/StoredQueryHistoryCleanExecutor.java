@@ -17,17 +17,18 @@
 
 package stroom.storedquery.impl;
 
-import stroom.security.user.api.UserNameService;
+import stroom.security.user.api.UserRefLookup;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -40,24 +41,27 @@ public class StoredQueryHistoryCleanExecutor {
     private final StoredQueryDao storedQueryDao;
     private final StoredQueryConfig storedQueryConfig;
     private final TaskContextFactory taskContextFactory;
-    private final UserNameService userNameService;
+    private final UserRefLookup userRefLookup;
 
     @Inject
     public StoredQueryHistoryCleanExecutor(final StoredQueryDao storedQueryDao,
                                            final StoredQueryConfig storedQueryConfig,
                                            final TaskContextFactory taskContextFactory,
-                                           final UserNameService userNameService) {
+                                           final UserRefLookup userRefLookup) {
         this.storedQueryDao = storedQueryDao;
         this.storedQueryConfig = storedQueryConfig;
         this.taskContextFactory = taskContextFactory;
-        this.userNameService = userNameService;
+        this.userRefLookup = userRefLookup;
     }
 
     public void exec() {
-        clean(false);
+        clean();
     }
 
-    private void clean(final boolean favourite) {
+    /**
+     * Delete all non-favourite stored queries
+     */
+    private void clean() {
         info(() -> "Starting history clean task");
 
         final int historyItemsRetention = storedQueryConfig.getItemsRetention();
@@ -67,17 +71,18 @@ public class StoredQueryHistoryCleanExecutor {
                 .minus(historyDaysRetention, ChronoUnit.DAYS)
                 .toEpochMilli();
 
-        final List<String> users = storedQueryDao.getUsers(favourite);
-        users.forEach(ownerUuid -> {
-            final String userDisplayName = userNameService.getByUuid(ownerUuid)
-                    .map(UserName::getUserIdentityForAudit)
-                    .orElse("?");
-            info(() -> "Cleaning query history for user '" + userDisplayName
-                    + "' with ownerUuid '" + ownerUuid + "'");
+        final Set<String> userUuids = storedQueryDao.getUsersWithNonFavourites();
+        LOGGER.debug(() -> LogUtil.message("Found {} userUuids", userUuids.size()));
 
-            final Integer oldestId = storedQueryDao.getOldestId(
-                    ownerUuid, favourite, historyItemsRetention);
-            storedQueryDao.clean(ownerUuid, favourite, oldestId, oldestCrtMs);
+        userUuids.forEach(ownerUuid -> {
+            final String userDisplayName = userRefLookup.getByUuid(ownerUuid)
+                    .map(UserRef::toInfoString)
+                    .orElse("?");
+
+            info(() -> "Cleaning query history for user '" + userDisplayName
+                       + "' with ownerUuid '" + ownerUuid + "'");
+
+            storedQueryDao.clean(ownerUuid, historyItemsRetention, oldestCrtMs);
         });
 
         info(() -> "Finished history clean task");

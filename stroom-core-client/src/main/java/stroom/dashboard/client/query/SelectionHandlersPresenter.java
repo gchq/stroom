@@ -18,18 +18,35 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.client.HasSelection;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
+import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.ComponentSettings.AbstractBuilder;
+import stroom.dashboard.shared.HasSelectionFilter;
+import stroom.dashboard.shared.HasSelectionFilterBuilder;
+import stroom.dashboard.shared.HasSelectionQuery;
+import stroom.dashboard.shared.HasSelectionQueryBuilder;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.Format;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
+import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.query.client.presenter.QueryResultTablePresenter;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -45,7 +62,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SelectionHandlersPresenter
@@ -54,6 +73,7 @@ public class SelectionHandlersPresenter
 
     private final SelectionHandlerListPresenter listPresenter;
     private final Provider<SelectionHandlerPresenter> editRulePresenterProvider;
+    private final DynamicFieldSelectionListModel dynamicFieldSelectionListModel;
     private List<ComponentSelectionHandler> selectionHandlers = new ArrayList<>();
 
     private final ButtonView addButton;
@@ -66,14 +86,18 @@ public class SelectionHandlersPresenter
 
     private boolean dirty;
     private List<Component> componentList;
-    private BasicQuerySettingsPresenter basicQuerySettingsPresenter;
+    private FieldSelectionListModel fieldSelectionListModel;
+    // Determine if we are using this to set a filter or query selection handler.
+    private boolean useForFilter;
 
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
                                       final SelectionHandlersView view,
                                       final SelectionHandlerListPresenter listPresenter,
-                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider) {
+                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider,
+                                      final DynamicFieldSelectionListModel dynamicFieldSelectionListModel) {
         super(eventBus, view);
+        this.dynamicFieldSelectionListModel = dynamicFieldSelectionListModel;
         this.listPresenter = listPresenter;
 //        this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
@@ -102,8 +126,8 @@ public class SelectionHandlersPresenter
         addButton.focus();
     }
 
-    public void setBasicQuerySettingsPresenter(final BasicQuerySettingsPresenter basicQuerySettingsPresenter) {
-        this.basicQuerySettingsPresenter = basicQuerySettingsPresenter;
+    public void setDataSourceRefConsumer(final Consumer<Consumer<DocRef>> dataSourceRefConsumer) {
+        dynamicFieldSelectionListModel.setDataSourceRefConsumer(dataSourceRefConsumer);
     }
 
     @Override
@@ -201,16 +225,16 @@ public class SelectionHandlersPresenter
     }
 
     private void add() {
-        final DocRef dataSource = basicQuerySettingsPresenter.getDataSource();
         final ComponentSelectionHandler newRule = ComponentSelectionHandler
                 .builder()
                 .id(RandomId.createId(5))
                 .enabled(true)
                 .build();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.read(newRule, componentList, dataSource);
+        editSelectionHandlerPresenter.setComponents(getComponents());
+        editSelectionHandlerPresenter.read(newRule, componentList, fieldSelectionListModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -230,12 +254,11 @@ public class SelectionHandlersPresenter
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
-        final DocRef dataSource = basicQuerySettingsPresenter.getDataSource();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
+        editSelectionHandlerPresenter.setComponents(getComponents());
+        editSelectionHandlerPresenter.read(existingRule, componentList, fieldSelectionListModel);
 
-        editSelectionHandlerPresenter.read(existingRule, componentList, dataSource);
-
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -263,17 +286,51 @@ public class SelectionHandlersPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        final QueryComponentSettings settings = (QueryComponentSettings) componentConfig.getSettings();
-        if (settings.getSelectionHandlers() != null) {
-            this.selectionHandlers = settings.getSelectionHandlers();
-        } else {
-            this.selectionHandlers.clear();
+
+        // Get field list model.
+        fieldSelectionListModel = dynamicFieldSelectionListModel;
+        if (componentConfig.getSettings() instanceof TableComponentSettings) {
+            final TableComponentSettings settings =
+                    (TableComponentSettings) componentConfig.getSettings();
+            fieldSelectionListModel = createSelectionListModelFromColumns(settings.getColumns());
+        } else if (useForFilter) {
+            final Component component = getComponents().get(componentConfig.getId());
+            if (component instanceof EmbeddedQueryPresenter) {
+                List<Column> columns = Collections.emptyList();
+                final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
+                final QueryResultTablePresenter queryResultTablePresenter =
+                        embeddedQueryPresenter.getCurrentTablePresenter();
+                if (queryResultTablePresenter != null) {
+                    columns = GwtNullSafe.list(queryResultTablePresenter.getCurrentColumns());
+                }
+                fieldSelectionListModel = createSelectionListModelFromColumns(columns);
+            }
+        }
+
+        // Read selection handlers.
+        if (useForFilter) {
+            if (componentConfig.getSettings() instanceof HasSelectionFilter) {
+                final HasSelectionFilter hasSelectionFilter = (HasSelectionFilter) componentConfig.getSettings();
+                if (hasSelectionFilter.getSelectionFilter() != null) {
+                    this.selectionHandlers = hasSelectionFilter.getSelectionFilter();
+                } else {
+                    this.selectionHandlers.clear();
+                }
+            }
+        } else if (componentConfig.getSettings() instanceof HasSelectionQuery) {
+            final HasSelectionQuery hasSelectionQuery =
+                    (HasSelectionQuery) componentConfig.getSettings();
+            if (hasSelectionQuery.getSelectionQuery() != null) {
+                this.selectionHandlers = hasSelectionQuery.getSelectionQuery();
+            } else {
+                this.selectionHandlers.clear();
+            }
         }
 
         componentList = getComponents()
                 .getComponents()
                 .stream()
-                .filter(c -> c instanceof HasSelection)
+                .filter(c -> c instanceof HasComponentSelection)
                 .collect(Collectors.toList());
 
         listPresenter.getSelectionModel().clear();
@@ -281,13 +338,53 @@ public class SelectionHandlersPresenter
         update();
     }
 
+    private FieldSelectionListModel createSelectionListModelFromColumns(final List<Column> columns) {
+        final List<QueryField> fields = columns
+                .stream()
+                .map(column -> QueryField
+                        .builder()
+                        .fldName(column.getName())
+                        .fldType(getFieldType(column))
+                        .queryable(true)
+                        .build())
+                .collect(Collectors.toList());
+        final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
+        simpleFieldSelectionListModel.addItems(fields);
+        return simpleFieldSelectionListModel;
+    }
+
+    private FieldType getFieldType(final Column column) {
+        final Format format = column.getFormat();
+        if (format != null && format.getType() != null) {
+            switch (format.getType()) {
+                case NUMBER: {
+                    return FieldType.LONG;
+                }
+                case DATE_TIME: {
+                    return FieldType.DATE;
+                }
+            }
+        }
+        return FieldType.TEXT;
+    }
+
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        final QueryComponentSettings oldSettings = (QueryComponentSettings) componentConfig.getSettings();
-        final QueryComponentSettings newSettings = oldSettings
-                .copy()
-                .selectionHandlers(selectionHandlers)
-                .build();
+        final AbstractBuilder<?, ?> builder = componentConfig.getSettings().copy();
+
+        if (useForFilter) {
+            if (builder instanceof HasSelectionFilterBuilder<?, ?>) {
+                final HasSelectionFilterBuilder<?, ?> hasSelectionFilter = (HasSelectionFilterBuilder<?, ?>) builder;
+                hasSelectionFilter.selectionFilter(selectionHandlers);
+            }
+        } else {
+            if (builder instanceof HasSelectionQueryBuilder<?, ?>) {
+                final HasSelectionQueryBuilder<?, ?> hasSelectionQuery = (HasSelectionQueryBuilder<?, ?>) builder;
+                hasSelectionQuery.selectionQuery(selectionHandlers);
+            }
+        }
+
+        final ComponentSettings newSettings = builder.build();
         return componentConfig.copy().settings(newSettings).build();
     }
 
@@ -304,6 +401,12 @@ public class SelectionHandlersPresenter
     private void update() {
         listPresenter.setData(selectionHandlers);
         updateButtons();
+    }
+
+    @Override
+    public void setComponents(final Components components) {
+        listPresenter.setComponents(components);
+        super.setComponents(components);
     }
 
     private void updateButtons() {
@@ -340,6 +443,10 @@ public class SelectionHandlersPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setUseForFilter(final boolean useForFilter) {
+        this.useForFilter = useForFilter;
     }
 
     public interface SelectionHandlersView extends View {

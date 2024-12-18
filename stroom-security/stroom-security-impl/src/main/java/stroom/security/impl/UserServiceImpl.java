@@ -16,101 +16,142 @@
 
 package stroom.security.impl;
 
+import stroom.activity.api.ActivityService;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
+import stroom.security.impl.event.PermissionChangeEvent;
+import stroom.security.impl.event.PermissionChangeEventBus;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
+import stroom.storedquery.api.StoredQueryService;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.HasUserDependencies;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
+import stroom.util.shared.UserDependency;
+import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-class UserServiceImpl implements UserService {
+class UserServiceImpl implements UserService, ContentPackUserService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserServiceImpl.class);
 
     private final SecurityContext securityContext;
     private final UserDao userDao;
-    private final EntityEventBus eventBus;
+    private final PermissionChangeEventBus permissionChangeEventBus;
+    private final Map<String, Provider<HasUserDependencies>> hasUserDependenciesProviderMap;
+    private final UserCache userCache;
+    private final DocRefInfoService docRefInfoService;
+    private final StoredQueryService storedQueryService;
+    private final UserPreferencesService userPreferencesService;
+    private final ActivityService activityService;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
                     final UserDao userDao,
-                    final EntityEventBus eventBus) {
+                    final PermissionChangeEventBus permissionChangeEventBus,
+                    final Map<String, Provider<HasUserDependencies>> hasDependenciesSet,
+                    final UserCache userCache,
+                    final DocRefInfoService docRefInfoService,
+                    final StoredQueryService storedQueryService,
+                    final UserPreferencesService userPreferencesService,
+                    final ActivityService activityService) {
         this.securityContext = securityContext;
         this.userDao = userDao;
-        this.eventBus = eventBus;
+        this.permissionChangeEventBus = permissionChangeEventBus;
+        this.hasUserDependenciesProviderMap = hasDependenciesSet;
+        this.userCache = userCache;
+        this.docRefInfoService = docRefInfoService;
+        this.storedQueryService = storedQueryService;
+        this.userPreferencesService = userPreferencesService;
+        this.activityService = activityService;
     }
 
     @Override
-    public User getOrCreateUser(final UserName userName, final Consumer<User> onCreateAction) {
-        return getOrCreate(userName, false, onCreateAction);
+    public User getOrCreateUser(final UserDesc userDesc, final Consumer<User> onCreateAction) {
+        final Optional<User> optional = userDao.getUserBySubjectId(userDesc.getSubjectId());
+        return optional.orElseGet(() -> {
+            final User user = new User();
+            AuditUtil.stamp(securityContext, user);
+            user.setSubjectId(userDesc.getSubjectId());
+            // Make sure we set a display name even if it is the same as the subject id.
+            user.setDisplayName(NullSafe.isBlankString(userDesc.getDisplayName())
+                    ? userDesc.getSubjectId()
+                    : userDesc.getDisplayName());
+            user.setFullName(userDesc.getFullName());
+            user.setGroup(false);
+            user.setEnabled(true);
+
+            return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
+                    userDao.tryCreate(user, persistedUser -> {
+                        fireUserChangeEvent(persistedUser.asRef());
+                        if (onCreateAction != null) {
+                            onCreateAction.accept(persistedUser);
+                        }
+                    }));
+        });
     }
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
-        return getOrCreate(SimpleUserName.fromGroupName(name), true, onCreateAction);
-    }
-
-    private User getOrCreate(final UserName userName,
-                             final boolean isGroup,
-                             final Consumer<User> onCreateAction) {
-        final Optional<User> optional = userDao.getBySubjectId(userName.getSubjectId(), isGroup);
+        final Optional<User> optional = userDao.getGroupByName(name);
         return optional.orElseGet(() -> {
             final User user = new User();
             AuditUtil.stamp(securityContext, user);
-            user.setUuid(UUID.randomUUID().toString());
-            user.setSubjectId(userName.getSubjectId());
-            user.setDisplayName(userName.getDisplayName());
-            user.setFullName(userName.getFullName());
-            user.setGroup(isGroup);
+            user.setSubjectId(name);
+            user.setDisplayName(name);
+            user.setGroup(true);
+            user.setEnabled(true);
 
-            return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-                final User newUser = userDao.tryCreate(user, persistedUser -> {
-                    fireEntityChangeEvent(persistedUser, EntityAction.CREATE);
-                    if (onCreateAction != null) {
-                        onCreateAction.accept(persistedUser);
-                    }
-                });
-                return newUser;
-            });
+            return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
+                    userDao.tryCreate(user, persistedUser -> {
+                        fireUserChangeEvent(persistedUser.asRef());
+                        if (onCreateAction != null) {
+                            onCreateAction.accept(persistedUser);
+                        }
+                    }));
         });
     }
 
     @Override
     public Optional<User> getUserBySubjectId(final String subjectId) {
         if (!NullSafe.isBlankString(subjectId)) {
-            return userDao.getBySubjectId(subjectId)
-                    .filter(user -> {
-                        // TODO: 23/03/2023 Why is this here?
-                        if (!user.getSubjectId().equals(subjectId)) {
-                            throw new RuntimeException(
-                                    "Unexpected: returned user name does not match requested user name");
-                        }
-                        return true;
-                    });
+            return userDao.getUserBySubjectId(subjectId);
         } else {
             return Optional.empty();
         }
     }
 
     @Override
-    public Optional<User> getUserByDisplayName(final String displayName) {
-        if (!NullSafe.isBlankString(displayName)) {
-            return userDao.getByDisplayName(displayName);
+    public Optional<User> getGroupByName(final String groupName) {
+        if (!NullSafe.isBlankString(groupName)) {
+            return userDao.getGroupByName(groupName);
         } else {
             return Optional.empty();
         }
@@ -124,120 +165,283 @@ class UserServiceImpl implements UserService {
     @Override
     public User update(User user) {
         AuditUtil.stamp(securityContext, user);
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
-            fireEntityChangeEvent(updatedUser, EntityAction.UPDATE);
+
+            // If the updated user is a group then we need to let all children know there has been a change as we cache
+            // parent groups for children.
+            if (updatedUser.isGroup()) {
+                final ResultPage<User> resultPage = findUsersInGroup(updatedUser.getUuid(), new FindUserCriteria());
+                for (final User child : resultPage.getValues()) {
+                    fireUserChangeEvent(child.asRef());
+                }
+            }
+
+            fireUserChangeEvent(updatedUser.asRef());
             return updatedUser;
         });
     }
 
     @Override
-    public Boolean delete(final String userUuid) {
-        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            userDao.delete(userUuid);
-
-            fireEntityChangeEvent(userUuid, EntityAction.DELETE);
-        });
-        return true;
+    public ResultPage<User> find(final FindUserCriteria criteria) {
+        return securityContext.secureResult(() -> userDao.find(criteria));
     }
 
     @Override
-    public List<User> find(final FindUserCriteria criteria) {
-        return userDao.find(criteria.getQuickFilterInput(), criteria.isGroup());
+    public ResultPage<User> findUsersInGroup(final String groupUuid, final FindUserCriteria criteria) {
+        // See if the user is allowed to see the requested group.
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(
+                    securityContext.getUserRef(),
+                    "You do not have permission to manage users.");
+        }
+        return userDao.findUsersInGroup(groupUuid, criteria);
     }
 
     @Override
-    public List<User> findUsersInGroup(final String groupUuid, final String quickFilterInput) {
-        return userDao.findUsersInGroup(groupUuid, quickFilterInput);
-    }
-
-
-    @Override
-    public List<User> findGroupsForUser(final String userUuid, final String quickFilterInput) {
-        return userDao.findGroupsForUser(userUuid, quickFilterInput);
-    }
-
-    @Override
-    public Set<String> findGroupUuidsForUser(final String userUuid) {
-        return userDao.findGroupUuidsForUser(userUuid);
+    public ResultPage<User> findGroupsForUser(final String userUuid, final FindUserCriteria criteria) {
+        // See if the user is allowed to see for the requested user.
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            if (!securityContext.getUserRef().getUuid().equals(userUuid)) {
+                throw new PermissionException(
+                        securityContext.getUserRef(),
+                        "You are only allowed to see your own groups.");
+            }
+        }
+        return userDao.findGroupsForUser(userUuid, criteria);
     }
 
     @Override
-    public List<User> findGroupsForUserName(final String userName) {
-        return userDao.findGroupsForUserName(userName);
-    }
+    public Boolean addUserToGroup(final UserRef userOrGroupRef, final UserRef groupRef) {
+        Objects.requireNonNull(userOrGroupRef);
+        Objects.requireNonNull(groupRef);
+        securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            final String userUuid = userOrGroupRef.getUuid();
+            final String groupUuid = groupRef.getUuid();
 
-    @Override
-    public Boolean addUserToGroup(final String userUuid, final String groupUuid) {
-        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            // Make sure we aren't creating a cyclic dependency.
+            checkCyclicDependency(userUuid, groupUuid, new HashSet<>());
+
             userDao.addUserToGroup(userUuid, groupUuid);
-            fireEntityChangeEvent(userUuid, EntityAction.UPDATE);
+            fireUserChangeEvent(userOrGroupRef);
+            fireUserChangeEvent(groupRef);
+        });
+        return true;
+    }
+
+    private void checkCyclicDependency(final String userUuid,
+                                       final String groupUuid,
+                                       final Set<String> examined) {
+        if (userUuid.equals(groupUuid)) {
+            throw new RuntimeException("Attempt to add a user/group to a group that would create a cyclic dependency");
+        }
+        if (!examined.contains(groupUuid)) {
+            examined.add(groupUuid);
+
+            final ResultPage<User> groups = userDao.findGroupsForUser(
+                    groupUuid,
+                    new FindUserCriteria.Builder().pageRequest(PageRequest.unlimited()).build());
+            for (final User group : groups.getValues()) {
+                checkCyclicDependency(userUuid, group.getUuid(), examined);
+            }
+        }
+    }
+
+    @Override
+    public Boolean removeUserFromGroup(final UserRef userOrGroupRef, final UserRef groupRef) {
+        Objects.requireNonNull(userOrGroupRef);
+        Objects.requireNonNull(groupRef);
+        securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            userDao.removeUserFromGroup(userOrGroupRef.getUuid(), groupRef.getUuid());
+            fireUserChangeEvent(userOrGroupRef);
+            fireUserChangeEvent(groupRef);
         });
         return true;
     }
 
     @Override
-    public Boolean removeUserFromGroup(final String userUuid, final String groupUuid) {
-        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            userDao.removeUserFromGroup(userUuid, groupUuid);
-            fireEntityChangeEvent(userUuid, EntityAction.UPDATE);
+    public boolean delete(final String userUuid) {
+        Objects.requireNonNull(userUuid);
+        securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+
+            final UserRef userRef = userDao.getByUuid(userUuid)
+                    .map(User::asRef)
+                    .orElseThrow(() ->
+                            new RuntimeException(LogUtil.message("User not found with userUuid {}", userUuid)));
+
+            final List<UserDependency> allUserDependencies = NullSafe.valuesOf(hasUserDependenciesProviderMap)
+                    .stream()
+                    .map(Provider::get)
+                    .flatMap(hasUserDependencies ->
+                            hasUserDependencies.getUserDependencies(userRef).stream())
+                    .toList();
+
+            if (NullSafe.isEmptyCollection(allUserDependencies)) {
+                doDelete(userRef);
+            } else {
+                final List<String> detailLines = allUserDependencies.stream()
+                        .filter(userDependency ->
+                                NullSafe.getOrElse(
+                                        userDependency.getDocRef(),
+                                        docRef -> securityContext.hasDocumentPermission(
+                                                docRef, DocumentPermission.VIEW),
+                                        true))
+                        .map(UserDependency::getDetails)
+                        .toList();
+
+                if (detailLines.isEmpty()) {
+                    // Deps exist, but we don't have perms to see what they are
+                    throw new RuntimeException(
+                            LogUtil.message(
+                                    "Unable to delete user '{}' as {} {} have dependencies on the user. You do not " +
+                                    "have permission to view these items.",
+                                    userRef.toDisplayString(),
+                                    allUserDependencies.size(),
+                                    StringUtil.plural("item has", "items have", allUserDependencies)));
+                } else {
+                    final String detail = String.join("\n", detailLines);
+                    throw new RuntimeException(
+                            LogUtil.message(
+                                    "Unable to delete user '{}' as the following {} have dependencies on " +
+                                    "the user.\n{}",
+                                    userRef.toDisplayString(),
+                                    StringUtil.plural("item has", "items have", allUserDependencies),
+                                    detail));
+                }
+            }
         });
         return true;
     }
 
+    private boolean doDelete(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+        final boolean didDelete = userDao.deleteUser(userRef);
+        if (didDelete) {
+            // We can't delete these things inside the user deletion txn as they are in different
+            // db modules. Best we can do is log any failures and delete as much as we can. Not the
+            // end of the world if there are orphaned records hanging around.
+            int storedQueryCount = 0;
+            try {
+                storedQueryCount = storedQueryService.deleteByOwner(userRef);
+            } catch (Exception e) {
+                LOGGER.error("Error deleting stored queries for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
+            int userPrefCount = 0;
+            try {
+                userPrefCount = userPreferencesService.delete(userRef)
+                        ? 1
+                        : 0;
+            } catch (Exception e) {
+                LOGGER.error("Error deleting user preferences for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
+            int activityCount = 0;
+            try {
+                activityCount = activityService.deleteAllByOwner(userRef);
+            } catch (Exception e) {
+                LOGGER.error("Error deleting activities for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
+
+            LOGGER.info("Deleted the following associated records for deleted user {}, stored queries: {}, " +
+                        "user preferences: {}, activities: {}",
+                    userRef.toInfoString(),
+                    storedQueryCount,
+                    userPrefCount,
+                    activityCount);
+
+            // Search result stores will get cleaned up by
+            // stroom.query.common.v2.ResultStoreManager.evictExpiredElements
+
+            fireUserChangeEvent(userRef);
+        }
+        return didDelete;
+    }
+
     @Override
-    public List<UserName> getAssociates(final String filter) {
-        final Set<User> userSet;
+    public ResultPage<UserDependency> fetchUserDependencies(final FindUserDependenciesCriteria criteria) {
+        Objects.requireNonNull(criteria);
+        final UserRef userRef = Objects.requireNonNull(criteria.getUserRef());
+        final String userUuid = userRef.getUuid();
 
-        final Predicate<User> userPredicate = user -> user.getUuid().length() > 5 && !user.isGroup();
+        final boolean hasPermission = securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
+                                      || securityContext.isCurrentUser(userRef);
 
-        // An admin or a MANAGE_USERS user will see all.
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            final FindUserCriteria findUserCriteria = new FindUserCriteria(filter, false);
-            final List<User> users = find(findUserCriteria);
-
-            userSet = new HashSet<>(users);
-        } else {
-            userSet = new HashSet<>();
-            getUserBySubjectId(securityContext.getSubjectId())
-                    .ifPresent(user -> {
-                        userSet.add(user);
-
-                        final List<User> groups = findGroupsForUser(user.getUuid());
-                        groups.forEach(userGroup -> {
-                            final List<User> usersInGroup = findUsersInGroup(userGroup.getUuid(), filter);
-                            if (usersInGroup != null) {
-                                userSet.addAll(usersInGroup);
-                            }
-                        });
-                    });
+        if (!hasPermission) {
+            final UserRef decoratedUserRef = userCache.getByUuid(userUuid)
+                    .map(User::asRef)
+                    .orElse(userRef);
+            throw new PermissionException(
+                    userRef,
+                    "You do not have permission to view the dependencies on user "
+                    + decoratedUserRef.toInfoString());
         }
 
-        return userSet
+        final List<UserDependency> allUserDependencies = NullSafe.valuesOf(hasUserDependenciesProviderMap)
                 .stream()
-                .filter(userPredicate)
-                .map(User::asUserName)
-                .collect(Collectors.toList());
+                .map(Provider::get)
+                .flatMap(hasUserDependencies ->
+                        hasUserDependencies.getUserDependencies(UserRef.forUserUuid(userUuid)).stream())
+                .map(userDependency -> {
+                    final DocRef docRef = NullSafe.get(userDependency.getDocRef(), docRefInfoService::decorate);
+                    return new UserDependency(
+                            userDependency.getUserRef(),
+                            userDependency.getDetails(),
+                            docRef);
+                })
+                .toList();
+
+        LOGGER.debug(() -> LogUtil.message("Found {} userDependencies", allUserDependencies.size()));
+
+        // TODO add in the criteria filtering
+        final Comparator<UserDependency> defaultComparator = CompareUtil.getNullSafeCaseInsensitiveComparator(
+                dep -> NullSafe.get(dep.getDocRef(), DocRef::getName));
+
+        final CriteriaFieldSort fieldSort = NullSafe.first(criteria.getSortList());
+        Comparator<UserDependency> comparator;
+        if (fieldSort != null) {
+            if (FindUserDependenciesCriteria.FIELD_DETAILS.equals(fieldSort.getId())) {
+                comparator = CompareUtil.getNullSafeCaseInsensitiveComparator(UserDependency::getDetails);
+                if (fieldSort.isDesc()) {
+                    comparator = comparator.reversed();
+                }
+                comparator = comparator.thenComparing(defaultComparator);
+            } else {
+                comparator = defaultComparator;
+                if (fieldSort.isDesc()) {
+                    comparator = comparator.reversed();
+                }
+            }
+        } else {
+            comparator = defaultComparator;
+        }
+
+        final List<UserDependency> filteredUserDependencies = allUserDependencies.stream()
+                .filter(userDependency ->
+                        NullSafe.getOrElse(
+                                userDependency.getDocRef(),
+                                docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
+                                true))
+                .sorted(comparator)
+                .toList();
+
+        LOGGER.debug(() -> LogUtil.message("Returning {} filtered userDependencies", filteredUserDependencies.size()));
+        return ResultPage.createCriterialBasedList(filteredUserDependencies, criteria);
     }
 
-    private void fireEntityChangeEvent(final User user, final EntityAction entityAction) {
-        EntityEvent.fire(
-                eventBus,
-                DocRef.builder()
-                        .name(user.getSubjectId())
-                        .uuid(user.getUuid())
-                        .type(UserDocRefUtil.USER)
-                        .build(),
-                entityAction);
+    private void fireUserChangeEvent(final UserRef userRef) {
+        Objects.requireNonNull(userRef);
+        PermissionChangeEvent.fire(permissionChangeEventBus, userRef, null);
     }
 
-    private void fireEntityChangeEvent(final String userUuid, final EntityAction entityAction) {
-        EntityEvent.fire(
-                eventBus,
-                DocRef.builder()
-                        .uuid(userUuid)
-                        .type(UserDocRefUtil.USER)
-                        .build(),
-                entityAction);
+    @Deprecated
+    @Override
+    public UserRef getUserRef(final String subjectId, final boolean isGroup) {
+        final Optional<User> optUser = isGroup
+                ? userDao.getGroupByName(subjectId)
+                : userDao.getUserBySubjectId(subjectId);
+        return optUser.map(User::asRef)
+                .orElse(null);
     }
 }

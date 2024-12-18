@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.SettingsPresenter;
+import stroom.dashboard.client.query.SelectionHandlersPresenter;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
@@ -28,11 +29,15 @@ public class TableSettingsPresenter extends SettingsPresenter {
     @Inject
     public TableSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                   final BasicTableSettingsPresenter basicSettingsPresenter,
-                                  final RulesPresenter rulesPresenter) {
+                                  final RulesPresenter rulesPresenter,
+                                  final SelectionHandlersPresenter selectionFilterPresenter) {
         super(eventBus, view);
         getView().asWidget().addStyleName("settingsPresenter");
 
+        selectionFilterPresenter.setUseForFilter(true);
+
         addTab("Basic", basicSettingsPresenter);
         addTab("Conditional Formatting", rulesPresenter);
+        addTab("Selection Filter", selectionFilterPresenter);
     }
 }

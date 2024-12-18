@@ -29,10 +29,9 @@ import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -67,7 +66,7 @@ public class AnalyticProcessingPresenter
         view.setUiHandlers(this);
 
         errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        errorFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 
@@ -100,11 +99,14 @@ public class AnalyticProcessingPresenter
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                final DocRef selectedDocRef = GwtNullSafe.requireNonNullElseGet(
-                        analyticRuleDoc.getErrorFeed(),
-                        () -> extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
+                DocRef selectedDocRef = analyticRuleDoc.getErrorFeed();
+                if (selectedDocRef == null) {
+                    selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
+                }
 
-                errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
+                if (selectedDocRef != null) {
+                    errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
+                }
 
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
                 final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null

@@ -7,6 +7,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
     implementation libs.jackson_annotations
     implementation libs.jakarta_servlet_api

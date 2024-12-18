@@ -24,6 +24,8 @@ import stroom.docref.DocRef;
 import stroom.docref.HasType;
 import stroom.docstore.shared.DocumentTypeImages;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
@@ -43,6 +45,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
+
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         extends DocumentEditPresenter<V, D>
         implements DocumentTabData, Refreshable, HasType, HasSave {
@@ -56,6 +63,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     private DocRef docRef;
 
     private final TabContentProvider<D> tabContentProvider;
+    private final Map<CommonDocLinkTab, TabData> commonTabsMap;
 
     public DocumentEditTabPresenter(final EventBus eventBus,
                                     final V view) {
@@ -74,6 +82,19 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
         tabContentProvider = new TabContentProvider<>(eventBus);
+
+        commonTabsMap = new EnumMap<>(CommonDocLinkTab.class);
+        addEntry(commonTabsMap, CommonDocLinkTab.DOCUMENTATION, this::getDocumentationTab);
+        addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
+    }
+
+    private void addEntry(final Map<CommonDocLinkTab, TabData> commonTabsMap,
+                          final CommonDocLinkTab commonDocLinkTab,
+                          final Supplier<TabData> tabDataSupplier) {
+        final TabData tabData = tabDataSupplier.get();
+        if (tabData != null) {
+            commonTabsMap.put(commonDocLinkTab, tabData);
+        }
     }
 
     @Override
@@ -120,7 +141,17 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         callback.onReady(tabContentProvider.getPresenter(tab, this));
     }
 
+    public void selectCommonTab(final OpenDocumentEvent.CommonDocLinkTab commonDocLinkTab) {
+        if (commonDocLinkTab != null) {
+            final TabData tabData = commonTabsMap.get(commonDocLinkTab);
+            if (tabData != null) {
+                selectTab(tabData);
+            }
+        }
+    }
+
     public void selectTab(final TabData tab) {
+//        GWT.log("docRef: " + docRef + ", selecting tab " + GwtNullSafe.get(tab, TabData::getLabel));
         final TaskMonitor taskMonitor = createTaskMonitor();
         final Task task = new SimpleTask("Selecting tab");
         taskMonitor.onStart(task);
@@ -217,6 +248,16 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
+    public Optional<String> getTooltip() {
+        final String type = docRef.getType();
+        if (type != null) {
+            return Optional.of(type + " - " + docRef.getName());
+        } else {
+            return Optional.of(docRef.getName());
+        }
+    }
+
+    @Override
     public void onDirty(final boolean dirty) {
         super.onDirty(dirty);
 
@@ -232,4 +273,20 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     public DocRef getDocRef() {
         return docRef;
     }
+
+//    /**
+//     * @return The {@link TabData} instance for the default tab that the user
+//     * will see on opening this document.
+//     */
+//    protected abstract TabData getDefaultTab();
+
+    /**
+     * @return The {@link TabData} instance for the Permissions tab.
+     */
+    protected abstract TabData getPermissionsTab();
+
+    /**
+     * @return The {@link TabData} instance for the Documentation tab.
+     */
+    protected abstract TabData getDocumentationTab();
 }

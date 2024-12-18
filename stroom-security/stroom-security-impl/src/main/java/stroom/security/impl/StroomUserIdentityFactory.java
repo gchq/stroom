@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.ServiceUserFactory;
@@ -13,10 +15,12 @@ import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.impl.apikey.ApiKeyService;
+import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -31,6 +35,10 @@ import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.UserDesc;
+import stroom.util.shared.UserDocRefUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -48,14 +56,19 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 @Singleton
-public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
+public class StroomUserIdentityFactory
+        extends AbstractUserIdentityFactory
+        implements Clearable, PermissionChangeEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomUserIdentityFactory.class);
 
+    private static final String CACHE_NAME_BY_SUBJECT_ID = "User Cache (by Subject Id)";
+
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final UserCache userCache;
+    private final LoadingStroomCache<String, Optional<User>> cacheBySubjectId;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
-    private final UserService userService;
+    private final Provider<UserService> userServiceProvider;
+    private final UserCache userCache;
     private final SecurityContext securityContext;
     private final EntityEventBus entityEventBus;
     private final ApiKeyService apiKeyService;
@@ -67,12 +80,14 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                      final CertificateExtractor certificateExtractor,
                                      final UserCache userCache,
                                      final ServiceUserFactory serviceUserFactory,
-                                     final UserService userService,
+                                     final Provider<UserService> userServiceProvider,
                                      final SecurityContext securityContext,
                                      final JerseyClientFactory jerseyClientFactory,
                                      final EntityEventBus entityEventBus,
                                      final RefreshManager refreshManager,
-                                     final ApiKeyService apiKeyService) {
+                                     final ApiKeyService apiKeyService,
+                                     final Provider<AuthorisationConfig> authorisationConfigProvider,
+                                     final CacheManager cacheManager) {
 
 
         super(jwtContextFactory,
@@ -84,12 +99,22 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 refreshManager);
 
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.userCache = userCache;
         this.openIdConfigProvider = openIdConfigProvider;
-        this.userService = userService;
+        this.userCache = userCache;
+        this.userServiceProvider = userServiceProvider;
         this.securityContext = securityContext;
         this.entityEventBus = entityEventBus;
         this.apiKeyService = apiKeyService;
+
+        cacheBySubjectId = cacheManager.createLoadingCache(
+                CACHE_NAME_BY_SUBJECT_ID,
+                () -> authorisationConfigProvider.get().getUserCache(),
+                subjectId -> {
+                    LOGGER.debug("Loading user with subjectId '{}' into cache '{}'",
+                            subjectId, CACHE_NAME_BY_SUBJECT_ID);
+                    //
+                    return userServiceProvider.get().getUserBySubjectId(subjectId);
+                });
     }
 
     @Override
@@ -97,8 +122,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                                     final HttpServletRequest request) {
 
         final String headerKey = UserIdentityFactory.RUN_AS_USER_HEADER;
-        final String runAsUserId = request.getHeader(headerKey);
-        if (!NullSafe.isBlankString(runAsUserId)) {
+        final String runAsUserUuid = request.getHeader(headerKey);
+        if (!NullSafe.isBlankString(runAsUserUuid)) {
             // Request is proxying for a user, so it needs to be the processing user that
             // sent the request. Getting the proc user, even though we don't do anything with it will
             // ensure it is authenticated.
@@ -106,12 +131,13 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
             getProcessingUser(jwtContext)
                     .orElseThrow(() -> new AuthenticationException(
                             "Expecting request to be made by processing user identity. url: "
-                                    + request.getRequestURI()));
+                            + request.getRequestURI()));
 
-            final UserIdentity runAsUserIdentity = userCache.get(runAsUserId)
+            final UserIdentity runAsUserIdentity = userCache.getByUuid(runAsUserUuid)
+                    .map(User::asRef)
                     .map(BasicUserIdentity::new)
                     .orElseThrow(() -> new AuthenticationException(LogUtil.message("{} {} not found",
-                            headerKey, runAsUserId)));
+                            headerKey, runAsUserUuid)));
             LOGGER.trace("Found '{}' header, running as user {}", headerKey, runAsUserIdentity);
             return Optional.ofNullable(runAsUserIdentity);
         } else {
@@ -129,7 +155,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                                          final TokenResponse tokenResponse) {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
         final String subjectId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
-        final Optional<User> optUser = userCache.getOrCreate(subjectId);
+        final Optional<User> optUser = getOrCreateUserBySubjectId(subjectId);
 
         return optUser
                 .flatMap(user -> {
@@ -169,7 +195,6 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
      * Each time we map their identity we check the cached info is up-to-date and if so update it.
      */
     private User updateUserInfo(final User user, final JwtClaims jwtClaims) {
-
         AtomicReference<User> userRef = new AtomicReference<>(user);
         final String displayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
                 .orElse(null);
@@ -180,7 +205,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
         final Predicate<User> hasUserInfoChangedPredicate = aUser ->
                 !Objects.equals(displayName, aUser.getDisplayName())
-                        || !Objects.equals(fullName, aUser.getFullName());
+                || !Objects.equals(fullName, aUser.getFullName());
 
         if (hasUserInfoChangedPredicate.test(user)) {
             synchronized (this) {
@@ -189,6 +214,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                     int iterationCount = 0;
                     boolean success = false;
 
+                    final UserService userService = userServiceProvider.get();
                     while (!success && iterationCount < 10) {
                         final User persistedUser = userService.loadByUuid(user.getUuid())
                                 .orElseThrow(() -> new RuntimeException(
@@ -295,29 +321,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         addTokenToRefreshManager(updatableToken);
 
         LOGGER.info(() -> "Authenticated user " + userIdentity
-                + " for sessionId " + NullSafe.get(session, HttpSession::getId));
+                          + " for sessionId " + NullSafe.get(session, HttpSession::getId));
         return userIdentity;
-    }
-
-    /**
-     * Extract a unique identifier from the JWT claims that can be used to map to a local user.
-     */
-    private String getUserId(final JwtClaims jwtClaims) {
-        Objects.requireNonNull(jwtClaims);
-        // TODO: 06/03/2023 We need to figure out how we deal with existing data that uses this mix of claims.
-        //  Also, what is the identities claim all about?
-        String userId = JwtUtil.getEmail(jwtClaims);
-        if (userId == null) {
-            userId = JwtUtil.getUserIdFromIdentities(jwtClaims);
-        }
-        if (userId == null) {
-            userId = JwtUtil.getUserName(jwtClaims);
-        }
-        if (userId == null) {
-            userId = JwtUtil.getSubject(jwtClaims);
-        }
-
-        return userId;
     }
 
     private Optional<UserIdentity> getApiUserIdentity(final JwtContext jwtContext,
@@ -326,30 +331,30 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
         try {
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            final String userId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
+            final String subjectId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
             final Optional<String> optDisplayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims);
             LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {}, displayName: {}, uri: {}",
-                    userId, optDisplayName, request.getRequestURI()));
+                    subjectId, optDisplayName, request.getRequestURI()));
 
             final String userUuid;
 
             if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())
-                    && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
-                    && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
+                && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
+                && subjectId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
                 LOGGER.debug("Authenticating using default API key. DO NOT USE IN PRODUCTION!");
                 // Using default creds so just fake a user
                 userUuid = UUID.randomUUID().toString();
             } else {
-                User user = userCache.getOrCreate(userId).orElseThrow(() ->
-                        new AuthenticationException("Unable to find user with id: " + userId
-                                + "(displayName: " + optDisplayName + ")"));
+                User user = getOrCreateUserBySubjectId(subjectId).orElseThrow(() ->
+                        new AuthenticationException("Unable to find user with id: " + subjectId
+                                                    + "(displayName: " + optDisplayName + ")"));
                 user = updateUserInfo(user, jwtClaims);
                 userUuid = user.getUuid();
             }
 
             return Optional.of(createApiUserIdentity(
                     jwtContext,
-                    userId,
+                    subjectId,
                     optDisplayName.orElse(null),
                     userUuid,
                     request));
@@ -396,7 +401,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
             return Optional.ofNullable(hasJwtClaims.getJwtClaims())
                     .map(ThrowingFunction.unchecked(jwtClaims -> {
                         final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
-                                && Objects.equals(issuer, jwtClaims.getIssuer());
+                                                         && Objects.equals(issuer, jwtClaims.getIssuer());
 
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
@@ -412,7 +417,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         } else {
             final String requiredIssuer = openIdConfigProvider.get().getIssuer();
             final boolean isProcessingUser = Objects.equals(subject, serviceUser.getSubjectId())
-                    && Objects.equals(issuer, requiredIssuer);
+                                             && Objects.equals(issuer, requiredIssuer);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
                         subject,
@@ -422,6 +427,71 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                         isProcessingUser);
             }
             return isProcessingUser;
+        }
+    }
+
+    /**
+     * Gets a user from the cache and if it doesn't exist creates it in the database.
+     *
+     * @param subjectId This is the unique identifier for the user that links the stroom user
+     *                  to an IDP user, e.g. may be the 'sub' on the IDP depending on stroom config.
+     */
+    private Optional<User> getOrCreateUserBySubjectId(final String subjectId) {
+        if (NullSafe.isBlankString(subjectId)) {
+            return Optional.empty();
+        } else {
+            Optional<User> optUser = cacheBySubjectId.get(subjectId);
+            if (optUser.isEmpty()) {
+                optUser = securityContext.asProcessingUserResult(() ->
+                        Optional.ofNullable(userServiceProvider.get().getOrCreateUser(subjectId)));
+                if (optUser.isPresent()) {
+                    cacheBySubjectId.put(subjectId, optUser);
+                }
+            }
+            return optUser;
+        }
+    }
+
+    @Override
+    public void clear() {
+        cacheBySubjectId.clear();
+    }
+
+    @Override
+    public void ensureUserIdentity(final UserDesc userDesc) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You are not authorised to ensure a stroom user.");
+        }
+        NullSafe.requireNonNull(userDesc, UserDesc::getSubjectId, () -> "subjectId required");
+        final UserService userService = userServiceProvider.get();
+        final String newDisplayName = userDesc.getDisplayName();
+        final String newFullName = userDesc.getFullName();
+
+        final User user = userService.getOrCreateUser(userDesc);
+
+        if (!Objects.equals(newDisplayName, user.getDisplayName())
+            || !Objects.equals(newFullName, user.getFullName())) {
+
+            LOGGER.debug("Updating user {} with displayName: '{}' and fullName: '{}'",
+                    user, newDisplayName, newFullName);
+            user.setDisplayName(newDisplayName);
+            user.setFullName(newFullName);
+            userService.update(user);
+        }
+    }
+
+    @Override
+    public void onChange(final PermissionChangeEvent event) {
+        if (event.getUserRef() != null) {
+            // User is not a Doc so DocRef is being abused to make use of EntityEvent
+            // DocRef.name is User.subjectId
+            // DocRef.uuid is User.userUuid
+            String subjectId = event.getUserRef().getSubjectId();
+            if (subjectId != null) {
+                // Don't know if it is a user or a group so invalidate both
+                cacheBySubjectId.invalidate(subjectId);
+            }
         }
     }
 }

@@ -57,6 +57,10 @@ public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
         return presenterWidget;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onShowFullScreen(final ShowFullScreenEvent event);

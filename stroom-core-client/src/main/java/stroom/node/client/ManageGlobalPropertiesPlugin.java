@@ -5,7 +5,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -28,8 +28,8 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_PROPERTIES_PERMISSION;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_PROPERTIES_PERMISSION;
     }
 
     @Override

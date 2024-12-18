@@ -15,11 +15,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import jakarta.validation.constraints.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,8 +29,6 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public class ProxyConfigurationSourceProvider implements ConfigurationSourceProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyConfigurationSourceProvider.class);
 
     private static final String SOURCE_DEFAULTS = "defaults";
     private static final String SOURCE_YAML = "YAML";
@@ -68,7 +63,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         try (final InputStream in = delegate.open(path)) {
             // This is the yaml tree after passing though the delegate
             // substitutions
-            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
             final JsonNode rootNode = mapper.readTree(in);
 
             Objects.requireNonNull(rootNode, () ->
@@ -209,10 +204,10 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
         final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
-        log("Using stroom home [{}] from {} for Drop Wizard config path substitutions",
+        log("Using stroom home [{}] from {} for Dropwizard config path substitutions",
                 homeDirProvider.get().toAbsolutePath(),
                 homeSource);
-        log("Using stroom temp [{}] from {} for Drop Wizard config path substitutions",
+        log("Using stroom temp [{}] from {} for Dropwizard config path substitutions",
                 tempDirProvider.get().toAbsolutePath(),
                 tempSource);
         return pathCreator;

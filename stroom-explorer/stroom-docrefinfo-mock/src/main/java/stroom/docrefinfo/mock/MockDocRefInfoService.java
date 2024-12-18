@@ -19,6 +19,7 @@ package stroom.docrefinfo.mock;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.security.shared.DocumentPermission;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,17 +37,14 @@ public class MockDocRefInfoService implements DocRefInfoService {
 
     @Override
     public Optional<DocRefInfo> info(final String uuid) {
-        throw new UnsupportedOperationException();
+        return Optional.of(DocRefInfo.builder()
+                .docRef(DocRef.builder().uuid(uuid).build())
+                .build());
     }
 
     @Override
     public Optional<String> name(final DocRef docRef) {
         return Optional.ofNullable(docRef.getName());
-    }
-
-    @Override
-    public Optional<String> name(final String uuid) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -77,7 +75,9 @@ public class MockDocRefInfoService implements DocRefInfoService {
     }
 
     @Override
-    public DocRef decorate(final DocRef docRef, final boolean force, final Set<String> requiredPermissions) {
+    public DocRef decorate(final DocRef docRef,
+                           final boolean force,
+                           final Set<DocumentPermission> requiredPermissions) {
         return docRef;
     }
 }

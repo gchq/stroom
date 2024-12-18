@@ -130,7 +130,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         assertThat(rootNode).isNotNull();
 
         final DocRef destFolder =
-                new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "Destination Folder");
+                new DocRef(ExplorerConstants.FOLDER_TYPE, UUID.randomUUID().toString(), "Destination Folder");
         explorerNodeService.createNode(destFolder, rootNode.getDocRef(), PermissionInheritance.DESTINATION);
         explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
         explorerNodeService.renameNode(renamedPipelineDocRef);
@@ -187,7 +187,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         // CHECK NEW ROOT
         /////////////////////////////////////////////////
         final DocRef rootDocRef =
-                new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "New Root");
+                new DocRef(ExplorerConstants.FOLDER_TYPE, UUID.randomUUID().toString(), "New Root");
         explorerNodeService.createNode(rootDocRef, rootNode.getDocRef(), PermissionInheritance.DESTINATION);
         builder.rootDocRef(rootDocRef);
         builder.useImportNames(false);

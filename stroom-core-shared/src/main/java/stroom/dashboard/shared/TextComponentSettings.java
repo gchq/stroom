@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -48,19 +48,19 @@ public class TextComponentSettings implements ComponentSettings {
     @JsonProperty("tableId")
     private final String tableId;
     @JsonProperty
-    private final Column streamIdField;
+    private final ColumnRef streamIdField;
     @JsonProperty
-    private final Column partNoField;
+    private final ColumnRef partNoField;
     @JsonProperty
-    private final Column recordNoField;
+    private final ColumnRef recordNoField;
     @JsonProperty
-    private final Column lineFromField;
+    private final ColumnRef lineFromField;
     @JsonProperty
-    private final Column colFromField;
+    private final ColumnRef colFromField;
     @JsonProperty
-    private final Column lineToField;
+    private final ColumnRef lineToField;
     @JsonProperty
-    private final Column colToField;
+    private final ColumnRef colToField;
     @JsonProperty
     private final DocRef pipeline;
     @JsonProperty
@@ -72,13 +72,13 @@ public class TextComponentSettings implements ComponentSettings {
 
     @JsonCreator
     public TextComponentSettings(@JsonProperty("tableId") final String tableId,
-                                 @JsonProperty("streamIdField") final Column streamIdField,
-                                 @JsonProperty("partNoField") final Column partNoField,
-                                 @JsonProperty("recordNoField") final Column recordNoField,
-                                 @JsonProperty("lineFromField") final Column lineFromField,
-                                 @JsonProperty("colFromField") final Column colFromField,
-                                 @JsonProperty("lineToField") final Column lineToField,
-                                 @JsonProperty("colToField") final Column colToField,
+                                 @JsonProperty("streamIdField") final ColumnRef streamIdField,
+                                 @JsonProperty("partNoField") final ColumnRef partNoField,
+                                 @JsonProperty("recordNoField") final ColumnRef recordNoField,
+                                 @JsonProperty("lineFromField") final ColumnRef lineFromField,
+                                 @JsonProperty("colFromField") final ColumnRef colFromField,
+                                 @JsonProperty("lineToField") final ColumnRef lineToField,
+                                 @JsonProperty("colToField") final ColumnRef colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
                                  @JsonProperty("showAsHtml") final boolean showAsHtml,
                                  @JsonProperty("showStepping") final boolean showStepping,
@@ -102,72 +102,72 @@ public class TextComponentSettings implements ComponentSettings {
     }
 
     @Deprecated
-    public Column getStreamIdField() {
+    public ColumnRef getStreamIdField() {
         return streamIdField;
     }
 
     @Deprecated
-    public Column getPartNoField() {
+    public ColumnRef getPartNoField() {
         return partNoField;
     }
 
     @Deprecated
-    public Column getRecordNoField() {
+    public ColumnRef getRecordNoField() {
         return recordNoField;
     }
 
     @Deprecated
-    public Column getLineFromField() {
+    public ColumnRef getLineFromField() {
         return lineFromField;
     }
 
     @Deprecated
-    public Column getColFromField() {
+    public ColumnRef getColFromField() {
         return colFromField;
     }
 
     @Deprecated
-    public Column getLineToField() {
+    public ColumnRef getLineToField() {
         return lineToField;
     }
 
     @Deprecated
-    public Column getColToField() {
+    public ColumnRef getColToField() {
         return colToField;
     }
 
     @JsonIgnore
-    public Column getStreamIdColumn() {
+    public ColumnRef getStreamIdColumn() {
         return streamIdField;
     }
 
     @JsonIgnore
-    public Column getPartNoColumn() {
+    public ColumnRef getPartNoColumn() {
         return partNoField;
     }
 
     @JsonIgnore
-    public Column getRecordNoColumn() {
+    public ColumnRef getRecordNoColumn() {
         return recordNoField;
     }
 
     @JsonIgnore
-    public Column getLineFromColumn() {
+    public ColumnRef getLineFromColumn() {
         return lineFromField;
     }
 
     @JsonIgnore
-    public Column getColFromColumn() {
+    public ColumnRef getColFromColumn() {
         return colFromField;
     }
 
     @JsonIgnore
-    public Column getLineToColumn() {
+    public ColumnRef getLineToColumn() {
         return lineToField;
     }
 
     @JsonIgnore
-    public Column getColToColumn() {
+    public ColumnRef getColToColumn() {
         return colToField;
     }
 
@@ -253,16 +253,17 @@ public class TextComponentSettings implements ComponentSettings {
         return new Builder(this);
     }
 
-    public static final class Builder implements ComponentSettings.Builder {
+    public static final class Builder extends ComponentSettings
+            .AbstractBuilder<TextComponentSettings, TextComponentSettings.Builder> {
 
         private String tableId;
-        private Column streamIdField;
-        private Column partNoField;
-        private Column recordNoField;
-        private Column lineFromField;
-        private Column colFromField;
-        private Column lineToField;
-        private Column colToField;
+        private ColumnRef streamIdField;
+        private ColumnRef partNoField;
+        private ColumnRef recordNoField;
+        private ColumnRef lineFromField;
+        private ColumnRef colFromField;
+        private ColumnRef lineToField;
+        private ColumnRef colToField;
         private DocRef pipeline;
         private boolean showAsHtml;
         private boolean showStepping;
@@ -288,61 +289,66 @@ public class TextComponentSettings implements ComponentSettings {
 
         public Builder tableId(final String tableId) {
             this.tableId = tableId;
-            return this;
+            return self();
         }
 
-        public Builder streamIdField(final Column streamIdField) {
+        public Builder streamIdField(final ColumnRef streamIdField) {
             this.streamIdField = streamIdField;
-            return this;
+            return self();
         }
 
-        public Builder partNoField(final Column partNoField) {
+        public Builder partNoField(final ColumnRef partNoField) {
             this.partNoField = partNoField;
-            return this;
+            return self();
         }
 
-        public Builder recordNoField(final Column recordNoField) {
+        public Builder recordNoField(final ColumnRef recordNoField) {
             this.recordNoField = recordNoField;
-            return this;
+            return self();
         }
 
-        public Builder lineFromField(final Column lineFromField) {
+        public Builder lineFromField(final ColumnRef lineFromField) {
             this.lineFromField = lineFromField;
-            return this;
+            return self();
         }
 
-        public Builder colFromField(final Column colFromField) {
+        public Builder colFromField(final ColumnRef colFromField) {
             this.colFromField = colFromField;
-            return this;
+            return self();
         }
 
-        public Builder lineToField(final Column lineToField) {
+        public Builder lineToField(final ColumnRef lineToField) {
             this.lineToField = lineToField;
-            return this;
+            return self();
         }
 
-        public Builder colToField(final Column colToField) {
+        public Builder colToField(final ColumnRef colToField) {
             this.colToField = colToField;
-            return this;
+            return self();
         }
 
         public Builder pipeline(final DocRef pipeline) {
             this.pipeline = pipeline;
-            return this;
+            return self();
         }
 
         public Builder showAsHtml(final boolean showAsHtml) {
             this.showAsHtml = showAsHtml;
-            return this;
+            return self();
         }
 
         public Builder showStepping(final boolean showStepping) {
             this.showStepping = showStepping;
-            return this;
+            return self();
         }
 
         public Builder modelVersion(final String modelVersion) {
             this.modelVersion = modelVersion;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

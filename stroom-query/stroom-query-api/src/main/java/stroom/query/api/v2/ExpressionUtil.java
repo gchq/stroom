@@ -4,16 +4,17 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.GwtNullSafe;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT :-(
 public class ExpressionUtil {
 
     private ExpressionUtil() {
@@ -86,8 +87,26 @@ public class ExpressionUtil {
                 .build();
     }
 
+    /**
+     * @return True if there are at least one enabled term under the expressionOperator
+     */
     public static boolean hasTerms(final ExpressionOperator expressionOperator) {
-        return termCount(expressionOperator) > 0;
+        if (expressionOperator != null) {
+            for (final ExpressionItem child : GwtNullSafe.list(expressionOperator.getChildren())) {
+                if (child != null && child.enabled()) {
+                    if (child instanceof ExpressionOperator) {
+                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                        if (hasTerms(childOperator)) {
+                            return true;
+                        }
+                    } else if (child instanceof ExpressionTerm) {
+                        // Found an enabled term so our work is done
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public static int termCount(final ExpressionOperator expressionOperator) {
@@ -130,10 +149,11 @@ public class ExpressionUtil {
     private static void addTerms(final ExpressionOperator expressionOperator,
                                  final Collection<String> fieldNames,
                                  final List<ExpressionTerm> terms) {
-        if (expressionOperator != null &&
-                expressionOperator.enabled() &&
-                expressionOperator.getChildren() != null &&
-                !Op.NOT.equals(expressionOperator.op())) {
+        // This if condition used to include
+        // !Op.NOT.equals(expressionOperator.op()
+        // but we have no idea why. If you remember why, then add it back in with a comment
+        // explaining why
+        if (ExpressionItem.isEnabled(expressionOperator) && expressionOperator.hasChildren()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
@@ -141,11 +161,11 @@ public class ExpressionUtil {
                         if (fieldNames == null || fieldNames.stream()
                                 .anyMatch(fieldName ->
                                         fieldName.equals(expressionTerm.getField()) &&
-                                                (Condition.IS_DOC_REF.equals(expressionTerm.getCondition()) &&
-                                                        expressionTerm.getDocRef() != null &&
-                                                        expressionTerm.getDocRef().getUuid() != null) ||
-                                                (expressionTerm.getValue() != null &&
-                                                        expressionTerm.getValue().length() > 0))) {
+                                        (Condition.IS_DOC_REF.equals(expressionTerm.getCondition()) &&
+                                         expressionTerm.getDocRef() != null &&
+                                         expressionTerm.getDocRef().getUuid() != null) ||
+                                        (expressionTerm.getValue() != null &&
+                                         !expressionTerm.getValue().isEmpty()))) {
                             terms.add(expressionTerm);
                         }
                     } else if (item instanceof ExpressionOperator) {
@@ -207,8 +227,8 @@ public class ExpressionUtil {
         if (query != null) {
             ExpressionOperator expression = query.getExpression();
             if (query.getParams() != null && expression != null) {
-                final Map<String, String> paramMap = ParamUtil.createParamMap(query.getParams());
-                expression = replaceExpressionParameters(expression, paramMap);
+                final ParamValues paramValues = ParamUtil.createParamValueFunction(query.getParams());
+                expression = replaceExpressionParameters(expression, paramValues);
             }
             result = query.copy().expression(expression).build();
         }
@@ -219,8 +239,8 @@ public class ExpressionUtil {
                                                                  final List<Param> params) {
         final ExpressionOperator result;
         if (operator != null) {
-            final Map<String, String> paramMap = ParamUtil.createParamMap(params);
-            result = replaceExpressionParameters(operator, paramMap);
+            final ParamValues paramValues = ParamUtil.createParamValueFunction(params);
+            result = replaceExpressionParameters(operator, paramValues);
         } else {
             result = null;
         }
@@ -228,7 +248,7 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
-                                                                 final Map<String, String> paramMap) {
+                                                                 final ParamValues paramValues) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()
                 .enabled(operator.getEnabled())
@@ -237,12 +257,12 @@ public class ExpressionUtil {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    builder.addOperator(replaceExpressionParameters(childOperator, paramMap));
+                    builder.addOperator(replaceExpressionParameters(childOperator, paramValues));
 
                 } else if (child instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
-                    final String replaced = ParamUtil.replaceParameters(value, paramMap);
+                    final String replaced = ParamUtil.replaceParameters(value, paramValues);
                     builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())
@@ -310,7 +330,10 @@ public class ExpressionUtil {
         if (expressionItem instanceof ExpressionOperator) {
             return (ExpressionOperator) expressionItem;
         }
-        return ExpressionOperator.builder().op(Op.AND).children(Collections.singletonList(expressionItem)).build();
+        return ExpressionOperator.builder()
+                .op(Op.AND)
+                .children(Collections.singletonList(expressionItem))
+                .build();
     }
 
     private static ExpressionItem simplifyExpressionItem(final ExpressionItem item) {
@@ -365,10 +388,28 @@ public class ExpressionUtil {
         return item;
     }
 
+    public static ExpressionOperator combine(final ExpressionOperator in,
+                                             final ExpressionOperator decoration) {
+        if (in == null) {
+            return decoration;
+        } else if (decoration == null) {
+            return in;
+        }
+
+        return ExpressionOperator
+                .builder()
+                .addOperator(in)
+                .addOperator(decoration)
+                .build();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ExpressionItemVisitor {
 
         /**
-         * @param expressionItem
          * @return False to stop walking the tree
          */
         boolean visit(final ExpressionItem expressionItem);

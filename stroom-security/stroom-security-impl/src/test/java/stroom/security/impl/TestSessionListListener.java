@@ -124,7 +124,6 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
         return new SessionResourceImpl(
-                TestUtil.mockProvider(AuthenticationConfig.class),
                 TestUtil.mockProvider(OpenIdManager.class),
                 TestUtil.mockProvider(HttpServletRequest.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),

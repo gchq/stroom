@@ -34,13 +34,12 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasItems;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -197,7 +196,7 @@ public class DataPresenter
         addTab(metaTab);
         addTab(contextTab);
 
-        userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+        userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         dataView.addSourceLinkClickHandler(event ->
@@ -1074,7 +1073,7 @@ public class DataPresenter
                 && Objects.equals(getCurrentMetaId(), highlightMetaId)
                 && partIndex == highlightPartIndex
                 && result != null
-                && EqualsUtil.isEquals(result.getStreamTypeName(), highlightChildDataType)) {
+                && Objects.equals(result.getStreamTypeName(), highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);

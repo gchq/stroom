@@ -19,6 +19,7 @@ package stroom.widget.tab.client.view;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -37,7 +38,11 @@ public class CurveTab extends AbstractTab {
     private final SpinnerSmall spinnerSmall;
     private final boolean allowClose;
 
-    public CurveTab(final SvgImage icon, final IconColour iconColour, final String text, final boolean allowClose) {
+    public CurveTab(final SvgImage icon,
+                    final IconColour iconColour,
+                    final String text,
+                    final String tooltip,
+                    final boolean allowClose) {
         this.allowClose = allowClose;
 
         element = DOM.createDiv();
@@ -46,10 +51,12 @@ public class CurveTab extends AbstractTab {
         final Element background = DOM.createDiv();
         background.setClassName("curveTab-background");
         element.appendChild(background);
+        final String title = GwtNullSafe.requireNonNullElse(tooltip, text);
 
         if (icon != null) {
             final Element iconElement = DOM.createDiv();
             iconElement.addClassName("curveTab-icon " + iconColour.getClassName());
+            iconElement.setTitle(title);
             SvgImageUtil.setSvgAsInnerHtml(iconElement, icon);
             element.appendChild(iconElement);
         }
@@ -63,7 +70,7 @@ public class CurveTab extends AbstractTab {
             label.setInnerText(text);
         }
 
-        label.setTitle(text);
+        label.setTitle(title);
         element.appendChild(label);
 
         close = DOM.createDiv();

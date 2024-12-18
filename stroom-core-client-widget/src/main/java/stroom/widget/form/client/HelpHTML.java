@@ -11,4 +11,5 @@ import com.google.gwt.user.client.ui.HTML;
  */
 public class HelpHTML extends HTML {
 
+
 }

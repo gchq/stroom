@@ -33,6 +33,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.HasUserDependencies;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -69,6 +70,9 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
 
+        GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
+                .addBinding(ProcessorFilterServiceImpl.class.getName(), ProcessorFilterServiceImpl.class);
+
         DocumentActionHandlerBinder.create(binder())
                 .bind(ProcessorFilterDoc.DOCUMENT_TYPE, ProcessorFilterImportExportHandlerImpl.class);
 
@@ -83,13 +87,13 @@ public class ProcessorModule extends AbstractModule {
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
-                                "deleted or complete based on age (stroom.processor.deleteAge)")
+                                     "deleted or complete based on age (stroom.processor.deleteAge)")
                         .frequencySchedule("10m"))
                 .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
                         .name("Processor Task Manager Disown Dead Tasks")
                         .description("Tasks that seem to be stuck processing due to the death of a processing node " +
-                                "are disowned and added back to the task queue for processing after " +
-                                "(stroom.processor.disownDeadTasksAfter)")
+                                     "are disowned and added back to the task queue for processing after " +
+                                     "(stroom.processor.disownDeadTasksAfter)")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
                         .name("Processor Task Manager Release Old Queued Tasks")

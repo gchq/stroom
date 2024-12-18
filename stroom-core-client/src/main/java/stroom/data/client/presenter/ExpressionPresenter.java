@@ -31,7 +31,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
