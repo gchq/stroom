@@ -24,18 +24,29 @@ public class ReceiveDataConfig
         extends AbstractConfig
         implements IsStroomConfig, IsProxyConfig {
 
+    @JsonProperty
     private final String receiptPolicyUuid;
+    @JsonProperty
     private final Set<String> metaTypes;
+    @JsonProperty
     private final boolean tokenAuthenticationEnabled;
+    @JsonProperty
     private final boolean certificateAuthenticationEnabled;
+    @JsonProperty
+    private final boolean datafeedKeyAuthenticationEnabled;
+    @JsonProperty
     private final boolean authenticationRequired;
+    @JsonProperty
+    private final String dataFeedKeysDir;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
         metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         tokenAuthenticationEnabled = false;
         certificateAuthenticationEnabled = true;
+        datafeedKeyAuthenticationEnabled = false;
         authenticationRequired = true;
+        dataFeedKeysDir = "data_feed_keys";
     }
 
     @SuppressWarnings("unused")
@@ -45,13 +56,17 @@ public class ReceiveDataConfig
             @JsonProperty("metaTypes") final Set<String> metaTypes,
             @JsonProperty("tokenAuthenticationEnabled") final boolean tokenAuthenticationEnabled,
             @JsonProperty("certificateAuthenticationEnabled") final boolean certificateAuthenticationEnabled,
-            @JsonProperty("authenticationRequired") final boolean authenticationRequired) {
+            @JsonProperty("datafeedKeyAuthenticationEnabled") final boolean datafeedKeyAuthenticationEnabled,
+            @JsonProperty("authenticationRequired") final boolean authenticationRequired,
+            @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
         this.tokenAuthenticationEnabled = tokenAuthenticationEnabled;
         this.certificateAuthenticationEnabled = certificateAuthenticationEnabled;
+        this.datafeedKeyAuthenticationEnabled = datafeedKeyAuthenticationEnabled;
         this.authenticationRequired = authenticationRequired;
+        this.dataFeedKeysDir = dataFeedKeysDir;
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -59,7 +74,9 @@ public class ReceiveDataConfig
         metaTypes = builder.metaTypes;
         tokenAuthenticationEnabled = builder.tokenAuthenticationEnabled;
         certificateAuthenticationEnabled = builder.certificateAuthenticationEnabled;
+        datafeedKeyAuthenticationEnabled = builder.datafeedKeyAuthenticationEnabled;
         authenticationRequired = builder.authenticationRequired;
+        dataFeedKeysDir = builder.dataFeedKeysDir;
     }
 
 
@@ -71,7 +88,7 @@ public class ReceiveDataConfig
     @NotNull
     @NotEmpty
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
-            "in the default value for this property but can contain additional names.")
+                             "in the default value for this property but can contain additional names.")
     @IsSupersetOf(requiredValues = {
             StreamTypeNames.RAW_EVENTS,
             StreamTypeNames.RAW_REFERENCE,
@@ -86,13 +103,13 @@ public class ReceiveDataConfig
     }
 
     @JsonPropertyDescription("If true, the data receipt request headers will be checked for the presence of an " +
-            "Open ID access token. This token will be used to authenticate the sender.")
+                             "Open ID access token. This token will be used to authenticate the sender.")
     public boolean isTokenAuthenticationEnabled() {
         return tokenAuthenticationEnabled;
     }
 
     @JsonPropertyDescription("If true, the data receipt request will be checked for the presence of a " +
-            "certificate. The certificate will be used to authenticate the sender.")
+                             "certificate. The certificate will be used to authenticate the sender.")
     public boolean isCertificateAuthenticationEnabled() {
         return certificateAuthenticationEnabled;
     }
@@ -106,13 +123,29 @@ public class ReceiveDataConfig
         return authenticationRequired;
     }
 
+    @JsonPropertyDescription("If true, the data receipt request will be checked for the presence of a datafeed key. " +
+                             "If present this key will be checked against the configured list of valid datafeed keys.")
+    public boolean isDatafeedKeyAuthenticationEnabled() {
+        return datafeedKeyAuthenticationEnabled;
+    }
+
+    @JsonPropertyDescription("The directory where Stroom will look for datafeed key files. " +
+                             "Only used if datafeedKeyAuthenticationEnabled is true." +
+                             "If the value is a relative path then it will be treated as being " +
+                             "relative to stroom.path.home.")
+    public String getDataFeedKeysDir() {
+        return dataFeedKeysDir;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then one of tokenAuthenticationEnabled " +
-            "or certificateAuthenticationEnabled must also be set to true.")
+                                "or certificateAuthenticationEnabled must also be set to true.")
     public boolean isAuthenticationRequiredValid() {
         return !authenticationRequired
-                || (tokenAuthenticationEnabled || certificateAuthenticationEnabled);
+               || (tokenAuthenticationEnabled
+                   || certificateAuthenticationEnabled
+                   || datafeedKeyAuthenticationEnabled);
     }
 
     public ReceiveDataConfig withTokenAuthenticationEnabled(final boolean isTokenAuthenticationEnabled) {
@@ -121,7 +154,8 @@ public class ReceiveDataConfig
                 metaTypes,
                 isTokenAuthenticationEnabled,
                 certificateAuthenticationEnabled,
-                authenticationRequired);
+                datafeedKeyAuthenticationEnabled, authenticationRequired,
+                dataFeedKeysDir);
     }
 
     public ReceiveDataConfig withCertificateAuthenticationEnabled(final boolean isCertificateAuthenticationEnabled) {
@@ -130,7 +164,18 @@ public class ReceiveDataConfig
                 metaTypes,
                 tokenAuthenticationEnabled,
                 isCertificateAuthenticationEnabled,
-                authenticationRequired);
+                datafeedKeyAuthenticationEnabled, authenticationRequired,
+                dataFeedKeysDir);
+    }
+
+    public ReceiveDataConfig withDatafeedKeyAuthenticationEnabled(final boolean isDatafeedKeyAuthenticationEnabled) {
+        return new ReceiveDataConfig(
+                receiptPolicyUuid,
+                metaTypes,
+                datafeedKeyAuthenticationEnabled,
+                certificateAuthenticationEnabled,
+                isDatafeedKeyAuthenticationEnabled, authenticationRequired,
+                dataFeedKeysDir);
     }
 
     public ReceiveDataConfig withAuthenticationRequired(final boolean isAuthenticationRequired) {
@@ -139,17 +184,20 @@ public class ReceiveDataConfig
                 metaTypes,
                 tokenAuthenticationEnabled,
                 certificateAuthenticationEnabled,
-                isAuthenticationRequired);
+                datafeedKeyAuthenticationEnabled, isAuthenticationRequired,
+                dataFeedKeysDir);
     }
 
     @Override
     public String toString() {
         return "ReceiveDataConfig{" +
-                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
-                ", tokenAuthenticationEnabled=" + tokenAuthenticationEnabled +
-                ", certificateAuthenticationEnabled=" + certificateAuthenticationEnabled +
-                ", authenticationRequired=" + authenticationRequired +
-                '}';
+               "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
+               ", tokenAuthenticationEnabled=" + tokenAuthenticationEnabled +
+               ", certificateAuthenticationEnabled=" + certificateAuthenticationEnabled +
+               ", datafeedKeyAuthenticationEnabled=" + datafeedKeyAuthenticationEnabled +
+               ", authenticationRequired=" + authenticationRequired +
+               ", dataFeedKeysDir=" + dataFeedKeysDir +
+               '}';
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
@@ -158,7 +206,9 @@ public class ReceiveDataConfig
         builder.metaTypes = receiveDataConfig.getMetaTypes();
         builder.tokenAuthenticationEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
         builder.certificateAuthenticationEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
+        builder.datafeedKeyAuthenticationEnabled = receiveDataConfig.isDatafeedKeyAuthenticationEnabled();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
+        builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
         return builder;
     }
 
@@ -177,6 +227,8 @@ public class ReceiveDataConfig
         private boolean tokenAuthenticationEnabled;
         private boolean certificateAuthenticationEnabled;
         private boolean authenticationRequired;
+        private boolean datafeedKeyAuthenticationEnabled;
+        private String dataFeedKeysDir;
 
         private Builder() {
         }
@@ -207,6 +259,16 @@ public class ReceiveDataConfig
 
         public Builder withAuthenticationRequired(final boolean val) {
             authenticationRequired = val;
+            return this;
+        }
+
+        public Builder withDatafeedKeyAuthenticationEnabled(final boolean val) {
+            datafeedKeyAuthenticationEnabled = val;
+            return this;
+        }
+
+        public Builder withDataFeedKeysDir(final String val) {
+            dataFeedKeysDir = val;
             return this;
         }
 

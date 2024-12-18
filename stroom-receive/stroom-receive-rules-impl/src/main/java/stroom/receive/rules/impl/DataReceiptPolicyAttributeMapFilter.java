@@ -22,6 +22,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.rules.shared.RuleAction;
+import stroom.security.api.UserIdentity;
 
 import java.util.Objects;
 
@@ -35,7 +36,7 @@ class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
     }
 
     @Override
-    public boolean filter(final AttributeMap attributeMap) {
+    public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
         final RuleAction action = dataReceiptPolicyChecker.check(attributeMap);
 
