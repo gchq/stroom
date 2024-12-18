@@ -44,8 +44,8 @@ public interface AttributeMapFilter {
     static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
             return PermissiveAttributeMapFilter.getInstance();
-        } else if (attributeMapFilters.size() == 1 && attributeMapFilters.getFirst() != null) {
-            return attributeMapFilters.getFirst();
+        } else if (attributeMapFilters.size() == 1 && attributeMapFilters.get(0) != null) {
+            return attributeMapFilters.get(0);
         } else {
             return new MultiAttributeMapFilter(attributeMapFilters);
         }

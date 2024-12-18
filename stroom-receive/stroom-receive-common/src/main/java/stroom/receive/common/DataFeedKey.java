@@ -7,13 +7,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 
 @JsonPropertyOrder(alphabetic = true)
 public class DataFeedKey {

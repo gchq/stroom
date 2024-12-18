@@ -2,9 +2,8 @@ package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 
 public interface DataFeedKeyService extends AttributeMapFilter, AuthenticatorFilter {
 

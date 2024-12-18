@@ -12,10 +12,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.string.Base58;
 
 import com.google.common.base.Strings;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-import jakarta.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.params.Argon2Parameters;
 import org.bouncycastle.crypto.params.Argon2Parameters.Builder;
@@ -32,6 +29,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class DataFeedKeyServiceImpl
@@ -189,7 +190,7 @@ public class DataFeedKeyServiceImpl
 
     private Optional<String> getAttribute(final AttributeMap attributeMap, final String header) {
         return Optional.ofNullable(attributeMap.get(header))
-                .filter(str -> !NullSafe.isNonBlankString(str));
+                .filter(str -> !StringUtils.isNotBlank(str));
     }
 
     @Override

@@ -23,12 +23,8 @@ import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.PeriodicallyUpdatedValue;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {
