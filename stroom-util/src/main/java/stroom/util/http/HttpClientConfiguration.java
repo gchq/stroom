@@ -254,7 +254,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
     }
 
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new HttpClientConfiguration());
     }
 
     public static class Builder extends AbstractBuilder<HttpClientConfiguration, HttpClientConfiguration.Builder> {

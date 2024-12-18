@@ -159,7 +159,7 @@ public class HttpProxyConfiguration extends AbstractConfig implements IsStroomCo
     }
 
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new HttpProxyConfiguration());
     }
 
     public static class Builder extends AbstractBuilder<HttpProxyConfiguration, HttpProxyConfiguration.Builder> {

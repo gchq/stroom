@@ -200,7 +200,7 @@ public class HttpAuthConfiguration extends AbstractConfig implements IsStroomCon
     }
 
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new HttpAuthConfiguration());
     }
 
     public static class Builder extends AbstractBuilder<HttpAuthConfiguration, HttpAuthConfiguration.Builder> {

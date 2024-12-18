@@ -43,11 +43,11 @@ class HttpCall extends StroomExtensionFunctionCall {
     private static final String HEADER_DELIMITER = "\n";
     private static final String HEADER_KV_DELIMITER = ":";
 
-    private final HttpClientCache httpClientCache;
+    private final CommonHttpClient commonHttpClient;
 
     @Inject
     HttpCall(final HttpClientCache httpClientCache) {
-        this.httpClientCache = httpClientCache;
+        commonHttpClient = new CommonHttpClient(httpClientCache);
     }
 
     @Override
@@ -59,14 +59,15 @@ class HttpCall extends StroomExtensionFunctionCall {
         final String headers = getOptionalString(arguments, 1).orElse("");
         final String mediaType = getOptionalString(arguments, 2).orElse("application/json; charset=utf-8");
         final String data = getOptionalString(arguments, 3).orElse("");
-        final String clientConfig = getOptionalString(arguments, 4).orElse("");
+        final String clientConfigStr = getOptionalString(arguments, 4).orElse("");
 
         if (url.isEmpty()) {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
 
         } else {
             try {
-                sequence = execute(url, headers, mediaType, data, clientConfig, response ->
+                final HttpClient httpClient = commonHttpClient.createClient(clientConfigStr);
+                sequence = execute(url, headers, mediaType, data, httpClient, response ->
                         createSequence(context, response));
 
             } catch (final Exception e) {
@@ -99,11 +100,8 @@ class HttpCall extends StroomExtensionFunctionCall {
                   final String headers,
                   final String mediaType,
                   final String data,
-                  final String clientConfig,
+                  final HttpClient httpClient,
                   HttpClientResponseHandler<T> responseHandler) {
-        LOGGER.debug(() -> "Creating client");
-        final HttpClient httpClient = httpClientCache.get(clientConfig);
-
         LOGGER.debug(() -> "Creating request builder");
         final HttpPost httpPost = new HttpPost(url);
 

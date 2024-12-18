@@ -19,17 +19,10 @@ package stroom.pipeline.xsltfunctions;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
-import stroom.pipeline.errorhandler.ProcessException;
-import stroom.util.config.OkHttpClientConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
-import stroom.util.http.HttpClientUtil;
-import stroom.util.http.HttpTlsConfiguration;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -38,7 +31,6 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.io.CloseMode;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Singleton
@@ -48,7 +40,7 @@ public class HttpClientCache {
 
     private static final String CACHE_NAME = "Http Client Cache";
 
-    private final LoadingStroomCache<String, CloseableHttpClient> cache;
+    private final LoadingStroomCache<HttpClientConfiguration, CloseableHttpClient> cache;
     private final HttpClientFactory httpClientFactory;
 
     @Inject
@@ -63,56 +55,13 @@ public class HttpClientCache {
                 this::destroy);
     }
 
-    public HttpClient get(final String clientConfig) {
-        return cache.get(clientConfig);
+    public HttpClient get(final HttpClientConfiguration httpClientConfiguration) {
+        return cache.get(httpClientConfiguration);
     }
 
-    private CloseableHttpClient create(final String clientConfigStr) {
+    private CloseableHttpClient create(final HttpClientConfiguration httpClientConfiguration) {
         LOGGER.debug(() -> "Creating client builder");
         RuntimeException exception = null;
-
-        HttpClientConfiguration httpClientConfiguration = null;
-        if (clientConfigStr != null && !clientConfigStr.isBlank()) {
-
-            try {
-                // Try deprecated OKHttp config.
-                final OkHttpClientConfig clientConfig = JsonUtil.readValue(clientConfigStr, OkHttpClientConfig.class);
-                final HttpTlsConfiguration httpTlsConfiguration = HttpClientUtil
-                        .getHttpTlsConfiguration(clientConfig.getSslConfig());
-                httpClientConfiguration = HttpClientConfiguration
-                        .builder()
-                        .connectionRequestTimeout(Objects
-                                .requireNonNullElse(clientConfig.getCallTimeout(), StroomDuration.ofMillis(500)))
-                        .connectionTimeout(Objects
-                                .requireNonNullElse(clientConfig.getConnectionTimeout(), StroomDuration.ofMillis(500)))
-                        .tlsConfiguration(httpTlsConfiguration)
-                        .build();
-            } catch (final RuntimeException e) {
-                LOGGER.debug(() -> LogUtil.message(
-                        "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()));
-                exception = ProcessException.create(LogUtil.message(
-                        "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()), e);
-            }
-
-            if (httpClientConfiguration == null) {
-                try {
-                    httpClientConfiguration = JsonUtil.readValue(clientConfigStr, HttpClientConfiguration.class);
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(() -> LogUtil.message(
-                            "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()));
-                    if (exception != null) {
-                        exception = ProcessException.create(LogUtil.message(
-                                        "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr,
-                                        e.getMessage()),
-                                e);
-                    }
-                }
-            }
-
-            if (exception != null) {
-                throw exception;
-            }
-
 
 //            @JsonProperty
 //            private final List<String> httpProtocols;
@@ -144,17 +93,12 @@ public class HttpClientCache {
 //            configureHttpProtocolVersions(builder, clientConfig);
 //
 //            applySslConfig(builder, clientConfig);
-        }
-
-        if (httpClientConfiguration == null) {
-            httpClientConfiguration = HttpClientConfiguration.builder().build();
-        }
 
         LOGGER.debug(() -> "Creating client");
         return httpClientFactory.get("HttpClientCache-" + UUID.randomUUID(), httpClientConfiguration);
     }
 
-    private void destroy(final String key, final CloseableHttpClient value) {
+    private void destroy(final HttpClientConfiguration key, final CloseableHttpClient value) {
         LOGGER.debug(() -> "Closing client");
         try {
             value.close(CloseMode.GRACEFUL);

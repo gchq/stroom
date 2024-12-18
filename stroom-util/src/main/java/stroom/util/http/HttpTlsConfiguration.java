@@ -284,7 +284,7 @@ public class HttpTlsConfiguration extends AbstractConfig implements IsStroomConf
     }
 
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new HttpTlsConfiguration());
     }
 
     public static class Builder extends AbstractBuilder<HttpTlsConfiguration, HttpTlsConfiguration.Builder> {
