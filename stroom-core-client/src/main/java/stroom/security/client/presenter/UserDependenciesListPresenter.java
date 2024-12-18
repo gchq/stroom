@@ -1,13 +1,13 @@
 package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef.DisplayType;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
@@ -186,18 +186,18 @@ public class UserDependenciesListPresenter
 //                ColumnSizeConstants.ICON_COL);
 
         // Doc name col
+        final DocRefCell.Builder<UserDependency> cellBuilder =
+                new DocRefCell.Builder<UserDependency>()
+                        .eventBus(getEventBus())
+                        .documentTypes(documentTypes)
+                        .showIcon(true);
+
         final Column<UserDependency, DocRefProvider<UserDependency>> docNameCol = DataGridUtil.docRefColumnBuilder(
                         (UserDependency row) ->
                                 GwtNullSafe.get(
                                         row,
                                         row2 -> new DocRefProvider<>(row2, UserDependency::getDocRef)),
-                        getEventBus(),
-                        documentTypes,
-                        false,
-                        true,
-                        DisplayType.NAME,
-                        null,
-                        null)
+                        cellBuilder)
                 .withSorting(FindUserDependenciesCriteria.FIELD_DOC_NAME)
                 .build();
         dataGrid.addColumn(

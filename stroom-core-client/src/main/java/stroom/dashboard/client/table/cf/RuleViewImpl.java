@@ -71,11 +71,13 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
         widget = binder.createAndBindUi(this);
 
         formattingType.addItems(ConditionalFormattingType.LIST);
+        formattingType.setValue(ConditionalFormattingType.BACKGROUND);
         formattingType.addStyleName("conditionalFormatTypeSelection");
 
         formattingStyle.setRenderFunction(style -> ConditionalFormattingSwatchUtil
                 .createSwatch(formattingType.getValue(), style, getTextAttributes()));
         formattingStyle.addItems(ConditionalFormattingStyle.LIST);
+        formattingStyle.setValue(ConditionalFormattingStyle.NONE);
         formattingStyle.addStyleName("conditionalFormatStyleSelection");
     }
 
@@ -101,7 +103,9 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
 
     @Override
     public void setFormattingType(final ConditionalFormattingType formattingType) {
-        this.formattingType.setValue(formattingType);
+        this.formattingType.setValue(formattingType == null
+                ? ConditionalFormattingType.BACKGROUND
+                : formattingType);
         updateVisibility();
         updateExampleSwatch();
     }
@@ -112,8 +116,10 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     }
 
     @Override
-    public void setFormattingStyle(final ConditionalFormattingStyle formattingStyle) {
-        this.formattingStyle.setValue(formattingStyle);
+    public void setFormattingStyle(final ConditionalFormattingStyle style) {
+        this.formattingStyle.setValue(style == null
+                ? ConditionalFormattingStyle.NONE
+                : style);
         updateExampleSwatch();
     }
 
@@ -160,7 +166,9 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
         final ConditionalFormattingStyle style = formattingStyle.getValue();
         formattingStyle.clear();
         formattingStyle.addItems(ConditionalFormattingStyle.LIST);
-        formattingStyle.setValue(style);
+        formattingStyle.setValue(style == null
+                ? ConditionalFormattingStyle.NONE
+                : style);
 
         final ConditionalFormattingType type = formattingType.getValue();
         final boolean custom = type == null || ConditionalFormattingType.CUSTOM.equals(type);

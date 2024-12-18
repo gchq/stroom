@@ -29,8 +29,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -41,6 +39,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
@@ -52,12 +52,10 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
-import stroom.processor.shared.ProcessorType;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
@@ -80,6 +78,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT
 public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
@@ -88,6 +87,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
+    private final DocumentTypeCache documentTypeCache;
     private final ClientSecurityContext securityContext;
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final TooltipPresenter tooltipPresenter;
@@ -114,9 +114,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                   final ClientSecurityContext securityContext,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
-                                  final ProcessorInfoBuilder processorInfoBuilder) {
+                                  final ProcessorInfoBuilder processorInfoBuilder,
+                                  final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
         this.securityContext = securityContext;
+        this.documentTypeCache = documentTypeCache;
 
         this.dataGrid = new MyDataGrid<>();
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -215,7 +217,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         this.allowUpdate = allowUpdate;
 
         if (expanderColumn == null) {
-            addColumns();
+            documentTypeCache.fetch(this::addColumns, this);
 
             // Handle use of the expander column.
             dataProvider.setTreeRowHandler(new TreeRowHandler<ProcessorListRow>(request, dataGrid, expanderColumn));
@@ -243,7 +245,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    private void addColumns() {
+    private void addColumns(final DocumentTypes documentTypes) {
         // TODO Change all the cols to use DataGridUtil and enabledWhen() so the disabled
         //  ones get low-lighted
 
@@ -258,7 +260,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addIconColumn();
         addInfoColumn();
         addEnabledColumn();
-        addPipelineColumn();
+        addPipelineColumn(documentTypes);
         addPriorityColumn();
         addMaxProcessingTasksColumn();
         addStatusColumn();
@@ -310,65 +312,48 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 if (row instanceof ProcessorFilterRow) {
                     icon = SvgPresets.FILTER.enabled(true);
                 } else if (row instanceof ProcessorRow) {
-                    if (ProcessorType.STREAMING_ANALYTIC
-                            .equals(((ProcessorRow) row).getProcessor().getProcessorType())) {
-                        icon = SvgPresets.enabled(SvgImage.DOCUMENT_ANALYTIC_RULE,
-                                ProcessorType.STREAMING_ANALYTIC.getDisplayValue());
-                    } else {
-                        icon = SvgPresets.PROCESS.enabled(true);
-                    }
+                    icon = SvgPresets.PROCESS.enabled(true);
                 }
                 return icon;
             }
         }, "", ColumnSizeConstants.ICON_COL);
     }
 
-    private void addPipelineColumn() {
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, DocRefProvider<DocRef>>(new DocRefCell<>(
-                getEventBus(), false)) {
-            @Override
-            public DocRefProvider<DocRef> getValue(final ProcessorListRow row) {
-                DocRef docRef = null;
-                if (row instanceof ProcessorFilterRow) {
-                    //noinspection PatternVariableCanBeUsed Not in GWT
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+    private void addPipelineColumn(final DocumentTypes documentTypes) {
+        final Function<ProcessorListRow, DocRef> extractionFunction = row -> {
+            DocRef docRef = null;
+            if (row instanceof ProcessorFilterRow) {
+                //noinspection PatternVariableCanBeUsed Not in GWT
+                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
 
-                    if (processorFilter.getPipelineUuid() != null) {
-                        docRef = new DocRef(
-                                PipelineDoc.DOCUMENT_TYPE,
-                                processorFilter.getPipelineUuid(),
-                                processorFilter.getPipelineName());
-                    }
+                if (processorFilter.getPipelineUuid() != null) {
+                    docRef = processorFilter.getPipeline();
+                }
 
-                    if (docRef == null) {
-                        final Processor processor = processorFilter.getProcessor();
-                        if (processor != null) {
-                            if (processor.getPipelineUuid() != null || processor.getPipelineName() != null) {
-                                docRef = new DocRef(
-                                        PipelineDoc.DOCUMENT_TYPE,
-                                        processor.getPipelineUuid(),
-                                        processor.getPipelineName());
-                            }
-                        }
-                    }
-                } else if (row instanceof ProcessorRow) {
-                    //noinspection PatternVariableCanBeUsed Not in GWT
-                    final ProcessorRow processorRow = (ProcessorRow) row;
-                    final Processor processor = processorRow.getProcessor();
+                if (docRef == null) {
+                    final Processor processor = processorFilter.getProcessor();
                     if (processor != null) {
                         if (processor.getPipelineUuid() != null || processor.getPipelineName() != null) {
-                            docRef = new DocRef(
-                                    PipelineDoc.DOCUMENT_TYPE,
-                                    processor.getPipelineUuid(),
-                                    processor.getPipelineName());
+                            docRef = processor.getPipeline();
                         }
                     }
                 }
-
-                return DocRefProvider.forDocRef(docRef);
+            } else if (row instanceof ProcessorRow) {
+                //noinspection PatternVariableCanBeUsed Not in GWT
+                final ProcessorRow processorRow = (ProcessorRow) row;
+                final Processor processor = processorRow.getProcessor();
+                if (processor != null) {
+                    if (processor.getPipelineUuid() != null || processor.getPipelineName() != null) {
+                        docRef = processor.getPipeline();
+                    }
+                }
             }
-        }, "Pipeline", 300);
+
+            return docRef;
+        };
+
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, extractionFunction);
     }
 
 //    private void addTrackerColumns() {

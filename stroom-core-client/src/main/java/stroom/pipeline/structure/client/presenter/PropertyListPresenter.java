@@ -18,13 +18,13 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.DocRefCell.Builder;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
@@ -155,36 +155,35 @@ public class PropertyListPresenter
     private void addValueColumn(final DocumentTypes documentTypes) {
         // Value.
         // Value could be a docRef, in which case it gets a hover link to open it) or a simple string
+        final DocRefCell.Builder<PipelineProperty> cellBuilder = new Builder<PipelineProperty>()
+                .eventBus(getEventBus())
+                .documentTypes(documentTypes)
+                .showIcon(true)
+                .cssClassFunction(property1 -> getStateCssClass(property1, true))
+                .cellTextFunction(docRefProvider -> {
+                    if (docRefProvider == null) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        final PipelineProperty property = docRefProvider.getRow();
+                        final PipelinePropertyValue value = property.getValue();
+                        if (value.getEntity() != null) {
+                            return SafeHtmlUtils.fromString(DocRefCell.getTextFromDocRef(value.getEntity()));
+                        } else {
+                            return SafeHtmlUtils.fromString(getVal(property));
+                        }
+                    }
+                });
+
         final Column<PipelineProperty, DocRefProvider<PipelineProperty>> valueCol = DataGridUtil.docRefColumnBuilder(
-                        (PipelineProperty property) -> {
-                            return new DocRefProvider<>(property, property2 -> {
-                                final PipelinePropertyValue value = property.getValue();
-                                if (value == null) {
-                                    return null;
-                                } else {
-                                    return value.getEntity();
-                                }
-                            });
-                        },
-                        getEventBus(),
-                        documentTypes,
-                        false,
-                        true,
-                        DisplayType.NAME,
-                        property1 -> getStateCssClass(property1, true),
-                        docRefProvider -> {
-                            if (docRefProvider == null) {
-                                return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                        (PipelineProperty property) -> new DocRefProvider<>(property, property2 -> {
+                            final PipelinePropertyValue value = property.getValue();
+                            if (value == null) {
+                                return null;
                             } else {
-                                final PipelineProperty property = docRefProvider.getRow();
-                                final PipelinePropertyValue value = property.getValue();
-                                if (value.getEntity() != null) {
-                                    return SafeHtmlUtils.fromString(DocRefCell.getTextFromDocRef(value.getEntity()));
-                                } else {
-                                    return SafeHtmlUtils.fromString(getVal(property));
-                                }
+                                return value.getEntity();
                             }
-                        })
+                        }),
+                        cellBuilder)
                 .build();
 
         dataGrid.addAutoResizableColumn(valueCol, "Value", 30, 200);

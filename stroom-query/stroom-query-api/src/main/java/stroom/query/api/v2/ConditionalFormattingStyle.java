@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum ConditionalFormattingStyle implements HasDisplayValue {
+    NONE("None", ""),
     RED("Red", "cf-red"),
     PINK("Pink", "cf-pink"),
     PURPLE("Purple", "cf-purple"),
@@ -29,6 +30,7 @@ public enum ConditionalFormattingStyle implements HasDisplayValue {
     public static final List<ConditionalFormattingStyle> LIST = new ArrayList<>();
 
     static {
+        LIST.add(NONE);
         LIST.add(RED);
         LIST.add(PINK);
         LIST.add(PURPLE);

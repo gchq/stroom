@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
@@ -28,12 +27,15 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -47,19 +49,20 @@ import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
+    private final TooltipPresenter tooltipPresenter;
     private final MyDataGrid<ProcessorTaskSummary> dataGrid;
     private final MultiSelectionModelImpl<ProcessorTaskSummary> selectionModel;
     private final RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
@@ -70,8 +73,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
                                          final PagerView view,
                                          final RestFactory restFactory,
-                                         final TooltipPresenter tooltipPresenter) {
+                                         final TooltipPresenter tooltipPresenter,
+                                         final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
+        this.tooltipPresenter = tooltipPresenter;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -107,6 +112,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
             }
         };
 
+        documentTypeCache.fetch(this::addColumns, this);
+    }
+
+    private void addColumns(final DocumentTypes documentTypes) {
         // Info column.
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
@@ -131,25 +140,12 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, DocRefProvider<DocRef>>(
-                new DocRefCell<>(getEventBus(), false)) {
-            @Override
-            public DocRefProvider<DocRef> getValue(final ProcessorTaskSummary row) {
-                return DocRefProvider.forDocRef(row.getPipeline());
-            }
-        }, "Pipeline", ColumnSizeConstants.BIG_COL);
+        final Function<ProcessorTaskSummary, DocRef> pipelineExtractionFunction = ProcessorTaskSummary::getPipeline;
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, pipelineExtractionFunction);
 
-        dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, DocRefProvider<DocRef>>(
-                        new DocRefCell<>(getEventBus(), true),
-                        ProcessorTaskFields.FIELD_FEED,
-                        true) {
-                    @Override
-                    public DocRefProvider<DocRef> getValue(final ProcessorTaskSummary row) {
-                        final DocRef docRef = new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
-                        return DocRefProvider.forDocRef(docRef);
-                    }
-                }, "Feed", ColumnSizeConstants.BIG_COL);
+        final Function<ProcessorTaskSummary, DocRef> feedExtractionFunction = row ->
+                new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", documentTypes, feedExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
