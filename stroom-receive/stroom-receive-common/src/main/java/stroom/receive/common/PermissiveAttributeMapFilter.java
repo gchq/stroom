@@ -18,11 +18,21 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
+import stroom.security.api.UserIdentity;
 
 public class PermissiveAttributeMapFilter implements AttributeMapFilter {
 
+    public static final PermissiveAttributeMapFilter INSTANCE = new PermissiveAttributeMapFilter();
+
+    private PermissiveAttributeMapFilter() {
+    }
+
+    public static PermissiveAttributeMapFilter getInstance() {
+        return INSTANCE;
+    }
+
     @Override
-    public boolean filter(AttributeMap attributeMap) {
+    public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
         return true;
     }
 }

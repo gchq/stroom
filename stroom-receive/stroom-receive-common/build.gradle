@@ -14,6 +14,8 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
+    implementation libs.bcrypt
+    implementation libs.bouncy_castle
     implementation libs.commons_compress
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks

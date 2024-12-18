@@ -45,6 +45,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             final boolean isAuthRequired = receiveDataConfig.isAuthenticationRequired();
             final boolean isTokenAuthEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
             final boolean isCertAuthEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
+            final boolean isDataFeedKeyAuthEnabled = receiveDataConfig.isDatafeedKeyAuthenticationEnabled();
 
             // Try tokens first in preference
             final boolean foundToken = userIdentityFactory.hasAuthenticationToken(request);

@@ -21,6 +21,10 @@ public enum StroomStatusCode {
     FEED_IS_NOT_SET_TO_RECEIVED_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 
+    INVALID_FEED_NAME(HttpServletResponse.SC_NOT_ACCEPTABLE, 111,
+            "Feed is not valid",
+            "The feed you have provided does not match an agreed pattern"),
+
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),
 
@@ -57,11 +61,17 @@ public enum StroomStatusCode {
             "Client Token or Certificate failed authentication",
             "The provided client token or certificate cannot be authorised"),
 
+    DATA_FEED_KEY_NOT_AUTHENTICATED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            313,
+            "Data feed key failed authentication",
+            "The provided data feed key cannot be authorised"),
+
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             400,
             "Compressed stream invalid",
             "The stream of data sent does not form a valid compressed file.  Maybe it terminated " +
-                    "unexpectedly or is corrupt."),
+            "unexpectedly or is corrupt."),
 
     UNKNOWN_ERROR(
             HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -117,7 +127,7 @@ public enum StroomStatusCode {
         for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
             System.out.println("|-");
             System.out.println("|" + stroomStatusCode.getHttpCode() + "||" + stroomStatusCode.getCode() + "||"
-                    + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());
+                               + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());
 
         }
         System.out.println("|}");

@@ -6,6 +6,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.security.api.UserIdentity;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
     }
 
     @Override
-    public boolean filter(final AttributeMap attributeMap) {
+    public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
         final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
 
         final String senderDn = attributeMap.get(StandardHeaderArguments.REMOTE_DN);
