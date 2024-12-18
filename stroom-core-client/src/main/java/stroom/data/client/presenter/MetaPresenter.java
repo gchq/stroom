@@ -558,7 +558,7 @@ public class MetaPresenter
         ButtonView.setEnabled(streamRelationListDownload, someSelected);
         ButtonView.setEnabled(streamRelationListProcess, someSelected);
         if (streamRelationListDelete != null) {
-            shouldEnableDelete(metaListPresenter, streamIdSet, streamRelationListDelete::setEnabled);
+            shouldEnableDelete(metaRelationListPresenter, streamIdSet, streamRelationListDelete::setEnabled);
         }
         if (streamRelationListRestore != null) {
             shouldEnableRestore(metaRelationListPresenter, streamIdSet, streamRelationListRestore::setEnabled);
