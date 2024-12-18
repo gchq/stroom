@@ -12,6 +12,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-search:stroom-expression-matcher')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 

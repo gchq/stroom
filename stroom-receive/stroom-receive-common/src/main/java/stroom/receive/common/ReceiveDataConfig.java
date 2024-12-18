@@ -24,12 +24,20 @@ public class ReceiveDataConfig
         extends AbstractConfig
         implements IsStroomConfig, IsProxyConfig {
 
+    @JsonProperty
     private final String receiptPolicyUuid;
+    @JsonProperty
     private final Set<String> metaTypes;
+    @JsonProperty
     private final boolean tokenAuthenticationEnabled;
+    @JsonProperty
     private final boolean certificateAuthenticationEnabled;
+    @JsonProperty
     private final boolean datafeedKeyAuthenticationEnabled;
+    @JsonProperty
     private final boolean authenticationRequired;
+    @JsonProperty
+    private final String dataFeedKeysDir;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
@@ -38,6 +46,7 @@ public class ReceiveDataConfig
         certificateAuthenticationEnabled = true;
         datafeedKeyAuthenticationEnabled = false;
         authenticationRequired = true;
+        dataFeedKeysDir = "data_feed_keys";
     }
 
     @SuppressWarnings("unused")
@@ -48,7 +57,8 @@ public class ReceiveDataConfig
             @JsonProperty("tokenAuthenticationEnabled") final boolean tokenAuthenticationEnabled,
             @JsonProperty("certificateAuthenticationEnabled") final boolean certificateAuthenticationEnabled,
             @JsonProperty("datafeedKeyAuthenticationEnabled") final boolean datafeedKeyAuthenticationEnabled,
-            @JsonProperty("authenticationRequired") final boolean authenticationRequired) {
+            @JsonProperty("authenticationRequired") final boolean authenticationRequired,
+            @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
@@ -56,6 +66,7 @@ public class ReceiveDataConfig
         this.certificateAuthenticationEnabled = certificateAuthenticationEnabled;
         this.datafeedKeyAuthenticationEnabled = datafeedKeyAuthenticationEnabled;
         this.authenticationRequired = authenticationRequired;
+        this.dataFeedKeysDir = dataFeedKeysDir;
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -65,6 +76,7 @@ public class ReceiveDataConfig
         certificateAuthenticationEnabled = builder.certificateAuthenticationEnabled;
         datafeedKeyAuthenticationEnabled = builder.datafeedKeyAuthenticationEnabled;
         authenticationRequired = builder.authenticationRequired;
+        dataFeedKeysDir = builder.dataFeedKeysDir;
     }
 
 
@@ -117,6 +129,14 @@ public class ReceiveDataConfig
         return datafeedKeyAuthenticationEnabled;
     }
 
+    @JsonPropertyDescription("The directory where Stroom will look for datafeed key files. " +
+                             "Only used if datafeedKeyAuthenticationEnabled is true." +
+                             "If the value is a relative path then it will be treated as being " +
+                             "relative to stroom.path.home.")
+    public String getDataFeedKeysDir() {
+        return dataFeedKeysDir;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then one of tokenAuthenticationEnabled " +
@@ -134,8 +154,8 @@ public class ReceiveDataConfig
                 metaTypes,
                 isTokenAuthenticationEnabled,
                 certificateAuthenticationEnabled,
-                datafeedKeyAuthenticationEnabled, authenticationRequired
-        );
+                datafeedKeyAuthenticationEnabled, authenticationRequired,
+                dataFeedKeysDir);
     }
 
     public ReceiveDataConfig withCertificateAuthenticationEnabled(final boolean isCertificateAuthenticationEnabled) {
@@ -144,8 +164,8 @@ public class ReceiveDataConfig
                 metaTypes,
                 tokenAuthenticationEnabled,
                 isCertificateAuthenticationEnabled,
-                datafeedKeyAuthenticationEnabled, authenticationRequired
-        );
+                datafeedKeyAuthenticationEnabled, authenticationRequired,
+                dataFeedKeysDir);
     }
 
     public ReceiveDataConfig withDatafeedKeyAuthenticationEnabled(final boolean isDatafeedKeyAuthenticationEnabled) {
@@ -154,8 +174,8 @@ public class ReceiveDataConfig
                 metaTypes,
                 datafeedKeyAuthenticationEnabled,
                 certificateAuthenticationEnabled,
-                isDatafeedKeyAuthenticationEnabled, authenticationRequired
-        );
+                isDatafeedKeyAuthenticationEnabled, authenticationRequired,
+                dataFeedKeysDir);
     }
 
     public ReceiveDataConfig withAuthenticationRequired(final boolean isAuthenticationRequired) {
@@ -164,8 +184,8 @@ public class ReceiveDataConfig
                 metaTypes,
                 tokenAuthenticationEnabled,
                 certificateAuthenticationEnabled,
-                datafeedKeyAuthenticationEnabled, isAuthenticationRequired
-        );
+                datafeedKeyAuthenticationEnabled, isAuthenticationRequired,
+                dataFeedKeysDir);
     }
 
     @Override
@@ -176,6 +196,7 @@ public class ReceiveDataConfig
                ", certificateAuthenticationEnabled=" + certificateAuthenticationEnabled +
                ", datafeedKeyAuthenticationEnabled=" + datafeedKeyAuthenticationEnabled +
                ", authenticationRequired=" + authenticationRequired +
+               ", dataFeedKeysDir=" + dataFeedKeysDir +
                '}';
     }
 
@@ -187,6 +208,7 @@ public class ReceiveDataConfig
         builder.certificateAuthenticationEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
         builder.datafeedKeyAuthenticationEnabled = receiveDataConfig.isDatafeedKeyAuthenticationEnabled();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
+        builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
         return builder;
     }
 
@@ -206,6 +228,7 @@ public class ReceiveDataConfig
         private boolean certificateAuthenticationEnabled;
         private boolean authenticationRequired;
         private boolean datafeedKeyAuthenticationEnabled;
+        private String dataFeedKeysDir;
 
         private Builder() {
         }
@@ -241,6 +264,11 @@ public class ReceiveDataConfig
 
         public Builder withDatafeedKeyAuthenticationEnabled(final boolean val) {
             datafeedKeyAuthenticationEnabled = val;
+            return this;
+        }
+
+        public Builder withDataFeedKeysDir(final String val) {
+            dataFeedKeysDir = val;
             return this;
         }
 

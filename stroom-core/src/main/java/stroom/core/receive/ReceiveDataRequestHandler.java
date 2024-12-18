@@ -87,14 +87,15 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-            // Authenticate the request token if there is one.
+            // Authenticate the request depending on the configured auth methods.
+            // Adds sender details to the attributeMap
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
             // Validate the supplied attributes.
             AttributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             final String feedName;
-            if (attributeMapFilter.filter(attributeMap)) {
+            if (attributeMapFilter.filter(attributeMap, userIdentity)) {
                 debug("Receiving data", attributeMap);
 
                 feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
@@ -153,7 +154,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 sb.append(attributeMap.get(key));
                 sb.append(",");
             });
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.setLength(sb.length() - 1);
             }
 

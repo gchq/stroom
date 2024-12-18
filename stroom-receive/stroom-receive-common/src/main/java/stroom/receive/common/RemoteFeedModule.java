@@ -21,11 +21,13 @@ import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
 
+// TODO maybe rename to ReceiveModule
 public class RemoteFeedModule extends AbstractModule {
 
     @Override
     protected void configure() {
         bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
+        bind(DataFeedKeyService.class).to(DataFeedKeyServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(FeedStatusResourceImpl.class);
