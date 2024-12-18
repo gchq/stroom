@@ -28,6 +28,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
@@ -42,6 +44,7 @@ import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -52,7 +55,6 @@ import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -61,6 +63,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ProcessorTaskListPresenter
         extends MyPresenterWidget<PagerView>
@@ -69,6 +72,7 @@ public class ProcessorTaskListPresenter
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
+    private final RestFactory restFactory;
     private final MyDataGrid<ProcessorTask> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
@@ -81,8 +85,10 @@ public class ProcessorTaskListPresenter
                                       final PagerView view,
                                       final RestFactory restFactory,
                                       final TooltipPresenter tooltipPresenter,
-                                      final DateTimeFormatter dateTimeFormatter) {
+                                      final DateTimeFormatter dateTimeFormatter,
+                                      final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
+        this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>();
         view.setDataWidget(dataGrid);
@@ -108,7 +114,10 @@ public class ProcessorTaskListPresenter
                 }
             }
         };
+        documentTypeCache.fetch(this::addColumns, this);
+    }
 
+    private void addColumns(final DocumentTypes documentTypes) {
         // Info column.
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
@@ -166,19 +175,30 @@ public class ProcessorTaskListPresenter
                         }
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
-        dataGrid
-                .addResizableColumn(new OrderByColumn<ProcessorTask, DocRefProvider<DocRef>>(
-                        new DocRefCell<>(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
-                    @Override
-                    public DocRefProvider<DocRef> getValue(final ProcessorTask row) {
-                        if (row.getFeedName() != null) {
-                            final DocRef docRef = new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
-                            return DocRefProvider.forDocRef(docRef);
-                        } else {
-                            return null;
-                        }
-                    }
-                }, "Feed", ColumnSizeConstants.BIG_COL);
+
+        final Function<ProcessorTask, DocRef> feedExtractionFunction = row -> {
+            if (row.getFeedName() != null) {
+                return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
+            } else {
+                return null;
+            }
+        };
+        final Function<ProcessorTask, DocRefProvider<ProcessorTask>> feedExtractionFunction2 = row ->
+                new DocRefProvider<>(row, feedExtractionFunction);
+        dataGrid.addResizableColumn(
+                DataGridUtil.docRefColumnBuilder(
+                                feedExtractionFunction2,
+                                getEventBus(),
+                                documentTypes,
+                                false,
+                                true,
+                                DocRef.DisplayType.NAME,
+                                null,
+                                null)
+                        .build(),
+                "Feed",
+                ColumnSizeConstants.BIG_COL);
+
         dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
             @Override
@@ -190,16 +210,27 @@ public class ProcessorTaskListPresenter
                 return "";
             }
         }, "Priority", 60);
+        final Function<ProcessorTask, DocRef> pipelineExtractionFunction = row -> {
+            if (row.getProcessorFilter() != null) {
+                return row.getProcessorFilter().getPipeline();
+            }
+            return null;
+        };
+        final Function<ProcessorTask, DocRefProvider<ProcessorTask>> pipelineExtractionFunction2 = row ->
+                new DocRefProvider<>(row, pipelineExtractionFunction);
         dataGrid.addResizableColumn(
-                new Column<ProcessorTask, DocRefProvider<DocRef>>(new DocRefCell<>(getEventBus(), false)) {
-                    @Override
-                    public DocRefProvider<DocRef> getValue(final ProcessorTask row) {
-                        if (row.getProcessorFilter() != null) {
-                            return DocRefProvider.forDocRef(row.getProcessorFilter().getPipeline());
-                        }
-                        return null;
-                    }
-                }, "Pipeline", ColumnSizeConstants.BIG_COL);
+                DataGridUtil.docRefColumnBuilder(
+                                pipelineExtractionFunction2,
+                                getEventBus(),
+                                documentTypes,
+                                false,
+                                true,
+                                DocRef.DisplayType.NAME,
+                                null,
+                                null)
+                        .build(),
+                "Pipeline",
+                ColumnSizeConstants.BIG_COL);
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_START_TIME, false) {

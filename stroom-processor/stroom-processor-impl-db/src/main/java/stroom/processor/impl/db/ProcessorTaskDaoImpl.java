@@ -16,6 +16,7 @@
 
 package stroom.processor.impl.db;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -42,6 +43,7 @@ import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
@@ -72,7 +74,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
-import org.jooq.Record5;
+import org.jooq.Record6;
 import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -277,7 +279,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final long count = releaseTasks(conditions);
 
         LOGGER.info(() -> "Set " + count + " tasks back to CREATED that were " +
-                "QUEUED, ASSIGNED, PROCESSING");
+                          "QUEUED, ASSIGNED, PROCESSING");
 
         return count;
     }
@@ -309,7 +311,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final long count = releaseTasks(conditions);
 
         LOGGER.info(() -> "Set " + count + " tasks back to CREATED that were " +
-                "QUEUED, ASSIGNED, PROCESSING");
+                          "QUEUED, ASSIGNED, PROCESSING");
 
         return count;
     }
@@ -458,7 +460,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     // If we have never created tasks before or the last poll gave
                     // us no tasks then start to report a new creation range.
                     if (tracker.getMinMetaCreateMs() == null || (tracker.getLastPollTaskCount() != null
-                            && tracker.getLastPollTaskCount().longValue() == 0L)) {
+                                                                 && tracker.getLastPollTaskCount().longValue() == 0L)) {
                         tracker.setMinMetaCreateMs(creationState.streamMsRange.getMin());
                     }
                     // Report where we have got to.
@@ -518,14 +520,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 // Has this filter finished creating tasks for good, i.e. is there
                 // any possibility of getting more tasks in future?
                 if (reachedLimit ||
-                        (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
-                                && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs())) {
+                    (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
+                     && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs())) {
                     LOGGER.debug(() ->
                             "processProcessorFilter() - Completed task creation for bounded filter " +
-                                    filter.getId());
+                            filter.getId());
                     LOGGER.trace(() ->
                             "processProcessorFilter() - Completed task creation for bounded filter " +
-                                    filter);
+                            filter);
                     tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                 }
 
@@ -719,9 +721,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private void log(final CreationState creationState,
                      final InclusiveRange streamIdRange) {
         LOGGER.debug(() -> "processProcessorFilter() - Created " +
-                creationState.totalTasksCreated +
-                " tasks in the range " +
-                streamIdRange);
+                           creationState.totalTasksCreated +
+                           " tasks in the range " +
+                           streamIdRange);
     }
 
     @Override
@@ -793,9 +795,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final PageRequest pageRequest = criteria.getPageRequest();
         final int offset = JooqUtil.getOffset(pageRequest);
         final int limit = JooqUtil.getLimit(pageRequest, true);
-        final Result<Record5<String, String, Integer, Byte, Integer>> result =
+        final Result<Record6<String, String, String, Integer, Byte, Integer>> result =
                 JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select(
+                                PROCESSOR.TASK_TYPE,
                                 PROCESSOR_FEED.NAME,
                                 PROCESSOR.PIPELINE_UUID,
                                 PROCESSOR_FILTER.PRIORITY,
@@ -808,7 +811,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(condition)
-                        .groupBy(PROCESSOR_FEED.NAME,
+                        .groupBy(
+                                PROCESSOR.TASK_TYPE,
+                                PROCESSOR_FEED.NAME,
                                 PROCESSOR.PIPELINE_UUID,
                                 PROCESSOR_FILTER.PRIORITY,
                                 PROCESSOR_TASK.STATUS)
@@ -817,13 +822,21 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .fetch());
 
         final List<ProcessorTaskSummary> list = result.map(record -> {
+            final ProcessorType processorType = ProcessorType.fromDisplayValue(record.get(PROCESSOR.TASK_TYPE));
+            final String docType;
+            if (ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
+                docType = AnalyticRuleDoc.DOCUMENT_TYPE;
+            } else {
+                docType = PipelineDoc.DOCUMENT_TYPE;
+            }
+
             final String feed = record.get(PROCESSOR_FEED.NAME);
             final String pipelineUuid = record.get(PROCESSOR.PIPELINE_UUID);
             final int priority = record.get(PROCESSOR_FILTER.PRIORITY);
             final TaskStatus status = TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(
                     PROCESSOR_TASK.STATUS));
             final int count = record.get(COUNT);
-            DocRef pipelineDocRef = new DocRef("Pipeline", pipelineUuid);
+            DocRef pipelineDocRef = new DocRef(docType, pipelineUuid);
             final Optional<String> pipelineName = docRefInfoService.name(pipelineDocRef);
             if (pipelineName.isPresent()) {
                 pipelineDocRef = pipelineDocRef.copy().name(pipelineName.get()).build();
@@ -838,7 +851,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                            final String[] resultFields,
                            final ExpressionCriteria criteria) {
         return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+               ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
     @Override
@@ -1038,7 +1051,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     if (optTaskRec.isEmpty()) {
                                         LOGGER.warn(() -> LogUtil.message(
                                                 "changeTaskStatus({}) - Task does not exist, " +
-                                                        "task may have been physically deleted {}",
+                                                "task may have been physically deleted {}",
                                                 processorTask));
                                         record = null;
                                     } else if (TaskStatus.DELETED.getPrimitiveValue() == optTaskRec.get().getStatus()) {
@@ -1131,7 +1144,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     final boolean isValid = field.supportsCondition(term.getCondition());
                     if (!isValid) {
                         throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
-                                        "of type {}. Term: {}",
+                                                                   "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
                                 field.getFldType(), term));
@@ -1299,7 +1312,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
             LOGGER.debug(() -> LogUtil.message(
                     "Physically deleted a batch of {} processor tasks with status time older than {} " +
-                            "for an idList size of {}, totalDeleteCount: {}",
+                    "for an idList size of {}, totalDeleteCount: {}",
                     count, deleteThreshold, idList.size(), totalDeleteCount));
         }
 

@@ -16,6 +16,7 @@
 
 package stroom.processor.shared;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
@@ -187,7 +188,13 @@ public class Processor implements HasAuditInfo, HasUuid {
 
     @JsonIgnore
     public DocRef getPipeline() {
-        return new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName);
+        final String docType;
+        if (ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
+            docType = AnalyticRuleDoc.DOCUMENT_TYPE;
+        } else {
+            docType = PipelineDoc.DOCUMENT_TYPE;
+        }
+        return new DocRef(docType, pipelineUuid, pipelineName);
     }
 
     @JsonIgnore
