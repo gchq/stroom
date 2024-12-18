@@ -599,6 +599,7 @@ appConfig:
   receive:
     authenticationRequired: true
     certificateAuthenticationEnabled: true
+    datafeedKeyAuthenticationEnabled: false
     metaTypes:
     - "Context"
     - "Raw Reference"
