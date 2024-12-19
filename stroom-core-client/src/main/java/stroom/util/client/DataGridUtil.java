@@ -19,7 +19,10 @@ import stroom.data.client.presenter.DocRefCell.Builder;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.client.presenter.UserRefCell.UserRefProvider;
+import stroom.data.grid.client.ColSpec;
+import stroom.data.grid.client.ColumnBuilder;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.DocRef;
@@ -37,11 +40,8 @@ import stroom.util.shared.UserRef;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -632,23 +632,29 @@ public class DataGridUtil {
                         .cellSupplier(cellBuilder::build)
                         .build();
 
-        dataGrid.addResizableColumn(column, name, ColumnSizeConstants.BIG_COL);
+        final ColSpec<T_ROW> colSpec = new ColSpec.Builder<T_ROW>()
+                .column(column)
+                .resizable(true)
+                .name(name)
+                .width(ColumnSizeConstants.BIG_COL)
+                .build();
+        dataGrid.addColumn(colSpec);
     }
 
     /**
      * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
      * and to open the doc.
      *
-     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param docRefExtractionFunction Function to extract a {@link DocRef} from the {@code T_ROW}.
      * @param <T_ROW>       The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>> docRefColumnBuilder(
-            final Function<T_ROW, DocRef> cellExtractor,
+            final Function<T_ROW, DocRef> docRefExtractionFunction,
             final EventBus eventBus,
             final boolean allowLinkByName) {
 
-        Objects.requireNonNull(cellExtractor);
+        Objects.requireNonNull(docRefExtractionFunction);
 
         final DocRefCell.Builder<DocRef> cellBuilder = new Builder<DocRef>()
                 .eventBus(eventBus)
@@ -657,7 +663,7 @@ public class DataGridUtil {
         final ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>>
                 columnBuilder = new ColumnBuilder<>();
         return columnBuilder
-                .valueExtractor(row -> GwtNullSafe.get(cellExtractor.apply(row), DocRefProvider::forDocRef))
+                .valueExtractor(row -> GwtNullSafe.get(docRefExtractionFunction.apply(row), DocRefProvider::forDocRef))
                 .formatter(Function.identity())
                 .cellSupplier(cellBuilder::build);
     }
@@ -753,175 +759,5 @@ public class DataGridUtil {
 
     public static HeadingBuilder headingBuilder() {
         return new HeadingBuilder("");
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>>
-            extends AbstractColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL,
-            ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL>> {
-
-        private ColumnBuilder() {
-
-        }
-
-        private ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
-                              final Function<T_RAW_VAL, T_CELL_VAL> formatter,
-                              final Supplier<T_CELL> cellSupplier) {
-            valueExtractor(valueExtractor);
-            formatter(formatter);
-            cellSupplier(cellSupplier);
-        }
-
-        @Override
-        ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> self() {
-            return this;
-        }
-    }
-
-    public static class SimpleColumnBuilder<T_ROW, T_RAW_VAL, T_CELL extends Cell<T_RAW_VAL>>
-            extends AbstractColumnBuilder<T_ROW, T_RAW_VAL, T_RAW_VAL, T_CELL,
-            SimpleColumnBuilder<T_ROW, T_RAW_VAL, T_CELL>> {
-
-        private SimpleColumnBuilder() {
-            formatter(Function.identity());
-        }
-
-        private SimpleColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
-                                    final Supplier<T_CELL> cellSupplier) {
-            valueExtractor(valueExtractor);
-            formatter(Function.identity());
-            cellSupplier(cellSupplier);
-        }
-
-        @Override
-        SimpleColumnBuilder<T_ROW, T_RAW_VAL, T_CELL> self() {
-            return this;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class HeadingBuilder {
-
-        private HeadingAlignment headingAlignment = null;
-        private SafeHtml headingText = SafeHtmlUtils.EMPTY_SAFE_HTML;
-        private String toolTip;
-
-        public HeadingBuilder(final String headingText) {
-            this.headingText = SafeHtmlUtil.getSafeHtml(headingText);
-        }
-
-        public HeadingBuilder headingText(final String headingText) {
-            this.headingText = SafeHtmlUtil.getSafeHtml(headingText);
-            return this;
-        }
-
-        public HeadingBuilder headingText(final SafeHtml headingText) {
-            this.headingText = GwtNullSafe.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
-            return this;
-        }
-
-        public HeadingBuilder leftAligned() {
-            this.headingAlignment = HeadingAlignment.LEFT;
-            return this;
-        }
-
-        public HeadingBuilder centerAligned() {
-            this.headingAlignment = HeadingAlignment.CENTER;
-            return this;
-        }
-
-        public HeadingBuilder rightAligned() {
-            this.headingAlignment = HeadingAlignment.RIGHT;
-            return this;
-        }
-
-        public HeadingBuilder withToolTip(final String toolTip) {
-            this.toolTip = toolTip;
-            return this;
-        }
-
-        public Header<SafeHtml> build() {
-
-            final boolean hasToolTip = !GwtNullSafe.isBlankString(toolTip);
-            final boolean hasAlignment = headingAlignment != null
-                                         && headingAlignment != HeadingAlignment.LEFT;
-            final Header<SafeHtml> header;
-            String headingStyle = null;
-            if (hasAlignment) {
-                if (HeadingAlignment.CENTER == headingAlignment) {
-                    headingStyle = "center-align";
-                } else if (HeadingAlignment.RIGHT == headingAlignment) {
-                    headingStyle = "right-align";
-                }
-            }
-
-//            if (hasToolTip || hasAlignment) {
-            if (hasToolTip) {
-
-                final SafeHtmlBuilder builder = new SafeHtmlBuilder()
-                        .appendHtmlConstant("<div");
-//                if (hasToolTip) {
-                builder.appendHtmlConstant(" title=\"")
-                        .appendEscaped(toolTip)
-                        .appendHtmlConstant("\"");
-//                }
-//                if (hasAlignment) {
-//                    if (HeadingAlignment.CENTER == headingAlignment) {
-//                        builder.appendHtmlConstant(" style=\"text-align: center;\"");
-//                        headingStyle = "center-align";
-//                    } else if (HeadingAlignment.RIGHT == headingAlignment) {
-//                        builder.appendHtmlConstant(" style=\"text-align: right;\"");
-//                        headingStyle = "right-align";
-//                    }
-//                }
-
-                builder.appendHtmlConstant(">")
-                        .append(headingText);
-//                if (GwtNullSafe.isBlankString(headingText)) {
-//                    builder.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
-//                } else {
-//                    builder.appendEscaped(headingText);
-//                }
-
-                final SafeHtml safeHtml = builder
-                        .appendHtmlConstant("</div>")
-                        .toSafeHtml();
-                header = new SafeHtmlHeader(safeHtml);
-            } else {
-                header = new SafeHtmlHeader(headingText);
-            }
-
-            // Apply a class to the header itself
-            GwtNullSafe.consume(headingStyle, header::setHeaderStyleNames);
-            return header;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private enum HeadingAlignment {
-        LEFT,
-        CENTER,
-        RIGHT;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public static interface BrowserEventHandler<T_ROW> {
-
-        void handle(final Context context,
-                    final Element elem,
-                    final T_ROW row,
-                    final NativeEvent event);
     }
 }

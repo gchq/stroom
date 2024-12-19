@@ -1,8 +1,6 @@
-package stroom.util.client;
+package stroom.data.grid.client;
 
-import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.HasDisplayValue;
-import stroom.util.client.DataGridUtil.BrowserEventHandler;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.cell.client.Cell;
@@ -44,18 +42,6 @@ public abstract class AbstractColumnBuilder<
     private List<Function<T_ROW, String>> styleFunctions = null;
     private FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater = null;
     private BrowserEventHandler<T_ROW> browserEventHandler = null;
-
-//    private AbstractColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
-//                                  final Function<T_RAW_VAL, T_CELL_VAL> formatter,
-//                                  final Supplier<T_CELL> cellSupplier) {
-//        Objects.requireNonNull(valueExtractor);
-//        Objects.requireNonNull(formatter);
-//        Objects.requireNonNull(cellSupplier);
-//
-//        this.valueExtractor = valueExtractor;
-//        this.formatter = formatter;
-//        this.cellSupplier = cellSupplier;
-//    }
 
     public AbstractColumnBuilder() {
     }
@@ -288,5 +274,13 @@ public abstract class AbstractColumnBuilder<
                 }
             }
         };
+    }
+
+    public interface BrowserEventHandler<T_ROW> {
+
+        void handle(final Context context,
+                    final Element elem,
+                    final T_ROW row,
+                    final NativeEvent event);
     }
 }

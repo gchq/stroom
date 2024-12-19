@@ -211,8 +211,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 }
 
                 if (allowResize &&
-                        !resizeHandle.isResizing() &&
-                        MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                    !resizeHandle.isResizing() &&
+                    MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                     resizeHandle.startResize(event);
 
                 } else {
@@ -292,8 +292,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             // Hide the resize handle once the mouse moves outside the data
             // grid.
             if (!resizeHandle.isResizing() &&
-                    moveHeading == null &&
-                    !MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                moveHeading == null &&
+                !MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                 final Element rel = event.getRelatedEventTarget().cast();
                 final Heading heading = getHeading(rel, event.getClientX());
                 if (heading != null) {
@@ -456,6 +456,12 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         colSettings.add(new ColSettings(true, true));
         super.addColumn(column, SafeHtmlUtils.fromSafeConstant(name));
         setColumnWidth(column, width, Unit.PX);
+    }
+
+    public void addColumn(final ColSpec<R> colSpec) {
+        colSettings.add(colSpec.getColSettings());
+        super.addColumn(colSpec.getColumn(), colSpec.getHeader());
+        setColumnWidth(colSpec.getColumn(), colSpec.getWidth(), Unit.PX);
     }
 
     /**

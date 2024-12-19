@@ -59,7 +59,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.client.MyDataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -336,7 +335,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addInfoColumn() {
-        MyDataGridUtil.addStatusIconColumn(dataGrid, this::getInfoCellState);
+        DataGridUtil.addStatusIconColumn(dataGrid, this::getInfoCellState);
     }
 
     void addCreatedColumn() {
