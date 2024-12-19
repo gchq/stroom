@@ -24,6 +24,7 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
@@ -184,10 +185,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             if (currentStatus != existingMeta.getStatus()) {
                 throw new RuntimeException("Unexpected status " +
-                        existingMeta.getStatus() +
-                        " (expected " +
-                        currentStatus +
-                        ")");
+                                           existingMeta.getStatus() +
+                                           " (expected " +
+                                           currentStatus +
+                                           ")");
             }
 
             return null;
@@ -217,7 +218,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             final Predicate<ExpressionTerm> termPredicate = term ->
                     MetaFields.ID.getFldName().equals(term.getField())
-                            && term.hasCondition(Condition.EQUALS, Condition.IN);
+                    && term.hasCondition(Condition.EQUALS, Condition.IN);
 
             // The UI may give us one of:
             // * EQUALS on one unique id (user checked one stream)
@@ -225,8 +226,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
             // * A complex user provided filter expression containing who knows what
             // For the latter we need to use a batch wise approach that is less likely to lock other rows.
             final boolean usesUniqueIds = expression != null
-                    && expression.getChildren().size() == 1
-                    && expression.containsTerm(termPredicate);
+                                          && expression.getChildren().size() == 1
+                                          && expression.containsTerm(termPredicate);
 
             expression = addPermissionConstraints(expression,
                     permission,
@@ -562,7 +563,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                         final Map<String, String> attributes = attributeMap.getOrDefault(
                                 meta.getId(),
                                 new HashMap<>());
-                        metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
+                        metaRowList.add(new MetaRow(meta, getPipeline(meta), attributes));
                     }
                     return metaRowList;
                 },
@@ -600,11 +601,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return metaDao.getReprocessSelectionSummary(criteria);
     }
 
-    private String getPipelineName(final Meta meta) {
+    private DocRef getPipeline(final Meta meta) {
         if (meta.getPipelineUuid() != null) {
-            return docRefInfoService
-                    .name(new DocRef("Pipeline", meta.getPipelineUuid()))
-                    .orElse(null);
+            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(meta.getPipelineUuid());
+            return optionalDocRefInfo.map(DocRefInfo::getDocRef).orElse(null);
         }
         return null;
     }

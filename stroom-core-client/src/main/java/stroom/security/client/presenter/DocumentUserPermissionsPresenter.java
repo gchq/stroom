@@ -19,9 +19,9 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.docref.DocRef;
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentPermission;
@@ -161,11 +161,9 @@ public class DocumentUserPermissionsPresenter
         // Fetch detailed permissions report.
         if (selection != null) {
             docPermissionClient.getDocUserPermissionsReport(docRef, selection.getUserRef(), response -> {
-                documentTypeCache.fetch(documentTypes -> {
-                    final SafeHtml details = getDetails(documentTypes, response);
-                    getView().setUserRef(selection.getUserRef());
-                    getView().setDetails(details);
-                }, this);
+                final SafeHtml details = getDetails(response);
+                getView().setUserRef(selection.getUserRef());
+                getView().setDetails(details);
             }, this);
         } else {
             getView().setUserRef(null);
@@ -173,8 +171,7 @@ public class DocumentUserPermissionsPresenter
         }
     }
 
-    private SafeHtml getDetails(final DocumentTypes documentTypes,
-                                final DocumentUserPermissionsReport permissions) {
+    private SafeHtml getDetails(final DocumentUserPermissionsReport permissions) {
         DocumentPermission maxPermission = null;
 
         DescriptionBuilder sb = new DescriptionBuilder();
@@ -220,7 +217,7 @@ public class DocumentUserPermissionsPresenter
         }
 
         final Set<String> explicitCreatePerms = permissions.getExplicitCreatePermissions();
-        final SafeHtml explicitTypesHtml = docTypesToSortedDisplayList(explicitCreatePerms, documentTypes);
+        final SafeHtml explicitTypesHtml = docTypesToSortedDisplayList(explicitCreatePerms);
 
         if (explicitTypesHtml != null) {
             sb.addNewLine();
@@ -242,7 +239,7 @@ public class DocumentUserPermissionsPresenter
                     .forEach(entry -> {
                         final String type = entry.getKey();
                         final List<String> path = entry.getValue();
-                        final DocumentType docType = documentTypes.getDocumentType(type);
+                        final ClientDocumentType docType = ClientDocumentTypeRegistry.get(type);
                         if (docType != null && GwtNullSafe.hasItems(path)) {
                             final SvgImage icon = docType.getIcon();
                             final String pathStr = String.join(" & ", path);
@@ -272,19 +269,18 @@ public class DocumentUserPermissionsPresenter
     /**
      * May return null
      */
-    private SafeHtml docTypesToSortedDisplayList(final Set<String> types,
-                                                 final DocumentTypes documentTypes) {
+    private SafeHtml docTypesToSortedDisplayList(final Set<String> types) {
         if (GwtNullSafe.hasItems(types)) {
             //noinspection SimplifyStreamApiCallChains // Cos GWT
-            final List<DocumentType> sortedDocTypes = documentTypes.getTypes()
+            final List<ClientDocumentType> sortedDocTypes = ClientDocumentTypeRegistry.getTypes()
                     .stream()
                     .filter(docType -> types.contains(docType.getType()))
-                    .sorted(Comparator.comparing(DocumentType::getType))
+                    .sorted(Comparator.comparing(ClientDocumentType::getType))
                     .collect(Collectors.toList());
             if (GwtNullSafe.hasItems(sortedDocTypes)) {
                 final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
                 for (int i = 0; i < sortedDocTypes.size(); i++) {
-                    final DocumentType docType = sortedDocTypes.get(i);
+                    final ClientDocumentType docType = sortedDocTypes.get(i);
                     final SvgImage icon = docType.getIcon();
                     htmlBuilder.br()
                             .span(spanBuilder -> spanBuilder

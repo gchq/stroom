@@ -17,6 +17,8 @@
 package stroom.explorer.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.shared.FindResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -50,10 +52,11 @@ public class FindResultCell extends AbstractCell<FindResult> {
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
             // Add icon
-            if (value.getIcon() != null) {
+            final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(docRef.getType());
+            if (documentType != null && documentType.getIcon() != null) {
                 main.append(SvgImageUtil.toSafeHtml(
                         docRef.getType(),
-                        value.getIcon(),
+                        documentType.getIcon(),
                         getCellClassName() + "-icon",
                         "svgIcon"));
             }

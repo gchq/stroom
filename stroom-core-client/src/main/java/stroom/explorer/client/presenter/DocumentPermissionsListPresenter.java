@@ -11,7 +11,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.FocusEvent;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest.Builder;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.FindResultWithPermissions;
@@ -53,18 +52,17 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     @Inject
     public DocumentPermissionsListPresenter(final EventBus eventBus,
                                             final PagerView view,
-                                            final RestFactory restFactory,
-                                            final DocumentTypeCache documentTypeCache) {
+                                            final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         getView().setDataWidget(dataGrid);
-        documentTypeCache.fetch(this::addColumns, this);
+        addColumns();
     }
 
-    private void addColumns(final DocumentTypes documentTypes) {
+    private void addColumns() {
         // Icon
 //        final Column<FindResultWithPermissions, Preset> iconCol =
 //                new Column<FindResultWithPermissions, Preset>(new SvgCell()) {
@@ -86,7 +84,6 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         final DocRefCell.Builder<FindResultWithPermissions> cellBuilder =
                 new DocRefCell.Builder<FindResultWithPermissions>()
                         .eventBus(getEventBus())
-                        .documentTypes(documentTypes)
                         .showIcon(true);
         final Column<FindResultWithPermissions, DocRefProvider<FindResultWithPermissions>> docNameCol =
                 DataGridUtil.docRefColumnBuilder(

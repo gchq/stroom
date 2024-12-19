@@ -17,7 +17,6 @@ public final class ExplorerConstants {
     public static final ExplorerNode SYSTEM_NODE = ExplorerNode.builder()
             .docRef(SYSTEM_DOC_REF)
             .rootNodeUuid(SYSTEM_DOC_REF.getUuid())
-            .icon(SvgImage.DOCUMENT_SYSTEM)
             .build();
 
     public static final String FAVOURITES = "Favourites";
@@ -26,7 +25,6 @@ public final class ExplorerConstants {
     public static final ExplorerNode FAVOURITES_NODE = ExplorerNode.builder()
             .docRef(FAVOURITES_DOC_REF)
             .rootNodeUuid(FAVOURITES_DOC_REF.getUuid())
-            .icon(SvgImage.FAVOURITES)
             .build();
 
     private ExplorerConstants() {

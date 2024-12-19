@@ -114,7 +114,6 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         removeButton = view.addButton(SvgPresets.REMOVE);
 
         addColumns();
-
         enableButtons();
     }
 
@@ -206,7 +205,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         final Column<PipelineReference, DocRefProvider<DocRef>> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
                         (PipelineReference pipelineReference) -> {
                             if (pipelineReference.getSourcePipeline() == null
-                                    || pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
+                                || pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
                                 return null;
                             } else {
                                 return pipelineReference.getSourcePipeline();
@@ -337,11 +336,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a pipeline to use.", e::reset);
                     } else if (!StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                            pipelineReference.getFeed() == null) {
+                               pipelineReference.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
                                 e::reset);
                     } else if (!StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                            pipelineReference.getStreamType() == null) {
+                               pipelineReference.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a stream type to use.", e::reset);
                     } else {

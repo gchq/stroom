@@ -17,7 +17,6 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,16 +33,12 @@ public class FindResult {
     private final DocRef docRef;
     @JsonProperty
     private final String path;
-    @JsonProperty
-    private final SvgImage icon;
 
     @JsonCreator
     public FindResult(@JsonProperty("docRef") final DocRef docRef,
-                      @JsonProperty("path") final String path,
-                      @JsonProperty("icon") final SvgImage icon) {
+                      @JsonProperty("path") final String path) {
         this.docRef = docRef;
         this.path = path;
-        this.icon = icon;
     }
 
     public DocRef getDocRef() {
@@ -57,10 +52,6 @@ public class FindResult {
         return path;
     }
 
-    public SvgImage getIcon() {
-        return icon;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -71,13 +62,12 @@ public class FindResult {
         }
         final FindResult that = (FindResult) o;
         return Objects.equals(docRef, that.docRef) &&
-               Objects.equals(path, that.path) &&
-               Objects.equals(icon, that.icon);
+               Objects.equals(path, that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docRef, path, icon);
+        return Objects.hash(docRef, path);
     }
 
     public static Builder builder() {
@@ -100,7 +90,6 @@ public class FindResult {
 
         private DocRef docRef;
         private String path;
-        private SvgImage icon;
 
         private Builder() {
         }
@@ -108,7 +97,6 @@ public class FindResult {
         private Builder(final FindResult findResult) {
             this.docRef = findResult.docRef;
             this.path = findResult.path;
-            this.icon = findResult.icon;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -121,16 +109,10 @@ public class FindResult {
             return this;
         }
 
-        public Builder icon(final SvgImage icon) {
-            this.icon = icon;
-            return this;
-        }
-
         public FindResult build() {
             return new FindResult(
                     docRef,
-                    path,
-                    icon);
+                    path);
         }
     }
 }

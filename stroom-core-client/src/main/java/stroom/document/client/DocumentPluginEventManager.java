@@ -415,16 +415,15 @@ public class DocumentPluginEventManager extends Plugin {
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (GwtNullSafe.hasItems(getSelectedItems())) {
-                fetchPermissions(getSelectedItems(), documentPermissionMap ->
-                        documentTypeCache.fetch(documentTypes -> {
-                            final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
-                                    documentPermissionMap,
-                                    DocumentPermission.DELETE,
-                                    false);
-                            if (!deletableItems.isEmpty()) {
-                                deleteItems(deletableItems, explorerListener);
-                            }
-                        }, explorerListener), explorerListener);
+                fetchPermissions(getSelectedItems(), documentPermissionMap -> {
+                    final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
+                            documentPermissionMap,
+                            DocumentPermission.DELETE,
+                            false);
+                    if (!deletableItems.isEmpty()) {
+                        deleteItems(deletableItems, explorerListener);
+                    }
+                }, explorerListener);
             }
         }));
 
@@ -464,11 +463,10 @@ public class DocumentPluginEventManager extends Plugin {
                     final ExplorerNodePermissions permissions = documentPermissions.get(explorerNode);
                     final String type = event.getDocumentType();
                     if (permissions.hasCreatePermission(type)) {
-                        documentTypeCache.fetch(documentTypes -> {
-                            GwtNullSafe.consume(documentTypes.getDocumentType(type), documentType -> {
-                                fireShowCreateDocumentDialogEvent(documentType, explorerNode);
-                            });
-                        }, explorerListener);
+                        final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(type);
+                        if (documentType != null) {
+                            fireShowCreateDocumentDialogEvent(documentType, explorerNode);
+                        }
                     }
                 }, explorerListener);
             }
@@ -1017,7 +1015,7 @@ public class DocumentPluginEventManager extends Plugin {
         return children;
     }
 
-    private void fireShowCreateDocumentDialogEvent(final DocumentType documentType,
+    private void fireShowCreateDocumentDialogEvent(final ClientDocumentType documentType,
                                                    final ExplorerNode explorerNode) {
         final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
             final DocRef docRef = newDocNode.getDocRef();
@@ -1041,14 +1039,14 @@ public class DocumentPluginEventManager extends Plugin {
     private IconMenuItem createIconMenuItemFromDocumentType(
             final DocumentType documentType,
             final ExplorerNode explorerNode) {
-
+        final ClientDocumentType clientDocumentType = ClientDocumentTypeRegistry.get(documentType.getType());
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(documentType.getIcon())
-                .text(documentType.getDisplayType())
+                .icon(clientDocumentType.getIcon())
+                .text(clientDocumentType.getDisplayType())
                 .command(() ->
-                        fireShowCreateDocumentDialogEvent(documentType, explorerNode))
-                .action(KeyBinding.getCreateActionByType(documentType.getType()).orElse(null))
+                        fireShowCreateDocumentDialogEvent(clientDocumentType, explorerNode))
+                .action(KeyBinding.getCreateActionByType(clientDocumentType.getType()).orElse(null))
                 .build();
     }
 

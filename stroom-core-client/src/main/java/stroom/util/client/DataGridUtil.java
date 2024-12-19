@@ -26,7 +26,6 @@ import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
@@ -547,8 +546,9 @@ public class DataGridUtil {
      * @param <T_ROW>       The row type
      */
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> copyTextColumnBuilder(
-            final Function<T_ROW, String> cellExtractor) {
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), CopyTextCell::new);
+            final Function<T_ROW, String> cellExtractor,
+            final EventBus eventBus) {
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), () -> new CopyTextCell(eventBus));
     }
 
     /**
@@ -561,8 +561,9 @@ public class DataGridUtil {
      */
     public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, String, Cell<String>> copyTextColumnBuilder(
             final Function<T_ROW, T_RAW_VAL> cellExtractor,
+            final EventBus eventBus,
             final Function<T_RAW_VAL, String> formatter) {
-        return new ColumnBuilder<>(cellExtractor, formatter, CopyTextCell::new);
+        return new ColumnBuilder<>(cellExtractor, formatter, () -> new CopyTextCell(eventBus));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, Cell<Number>> percentBarColumnBuilder(
@@ -618,11 +619,9 @@ public class DataGridUtil {
     public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
                                                final MyDataGrid<T_ROW> dataGrid,
                                                final String name,
-                                               final DocumentTypes documentTypes,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
         final DocRefCell.Builder<T_ROW> cellBuilder = new Builder<T_ROW>()
                 .eventBus(eventBus)
-                .documentTypes(documentTypes)
                 .showIcon(true);
 
         final Column<T_ROW, DocRefProvider<T_ROW>> column =

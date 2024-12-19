@@ -25,6 +25,8 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -265,7 +267,7 @@ public class DocumentUserPermissionsListPresenter
             // Explicit doc create types
             dataGrid.addResizableColumn(
                     DataGridUtil.safeHtmlColumn((DocumentUserPermissions row) ->
-                            permissionsToExplicitTypeIcons(row, documentTypes, docTypeCount)),
+                            permissionsToExplicitTypeIcons(row, docTypeCount)),
                     DataGridUtil.headingBuilder("Explicit Create Document Types")
                             .withToolTip("The document types that this user/group has explicit permission to create. " +
                                          "Ignores inherited permissions. 'ALL' will be displayed if the user/group " +
@@ -276,7 +278,7 @@ public class DocumentUserPermissionsListPresenter
             // Effective doc create types
             dataGrid.addResizableColumn(
                     DataGridUtil.safeHtmlColumn((DocumentUserPermissions row) ->
-                            permissionsToEffectiveTypeIcons(row, documentTypes, docTypeCount)),
+                            permissionsToEffectiveTypeIcons(row, docTypeCount)),
                     DataGridUtil.headingBuilder("Effective Create Document Types")
                             .withToolTip("The document types that this user/group has permission to create. " +
                                          "Includes both explicit and inherited permissions. 'ALL' will be " +
@@ -291,35 +293,32 @@ public class DocumentUserPermissionsListPresenter
     }
 
     public SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,
-                                                   final DocumentTypes documentTypes,
                                                    final int docTypeCount) {
         final Set<String> explicit = row
                 .getDocumentCreatePermissions();
-        return permissionsToTypeIcons(explicit, documentTypes, docTypeCount);
+        return permissionsToTypeIcons(explicit, docTypeCount);
     }
 
     public SafeHtml permissionsToEffectiveTypeIcons(final DocumentUserPermissions row,
-                                                    final DocumentTypes documentTypes,
                                                     final int docTypeCount) {
         final Set<String> effective = new HashSet<>(GwtNullSafe.set(row
                 .getDocumentCreatePermissions()));
         effective.addAll(GwtNullSafe.set(row.getInheritedDocumentCreatePermissions()));
 
-        return permissionsToTypeIcons(effective, documentTypes, docTypeCount);
+        return permissionsToTypeIcons(effective, docTypeCount);
     }
 
     public SafeHtml permissionsToTypeIcons(final Set<String> createTypes,
-                                           final DocumentTypes documentTypes,
                                            final int docTypeCount) {
         if ((GwtNullSafe.hasItems(createTypes))) {
             if (GwtNullSafe.size(createTypes) == docTypeCount) {
                 return SafeHtmlUtils.fromTrustedString("ALL");
             } else {
                 //noinspection SimplifyStreamApiCallChains // Cos GWT
-                final List<DocumentType> typeIcons = documentTypes.getTypes()
+                final List<ClientDocumentType> typeIcons = ClientDocumentTypeRegistry.getTypes()
                         .stream()
                         .filter(docType -> createTypes.contains(docType.getType()))
-                        .sorted(Comparator.comparing(DocumentType::getType))
+                        .sorted(Comparator.comparing(ClientDocumentType::getType))
                         .collect(Collectors.toList());
 
                 return HtmlBuilder.builder()

@@ -96,7 +96,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 .filter(Objects::nonNull)
                 .filter(docInfo ->
                         DocumentTypeGroup.SYSTEM != docInfo.group
-                                && DocumentTypeGroup.STRUCTURE != docInfo.group)
+                        && DocumentTypeGroup.STRUCTURE != docInfo.group)
                 .sequential()
                 .collect(Collectors.groupingBy(DocInfo::group))
                 .entrySet()

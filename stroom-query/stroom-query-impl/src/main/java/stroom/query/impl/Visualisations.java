@@ -31,7 +31,6 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -70,13 +69,11 @@ public class Visualisations {
 
     private final VisualisationStore visualisationStore;
     private final VisualisationDocCache visualisationDocCache;
-    private final SvgImage icon;
 
     @Inject
     public Visualisations(final VisualisationStore visualisationStore,
                           final VisualisationDocCache visualisationDocCache) {
         this.visualisationStore = visualisationStore;
-        this.icon = visualisationStore.getDocumentType().getIcon();
         this.visualisationDocCache = visualisationDocCache;
     }
 
@@ -99,8 +96,8 @@ public class Visualisations {
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(docs, stringMatcher);
             if (hasChildren ||
-                    MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                stringMatcher.match(ROOT.getTitle()).isPresent()) {
                 resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(VISUALISATION_ID + ".")) {
@@ -114,7 +111,7 @@ public class Visualisations {
                             .builder()
                             .type(QueryHelpType.VISUALISATION)
                             .id(VISUALISATION_ID + "." + docRef.getUuid())
-                            .icon(icon)
+                            .documentType(VisualisationDoc.DOCUMENT_TYPE)
                             .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))
@@ -177,7 +174,7 @@ public class Visualisations {
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
 
         } else if (QueryHelpType.VISUALISATION.equals(row.getType()) &&
-                row.getId().startsWith(VISUALISATION_ID + ".")) {
+                   row.getId().startsWith(VISUALISATION_ID + ".")) {
             final QueryHelpDocument queryHelpDocument = (QueryHelpDocument) row.getData();
             final DocRef docRef = queryHelpDocument.getDocRef();
             final VisualisationDoc doc = visualisationDocCache.get(docRef);

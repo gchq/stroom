@@ -8,8 +8,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
@@ -47,7 +45,6 @@ public class UserDependenciesListPresenter
     private final RestFactory restFactory;
     private final FindUserDependenciesCriteria.Builder criteriaBuilder = FindUserDependenciesCriteria.builder();
     private final PagerView pagerView;
-    private final DocumentTypeCache documentTypeCache;
 
     private UserRef userRef;
     private RestDataProvider<UserDependency, ResultPage<UserDependency>> dataProvider;
@@ -60,12 +57,10 @@ public class UserDependenciesListPresenter
                                          final PagerView pagerView,
                                          final RestFactory restFactory,
                                          final QuickFilterPageView dependenciesListView,
-                                         final DocumentTypeCache documentTypeCache,
                                          final UiConfigCache uiConfigCache) {
         super(eventBus, dependenciesListView);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
-        this.documentTypeCache = documentTypeCache;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -158,10 +153,6 @@ public class UserDependenciesListPresenter
     }
 
     private void setupColumns() {
-        documentTypeCache.fetch(this::setupColumns, this);
-    }
-
-    private void setupColumns(final DocumentTypes documentTypes) {
         DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
 
         // Doc type icon col
@@ -189,7 +180,6 @@ public class UserDependenciesListPresenter
         final DocRefCell.Builder<UserDependency> cellBuilder =
                 new DocRefCell.Builder<UserDependency>()
                         .eventBus(getEventBus())
-                        .documentTypes(documentTypes)
                         .showIcon(true);
 
         final Column<UserDependency, DocRefProvider<UserDependency>> docNameCol = DataGridUtil.docRefColumnBuilder(

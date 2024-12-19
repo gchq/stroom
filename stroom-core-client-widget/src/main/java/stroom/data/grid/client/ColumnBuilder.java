@@ -14,8 +14,8 @@ public class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_C
     }
 
     public ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
-                          final Function<T_RAW_VAL, T_CELL_VAL> formatter,
-                          final Supplier<T_CELL> cellSupplier) {
+                         final Function<T_RAW_VAL, T_CELL_VAL> formatter,
+                         final Supplier<T_CELL> cellSupplier) {
         valueExtractor(valueExtractor);
         formatter(formatter);
         cellSupplier(cellSupplier);

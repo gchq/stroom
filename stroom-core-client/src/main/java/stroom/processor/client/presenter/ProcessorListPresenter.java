@@ -39,8 +39,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
@@ -87,7 +85,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final DocumentTypeCache documentTypeCache;
     private final ClientSecurityContext securityContext;
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final TooltipPresenter tooltipPresenter;
@@ -114,11 +111,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                   final ClientSecurityContext securityContext,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
-                                  final ProcessorInfoBuilder processorInfoBuilder,
-                                  final DocumentTypeCache documentTypeCache) {
+                                  final ProcessorInfoBuilder processorInfoBuilder) {
         super(eventBus, view);
         this.securityContext = securityContext;
-        this.documentTypeCache = documentTypeCache;
 
         this.dataGrid = new MyDataGrid<>();
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -217,7 +212,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         this.allowUpdate = allowUpdate;
 
         if (expanderColumn == null) {
-            documentTypeCache.fetch(this::addColumns, this);
+            addColumns();
 
             // Handle use of the expander column.
             dataProvider.setTreeRowHandler(new TreeRowHandler<ProcessorListRow>(request, dataGrid, expanderColumn));
@@ -245,7 +240,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    private void addColumns(final DocumentTypes documentTypes) {
+    private void addColumns() {
         // TODO Change all the cols to use DataGridUtil and enabledWhen() so the disabled
         //  ones get low-lighted
 
@@ -260,7 +255,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addIconColumn();
         addInfoColumn();
         addEnabledColumn();
-        addPipelineColumn(documentTypes);
+        addPipelineColumn();
         addPriorityColumn();
         addMaxProcessingTasksColumn();
         addStatusColumn();
@@ -319,7 +314,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         }, "", ColumnSizeConstants.ICON_COL);
     }
 
-    private void addPipelineColumn(final DocumentTypes documentTypes) {
+    private void addPipelineColumn() {
         final Function<ProcessorListRow, DocRef> extractionFunction = row -> {
             DocRef docRef = null;
             if (row instanceof ProcessorFilterRow) {
@@ -353,7 +348,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             return docRef;
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, extractionFunction);
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", extractionFunction);
     }
 
 //    private void addTrackerColumns() {

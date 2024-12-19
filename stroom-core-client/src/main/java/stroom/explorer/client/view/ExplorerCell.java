@@ -2,6 +2,8 @@ package stroom.explorer.client.view;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -103,11 +105,12 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 content.append(tickBoxHtml);
             }
 
-            if (node.getIcon() != null) {
+            final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(node.getType());
+            if (documentType != null && documentType.getIcon() != null) {
                 // Add icon
                 final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
-                        node.getType(),
-                        node.getIcon(),
+                        documentType.getDisplayType(),
+                        documentType.getIcon(),
                         getCellClassName() + "-icon");
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
 

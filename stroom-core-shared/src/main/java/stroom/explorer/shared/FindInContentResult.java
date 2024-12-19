@@ -17,7 +17,6 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocContentMatch;
-import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,18 +33,14 @@ public class FindInContentResult {
     @JsonProperty
     private final String path;
     @JsonProperty
-    private final SvgImage icon;
-    @JsonProperty
     private final boolean isFavourite;
 
     @JsonCreator
     public FindInContentResult(@JsonProperty("docContentMatch") final DocContentMatch docContentMatch,
                                @JsonProperty("path") final String path,
-                               @JsonProperty("icon") final SvgImage icon,
                                @JsonProperty("isFavourite") final boolean isFavourite) {
         this.docContentMatch = docContentMatch;
         this.path = path;
-        this.icon = icon;
         this.isFavourite = isFavourite;
     }
 
@@ -55,10 +50,6 @@ public class FindInContentResult {
 
     public String getPath() {
         return path;
-    }
-
-    public SvgImage getIcon() {
-        return icon;
     }
 
     public boolean getIsFavourite() {
@@ -75,14 +66,13 @@ public class FindInContentResult {
         }
         final FindInContentResult that = (FindInContentResult) o;
         return isFavourite == that.isFavourite &&
-                Objects.equals(docContentMatch, that.docContentMatch) &&
-                Objects.equals(path, that.path) &&
-                Objects.equals(icon, that.icon);
+               Objects.equals(docContentMatch, that.docContentMatch) &&
+               Objects.equals(path, that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docContentMatch, path, icon, isFavourite);
+        return Objects.hash(docContentMatch, path, isFavourite);
     }
 
     public static Builder builder() {
@@ -101,7 +91,6 @@ public class FindInContentResult {
 
         private DocContentMatch docContentMatch;
         private String path;
-        private SvgImage icon;
         private boolean isFavourite;
 
         private Builder() {
@@ -110,7 +99,6 @@ public class FindInContentResult {
         private Builder(final FindInContentResult findInContentResult) {
             this.docContentMatch = findInContentResult.docContentMatch;
             this.path = findInContentResult.path;
-            this.icon = findInContentResult.icon;
             this.isFavourite = findInContentResult.isFavourite;
         }
 
@@ -124,11 +112,6 @@ public class FindInContentResult {
             return this;
         }
 
-        public Builder icon(final SvgImage icon) {
-            this.icon = icon;
-            return this;
-        }
-
         public Builder isFavourite(final boolean isFavourite) {
             this.isFavourite = isFavourite;
             return this;
@@ -138,7 +121,6 @@ public class FindInContentResult {
             return new FindInContentResult(
                     docContentMatch,
                     path,
-                    icon,
                     isFavourite);
         }
     }

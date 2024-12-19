@@ -27,8 +27,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
@@ -84,8 +82,7 @@ public class ProcessorTaskListPresenter
                                       final PagerView view,
                                       final RestFactory restFactory,
                                       final TooltipPresenter tooltipPresenter,
-                                      final DateTimeFormatter dateTimeFormatter,
-                                      final DocumentTypeCache documentTypeCache) {
+                                      final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
@@ -113,10 +110,10 @@ public class ProcessorTaskListPresenter
                 }
             }
         };
-        documentTypeCache.fetch(this::addColumns, this);
+        addColumns();
     }
 
-    private void addColumns(final DocumentTypes documentTypes) {
+    private void addColumns() {
         // Info column.
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
@@ -183,7 +180,7 @@ public class ProcessorTaskListPresenter
             }
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", documentTypes, feedExtractionFunction);
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
@@ -203,7 +200,7 @@ public class ProcessorTaskListPresenter
             return null;
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, pipelineExtractionFunction);
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(

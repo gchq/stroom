@@ -17,11 +17,9 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
@@ -98,8 +96,8 @@ class ExplorerTreeModel implements EntityEvent.Handler {
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
         return currentModel == null ||
-                currentModel.getId() < minId ||
-                currentModel.getCreationTime() < now - ONE_HOUR;
+               currentModel.getId() < minId ||
+               currentModel.getCreationTime() < now - ONE_HOUR;
     }
 
     UnmodifiableTreeModel getModel() {
@@ -172,7 +170,7 @@ class ExplorerTreeModel implements EntityEvent.Handler {
             try {
                 LOGGER.debug("Updating model for id {}", id);
                 newModel = LOGGER.logDurationIfDebugEnabled(() ->
-                                explorerTreeDao.createModel(this::getIcon, id, creationTime),
+                                explorerTreeDao.createModel(id, creationTime),
                         "Create model");
 
                 // Make sure the cache is fresh for our new model
@@ -223,19 +221,10 @@ class ExplorerTreeModel implements EntityEvent.Handler {
         }
     }
 
-    private SvgImage getIcon(final String type) {
-        final DocumentType documentType = explorerActionHandlers.getType(type);
-        if (documentType == null) {
-            return null;
-        }
-
-        return documentType.getIcon();
-    }
-
     private synchronized void setCurrentModel(final UnmodifiableTreeModel treeModel) {
         if (currentModel == null
-                || treeModel == null
-                || currentModel.getId() < treeModel.getId()) {
+            || treeModel == null
+            || currentModel.getId() < treeModel.getId()) {
 
             LOGGER.debug(() -> LogUtil.message("Setting new model old id: {}, new id {}",
                     NullSafe.toStringOrElse(currentModel, UnmodifiableTreeModel::getId, "null"),
@@ -267,10 +256,10 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                 // The model doesn't care about UPDATE as that is an update of the content of the doc
                 // rather than an update to the node (e.g. tags).
                 case CREATE,
-                        DELETE,
-                        UPDATE_EXPLORER_NODE,
-                        DELETE_EXPLORER_NODE,
-                        CREATE_EXPLORER_NODE -> {
+                     DELETE,
+                     UPDATE_EXPLORER_NODE,
+                     DELETE_EXPLORER_NODE,
+                     CREATE_EXPLORER_NODE -> {
                     // E.g. tags on a node have changed
                     LOGGER.debug("Rebuilding tree model due to entity event {}", event);
                     rebuild();

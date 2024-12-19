@@ -1,14 +1,22 @@
 package stroom.data.client.presenter;
 
+import stroom.core.client.UrlParameters;
 import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EventCell;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -24,9 +32,12 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -42,7 +53,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
 
     private final EventBus eventBus;
-    private final DocumentTypes documentTypes;
     private final boolean allowLinkByName;
     private final boolean showIcon;
     private final DocRef.DisplayType displayType;
@@ -52,21 +62,18 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     private static volatile Template template;
 
     /**
-     * @param documentTypes    Must be non-null to show the icon. Can be null.
      * @param showIcon         Set to true to show the type icon next to the text
      * @param cssClassFunction Can be null. Function to provide additional css class names.
      * @param cellTextFunction Can be null. Function to provide the cell 'text' in HTML form. If null
      *                         then displayType will be used to derive the text from the {@link DocRef}.
      */
     private DocRefCell(final EventBus eventBus,
-                       final DocumentTypes documentTypes,
                        final boolean allowLinkByName,
                        final boolean showIcon,
                        final DocRef.DisplayType displayType,
                        final Function<T_ROW, String> cssClassFunction,
                        final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction) {
         super(MOUSEDOWN);
-        this.documentTypes = documentTypes;
         this.eventBus = eventBus;
         this.allowLinkByName = allowLinkByName;
         this.showIcon = showIcon;
@@ -98,8 +105,34 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
                                final ValueUpdater<DocRefProvider<T_ROW>> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if (value.getDocRef() != null) {
-            if (MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
-                onEnterKeyDown(context, parent, value, event, valueUpdater);
+            if (MOUSEDOWN.equals(event.getType())) {
+                if (MouseUtil.isPrimary(event)) {
+                    onEnterKeyDown(context, parent, value, event, valueUpdater);
+                } else {
+                    final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
+                    if (docRef != null) {
+                        final String type;
+                        final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(docRef.getType());
+                        type = GwtNullSafe.getOrElse(documentType, ClientDocumentType::getDisplayType,
+                                docRef.getType());
+
+                        final List<Item> menuItems = new ArrayList<>();
+                        int priority = 1;
+                        menuItems.add(new IconMenuItem.Builder()
+                                .priority(priority++)
+                                .icon(SvgImage.OPEN)
+                                .text("Open " + type)
+                                .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                                .build());
+                        menuItems.add(createCopyAsMenuItem(docRef, priority++));
+
+                        ShowMenuEvent
+                                .builder()
+                                .items(menuItems)
+                                .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
+                                .fire(this);
+                    }
+                }
             }
         }
     }
@@ -157,17 +190,17 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
                     "docRefLinkContainer");
 
             sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
-            if (showIcon && documentTypes != null && docRef != null) {
-                final String iconTitle = docRef.getType();
-
-                final SvgImage svgImage = documentTypes.getDocumentType(docRef.getType()).getIcon();
-
-                final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
-                        iconTitle,
-                        svgImage,
-                        ICON_CLASS_NAME,
-                        "deocRefLinkIcon");
-                sb.append(iconDiv);
+            if (showIcon && docRef != null) {
+                final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(docRef.getType());
+                if (documentType != null) {
+                    final SvgImage svgImage = documentType.getIcon();
+                    final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
+                            documentType.getDisplayType(),
+                            svgImage,
+                            ICON_CLASS_NAME,
+                            "docRefLinkIcon");
+                    sb.append(iconDiv);
+                }
             }
 
             sb.append(textDiv);
@@ -219,6 +252,63 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         } else {
             return docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
         }
+    }
+
+    private MenuItem createCopyAsMenuItem(final DocRef docRef,
+                                          final int priority) {
+        List<Item> children = createCopyAsChildMenuItems(docRef);
+        return new IconParentMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.COPY)
+                .text("Copy As")
+                .children(children)
+                .enabled(true)
+                .build();
+    }
+
+    private List<Item> createCopyAsChildMenuItems(final DocRef docRef) {
+        // If a user has VIEW on a doc they will also see (but not have VIEW) all ancestor
+        // docs, so we need to only allow 'copy name' for these 'see but not view' cases.
+        // Thus, totalCount may be bigger than readableCount
+        final List<Item> childMenuItems = new ArrayList<>();
+        int priority = 1;
+        if (GwtNullSafe.isNonBlankString(docRef.getName())) {
+            childMenuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy Name to Clipboard")
+                    .enabled(true)
+                    .command(() -> ClipboardUtil.copy(docRef.getName()))
+                    .build());
+        }
+        if (GwtNullSafe.isNonBlankString(docRef.getUuid())) {
+            childMenuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy UUID to Clipboard")
+                    .enabled(true)
+                    .command(() -> ClipboardUtil.copy(docRef.getUuid()))
+                    .build());
+        }
+        childMenuItems.add(createCopyLinkMenuItem(docRef, priority++));
+        return childMenuItems;
+    }
+
+    private MenuItem createCopyLinkMenuItem(final DocRef docRef, final int priority) {
+        // Generate a URL that can be used to open a new Stroom window with the target document loaded
+        final String docUrl = Window.Location.createUrlBuilder()
+                .setPath("/")
+                .setParameter(UrlParameters.ACTION, UrlParameters.OPEN_DOC_ACTION)
+                .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, docRef.getType())
+                .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, docRef.getUuid())
+                .buildString();
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.SHARE)
+                .text("Copy Link to Clipboard")
+                .command(() -> ClipboardUtil.copy(docUrl))
+                .build();
     }
 
 
@@ -273,7 +363,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     public static class Builder<T> {
 
         private EventBus eventBus;
-        private DocumentTypes documentTypes;
         private boolean allowLinkByName = false;
         private boolean showIcon = false;
         private DocRef.DisplayType displayType = DisplayType.NAME;
@@ -282,11 +371,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
 
         public Builder<T> eventBus(final EventBus eventBus) {
             this.eventBus = eventBus;
-            return this;
-        }
-
-        public Builder<T> documentTypes(final DocumentTypes documentTypes) {
-            this.documentTypes = documentTypes;
             return this;
         }
 
@@ -318,7 +402,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         public DocRefCell<T> build() {
             return new DocRefCell<>(
                     eventBus,
-                    documentTypes,
                     allowLinkByName,
                     showIcon,
                     displayType,

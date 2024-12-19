@@ -244,7 +244,7 @@ public abstract class AbstractMetaListPresenter
         return data;
     }
 
-    protected abstract void addColumns(boolean allowSelectAll);
+    protected abstract void addColumns(final boolean allowSelectAll);
 
     private void setMatchAll(final boolean select) {
         selection.clear();
@@ -341,7 +341,8 @@ public abstract class AbstractMetaListPresenter
     void addCreatedColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
-                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
+                                        dateTimeFormatter.format(metaRow.getMeta().getCreateMs()),
+                                getEventBus())
                         .withSorting(MetaFields.CREATE_TIME)
                         .build(),
                 "Created",
@@ -387,11 +388,8 @@ public abstract class AbstractMetaListPresenter
 
     private DocRef getPipeline(final MetaRow metaRow) {
         if (metaRow.getMeta().getProcessorUuid() != null) {
-            if (metaRow.getPipelineName() != null) {
-                return new DocRef(
-                        PipelineDoc.DOCUMENT_TYPE,
-                        metaRow.getMeta().getPipelineUuid(),
-                        metaRow.getPipelineName());
+            if (metaRow.getPipeline() != null) {
+                return metaRow.getPipeline();
             } else {
                 return new DocRef(null, null, null);
             }
@@ -405,7 +403,8 @@ public abstract class AbstractMetaListPresenter
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getPipeline)
                                                 .orElse(null),
-                                getEventBus(), false)
+                                getEventBus(),
+                                false)
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",
