@@ -56,6 +56,18 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             PipelineDoc.DOCUMENT_TYPE,
             SvgImage.DOCUMENT_PIPELINE);
 
+    public static final ClientDocumentType PROCESSOR_DOCUMENT_TYPE = new ClientDocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            "Processor",
+            "Processor",
+            SvgImage.DOCUMENT_PIPELINE);
+
+    public static final ClientDocumentType PROCESSOR_FILTER_DOCUMENT_TYPE = new ClientDocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            "ProcessorFilter",
+            "Processor Filter",
+            SvgImage.FILTER);
+
     private final Provider<PipelinePresenter> editorProvider;
     private final RestFactory restFactory;
 
@@ -71,6 +83,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         this.restFactory = restFactory;
 
         ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
+        ClientDocumentTypeRegistry.put(PROCESSOR_DOCUMENT_TYPE);
+        ClientDocumentTypeRegistry.put(PROCESSOR_FILTER_DOCUMENT_TYPE);
     }
 
     @Override

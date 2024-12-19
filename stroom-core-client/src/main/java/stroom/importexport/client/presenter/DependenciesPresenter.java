@@ -26,6 +26,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.LocateDocEvent;
@@ -86,8 +87,6 @@ public class DependenciesPresenter
     private final MyDataGrid<Dependency> dataGrid;
     private final MenuPresenter menuPresenter;
 
-    // Holds all the doc type icons
-    private Map<String, SvgImage> typeToSvgMap = new HashMap<>();
     private Set<String> openableTypes = new HashSet<>();
 
     @Inject
@@ -287,26 +286,6 @@ public class DependenciesPresenter
                             .stream()
                             .map(DocumentType::getType)
                             .collect(Collectors.toSet());
-
-                    typeToSvgMap = documentTypes
-                            .getTypes()
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    DocumentType::getType,
-                                    DocumentType::getIcon));
-
-                    // Special case for Searchable as it is not a normal doc type
-                    // Not ideal defining it here but adding it fetchDocumentTypes causes problems
-                    // with the explorer context menus.
-                    typeToSvgMap.putIfAbsent(
-                            "Searchable",
-                            SvgImage.DOCUMENT_SEARCHABLE);
-                    typeToSvgMap.putIfAbsent(
-                            "Analytics",
-                            SvgImage.DOCUMENT_SEARCHABLE);
-                    typeToSvgMap.putIfAbsent(
-                            "ProcessorFilter",
-                            SvgImage.FILTER);
                 })
                 .taskMonitorFactory(this)
                 .exec();
@@ -346,9 +325,9 @@ public class DependenciesPresenter
 
     private Preset getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
-            final SvgImage svgPreset = typeToSvgMap.get(docRef.getType());
-            if (svgPreset != null) {
-                return new Preset(svgPreset, docRef.getType(), true);
+            final SvgImage icon = ClientDocumentTypeRegistry.getIcon(docRef.getType());
+            if (icon != null) {
+                return new Preset(icon, docRef.getType(), true);
             } else {
                 return SvgPresets.ALERT.title("Unknown Document Type");
             }

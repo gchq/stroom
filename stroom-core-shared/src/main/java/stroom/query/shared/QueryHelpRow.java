@@ -16,8 +16,6 @@
 
 package stroom.query.shared;
 
-import stroom.svg.shared.SvgImage;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -35,7 +33,7 @@ public class QueryHelpRow {
     @JsonProperty
     private final boolean hasChildren;
     @JsonProperty
-    private final SvgImage icon;
+    private final String documentType;
     @JsonProperty
     private final String iconTooltip;
     @JsonProperty
@@ -47,14 +45,14 @@ public class QueryHelpRow {
     public QueryHelpRow(@JsonProperty("type") final QueryHelpType type,
                         @JsonProperty("id") final String id,
                         @JsonProperty("hasChildren") final boolean hasChildren,
-                        @JsonProperty("icon") final SvgImage icon,
+                        @JsonProperty("documentType") final String documentType,
                         @JsonProperty("iconTooltip") final String iconTooltip,
                         @JsonProperty("title") final String title,
                         @JsonProperty("data") final QueryHelpData data) {
         this.type = type;
         this.id = id;
         this.hasChildren = hasChildren;
-        this.icon = icon;
+        this.documentType = documentType;
         this.iconTooltip = iconTooltip;
         this.title = title;
         this.data = data;
@@ -76,8 +74,8 @@ public class QueryHelpRow {
         return title;
     }
 
-    public SvgImage getIcon() {
-        return icon;
+    public String getDocumentType() {
+        return documentType;
     }
 
     public String getIconTooltip() {
@@ -121,7 +119,7 @@ public class QueryHelpRow {
         private QueryHelpType type = QueryHelpType.TITLE;
         private String id;
         private boolean hasChildren;
-        private SvgImage icon;
+        private String documentType;
         private String iconTooltip;
         private String title;
         private QueryHelpData data;
@@ -133,7 +131,7 @@ public class QueryHelpRow {
             this.type = row.type;
             this.id = row.id;
             this.hasChildren = row.hasChildren;
-            this.icon = row.icon;
+            this.documentType = row.documentType;
             this.iconTooltip = row.iconTooltip;
             this.title = row.title;
             this.data = row.data;
@@ -155,8 +153,8 @@ public class QueryHelpRow {
             return this;
         }
 
-        public Builder icon(final SvgImage icon) {
-            this.icon = icon;
+        public Builder documentType(final String documentType) {
+            this.documentType = documentType;
             return this;
         }
 
@@ -176,7 +174,7 @@ public class QueryHelpRow {
         }
 
         public QueryHelpRow build() {
-            return new QueryHelpRow(type, id, hasChildren, icon, iconTooltip, title, data);
+            return new QueryHelpRow(type, id, hasChildren, documentType, iconTooltip, title, data);
         }
     }
 }

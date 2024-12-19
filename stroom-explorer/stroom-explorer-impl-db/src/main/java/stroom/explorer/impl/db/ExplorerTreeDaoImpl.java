@@ -12,7 +12,6 @@ import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerPathRecord;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.svg.shared.SvgImage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -25,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
@@ -161,8 +159,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    public TreeModel createModel(final Function<String, SvgImage> iconProvider,
-                                 final long id,
+    public TreeModel createModel(final long id,
                                  final long creationTime) {
         final TreeModel treeModel = new TreeModel(id, creationTime);
 
@@ -190,7 +187,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .uuid(rec.getUuid())
                                     .name(rec.getName())
                                     .tags(NodeTagSerialiser.deserialise(rec.getTags()))
-                                    .icon(iconProvider.apply(rec.getType()))
                                     .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(rec.getType())
                                             .orElse(null))
                                     .build()));

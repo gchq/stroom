@@ -18,7 +18,6 @@ package stroom.query.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch.MatchType;
-import stroom.explorer.api.ExplorerActionHandler;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
@@ -28,7 +27,6 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -44,10 +42,7 @@ import jakarta.inject.Singleton;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class DataSources {
@@ -65,17 +60,10 @@ public class DataSources {
     public static final int INITIAL_SCORE = 500;
 
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final Map<String, SvgImage> icons;
 
     @Inject
-    DataSources(final Set<ExplorerActionHandler> explorerActionHandlers,
-                final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
+    DataSources(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        icons = explorerActionHandlers
-                .stream()
-                .collect(Collectors
-                        .toMap(c -> c.getDocumentType().getType(),
-                                c -> c.getDocumentType().getIcon()));
     }
 
     public void addRows(final PageRequest pageRequest,
@@ -85,8 +73,8 @@ public class DataSources {
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(stringMatcher);
             if (hasChildren ||
-                    MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                stringMatcher.match(ROOT.getTitle()).isPresent()) {
                 resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(DATA_SOURCE_ID + ".")) {
@@ -100,7 +88,7 @@ public class DataSources {
                             .builder()
                             .type(QueryHelpType.DATA_SOURCE)
                             .id(DATA_SOURCE_ID + "." + docRef.getUuid())
-                            .icon(getIcon(docRef))
+                            .documentType(docRef.getType())
                             .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))
@@ -162,7 +150,7 @@ public class DataSources {
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
 
         } else if (QueryHelpType.DATA_SOURCE.equals(row.getType()) &&
-                row.getId().startsWith(DATA_SOURCE_ID + ".")) {
+                   row.getId().startsWith(DATA_SOURCE_ID + ".")) {
             final QueryHelpDocument dataSource = (QueryHelpDocument) row.getData();
             final DocRef docRef = dataSource.getDocRef();
             final InsertType insertType = InsertType.plainText(docRef.getName());
@@ -217,13 +205,5 @@ public class DataSources {
             }
         }
         return false;
-    }
-
-    private SvgImage getIcon(final DocRef docRef) {
-        SvgImage svgImage = icons.get(docRef.getType());
-        if (svgImage == null) {
-            svgImage = SvgImage.DOCUMENT_SEARCHABLE;
-        }
-        return svgImage;
     }
 }

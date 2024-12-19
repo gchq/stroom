@@ -52,6 +52,11 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
             AnalyticRuleDoc.DOCUMENT_TYPE,
             "Analytic Rule",
             SvgImage.DOCUMENT_ANALYTIC_RULE);
+    public static final ClientDocumentType ANALYTIC_DOCUMENT_TYPE = new ClientDocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Analytics",
+            "Analytics",
+            SvgImage.DOCUMENT_SEARCHABLE);
 
     private final Provider<AnalyticRulePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -68,6 +73,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
         this.restFactory = restFactory;
 
         ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
+        ClientDocumentTypeRegistry.put(ANALYTIC_DOCUMENT_TYPE);
     }
 
     @Override

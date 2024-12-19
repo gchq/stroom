@@ -18,7 +18,6 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Severity;
 
@@ -60,8 +59,6 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final int depth;
     @JsonProperty
-    private final SvgImage icon;
-    @JsonProperty
     private final List<ExplorerNode> children;
     @JsonProperty
     private final String rootNodeUuid;
@@ -86,7 +83,6 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("name") final String name,
                         @JsonProperty("tags") final Set<String> tags,
                         @JsonProperty("depth") final int depth,
-                        @JsonProperty("icon") final SvgImage icon,
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
                         @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey,
@@ -97,7 +93,6 @@ public class ExplorerNode implements HasDisplayValue {
         this.name = name;
         this.tags = tags;
         this.depth = depth;
-        this.icon = icon;
         this.children = GwtNullSafe.get(children, Collections::unmodifiableList);
         this.rootNodeUuid = rootNodeUuid;
         this.uniqueKey = uniqueKey;
@@ -136,10 +131,6 @@ public class ExplorerNode implements HasDisplayValue {
 
     public int getDepth() {
         return depth;
-    }
-
-    public SvgImage getIcon() {
-        return icon;
     }
 
     public List<ExplorerNode> getChildren() {
@@ -336,7 +327,6 @@ public class ExplorerNode implements HasDisplayValue {
         private String name;
         private Set<String> tags;
         private int depth;
-        private SvgImage icon;
         private List<ExplorerNode> children;
         private String rootNodeUuid;
         private List<NodeInfo> nodeInfoList;
@@ -352,7 +342,6 @@ public class ExplorerNode implements HasDisplayValue {
             this.name = explorerNode.name;
             this.tags = explorerNode.tags;
             this.depth = explorerNode.depth;
-            this.icon = explorerNode.icon;
             this.children = GwtNullSafe.get(explorerNode.children, ArrayList::new);
             this.rootNodeUuid = explorerNode.rootNodeUuid;
             this.nodeInfoList = GwtNullSafe.get(explorerNode.nodeInfoList, ArrayList::new);
@@ -429,11 +418,6 @@ public class ExplorerNode implements HasDisplayValue {
 
         public Builder depth(final int depth) {
             this.depth = depth;
-            return this;
-        }
-
-        public Builder icon(final SvgImage icon) {
-            this.icon = icon;
             return this;
         }
 
@@ -599,7 +583,6 @@ public class ExplorerNode implements HasDisplayValue {
                     name,
                     tags,
                     depth,
-                    icon,
                     children,
                     rootNodeUuid,
                     new ExplorerNodeKey(type, uuid, rootNodeUuid),

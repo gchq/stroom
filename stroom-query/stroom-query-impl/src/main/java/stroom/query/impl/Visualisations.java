@@ -31,7 +31,6 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -112,7 +111,7 @@ public class Visualisations {
                             .builder()
                             .type(QueryHelpType.VISUALISATION)
                             .id(VISUALISATION_ID + "." + docRef.getUuid())
-                            .icon(SvgImage.DOCUMENT_VISUALISATION)
+                            .documentType(VisualisationDoc.DOCUMENT_TYPE)
                             .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))

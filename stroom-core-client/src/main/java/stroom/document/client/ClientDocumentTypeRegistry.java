@@ -2,7 +2,9 @@ package stroom.document.client;
 
 import stroom.svg.shared.SvgImage;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ClientDocumentTypeRegistry {
@@ -20,8 +22,12 @@ public class ClientDocumentTypeRegistry {
     public static SvgImage getIcon(final String type) {
         final ClientDocumentType documentType = MAP.get(type);
         if (documentType == null) {
-            return null;
+            return SvgImage.DOCUMENT_SEARCHABLE;
         }
         return documentType.getIcon();
+    }
+
+    public static Collection<ClientDocumentType> getTypes() {
+        return MAP.values();
     }
 }

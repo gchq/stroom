@@ -63,7 +63,6 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
-import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -521,7 +520,6 @@ class ExplorerServiceImpl
                 .addNodeFlag(NodeFlag.DATA_SOURCE)
                 .addNodeFlag(NodeFlag.LEAF)
                 .depth(1)
-                .icon(SvgImage.DOCUMENT_SEARCHABLE)
                 .build();
     }
 
@@ -1576,7 +1574,7 @@ class ExplorerServiceImpl
                     node.getDocRef() != null &&
                     !ExplorerConstants.isRootNode(node)) {
                     final String pathStr = ExplorerNode.buildDocRefPathString(path);
-                    results.add(new FindResult(node.getDocRef(), pathStr, node.getIcon()));
+                    results.add(new FindResult(node.getDocRef(), pathStr));
                 }
                 return true;
             });
@@ -1660,7 +1658,7 @@ class ExplorerServiceImpl
 
     private FindResult createFindResult(final SequencedSet<DocRef> path, final ExplorerNode node) {
         final String pathStr = ExplorerNode.buildDocRefPathString(path);
-        return new FindResult(node.getDocRef(), pathStr, node.getIcon());
+        return new FindResult(node.getDocRef(), pathStr);
     }
 
     private void applyExpressionFilter(final AdvancedDocumentFindRequest request,
@@ -1889,12 +1887,9 @@ class ExplorerServiceImpl
                 }
             }
 
-            final ExplorerActionHandler explorerActionHandler =
-                    explorerActionHandlers.getHandler(docContentMatch.getDocRef().getType());
             final FindInContentResult explorerDocContentMatch = FindInContentResult.builder()
                     .docContentMatch(docContentMatch)
                     .path(parentPath.toString())
-                    .icon(explorerActionHandler.getDocumentType().getIcon())
                     .build();
             list.add(explorerDocContentMatch);
         }

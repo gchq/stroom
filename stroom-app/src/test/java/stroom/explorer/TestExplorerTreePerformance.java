@@ -114,7 +114,6 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
             LOGGER.logDurationIfInfoEnabled(() -> {
                 // Check create model.
                 explorerTreeDao.createModel(
-                        this::getIcon,
                         0,
                         System.currentTimeMillis());
             }, "Create model");
@@ -215,28 +214,11 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
         }
     }
 
-    private ExplorerTreeNode newSystemNode() {
-        final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();
-        explorerTreeNode.setName(ExplorerConstants.SYSTEM);
-        explorerTreeNode.setType(ExplorerConstants.SYSTEM_DOC_REF.getType());
-        explorerTreeNode.setUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid());
-        return explorerTreeNode;
-    }
-
     private ExplorerTreeNode newTreeNode(final String name) {
         final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();
         explorerTreeNode.setName(name);
         explorerTreeNode.setType(TYPE_TEST);
         explorerTreeNode.setUuid(UUID.randomUUID().toString());
         return explorerTreeNode;
-    }
-
-    private SvgImage getIcon(final String type) {
-        return typeToIconMap.computeIfAbsent(type, k ->
-                explorerActionHandlers.stream()
-                        .filter(handler -> handler.getDocumentType().getType().equals(k))
-                        .map(handler -> handler.getDocumentType().getIcon())
-                        .findFirst()
-                        .orElse(SvgImage.OK));
     }
 }

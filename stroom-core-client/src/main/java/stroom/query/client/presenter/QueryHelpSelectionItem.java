@@ -16,6 +16,8 @@
 
 package stroom.query.client.presenter;
 
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.item.client.SelectionItem;
 import stroom.query.shared.QueryHelpRow;
 import stroom.svg.shared.SvgImage;
@@ -37,7 +39,7 @@ public class QueryHelpSelectionItem implements SelectionItem {
 
     @Override
     public SvgImage getIcon() {
-        return queryHelpRow.getIcon();
+        return ClientDocumentTypeRegistry.getIcon(queryHelpRow.getDocumentType());
     }
 
     @Override
@@ -74,7 +76,7 @@ public class QueryHelpSelectionItem implements SelectionItem {
     @Override
     public String toString() {
         return "QueryHelpSelectionItem{" +
-                "fieldInfo=" + queryHelpRow +
-                '}';
+               "fieldInfo=" + queryHelpRow +
+               '}';
     }
 }
