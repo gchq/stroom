@@ -3,7 +3,8 @@ package stroom.proxy;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * List of all the stroom codes that we return.
+ * List of all the stroom codes that we return from the datafeed interface.
+ * Both stroom and proxy use this.
  */
 public enum StroomStatusCode {
     OK(HttpServletResponse.SC_OK, 0, "OK", "Post of data successful"),
@@ -39,8 +40,21 @@ public enum StroomStatusCode {
     CLIENT_TOKEN_OR_CERT_REQUIRED(
             HttpServletResponse.SC_UNAUTHORIZED,
             302,
-            "Client Token or Certificate Required",
-            "The feed you have provided requires a client HTTPS certificate to send data"),
+            "Client token or certificate required",
+            "The feed you have provided requires a client HTTPS certificate or token to send data"),
+
+    CLIENT_DATA_FEED_KEY_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            303,
+            "Client data feed key required",
+            "A client data feed key is required to send data"),
+
+    AUTHENTICATION_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            304,
+            "Authentication of the client is required",
+            "Some form of client authentication is required, e.g. certificate, token, data feed key, etc. " +
+                    "Ask administrator for supported authentication mechanism(s)."),
 
     CLIENT_CERTIFICATE_NOT_AUTHENTICATED(
             HttpServletResponse.SC_UNAUTHORIZED,

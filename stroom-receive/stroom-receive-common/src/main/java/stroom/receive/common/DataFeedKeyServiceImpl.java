@@ -59,7 +59,6 @@ public class DataFeedKeyServiceImpl
     // Cache of the un-hashed key to validated DataFeedKey, to save us the hashing cost
     private final Map<String, Optional<DataFeedKey>> keyToDataFeedKeyMap = new HashMap<>();
 
-
     private final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap = new EnumMap<>(
             DataFeedKeyHashAlgorithm.class);
 
@@ -88,22 +87,12 @@ public class DataFeedKeyServiceImpl
                             "Found Authorization in request:\n" + str);
                     return key;
                 })
-                .flatMap((String key2) -> lookupKey(key2, attributeMap));
+                .flatMap((String key2) ->
+                        lookupKey(key2, attributeMap));
 
         optDataFeedKey.ifPresent(dataFeedKey -> {
-
             validateDataFeedKeyExpiry(dataFeedKey, attributeMap);
-
-            // Add the user identity to the attributeMap so that we can use it for request filtering
-            // later
-            NullSafe.consume(dataFeedKey.getSubjectId(), id ->
-                    attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
-            NullSafe.consume(dataFeedKey.getDisplayName(), username ->
-                    attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
         });
-
-        // Remove authorization header from attributes as it should not be stored or forwarded on.
-        attributeMap.remove(AUTHORIZATION_HEADER);
 
         return optDataFeedKey;
     }
@@ -161,6 +150,7 @@ public class DataFeedKeyServiceImpl
             final String hash = hasher.hash(key);
             return Optional.of(new CacheKey(hashAlgorithm, hash));
         } else {
+            LOGGER.debug("key '{}' does not look like a not a datafeed key", key);
             return Optional.empty();
         }
     }
@@ -188,6 +178,9 @@ public class DataFeedKeyServiceImpl
         }
     }
 
+    /**
+     * @return An optional containing a non-blank attribute value, else empty.
+     */
     private Optional<String> getAttribute(final AttributeMap attributeMap, final String header) {
         return Optional.ofNullable(attributeMap.get(header))
                 .filter(str -> !StringUtils.isNotBlank(str));
@@ -225,8 +218,15 @@ public class DataFeedKeyServiceImpl
     @Override
     public Optional<UserIdentity> authenticate(final HttpServletRequest request,
                                                final AttributeMap attributeMap) {
-        return getDataFeedKey(request, attributeMap)
-                .map(DataFeedKeyUserIdentity::new);
+        try {
+            return getDataFeedKey(request, attributeMap)
+                    .map(DataFeedKeyUserIdentity::new);
+        } catch (StroomStreamException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StroomStreamException(
+                    StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap, e.getMessage());
+        }
     }
 
     // --------------------------------------------------------------------------------
@@ -242,8 +242,8 @@ public class DataFeedKeyServiceImpl
 
 
     public enum DataFeedKeyHashAlgorithm implements HasDisplayValue {
-        BCRYPT("BCrypt", 0),
-        ARGON2("Argon2", 1),
+        ARGON2("Argon2", 0),
+//        BCRYPT("BCrypt", 0),
         ;
 
         private static final DataFeedKeyHashAlgorithm[] sparseArray;
@@ -279,7 +279,7 @@ public class DataFeedKeyServiceImpl
 
         @Override
         public String getDisplayValue() {
-            return null;
+            return displayValue;
         }
 
         /**
@@ -326,9 +326,9 @@ public class DataFeedKeyServiceImpl
         @Override
         public String toString() {
             return "DataFeedKeyHashAlgorithm{" +
-                   "displayValue='" + displayValue + '\'' +
-                   ", uniqueId=" + uniqueId +
-                   '}';
+                    "displayValue='" + displayValue + '\'' +
+                    ", uniqueId=" + uniqueId +
+                    '}';
         }
     }
 

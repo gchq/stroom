@@ -3,6 +3,8 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +15,7 @@ public interface AuthenticatorFilter {
     /**
      * Filter that returns no identity, i.e. the request fails authentication.
      */
-    AuthenticatorFilter UNAUTHENTICATED_FILTER = (request, attributeMap) ->
+    AuthenticatorFilter NOT_AUTHENTICATED_FILTER = (request, attributeMap) ->
             Optional.empty();
 
     Optional<UserIdentity> authenticate(final HttpServletRequest request,
@@ -25,7 +27,7 @@ public interface AuthenticatorFilter {
 
     static AuthenticatorFilter wrap(final List<AuthenticatorFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-            return UNAUTHENTICATED_FILTER;
+            return NOT_AUTHENTICATED_FILTER;
         } else if (attributeMapFilters.size() == 1 && attributeMapFilters.get(0) != null) {
             return attributeMapFilters.get(0);
         } else {
@@ -38,6 +40,8 @@ public interface AuthenticatorFilter {
 
 
     class MultiAuthenticatorFilter implements AuthenticatorFilter {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MultiAuthenticatorFilter.class);
 
         private final List<AuthenticatorFilter> authenticatorFilters;
 
@@ -53,6 +57,7 @@ public interface AuthenticatorFilter {
                                                    final AttributeMap attributeMap) {
             for (final AuthenticatorFilter authenticatorFilter : authenticatorFilters) {
                 if (authenticatorFilter != null) {
+                    LOGGER.debug(() -> "Calling authenticate on " + authenticatorFilter.getClass().getName());
                     final Optional<UserIdentity> optUserIdentity = authenticatorFilter.authenticate(
                             request, attributeMap);
                     if (optUserIdentity.isPresent()) {

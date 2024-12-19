@@ -18,6 +18,7 @@ package stroom.core.receive;
 
 import stroom.docref.DocRef;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AuthenticationType;
 import stroom.receive.common.DataFeedKeyService;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
@@ -28,6 +29,7 @@ import stroom.util.concurrent.PeriodicallyUpdatedValue;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -61,7 +63,7 @@ public class AttributeMapFilterFactory {
     private AttributeMapFilter create(final ConfigState configState) {
 
         final List<AttributeMapFilter> filters = new ArrayList<>();
-        if (configState.isDatafeedKeyAuthenticationEnabled) {
+        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
             filters.add(dataFeedKeyService);
         }
 //        if (NullSafe.isNonEmptyString(configState.policyUuid)) {
@@ -83,12 +85,16 @@ public class AttributeMapFilterFactory {
 
     private record ConfigState(
             String policyUuid,
-            boolean isDatafeedKeyAuthenticationEnabled) {
+            Set<AuthenticationType> enabledAuthenticationTypes) {
 
         public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
             return new ConfigState(
                     receiveDataConfig.getReceiptPolicyUuid(),
-                    receiveDataConfig.isDatafeedKeyAuthenticationEnabled());
+                    receiveDataConfig.getEnabledAuthenticationTypes());
+        }
+
+        public boolean isEnabled(final AuthenticationType authenticationType) {
+            return enabledAuthenticationTypes.contains(authenticationType);
         }
     }
 }
