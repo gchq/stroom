@@ -3,10 +3,10 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.receive.common.DataFeedKeyServiceImpl.DataFeedKeyHashAlgorithm;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.test.common.TestUtil;
-import stroom.util.cert.CertificateExtractor;
 
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
@@ -14,8 +14,10 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.mockito.Mockito;
 
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
@@ -23,22 +25,30 @@ import javax.ws.rs.core.HttpHeaders;
 class TestRequestAuthenticatorImpl {
 
     private final UserIdentityFactory mockUserIdentityFactory = Mockito.mock(UserIdentityFactory.class);
-    private final ReceiveDataConfig configTokenOnly = new ReceiveDataConfig()
+    private final ReceiveDataConfig configTokenOnly = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
-            .withTokenAuthenticationEnabled(true)
-            .withCertificateAuthenticationEnabled(false);
-    private final ReceiveDataConfig configCertOnly = new ReceiveDataConfig()
+            .withEnabledAuthenticationTypes(AuthenticationType.TOKEN)
+            .build();
+    private final ReceiveDataConfig configCertOnly = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
-            .withTokenAuthenticationEnabled(false)
-            .withCertificateAuthenticationEnabled(true);
-    private final ReceiveDataConfig configTokenAndCert = new ReceiveDataConfig()
+            .withEnabledAuthenticationTypes(AuthenticationType.CERT)
+            .build();
+    private final ReceiveDataConfig dataFeedKeyOnly = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
-            .withTokenAuthenticationEnabled(true)
-            .withCertificateAuthenticationEnabled(true);
-    private final ReceiveDataConfig configOptionalAuth = new ReceiveDataConfig()
+            .withEnabledAuthenticationTypes(AuthenticationType.DATA_FEED_KEY)
+            .build();
+    private final ReceiveDataConfig configTokenAndCert = ReceiveDataConfig.builder()
+            .withAuthenticationRequired(true)
+            .withEnabledAuthenticationTypes(AuthenticationType.TOKEN, AuthenticationType.CERT)
+            .build();
+    private final ReceiveDataConfig configAllTypes = ReceiveDataConfig.builder()
+            .withAuthenticationRequired(true)
+            .withEnabledAuthenticationTypes(AuthenticationType.values())
+            .build();
+    private final ReceiveDataConfig configOptionalAuth = ReceiveDataConfig.builder()
             .withAuthenticationRequired(false)
-            .withTokenAuthenticationEnabled(true)
-            .withCertificateAuthenticationEnabled(true);
+            .withEnabledAuthenticationTypes(AuthenticationType.values())
+            .build();
 
     private AttributeMap attributeMap = new AttributeMap();
 
@@ -50,31 +60,85 @@ class TestRequestAuthenticatorImpl {
     @TestFactory
     Stream<DynamicTest> authenticate_tokenEnabled() {
 
-        final HttpServletRequest mockHttpServletRequest = Mockito.mock(HttpServletRequest.class);
-        final CertificateExtractor mockCertificateExtractor = Mockito.mock(CertificateExtractor.class);
 
         final String certCn = "My CN";
         final UserIdentity tokenUser = new TestUserIdentity("1"); // We are mocking so type doesn't matter here
         final UserIdentity certUser = new CertificateUserIdentity(certCn); // Type matters here
+        final UserIdentity dataFeedKeyUser = new DataFeedKeyUserIdentity(new DataFeedKey(
+                "my hash",
+                DataFeedKeyHashAlgorithm.ARGON2.getDisplayValue(),
+                "MySubjectId",
+                "My Display Name",
+                null,
+                null,
+                Long.MAX_VALUE));
+
+        // Type matters here
         final UnauthenticatedUserIdentity unauthUser = UnauthenticatedUserIdentity.getInstance();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Input.class)
                 .withOutputTypes(UserIdentity.class, StroomStatusCode.class)
                 .withTestFunction(testCase -> {
+                    final HttpServletRequest mockHttpServletRequest = Mockito.mock(HttpServletRequest.class);
+                    final DataFeedKeyService mockDataFeedKeyService = Mockito.mock(DataFeedKeyService.class);
+                    final OidcTokenAuthenticator mockOidcTokenAuthenticator = Mockito.mock(
+                            OidcTokenAuthenticator.class);
+                    final CertificateAuthenticator mockCertificateAuthenticator = Mockito.mock(
+                            CertificateAuthenticator.class);
+                    final AllowUnauthenticatedAuthenticator mockAllowUnauthenticatedAuthenticator =
+                            Mockito.mock(AllowUnauthenticatedAuthenticator.class);
                     final RequestAuthenticator requestAuthenticator = new RequestAuthenticatorImpl(
                             mockUserIdentityFactory,
                             () -> testCase.getInput().receiveDataConfig,
-                            mockCertificateExtractor);
+                            () -> mockDataFeedKeyService,
+                            () -> mockOidcTokenAuthenticator,
+                            () -> mockCertificateAuthenticator,
+                            () -> mockAllowUnauthenticatedAuthenticator);
                     setupAttributeMap();
-                    Mockito.when(mockUserIdentityFactory.hasAuthenticationToken(Mockito.any()))
-                            .thenReturn(testCase.getInput().tokenState.asBoolean());
-                    Mockito.when(mockUserIdentityFactory.getApiUserIdentity(Mockito.any()))
-                            .thenReturn(testCase.getInput().userFromTokenAuth);
-                    Mockito.when(mockCertificateExtractor.getCN(Mockito.any()))
-                            .thenReturn(testCase.getInput().certState.asBoolean()
-                                    ? Optional.of(certCn)
-                                    : Optional.empty());
+                    final Set<AuthMethod> authMethodsInReq = testCase.getInput().authMethodsInReq;
+                    final ReceiveDataConfig receiveDataConfig = testCase.getInput().receiveDataConfig;
+                    final Optional<UserIdentity> userFromTokenAuth = testCase.getInput().userFromTokenAuth;
+                    final StroomStatusCode errorCode = testCase.getInput().errorCode;
+
+                    if (receiveDataConfig.isAuthenticationTypeEnabled(AuthenticationType.TOKEN)) {
+                        if (errorCode != null) {
+                            Mockito.when(mockOidcTokenAuthenticator.authenticate(Mockito.any(), Mockito.any()))
+                                    .thenThrow(new StroomStreamException(errorCode, null));
+                        } else {
+                            Mockito.when(mockOidcTokenAuthenticator.authenticate(Mockito.any(), Mockito.any()))
+                                    .thenReturn(authMethodsInReq.contains(AuthMethod.TOKEN)
+                                            ? userFromTokenAuth
+                                            : Optional.empty());
+                        }
+                    }
+                    if (receiveDataConfig.isAuthenticationTypeEnabled(AuthenticationType.CERT)) {
+                        if (errorCode != null) {
+                            Mockito.when(mockCertificateAuthenticator.authenticate(Mockito.any(), Mockito.any()))
+                                    .thenThrow(new StroomStreamException(errorCode, null));
+                        } else {
+                            Mockito.when(mockCertificateAuthenticator.authenticate(Mockito.any(), Mockito.any()))
+                                    .thenReturn(authMethodsInReq.contains(AuthMethod.CERT)
+                                            ? Optional.of(certUser)
+                                            : Optional.empty());
+                        }
+                    }
+                    if (receiveDataConfig.isAuthenticationTypeEnabled(AuthenticationType.DATA_FEED_KEY)) {
+                        if (errorCode != null) {
+                            Mockito.when(mockDataFeedKeyService.authenticate(Mockito.any(), Mockito.any()))
+                                    .thenThrow(new StroomStreamException(errorCode, null));
+                        } else {
+                            Mockito.when(mockDataFeedKeyService.authenticate(Mockito.any(), Mockito.any()))
+                                    .thenReturn(authMethodsInReq.contains(AuthMethod.DATA_FEED_KEY)
+                                            ? Optional.of(dataFeedKeyUser)
+                                            : Optional.empty());
+                        }
+                    }
+
+                    if (!receiveDataConfig.isAuthenticationRequired()) {
+                        Mockito.when(mockAllowUnauthenticatedAuthenticator.authenticate(Mockito.any(), Mockito.any()))
+                                .thenReturn(Optional.of(unauthUser));
+                    }
                     Mockito.doAnswer(invocation -> {
                         attributeMap.remove(HttpHeaders.AUTHORIZATION);
                         return null;
@@ -117,114 +181,109 @@ class TestRequestAuthenticatorImpl {
                         "token only - Valid token",
                         new Input(
                                 configTokenOnly,
-                                TokenState.FOUND,
-                                CertState.NOT_FOUND,
+                                EnumSet.of(AuthMethod.TOKEN),
                                 Optional.of(tokenUser)),
                         Tuple.of(tokenUser, null))
                 .addNamedCase(
                         "token only - No token",
                         new Input(
                                 configTokenOnly,
-                                TokenState.NOT_FOUND,
-                                CertState.NOT_FOUND,
+                                EnumSet.noneOf(AuthMethod.class),
                                 Optional.empty()),
                         Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_REQUIRED))
                 .addNamedCase(
                         "token only - Token found but not authenticated",
                         new Input(
                                 configTokenOnly,
-                                TokenState.FOUND,
-                                CertState.NOT_FOUND,
-                                Optional.empty()),
+                                EnumSet.of(AuthMethod.TOKEN),
+                                Optional.empty(),
+                                StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED),
                         Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED))
                 .addNamedCase(
                         "token only - Token not found, cert found but ignored",
                         new Input(
                                 configTokenOnly,
-                                TokenState.NOT_FOUND,
-                                CertState.FOUND,
+                                EnumSet.of(AuthMethod.CERT),
                                 Optional.empty()),
                         Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_REQUIRED))
                 .addNamedCase(
                         "Cert only - Valid cert",
                         new Input(
                                 configCertOnly,
-                                TokenState.NOT_FOUND,
-                                CertState.FOUND,
+                                EnumSet.of(AuthMethod.CERT),
                                 Optional.empty()),
                         Tuple.of(certUser, null))
                 .addNamedCase(
                         "Cert only - no cert",
                         new Input(
                                 configCertOnly,
-                                TokenState.NOT_FOUND,
-                                CertState.NOT_FOUND,
-                                Optional.empty()), // ignored
+                                EnumSet.noneOf(AuthMethod.class),
+                                Optional.empty(),
+                                StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED),
                         Tuple.of(null, StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED))
                 .addNamedCase(
                         "Token & Cert - valid token",
                         new Input(
                                 configTokenAndCert,
-                                TokenState.FOUND,
-                                CertState.NOT_FOUND,
+                                EnumSet.of(AuthMethod.TOKEN),
                                 Optional.of(tokenUser)),
                         Tuple.of(tokenUser, null))
                 .addNamedCase(
                         "Token & Cert - valid cert",
                         new Input(
                                 configTokenAndCert,
-                                TokenState.NOT_FOUND,
-                                CertState.FOUND,
+                                EnumSet.of(AuthMethod.CERT),
                                 Optional.empty()),
                         Tuple.of(certUser, null))
                 .addNamedCase(
                         "Token & Cert - valid token + valid cert",
                         new Input(
                                 configTokenAndCert,
-                                TokenState.FOUND,
-                                CertState.FOUND,
+                                EnumSet.of(AuthMethod.TOKEN, AuthMethod.CERT),
                                 Optional.of(tokenUser)),
                         Tuple.of(tokenUser, null))
                 .addNamedCase(
                         "Token & Cert - neither present",
                         new Input(
                                 configTokenAndCert,
-                                TokenState.NOT_FOUND,
-                                CertState.NOT_FOUND,
+                                EnumSet.noneOf(AuthMethod.class),
                                 Optional.empty()),
                         Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_OR_CERT_REQUIRED))
                 .addNamedCase(
                         "No auth required - neither present",
                         new Input(
                                 configOptionalAuth,
-                                TokenState.NOT_FOUND,
-                                CertState.NOT_FOUND,
+                                EnumSet.noneOf(AuthMethod.class),
                                 Optional.empty()),
                         Tuple.of(unauthUser, null))
                 .addNamedCase(
                         "No auth required - Valid token",
                         new Input(
                                 configOptionalAuth,
-                                TokenState.FOUND,
-                                CertState.NOT_FOUND,
+                                EnumSet.of(AuthMethod.TOKEN),
                                 Optional.of(tokenUser)),
                         Tuple.of(tokenUser, null))
                 .addNamedCase(
                         "No auth required - Valid cert",
                         new Input(
                                 configOptionalAuth,
-                                TokenState.NOT_FOUND,
-                                CertState.FOUND,
+                                EnumSet.of(AuthMethod.CERT),
                                 Optional.empty()),
                         Tuple.of(certUser, null))
                 .addNamedCase(
                         "No auth required - both present, token used in pref",
                         new Input(
                                 configOptionalAuth,
-                                TokenState.FOUND,
-                                CertState.FOUND,
+                                EnumSet.of(AuthMethod.TOKEN, AuthMethod.CERT),
                                 Optional.of(tokenUser)),
                         Tuple.of(tokenUser, null))
+                .addNamedCase(
+                        "No auth required - all present, DFK used in pref",
+                        new Input(
+                                configOptionalAuth,
+                                EnumSet.of(AuthMethod.DATA_FEED_KEY, AuthMethod.TOKEN, AuthMethod.CERT),
+                                Optional.of(dataFeedKeyUser)),
+                        Tuple.of(dataFeedKeyUser, null))
                 .build();
     }
 
@@ -234,10 +293,15 @@ class TestRequestAuthenticatorImpl {
 
     private record Input(
             ReceiveDataConfig receiveDataConfig,
-            TokenState tokenState,
-            CertState certState,
-            Optional<UserIdentity> userFromTokenAuth) {
+            Set<AuthMethod> authMethodsInReq,
+            Optional<UserIdentity> userFromTokenAuth,
+            StroomStatusCode errorCode) {
 
+        private Input(final ReceiveDataConfig receiveDataConfig,
+                      final Set<AuthMethod> authMethodsInReq,
+                      final Optional<UserIdentity> userFromTokenAuth) {
+            this(receiveDataConfig, authMethodsInReq, userFromTokenAuth, null);
+        }
     }
 
 
@@ -285,40 +349,10 @@ class TestRequestAuthenticatorImpl {
 
     // --------------------------------------------------------------------------------
 
-
-    // Make tests easier to read
-    private enum TokenState {
-        FOUND(true),
-        NOT_FOUND(false);
-
-        private final boolean isTokenFound;
-
-        TokenState(final boolean isTokenFound) {
-            this.isTokenFound = isTokenFound;
-        }
-
-        boolean asBoolean() {
-            return isTokenFound;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    // Make tests easier to read
-    private enum CertState {
-        FOUND(true),
-        NOT_FOUND(false);
-
-        private final boolean isCertFound;
-
-        CertState(final boolean isCertFound) {
-            this.isCertFound = isCertFound;
-        }
-
-        boolean asBoolean() {
-            return isCertFound;
-        }
+    private enum AuthMethod {
+        DATA_FEED_KEY,
+        TOKEN,
+        CERT,
+        ;
     }
 }
