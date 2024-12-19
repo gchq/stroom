@@ -465,7 +465,7 @@ public class DocumentPluginEventManager extends Plugin {
                     if (permissions.hasCreatePermission(type)) {
                         final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(type);
                         if (documentType != null) {
-                                fireShowCreateDocumentDialogEvent(documentType, explorerNode);
+                            fireShowCreateDocumentDialogEvent(documentType, explorerNode);
                         }
                     }
                 }, explorerListener);
