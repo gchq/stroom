@@ -415,16 +415,15 @@ public class DocumentPluginEventManager extends Plugin {
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (GwtNullSafe.hasItems(getSelectedItems())) {
-                fetchPermissions(getSelectedItems(), documentPermissionMap ->
-                        documentTypeCache.fetch(documentTypes -> {
-                            final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
-                                    documentPermissionMap,
-                                    DocumentPermission.DELETE,
-                                    false);
-                            if (!deletableItems.isEmpty()) {
-                                deleteItems(deletableItems, explorerListener);
-                            }
-                        }, explorerListener), explorerListener);
+                fetchPermissions(getSelectedItems(), documentPermissionMap -> {
+                    final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
+                            documentPermissionMap,
+                            DocumentPermission.DELETE,
+                            false);
+                    if (!deletableItems.isEmpty()) {
+                        deleteItems(deletableItems, explorerListener);
+                    }
+                }, explorerListener);
             }
         }));
 

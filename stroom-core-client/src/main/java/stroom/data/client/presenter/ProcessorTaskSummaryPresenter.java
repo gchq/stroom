@@ -27,8 +27,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
@@ -73,8 +71,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
                                          final PagerView view,
                                          final RestFactory restFactory,
-                                         final TooltipPresenter tooltipPresenter,
-                                         final DocumentTypeCache documentTypeCache) {
+                                         final TooltipPresenter tooltipPresenter) {
         super(eventBus, view);
         this.tooltipPresenter = tooltipPresenter;
 
@@ -112,10 +109,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
             }
         };
 
-        documentTypeCache.fetch(this::addColumns, this);
+        addColumns();
     }
 
-    private void addColumns(final DocumentTypes documentTypes) {
+    private void addColumns() {
         // Info column.
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
@@ -141,11 +138,11 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         final Function<ProcessorTaskSummary, DocRef> pipelineExtractionFunction = ProcessorTaskSummary::getPipeline;
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", documentTypes, pipelineExtractionFunction);
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
 
         final Function<ProcessorTaskSummary, DocRef> feedExtractionFunction = row ->
                 new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", documentTypes, feedExtractionFunction);
+        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),

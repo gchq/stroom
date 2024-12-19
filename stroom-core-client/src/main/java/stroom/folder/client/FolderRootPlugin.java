@@ -21,11 +21,14 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
+import stroom.document.client.ClientDocumentType;
+import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -44,11 +47,20 @@ import javax.inject.Singleton;
 @Singleton
 public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData {
 
+    public static final ClientDocumentType SYSTEM_DOCUMENT_TYPE = new ClientDocumentType(
+            DocumentTypeGroup.SYSTEM,
+            ExplorerConstants.SYSTEM,
+            ExplorerConstants.SYSTEM,
+            SvgImage.DOCUMENT_SYSTEM);
+    public static final ClientDocumentType FAVOURITES_DOCUMENT_TYPE = new ClientDocumentType(
+            DocumentTypeGroup.SYSTEM,
+            "Favourites",
+            "Favourites",
+            SvgImage.DOCUMENT_FAVOURITES);
+
     private final ContentManager contentManager;
     private final Provider<FolderRootPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
-
-//    private FolderRootPresenter presenter;
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus,
@@ -60,6 +72,9 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
+
+        ClientDocumentTypeRegistry.put(SYSTEM_DOCUMENT_TYPE);
+        ClientDocumentTypeRegistry.put(FAVOURITES_DOCUMENT_TYPE);
     }
 
 //    @Override

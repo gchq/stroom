@@ -30,8 +30,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -99,8 +97,7 @@ public class PropertyListPresenter
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
-                                 final RestFactory restFactory,
-                                 final DocumentTypeCache documentTypeCache) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -113,9 +110,7 @@ public class PropertyListPresenter
 
         editButton = view.addButton(SvgPresets.EDIT);
 
-        documentTypeCache.fetch(documentTypes -> {
-            addColumns(documentTypes);
-        }, this);
+        addColumns();
         enableButtons();
     }
 
@@ -134,9 +129,9 @@ public class PropertyListPresenter
         }));
     }
 
-    private void addColumns(final DocumentTypes documentTypes) {
+    private void addColumns() {
         addNameColumn();
-        addValueColumn(documentTypes);
+        addValueColumn();
         addDescriptionColumn();
 
         addEndColumn();
@@ -152,12 +147,11 @@ public class PropertyListPresenter
         }, "Property Name", 300);
     }
 
-    private void addValueColumn(final DocumentTypes documentTypes) {
+    private void addValueColumn() {
         // Value.
         // Value could be a docRef, in which case it gets a hover link to open it) or a simple string
         final DocRefCell.Builder<PipelineProperty> cellBuilder = new Builder<PipelineProperty>()
                 .eventBus(getEventBus())
-                .documentTypes(documentTypes)
                 .showIcon(true)
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
                 .cellTextFunction(docRefProvider -> {

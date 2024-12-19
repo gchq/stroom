@@ -16,6 +16,8 @@
 
 package stroom.meta.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -29,16 +31,16 @@ public class MetaRow {
     @JsonProperty
     private final Meta meta;
     @JsonProperty
-    private final String pipelineName;
+    private final DocRef pipeline;
     @JsonProperty
     private final Map<String, String> attributes;
 
     @JsonCreator
     public MetaRow(@JsonProperty("meta") final Meta meta,
-                   @JsonProperty("pipelineName") final String pipelineName,
+                   @JsonProperty("pipeline") final DocRef pipeline,
                    @JsonProperty("attributes") final Map<String, String> attributes) {
         this.meta = meta;
-        this.pipelineName = pipelineName;
+        this.pipeline = pipeline;
         this.attributes = attributes;
     }
 
@@ -46,8 +48,8 @@ public class MetaRow {
         return meta;
     }
 
-    public String getPipelineName() {
-        return pipelineName;
+    public DocRef getPipeline() {
+        return pipeline;
     }
 
     public Map<String, String> getAttributes() {

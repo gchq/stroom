@@ -79,7 +79,8 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         );
     }
 
-    public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
+    public void setSelectedStream(final MetaRow metaRow,
+                                  final boolean fireEvents,
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
             getCriteria().setExpression(null);

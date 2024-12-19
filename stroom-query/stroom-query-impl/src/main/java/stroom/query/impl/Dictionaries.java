@@ -60,12 +60,10 @@ public class Dictionaries {
     public static final int INITIAL_SCORE = 100;
 
     private final DictionaryStore dictionaryStore;
-    private final SvgImage icon;
 
     @Inject
     public Dictionaries(final DictionaryStore dictionaryStore) {
         this.dictionaryStore = dictionaryStore;
-        this.icon = dictionaryStore.getDocumentType().getIcon();
     }
 
     public void addRows(final PageRequest pageRequest,
@@ -76,8 +74,8 @@ public class Dictionaries {
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(docs, stringMatcher);
             if (hasChildren ||
-                    MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                stringMatcher.match(ROOT.getTitle()).isPresent()) {
                 resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(DICTIONARY_ID + ".")) {
@@ -90,7 +88,7 @@ public class Dictionaries {
                             .builder()
                             .type(QueryHelpType.DICTIONARY)
                             .id(DICTIONARY_ID + "." + docRef.getUuid())
-                            .icon(icon)
+                            .icon(SvgImage.DOCUMENT_DICTIONARY)
                             .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))
@@ -180,7 +178,7 @@ public class Dictionaries {
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
 
         } else if (QueryHelpType.DICTIONARY.equals(row.getType()) &&
-                row.getId().startsWith(DICTIONARY_ID + ".")) {
+                   row.getId().startsWith(DICTIONARY_ID + ".")) {
             final QueryHelpDocument queryHelpDocument = (QueryHelpDocument) row.getData();
             final DocRef docRef = queryHelpDocument.getDocRef();
             final InsertType insertType = InsertType.plainText(docRef.getName());
