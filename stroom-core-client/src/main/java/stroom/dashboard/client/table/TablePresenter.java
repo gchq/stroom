@@ -970,12 +970,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void fixRuleIds(final List<ConditionalFormattingRule> rules) {
         if (rules != null) {
             final Set<String> idSet = new HashSet<>();
-            for (int i = 0; i < rules.size(); i++) {
-                ConditionalFormattingRule rule = rules.get(i);
-                while (!idSet.add(rule.getId())) {
-                    rule = rule.copy().id(RandomId.createId(5)).build();
-                    rules.set(i, rule);
+            final List<ConditionalFormattingRule> fixedRules = new ArrayList<>(rules.size());
+            for (final ConditionalFormattingRule rule : rules) {
+                ConditionalFormattingRule fixed = rule;
+                while (!idSet.add(fixed.getId())) {
+                    fixed = fixed.copy().id(RandomId.createId(5)).build();
                 }
+                fixedRules.add(fixed);
+            }
+            if (!Objects.equals(rules, fixedRules)) {
+                GWT.log("Fixed conditional formatting rules");
+                setSettings(getTableComponentSettings().copy().conditionalFormattingRules(fixedRules).build());
             }
         }
     }
