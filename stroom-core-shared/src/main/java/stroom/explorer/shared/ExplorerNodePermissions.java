@@ -16,6 +16,7 @@
 
 package stroom.explorer.shared;
 
+import stroom.docstore.shared.DocumentType;
 import stroom.security.shared.DocumentPermission;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

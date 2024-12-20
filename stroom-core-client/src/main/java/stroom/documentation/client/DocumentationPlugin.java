@@ -30,7 +30,7 @@ import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;

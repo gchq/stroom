@@ -17,7 +17,7 @@
 
 package stroom.document.client;
 
-import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

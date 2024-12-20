@@ -19,7 +19,7 @@ package stroom.explorer.impl;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.DocumentType;
+import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;

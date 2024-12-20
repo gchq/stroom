@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.shared;
+package stroom.docstore.shared;
 
 @SuppressWarnings("TextBlockMigration") // Because GWT :-(
 public enum DocumentTypeGroup {

@@ -24,7 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.document.client.ClientDocumentType;
 import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentType;
+import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;

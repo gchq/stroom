@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.explorer.shared;
+package stroom.docstore.shared;
 
 import stroom.svg.shared.SvgImage;
 

@@ -25,7 +25,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.document.client.ClientDocumentType;
 import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
-import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;

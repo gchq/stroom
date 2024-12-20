@@ -28,7 +28,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.ClientDocumentType;
 import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;

@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocumentType;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

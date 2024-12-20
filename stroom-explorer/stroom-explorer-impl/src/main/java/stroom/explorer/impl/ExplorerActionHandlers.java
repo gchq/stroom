@@ -17,7 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
+import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 
 import jakarta.inject.Inject;

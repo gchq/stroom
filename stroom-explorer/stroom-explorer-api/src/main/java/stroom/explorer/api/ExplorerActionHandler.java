@@ -20,6 +20,7 @@ package stroom.explorer.api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
+import stroom.docstore.shared.HasDocumentType;
 import stroom.util.shared.HasDependencies;
 
 import java.util.Set;

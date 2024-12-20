@@ -16,7 +16,7 @@
 
 package stroom.security.client.view;
 
-import stroom.explorer.shared.DocumentType;
+import stroom.docstore.shared.DocumentType;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.security.shared.DocumentPermission;

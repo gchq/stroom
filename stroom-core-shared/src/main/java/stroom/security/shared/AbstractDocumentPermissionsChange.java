@@ -1,7 +1,6 @@
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DocumentType;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentUserCreatePermission;

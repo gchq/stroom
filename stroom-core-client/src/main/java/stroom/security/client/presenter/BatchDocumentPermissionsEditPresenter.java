@@ -23,7 +23,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentType;
+import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;

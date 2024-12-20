@@ -10,7 +10,7 @@ import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;

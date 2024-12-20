@@ -6,6 +6,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentActionHandlers;
 import stroom.docstore.api.DocumentTypeName;
+import stroom.docstore.shared.DocumentType;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
@@ -260,7 +261,7 @@ class TestDocRefInfoCache {
         }
 
         @Override
-        public stroom.explorer.shared.DocumentType getDocumentType() {
+        public DocumentType getDocumentType() {
             return FolderExplorerActionHandler.DOCUMENT_TYPE;
         }
 
