@@ -36,12 +36,12 @@ public class MetaFields {
 
     // Maps to the docref uuid
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
-            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.TYPE,
             "Pipeline");
 
     // Maps to the docref name (which is not unique)
     public static final QueryField PIPELINE_NAME = QueryField.createDocRefByNonUniqueName(
-            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.TYPE,
             "Pipeline Name");
 
     public static final QueryField STATUS = QueryField.createText("Status");

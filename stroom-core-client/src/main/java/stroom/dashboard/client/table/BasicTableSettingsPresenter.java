@@ -55,7 +55,7 @@ public class BasicTableSettingsPresenter
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setPipelineView(pipelinePresenter.getView());

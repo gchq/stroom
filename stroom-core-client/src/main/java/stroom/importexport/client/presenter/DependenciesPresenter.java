@@ -26,11 +26,11 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.ClientDocumentTypeRegistry;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.LocateDocEvent;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
@@ -63,10 +63,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -325,7 +323,7 @@ public class DependenciesPresenter
 
     private Preset getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
-            final SvgImage icon = ClientDocumentTypeRegistry.getIcon(docRef.getType());
+            final SvgImage icon = DocumentTypeRegistry.getIcon(docRef.getType());
             if (icon != null) {
                 return new Preset(icon, docRef.getType(), true);
             } else {

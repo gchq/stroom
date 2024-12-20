@@ -71,7 +71,7 @@ public class V07_00_00_009__Script extends BaseJavaMigration {
                     final String dat = resultSet.getString(9);
 
                     final ScriptDoc document = new ScriptDoc();
-                    document.setType(ScriptDoc.DOCUMENT_TYPE);
+                    document.setType(ScriptDoc.TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -99,7 +99,7 @@ public class V07_00_00_009__Script extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, ScriptDoc.DOCUMENT_TYPE);
+                            ps.setString(1, ScriptDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

@@ -20,6 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,23 +36,23 @@ import java.util.Objects;
 
 @Description(
         "Lucene Index is the standard built-in index within Stroom and is one of may data sources.\n" +
-                "An index is like a catalog in a library and provides a very fast way to access " +
-                "documents/records/events when searching using fields that have been indexed.\n" +
-                "The index stores the field values and pointers to the document they came from " +
-                "(the Stream and Event IDs).\n" +
-                "Data can be indexed using multiple indexes to allow fast access in different ways.\n" +
-                "\n" +
-                "The Lucene Index Document optionally defines the fields that will be indexed (" +
-                "it is possible to define the fields dynamically) and their types.\n" +
-                "It also allows for configuration of the way the data in the index will be stored, " +
-                "partitioned and retained.\n" +
-                "\n" +
-                "The Lucene Index Document is used by the {{< pipe-elm \\\"IndexingFilter\\\" >}} " +
-                "and {{< pipe-elm \"DynamicIndexingFilter\" >}} pipeline elements.\n" +
-                "\n" +
-                "{{% see-also %}}" +
-                "[Lucene Indexes]({{< relref \"docs/user-guide/indexing/lucene\" >}})" +
-                "{{% /see-also %}}")
+        "An index is like a catalog in a library and provides a very fast way to access " +
+        "documents/records/events when searching using fields that have been indexed.\n" +
+        "The index stores the field values and pointers to the document they came from " +
+        "(the Stream and Event IDs).\n" +
+        "Data can be indexed using multiple indexes to allow fast access in different ways.\n" +
+        "\n" +
+        "The Lucene Index Document optionally defines the fields that will be indexed (" +
+        "it is possible to define the fields dynamically) and their types.\n" +
+        "It also allows for configuration of the way the data in the index will be stored, " +
+        "partitioned and retained.\n" +
+        "\n" +
+        "The Lucene Index Document is used by the {{< pipe-elm \\\"IndexingFilter\\\" >}} " +
+        "and {{< pipe-elm \"DynamicIndexingFilter\" >}} pipeline elements.\n" +
+        "\n" +
+        "{{% see-also %}}" +
+        "[Lucene Indexes]({{< relref \"docs/user-guide/indexing/lucene\" >}})" +
+        "{{% /see-also %}}")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -79,8 +81,12 @@ public class LuceneIndexDoc extends Doc {
     private static final int DEFAULT_PARTITION_SIZE = 1;
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
-    public static final String DOCUMENT_TYPE = "Index";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_INDEX;
+    public static final String TYPE = "Index";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            TYPE,
+            "Lucene Index",
+            SvgImage.DOCUMENT_INDEX);
 
     @JsonProperty
     private String description;
@@ -160,7 +166,7 @@ public class LuceneIndexDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -169,7 +175,7 @@ public class LuceneIndexDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -268,15 +274,15 @@ public class LuceneIndexDoc extends Doc {
         }
         final LuceneIndexDoc indexDoc = (LuceneIndexDoc) o;
         return Objects.equals(maxDocsPerShard, indexDoc.maxDocsPerShard) &&
-                Objects.equals(partitionSize, indexDoc.partitionSize) &&
-                Objects.equals(shardsPerPartition, indexDoc.shardsPerPartition) &&
-                Objects.equals(description, indexDoc.description) &&
-                partitionBy == indexDoc.partitionBy &&
-                Objects.equals(timeField, indexDoc.timeField) &&
-                Objects.equals(retentionDayAge, indexDoc.retentionDayAge) &&
-                Objects.equals(fields, indexDoc.fields) &&
-                Objects.equals(volumeGroupName, indexDoc.volumeGroupName) &&
-                Objects.equals(defaultExtractionPipeline, indexDoc.defaultExtractionPipeline);
+               Objects.equals(partitionSize, indexDoc.partitionSize) &&
+               Objects.equals(shardsPerPartition, indexDoc.shardsPerPartition) &&
+               Objects.equals(description, indexDoc.description) &&
+               partitionBy == indexDoc.partitionBy &&
+               Objects.equals(timeField, indexDoc.timeField) &&
+               Objects.equals(retentionDayAge, indexDoc.retentionDayAge) &&
+               Objects.equals(fields, indexDoc.fields) &&
+               Objects.equals(volumeGroupName, indexDoc.volumeGroupName) &&
+               Objects.equals(defaultExtractionPipeline, indexDoc.defaultExtractionPipeline);
     }
 
     @Override

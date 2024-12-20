@@ -55,7 +55,7 @@ public class ReferenceDataFields {
             .fldName("Reference Loader Pipeline")
             .fldType(FieldType.DOC_REF)
             .conditionSet(ConditionSet.REF_DATA_DOC_REF)
-            .docRefType(PipelineDoc.DOCUMENT_TYPE)
+            .docRefType(PipelineDoc.TYPE)
             .queryable(true)
             .build();
     public static final QueryField PROCESSING_STATE_FIELD = QueryField

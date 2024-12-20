@@ -152,7 +152,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
         return parentData.computeIfAbsent(PIPELINE, k -> {
             final Meta meta = metaHolder.getMeta();
             if (meta != null && meta.getPipelineUuid() != null) {
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE,
                         meta.getPipelineUuid()));
                 if (pipelineDoc != null) {
                     return pipelineDoc.getName();

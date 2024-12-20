@@ -46,7 +46,7 @@ public class BasicListInputSettingsPresenter
         super(eventBus, view);
         this.dictionaryPresenter = dictionaryPresenter;
 
-        dictionaryPresenter.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
+        dictionaryPresenter.setIncludedTypes(DictionaryDoc.TYPE);
         dictionaryPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setDictionaryView(dictionaryPresenter.getView());

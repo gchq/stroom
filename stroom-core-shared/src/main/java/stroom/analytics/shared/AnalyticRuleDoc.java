@@ -19,6 +19,8 @@ package stroom.analytics.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
@@ -36,17 +38,21 @@ import java.util.Objects;
 
 @Description(
         "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
-                "The criteria is defined using a StroomQL query.\n" +
-                "The analytic can be processed in different ways:\n\n" +
-                "* Streaming\n" +
-                "* Table Builder\n" +
-                "* Scheduled Query")
+        "The criteria is defined using a StroomQL query.\n" +
+        "The analytic can be processed in different ways:\n\n" +
+        "* Streaming\n" +
+        "* Table Builder\n" +
+        "* Scheduled Query")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "AnalyticRule";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_ANALYTIC_RULE;
+    public static final String TYPE = "AnalyticRule";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            TYPE,
+            "Analytic Rule",
+            SvgImage.DOCUMENT_ANALYTIC_RULE);
 
     @JsonProperty
     private final String description;
@@ -156,7 +162,7 @@ public class AnalyticRuleDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -165,7 +171,7 @@ public class AnalyticRuleDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -241,17 +247,17 @@ public class AnalyticRuleDoc extends Doc {
         }
         final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
         return rememberNotifications == that.rememberNotifications &&
-                suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
-                Objects.equals(description, that.description) &&
-                languageVersion == that.languageVersion &&
-                Objects.equals(parameters, that.parameters) &&
-                Objects.equals(timeRange, that.timeRange) &&
-                Objects.equals(query, that.query) &&
-                analyticProcessType == that.analyticProcessType &&
-                Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
-                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
-                Objects.equals(notifications, that.notifications) &&
-                Objects.equals(errorFeed, that.errorFeed);
+               suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
+               Objects.equals(description, that.description) &&
+               languageVersion == that.languageVersion &&
+               Objects.equals(parameters, that.parameters) &&
+               Objects.equals(timeRange, that.timeRange) &&
+               Objects.equals(query, that.query) &&
+               analyticProcessType == that.analyticProcessType &&
+               Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
+               Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
+               Objects.equals(notifications, that.notifications) &&
+               Objects.equals(errorFeed, that.errorFeed);
     }
 
     @Override
@@ -274,19 +280,19 @@ public class AnalyticRuleDoc extends Doc {
     @Override
     public String toString() {
         return "AnalyticRuleDoc{" +
-                "description='" + description + '\'' +
-                ", languageVersion=" + languageVersion +
-                ", parameters=" + parameters +
-                ", timeRange=" + timeRange +
-                ", query='" + query + '\'' +
-                ", analyticProcessType=" + analyticProcessType +
-                ", analyticProcessConfig=" + analyticProcessConfig +
-                ", analyticNotificationConfig=" + analyticNotificationConfig +
-                ", notifications=" + notifications +
-                ", errorFeed=" + errorFeed +
-                ", rememberNotifications=" + rememberNotifications +
-                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
-                '}';
+               "description='" + description + '\'' +
+               ", languageVersion=" + languageVersion +
+               ", parameters=" + parameters +
+               ", timeRange=" + timeRange +
+               ", query='" + query + '\'' +
+               ", analyticProcessType=" + analyticProcessType +
+               ", analyticProcessConfig=" + analyticProcessConfig +
+               ", analyticNotificationConfig=" + analyticNotificationConfig +
+               ", notifications=" + notifications +
+               ", errorFeed=" + errorFeed +
+               ", rememberNotifications=" + rememberNotifications +
+               ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
+               '}';
     }
 
     public static Builder builder() {

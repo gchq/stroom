@@ -67,7 +67,7 @@ class DashboardResourceImpl implements DashboardResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(DashboardDoc.DOCUMENT_TYPE)
+                .type(DashboardDoc.TYPE)
                 .build();
     }
 

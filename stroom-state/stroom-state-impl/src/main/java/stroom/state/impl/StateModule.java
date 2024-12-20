@@ -76,7 +76,7 @@ public class StateModule extends AbstractModule {
                 .addBinding(ScyllaDbDocStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ScyllaDbDoc.DOCUMENT_TYPE, ScyllaDbDocStoreImpl.class);
+                .bind(ScyllaDbDoc.TYPE, ScyllaDbDocStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ScyllaDbDocResourceImpl.class);
@@ -92,7 +92,7 @@ public class StateModule extends AbstractModule {
                 .addBinding(StateDocStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(StateDoc.DOCUMENT_TYPE, StateDocStoreImpl.class);
+                .bind(StateDoc.TYPE, StateDocStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(StateDocResourceImpl.class);

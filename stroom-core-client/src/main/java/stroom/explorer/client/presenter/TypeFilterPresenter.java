@@ -22,10 +22,9 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -55,7 +54,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -66,16 +64,16 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         DocumentTypeSelectionModel {
 
     private final Set<String> selected = new HashSet<>();
-    private List<ClientDocumentType> visibleTypes;
+    private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All / None";
-    static final ClientDocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new ClientDocumentType(
+    static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM,
             SELECT_ALL_OR_NONE_TEXT,
             SELECT_ALL_OR_NONE_TEXT,
             SvgImage.DOCUMENT_SELECT_ALL_OR_NONE);
 
-    private final CellTable<ClientDocumentType> cellTable;
+    private final CellTable<DocumentType> cellTable;
 
     private final TypeFilterSelectionEventManager typeFilterSelectionEventManager;
     private Consumer<Boolean> filterStateConsumer = null;
@@ -97,7 +95,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        MySingleSelectionModel<ClientDocumentType> selectionModel = new MySingleSelectionModel<>();
+        MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
         typeFilterSelectionEventManager = new TypeFilterSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
 
@@ -133,13 +131,13 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
                 .fire();
     }
 
-    public void execute(final ClientDocumentType documentType) {
+    public void execute(final DocumentType documentType) {
         if (documentType != null) {
             toggle(documentType);
         }
     }
 
-    public void setData(final List<ClientDocumentType> items) {
+    public void setData(final List<DocumentType> items) {
         cellTable.setRowData(0, items);
         cellTable.setRowCount(items.size());
     }
@@ -155,9 +153,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public void setDocumentTypes(final DocumentTypes documentTypes) {
         visibleTypes = documentTypes.getVisibleTypes()
                 .stream()
-                .map(documentType -> ClientDocumentTypeRegistry.get(documentType.getType()))
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(ClientDocumentType::getDisplayType))
+                .sorted(Comparator.comparing(DocumentType::getDisplayType))
                 .collect(Collectors.toList());
         selectAll();
         refreshView();
@@ -169,7 +165,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public Optional<Set<String>> getIncludedTypes() {
         if (visibleTypes != null) {
             final Set<String> visibleTypeNames = visibleTypes.stream()
-                    .map(ClientDocumentType::getType)
+                    .map(DocumentType::getType)
                     .collect(Collectors.toSet());
             if (selected.containsAll(visibleTypeNames)) {
                 // All selected so return null to save the back end pointlessly filtering on them.
@@ -194,7 +190,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     private void selectAll() {
-        for (final ClientDocumentType documentType : visibleTypes) {
+        for (final DocumentType documentType : visibleTypes) {
             selected.add(documentType.getType());
         }
     }
@@ -205,7 +201,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     private void refreshView() {
         // We want to add in the 'All/none' DocumentType, at the top.
-        List<ClientDocumentType> selectableTypes = new ArrayList<>(visibleTypes);
+        List<DocumentType> selectableTypes = new ArrayList<>(visibleTypes);
         selectableTypes.add(0, SELECT_ALL_OR_NONE_DOCUMENT_TYPE);
 
         // To refresh the view we need to set the row data again.
@@ -221,7 +217,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         }
     }
 
-    private void toggle(final ClientDocumentType type) {
+    private void toggle(final DocumentType type) {
         if (type.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
             toggleSelectAll();
         } else {
@@ -244,7 +240,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     @Override
-    public TickBoxState getState(final ClientDocumentType type) {
+    public TickBoxState getState(final DocumentType type) {
         if (type.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
             if (selected.size() == 0) {
                 return TickBoxState.UNTICK;
@@ -259,10 +255,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         return TickBoxState.UNTICK;
     }
 
-    private Column<ClientDocumentType, ClientDocumentType> getTickBoxColumn() {
-        return new Column<ClientDocumentType, ClientDocumentType>(new DocumentTypeCell(this)) {
+    private Column<DocumentType, DocumentType> getTickBoxColumn() {
+        return new Column<DocumentType, DocumentType>(new DocumentTypeCell(this)) {
             @Override
-            public ClientDocumentType getValue(final ClientDocumentType documentType) {
+            public DocumentType getValue(final DocumentType documentType) {
                 return documentType;
             }
         };
@@ -281,24 +277,24 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     // --------------------------------------------------------------------------------
 
 
-    private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<ClientDocumentType> {
+    private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {
 
-        public TypeFilterSelectionEventManager(final AbstractHasData<ClientDocumentType> cellTable) {
+        public TypeFilterSelectionEventManager(final AbstractHasData<DocumentType> cellTable) {
             super(cellTable);
         }
 
         @Override
-        protected void onToggle(final ClientDocumentType item) {
+        protected void onToggle(final DocumentType item) {
             execute(item);
         }
 
         @Override
-        protected void onClose(final CellPreviewEvent<ClientDocumentType> e) {
+        protected void onClose(final CellPreviewEvent<DocumentType> e) {
             escape();
         }
 
         @Override
-        protected void onSelectAll(final CellPreviewEvent<ClientDocumentType> e) {
+        protected void onSelectAll(final CellPreviewEvent<DocumentType> e) {
             toggleSelectAll();
             refreshView();
             DataSelectionEvent.fire(

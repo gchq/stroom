@@ -55,7 +55,7 @@ class XmlSchemaResourceImpl implements XmlSchemaResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(XmlSchemaDoc.DOCUMENT_TYPE)
+                .type(XmlSchemaDoc.TYPE)
                 .build();
     }
 }

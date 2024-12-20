@@ -41,7 +41,7 @@ import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(
-        type = ScyllaDbDoc.DOCUMENT_TYPE,
+        type = ScyllaDbDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class ScyllaDbDocCacheImpl implements ScyllaDbDocCache, Clearable, EntityEvent.Handler {
 

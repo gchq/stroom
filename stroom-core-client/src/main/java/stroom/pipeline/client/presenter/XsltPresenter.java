@@ -103,7 +103,7 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
 
     @Override
     public String getType() {
-        return XsltDoc.DOCUMENT_TYPE;
+        return XsltDoc.TYPE;
     }
 
     @Override

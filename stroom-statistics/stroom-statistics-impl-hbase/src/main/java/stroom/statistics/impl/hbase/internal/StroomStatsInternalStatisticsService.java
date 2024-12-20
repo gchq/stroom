@@ -69,7 +69,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         final DocRef kafkaConfigDocRef = new DocRef(
-                KafkaConfigDoc.DOCUMENT_TYPE,
+                KafkaConfigDoc.TYPE,
                 internalStatisticsConfig.getKafkaConfigUuid());
 
         try (SharedKafkaProducer sharedKafkaProducer =

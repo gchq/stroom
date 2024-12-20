@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -40,11 +38,6 @@ import java.util.Set;
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            ElasticIndexDoc.DOCUMENT_TYPE,
-            "Elastic Index",
-            ElasticIndexDoc.ICON);
     private final Store<ElasticIndexDoc> store;
     private final ElasticIndexService elasticIndexService;
 
@@ -53,7 +46,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
             final StoreFactory storeFactory,
             final ElasticIndexService elasticIndexService,
             final ElasticIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDoc.class);
+        this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.TYPE, ElasticIndexDoc.class);
         this.elasticIndexService = elasticIndexService;
     }
 
@@ -93,11 +86,6 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -179,7 +167,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public String getType() {
-        return ElasticIndexDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

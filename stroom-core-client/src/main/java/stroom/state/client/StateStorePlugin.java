@@ -22,17 +22,13 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.state.client.presenter.StateStorePresenter;
 import stroom.state.shared.StateDoc;
 import stroom.state.shared.StateDocResource;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -47,11 +43,6 @@ import javax.inject.Singleton;
 public class StateStorePlugin extends DocumentPlugin<StateDoc> {
 
     private static final StateDocResource STATE_STORE_RESOURCE = GWT.create(StateDocResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.INDEXING,
-            StateDoc.DOCUMENT_TYPE,
-            "State Store",
-            SvgImage.DOCUMENT_STATE_STORE);
 
     private final Provider<StateStorePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -68,8 +59,6 @@ public class StateStorePlugin extends DocumentPlugin<StateDoc> {
 
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
@@ -108,7 +97,7 @@ public class StateStorePlugin extends DocumentPlugin<StateDoc> {
 
     @Override
     public String getType() {
-        return StateDoc.DOCUMENT_TYPE;
+        return StateDoc.TYPE;
     }
 
     @Override

@@ -19,6 +19,8 @@ package stroom.statistics.impl.sql.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -36,17 +38,17 @@ import java.util.Set;
 
 @Description(
         "Defines a logical statistic store used to hold statistical data of a particular type and " +
-                "aggregation window.\n" +
-                "Statistics in Stroom is a way to capture counts or values from events and record how they change " +
-                "over time, with the counts/values aggregated (sum/mean) across time windows.\n" +
-                "\n" +
-                "The Statistic Store Document configures the type of the statistic (Count or Value), the tags " +
-                "that are used to qualify a statistic event and the size of the aggregation windows.\n" +
-                "It also supports the definition of roll-ups that allow for aggregation over all values of a tag.\n" +
-                "Tags can be things like `user`, `node`, `feed`, etc. and can be used to filter data when " +
-                "querying the statistic store in a Dashboard/Query.\n" +
-                "\n" +
-                "It is used by the {{< pipe-elm \"StatisticsFilter\" >}} pipeline element."
+        "aggregation window.\n" +
+        "Statistics in Stroom is a way to capture counts or values from events and record how they change " +
+        "over time, with the counts/values aggregated (sum/mean) across time windows.\n" +
+        "\n" +
+        "The Statistic Store Document configures the type of the statistic (Count or Value), the tags " +
+        "that are used to qualify a statistic event and the size of the aggregation windows.\n" +
+        "It also supports the definition of roll-ups that allow for aggregation over all values of a tag.\n" +
+        "Tags can be things like `user`, `node`, `feed`, etc. and can be used to filter data when " +
+        "querying the statistic store in a Dashboard/Query.\n" +
+        "\n" +
+        "It is used by the {{< pipe-elm \"StatisticsFilter\" >}} pipeline element."
 )
 @JsonPropertyOrder({
         "type",
@@ -66,8 +68,12 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class StatisticStoreDoc extends Doc implements StatisticStore {
 
-    public static final String DOCUMENT_TYPE = "StatisticStore";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_STATISTIC_STORE;
+    public static final String TYPE = "StatisticStore";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            TYPE,
+            "Statistic Store",
+            SvgImage.DOCUMENT_STATISTIC_STORE);
 
     // IndexFields names
     public static final String FIELD_NAME_DATE_TIME = "Date Time";
@@ -134,7 +140,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -143,7 +149,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -223,7 +229,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
         if (config == null) {
             throw new RuntimeException("isRollUpCombinationSupported called with non-empty list but data source " +
-                    "has no statistic fields or custom roll up masks");
+                                       "has no statistic fields or custom roll up masks");
         }
 
         return config.isRollUpCombinationSupported(rolledUpFieldNames);
@@ -284,11 +290,11 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         }
         final StatisticStoreDoc that = (StatisticStoreDoc) o;
         return Objects.equals(description, that.description) &&
-                statisticType == that.statisticType &&
-                rollUpType == that.rollUpType &&
-                Objects.equals(precision, that.precision) &&
-                Objects.equals(enabled, that.enabled) &&
-                Objects.equals(config, that.config);
+               statisticType == that.statisticType &&
+               rollUpType == that.rollUpType &&
+               Objects.equals(precision, that.precision) &&
+               Objects.equals(enabled, that.enabled) &&
+               Objects.equals(config, that.config);
     }
 
     @Override

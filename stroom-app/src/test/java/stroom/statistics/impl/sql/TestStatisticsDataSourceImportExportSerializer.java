@@ -72,7 +72,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
      */
     @Test
     void testStatisticsDataSource() {
-        final ExplorerNode statNode = explorerService.create(StatisticStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
+        final ExplorerNode statNode = explorerService.create(StatisticStoreDoc.TYPE, "StatName1", null, null);
         final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef());
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);

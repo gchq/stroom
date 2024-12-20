@@ -21,17 +21,13 @@ import stroom.core.client.ContentManager;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -49,11 +45,6 @@ import javax.inject.Singleton;
 public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
 
     private static final ReceiveDataRuleSetResource RULES_RESOURCE = GWT.create(ReceiveDataRuleSetResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            ReceiveDataRules.DOCUMENT_TYPE,
-            "Rule Set",
-            SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
 
     private final Provider<RuleSetPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -68,8 +59,6 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
@@ -108,7 +97,7 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
 
     @Override
     public String getType() {
-        return ReceiveDataRules.DOCUMENT_TYPE;
+        return ReceiveDataRules.TYPE;
     }
 
     @Override

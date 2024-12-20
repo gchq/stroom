@@ -471,7 +471,7 @@ public class QueryPresenter
 
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
-        chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);
         chooser.show(pipeline -> {
             if (pipeline != null) {

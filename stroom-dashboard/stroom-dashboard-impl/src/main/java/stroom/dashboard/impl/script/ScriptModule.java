@@ -44,7 +44,7 @@ public class ScriptModule extends AbstractModule {
                 .addBinding(ScriptStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ScriptDoc.DOCUMENT_TYPE, ScriptStoreImpl.class);
+                .bind(ScriptDoc.TYPE, ScriptStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ScriptResourceImpl.class);

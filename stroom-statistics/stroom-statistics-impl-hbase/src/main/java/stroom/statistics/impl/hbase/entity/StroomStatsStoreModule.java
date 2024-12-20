@@ -40,7 +40,7 @@ public class StroomStatsStoreModule extends AbstractModule {
                 .addBinding(StroomStatsStoreStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreStoreImpl.class);
+                .bind(StroomStatsStoreDoc.TYPE, StroomStatsStoreStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(StatsStoreResourceImpl.class);

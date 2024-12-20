@@ -57,7 +57,7 @@ class StatisticResourceImpl implements StatisticResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(StatisticStoreDoc.DOCUMENT_TYPE)
+                .type(StatisticStoreDoc.TYPE)
                 .build();
     }
 }

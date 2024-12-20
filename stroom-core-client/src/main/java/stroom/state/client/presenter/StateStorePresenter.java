@@ -72,7 +72,7 @@ public class StateStorePresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     @Override
     public String getType() {
-        return StateDoc.DOCUMENT_TYPE;
+        return StateDoc.TYPE;
     }
 
     @Override

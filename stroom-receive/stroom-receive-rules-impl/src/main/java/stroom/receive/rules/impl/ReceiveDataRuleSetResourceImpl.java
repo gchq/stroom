@@ -64,7 +64,7 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(ReceiveDataRules.DOCUMENT_TYPE)
+                .type(ReceiveDataRules.TYPE)
                 .build();
     }
 

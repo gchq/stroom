@@ -51,7 +51,7 @@ public class BasicEmbeddedQuerySettingsPresenter
         this.querySelectionPresenter = querySelectionPresenter;
 
         view.setQuerySelectionView(querySelectionPresenter.getView());
-        querySelectionPresenter.setIncludedTypes(QueryDoc.DOCUMENT_TYPE);
+        querySelectionPresenter.setIncludedTypes(QueryDoc.TYPE);
         querySelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
     }
 

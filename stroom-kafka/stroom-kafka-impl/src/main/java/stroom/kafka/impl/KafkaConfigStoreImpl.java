@@ -22,8 +22,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.kafka.shared.KafkaConfigDoc;
@@ -40,11 +38,6 @@ import java.util.Set;
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            KafkaConfigDoc.DOCUMENT_TYPE,
-            "Kafka Configuration",
-            KafkaConfigDoc.ICON);
     private final Store<KafkaConfigDoc> store;
     private final Provider<KafkaConfig> kafkaConfigProvider;
 
@@ -53,7 +46,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
                          final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
         this.kafkaConfigProvider = kafkaConfigProvider;
-        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigDoc.class);
+        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.TYPE, KafkaConfigDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -110,11 +103,6 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -192,7 +180,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public String getType() {
-        return KafkaConfigDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

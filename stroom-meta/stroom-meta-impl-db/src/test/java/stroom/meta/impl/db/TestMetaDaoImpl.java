@@ -114,13 +114,13 @@ class TestMetaDaoImpl {
     private static final String REF1_FEED_NAME = "REF1";
 
     private static final DocRef TEST1_FEED =
-            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST1_FEED_NAME);
+            new DocRef(FeedDoc.TYPE, UUID.randomUUID().toString(), TEST1_FEED_NAME);
     private static final DocRef TEST2_FEED =
-            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST2_FEED_NAME);
+            new DocRef(FeedDoc.TYPE, UUID.randomUUID().toString(), TEST2_FEED_NAME);
     private static final DocRef TEST3_FEED =
-            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST3_FEED_NAME);
+            new DocRef(FeedDoc.TYPE, UUID.randomUUID().toString(), TEST3_FEED_NAME);
     private static final DocRef REF1_FEED =
-            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), REF1_FEED_NAME);
+            new DocRef(FeedDoc.TYPE, UUID.randomUUID().toString(), REF1_FEED_NAME);
 
 
     @Inject

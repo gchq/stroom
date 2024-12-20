@@ -87,7 +87,7 @@ public class Dictionaries {
                             .builder()
                             .type(QueryHelpType.DICTIONARY)
                             .id(DICTIONARY_ID + "." + docRef.getUuid())
-                            .documentType(DictionaryDoc.DOCUMENT_TYPE)
+                            .documentType(DictionaryDoc.TYPE)
                             .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))

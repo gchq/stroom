@@ -50,14 +50,14 @@ public class RefStreamDefinition {
     public RefStreamDefinition(final String pipelineUuid,
                                final String pipelineVersion,
                                final long streamId) {
-        this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId);
+        this(new DocRef(PipelineDoc.TYPE, pipelineUuid), pipelineVersion, streamId);
     }
 
     public RefStreamDefinition(final String pipelineUuid,
                                final String pipelineVersion,
                                final long streamId,
                                final long partIndex) {
-        this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId, partIndex);
+        this(new DocRef(PipelineDoc.TYPE, pipelineUuid), pipelineVersion, streamId, partIndex);
     }
 
     public RefStreamDefinition(final DocRef pipelineDocRef,

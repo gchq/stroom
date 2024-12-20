@@ -24,8 +24,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -44,11 +42,6 @@ import java.util.function.BiConsumer;
 @Singleton
 class ViewStoreImpl implements ViewStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            ViewDoc.DOCUMENT_TYPE,
-            ViewDoc.DOCUMENT_TYPE,
-            ViewDoc.ICON);
     private final Store<ViewDoc> store;
     private final SecurityContext securityContext;
 
@@ -56,7 +49,7 @@ class ViewStoreImpl implements ViewStore {
     ViewStoreImpl(final StoreFactory storeFactory,
                   final ViewSerialiser serialiser,
                   final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ViewDoc.DOCUMENT_TYPE, ViewDoc.class);
+        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc.class);
         this.securityContext = securityContext;
     }
 
@@ -106,11 +99,6 @@ class ViewStoreImpl implements ViewStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -199,7 +187,7 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public String getType() {
-        return ViewDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

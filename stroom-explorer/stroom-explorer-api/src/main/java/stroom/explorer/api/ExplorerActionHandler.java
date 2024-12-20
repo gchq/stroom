@@ -30,8 +30,7 @@ import java.util.Set;
  */
 // TODO could move HasFindDocsByName/HasFindDocsByContent into DocumentActionHandler
 //  as they are not specific to docs in the explorer
-public interface ExplorerActionHandler
-        extends HasDocumentType, HasDependencies, HasFindDocsByName {
+public interface ExplorerActionHandler extends HasDependencies, HasFindDocsByName {
 
     /**
      * Called to create a new item in this document store.
@@ -67,7 +66,7 @@ public interface ExplorerActionHandler
      * Change the name of an existing document identified by uuid, to the specified name.
      *
      * @param docRef The docRef of the document you want to rename.
-     * @param name The new name of the document.
+     * @param name   The new name of the document.
      * @return A doc ref for the renamed document.
      */
     DocRef renameDocument(DocRef docRef, String name);
@@ -86,4 +85,6 @@ public interface ExplorerActionHandler
      * @return The Audit information about the given DocRef.
      */
     DocRefInfo info(DocRef docRef);
+
+    String getType();
 }

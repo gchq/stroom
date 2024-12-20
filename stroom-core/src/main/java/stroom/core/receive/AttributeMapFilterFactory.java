@@ -59,7 +59,7 @@ public class AttributeMapFilterFactory {
 
             if (receiptPolicyUuid != null && receiptPolicyUuid.length() > 0) {
                 attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
-                        new DocRef(ReceiveDataRules.DOCUMENT_TYPE, receiptPolicyUuid));
+                        new DocRef(ReceiveDataRules.TYPE, receiptPolicyUuid));
             } else {
                 attributeMapFilter = feedStatusAttributeMapFilter;
             }

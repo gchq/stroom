@@ -22,8 +22,6 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -49,11 +47,6 @@ public class StateDocStoreImpl implements StateDocStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateDocStoreImpl.class);
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            StateDoc.DOCUMENT_TYPE,
-            "State Store",
-            StateDoc.ICON);
     private final Store<StateDoc> store;
     private final Provider<CqlSessionCache> cqlSessionCacheProvider;
     private final SecurityContext securityContext;
@@ -64,7 +57,7 @@ public class StateDocStoreImpl implements StateDocStore {
             final StateDocSerialiser serialiser,
             final Provider<CqlSessionCache> cqlSessionCacheProvider,
             final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, StateDoc.DOCUMENT_TYPE, StateDoc.class);
+        this.store = storeFactory.createStore(serialiser, StateDoc.TYPE, StateDoc.class);
         this.cqlSessionCacheProvider = cqlSessionCacheProvider;
         this.securityContext = securityContext;
     }
@@ -216,11 +209,6 @@ public class StateDocStoreImpl implements StateDocStore {
         return store.info(docRef);
     }
 
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
-    }
-
     ////////////////////////////////////////////////////////////////////////
     // END OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
@@ -297,7 +285,7 @@ public class StateDocStoreImpl implements StateDocStore {
 
     @Override
     public String getType() {
-        return StateDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

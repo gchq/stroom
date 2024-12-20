@@ -53,7 +53,7 @@ class DuplicateCheckService {
         String nodeName = null;
         final DocRef docRef = DocRef
                 .builder()
-                .type(AnalyticRuleDoc.DOCUMENT_TYPE)
+                .type(AnalyticRuleDoc.TYPE)
                 .uuid(analyticUuid)
                 .build();
         final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);

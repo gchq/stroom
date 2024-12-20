@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.XsltDoc;
@@ -40,17 +38,12 @@ import java.util.Set;
 @Singleton
 class XsltStoreImpl implements XsltStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.TRANSFORMATION,
-            XsltDoc.DOCUMENT_TYPE,
-            "XSL Translation",
-            XsltDoc.ICON);
     private final Store<XsltDoc> store;
 
     @Inject
     XsltStoreImpl(final StoreFactory storeFactory,
                   final XsltSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XsltDoc.DOCUMENT_TYPE, XsltDoc.class);
+        this.store = storeFactory.createStore(serialiser, XsltDoc.TYPE, XsltDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -89,11 +82,6 @@ class XsltStoreImpl implements XsltStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -176,7 +164,7 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public String getType() {
-        return XsltDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     ////////////////////////////////////////////////////////////////////////

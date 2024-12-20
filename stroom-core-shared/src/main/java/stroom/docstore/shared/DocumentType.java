@@ -15,9 +15,8 @@
  *
  */
 
-package stroom.document.client;
+package stroom.docstore.shared;
 
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class ClientDocumentType {
+public class DocumentType {
 
     @JsonProperty
     private final DocumentTypeGroup group;
@@ -38,10 +37,10 @@ public class ClientDocumentType {
     private final SvgImage icon;
 
     @JsonCreator
-    public ClientDocumentType(@JsonProperty("group") final DocumentTypeGroup group,
-                              @JsonProperty("type") final String type,
-                              @JsonProperty("displayType") final String displayType,
-                              @JsonProperty("icon") final SvgImage icon) {
+    public DocumentType(@JsonProperty("group") final DocumentTypeGroup group,
+                        @JsonProperty("type") final String type,
+                        @JsonProperty("displayType") final String displayType,
+                        @JsonProperty("icon") final SvgImage icon) {
         this.group = group;
         this.type = type;
         this.displayType = displayType;
@@ -73,7 +72,7 @@ public class ClientDocumentType {
             return false;
         }
 
-        final ClientDocumentType that = (ClientDocumentType) o;
+        final DocumentType that = (DocumentType) o;
 
         return type.equals(that.type);
     }

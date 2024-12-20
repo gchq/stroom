@@ -45,7 +45,7 @@ public class VisualisationModule extends AbstractModule {
                 .addBinding(VisualisationStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(VisualisationDoc.DOCUMENT_TYPE, VisualisationStoreImpl.class);
+                .bind(VisualisationDoc.TYPE, VisualisationStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(VisualisationResourceImpl.class);

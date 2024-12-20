@@ -252,7 +252,7 @@ public final class StoreCreationTool {
 
     private DocRef createFeed(final String feedName) {
         ExplorerNode feedNode;
-        feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        feedNode = explorerService.create(FeedDoc.TYPE,
                 feedName,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
@@ -266,7 +266,7 @@ public final class StoreCreationTool {
 
     private DocRef createTextConverter(final String name) {
         ExplorerNode textConverterNode;
-        textConverterNode = explorerService.create(TextConverterDoc.DOCUMENT_TYPE,
+        textConverterNode = explorerService.create(TextConverterDoc.TYPE,
                 name,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
@@ -280,7 +280,7 @@ public final class StoreCreationTool {
 
     private DocRef createXslt(final String name) {
         ExplorerNode xsltNode;
-        xsltNode = explorerService.create(XsltDoc.DOCUMENT_TYPE,
+        xsltNode = explorerService.create(XsltDoc.TYPE,
                 name,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
@@ -294,7 +294,7 @@ public final class StoreCreationTool {
 
     private DocRef createPipeline(final String name) {
         ExplorerNode pipelineNode;
-        pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        pipelineNode = explorerService.create(PipelineDoc.TYPE,
                 name,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
@@ -316,7 +316,7 @@ public final class StoreCreationTool {
 //        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
-                new DocRef(PipelineDoc.DOCUMENT_TYPE, REFERENCE_DATA_PIPELINE_UUID),
+                new DocRef(PipelineDoc.TYPE, REFERENCE_DATA_PIPELINE_UUID),
                 feedName);
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
@@ -552,7 +552,7 @@ public final class StoreCreationTool {
 //        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
-                new DocRef(PipelineDoc.DOCUMENT_TYPE, CONTEXT_DATA_PIPELINE_UUID),
+                new DocRef(PipelineDoc.TYPE, CONTEXT_DATA_PIPELINE_UUID),
                 feedName + "_CONTEXT");
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
@@ -576,7 +576,7 @@ public final class StoreCreationTool {
     private DocRef getReferenceLoaderPipeline() {
         // Setup the pipeline.
 //        return getPipeline("ReferenceLoader", StreamUtil.fileToString(referenceLoaderPipeline));
-        return getPipeline(new DocRef(PipelineDoc.DOCUMENT_TYPE, REFERENCE_LOADER_PIPELINE_UUID))
+        return getPipeline(new DocRef(PipelineDoc.TYPE, REFERENCE_LOADER_PIPELINE_UUID))
                 .orElseThrow();
     }
 
@@ -672,7 +672,7 @@ public final class StoreCreationTool {
 //        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
-                new DocRef(PipelineDoc.DOCUMENT_TYPE, INDEXING_PIPELINE_UUID),
+                new DocRef(PipelineDoc.TYPE, INDEXING_PIPELINE_UUID),
                 indexRef.getName());
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
@@ -831,7 +831,7 @@ public final class StoreCreationTool {
         final PipelineDoc sourcePipeline = pipelineStore.readDocument(sourcePipelineDocRef);
 
         final ExplorerNode newNode = explorerService.create(
-                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.TYPE,
                 newName,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
@@ -922,7 +922,7 @@ public final class StoreCreationTool {
 //        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
-                new DocRef(PipelineDoc.DOCUMENT_TYPE, SEARCH_EXTRACTION_PIPELINE_UUID),
+                new DocRef(PipelineDoc.TYPE, SEARCH_EXTRACTION_PIPELINE_UUID),
                 name);
         final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
@@ -1038,7 +1038,7 @@ public final class StoreCreationTool {
                              final boolean isReference) {
         LOGGER.info("Creating feed {} in {} with type {} encoding {}");
         ExplorerNode feedNode;
-        feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE, feedName,
+        feedNode = explorerService.create(FeedDoc.TYPE, feedName,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         final DocRef feedDocRef = feedNode != null

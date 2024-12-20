@@ -92,7 +92,7 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
 
     @Override
     public String getType() {
-        return StatisticStoreDoc.DOCUMENT_TYPE;
+        return StatisticStoreDoc.TYPE;
     }
 
     @Override

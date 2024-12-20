@@ -25,10 +25,9 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
@@ -315,10 +314,10 @@ public class DocumentUserPermissionsListPresenter
                 return SafeHtmlUtils.fromTrustedString("ALL");
             } else {
                 //noinspection SimplifyStreamApiCallChains // Cos GWT
-                final List<ClientDocumentType> typeIcons = ClientDocumentTypeRegistry.getTypes()
+                final List<DocumentType> typeIcons = DocumentTypeRegistry.getTypes()
                         .stream()
                         .filter(docType -> createTypes.contains(docType.getType()))
-                        .sorted(Comparator.comparing(ClientDocumentType::getType))
+                        .sorted(Comparator.comparing(DocumentType::getType))
                         .collect(Collectors.toList());
 
                 return HtmlBuilder.builder()

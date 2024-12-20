@@ -69,7 +69,7 @@ public class V07_00_00_006__XmlSchema extends BaseJavaMigration {
                     final String systemId = resultSet.getString(12);
 
                     final XmlSchemaDoc document = new XmlSchemaDoc();
-                    document.setType(XmlSchemaDoc.DOCUMENT_TYPE);
+                    document.setType(XmlSchemaDoc.TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -96,7 +96,7 @@ public class V07_00_00_006__XmlSchema extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, XmlSchemaDoc.DOCUMENT_TYPE);
+                            ps.setString(1, XmlSchemaDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

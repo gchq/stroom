@@ -20,6 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
@@ -33,18 +35,18 @@ import java.util.Objects;
 
 @Description(
         "A Text Converter Document defines the specification for splitting text data into records/fields using " +
-                "[Data Splitter]({{< relref \"docs/user-guide/data-splitter\" >}}) or for wrapping fragment XML " +
-                "with a {{< pipe-elm \"XMLFragmentParser\" >}} pipeline element.\n" +
-                "The content of the Document is either XML in the `data-splitter:3` namespace or a fragment parser " +
-                "specification (see " +
-                "[Pipeline Recipies]" +
-                "({{< relref \"docs/user-guide/pipelines/recipies#xml-fragments-to-normalised-xml\" >}})).\n" +
-                "\n" +
-                "This Document is used by the following pipeline elements:\n" +
-                "\n" +
-                "* {{< pipe-elm \"DSParser\" >}}\n" +
-                "* {{< pipe-elm \"XMLFragmentParser\" >}}\n" +
-                "* {{< pipe-elm \"CombinedParser\" >}}"
+        "[Data Splitter]({{< relref \"docs/user-guide/data-splitter\" >}}) or for wrapping fragment XML " +
+        "with a {{< pipe-elm \"XMLFragmentParser\" >}} pipeline element.\n" +
+        "The content of the Document is either XML in the `data-splitter:3` namespace or a fragment parser " +
+        "specification (see " +
+        "[Pipeline Recipies]" +
+        "({{< relref \"docs/user-guide/pipelines/recipies#xml-fragments-to-normalised-xml\" >}})).\n" +
+        "\n" +
+        "This Document is used by the following pipeline elements:\n" +
+        "\n" +
+        "* {{< pipe-elm \"DSParser\" >}}\n" +
+        "* {{< pipe-elm \"XMLFragmentParser\" >}}\n" +
+        "* {{< pipe-elm \"CombinedParser\" >}}"
 )
 @JsonPropertyOrder({
         "type",
@@ -61,8 +63,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class TextConverterDoc extends Doc implements HasData {
 
-    public static final String DOCUMENT_TYPE = "TextConverter";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_TEXT_CONVERTER;
+    public static final String TYPE = "TextConverter";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            TYPE,
+            "Text Converter",
+            SvgImage.DOCUMENT_TEXT_CONVERTER);
 
     @JsonProperty
     private String description;
@@ -101,7 +107,7 @@ public class TextConverterDoc extends Doc implements HasData {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -110,7 +116,7 @@ public class TextConverterDoc extends Doc implements HasData {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -152,8 +158,8 @@ public class TextConverterDoc extends Doc implements HasData {
         }
         final TextConverterDoc that = (TextConverterDoc) o;
         return Objects.equals(description, that.description) &&
-                Objects.equals(data, that.data) &&
-                Objects.equals(converterType, that.converterType);
+               Objects.equals(data, that.data) &&
+               Objects.equals(converterType, that.converterType);
     }
 
     @Override

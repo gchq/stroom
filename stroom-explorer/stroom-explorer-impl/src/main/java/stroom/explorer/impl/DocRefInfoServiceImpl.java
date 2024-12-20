@@ -162,7 +162,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         }
 
         // Allow decoration by name alone if feed (special case).
-        if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
+        if (FeedDoc.TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
             final List<DocRef> list = findByName(docRef.getType(), docRef.getName(), false);
             if (!NullSafe.isEmptyCollection(list)) {
                 return list.getFirst();

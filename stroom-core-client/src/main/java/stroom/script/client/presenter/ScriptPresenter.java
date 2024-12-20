@@ -117,7 +117,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
 
     @Override
     public String getType() {
-        return ScriptDoc.DOCUMENT_TYPE;
+        return ScriptDoc.TYPE;
     }
 
     @Override

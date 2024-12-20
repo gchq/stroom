@@ -38,7 +38,7 @@ public class DocumentationHandlerModule extends AbstractModule {
                 .addBinding(DocumentationStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(DocumentationDoc.DOCUMENT_TYPE, DocumentationStoreImpl.class);
+                .bind(DocumentationDoc.TYPE, DocumentationStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DocumentationResourceImpl.class);

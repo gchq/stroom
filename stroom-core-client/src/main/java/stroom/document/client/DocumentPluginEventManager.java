@@ -28,6 +28,9 @@ import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -62,8 +65,6 @@ import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFavouriteResource;
@@ -463,7 +464,7 @@ public class DocumentPluginEventManager extends Plugin {
                     final ExplorerNodePermissions permissions = documentPermissions.get(explorerNode);
                     final String type = event.getDocumentType();
                     if (permissions.hasCreatePermission(type)) {
-                        final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(type);
+                        final DocumentType documentType = DocumentTypeRegistry.get(type);
                         if (documentType != null) {
                             fireShowCreateDocumentDialogEvent(documentType, explorerNode);
                         }
@@ -1015,7 +1016,7 @@ public class DocumentPluginEventManager extends Plugin {
         return children;
     }
 
-    private void fireShowCreateDocumentDialogEvent(final ClientDocumentType documentType,
+    private void fireShowCreateDocumentDialogEvent(final DocumentType documentType,
                                                    final ExplorerNode explorerNode) {
         final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
             final DocRef docRef = newDocNode.getDocRef();
@@ -1039,14 +1040,13 @@ public class DocumentPluginEventManager extends Plugin {
     private IconMenuItem createIconMenuItemFromDocumentType(
             final DocumentType documentType,
             final ExplorerNode explorerNode) {
-        final ClientDocumentType clientDocumentType = ClientDocumentTypeRegistry.get(documentType.getType());
         return new IconMenuItem.Builder()
                 .priority(1)
-                .icon(clientDocumentType.getIcon())
-                .text(clientDocumentType.getDisplayType())
+                .icon(documentType.getIcon())
+                .text(documentType.getDisplayType())
                 .command(() ->
-                        fireShowCreateDocumentDialogEvent(clientDocumentType, explorerNode))
-                .action(KeyBinding.getCreateActionByType(clientDocumentType.getType()).orElse(null))
+                        fireShowCreateDocumentDialogEvent(documentType, explorerNode))
+                .action(KeyBinding.getCreateActionByType(documentType.getType()).orElse(null))
                 .build();
     }
 
@@ -1076,7 +1076,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Feeds are a special case so can't be copied or renamed, see https://github.com/gchq/stroom/issues/3048
         final boolean hasFeed = readableItems.stream()
-                .anyMatch(item -> FeedDoc.DOCUMENT_TYPE.equals(item.getType()));
+                .anyMatch(item -> FeedDoc.TYPE.equals(item.getType()));
 
         // Feeds are a special case so can't be renamed, see https://github.com/gchq/stroom/issues/2912
         final boolean isRenameEnabled = singleSelection

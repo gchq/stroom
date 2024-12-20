@@ -137,6 +137,6 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
     @Override
     public String getType() {
-        return LuceneIndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.TYPE;
     }
 }

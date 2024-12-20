@@ -172,7 +172,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             description = "The feed that output stream should be written to. If not specified the feed the input " +
                     "stream belongs to will be used.",
             displayPriority = 2)
-    @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = FeedDoc.TYPE)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
     }

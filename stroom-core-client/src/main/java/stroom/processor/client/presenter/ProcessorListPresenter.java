@@ -591,9 +591,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     public void read(final DocRef docRef, final Object document, final boolean readOnly) {
         if (docRef == null) {
             expression = ProcessorFilterExpressionUtil.createBasicExpression();
-        } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        } else if (PipelineDoc.TYPE.equals(docRef.getType())) {
             expression = ProcessorFilterExpressionUtil.createPipelineExpression(docRef);
-        } else if (AnalyticRuleDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        } else if (AnalyticRuleDoc.TYPE.equals(docRef.getType())) {
             expression = ProcessorFilterExpressionUtil.createAnalyticRuleExpression(docRef);
         } else {
             expression = ProcessorFilterExpressionUtil.createFolderExpression(docRef);

@@ -61,7 +61,7 @@ public class FeedModule extends AbstractModule {
                 .addBinding(FeedDocCache.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(FeedDoc.DOCUMENT_TYPE, FeedStoreImpl.class);
+                .bind(FeedDoc.TYPE, FeedStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

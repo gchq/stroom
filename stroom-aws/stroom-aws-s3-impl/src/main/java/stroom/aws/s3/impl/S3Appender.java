@@ -155,7 +155,7 @@ public class S3Appender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "The S3 bucket config to use.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = S3ConfigDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = S3ConfigDoc.TYPE)
     public void setS3Config(final DocRef s3ConfigRef) {
         this.s3ConfigRef = s3ConfigRef;
     }

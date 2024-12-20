@@ -235,7 +235,7 @@ public class ReferenceData {
                     pipelineReference, lookupIdentifier);
 
             // Try the state store if it is present.
-            if (StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType())) {
+            if (StateDoc.TYPE.equals(pipelineReference.getPipeline().getType())) {
                 // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
                 if (stateLookup != null) {
                     stateLookup.lookup(lookupIdentifier, referenceDataResult);

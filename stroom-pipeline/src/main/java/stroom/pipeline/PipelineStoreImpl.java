@@ -23,8 +23,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.PipelineDoc;
@@ -51,11 +49,6 @@ import java.util.function.BiConsumer;
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            PipelineDoc.DOCUMENT_TYPE,
-            PipelineDoc.DOCUMENT_TYPE,
-            PipelineDoc.ICON);
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
@@ -66,7 +59,7 @@ public class PipelineStoreImpl implements PipelineStore {
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
                              final Provider<ProcessorService> processorServiceProvider) {
         this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
+        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
     }
 
@@ -110,11 +103,6 @@ public class PipelineStoreImpl implements PipelineStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -233,7 +221,7 @@ public class PipelineStoreImpl implements PipelineStore {
     public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
         Set<DocRef> processorFilters = new HashSet<>();
 
-        if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        if (docRef != null && PipelineDoc.TYPE.equals(docRef.getType())) {
             ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
             List<DocRef> docRefs = filterResultPage.getValues().stream()
@@ -248,7 +236,7 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public String getType() {
-        return PipelineDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     ////////////////////////////////////////////////////////////////////////

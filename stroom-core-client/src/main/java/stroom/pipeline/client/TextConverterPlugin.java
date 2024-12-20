@@ -22,17 +22,13 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -47,11 +43,6 @@ import javax.inject.Singleton;
 public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
 
     private static final TextConverterResource TEXT_CONVERTER_RESOURCE = GWT.create(TextConverterResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.TRANSFORMATION,
-            TextConverterDoc.DOCUMENT_TYPE,
-            "Text Converter",
-            SvgImage.DOCUMENT_TEXT_CONVERTER);
 
     private final Provider<TextConverterPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -66,8 +57,6 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
@@ -106,7 +95,7 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
 
     @Override
     public String getType() {
-        return TextConverterDoc.DOCUMENT_TYPE;
+        return TextConverterDoc.TYPE;
     }
 
     @Override

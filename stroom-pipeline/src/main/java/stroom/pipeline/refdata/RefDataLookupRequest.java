@@ -157,10 +157,10 @@ public class RefDataLookupRequest {
                     '}';
         }
 
-        @ValidationMethod(message = "loaderPipeline docRef type must be '" + PipelineDoc.DOCUMENT_TYPE + "'")
+        @ValidationMethod(message = "loaderPipeline docRef type must be '" + PipelineDoc.TYPE + "'")
         @JsonIgnore
         public boolean isCorrectLoaderType() {
-            return loaderPipeline != null && PipelineDoc.DOCUMENT_TYPE.equals(loaderPipeline.getType());
+            return loaderPipeline != null && PipelineDoc.TYPE.equals(loaderPipeline.getType());
         }
 
         @ValidationMethod(message = "loaderPipeline docRef must have a UUID")

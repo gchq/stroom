@@ -59,7 +59,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         this.scriptListPresenter = scriptListPresenter;
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
 
-        explorerDropDownTreePresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
+        explorerDropDownTreePresenter.setIncludedTypes(ScriptDoc.TYPE);
         explorerDropDownTreePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setView(scriptListPresenter.getView());

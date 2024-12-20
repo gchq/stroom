@@ -111,7 +111,7 @@ public class Visualisations {
                             .builder()
                             .type(QueryHelpType.VISUALISATION)
                             .id(VISUALISATION_ID + "." + docRef.getUuid())
-                            .documentType(VisualisationDoc.DOCUMENT_TYPE)
+                            .documentType(VisualisationDoc.TYPE)
                             .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))

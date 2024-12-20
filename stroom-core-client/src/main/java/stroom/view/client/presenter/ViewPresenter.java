@@ -72,7 +72,7 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
 
     @Override
     public String getType() {
-        return ViewDoc.DOCUMENT_TYPE;
+        return ViewDoc.TYPE;
     }
 
     @Override

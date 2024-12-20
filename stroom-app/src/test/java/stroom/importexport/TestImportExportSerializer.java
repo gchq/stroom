@@ -104,7 +104,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testExport() throws IOException {
-        final ExplorerNode testNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode testNode = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
@@ -185,7 +185,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.TYPE,
                 "TestPipeline",
                 folder,
                 null);
@@ -232,12 +232,12 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        final ExplorerNode parentPipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode parentPipelineNode = explorerService.create(PipelineDoc.TYPE,
                 "Parent",
                 folder,
                 null);
         final ExplorerNode childPipelineNode = explorerService.create(
-                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.TYPE,
                 "Child",
                 folder,
                 null);

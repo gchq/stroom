@@ -41,7 +41,7 @@ public class AnalyticRuleModule extends AbstractModule {
                 .addBinding(AnalyticRuleStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleStoreImpl.class);
+                .bind(AnalyticRuleDoc.TYPE, AnalyticRuleStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

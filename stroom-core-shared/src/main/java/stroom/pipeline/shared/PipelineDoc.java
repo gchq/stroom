@@ -19,6 +19,8 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.svg.shared.SvgImage;
 
@@ -34,19 +36,19 @@ import java.util.Objects;
  * This entity is used to persist pipeline configuration.
  */
 @Description("A Pipeline defines a chain of Pipeline elements that consumes from a source of data (a Stream of " +
-        "raw data or cooked events) then processes it according to the elements used in the chain.\n" +
-        "Pipelines can be linear or branching and support inheritance of other pipelines to allow re-use of common " +
-        "structural parts.\n\n" +
-        "The Pipeline Document defines the structure of the pipeline and the configuration of each of the elements " +
-        "in that pipeline.\n" +
-        "It also defines the filter(s) that will be used to control what data is passed through the pipeline and the " +
-        "priority of processing.\n" +
-        "The Pipeline Document can be used to view the data produced by the pipeline and to monitor its processing " +
-        "state and progress." +
-        "\n" +
-        "{{% see-also %}}" +
-        "[Pipelines]({{< relref \"docs/user-guide/pipelines\" >}})" +
-        "{{% /see-also %}}")
+             "raw data or cooked events) then processes it according to the elements used in the chain.\n" +
+             "Pipelines can be linear or branching and support inheritance of other pipelines to allow re-use of " +
+             "common structural parts.\n\n" +
+             "The Pipeline Document defines the structure of the pipeline and the configuration of each of the " +
+             "elements in that pipeline.\n" +
+             "It also defines the filter(s) that will be used to control what data is passed through the pipeline " +
+             "and the priority of processing.\n" +
+             "The Pipeline Document can be used to view the data produced by the pipeline and to monitor its " +
+             "processing state and progress." +
+             "\n" +
+             "{{% see-also %}}" +
+             "[Pipelines]({{< relref \"docs/user-guide/pipelines\" >}})" +
+             "{{% /see-also %}}")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -62,8 +64,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class PipelineDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "Pipeline";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_PIPELINE;
+    public static final String TYPE = "Pipeline";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_PIPELINE);
 
     @JsonProperty
     private String description;
@@ -97,7 +103,7 @@ public class PipelineDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -106,7 +112,7 @@ public class PipelineDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -146,8 +152,8 @@ public class PipelineDoc extends Doc {
         }
         final PipelineDoc that = (PipelineDoc) o;
         return Objects.equals(description, that.description) &&
-                Objects.equals(parentPipeline, that.parentPipeline) &&
-                Objects.equals(pipelineData, that.pipelineData);
+               Objects.equals(parentPipeline, that.parentPipeline) &&
+               Objects.equals(pipelineData, that.pipelineData);
     }
 
     @Override

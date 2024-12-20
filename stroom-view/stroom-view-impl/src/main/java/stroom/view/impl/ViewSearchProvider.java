@@ -229,6 +229,6 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public String getType() {
-        return ViewDoc.DOCUMENT_TYPE;
+        return ViewDoc.TYPE;
     }
 }

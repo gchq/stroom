@@ -122,7 +122,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         getView().setProperties(propertyListPresenter.getView());
         getView().setPipelineReferences(pipelineReferenceListPresenter.getView());
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Get a map of all available elements and properties.

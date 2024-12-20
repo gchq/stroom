@@ -156,7 +156,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         VisualisationDoc visualisationDoc;
 
         // Load visualisation.
-        final DocRef docRef = docResolver.resolveDocRef(VisualisationDoc.DOCUMENT_TYPE, visName);
+        final DocRef docRef = docResolver.resolveDocRef(VisualisationDoc.TYPE, visName);
         try {
             visualisationDoc = visualisationStore.readDocument(docRef);
             if (visualisationDoc == null) {

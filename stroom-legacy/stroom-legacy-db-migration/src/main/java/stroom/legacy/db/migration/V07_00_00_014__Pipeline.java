@@ -68,7 +68,7 @@ public class V07_00_00_014__Pipeline extends BaseJavaMigration {
                     final String dat = resultSet.getString(9);
 
                     final PipelineDoc document = new PipelineDoc();
-                    document.setType(PipelineDoc.DOCUMENT_TYPE);
+                    document.setType(PipelineDoc.TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -92,7 +92,7 @@ public class V07_00_00_014__Pipeline extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, PipelineDoc.DOCUMENT_TYPE);
+                            ps.setString(1, PipelineDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

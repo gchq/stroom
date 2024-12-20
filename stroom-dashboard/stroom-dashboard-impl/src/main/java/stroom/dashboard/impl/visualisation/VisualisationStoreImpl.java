@@ -24,8 +24,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -42,17 +40,12 @@ import java.util.function.BiConsumer;
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            VisualisationDoc.DOCUMENT_TYPE,
-            VisualisationDoc.DOCUMENT_TYPE,
-            VisualisationDoc.ICON);
     private final Store<VisualisationDoc> store;
 
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
                            final VisualisationSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, VisualisationDoc.DOCUMENT_TYPE, VisualisationDoc.class);
+        this.store = storeFactory.createStore(serialiser, VisualisationDoc.TYPE, VisualisationDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -91,11 +84,6 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -178,7 +166,7 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public String getType() {
-        return VisualisationDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

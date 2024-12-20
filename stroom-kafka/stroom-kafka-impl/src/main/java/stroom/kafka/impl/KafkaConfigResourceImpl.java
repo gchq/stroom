@@ -56,7 +56,7 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource, FetchWithUu
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(KafkaConfigDoc.DOCUMENT_TYPE)
+                .type(KafkaConfigDoc.TYPE)
                 .build();
     }
 

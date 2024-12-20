@@ -69,7 +69,7 @@ class SolrIndexResourceImpl implements SolrIndexResource, FetchWithUuid<SolrInde
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(SolrIndexDoc.DOCUMENT_TYPE)
+                .type(SolrIndexDoc.TYPE)
                 .build();
     }
 

@@ -42,7 +42,7 @@ import org.xml.sax.ErrorHandler;
 
 @Singleton
 @EntityEventHandler(
-        type = TextConverterDoc.DOCUMENT_TYPE,
+        type = TextConverterDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class ParserFactoryPoolImpl
         extends AbstractDocPool<TextConverterDoc, StoredParserFactory>

@@ -312,9 +312,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
         final String docType;
         if (ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-            docType = AnalyticRuleDoc.DOCUMENT_TYPE;
+            docType = AnalyticRuleDoc.TYPE;
         } else {
-            docType = PipelineDoc.DOCUMENT_TYPE;
+            docType = PipelineDoc.TYPE;
         }
         return new DocRef(docType, pipelineUuid, pipelineName);
     }

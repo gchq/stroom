@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -40,11 +38,6 @@ import java.util.Set;
 @Singleton
 public class ElasticClusterStoreImpl implements ElasticClusterStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            ElasticClusterDoc.DOCUMENT_TYPE,
-            "Elastic Cluster",
-            ElasticClusterDoc.ICON);
     private final Store<ElasticClusterDoc> store;
 
     @Inject
@@ -52,7 +45,7 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
             final StoreFactory storeFactory,
             final ElasticClusterSerialiser serialiser
     ) {
-        this.store = storeFactory.createStore(serialiser, ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterDoc.class);
+        this.store = storeFactory.createStore(serialiser, ElasticClusterDoc.TYPE, ElasticClusterDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -91,11 +84,6 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -173,7 +161,7 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
 
     @Override
     public String getType() {
-        return ElasticClusterDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

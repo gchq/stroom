@@ -48,7 +48,7 @@ public class AttributeMapFilterFactory {
         if (StringUtils.isNotBlank(receiveDataConfig.getReceiptPolicyUuid())) {
             LOGGER.info("Using data receipt policy to filter received data");
             attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
-                    new DocRef(ReceiveDataRules.DOCUMENT_TYPE, receiveDataConfig.getReceiptPolicyUuid()));
+                    new DocRef(ReceiveDataRules.TYPE, receiveDataConfig.getReceiptPolicyUuid()));
         } else if (StringUtils.isNotBlank(feedStatusConfig.getFeedStatusUrl())) {
             LOGGER.info("Using remote feed status service to filter received data");
             final RemoteFeedStatusService remoteFeedStatusService = remoteFeedStatusServiceProvider.get();

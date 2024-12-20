@@ -121,7 +121,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Check the user has read permissions on the pipeline.
         final DocRef pipelineDocRef = DocRef
                 .builder()
-                .type(PipelineDoc.DOCUMENT_TYPE)
+                .type(PipelineDoc.TYPE)
                 .uuid(processor.getPipelineUuid())
                 .build();
         if (!securityContext.hasDocumentPermission(pipelineDocRef, DocumentPermission.VIEW)) {
@@ -160,7 +160,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Check the user has read permissions on the pipeline.
         final DocRef pipelineDocRef = DocRef
                 .builder()
-                .type(PipelineDoc.DOCUMENT_TYPE)
+                .type(PipelineDoc.TYPE)
                 .uuid(processor.getPipelineUuid())
                 .build();
         if (!securityContext.hasDocumentPermission(pipelineDocRef, DocumentPermission.VIEW)) {
@@ -238,7 +238,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Check the user has update permissions on the pipeline.
         final DocRef pipelineDocRef = DocRef
                 .builder()
-                .type(PipelineDoc.DOCUMENT_TYPE)
+                .type(PipelineDoc.TYPE)
                 .uuid(processorFilter.getProcessor().getPipelineUuid())
                 .build();
         if (!securityContext.hasDocumentPermission(pipelineDocRef, DocumentPermission.EDIT)) {
@@ -420,9 +420,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     public Optional<String> getPipelineName(final ProcessorType processorType,
                                             final String uuid) {
         try {
-            String docType = PipelineDoc.DOCUMENT_TYPE;
+            String docType = PipelineDoc.TYPE;
             if (ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-                docType = AnalyticRuleDoc.DOCUMENT_TYPE;
+                docType = AnalyticRuleDoc.TYPE;
             }
 
             final DocRef pipelineDocRef = DocRef.builder()
@@ -444,7 +444,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             throw new IllegalArgumentException("Supplied pipeline reference cannot be null");
         }
 
-        if (!PipelineDoc.DOCUMENT_TYPE.equals(pipelineDocRef.getType())) {
+        if (!PipelineDoc.TYPE.equals(pipelineDocRef.getType())) {
             throw new IllegalArgumentException("Supplied pipeline reference cannot be of type " +
                                                pipelineDocRef.getType());
         }

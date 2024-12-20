@@ -71,7 +71,7 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(ElasticIndexDoc.DOCUMENT_TYPE)
+                .type(ElasticIndexDoc.TYPE)
                 .build();
     }
 

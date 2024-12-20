@@ -206,7 +206,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     public XsltDoc loadXsltDoc() {
 
         final DocFinder<XsltDoc> docFinder = new DocFinder<>(
-                XsltDoc.DOCUMENT_TYPE,
+                XsltDoc.TYPE,
                 pathCreator,
                 xsltStore,
                 docRefInfoService);
@@ -548,7 +548,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     @PipelineProperty(
             description = "A previously saved XSLT, used to modify the output via xsl:output attributes.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = XsltDoc.TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }

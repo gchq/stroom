@@ -76,7 +76,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
         return securityContext.asProcessingUserResult(() -> {
             // Get the index fields.
             final LuceneIndexDoc luceneIndexDoc = luceneIndexDocCache.get(
-                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                    new DocRef(LuceneIndexDoc.TYPE, indexShardKey.getIndexUuid()));
             if (luceneIndexDoc == null) {
                 throw new IndexException("Unable to find index with UUID: " + indexShardKey.getIndexUuid());
             }

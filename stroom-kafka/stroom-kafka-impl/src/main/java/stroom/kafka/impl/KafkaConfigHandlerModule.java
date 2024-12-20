@@ -20,7 +20,7 @@ public class KafkaConfigHandlerModule extends AbstractModule {
                 .addBinding(KafkaConfigStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
+                .bind(KafkaConfigDoc.TYPE, KafkaConfigStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(KafkaConfigResourceImpl.class);

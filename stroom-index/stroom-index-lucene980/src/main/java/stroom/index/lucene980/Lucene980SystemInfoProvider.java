@@ -153,7 +153,7 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
         } else {
             final LuceneIndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
                     .uuid(indexShard.getIndexUuid())
-                    .type(LuceneIndexDoc.DOCUMENT_TYPE)
+                    .type(LuceneIndexDoc.TYPE)
                     .build());
             Objects.requireNonNull(indexDoc);
 

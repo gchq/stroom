@@ -23,13 +23,10 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStorePresenter;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
@@ -39,7 +36,6 @@ import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StatsStoreResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -57,11 +53,6 @@ import javax.inject.Singleton;
 public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> {
 
     private static final StatsStoreResource STATS_STORE_RESOURCE = GWT.create(StatsStoreResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.INDEXING,
-            StroomStatsStoreDoc.DOCUMENT_TYPE,
-            "Stroom-Stats Store",
-            SvgImage.DOCUMENT_STROOM_STATS_STORE);
 
     private final Provider<StroomStatsStorePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -76,13 +67,11 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
     public String getType() {
-        return StroomStatsStoreDoc.DOCUMENT_TYPE;
+        return StroomStatsStoreDoc.TYPE;
     }
 
     @Override

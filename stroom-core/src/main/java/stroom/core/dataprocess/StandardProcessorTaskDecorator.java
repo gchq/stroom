@@ -20,6 +20,6 @@ public class StandardProcessorTaskDecorator implements ProcessorTaskDecorator {
 
     @Override
     public DocRef getPipeline() {
-        return new DocRef(PipelineDoc.DOCUMENT_TYPE, processorFilter.getPipelineUuid());
+        return new DocRef(PipelineDoc.TYPE, processorFilter.getPipelineUuid());
     }
 }

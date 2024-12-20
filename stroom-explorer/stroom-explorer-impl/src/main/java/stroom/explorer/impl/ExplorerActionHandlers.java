@@ -16,8 +16,9 @@
 
 package stroom.explorer.impl;
 
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 
 import jakarta.inject.Inject;
@@ -25,6 +26,7 @@ import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,10 +49,6 @@ class ExplorerActionHandlers {
 
     List<DocumentType> getTypes() {
         return getHandlers().documentTypes;
-    }
-
-    DocumentType getType(final String type) {
-        return getHandlers().allTypes.get(type);
     }
 
     ExplorerActionHandler getHandler(final String type) {
@@ -95,18 +93,16 @@ class ExplorerActionHandlers {
     private static class Handlers {
 
         private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();
-        private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
         private final List<DocumentType> documentTypes;
 
         Handlers(final Set<ExplorerActionHandler> explorerActionHandlers) {
+            final Map<String, DocumentType> allTypes = new HashMap<>();
+
             // Add external handlers.
             if (explorerActionHandlers != null) {
-                explorerActionHandlers.forEach(this::addExplorerActionHandler);
+                explorerActionHandlers.forEach(explorerActionHandler ->
+                        addExplorerActionHandler(explorerActionHandler, allTypes));
             }
-
-//            // Add internal handlers.
-//            final Set<ExplorerActionHandler> set = beanStore.getInstancesOfType(ExplorerActionHandler.class);
-//            set.forEach(this::addExplorerActionHandler);
 
             final List<DocumentType> list = allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))
@@ -115,19 +111,24 @@ class ExplorerActionHandlers {
             this.documentTypes = new ArrayList<>(list);
         }
 
-        private void addExplorerActionHandler(final ExplorerActionHandler handler) {
-            final String type = handler.getDocumentType().getType();
+        private void addExplorerActionHandler(final ExplorerActionHandler handler,
+                                              final Map<String, DocumentType> allTypes) {
+            final String type = handler.getType();
+            final DocumentType documentType = DocumentTypeRegistry.get(type);
+            if (documentType == null) {
+                throw new RuntimeException("Unable to find a registered document type for '" + type + "'");
+            }
 
             final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
             if (existingActionHandler != null) {
                 throw new RuntimeException("A handler already exists for '" + type +
-                        "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                                           "' existing {" + existingActionHandler + "} new {" + handler + "}");
             }
 
-            final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
+            final DocumentType existingDocumentType = allTypes.putIfAbsent(type, documentType);
             if (existingDocumentType != null) {
                 throw new RuntimeException("A document type already exists for '" + type + "' existing {" +
-                        existingDocumentType + "} new {" + handler.getDocumentType() + "}");
+                                           existingDocumentType + "} new {" + documentType + "}");
             }
         }
     }

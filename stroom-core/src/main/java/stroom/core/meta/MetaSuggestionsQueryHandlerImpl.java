@@ -61,15 +61,15 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     private final Map<String, Function<String, List<String>>> indexShardsFieldNameToFunctionMap = Map.of(
             IndexShardFields.FIELD_INDEX.getFldName(), filter ->
-                    getNonUniqueDocRefNames(LuceneIndexDoc.DOCUMENT_TYPE, filter));
+                    getNonUniqueDocRefNames(LuceneIndexDoc.TYPE, filter));
 
     private final Map<String, Function<String, List<String>>> processorTaskFieldNameToFunctionMap = Map.of(
             ProcessorTaskFields.PIPELINE_NAME.getFldName(), filter ->
-                    getNonUniqueDocRefNames(PipelineDoc.DOCUMENT_TYPE, filter));
+                    getNonUniqueDocRefNames(PipelineDoc.TYPE, filter));
 
     private final Map<String, Function<String, List<String>>> refDataFieldNameToFunctionMap = Map.of(
             ReferenceDataFields.PIPELINE_FIELD.getFldName(), filter ->
-                    getNonUniqueDocRefNames(PipelineDoc.DOCUMENT_TYPE, filter));
+                    getNonUniqueDocRefNames(PipelineDoc.TYPE, filter));
 
     @SuppressWarnings("unused")
     @Inject

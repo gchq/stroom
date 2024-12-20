@@ -56,7 +56,7 @@ class StateDocResourceImpl implements StateDocResource, FetchWithUuid<StateDoc> 
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(StateDoc.DOCUMENT_TYPE)
+                .type(StateDoc.TYPE)
                 .build();
     }
 }

@@ -18,11 +18,9 @@ package stroom.app.docs;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docs.shared.Description;
-import stroom.docstore.api.DocumentStore;
 import stroom.docstore.shared.Doc;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
-import stroom.pipeline.factory.Element;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.shared.SvgImage;
 import stroom.test.common.docs.StroomDocsUtil;
@@ -40,7 +38,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -59,8 +56,8 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
             "content/en/docs/reference-section/documents.md");
 
     private static final Set<String> DOC_TYPE_DENY_LIST = Set.of(
-            DataRetentionRules.DOCUMENT_TYPE,
-            ReceiveDataRules.DOCUMENT_TYPE);
+            DataRetentionRules.TYPE,
+            ReceiveDataRules.TYPE);
 
     public static void main(String[] args) {
         final GenerateDocumentReferenceDoc generateDocumentReferenceDoc = new GenerateDocumentReferenceDoc();
@@ -80,19 +77,12 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
     void generateDocumentsReference(final ScanResult scanResult) {
 
-        final Map<String, ClassInfo> typeToDocClassMap =
-                scanResult.getSubclasses(Doc.class)
-                        .parallelStream()
-                        .filter(classInfo -> !classInfo.isPrivate())
-                        .map(this::mapDocClass)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-        final String generatedContent = scanResult.getClassesImplementing(DocumentStore.class.getName())
+        final String generatedContent = scanResult
+                .getSubclasses(Doc.class)
                 .parallelStream()
                 // Not visible in UI currently
                 .filter(Predicate.not(ClassInfo::isInterface))
-                .map(classInfo -> mapClass(classInfo, typeToDocClassMap))
+                .map(this::mapClass)
                 .filter(Objects::nonNull)
                 .filter(docInfo ->
                         DocumentTypeGroup.SYSTEM != docInfo.group
@@ -118,79 +108,42 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
         }
     }
 
-    private Entry<String, ClassInfo> mapDocClass(final ClassInfo classInfo) {
-        if (classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
-            final Class<? extends Doc> clazz = (Class<? extends Doc>) classInfo.loadClass();
+    private DocInfo mapClass(final ClassInfo classInfo) {
+        final Class<?> clazz = classInfo.loadClass();
 
-            String type = null;
+        if (!classInfo.isInterface() && classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
+            DocumentType docType = null;
             try {
                 final Field field = clazz.getField(DOCUMENT_TYPE_FIELD_NAME);
                 field.setAccessible(true);
-                type = (String) field.get(null);
-                Objects.requireNonNull(type);
-                if (DOC_TYPE_DENY_LIST.contains(type)) {
-                    return null;
-                } else {
-                    return Map.entry(type, classInfo);
-                }
+                docType = (DocumentType) field.get(null);
             } catch (Exception e) {
                 throw new RuntimeException(LogUtil.message("Error reading field {} on {}: {}",
                         DOCUMENT_TYPE_FIELD_NAME, classInfo.getName(), e.getMessage(), e));
             }
-        } else {
-            // Dealing with statics here so relying on a sensible convention
-            throw new RuntimeException(LogUtil.message(
-                    "Class {} doesn't have a field called {}",
-                    classInfo.getName(), DOCUMENT_TYPE_FIELD_NAME));
-        }
-    }
 
-    private DocInfo mapClass(final ClassInfo classInfo,
-                             final Map<String, ClassInfo> typeToDocClassMap) {
-
-        final Class<? extends Element> clazz = (Class<? extends Element>) classInfo.loadClass();
-
-        if (!classInfo.isInterface()) {
-            if (classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
-                DocumentType docType = null;
-                try {
-                    final Field field = clazz.getField(DOCUMENT_TYPE_FIELD_NAME);
-                    field.setAccessible(true);
-                    docType = (DocumentType) field.get(null);
-                } catch (Exception e) {
-                    throw new RuntimeException(LogUtil.message("Error reading field {} on {}: {}",
-                            DOCUMENT_TYPE_FIELD_NAME, classInfo.getName(), e.getMessage(), e));
-                }
-
-                if (DOC_TYPE_DENY_LIST.contains(docType.getType())) {
-                    return null;
-                } else {
-                    final ClassInfo docClassInfo = typeToDocClassMap.get(docType.getType());
-                    Objects.requireNonNull(docClassInfo, () -> LogUtil.message(
-                            "No Doc subclass found for {}", classInfo.getName()));
-
-                    String description = null;
-                    if (docClassInfo.hasAnnotation(Description.class)) {
-                        final Class<?> docClazz = docClassInfo.loadClass();
-                        final Description descriptionAnno = docClazz.getAnnotation(Description.class);
-                        description = descriptionAnno.value();
-                    } else {
-                        LOGGER.warn("No {} annotation for class {}",
-                                Description.class.getSimpleName(), docClassInfo.getName());
-                    }
-
-                    return new DocInfo(
-                            docType.getType(),
-                            description,
-                            docType.getDisplayType(),
-                            docType.getIcon(),
-                            docType.getGroup());
-                }
+            if (DOC_TYPE_DENY_LIST.contains(docType.getType())) {
+                return null;
             } else {
-                // Dealing with statics here so relying on a sensible convention
-                throw new RuntimeException(LogUtil.message(
-                        "Class {} doesn't have a field called {}",
-                        clazz.getName(), DOCUMENT_TYPE_FIELD_NAME));
+                Objects.requireNonNull(classInfo, () -> LogUtil.message(
+                        "No Doc subclass found for {}", classInfo.getName()));
+
+                String description = null;
+                if (classInfo.hasAnnotation(Description.class)) {
+                    final Class<?> docClazz = classInfo.loadClass();
+                    final Description descriptionAnno = docClazz.getAnnotation(Description.class);
+                    description = descriptionAnno.value();
+                } else {
+                    LOGGER.warn("No {} annotation for class {}",
+                            Description.class.getSimpleName(), classInfo.getName());
+                }
+
+                return new DocInfo(
+                        docType.getType(),
+                        description,
+                        docType.getDisplayType(),
+                        docType.getIcon(),
+                        docType.getGroup());
             }
         } else {
             return null;

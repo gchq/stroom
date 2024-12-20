@@ -217,7 +217,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     @PipelineProperty(
             description = "The Kafka config to use.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = KafkaConfigDoc.TYPE)
     public void setKafkaConfig(final DocRef kafkaConfigRef) {
         this.kafkaConfigRef = kafkaConfigRef;
     }

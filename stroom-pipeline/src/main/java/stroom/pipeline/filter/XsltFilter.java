@@ -150,7 +150,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore, docRefInfoService);
+        this.docFinder = new DocFinder<>(XsltDoc.TYPE, pathCreator, xsltStore, docRefInfoService);
     }
 
     @Override
@@ -636,7 +636,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = XsltDoc.TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }

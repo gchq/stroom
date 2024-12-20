@@ -131,7 +131,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         ExplorerNode visNode = null;
         if (!skipVisCreation) {
-            final ExplorerNode scriptNode = explorerService.create(ScriptDoc.DOCUMENT_TYPE,
+            final ExplorerNode scriptNode = explorerService.create(ScriptDoc.TYPE,
                     "Test Script",
                     folder2,
                     null);
@@ -141,7 +141,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
             assertThat(scriptStore.list().size()).isEqualTo(1);
 
             visNode = explorerService.create(
-                    VisualisationDoc.DOCUMENT_TYPE,
+                    VisualisationDoc.TYPE,
                     "Test Vis",
                     folder2,
                     null);
@@ -151,7 +151,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
 
-        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.TYPE,
                 "Test Pipeline",
                 folder1,
                 null);
@@ -160,7 +160,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         assertThat(pipelineStore.list().size()).isEqualTo(1);
 
         final ExplorerNode indexNode = explorerService.create(
-                LuceneIndexDoc.DOCUMENT_TYPE,
+                LuceneIndexDoc.TYPE,
                 "Test Index",
                 folder1,
                 null);
@@ -168,7 +168,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         indexStore.writeDocument(index);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
-        final ExplorerNode dictionaryNode = explorerService.create(DictionaryDoc.DOCUMENT_TYPE,
+        final ExplorerNode dictionaryNode = explorerService.create(DictionaryDoc.TYPE,
                 "Test Dictionary",
                 folder1,
                 null);
@@ -228,7 +228,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         dashboardData.setComponents(components);
 
         final ExplorerNode dashboardNode = explorerService.create(
-                DashboardDoc.DOCUMENT_TYPE,
+                DashboardDoc.TYPE,
                 "Test Dashboard",
                 folder1,
                 null);

@@ -33,7 +33,7 @@ import jakarta.inject.Inject;
 import java.util.Optional;
 
 @EntityEventHandler(
-        type = LuceneIndexDoc.DOCUMENT_TYPE,
+        type = LuceneIndexDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
@@ -61,7 +61,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         final EntityAction eventAction = event.getAction();
         final DocRef docRef = event.getDocRef();
 
-        if (LuceneIndexDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        if (LuceneIndexDoc.TYPE.equals(docRef.getType())) {
             switch (eventAction) {
                 case CLEAR_CACHE -> indexStructureCache.clear();
                 case DELETE -> indexStructureCache.remove(docRef);

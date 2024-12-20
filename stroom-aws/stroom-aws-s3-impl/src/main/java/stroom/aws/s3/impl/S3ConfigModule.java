@@ -41,7 +41,7 @@ public class S3ConfigModule extends PipelineElementModule {
                 .addBinding(S3ConfigStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(S3ConfigDoc.DOCUMENT_TYPE, S3ConfigStoreImpl.class);
+                .bind(S3ConfigDoc.TYPE, S3ConfigStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(S3ClientConfigCache.class);

@@ -19,6 +19,8 @@ package stroom.view.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
 
@@ -32,10 +34,10 @@ import java.util.Objects;
 
 @Description(
         "A view is an abstraction over a data source (such as a " +
-                "[Lucene Indexe]({{< relref \"#lucene-index\" >}})) and optionally an " +
-                "[extraction pipeline]({{< relref \"docs/user-guide/pipelines/recipies#search-extraction\" >}}).\n" +
-                "Views provide a much simpler way for users to query data as the user can simply query against " +
-                "the View without any knowledge of the underlying data source or extraction of that data.")
+        "[Lucene Indexe]({{< relref \"#lucene-index\" >}})) and optionally an " +
+        "[extraction pipeline]({{< relref \"docs/user-guide/pipelines/recipies#search-extraction\" >}}).\n" +
+        "Views provide a much simpler way for users to query data as the user can simply query against " +
+        "the View without any knowledge of the underlying data source or extraction of that data.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -52,8 +54,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ViewDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "View";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_VIEW;
+    public static final String TYPE = "View";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_VIEW);
 
     @JsonProperty
     private String description;
@@ -91,7 +97,7 @@ public class ViewDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -100,7 +106,7 @@ public class ViewDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -148,9 +154,9 @@ public class ViewDoc extends Doc {
         }
         final ViewDoc viewDoc = (ViewDoc) o;
         return Objects.equals(description, viewDoc.description) &&
-                Objects.equals(dataSource, viewDoc.dataSource) &&
-                Objects.equals(filter, viewDoc.filter) &&
-                Objects.equals(pipeline, viewDoc.pipeline);
+               Objects.equals(dataSource, viewDoc.dataSource) &&
+               Objects.equals(filter, viewDoc.filter) &&
+               Objects.equals(pipeline, viewDoc.pipeline);
     }
 
     @Override

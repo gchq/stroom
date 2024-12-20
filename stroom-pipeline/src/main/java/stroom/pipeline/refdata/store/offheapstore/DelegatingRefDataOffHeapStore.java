@@ -646,7 +646,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             final String feedName;
             try {
                 feedName = NullSafe.get(
-                        feedStore.info(DocRef.builder().type(FeedDoc.DOCUMENT_TYPE).uuid(feedDocUuid).build()),
+                        feedStore.info(DocRef.builder().type(FeedDoc.TYPE).uuid(feedDocUuid).build()),
                         DocRefInfo::getDocRef,
                         DocRef::getName);
             } catch (DocumentNotFoundException e) {

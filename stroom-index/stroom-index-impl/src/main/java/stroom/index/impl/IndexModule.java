@@ -85,7 +85,7 @@ public class IndexModule extends AbstractModule {
                 .bind(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+                .bind(LuceneIndexDoc.TYPE, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexVolumeServiceImpl.class);

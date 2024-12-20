@@ -29,8 +29,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.NullSafe;
@@ -59,11 +57,6 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DictionaryStoreImpl.class);
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            DictionaryDoc.DOCUMENT_TYPE,
-            DictionaryDoc.DOCUMENT_TYPE,
-            DictionaryDoc.ICON);
     public static final boolean IS_DE_DUP_DEFAULT = false;
     private final Store<DictionaryDoc> store;
 
@@ -71,10 +64,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final DictionarySerialiser serialiser) {
 
-        this.store = storeFactory.createStore(
-                serialiser,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.class);
+        this.store = storeFactory.createStore(serialiser, DictionaryDoc.TYPE, DictionaryDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -113,11 +103,6 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -242,7 +227,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String getType() {
-        return DictionaryDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override
@@ -258,7 +243,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public Optional<DocRef> findByUuid(final String uuid) {
         try {
-            final DocRefInfo docRefInfo = store.info(new DocRef(DictionaryDoc.DOCUMENT_TYPE, uuid));
+            final DocRefInfo docRefInfo = store.info(new DocRef(DictionaryDoc.TYPE, uuid));
             return Optional.ofNullable(docRefInfo.getDocRef());
         } catch (final RuntimeException e) {
             // Expected permission exception for some users.

@@ -7,8 +7,6 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.documentation.shared.DocumentationDoc;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -24,20 +22,12 @@ import java.util.Set;
 @Singleton
 public class DocumentationStoreImpl implements DocumentationStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            DocumentationDoc.DOCUMENT_TYPE,
-            DocumentationDoc.DOCUMENT_TYPE,
-            DocumentationDoc.ICON);
     private final Store<DocumentationDoc> store;
 
     @Inject
     public DocumentationStoreImpl(final StoreFactory storeFactory,
                                   final DocumentationSerialiser documentationSerialiser) {
-        this.store = storeFactory.createStore(
-                documentationSerialiser,
-                DocumentationDoc.DOCUMENT_TYPE,
-                DocumentationDoc.class);
+        this.store = storeFactory.createStore(documentationSerialiser, DocumentationDoc.TYPE, DocumentationDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -76,11 +66,6 @@ public class DocumentationStoreImpl implements DocumentationStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -160,7 +145,7 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     @Override
     public String getType() {
-        return DocumentationDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

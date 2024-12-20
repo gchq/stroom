@@ -21,6 +21,8 @@ import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerFavService;
@@ -30,7 +32,6 @@ import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentFindRequest;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFields;
 import stroom.explorer.shared.ExplorerNode;
@@ -408,7 +409,7 @@ class ExplorerServiceImpl
     }
 
     private int getPriority(final ExplorerNode node) {
-        final DocumentType documentType = explorerActionHandlers.getType(node.getType());
+        final DocumentType documentType = DocumentTypeRegistry.get(node.getType());
         if (documentType == null) {
             return Integer.MAX_VALUE;
         }

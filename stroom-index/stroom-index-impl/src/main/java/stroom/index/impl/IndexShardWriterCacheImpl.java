@@ -140,7 +140,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
             // Get the index fields.
             final IndexShard indexShard = optional.get();
-            final LuceneIndexDoc luceneIndexDoc = luceneIndexDocCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
+            final LuceneIndexDoc luceneIndexDoc = luceneIndexDocCache.get(new DocRef(LuceneIndexDoc.TYPE,
                     indexShard.getIndexUuid()));
 
             // Mark the index shard as opening.

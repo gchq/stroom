@@ -19,6 +19,8 @@ package stroom.query.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
 
@@ -32,10 +34,10 @@ import java.util.Objects;
 
 @Description(
         "A Query Document defines a {{< glossary \"StroomQL\" >}} query and is used to execute that query " +
-                "and view its results.\n" +
-                "A Query can query main types of data source including " +
-                "[Views]({{< relref \"#view\" >}}), [Lucene Indexes]({{< relref \"#lucene-index\" >}}), and " +
-                "{{< glossary \"searchable\" \"Searchables\" >}}."
+        "and view its results.\n" +
+        "A Query can query main types of data source including " +
+        "[Views]({{< relref \"#view\" >}}), [Lucene Indexes]({{< relref \"#lucene-index\" >}}), and " +
+        "{{< glossary \"searchable\" \"Searchables\" >}}."
 )
 @JsonPropertyOrder({
         "type",
@@ -53,8 +55,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class QueryDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "Query";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_QUERY;
+    public static final String TYPE = "Query";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_QUERY);
 
     @JsonProperty
     private String description;
@@ -92,7 +98,7 @@ public class QueryDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -101,7 +107,7 @@ public class QueryDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {

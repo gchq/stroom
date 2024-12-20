@@ -72,7 +72,7 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
 
     @Override
     public String getType() {
-        return ElasticClusterDoc.DOCUMENT_TYPE;
+        return ElasticClusterDoc.TYPE;
     }
 
     @Override

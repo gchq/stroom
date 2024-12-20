@@ -38,7 +38,7 @@ import java.util.Optional;
 
 @Singleton
 @EntityEventHandler(
-        type = KafkaConfigDoc.DOCUMENT_TYPE,
+        type = KafkaConfigDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class KafkaConfigDocCache implements Clearable, EntityEvent.Handler {
 

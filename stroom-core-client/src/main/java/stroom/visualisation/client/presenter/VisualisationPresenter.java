@@ -72,7 +72,7 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
 
     @Override
     public String getType() {
-        return VisualisationDoc.DOCUMENT_TYPE;
+        return VisualisationDoc.TYPE;
     }
 
     @Override

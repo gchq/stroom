@@ -19,6 +19,8 @@ package stroom.kafka.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
@@ -33,8 +35,8 @@ import java.util.Objects;
 
 @Description(
         "Defines the connection details for a single Kafka cluster.\n" +
-                "This Kafka Configuration Document can then be used by one or more " +
-                "{{< pipe-elm \"StandardKafkaProducer\" >}} pipeline elements.")
+        "This Kafka Configuration Document can then be used by one or more " +
+        "{{< pipe-elm \"StandardKafkaProducer\" >}} pipeline elements.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -49,8 +51,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_EMPTY)
 public class KafkaConfigDoc extends Doc implements HasData {
 
-    public static final String DOCUMENT_TYPE = "KafkaConfig";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_KAFKA_CONFIG;
+    public static final String TYPE = "KafkaConfig";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            "Kafka Configuration",
+            SvgImage.DOCUMENT_KAFKA_CONFIG);
 
     @JsonProperty
     private String description = "";
@@ -85,7 +91,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -94,7 +100,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -129,7 +135,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
         }
         final KafkaConfigDoc other = (KafkaConfigDoc) o;
         return Objects.equals(description, other.description) &&
-                Objects.equals(data, other.data);
+               Objects.equals(data, other.data);
     }
 
     @Override

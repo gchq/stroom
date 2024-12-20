@@ -69,7 +69,7 @@ class IndexResourceImpl implements IndexResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(LuceneIndexDoc.DOCUMENT_TYPE)
+                .type(LuceneIndexDoc.TYPE)
                 .build();
     }
 

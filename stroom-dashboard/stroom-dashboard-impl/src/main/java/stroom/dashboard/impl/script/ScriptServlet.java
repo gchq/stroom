@@ -84,7 +84,7 @@ class ScriptServlet extends HttpServlet implements IsServlet {
     }
 
     private ScriptDoc getScript(final String uuid) {
-        return scriptStore.readDocument(new DocRef(ScriptDoc.DOCUMENT_TYPE, uuid));
+        return scriptStore.readDocument(new DocRef(ScriptDoc.TYPE, uuid));
     }
 
     private Map<String, String> createQueryParamMap(final String query) {

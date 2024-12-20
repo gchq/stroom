@@ -39,7 +39,7 @@ import java.util.Optional;
 
 @Singleton
 @EntityEventHandler(
-        type = FeedDoc.DOCUMENT_TYPE,
+        type = FeedDoc.TYPE,
         // Need to react to CREATE as we hold an empty optional for non-existent feeds
         action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class FeedDocCache implements Clearable, EntityEvent.Handler {

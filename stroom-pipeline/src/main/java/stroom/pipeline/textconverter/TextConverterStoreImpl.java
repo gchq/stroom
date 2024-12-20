@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -40,17 +38,12 @@ import java.util.Set;
 @Singleton
 class TextConverterStoreImpl implements TextConverterStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.TRANSFORMATION,
-            TextConverterDoc.DOCUMENT_TYPE,
-            "Text Converter",
-            TextConverterDoc.ICON);
     private final Store<TextConverterDoc> store;
 
     @Inject
     TextConverterStoreImpl(final StoreFactory storeFactory,
                            final TextConverterSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, TextConverterDoc.DOCUMENT_TYPE, TextConverterDoc.class);
+        this.store = storeFactory.createStore(serialiser, TextConverterDoc.TYPE, TextConverterDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -89,11 +82,6 @@ class TextConverterStoreImpl implements TextConverterStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -171,7 +159,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public String getType() {
-        return TextConverterDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

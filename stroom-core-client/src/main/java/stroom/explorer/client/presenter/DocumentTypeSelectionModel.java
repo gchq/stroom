@@ -1,9 +1,9 @@
 package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.document.client.ClientDocumentType;
+import stroom.docstore.shared.DocumentType;
 
 public interface DocumentTypeSelectionModel {
 
-    TickBoxState getState(ClientDocumentType type);
+    TickBoxState getState(DocumentType type);
 }

@@ -28,8 +28,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -54,11 +52,6 @@ import java.util.function.BiConsumer;
 class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            AnalyticRuleDoc.DOCUMENT_TYPE,
-            "Analytic Rule",
-            AnalyticRuleDoc.ICON);
 
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
@@ -73,7 +66,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
+        this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -161,11 +154,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -286,7 +274,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public String getType() {
-        return AnalyticRuleDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

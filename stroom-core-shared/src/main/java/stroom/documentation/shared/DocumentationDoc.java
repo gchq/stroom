@@ -3,6 +3,8 @@ package stroom.documentation.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
@@ -15,13 +17,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @Description("A Document type for simply storing user created documentation, e.g. adding a Documentation document " +
-        "into a folder to describe the contents of that folder.")
+             "into a folder to describe the contents of that folder.")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class DocumentationDoc extends Doc implements HasData {
 
-    public static final String DOCUMENT_TYPE = "Documentation";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_DOCUMENTATION;
+    public static final String TYPE = "Documentation";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_DOCUMENTATION);
 
     @JsonProperty
     private String documentation;
@@ -51,7 +57,7 @@ public class DocumentationDoc extends Doc implements HasData {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -60,7 +66,7 @@ public class DocumentationDoc extends Doc implements HasData {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getData() {
@@ -84,7 +90,7 @@ public class DocumentationDoc extends Doc implements HasData {
         }
         final DocumentationDoc that = (DocumentationDoc) o;
         return Objects.equals(documentation, that.documentation)
-                && Objects.equals(data, that.data);
+               && Objects.equals(data, that.data);
     }
 
     @Override

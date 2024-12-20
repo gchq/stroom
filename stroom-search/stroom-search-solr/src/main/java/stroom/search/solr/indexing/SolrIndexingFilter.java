@@ -291,7 +291,7 @@ class SolrIndexingFilter extends AbstractXMLFilter {
     @PipelineProperty(
             description = "The index to send records to.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = SolrIndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = SolrIndexDoc.TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

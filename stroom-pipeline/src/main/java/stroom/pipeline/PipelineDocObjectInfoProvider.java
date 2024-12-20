@@ -74,7 +74,7 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
 
         try {
             final String xml = pipelineServiceProvider.get().fetchPipelineXml(
-                    new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineDoc.getUuid()));
+                    new DocRef(PipelineDoc.TYPE, pipelineDoc.getUuid()));
             if (xml != null) {
                 builder.addData(Data.builder().withName("Structure").withValue(xml).build());
             }

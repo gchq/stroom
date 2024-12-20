@@ -42,7 +42,7 @@ import java.util.Optional;
 
 @Singleton
 @EntityEventHandler(
-        type = S3ConfigDoc.DOCUMENT_TYPE,
+        type = S3ConfigDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class S3ClientConfigCache implements Clearable, EntityEvent.Handler {
 

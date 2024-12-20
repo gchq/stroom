@@ -280,6 +280,6 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public String getType() {
-        return StateDoc.DOCUMENT_TYPE;
+        return StateDoc.TYPE;
     }
 }

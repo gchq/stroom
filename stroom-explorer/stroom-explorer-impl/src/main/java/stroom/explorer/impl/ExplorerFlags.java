@@ -16,12 +16,12 @@ public class ExplorerFlags {
     private static final Map<String, NodeFlag> DOC_TYPE_TO_DEFAULT_FLAG_MAP = new HashMap<>();
 
     static {
-        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(StatisticStoreDoc.DOCUMENT_TYPE, NodeFlag.DATA_SOURCE);
-        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(StroomStatsStoreDoc.DOCUMENT_TYPE, NodeFlag.DATA_SOURCE);
-        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(LuceneIndexDoc.DOCUMENT_TYPE, NodeFlag.DATA_SOURCE);
-        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(ElasticIndexDoc.DOCUMENT_TYPE, NodeFlag.DATA_SOURCE);
-        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(SolrIndexDoc.DOCUMENT_TYPE, NodeFlag.DATA_SOURCE);
-        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(StateDoc.DOCUMENT_TYPE, NodeFlag.DATA_SOURCE);
+        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(StatisticStoreDoc.TYPE, NodeFlag.DATA_SOURCE);
+        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(StroomStatsStoreDoc.TYPE, NodeFlag.DATA_SOURCE);
+        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(LuceneIndexDoc.TYPE, NodeFlag.DATA_SOURCE);
+        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(ElasticIndexDoc.TYPE, NodeFlag.DATA_SOURCE);
+        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(SolrIndexDoc.TYPE, NodeFlag.DATA_SOURCE);
+        DOC_TYPE_TO_DEFAULT_FLAG_MAP.put(StateDoc.TYPE, NodeFlag.DATA_SOURCE);
     }
 
     // Could return a set of flags really, but for not one is fine

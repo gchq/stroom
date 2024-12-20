@@ -50,7 +50,7 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
                       final RefStreamDefinition refStreamDefinition) {
 
         Preconditions.checkArgument(
-                refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
+                refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.TYPE));
         variableLengthUUIDKryoSerializer.write(output, refStreamDefinition.getPipelineDocRef().getUuid());
 
         // We are only ever dealing with pipeline DocRefs so we don't need

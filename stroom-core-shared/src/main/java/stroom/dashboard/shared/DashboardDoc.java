@@ -19,6 +19,8 @@ package stroom.dashboard.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,17 +33,17 @@ import java.util.Objects;
 
 @Description(
         "The Dashboard Document defines a data querying and visualisation dashboard.\n" +
-                "The dashboard is highly customisable to allow querying of many different data sources of " +
-                "different types.\n" +
-                "Queried data can be displayed in tabular form, visualised using interactive charts/graphs or " +
-                "render as HTML.\n" +
-                "\n" +
-                "The Dashboard Doc can either be used for ad-hoc querying/visualising of data, to construct " +
-                "a dashboard for others to view or to just view an already constructed dashboard.\n" +
-                "Dashboards can be parameterised so that all queries on the dashboard are displaying data for the " +
-                "same user, for example.\n" +
-                "For ad-hoc querying of data from one data source, you are recommended to use a " +
-                "[Query]({{< relref \"#query\" >}}) instead."
+        "The dashboard is highly customisable to allow querying of many different data sources of " +
+        "different types.\n" +
+        "Queried data can be displayed in tabular form, visualised using interactive charts/graphs or " +
+        "render as HTML.\n" +
+        "\n" +
+        "The Dashboard Doc can either be used for ad-hoc querying/visualising of data, to construct " +
+        "a dashboard for others to view or to just view an already constructed dashboard.\n" +
+        "Dashboards can be parameterised so that all queries on the dashboard are displaying data for the " +
+        "same user, for example.\n" +
+        "For ad-hoc querying of data from one data source, you are recommended to use a " +
+        "[Query]({{< relref \"#query\" >}}) instead."
 )
 @JsonPropertyOrder({
         "type",
@@ -57,8 +59,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class DashboardDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "Dashboard";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_DASHBOARD;
+    public static final String TYPE = "Dashboard";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_DASHBOARD);
 
     @JsonProperty
     private String description;
@@ -88,7 +94,7 @@ public class DashboardDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -97,7 +103,7 @@ public class DashboardDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {

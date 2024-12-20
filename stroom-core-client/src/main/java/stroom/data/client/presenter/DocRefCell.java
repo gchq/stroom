@@ -5,8 +5,8 @@ import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EventCell;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
@@ -112,8 +112,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
                     final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
                     if (docRef != null) {
                         final String type;
-                        final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(docRef.getType());
-                        type = GwtNullSafe.getOrElse(documentType, ClientDocumentType::getDisplayType,
+                        final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+                        type = GwtNullSafe.getOrElse(documentType, DocumentType::getDisplayType,
                                 docRef.getType());
 
                         final List<Item> menuItems = new ArrayList<>();
@@ -191,7 +191,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
 
             sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
             if (showIcon && docRef != null) {
-                final ClientDocumentType documentType = ClientDocumentTypeRegistry.get(docRef.getType());
+                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
                 if (documentType != null) {
                     final SvgImage svgImage = documentType.getIcon();
                     final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(

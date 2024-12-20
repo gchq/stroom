@@ -1,6 +1,4 @@
-package stroom.explorer.api;
-
-import stroom.explorer.shared.DocumentType;
+package stroom.docstore.shared;
 
 public interface HasDocumentType {
 

@@ -392,7 +392,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     @PipelineProperty(
             description = "Kafka configuration details relating to where and how to send Kafka messages.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = KafkaConfigDoc.TYPE)
     public void setKafkaConfig(final DocRef configRef) {
         this.configRef = configRef;
     }

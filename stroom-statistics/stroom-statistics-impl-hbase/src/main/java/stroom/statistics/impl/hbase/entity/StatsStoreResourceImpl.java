@@ -57,7 +57,7 @@ class StatsStoreResourceImpl implements StatsStoreResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(StroomStatsStoreDoc.DOCUMENT_TYPE)
+                .type(StroomStatsStoreDoc.TYPE)
                 .build();
     }
 }

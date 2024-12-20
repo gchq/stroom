@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportConverter;
@@ -52,11 +50,6 @@ public class FeedStoreImpl implements FeedStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStoreImpl.class);
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            FeedDoc.DOCUMENT_TYPE,
-            FeedDoc.DOCUMENT_TYPE,
-            FeedDoc.ICON);
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
@@ -72,7 +65,7 @@ public class FeedStoreImpl implements FeedStore {
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider,
                          final ImportConverter importConverter) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
+        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
@@ -146,11 +139,6 @@ public class FeedStoreImpl implements FeedStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -266,7 +254,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public String getType() {
-        return FeedDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

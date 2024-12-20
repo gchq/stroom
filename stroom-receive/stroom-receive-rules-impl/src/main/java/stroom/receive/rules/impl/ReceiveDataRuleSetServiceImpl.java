@@ -26,8 +26,6 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -45,11 +43,6 @@ import java.util.function.BiConsumer;
 @Singleton
 public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            ReceiveDataRules.DOCUMENT_TYPE,
-            "Rule Set",
-            ReceiveDataRules.ICON);
     private final Store<ReceiveDataRules> store;
 
     @Inject
@@ -57,7 +50,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                                          final Serialiser2Factory serialiser2Factory) {
         final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
                 ReceiveDataRules.class);
-        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.DOCUMENT_TYPE, ReceiveDataRules.class);
+        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -96,11 +89,6 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     @Override
     public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -191,7 +179,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public String getType() {
-        return ReceiveDataRules.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

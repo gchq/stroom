@@ -24,8 +24,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.json.JsonUtil;
@@ -42,11 +40,6 @@ import java.util.Set;
 @Singleton
 class S3ConfigStoreImpl implements S3ConfigStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            S3ConfigDoc.DOCUMENT_TYPE,
-            "S3 Configuration",
-            S3ConfigDoc.ICON);
     private final Store<S3ConfigDoc> store;
     private final Provider<S3Config> s3ConfigProvider;
 
@@ -55,7 +48,7 @@ class S3ConfigStoreImpl implements S3ConfigStore {
                       final Provider<S3Config> s3ConfigProvider,
                       final S3ConfigSerialiser serialiser) {
         this.s3ConfigProvider = s3ConfigProvider;
-        this.store = storeFactory.createStore(serialiser, S3ConfigDoc.DOCUMENT_TYPE, S3ConfigDoc.class);
+        this.store = storeFactory.createStore(serialiser, S3ConfigDoc.TYPE, S3ConfigDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -112,11 +105,6 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     @Override
     public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -197,7 +185,7 @@ class S3ConfigStoreImpl implements S3ConfigStore {
 
     @Override
     public String getType() {
-        return S3ConfigDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

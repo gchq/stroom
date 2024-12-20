@@ -75,7 +75,7 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
 
     @Override
     public String getType() {
-        return SolrIndexDoc.DOCUMENT_TYPE;
+        return SolrIndexDoc.TYPE;
     }
 
     @Override

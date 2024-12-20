@@ -311,6 +311,6 @@ public class SqlStatisticSearchProvider implements SearchProvider {
 
     @Override
     public String getType() {
-        return StatisticStoreDoc.DOCUMENT_TYPE;
+        return StatisticStoreDoc.TYPE;
     }
 }

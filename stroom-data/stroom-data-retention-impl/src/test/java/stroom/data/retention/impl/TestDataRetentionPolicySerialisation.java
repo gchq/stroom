@@ -42,7 +42,7 @@ class TestDataRetentionPolicySerialisation {
         builder.addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         builder.addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, DocRef
                 .builder()
-                .type(FeedDoc.DOCUMENT_TYPE)
+                .type(FeedDoc.TYPE)
                 .uuid("test")
                 .name("TEST_FEED")
                 .build());

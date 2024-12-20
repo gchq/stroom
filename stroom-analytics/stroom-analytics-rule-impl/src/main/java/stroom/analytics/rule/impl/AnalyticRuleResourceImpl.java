@@ -74,7 +74,7 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(AnalyticRuleDoc.DOCUMENT_TYPE)
+                .type(AnalyticRuleDoc.TYPE)
                 .build();
     }
 }

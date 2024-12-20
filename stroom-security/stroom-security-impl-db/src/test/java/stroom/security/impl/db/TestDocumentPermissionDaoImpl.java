@@ -62,18 +62,18 @@ class TestDocumentPermissionDaoImpl {
         documentPermissionDao.setDocumentUserPermission(
                 docUuid2, uuid1, DocumentPermission.VIEW);
         documentPermissionDao.setDocumentUserCreatePermissions(
-                docUuid1, uuid1, Set.of(DictionaryDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE));
+                docUuid1, uuid1, Set.of(DictionaryDoc.TYPE, ScriptDoc.TYPE));
         documentPermissionDao.setDocumentUserCreatePermissions(
-                docUuid2, uuid1, Set.of(DictionaryDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE));
+                docUuid2, uuid1, Set.of(DictionaryDoc.TYPE, ScriptDoc.TYPE));
 
         documentPermissionDao.setDocumentUserPermission(
                 docUuid1, uuid2, DocumentPermission.VIEW);
         documentPermissionDao.setDocumentUserPermission(
                 docUuid2, uuid2, DocumentPermission.OWNER);
         documentPermissionDao.setDocumentUserCreatePermissions(
-                docUuid1, uuid2, Set.of(DictionaryDoc.DOCUMENT_TYPE, QueryDoc.DOCUMENT_TYPE));
+                docUuid1, uuid2, Set.of(DictionaryDoc.TYPE, QueryDoc.TYPE));
         documentPermissionDao.setDocumentUserCreatePermissions(
-                docUuid2, uuid2, Set.of(DictionaryDoc.DOCUMENT_TYPE, QueryDoc.DOCUMENT_TYPE));
+                docUuid2, uuid2, Set.of(DictionaryDoc.TYPE, QueryDoc.TYPE));
 
         final Runnable assertUser1Perms = () -> {
             assertThat(documentPermissionDao.getPermissionsForUser(uuid1).getPermissions())
@@ -82,12 +82,12 @@ class TestDocumentPermissionDaoImpl {
                             docUuid2, DocumentPermission.VIEW));
             assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, uuid1))
                     .containsExactlyInAnyOrder(
-                            DictionaryDoc.DOCUMENT_TYPE,
-                            ScriptDoc.DOCUMENT_TYPE);
+                            DictionaryDoc.TYPE,
+                            ScriptDoc.TYPE);
             assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, uuid1))
                     .containsExactlyInAnyOrder(
-                            DictionaryDoc.DOCUMENT_TYPE,
-                            ScriptDoc.DOCUMENT_TYPE);
+                            DictionaryDoc.TYPE,
+                            ScriptDoc.TYPE);
         };
         assertUser1Perms.run();
 
@@ -97,12 +97,12 @@ class TestDocumentPermissionDaoImpl {
                         docUuid2, DocumentPermission.OWNER));
         assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, uuid2))
                 .containsExactlyInAnyOrder(
-                        DictionaryDoc.DOCUMENT_TYPE,
-                        QueryDoc.DOCUMENT_TYPE);
+                        DictionaryDoc.TYPE,
+                        QueryDoc.TYPE);
         assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, uuid2))
                 .containsExactlyInAnyOrder(
-                        DictionaryDoc.DOCUMENT_TYPE,
-                        QueryDoc.DOCUMENT_TYPE);
+                        DictionaryDoc.TYPE,
+                        QueryDoc.TYPE);
 
         final Integer delCount = JooqUtil.contextResult(securityDbConnProvider, context ->
                 documentPermissionDao.deletePermissionsForUser(context, uuid2));

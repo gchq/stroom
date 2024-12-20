@@ -825,9 +825,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             final ProcessorType processorType = ProcessorType.fromDisplayValue(record.get(PROCESSOR.TASK_TYPE));
             final String docType;
             if (ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-                docType = AnalyticRuleDoc.DOCUMENT_TYPE;
+                docType = AnalyticRuleDoc.TYPE;
             } else {
-                docType = PipelineDoc.DOCUMENT_TYPE;
+                docType = PipelineDoc.TYPE;
             }
 
             final String feed = record.get(PROCESSOR_FEED.NAME);
@@ -1159,7 +1159,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+        return docRefInfoService.findByNames(PipelineDoc.TYPE, pipelineNames, true)
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());

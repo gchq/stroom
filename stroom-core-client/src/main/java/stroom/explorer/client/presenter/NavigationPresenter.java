@@ -234,31 +234,31 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                 FocusExplorerTreeEvent.fire(this));
         // Binds for creating a document of a given type
         KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
-                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->
-                CreateNewDocumentEvent.fire(this, DashboardDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, DashboardDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_FEED, () ->
-                CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, FeedDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
                 CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER_TYPE));
         KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
-                CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, DictionaryDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
-                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_DOCUMENTATION, () ->
-                CreateNewDocumentEvent.fire(this, DocumentationDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, DocumentationDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_PIPELINE, () ->
-                CreateNewDocumentEvent.fire(this, PipelineDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, PipelineDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_QUERY, () ->
-                CreateNewDocumentEvent.fire(this, QueryDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, QueryDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_ANALYTIC_RULE, () ->
-                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_TEXT_CONVERTER, () ->
-                CreateNewDocumentEvent.fire(this, TextConverterDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, TextConverterDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_VIEW, () ->
-                CreateNewDocumentEvent.fire(this, ViewDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, ViewDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_XSLT, () ->
-                CreateNewDocumentEvent.fire(this, XsltDoc.DOCUMENT_TYPE));
+                CreateNewDocumentEvent.fire(this, XsltDoc.TYPE));
     }
 
     @Override

@@ -42,7 +42,7 @@ public class XsltModule extends AbstractModule {
                 .addBinding(XsltStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(XsltDoc.DOCUMENT_TYPE, XsltStoreImpl.class);
+                .bind(XsltDoc.TYPE, XsltStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(XsltResourceImpl.class);

@@ -168,7 +168,7 @@ public class QueryDocEditPresenter
                             this,
                             "Create New Analytic Rule",
                             explorerNode,
-                            AnalyticRuleDoc.DOCUMENT_TYPE,
+                            AnalyticRuleDoc.TYPE,
                             docRef.getName(),
                             true,
                             newDocumentConsumer);
