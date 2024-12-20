@@ -76,7 +76,7 @@ class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(DocumentationDoc.DOCUMENT_TYPE)
+                .type(DocumentationDoc.TYPE)
                 .build();
     }
 

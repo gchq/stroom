@@ -24,8 +24,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.solr.shared.SolrIndexDoc;
@@ -66,11 +64,6 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexStoreImpl.class);
 
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            SolrIndexDoc.DOCUMENT_TYPE,
-            "Solr Index",
-            SolrIndexDoc.ICON);
 
     private final Store<SolrIndexDoc> store;
     private final SecurityContext securityContext;
@@ -81,7 +74,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                        final SecurityContext securityContext,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.DOCUMENT_TYPE, SolrIndexDoc.class);
+        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc.class);
         this.securityContext = securityContext;
         this.solrIndexClientCache = solrIndexClientCache;
     }
@@ -122,11 +115,6 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -417,7 +405,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public String getType() {
-        return SolrIndexDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

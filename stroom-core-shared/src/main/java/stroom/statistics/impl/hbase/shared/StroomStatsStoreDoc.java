@@ -19,6 +19,8 @@ package stroom.statistics.impl.hbase.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -54,8 +56,12 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class StroomStatsStoreDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "StroomStatsStore";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_STROOM_STATS_STORE;
+    public static final String TYPE = "StroomStatsStore";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            TYPE,
+            "Stroom-Stats Store",
+            SvgImage.DOCUMENT_STROOM_STATS_STORE);
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
@@ -116,7 +122,7 @@ public class StroomStatsStoreDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -125,7 +131,7 @@ public class StroomStatsStoreDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -214,11 +220,11 @@ public class StroomStatsStoreDoc extends Doc {
         }
         final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
         return Objects.equals(description, that.description) &&
-                statisticType == that.statisticType &&
-                rollUpType == that.rollUpType &&
-                precision == that.precision &&
-                Objects.equals(enabled, that.enabled) &&
-                Objects.equals(config, that.config);
+               statisticType == that.statisticType &&
+               rollUpType == that.rollUpType &&
+               precision == that.precision &&
+               Objects.equals(enabled, that.enabled) &&
+               Objects.equals(config, that.config);
     }
 
     @Override

@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -45,18 +43,13 @@ import java.util.Set;
 public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaStoreImpl.class);
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.TRANSFORMATION,
-            XmlSchemaDoc.DOCUMENT_TYPE,
-            "XML Schema",
-            XmlSchemaDoc.ICON);
 
     private final Store<XmlSchemaDoc> store;
 
     @Inject
     public XmlSchemaStoreImpl(final StoreFactory storeFactory,
                               final XmlSchemaSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
+        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.TYPE, XmlSchemaDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -95,11 +88,6 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -177,7 +165,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public String getType() {
-        return XmlSchemaDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

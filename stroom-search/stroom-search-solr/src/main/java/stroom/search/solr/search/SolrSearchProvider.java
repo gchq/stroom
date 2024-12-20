@@ -59,7 +59,7 @@ import java.util.Set;
 @SuppressWarnings("unused")
 public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
 
-    public static final String ENTITY_TYPE = SolrIndexDoc.DOCUMENT_TYPE;
+    public static final String ENTITY_TYPE = SolrIndexDoc.TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchProvider.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
@@ -245,6 +245,6 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public String getType() {
-        return SolrIndexDoc.DOCUMENT_TYPE;
+        return SolrIndexDoc.TYPE;
     }
 }

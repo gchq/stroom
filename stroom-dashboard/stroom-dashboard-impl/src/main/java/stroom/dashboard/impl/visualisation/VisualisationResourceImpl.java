@@ -55,7 +55,7 @@ class VisualisationResourceImpl implements VisualisationResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(VisualisationDoc.DOCUMENT_TYPE)
+                .type(VisualisationDoc.TYPE)
                 .build();
     }
 }

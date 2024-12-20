@@ -426,7 +426,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         private Val getDocRefName(final String uuid) {
             String val = uuid;
             if (docRefInfoService != null) {
-                val = docRefInfoService.name(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, uuid))
+                val = docRefInfoService.name(new DocRef(LuceneIndexDoc.TYPE, uuid))
                         .orElse(uuid);
             }
             return ValString.create(val);

@@ -60,7 +60,7 @@ public class PipelineModule extends AbstractModule {
                 .bind(PipelineResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
+                .bind(PipelineDoc.TYPE, PipelineStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

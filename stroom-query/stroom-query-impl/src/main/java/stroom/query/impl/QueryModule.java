@@ -42,7 +42,7 @@ public class QueryModule extends AbstractModule {
                 .addBinding(QueryStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(QueryDoc.DOCUMENT_TYPE, QueryStoreImpl.class);
+                .bind(QueryDoc.TYPE, QueryStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

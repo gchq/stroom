@@ -849,7 +849,7 @@ public class TableBuilderAnalyticExecutor {
                                 .create(analyticRuleDoc);
                         final DocRef dataSource = searchRequest.getQuery().getDataSource();
 
-                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                        if (dataSource == null || !ViewDoc.TYPE.equals(dataSource.getType())) {
                             tracker.getAnalyticTrackerData()
                                     .setMessage("Error: Rule needs to reference a view");
 

@@ -132,7 +132,7 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
             index.setFields(indexFields);
             index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
             index.setShardsPerPartition(shardsPerPartition);
-            luceneIndexDocCache.put(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, "uuid" + i), index);
+            luceneIndexDocCache.put(new DocRef(LuceneIndexDoc.TYPE, "uuid" + i), index);
 
             for (int j = 0; j < jobSize; j++) {
                 final IndexShardKey indexShardKey = IndexShardKey.createKey(index);

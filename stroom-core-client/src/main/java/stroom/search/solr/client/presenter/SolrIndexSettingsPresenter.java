@@ -67,7 +67,7 @@ public class SolrIndexSettingsPresenter
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);

@@ -43,7 +43,7 @@ public class DashboardModule extends AbstractModule {
                 .addBinding(DashboardStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
+                .bind(DashboardDoc.TYPE, DashboardStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DashboardResourceImpl.class);

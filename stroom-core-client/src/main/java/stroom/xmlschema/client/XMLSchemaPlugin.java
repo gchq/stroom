@@ -22,14 +22,10 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -47,11 +43,6 @@ import javax.inject.Singleton;
 public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
 
     private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.TRANSFORMATION,
-            XmlSchemaDoc.DOCUMENT_TYPE,
-            "XML Schema",
-            SvgImage.DOCUMENT_XMLSCHEMA);
 
     private final Provider<XMLSchemaPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -66,8 +57,6 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
@@ -106,7 +95,7 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
 
     @Override
     public String getType() {
-        return XmlSchemaDoc.DOCUMENT_TYPE;
+        return XmlSchemaDoc.TYPE;
     }
 
     @Override

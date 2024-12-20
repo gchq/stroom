@@ -6,8 +6,8 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentActionHandlers;
 import stroom.docstore.api.DocumentTypeName;
-import stroom.docstore.shared.DocumentType;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.NullSafe;
@@ -54,7 +54,7 @@ class TestDocRefInfoCache {
 
     public static final DocRef DOC_REF_FOLDER = DocRef.builder()
             .randomUuid()
-            .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
+            .type(ExplorerConstants.FOLDER_TYPE)
             .name("bongo")
             .build();
 
@@ -255,14 +255,9 @@ class TestDocRefInfoCache {
         @Override
         public DocRefInfo info(final DocRef docRef) {
             return buildInfo(DocRef.builder()
-                    .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
+                    .type(ExplorerConstants.FOLDER_TYPE)
                     .uuid(docRef.getUuid())
                     .build());
-        }
-
-        @Override
-        public DocumentType getDocumentType() {
-            return FolderExplorerActionHandler.DOCUMENT_TYPE;
         }
 
         @Override
@@ -278,6 +273,11 @@ class TestDocRefInfoCache {
         @Override
         public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
 
+        }
+
+        @Override
+        public String getType() {
+            return ExplorerConstants.FOLDER_TYPE;
         }
     }
 }

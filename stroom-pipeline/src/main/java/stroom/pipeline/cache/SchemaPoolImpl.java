@@ -37,7 +37,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(
-        type = XmlSchemaDoc.DOCUMENT_TYPE,
+        type = XmlSchemaDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {

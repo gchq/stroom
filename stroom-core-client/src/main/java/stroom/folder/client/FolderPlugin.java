@@ -21,18 +21,14 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.inject.Inject;
@@ -45,12 +41,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FolderPlugin extends DocumentPlugin<DocRef> {
-
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.STRUCTURE,
-            ExplorerConstants.FOLDER_TYPE,
-            ExplorerConstants.FOLDER_TYPE,
-            SvgImage.FOLDER);
 
     private final Provider<FolderPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
@@ -66,8 +56,6 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
         this.contentManager = contentManager;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override

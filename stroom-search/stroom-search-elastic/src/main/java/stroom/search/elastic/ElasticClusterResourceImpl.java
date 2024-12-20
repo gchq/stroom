@@ -66,7 +66,7 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(ElasticClusterDoc.DOCUMENT_TYPE)
+                .type(ElasticClusterDoc.TYPE)
                 .build();
     }
 

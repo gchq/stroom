@@ -86,7 +86,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
 
     @Override
     public String getType() {
-        return LuceneIndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.TYPE;
     }
 
     @Override

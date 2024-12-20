@@ -73,7 +73,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     public void onBegin(final BeginPipelineSteppingEvent event) {
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
-        chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
 
         final Runnable showChooser = () -> {

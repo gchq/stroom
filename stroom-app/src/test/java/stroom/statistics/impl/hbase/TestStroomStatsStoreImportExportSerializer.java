@@ -60,7 +60,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
      */
     @Test
     void testStatisticsDataSource() {
-        final ExplorerNode statNode = explorerService.create(StroomStatsStoreDoc.DOCUMENT_TYPE,
+        final ExplorerNode statNode = explorerService.create(StroomStatsStoreDoc.TYPE,
                 "StatName1",
                 null,
                 null);

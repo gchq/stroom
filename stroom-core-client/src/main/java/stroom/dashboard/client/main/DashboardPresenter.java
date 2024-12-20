@@ -615,7 +615,7 @@ public class DashboardPresenter
 
     @Override
     public String getType() {
-        return DashboardDoc.DOCUMENT_TYPE;
+        return DashboardDoc.TYPE;
     }
 
     @Override

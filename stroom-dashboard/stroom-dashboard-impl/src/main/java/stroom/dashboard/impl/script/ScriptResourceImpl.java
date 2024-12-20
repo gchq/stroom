@@ -58,7 +58,7 @@ class ScriptResourceImpl implements ScriptResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(ScriptDoc.DOCUMENT_TYPE)
+                .type(ScriptDoc.TYPE)
                 .build();
     }
 

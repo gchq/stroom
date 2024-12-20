@@ -98,7 +98,7 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
 
         expression = ExpressionOperator.builder().addDocRefTerm(MetaFields.PIPELINE,
                 Condition.IS_DOC_REF,
-                new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
+                new DocRef(PipelineDoc.TYPE, "1234")).build();
         assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,

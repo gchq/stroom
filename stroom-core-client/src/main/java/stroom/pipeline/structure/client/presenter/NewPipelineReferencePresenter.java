@@ -67,10 +67,10 @@ public class NewPipelineReferencePresenter
         this.uiConfigCache = uiConfigCache;
 
         // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE, StateDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE, StateDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
-        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        feedPresenter.setIncludedTypes(FeedDoc.TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         pipelinePresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);

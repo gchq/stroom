@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
 
     private static final DocRef PIPELINE_DOC_REF = new DocRef(
-            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.TYPE,
             "d6fb12ff-fb94-437e-90c3-b95372572efd",
             "DATA_SPLITTER-EVENTS");
     private static final ExplorerNode PIPELINE_EXPLORER_NODE = ExplorerNode.builder()
@@ -95,7 +95,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
 
         // Rename doc.
         final DocRef renamedPipelineDocRef = new DocRef(
-                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.TYPE,
                 "d6fb12ff-fb94-437e-90c3-b95372572efd",
                 "RENAMED_DATA_SPLITTER-EVENTS");
         explorerNodeService.renameNode(renamedPipelineDocRef);

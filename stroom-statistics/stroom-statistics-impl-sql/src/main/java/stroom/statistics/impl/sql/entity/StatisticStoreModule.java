@@ -50,7 +50,7 @@ public class StatisticStoreModule extends AbstractModule {
                 .addBinding(StatisticStoreStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreStoreImpl.class);
+                .bind(StatisticStoreDoc.TYPE, StatisticStoreStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(StatisticResourceImpl.class);

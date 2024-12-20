@@ -50,7 +50,7 @@ public class IndexShardCreatorImpl implements IndexShardCreator {
                                        final String ownerNodeName) {
         return securityContext.asProcessingUserResult(() -> {
             final LuceneIndexDoc index = luceneIndexDocCache.get(
-                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                    new DocRef(LuceneIndexDoc.TYPE, indexShardKey.getIndexUuid()));
             final String volGroupName = index.getVolumeGroupName();
             final IndexVolume indexVolume = indexVolumeService.selectVolume(volGroupName, ownerNodeName);
 

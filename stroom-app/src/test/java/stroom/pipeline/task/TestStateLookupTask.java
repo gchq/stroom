@@ -102,7 +102,7 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
 
         // Add reference data to state store.
         // Setup the pipeline.
-        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "571a3ca1-5f94-4dcb-8289-119a95d60360");
+        final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "571a3ca1-5f94-4dcb-8289-119a95d60360");
         // Setup the stream processor filter to process all reference data.
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
@@ -128,7 +128,7 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         final List<PipelineReference> pipelineReferences = Collections.singletonList(PipelineDataUtil.createReference(
                 "translationFilter",
                 "pipelineReference",
-                new DocRef(StateDoc.DOCUMENT_TYPE, UUID.randomUUID().toString()),
+                new DocRef(StateDoc.TYPE, UUID.randomUUID().toString()),
                 null,
                 null));
         commonTranslationTestHelper.setupStateProcess(

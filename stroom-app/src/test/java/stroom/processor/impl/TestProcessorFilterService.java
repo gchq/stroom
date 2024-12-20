@@ -84,7 +84,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .isEqualTo(0);
 
         final DocRef pipelineRef = new DocRef(
-                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.TYPE,
                 "12345",
                 "Test Pipeline");
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
@@ -131,7 +131,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     @Test
     void testFeedIncludeExclude() throws Exception {
-        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
+        final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "12345", "Test Pipeline");
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();

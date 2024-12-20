@@ -294,7 +294,7 @@ class IndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = LuceneIndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = LuceneIndexDoc.TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

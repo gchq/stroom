@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
@@ -40,17 +38,12 @@ import java.util.Set;
 @Singleton
 class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            StroomStatsStoreDoc.DOCUMENT_TYPE,
-            "Stroom-Stats Store",
-            StroomStatsStoreDoc.ICON);
     private final Store<StroomStatsStoreDoc> store;
 
     @Inject
     StroomStatsStoreStoreImpl(final StoreFactory storeFactory,
                               final StroomStatsStoreSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreDoc.class);
+        this.store = storeFactory.createStore(serialiser, StroomStatsStoreDoc.TYPE, StroomStatsStoreDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -89,11 +82,6 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -171,7 +159,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public String getType() {
-        return StroomStatsStoreDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

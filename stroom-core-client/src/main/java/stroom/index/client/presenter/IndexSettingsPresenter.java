@@ -64,7 +64,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         this.pipelinePresenter = pipelinePickerPresenter;
         this.restFactory = restFactory;
 
-        pipelinePickerPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePickerPresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePickerPresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);

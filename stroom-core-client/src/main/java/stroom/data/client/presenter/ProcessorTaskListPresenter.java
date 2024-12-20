@@ -174,7 +174,7 @@ public class ProcessorTaskListPresenter
 
         final Function<ProcessorTask, DocRef> feedExtractionFunction = row -> {
             if (row.getFeedName() != null) {
-                return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
+                return new DocRef(FeedDoc.TYPE, null, row.getFeedName());
             } else {
                 return null;
             }
@@ -302,9 +302,9 @@ public class ProcessorTaskListPresenter
     public void read(final DocRef docRef, final Object document, final boolean readOnly) {
         if (docRef == null) {
             setExpression(null);
-        } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        } else if (PipelineDoc.TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(docRef));
-        } else if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        } else if (FeedDoc.TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createFeedExpression(docRef));
         } else if (ExplorerConstants.FOLDER_TYPE.equals(docRef.getType())) {
             setExpression(ProcessorTaskExpressionUtil.createFolderExpression(docRef));

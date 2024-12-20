@@ -22,7 +22,7 @@ import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
 import stroom.docref.DocRef;
 import stroom.docref.HasType;
-import stroom.document.client.ClientDocumentTypeRegistry;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
@@ -244,7 +244,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
 
     @Override
     public SvgImage getIcon() {
-        return ClientDocumentTypeRegistry.getIcon(getType());
+        return DocumentTypeRegistry.getIcon(getType());
     }
 
     @Override

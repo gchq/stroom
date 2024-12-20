@@ -24,8 +24,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.script.shared.ScriptDoc;
@@ -46,11 +44,6 @@ import java.util.stream.Collectors;
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            ScriptDoc.DOCUMENT_TYPE,
-            ScriptDoc.DOCUMENT_TYPE,
-            ScriptDoc.ICON);
     private final Store<ScriptDoc> store;
     private final SecurityContext securityContext;
 
@@ -58,7 +51,7 @@ class ScriptStoreImpl implements ScriptStore {
     ScriptStoreImpl(final StoreFactory storeFactory,
                     final ScriptSerialiser serialiser,
                     final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
+        this.store = storeFactory.createStore(serialiser, ScriptDoc.TYPE, ScriptDoc.class);
         this.securityContext = securityContext;
     }
 
@@ -98,11 +91,6 @@ class ScriptStoreImpl implements ScriptStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -191,7 +179,7 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public String getType() {
-        return ScriptDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

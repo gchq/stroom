@@ -14,19 +14,19 @@ class TestCustomUriResolver {
         assertThat(docRef.getUuid()).isEqualTo("test-uuid");
         assertThat(docRef.getName()).isNull();
 
-        docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "test-uuid", "test-name");
+        docRef = new DocRef(PipelineDoc.TYPE, "test-uuid", "test-name");
         final DocRef parsed = CustomURIResolver.parseDocRef(docRef.toString());
         assertThat(parsed).isEqualTo(docRef);
     }
 
     @Test
     void testGetPart() {
-        final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "test-uuid", "test-name");
+        final DocRef docRef = new DocRef(PipelineDoc.TYPE, "test-uuid", "test-name");
         String docRefString = docRef.toString();
         docRefString = docRefString.replaceAll("\"", "'");
 
         String value = CustomURIResolver.getPart("type", docRefString, null);
-        assertThat(value).isEqualTo(PipelineDoc.DOCUMENT_TYPE);
+        assertThat(value).isEqualTo(PipelineDoc.TYPE);
 
         value = CustomURIResolver.getPart("uuid", docRefString, null);
         assertThat(value).isEqualTo("test-uuid");
@@ -37,7 +37,7 @@ class TestCustomUriResolver {
         docRefString = docRefString.replaceAll("'", "\"");
 
         value = CustomURIResolver.getPart("type", docRefString, null);
-        assertThat(value).isEqualTo(PipelineDoc.DOCUMENT_TYPE);
+        assertThat(value).isEqualTo(PipelineDoc.TYPE);
 
         value = CustomURIResolver.getPart("uuid", docRefString, null);
         assertThat(value).isEqualTo("test-uuid");
@@ -48,7 +48,7 @@ class TestCustomUriResolver {
         docRefString = "type=Pipeline, uuid=test-uuid, name=test-name";
 
         value = CustomURIResolver.getPart("type", docRefString, null);
-        assertThat(value).isEqualTo(PipelineDoc.DOCUMENT_TYPE);
+        assertThat(value).isEqualTo(PipelineDoc.TYPE);
 
         value = CustomURIResolver.getPart("uuid", docRefString, null);
         assertThat(value).isEqualTo("test-uuid");

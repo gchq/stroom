@@ -28,8 +28,6 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -52,11 +50,6 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            DataRetentionRules.DOCUMENT_TYPE,
-            "Data Retention Rules",
-            DataRetentionRules.ICON);
 
     private final Store<DataRetentionRules> store;
     private final SecurityContext securityContext;
@@ -68,7 +61,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
         this.securityContext = securityContext;
         DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
-        this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);
+        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -107,11 +100,6 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     @Override
     public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -207,7 +195,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public String getType() {
-        return DataRetentionRules.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

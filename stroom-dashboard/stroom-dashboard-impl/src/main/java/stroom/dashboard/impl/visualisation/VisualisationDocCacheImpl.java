@@ -39,7 +39,7 @@ import jakarta.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@EntityEventHandler(type = VisualisationDoc.DOCUMENT_TYPE, action = {
+@EntityEventHandler(type = VisualisationDoc.TYPE, action = {
         EntityAction.DELETE,
         EntityAction.UPDATE,
         EntityAction.CLEAR_CACHE})
@@ -108,7 +108,7 @@ public class VisualisationDocCacheImpl implements VisualisationDocCache, Clearab
         final EntityAction eventAction = event.getAction();
         final DocRef docRef = event.getDocRef();
 
-        if (VisualisationDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+        if (VisualisationDoc.TYPE.equals(docRef.getType())) {
             switch (eventAction) {
                 case CLEAR_CACHE -> clear();
                 case DELETE,

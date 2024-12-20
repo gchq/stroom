@@ -37,7 +37,7 @@ import jakarta.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@EntityEventHandler(type = ElasticIndexDoc.DOCUMENT_TYPE, action = {
+@EntityEventHandler(type = ElasticIndexDoc.TYPE, action = {
         EntityAction.CREATE,
         EntityAction.DELETE,
         EntityAction.UPDATE
@@ -93,7 +93,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (ElasticIndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
+        if (ElasticIndexDoc.TYPE.equals(event.getDocRef().getType())) {
             cache.invalidate(event.getDocRef());
         }
     }

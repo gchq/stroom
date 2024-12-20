@@ -57,7 +57,7 @@ public class S3ConfigResourceImpl implements S3ConfigResource, FetchWithUuid<S3C
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(S3ConfigDoc.DOCUMENT_TYPE)
+                .type(S3ConfigDoc.TYPE)
                 .build();
     }
 

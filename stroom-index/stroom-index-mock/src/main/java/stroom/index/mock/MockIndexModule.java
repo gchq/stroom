@@ -62,7 +62,7 @@ public class MockIndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+                .bind(LuceneIndexDoc.TYPE, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
                 .addBinding(MockIndexFieldService.class);

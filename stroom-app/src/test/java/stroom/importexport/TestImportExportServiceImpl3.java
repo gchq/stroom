@@ -49,7 +49,7 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
             explorerService.create(
-                    FeedDoc.DOCUMENT_TYPE,
+                    FeedDoc.TYPE,
                     FileSystemTestUtil.getUniqueTestString(),
                     null,
                     null);

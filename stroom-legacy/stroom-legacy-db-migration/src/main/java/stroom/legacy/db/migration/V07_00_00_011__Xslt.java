@@ -61,7 +61,7 @@ public class V07_00_00_011__Xslt extends BaseJavaMigration {
                     final String dat = resultSet.getString(8);
 
                     final XsltDoc document = new XsltDoc();
-                    document.setType(XsltDoc.DOCUMENT_TYPE);
+                    document.setType(XsltDoc.TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -84,7 +84,7 @@ public class V07_00_00_011__Xslt extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, XsltDoc.DOCUMENT_TYPE);
+                            ps.setString(1, XsltDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

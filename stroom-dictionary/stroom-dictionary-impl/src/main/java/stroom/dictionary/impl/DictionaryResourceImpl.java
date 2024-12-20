@@ -93,7 +93,7 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(DictionaryDoc.DOCUMENT_TYPE)
+                .type(DictionaryDoc.TYPE)
                 .build();
     }
 

@@ -48,7 +48,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         this.scriptPresenter = scriptPresenter;
         this.editorPresenter = editorPresenter;
 
-        scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
+        scriptPresenter.setIncludedTypes(ScriptDoc.TYPE);
         scriptPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setScriptView(scriptPresenter.getView());

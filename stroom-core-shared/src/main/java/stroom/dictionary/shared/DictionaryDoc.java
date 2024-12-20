@@ -19,6 +19,8 @@ package stroom.dictionary.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -32,10 +34,10 @@ import java.util.Objects;
 
 @Description(
         "A Dictionary is essentially a list of 'words', where each 'word' is separated by a new line.\n" +
-                "Dictionaries can be used in filter expressions, i.e. `IN DICTIONARY`.\n" +
-                "They allow for the reuse of the same set of values across many search expressions.\n" +
-                "Dictionaries also support inheritance so one dictionary can import the contents of other " +
-                "dictionaries.")
+        "Dictionaries can be used in filter expressions, i.e. `IN DICTIONARY`.\n" +
+        "They allow for the reuse of the same set of values across many search expressions.\n" +
+        "Dictionaries also support inheritance so one dictionary can import the contents of other " +
+        "dictionaries.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -51,8 +53,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class DictionaryDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "Dictionary";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_DICTIONARY;
+    public static final String TYPE = "Dictionary";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_DICTIONARY);
 
     @JsonProperty
     private String description;
@@ -86,7 +92,7 @@ public class DictionaryDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -95,7 +101,7 @@ public class DictionaryDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -135,8 +141,8 @@ public class DictionaryDoc extends Doc {
         }
         final DictionaryDoc that = (DictionaryDoc) o;
         return Objects.equals(description, that.description) &&
-                Objects.equals(data, that.data) &&
-                Objects.equals(imports, that.imports);
+               Objects.equals(data, that.data) &&
+               Objects.equals(imports, that.imports);
     }
 
     @Override

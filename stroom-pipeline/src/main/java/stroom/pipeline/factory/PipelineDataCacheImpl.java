@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-@EntityEventHandler(type = PipelineDoc.DOCUMENT_TYPE)
+@EntityEventHandler(type = PipelineDoc.TYPE)
 public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "Pipeline Structure Cache";

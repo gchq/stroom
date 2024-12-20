@@ -82,7 +82,7 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
 
     @Override
     public String getType() {
-        return StroomStatsStoreDoc.DOCUMENT_TYPE;
+        return StroomStatsStoreDoc.TYPE;
     }
 
     @Override

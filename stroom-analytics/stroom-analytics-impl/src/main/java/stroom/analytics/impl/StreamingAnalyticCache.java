@@ -26,7 +26,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(
-        type = AnalyticRuleDoc.DOCUMENT_TYPE,
+        type = AnalyticRuleDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
 
@@ -80,7 +80,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                         .create(analyticRuleDoc);
                 final DocRef dataSource = searchRequest.getQuery().getDataSource();
 
-                if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                if (dataSource == null || !ViewDoc.TYPE.equals(dataSource.getType())) {
                     throw new RuntimeException("Error: Rule needs to reference a view");
 
                 } else {

@@ -114,7 +114,7 @@ class QueryResourceImpl implements QueryResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(QueryDoc.DOCUMENT_TYPE)
+                .type(QueryDoc.TYPE)
                 .build();
     }
 

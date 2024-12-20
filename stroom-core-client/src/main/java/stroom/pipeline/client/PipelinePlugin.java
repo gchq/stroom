@@ -22,19 +22,15 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.processor.shared.Processor;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 
@@ -50,23 +46,6 @@ import javax.inject.Singleton;
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            PipelineDoc.DOCUMENT_TYPE,
-            PipelineDoc.DOCUMENT_TYPE,
-            SvgImage.DOCUMENT_PIPELINE);
-
-    public static final ClientDocumentType PROCESSOR_DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            "Processor",
-            "Processor",
-            SvgImage.DOCUMENT_PIPELINE);
-
-    public static final ClientDocumentType PROCESSOR_FILTER_DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            "ProcessorFilter",
-            "Processor Filter",
-            SvgImage.FILTER);
 
     private final Provider<PipelinePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -81,10 +60,6 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
-        ClientDocumentTypeRegistry.put(PROCESSOR_DOCUMENT_TYPE);
-        ClientDocumentTypeRegistry.put(PROCESSOR_FILTER_DOCUMENT_TYPE);
     }
 
     @Override
@@ -94,7 +69,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
             final Processor processor = event.getProcessorFilter().getProcessor();
             final String pipelineUuid = processor.getPipelineUuid();
-            final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
+            final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid);
             // Open the item in the content pane.
             final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef,
                     true,
@@ -144,7 +119,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     @Override
     public String getType() {
-        return PipelineDoc.DOCUMENT_TYPE;
+        return PipelineDoc.TYPE;
     }
 
     @Override

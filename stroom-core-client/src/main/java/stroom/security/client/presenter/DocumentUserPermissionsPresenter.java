@@ -19,8 +19,8 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.docref.DocRef;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
@@ -239,7 +239,7 @@ public class DocumentUserPermissionsPresenter
                     .forEach(entry -> {
                         final String type = entry.getKey();
                         final List<String> path = entry.getValue();
-                        final ClientDocumentType docType = ClientDocumentTypeRegistry.get(type);
+                        final DocumentType docType = DocumentTypeRegistry.get(type);
                         if (docType != null && GwtNullSafe.hasItems(path)) {
                             final SvgImage icon = docType.getIcon();
                             final String pathStr = String.join(" & ", path);
@@ -272,15 +272,15 @@ public class DocumentUserPermissionsPresenter
     private SafeHtml docTypesToSortedDisplayList(final Set<String> types) {
         if (GwtNullSafe.hasItems(types)) {
             //noinspection SimplifyStreamApiCallChains // Cos GWT
-            final List<ClientDocumentType> sortedDocTypes = ClientDocumentTypeRegistry.getTypes()
+            final List<DocumentType> sortedDocTypes = DocumentTypeRegistry.getTypes()
                     .stream()
                     .filter(docType -> types.contains(docType.getType()))
-                    .sorted(Comparator.comparing(ClientDocumentType::getType))
+                    .sorted(Comparator.comparing(DocumentType::getType))
                     .collect(Collectors.toList());
             if (GwtNullSafe.hasItems(sortedDocTypes)) {
                 final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
                 for (int i = 0; i < sortedDocTypes.size(); i++) {
-                    final ClientDocumentType docType = sortedDocTypes.get(i);
+                    final DocumentType docType = sortedDocTypes.get(i);
                     final SvgImage icon = docType.getIcon();
                     htmlBuilder.br()
                             .span(spanBuilder -> spanBuilder

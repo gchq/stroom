@@ -82,7 +82,7 @@ public class PipelineServiceImpl implements PipelineService {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(PipelineDoc.DOCUMENT_TYPE)
+                .type(PipelineDoc.TYPE)
                 .build();
     }
 

@@ -57,7 +57,7 @@ public class MockStateModule extends AbstractModule {
                 .addBinding(ScyllaDbDocStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ScyllaDbDoc.DOCUMENT_TYPE, ScyllaDbDocStoreImpl.class);
+                .bind(ScyllaDbDoc.TYPE, ScyllaDbDocStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ScyllaDbDocResourceImpl.class);

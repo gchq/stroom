@@ -144,7 +144,7 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
     @Override
     public String getType() {
-        return S3ConfigDoc.DOCUMENT_TYPE;
+        return S3ConfigDoc.TYPE;
     }
 
     @Override

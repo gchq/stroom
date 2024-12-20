@@ -28,19 +28,15 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 
@@ -60,11 +56,6 @@ import javax.inject.Singleton;
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.SEARCH,
-            DashboardDoc.DOCUMENT_TYPE,
-            DashboardDoc.DOCUMENT_TYPE,
-            SvgImage.DOCUMENT_DASHBOARD);
 
     private final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider;
     private final RestFactory restFactory;
@@ -80,8 +71,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.dashboardSuperPresenterProvider = dashboardSuperPresenterProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
 
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
                 event -> openParameterisedDashboard(event.getHref())));
@@ -115,7 +104,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         if (uuid == null || uuid.trim().length() == 0) {
             AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
         } else {
-            final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, uuid);
+            final DocRef docRef = new DocRef(DashboardDoc.TYPE, uuid);
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
@@ -237,7 +226,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     @Override
     public String getType() {
-        return DashboardDoc.DOCUMENT_TYPE;
+        return DashboardDoc.TYPE;
     }
 
     @Override

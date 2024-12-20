@@ -69,7 +69,7 @@ public class V07_00_00_010__Visualisation extends BaseJavaMigration {
                     final String script = resultSet.getString(10);
 
                     final VisualisationDoc document = new VisualisationDoc();
-                    document.setType(VisualisationDoc.DOCUMENT_TYPE);
+                    document.setType(VisualisationDoc.TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -98,7 +98,7 @@ public class V07_00_00_010__Visualisation extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, VisualisationDoc.DOCUMENT_TYPE);
+                            ps.setString(1, VisualisationDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

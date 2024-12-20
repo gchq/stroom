@@ -84,7 +84,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(5);
 
-        final ExplorerNode tran1Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode tran1Ref = explorerService.create(PipelineDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder1,
                 null);
@@ -92,7 +92,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         tran1.setDescription("Description");
         pipelineStore.writeDocument(tran1);
 
-        final ExplorerNode tran2Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode tran2Ref = explorerService.create(PipelineDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
@@ -101,7 +101,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         tran2.setParentPipeline(tran1Ref.getDocRef());
         tran2 = pipelineStore.writeDocument(tran2);
 
-        final ExplorerNode referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode referenceFeedRef = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder1,
                 null);
@@ -109,7 +109,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         referenceFeed.setDescription("Description");
         feedStore.writeDocument(referenceFeed);
 
-        final ExplorerNode eventFeedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode eventFeedNode = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
@@ -117,7 +117,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         eventFeed.setDescription("Description");
         feedStore.writeDocument(eventFeed);
 
-        final ExplorerNode eventFeedChildNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode eventFeedChildNode = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2child1,
                 null);
@@ -125,7 +125,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         eventFeedChild.setDescription("Description");
         feedStore.writeDocument(eventFeedChild);
 
-        final ExplorerNode eventFeedChild2Node = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode eventFeedChild2Node = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2child2,
                 null);

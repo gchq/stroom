@@ -65,7 +65,7 @@ public class AnalyticProcessingPresenter
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
 
-        errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        errorFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
         errorFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         getView().setErrorFeedView(errorFeedPresenter.getView());
     }

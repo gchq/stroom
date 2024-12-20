@@ -107,7 +107,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.locationHolderProvider = locationHolderProvider;
 
         this.docFinder = new DocFinder<>(
-                TextConverterDoc.DOCUMENT_TYPE,
+                TextConverterDoc.TYPE,
                 pathCreator,
                 textConverterStore,
                 docRefInfoService);
@@ -180,7 +180,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     @PipelineProperty(
             description = "The XML fragment wrapper that should be used to wrap the input XML.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

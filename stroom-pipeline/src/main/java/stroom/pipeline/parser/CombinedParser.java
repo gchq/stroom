@@ -135,7 +135,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.locationHolderProvider = locationHolderProvider;
 
         this.docFinder = new DocFinder<>(
-                TextConverterDoc.DOCUMENT_TYPE,
+                TextConverterDoc.TYPE,
                 pathCreator,
                 textConverterStore,
                 docRefInfoService);
@@ -305,7 +305,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     @PipelineProperty(
             description = "The text converter configuration that should be used to parse the input data.",
             displayPriority = 2)
-    @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

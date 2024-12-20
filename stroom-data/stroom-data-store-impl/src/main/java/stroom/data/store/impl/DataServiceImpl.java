@@ -381,7 +381,7 @@ class DataServiceImpl implements DataService {
         }
         if (meta.getPipelineUuid() != null) {
             final String pipelineName = getPipelineName(meta);
-            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.TYPE,
                     meta.getPipelineUuid(),
                     pipelineName));
             entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));

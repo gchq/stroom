@@ -85,7 +85,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class ElasticSearchProvider implements SearchProvider, ElasticIndexService, IndexFieldProvider {
 
-    public static final String ENTITY_TYPE = ElasticIndexDoc.DOCUMENT_TYPE;
+    public static final String ENTITY_TYPE = ElasticIndexDoc.TYPE;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchProvider.class);
 
     private final ElasticIndexCache elasticIndexCache;
@@ -475,6 +475,6 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public String getType() {
-        return ElasticIndexDoc.DOCUMENT_TYPE;
+        return ElasticIndexDoc.TYPE;
     }
 }

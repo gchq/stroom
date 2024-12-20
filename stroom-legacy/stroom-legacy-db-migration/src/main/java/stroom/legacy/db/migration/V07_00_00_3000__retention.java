@@ -124,7 +124,7 @@ public class V07_00_00_3000__retention extends BaseJavaMigration {
                 " WHERE name = ?" +
                 " AND type = ?")) {
             preparedStatement.setString(1, DATA_RETENTION);
-            preparedStatement.setString(2, DataRetentionRules.DOCUMENT_TYPE);
+            preparedStatement.setString(2, DataRetentionRules.TYPE);
             preparedStatement.execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -141,7 +141,7 @@ public class V07_00_00_3000__retention extends BaseJavaMigration {
                             "  ext, " +
                             "  data) " +
                             "VALUES (?, ?, ?, ?, ?)")) {
-                ps.setString(1, DataRetentionRules.DOCUMENT_TYPE);
+                ps.setString(1, DataRetentionRules.TYPE);
                 ps.setString(2, dataRetentionRules.getUuid());
                 ps.setString(3, dataRetentionRules.getName());
                 ps.setString(4, k);
@@ -162,7 +162,7 @@ public class V07_00_00_3000__retention extends BaseJavaMigration {
                 " data" +
                 " FROM doc" +
                 " WHERE type = ?")) {
-            preparedStatement.setString(1, FeedDoc.DOCUMENT_TYPE);
+            preparedStatement.setString(1, FeedDoc.TYPE);
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
@@ -211,7 +211,7 @@ public class V07_00_00_3000__retention extends BaseJavaMigration {
                 " WHERE name = ?" +
                 " AND type = ?")) {
             preparedStatement.setString(1, DATA_RETENTION);
-            preparedStatement.setString(2, DataRetentionRules.DOCUMENT_TYPE);
+            preparedStatement.setString(2, DataRetentionRules.TYPE);
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
@@ -238,7 +238,7 @@ public class V07_00_00_3000__retention extends BaseJavaMigration {
         if (dataRetentionRules == null) {
             final long now = System.currentTimeMillis();
             dataRetentionRules = new DataRetentionRules();
-            dataRetentionRules.setType(DataRetentionRules.DOCUMENT_TYPE);
+            dataRetentionRules.setType(DataRetentionRules.TYPE);
             dataRetentionRules.setUuid(UUID.randomUUID().toString());
             dataRetentionRules.setName(DATA_RETENTION);
             dataRetentionRules.setVersion(UUID.randomUUID().toString());

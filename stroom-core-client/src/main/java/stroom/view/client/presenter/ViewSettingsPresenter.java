@@ -66,7 +66,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 
-        pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Filter the pipeline picker by tags, if configured

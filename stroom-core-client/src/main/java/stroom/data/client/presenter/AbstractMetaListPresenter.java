@@ -379,7 +379,7 @@ public abstract class AbstractMetaListPresenter
     private DocRef getFeed(final MetaRow metaRow) {
         if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
             return new DocRef(
-                    FeedDoc.DOCUMENT_TYPE,
+                    FeedDoc.TYPE,
                     null,
                     metaRow.getMeta().getFeedName());
         }
@@ -629,7 +629,7 @@ public abstract class AbstractMetaListPresenter
     private void choosePipeline(final Consumer<DocRef> consumer) {
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Data With");
-        chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
         chooser.show(consumer);
     }

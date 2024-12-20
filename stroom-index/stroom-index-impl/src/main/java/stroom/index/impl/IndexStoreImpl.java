@@ -22,8 +22,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.api.IndexVolumeGroupService;
@@ -47,11 +45,6 @@ public class IndexStoreImpl implements IndexStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexStoreImpl.class);
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            LuceneIndexDoc.DOCUMENT_TYPE,
-            "Lucene Index",
-            LuceneIndexDoc.ICON);
     private final Store<LuceneIndexDoc> store;
     private final Provider<IndexFieldService> indexFieldServiceProvider;
     private final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider;
@@ -63,7 +56,7 @@ public class IndexStoreImpl implements IndexStore {
                    final Provider<IndexFieldService> indexFieldServiceProvider,
                    final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
         this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.DOCUMENT_TYPE, LuceneIndexDoc.class);
+        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.TYPE, LuceneIndexDoc.class);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.serialiser = serialiser;
     }
@@ -104,11 +97,6 @@ public class IndexStoreImpl implements IndexStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -219,7 +207,7 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public String getType() {
-        return LuceneIndexDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

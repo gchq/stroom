@@ -70,7 +70,7 @@ public class SolrSearchModule extends AbstractModule {
                 .addBinding(SolrIndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(SolrIndexDoc.DOCUMENT_TYPE, SolrIndexStoreImpl.class);
+                .bind(SolrIndexDoc.TYPE, SolrIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(SolrIndexResourceImpl.class)

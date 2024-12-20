@@ -134,7 +134,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
 
     @Override
     public String getType() {
-        return FeedDoc.DOCUMENT_TYPE;
+        return FeedDoc.TYPE;
     }
 
     @Override

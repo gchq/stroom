@@ -82,7 +82,7 @@ public class QueryDocPresenter
 
     @Override
     public String getType() {
-        return QueryDoc.DOCUMENT_TYPE;
+        return QueryDoc.TYPE;
     }
 
     @Override

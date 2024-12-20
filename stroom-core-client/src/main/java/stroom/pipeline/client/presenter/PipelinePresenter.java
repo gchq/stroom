@@ -157,7 +157,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
     @Override
     public String getType() {
-        return PipelineDoc.DOCUMENT_TYPE;
+        return PipelineDoc.TYPE;
     }
 
     public ProcessorPresenter getProcessorPresenter() {

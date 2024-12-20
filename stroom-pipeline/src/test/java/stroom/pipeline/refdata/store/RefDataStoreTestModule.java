@@ -156,7 +156,7 @@ public class RefDataStoreTestModule extends AbstractModule {
         if (docRefs != null) {
             for (final DocRef docRef : docRefs) {
                 Objects.requireNonNull(docRef);
-                if (!docRef.getType().equals(FeedDoc.DOCUMENT_TYPE)) {
+                if (!docRef.getType().equals(FeedDoc.TYPE)) {
                     throw new RuntimeException(LogUtil.message("Invalid type " + docRef.getType()));
                 }
                 this.docRefs.put(docRef, docRef);

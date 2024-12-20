@@ -236,7 +236,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = stroom.index.shared.LuceneIndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = stroom.index.shared.LuceneIndexDoc.TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

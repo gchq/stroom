@@ -19,6 +19,8 @@ package stroom.visualisation.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,11 +33,11 @@ import java.util.Objects;
 
 @Description(
         "Defines a data visualisation that can be used in a [Dashboard]({{< relref \"#dashboard\" >}}) " +
-                "Document.\n" +
-                "The Visualisation defines the settings that will be available to the user when it is embedded in a " +
-                "Dashboard.\n" +
-                "A Visualisation is dependent on a [Script]({{< relref \"#script\" >}}) Document for the Javascript " +
-                "code to make it work.")
+        "Document.\n" +
+        "The Visualisation defines the settings that will be available to the user when it is embedded in a " +
+        "Dashboard.\n" +
+        "A Visualisation is dependent on a [Script]({{< relref \"#script\" >}}) Document for the Javascript " +
+        "code to make it work.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -52,8 +54,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class VisualisationDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "Visualisation";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_VISUALISATION;
+    public static final String TYPE = "Visualisation";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_VISUALISATION);
 
     @JsonProperty
     private String description;
@@ -91,7 +97,7 @@ public class VisualisationDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -100,7 +106,7 @@ public class VisualisationDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -148,9 +154,9 @@ public class VisualisationDoc extends Doc {
         }
         final VisualisationDoc that = (VisualisationDoc) o;
         return Objects.equals(description, that.description) &&
-                Objects.equals(functionName, that.functionName) &&
-                Objects.equals(scriptRef, that.scriptRef) &&
-                Objects.equals(settings, that.settings);
+               Objects.equals(functionName, that.functionName) &&
+               Objects.equals(scriptRef, that.scriptRef) &&
+               Objects.equals(settings, that.settings);
     }
 
     @Override

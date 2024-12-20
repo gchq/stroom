@@ -22,14 +22,10 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -47,11 +43,6 @@ import javax.inject.Singleton;
 public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
 
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            VisualisationDoc.DOCUMENT_TYPE,
-            VisualisationDoc.DOCUMENT_TYPE,
-            SvgImage.DOCUMENT_VISUALISATION);
 
     private final Provider<VisualisationPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -66,8 +57,6 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
@@ -106,7 +95,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
 
     @Override
     public String getType() {
-        return VisualisationDoc.DOCUMENT_TYPE;
+        return VisualisationDoc.TYPE;
     }
 
     @Override

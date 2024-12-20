@@ -141,7 +141,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
 
         final Function<ProcessorTaskSummary, DocRef> feedExtractionFunction = row ->
-                new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
+                new DocRef(FeedDoc.TYPE, null, row.getFeed());
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(

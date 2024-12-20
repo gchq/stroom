@@ -335,11 +335,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                     if (pipelineReference.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a pipeline to use.", e::reset);
-                    } else if (!StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType()) &&
+                    } else if (!StateDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
                                pipelineReference.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
                                 e::reset);
-                    } else if (!StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType()) &&
+                    } else if (!StateDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
                                pipelineReference.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a stream type to use.", e::reset);

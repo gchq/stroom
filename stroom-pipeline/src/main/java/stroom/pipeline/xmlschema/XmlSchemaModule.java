@@ -47,7 +47,7 @@ public class XmlSchemaModule extends AbstractModule {
                 .addBinding(XmlSchemaStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaStoreImpl.class);
+                .bind(XmlSchemaDoc.TYPE, XmlSchemaStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(XmlSchemaResourceImpl.class);

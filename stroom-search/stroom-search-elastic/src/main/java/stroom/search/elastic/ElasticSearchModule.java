@@ -54,7 +54,7 @@ public class ElasticSearchModule extends AbstractModule {
         bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
 
         SuggestionsServiceBinder.create(binder())
-                .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticSuggestionsQueryHandler.class);
+                .bind(ElasticIndexDoc.TYPE, ElasticSuggestionsQueryHandler.class);
 
         // Caches
 
@@ -80,7 +80,7 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticClusterStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterStoreImpl.class);
+                .bind(ElasticClusterDoc.TYPE, ElasticClusterStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ElasticClusterResourceImpl.class);
@@ -97,7 +97,7 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticIndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexStoreImpl.class);
+                .bind(ElasticIndexDoc.TYPE, ElasticIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ElasticIndexResourceImpl.class)

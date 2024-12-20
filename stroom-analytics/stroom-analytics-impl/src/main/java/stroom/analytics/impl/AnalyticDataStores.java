@@ -209,7 +209,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return dataStoreCache.computeIfAbsent(analyticRuleDoc, k -> {
             final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(k);
             final DocRef dataSource = searchRequest.getQuery().getDataSource();
-            if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+            if (dataSource == null || !ViewDoc.TYPE.equals(dataSource.getType())) {
                 LOGGER.error("Rule needs to reference a view");
                 throw new RuntimeException("Rule needs to reference a view");
             }
@@ -228,7 +228,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
             if (Files.isDirectory(path)) {
                 analyticDataStore = dataStoreCache.computeIfAbsent(analyticRuleDoc, k -> {
                     final DocRef dataSource = searchRequest.getQuery().getDataSource();
-                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                    if (dataSource == null || !ViewDoc.TYPE.equals(dataSource.getType())) {
                         LOGGER.error("Rule needs to reference a view");
                         throw new RuntimeException("Rule needs to reference a view");
                     }
@@ -242,7 +242,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     private LmdbDataStore createStore(final SearchRequest searchRequest) {
         final DocRef dataSource = searchRequest.getQuery().getDataSource();
-        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+        if (dataSource == null || !ViewDoc.TYPE.equals(dataSource.getType())) {
             LOGGER.error("Rule needs to reference a view");
             throw new RuntimeException("Rule needs to reference a view");
         }
@@ -374,7 +374,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
         final DocRef docRef = DocRef
                 .builder()
-                .type(AnalyticRuleDoc.DOCUMENT_TYPE)
+                .type(AnalyticRuleDoc.TYPE)
                 .uuid(criteria.getAnalyticDocUuid())
                 .build();
         try {
@@ -411,7 +411,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     public Result getData(final GetAnalyticShardDataRequest request) {
         final DocRef docRef = DocRef
                 .builder()
-                .type(AnalyticRuleDoc.DOCUMENT_TYPE)
+                .type(AnalyticRuleDoc.TYPE)
                 .uuid(request.getAnalyticDocUuid())
                 .build();
         try {

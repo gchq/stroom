@@ -88,7 +88,7 @@ class TestIndexShardDaoImpl {
         final DocRef index = DocRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name(TestData.createIndexName())
-                .type(LuceneIndexDoc.DOCUMENT_TYPE)
+                .type(LuceneIndexDoc.TYPE)
                 .build();
         final String nodeName = TestData.createNodeName();
 

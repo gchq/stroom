@@ -19,6 +19,8 @@ package stroom.script.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
@@ -33,8 +35,8 @@ import java.util.Objects;
 
 @Description(
         "Contains a Javascript script that is used as the source for a " +
-                "[visualisation]({{< relref \"#visualisation\" >}}) Document.\n" +
-                "Scripts can have dependencies on other Script Documents, e.g. to allow re-use of common code.")
+        "[visualisation]({{< relref \"#visualisation\" >}}) Document.\n" +
+        "Scripts can have dependencies on other Script Documents, e.g. to allow re-use of common code.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -50,8 +52,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ScriptDoc extends Doc implements HasData {
 
-    public static final String DOCUMENT_TYPE = "Script";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_SCRIPT;
+    public static final String TYPE = "Script";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            TYPE,
+            SvgImage.DOCUMENT_SCRIPT);
 
     @JsonProperty
     private String description;
@@ -85,7 +91,7 @@ public class ScriptDoc extends Doc implements HasData {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -94,7 +100,7 @@ public class ScriptDoc extends Doc implements HasData {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -136,8 +142,8 @@ public class ScriptDoc extends Doc implements HasData {
         }
         final ScriptDoc scriptDoc = (ScriptDoc) o;
         return Objects.equals(description, scriptDoc.description) &&
-                Objects.equals(dependencies, scriptDoc.dependencies) &&
-                Objects.equals(data, scriptDoc.data);
+               Objects.equals(dependencies, scriptDoc.dependencies) &&
+               Objects.equals(data, scriptDoc.data);
     }
 
     @Override

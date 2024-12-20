@@ -37,7 +37,7 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
         assertThat(internalStatisticsConfig).isNotNull();
 
         internalStatisticsConfig.setEnabledStoreTypes(List.of(
-                StatisticStoreDoc.DOCUMENT_TYPE));
+                StatisticStoreDoc.TYPE));
 
         List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
 
@@ -64,8 +64,8 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
         assertThat(internalStatisticsConfig).isNotNull();
 
         internalStatisticsConfig.setEnabledStoreTypes(List.of(
-                StatisticStoreDoc.DOCUMENT_TYPE,
-                StroomStatsStoreDoc.DOCUMENT_TYPE));
+                StatisticStoreDoc.TYPE,
+                StroomStatsStoreDoc.TYPE));
 
         List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
 

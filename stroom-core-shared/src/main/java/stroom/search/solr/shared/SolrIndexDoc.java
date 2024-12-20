@@ -19,6 +19,8 @@ package stroom.search.solr.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
 
@@ -35,12 +37,12 @@ import java.util.Objects;
 
 @Description(
         "Solr Index represents an index on a Solr cluster.\n" +
-                "It defines the connection details for connecting to that cluster and the structure of the index.\n" +
-                "It is used by the {{< pipe-elm \"SolrIndexingFilter\" >}} pipeline element." +
-                "\n" +
-                "{{% see-also %}}" +
-                "[Solr Integration]({{< relref \"docs/user-guide/indexing/solr\" >}})" +
-                "{{% /see-also %}}"
+        "It defines the connection details for connecting to that cluster and the structure of the index.\n" +
+        "It is used by the {{< pipe-elm \"SolrIndexingFilter\" >}} pipeline element." +
+        "\n" +
+        "{{% see-also %}}" +
+        "[Solr Integration]({{< relref \"docs/user-guide/indexing/solr\" >}})" +
+        "{{% /see-also %}}"
 )
 @JsonPropertyOrder({
         "type",
@@ -64,8 +66,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "SolrIndex";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_SOLR_INDEX;
+    public static final String TYPE = "SolrIndex";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            TYPE,
+            "Solr Index",
+            SvgImage.DOCUMENT_SOLR_INDEX);
 
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
@@ -145,7 +151,7 @@ public class SolrIndexDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -154,7 +160,7 @@ public class SolrIndexDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -234,7 +240,7 @@ public class SolrIndexDoc extends Doc {
 
     @JsonIgnore
     public final String getType() {
-        return DOCUMENT_TYPE;
+        return TYPE;
     }
 
     @Override
@@ -250,11 +256,11 @@ public class SolrIndexDoc extends Doc {
         }
         final SolrIndexDoc solrIndexDoc = (SolrIndexDoc) o;
         return Objects.equals(description, solrIndexDoc.description) &&
-                Objects.equals(collection, solrIndexDoc.collection) &&
-                Objects.equals(solrConnectionConfig, solrIndexDoc.solrConnectionConfig) &&
-                Objects.equals(fields, solrIndexDoc.fields) &&
-                Objects.equals(timeField, solrIndexDoc.timeField) &&
-                Objects.equals(defaultExtractionPipeline, solrIndexDoc.defaultExtractionPipeline);
+               Objects.equals(collection, solrIndexDoc.collection) &&
+               Objects.equals(solrConnectionConfig, solrIndexDoc.solrConnectionConfig) &&
+               Objects.equals(fields, solrIndexDoc.fields) &&
+               Objects.equals(timeField, solrIndexDoc.timeField) &&
+               Objects.equals(defaultExtractionPipeline, solrIndexDoc.defaultExtractionPipeline);
     }
 
     @Override
@@ -271,12 +277,12 @@ public class SolrIndexDoc extends Doc {
     @Override
     public String toString() {
         return "SolrIndex{" +
-                "description='" + description + '\'' +
-                ", collection='" + collection + '\'' +
-                ", solrConnectionConfig=" + solrConnectionConfig +
-                ", fields=" + fields +
-                ", timeField=" + timeField +
-                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
-                '}';
+               "description='" + description + '\'' +
+               ", collection='" + collection + '\'' +
+               ", solrConnectionConfig=" + solrConnectionConfig +
+               ", fields=" + fields +
+               ", timeField=" + timeField +
+               ", defaultExtractionPipeline=" + defaultExtractionPipeline +
+               '}';
     }
 }

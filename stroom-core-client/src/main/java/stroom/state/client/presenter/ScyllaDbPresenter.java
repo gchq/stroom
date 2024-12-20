@@ -72,7 +72,7 @@ public class ScyllaDbPresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
     @Override
     public String getType() {
-        return ScyllaDbDoc.DOCUMENT_TYPE;
+        return ScyllaDbDoc.TYPE;
     }
 
     @Override

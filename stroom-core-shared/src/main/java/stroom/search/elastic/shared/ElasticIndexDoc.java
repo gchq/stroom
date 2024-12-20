@@ -19,6 +19,8 @@ package stroom.search.elastic.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
 
@@ -35,12 +37,12 @@ import java.util.Objects;
 
 @Description(
         "Defines an index that exists within an Elasticsearch cluster.\n" +
-                "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
-                "pipeline element.\n" +
-                "\n" +
-                "{{% see-also %}}" +
-                "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
-                "{{% /see-also %}}")
+        "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
+        "pipeline element.\n" +
+        "\n" +
+        "{{% see-also %}}" +
+        "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
+        "{{% /see-also %}}")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -65,8 +67,12 @@ public class ElasticIndexDoc extends Doc {
 
     public static final int DEFAULT_SEARCH_SLICES = 1;
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
-    public static final String DOCUMENT_TYPE = "ElasticIndex";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_ELASTIC_INDEX;
+    public static final String TYPE = "ElasticIndex";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            TYPE,
+            "Elastic Index",
+            SvgImage.DOCUMENT_ELASTIC_INDEX);
     private static final String DEFAULT_TIME_FIELD = "@timestamp";
 
     /**
@@ -165,7 +171,7 @@ public class ElasticIndexDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -174,7 +180,7 @@ public class ElasticIndexDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -256,7 +262,7 @@ public class ElasticIndexDoc extends Doc {
     @JsonIgnore
     @Override
     public final String getType() {
-        return DOCUMENT_TYPE;
+        return TYPE;
     }
 
     @Override
@@ -272,13 +278,13 @@ public class ElasticIndexDoc extends Doc {
         }
         final ElasticIndexDoc elasticIndex = (ElasticIndexDoc) o;
         return Objects.equals(description, elasticIndex.description) &&
-                Objects.equals(clusterRef, elasticIndex.clusterRef) &&
-                Objects.equals(indexName, elasticIndex.indexName) &&
-                Objects.equals(searchSlices, elasticIndex.searchSlices) &&
-                Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
-                Objects.equals(fields, elasticIndex.fields) &&
-                Objects.equals(timeField, elasticIndex.timeField) &&
-                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
+               Objects.equals(clusterRef, elasticIndex.clusterRef) &&
+               Objects.equals(indexName, elasticIndex.indexName) &&
+               Objects.equals(searchSlices, elasticIndex.searchSlices) &&
+               Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
+               Objects.equals(fields, elasticIndex.fields) &&
+               Objects.equals(timeField, elasticIndex.timeField) &&
+               Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
     @Override
@@ -298,14 +304,14 @@ public class ElasticIndexDoc extends Doc {
     @Override
     public String toString() {
         return "ElasticIndex{" +
-                "description='" + description + '\'' +
-                ", clusterRef='" + clusterRef + '\'' +
-                ", indexName='" + indexName + '\'' +
-                ", searchSlices=" + searchSlices +
-                ", searchScrollSize=" + searchScrollSize +
-                ", fields=" + fields +
-                ", timeField=" + timeField +
-                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
-                '}';
+               "description='" + description + '\'' +
+               ", clusterRef='" + clusterRef + '\'' +
+               ", indexName='" + indexName + '\'' +
+               ", searchSlices=" + searchSlices +
+               ", searchScrollSize=" + searchScrollSize +
+               ", fields=" + fields +
+               ", timeField=" + timeField +
+               ", defaultExtractionPipeline=" + defaultExtractionPipeline +
+               '}';
     }
 }

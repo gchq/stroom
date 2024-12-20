@@ -101,7 +101,7 @@ public class AnalyticRulePresenter
 
     @Override
     public String getType() {
-        return AnalyticRuleDoc.DOCUMENT_TYPE;
+        return AnalyticRuleDoc.TYPE;
     }
 
     @Override

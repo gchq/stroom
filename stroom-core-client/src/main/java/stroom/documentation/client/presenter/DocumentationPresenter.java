@@ -114,7 +114,7 @@ public class DocumentationPresenter
 
     @Override
     public String getType() {
-        return DocumentationDoc.DOCUMENT_TYPE;
+        return DocumentationDoc.TYPE;
     }
 
     @Override

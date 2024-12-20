@@ -20,6 +20,8 @@ package stroom.receive.rules.shared;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,8 +48,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ReceiveDataRules extends Doc {
 
-    public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
+    public static final String TYPE = "ReceiveDataRuleSet";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            "Rule Set",
+            SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
 
     @JsonProperty
     private String description;
@@ -81,7 +87,7 @@ public class ReceiveDataRules extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -90,7 +96,7 @@ public class ReceiveDataRules extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -130,8 +136,8 @@ public class ReceiveDataRules extends Doc {
         }
         final ReceiveDataRules that = (ReceiveDataRules) o;
         return Objects.equals(description, that.description) &&
-                Objects.equals(fields, that.fields) &&
-                Objects.equals(rules, that.rules);
+               Objects.equals(fields, that.fields) &&
+               Objects.equals(rules, that.rules);
     }
 
     @Override

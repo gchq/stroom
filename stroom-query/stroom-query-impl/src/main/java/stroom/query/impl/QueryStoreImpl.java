@@ -24,8 +24,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -51,11 +49,6 @@ import java.util.function.BiConsumer;
 class QueryStoreImpl implements QueryStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryStoreImpl.class);
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            QueryDoc.DOCUMENT_TYPE,
-            QueryDoc.DOCUMENT_TYPE,
-            QueryDoc.ICON);
 
     private final Store<QueryDoc> store;
     private final SecurityContext securityContext;
@@ -68,7 +61,7 @@ class QueryStoreImpl implements QueryStore {
                    final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, QueryDoc.DOCUMENT_TYPE, QueryDoc.class);
+        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc.class);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -120,11 +113,6 @@ class QueryStoreImpl implements QueryStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -245,7 +233,7 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public String getType() {
-        return QueryDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

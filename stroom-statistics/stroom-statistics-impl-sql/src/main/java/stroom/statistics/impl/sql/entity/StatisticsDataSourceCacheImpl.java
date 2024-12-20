@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(
-        type = StatisticStoreDoc.DOCUMENT_TYPE,
+        type = StatisticStoreDoc.TYPE,
         action = {
                 EntityAction.CREATE,
                 EntityAction.UPDATE,

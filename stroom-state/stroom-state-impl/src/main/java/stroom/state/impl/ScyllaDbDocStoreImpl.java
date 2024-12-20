@@ -23,8 +23,6 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.state.shared.ScyllaDbDoc;
@@ -43,18 +41,13 @@ import java.util.Set;
 @Singleton
 public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
 
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            ScyllaDbDoc.DOCUMENT_TYPE,
-            "ScyllaDB",
-            ScyllaDbDoc.ICON);
     private final Store<ScyllaDbDoc> store;
 
     @Inject
     public ScyllaDbDocStoreImpl(
             final StoreFactory storeFactory,
             final ScyllaDbSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, ScyllaDbDoc.DOCUMENT_TYPE, ScyllaDbDoc.class);
+        this.store = storeFactory.createStore(serialiser, ScyllaDbDoc.TYPE, ScyllaDbDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -99,11 +92,6 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -218,7 +206,7 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
 
     @Override
     public String getType() {
-        return ScyllaDbDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

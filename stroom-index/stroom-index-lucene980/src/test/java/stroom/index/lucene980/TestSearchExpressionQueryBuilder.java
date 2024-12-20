@@ -53,7 +53,7 @@ public class TestSearchExpressionQueryBuilder {
 //        dictionaryDoc.setData("1\n2\n3\n4");
 //        dictionaryDoc = dictionaryStore.writeDocument(dictionaryDoc);
 
-        final DocRef dictionaryRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, "test", "test");
+        final DocRef dictionaryRef = new DocRef(DictionaryDoc.TYPE, "test", "test");
 
         final WordListProvider wordListProvider = new WordListProvider() {
             @Override

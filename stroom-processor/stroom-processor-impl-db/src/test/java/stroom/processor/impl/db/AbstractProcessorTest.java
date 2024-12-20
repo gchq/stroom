@@ -152,7 +152,7 @@ class AbstractProcessorTest {
 
     protected Processor createProcessor() {
         final Processor processor = new Processor(new DocRef(
-                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.TYPE,
                 UUID.randomUUID().toString()));
         processor.setCreateTimeMs(System.currentTimeMillis());
         processor.setCreateUser("jbloggs");

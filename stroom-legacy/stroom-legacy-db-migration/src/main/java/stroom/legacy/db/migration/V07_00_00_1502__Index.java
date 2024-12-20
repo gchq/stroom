@@ -408,7 +408,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                                         .orElse(null);
 
                         final LuceneIndexDoc document = new LuceneIndexDoc();
-                        document.setType(LuceneIndexDoc.DOCUMENT_TYPE);
+                        document.setType(LuceneIndexDoc.TYPE);
                         document.setUuid(uuid);
                         document.setName(name);
                         document.setVersion(UUID.randomUUID().toString());
@@ -438,7 +438,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         // Add the records.
                         dataMap.forEach((k, v) -> {
                             try {
-                                insert.setString(1, LuceneIndexDoc.DOCUMENT_TYPE);
+                                insert.setString(1, LuceneIndexDoc.TYPE);
                                 insert.setString(2, uuid);
                                 insert.setString(3, name);
                                 insert.setString(4, k);

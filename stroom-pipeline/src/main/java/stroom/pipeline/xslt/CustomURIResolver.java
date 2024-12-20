@@ -95,7 +95,7 @@ class CustomURIResolver implements URIResolver {
 
     static DocRef parseDocRef(final String href) {
         return new DocRef(
-                getPart("type", href, PipelineDoc.DOCUMENT_TYPE),
+                getPart("type", href, PipelineDoc.TYPE),
                 getPart("uuid", href, href),
                 getPart("name", href, null));
     }

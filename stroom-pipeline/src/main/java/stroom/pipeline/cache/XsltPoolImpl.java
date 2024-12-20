@@ -52,7 +52,7 @@ import javax.xml.transform.stream.StreamSource;
 
 @Singleton
 @EntityEventHandler(
-        type = XsltDoc.DOCUMENT_TYPE,
+        type = XsltDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool, EntityEvent.Handler {
 

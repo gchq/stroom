@@ -43,7 +43,7 @@ public class DashboardSuperPresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc>
         implements HasToolbar {
 
-    private static final TabData DASHBOARD = new TabDataImpl("Dashboard", DashboardDoc.DOCUMENT_TYPE);
+    private static final TabData DASHBOARD = new TabDataImpl("Dashboard", DashboardDoc.TYPE);
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -107,7 +107,7 @@ public class DashboardSuperPresenter
 
     @Override
     public String getType() {
-        return DashboardDoc.DOCUMENT_TYPE;
+        return DashboardDoc.TYPE;
     }
 
     @Override

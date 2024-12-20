@@ -804,7 +804,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             description = "Target Elasticsearch cluster.",
             displayPriority = 1
     )
-    @PipelinePropertyDocRef(types = ElasticClusterDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = ElasticClusterDoc.TYPE)
     public void setCluster(final DocRef clusterRef) {
         this.clusterRef = clusterRef;
     }

@@ -45,13 +45,13 @@ class TestIndexFieldDaoImpl {
 
     private static final DocRef DOC_REF_1 = DocRef.builder()
             .uuid("a8c078d8-b2e7-41e6-b254-d4870ab75ab8")
-            .type(LuceneIndexDoc.DOCUMENT_TYPE)
+            .type(LuceneIndexDoc.TYPE)
             .name("foo")
             .build();
 
     private static final DocRef DOC_REF_2 = DocRef.builder()
             .uuid("05da4d75-28d4-48ad-9195-9302cfacbc1c")
-            .type(LuceneIndexDoc.DOCUMENT_TYPE)
+            .type(LuceneIndexDoc.TYPE)
             .name("bar")
             .build();
 

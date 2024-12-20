@@ -52,7 +52,7 @@ public class ViewModule extends AbstractModule {
                 .addBinding(ViewSearchProvider.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(ViewDoc.DOCUMENT_TYPE, ViewStoreImpl.class);
+                .bind(ViewDoc.TYPE, ViewStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

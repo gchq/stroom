@@ -272,7 +272,7 @@ public class IndexShardManager {
     private void delete(final IndexShard indexShard) {
         final DocRef indexDocRef = DocRef
                 .builder()
-                .type(LuceneIndexDoc.DOCUMENT_TYPE)
+                .type(LuceneIndexDoc.TYPE)
                 .uuid(indexShard.getIndexUuid())
                 .build();
         if (!securityContext.hasDocumentPermission(indexDocRef,
@@ -301,7 +301,7 @@ public class IndexShardManager {
         try {
             // Delete this shard if it is older than the retention age.
             final LuceneIndexDoc index = indexStore.readDocument(
-                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
+                    new DocRef(LuceneIndexDoc.TYPE, shard.getIndexUuid()));
             if (index == null) {
                 // If there is no associated index then delete the shard.
                 indexShardWriterCache.delete(shard.getId());

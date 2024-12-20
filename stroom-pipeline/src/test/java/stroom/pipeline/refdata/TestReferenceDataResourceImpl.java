@@ -52,7 +52,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                         new ReferenceLoader(
                                 DocRef.builder()
                                         .name("LoaderPipeline")
-                                        .type(PipelineDoc.DOCUMENT_TYPE)
+                                        .type(PipelineDoc.TYPE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
                                 DocRef.builder()
@@ -88,7 +88,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                         new ReferenceLoader(
                                 DocRef.builder()
                                         .name("LoaderPipeline")
-                                        .type(PipelineDoc.DOCUMENT_TYPE)
+                                        .type(PipelineDoc.TYPE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
                                 DocRef.builder()
@@ -125,7 +125,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                         new ReferenceLoader(
                                 DocRef.builder()
                                         .name("LoaderPipeline")
-                                        .type(PipelineDoc.DOCUMENT_TYPE)
+                                        .type(PipelineDoc.TYPE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
                                 DocRef.builder()

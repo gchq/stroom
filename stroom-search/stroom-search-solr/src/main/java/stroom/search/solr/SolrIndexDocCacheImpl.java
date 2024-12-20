@@ -37,7 +37,7 @@ import jakarta.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@EntityEventHandler(type = SolrIndexDoc.DOCUMENT_TYPE, action = {
+@EntityEventHandler(type = SolrIndexDoc.TYPE, action = {
         EntityAction.CREATE,
         EntityAction.DELETE,
         EntityAction.UPDATE})
@@ -92,7 +92,7 @@ class SolrIndexDocCacheImpl implements SolrIndexDocCache, EntityEvent.Handler, C
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (SolrIndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
+        if (SolrIndexDoc.TYPE.equals(event.getDocRef().getType())) {
             cache.invalidate(event.getDocRef());
         }
     }

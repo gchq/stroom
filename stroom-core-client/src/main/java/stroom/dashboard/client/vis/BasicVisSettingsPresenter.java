@@ -76,7 +76,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         this.userPreferencesManager = userPreferencesManager;
         view.setUiHandlers(this);
 
-        visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
+        visualisationPresenter.setIncludedTypes(VisualisationDoc.TYPE);
         visualisationPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());

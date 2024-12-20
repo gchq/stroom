@@ -55,7 +55,7 @@ class TextConverterResourceImpl implements TextConverterResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(TextConverterDoc.DOCUMENT_TYPE)
+                .type(TextConverterDoc.TYPE)
                 .build();
     }
 }

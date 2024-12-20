@@ -40,7 +40,7 @@ public class TextConverterModule extends AbstractModule {
 
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterStoreImpl.class);
+                .bind(TextConverterDoc.TYPE, TextConverterStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(TextConverterResourceImpl.class);

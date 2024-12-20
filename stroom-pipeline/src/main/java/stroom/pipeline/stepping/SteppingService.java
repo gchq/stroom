@@ -249,7 +249,7 @@ public class SteppingService {
         if (pipelineUuid != null) {
             try {
                 // Ensure the current user is allowed to load this pipeline.
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE,
                         pipelineUuid));
                 docRef = DocRefUtil.create(pipelineDoc);
             } catch (final RuntimeException e) {

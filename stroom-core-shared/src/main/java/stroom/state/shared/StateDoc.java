@@ -19,6 +19,8 @@ package stroom.state.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.TimeUnit;
 
@@ -55,8 +57,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StateDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "StateStore";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_STATE_STORE;
+    public static final String TYPE = "StateStore";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            TYPE,
+            "State Store",
+            SvgImage.DOCUMENT_STATE_STORE);
 
     /**
      * Reference to the `scyllaDb` containing common connection properties
@@ -118,7 +124,7 @@ public class StateDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -127,7 +133,7 @@ public class StateDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -205,7 +211,7 @@ public class StateDoc extends Doc {
     @JsonIgnore
     @Override
     public final String getType() {
-        return DOCUMENT_TYPE;
+        return TYPE;
     }
 
     @Override
@@ -221,14 +227,14 @@ public class StateDoc extends Doc {
         }
         final StateDoc doc = (StateDoc) o;
         return condense == doc.condense &&
-                condenseAge == doc.condenseAge &&
-                retainForever == doc.retainForever &&
-                retainAge == doc.retainAge &&
-                Objects.equals(scyllaDbRef, doc.scyllaDbRef) &&
-                Objects.equals(description, doc.description) &&
-                stateType == doc.stateType &&
-                condenseTimeUnit == doc.condenseTimeUnit &&
-                retainTimeUnit == doc.retainTimeUnit;
+               condenseAge == doc.condenseAge &&
+               retainForever == doc.retainForever &&
+               retainAge == doc.retainAge &&
+               Objects.equals(scyllaDbRef, doc.scyllaDbRef) &&
+               Objects.equals(description, doc.description) &&
+               stateType == doc.stateType &&
+               condenseTimeUnit == doc.condenseTimeUnit &&
+               retainTimeUnit == doc.retainTimeUnit;
     }
 
     @Override
@@ -248,15 +254,15 @@ public class StateDoc extends Doc {
     @Override
     public String toString() {
         return "StateDoc{" +
-                "scyllaDbRef=" + scyllaDbRef +
-                ", description='" + description + '\'' +
-                ", stateType=" + stateType +
-                ", condense=" + condense +
-                ", condenseAge=" + condenseAge +
-                ", condenseTimeUnit=" + condenseTimeUnit +
-                ", retainForever=" + retainForever +
-                ", retainAge=" + retainAge +
-                ", retainTimeUnit=" + retainTimeUnit +
-                '}';
+               "scyllaDbRef=" + scyllaDbRef +
+               ", description='" + description + '\'' +
+               ", stateType=" + stateType +
+               ", condense=" + condense +
+               ", condenseAge=" + condenseAge +
+               ", condenseTimeUnit=" + condenseTimeUnit +
+               ", retainForever=" + retainForever +
+               ", retainAge=" + retainAge +
+               ", retainTimeUnit=" + retainTimeUnit +
+               '}';
     }
 }

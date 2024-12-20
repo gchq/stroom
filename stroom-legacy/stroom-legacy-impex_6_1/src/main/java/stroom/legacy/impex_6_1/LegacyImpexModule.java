@@ -25,20 +25,20 @@ public class LegacyImpexModule extends AbstractModule {
     protected void configure() {
         bind(ImportConverter.class).to(ImportConverterImpl.class);
         DataMapConverterBinder.create(binder())
-                .bind(DashboardDoc.DOCUMENT_TYPE, DashboardDataMapConverter.class)
-                .bind(DictionaryDoc.DOCUMENT_TYPE, DictionaryDataMapConverter.class)
-                .bind(ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterDataMapConverter.class)
-                .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDataMapConverter.class)
-                .bind(FeedDoc.DOCUMENT_TYPE, FeedDataMapConverter.class)
-                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexDataMapConverter.class)
-                .bind(PipelineDoc.DOCUMENT_TYPE, PipelineDataMapConverter.class)
-                .bind(ScriptDoc.DOCUMENT_TYPE, ScriptDataMapConverter.class)
-                .bind(SolrIndexDoc.DOCUMENT_TYPE, SolrIndexDataMapConverter.class)
-                .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticDataMapConverter.class)
-                .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsDataMapConverter.class)
-                .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterDataMapConverter.class)
-                .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDataMapConverter.class)
-                .bind(XsltDoc.DOCUMENT_TYPE, XsltDataMapConverter.class)
-                .bind(VisualisationDoc.DOCUMENT_TYPE, VisualisationDataMapConverter.class);
+                .bind(DashboardDoc.TYPE, DashboardDataMapConverter.class)
+                .bind(DictionaryDoc.TYPE, DictionaryDataMapConverter.class)
+                .bind(ElasticClusterDoc.TYPE, ElasticClusterDataMapConverter.class)
+                .bind(ElasticIndexDoc.TYPE, ElasticIndexDataMapConverter.class)
+                .bind(FeedDoc.TYPE, FeedDataMapConverter.class)
+                .bind(LuceneIndexDoc.TYPE, IndexDataMapConverter.class)
+                .bind(PipelineDoc.TYPE, PipelineDataMapConverter.class)
+                .bind(ScriptDoc.TYPE, ScriptDataMapConverter.class)
+                .bind(SolrIndexDoc.TYPE, SolrIndexDataMapConverter.class)
+                .bind(StatisticStoreDoc.TYPE, StatisticDataMapConverter.class)
+                .bind(StroomStatsStoreDoc.TYPE, StroomStatsDataMapConverter.class)
+                .bind(TextConverterDoc.TYPE, TextConverterDataMapConverter.class)
+                .bind(XmlSchemaDoc.TYPE, XmlSchemaDataMapConverter.class)
+                .bind(XsltDoc.TYPE, XsltDataMapConverter.class)
+                .bind(VisualisationDoc.TYPE, VisualisationDataMapConverter.class);
     }
 }

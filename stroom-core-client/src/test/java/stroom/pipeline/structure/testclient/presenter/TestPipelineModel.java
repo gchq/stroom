@@ -321,8 +321,8 @@ class TestPipelineModel {
 
     @Test
     void testInheritanceRefsSame() {
-        final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
-        final DocRef feed = new DocRef(FeedDoc.DOCUMENT_TYPE, "1");
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "1");
+        final DocRef feed = new DocRef(FeedDoc.TYPE, "1");
 
         final List<PipelineData> baseStack = new ArrayList<>();
 
@@ -343,8 +343,8 @@ class TestPipelineModel {
 
     @Test
     void testInheritanceRefsDiff() {
-        final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
-        final DocRef feed = new DocRef(FeedDoc.DOCUMENT_TYPE, "1");
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "1");
+        final DocRef feed = new DocRef(FeedDoc.TYPE, "1");
 
         final List<PipelineData> baseStack = new ArrayList<>();
 
@@ -365,8 +365,8 @@ class TestPipelineModel {
 
     @Test
     void testInheritanceRefsRemove() {
-        final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
-        final DocRef feed = new DocRef(FeedDoc.DOCUMENT_TYPE, "1");
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "1");
+        final DocRef feed = new DocRef(FeedDoc.TYPE, "1");
 
         final List<PipelineData> baseStack = new ArrayList<>();
 

@@ -105,7 +105,7 @@ class StroomStatsAppender extends AbstractKafkaAppender {
     @PipelineProperty(
             description = "The stroom-stats data source to record statistics against.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = StroomStatsStoreDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = StroomStatsStoreDoc.TYPE)
     public void setStatisticsDataSource(final DocRef stroomStatStoreRef) {
         this.stroomStatStoreRef = stroomStatStoreRef;
     }

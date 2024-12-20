@@ -218,6 +218,6 @@ public class LuceneSearchProvider implements SearchProvider {
 
     @Override
     public String getType() {
-        return LuceneIndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.TYPE;
     }
 }

@@ -19,6 +19,8 @@ package stroom.search.elastic.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -32,7 +34,7 @@ import java.util.Objects;
 
 @Description(
         "Defines the connection details for a single Elasticsearch cluster.\n" +
-                "This Elastic Cluster Document can then be used by one or more Elastic Index Documents.")
+        "This Elastic Cluster Document can then be used by one or more Elastic Index Documents.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -47,8 +49,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ElasticClusterDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "ElasticCluster";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_ELASTIC_CLUSTER;
+    public static final String TYPE = "ElasticCluster";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            "Elastic Cluster",
+            SvgImage.DOCUMENT_ELASTIC_CLUSTER);
 
     @JsonProperty
     private String description;
@@ -80,7 +86,7 @@ public class ElasticClusterDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -89,7 +95,7 @@ public class ElasticClusterDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -111,7 +117,7 @@ public class ElasticClusterDoc extends Doc {
     @JsonIgnore
     @Override
     public final String getType() {
-        return DOCUMENT_TYPE;
+        return TYPE;
     }
 
     @Override
@@ -127,7 +133,7 @@ public class ElasticClusterDoc extends Doc {
         }
         final ElasticClusterDoc elasticCluster = (ElasticClusterDoc) o;
         return Objects.equals(description, elasticCluster.description) &&
-                Objects.equals(connection, elasticCluster.connection);
+               Objects.equals(connection, elasticCluster.connection);
     }
 
     @Override
@@ -138,8 +144,8 @@ public class ElasticClusterDoc extends Doc {
     @Override
     public String toString() {
         return "ElasticCluster{" +
-                "description='" + description + '\'' +
-                ", connectionConfig=" + connection +
-                '}';
+               "description='" + description + '\'' +
+               ", connectionConfig=" + connection +
+               '}';
     }
 }

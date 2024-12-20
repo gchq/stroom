@@ -55,7 +55,7 @@ class XsltResourceImpl implements XsltResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(XsltDoc.DOCUMENT_TYPE)
+                .type(XsltDoc.TYPE)
                 .build();
     }
 }

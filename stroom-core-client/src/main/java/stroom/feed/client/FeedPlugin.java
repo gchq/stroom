@@ -22,17 +22,13 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -47,11 +43,6 @@ import javax.inject.Singleton;
 public class FeedPlugin extends DocumentPlugin<FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
-    public static final ClientDocumentType DOCUMENT_TYPE = new ClientDocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            FeedDoc.DOCUMENT_TYPE,
-            FeedDoc.DOCUMENT_TYPE,
-            SvgImage.DOCUMENT_FEED);
 
     private final Provider<FeedPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -66,8 +57,6 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
-
-        ClientDocumentTypeRegistry.put(DOCUMENT_TYPE);
     }
 
     @Override
@@ -106,7 +95,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
 
     @Override
     public String getType() {
-        return FeedDoc.DOCUMENT_TYPE;
+        return FeedDoc.TYPE;
     }
 
     @Override

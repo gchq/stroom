@@ -41,7 +41,7 @@ import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(
-        type = StateDoc.DOCUMENT_TYPE,
+        type = StateDoc.TYPE,
         action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.Handler {
 

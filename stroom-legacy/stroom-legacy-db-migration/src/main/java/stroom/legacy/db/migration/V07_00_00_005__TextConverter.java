@@ -64,7 +64,7 @@ public class V07_00_00_005__TextConverter extends BaseJavaMigration {
                     final String dat = resultSet.getString(9);
 
                     final TextConverterDoc document = new TextConverterDoc();
-                    document.setType(TextConverterDoc.DOCUMENT_TYPE);
+                    document.setType(TextConverterDoc.TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -94,7 +94,7 @@ public class V07_00_00_005__TextConverter extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, TextConverterDoc.DOCUMENT_TYPE);
+                            ps.setString(1, TextConverterDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

@@ -31,8 +31,6 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -62,11 +60,6 @@ class DashboardStoreImpl implements DashboardStore {
     private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
 
     private static final String TEMPLATE_FILE = "DashboardTemplate.json";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            DashboardDoc.DOCUMENT_TYPE,
-            DashboardDoc.DOCUMENT_TYPE,
-            DashboardDoc.ICON);
 
     private final Store<DashboardDoc> store;
     private final DashboardSerialiser serialiser;
@@ -78,7 +71,7 @@ class DashboardStoreImpl implements DashboardStore {
     DashboardStoreImpl(final StoreFactory storeFactory,
                        final DashboardSerialiser serialiser,
                        final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.class);
+        this.store = storeFactory.createStore(serialiser, DashboardDoc.TYPE, DashboardDoc.class);
         this.serialiser = serialiser;
         this.securityContext = securityContext;
     }
@@ -149,11 +142,6 @@ class DashboardStoreImpl implements DashboardStore {
     @Override
     public DocRefInfo info(DocRef docRef) {
         return store.info(docRef);
-    }
-
-    @Override
-    public DocumentType getDocumentType() {
-        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -320,7 +308,7 @@ class DashboardStoreImpl implements DashboardStore {
 
     @Override
     public String getType() {
-        return DashboardDoc.DOCUMENT_TYPE;
+        return store.getType();
     }
 
     @Override

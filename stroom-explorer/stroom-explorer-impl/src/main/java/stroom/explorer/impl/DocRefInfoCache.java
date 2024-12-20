@@ -114,7 +114,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                 .or(() ->
                         explorerActionHandlers.stream()
                                 .filter(handler ->
-                                        !typesChecked.contains(handler.getDocumentType().getType()))
+                                        !typesChecked.contains(handler.getType()))
                                 .map(handler -> {
                                     try {
                                         return handler.info(docRef);

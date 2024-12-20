@@ -19,6 +19,8 @@ package stroom.state.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,8 +51,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ScyllaDbDoc extends Doc {
 
-    public static final String DOCUMENT_TYPE = "ScyllaDB";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_SCYLLA_DB;
+    public static final String TYPE = "ScyllaDB";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            "Scylla DB",
+            SvgImage.DOCUMENT_SCYLLA_DB);
 
     @JsonProperty
     private String description;
@@ -88,7 +94,7 @@ public class ScyllaDbDoc extends Doc {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -97,7 +103,7 @@ public class ScyllaDbDoc extends Doc {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -135,7 +141,7 @@ public class ScyllaDbDoc extends Doc {
     @JsonIgnore
     @Override
     public final String getType() {
-        return DOCUMENT_TYPE;
+        return TYPE;
     }
 
     @Override
@@ -151,9 +157,9 @@ public class ScyllaDbDoc extends Doc {
         }
         final ScyllaDbDoc that = (ScyllaDbDoc) o;
         return Objects.equals(description, that.description) &&
-                Objects.equals(connection, that.connection) &&
-                Objects.equals(keyspace, that.keyspace) &&
-                Objects.equals(keyspaceCql, that.keyspaceCql);
+               Objects.equals(connection, that.connection) &&
+               Objects.equals(keyspace, that.keyspace) &&
+               Objects.equals(keyspaceCql, that.keyspaceCql);
     }
 
     @Override
@@ -164,10 +170,10 @@ public class ScyllaDbDoc extends Doc {
     @Override
     public String toString() {
         return "ScyllaDbDoc{" +
-                "description='" + description + '\'' +
-                ", connection='" + connection + '\'' +
-                ", keyspace='" + keyspace + '\'' +
-                ", keyspaceCql='" + keyspaceCql + '\'' +
-                '}';
+               "description='" + description + '\'' +
+               ", connection='" + connection + '\'' +
+               ", keyspace='" + keyspace + '\'' +
+               ", keyspaceCql='" + keyspaceCql + '\'' +
+               '}';
     }
 }

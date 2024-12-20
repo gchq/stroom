@@ -73,7 +73,7 @@ public class V07_00_00_008__Dashboard extends BaseJavaMigration {
                     dashboard = marshaller.unmarshal(dashboard);
 
                     final DashboardDoc document = new DashboardDoc();
-                    document.setType(DashboardDoc.DOCUMENT_TYPE);
+                    document.setType(DashboardDoc.TYPE);
                     document.setUuid(dashboard.getUuid());
                     document.setName(dashboard.getName());
                     document.setVersion(UUID.randomUUID().toString());
@@ -95,7 +95,7 @@ public class V07_00_00_008__Dashboard extends BaseJavaMigration {
                                         "  ext, " +
                                         "  data) " +
                                         "VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, DashboardDoc.DOCUMENT_TYPE);
+                            ps.setString(1, DashboardDoc.TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

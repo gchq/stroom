@@ -43,9 +43,9 @@ public class ProcessorTaskFields {
     public static final QueryField STATUS_TIME = QueryField.createDate("Status Time");
     public static final QueryField META_ID = QueryField.createId("Meta Id");
     public static final QueryField NODE_NAME = QueryField.createText("Node");
-    public static final QueryField PIPELINE = QueryField.createDocRefByUuid(PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
+    public static final QueryField PIPELINE = QueryField.createDocRefByUuid(PipelineDoc.TYPE, FIELD_PIPELINE);
     public static final QueryField PIPELINE_NAME = QueryField.createDocRefByNonUniqueName(
-            PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE_NAME);
+            PipelineDoc.TYPE, FIELD_PIPELINE_NAME);
     public static final QueryField PROCESSOR_FILTER_ID = QueryField.createId("Processor Filter Id");
     public static final QueryField PROCESSOR_FILTER_PRIORITY = QueryField.createLong("Processor Filter Priority");
     public static final QueryField PROCESSOR_ID = QueryField.createId("Processor Id");

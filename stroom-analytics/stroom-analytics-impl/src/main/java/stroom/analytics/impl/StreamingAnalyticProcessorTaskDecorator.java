@@ -91,7 +91,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     @Override
     public void beforeProcessing(final ProcessorFilter processorFilter) {
         // Load rule.
-        final DocRef analyticRuleRef = new DocRef(AnalyticRuleDoc.DOCUMENT_TYPE, processorFilter.getPipelineUuid());
+        final DocRef analyticRuleRef = new DocRef(AnalyticRuleDoc.TYPE, processorFilter.getPipelineUuid());
         analytic = streamingAnalyticCache.get(analyticRuleRef);
         if (analytic == null) {
             throw new RuntimeException("Unable to get analytic from cache: " + analyticRuleRef);

@@ -47,7 +47,7 @@ public class AnalyticStreamDestinationPresenter
         view.setUiHandlers(this);
         this.feedPresenter = feedPresenter;
 
-        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        feedPresenter.setIncludedTypes(FeedDoc.TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeedView(feedPresenter.getView());
     }

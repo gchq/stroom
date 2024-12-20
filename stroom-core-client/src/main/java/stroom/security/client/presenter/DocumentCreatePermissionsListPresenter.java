@@ -21,10 +21,8 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.document.client.ClientDocumentType;
-import stroom.document.client.ClientDocumentTypeRegistry;
-import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.docstore.shared.DocumentType;
+import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
@@ -321,10 +319,7 @@ public class DocumentCreatePermissionsListPresenter
 
     private Preset getDocTypeIcon(final DocumentType documentType) {
         if (documentType != null) {
-            final ClientDocumentType clientDocumentType = ClientDocumentTypeRegistry.get(documentType.getType());
-            if (clientDocumentType != null) {
-                return new Preset(clientDocumentType.getIcon(), clientDocumentType.getDisplayType(), true);
-            }
+            return new Preset(documentType.getIcon(), documentType.getDisplayType(), true);
         }
         return null;
     }

@@ -61,7 +61,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             .build();
     private static final TabData DOCUMENTATION = TabDataImpl.builder()
             .withLabel("Documentation")
-            .withTooltip(TabData.createDocumentationTooltip(DictionaryDoc.DOCUMENT_TYPE))
+            .withTooltip(TabData.createDocumentationTooltip(DictionaryDoc.TYPE))
             .build();
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -185,7 +185,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     @Override
     public String getType() {
-        return DictionaryDoc.DOCUMENT_TYPE;
+        return DictionaryDoc.TYPE;
     }
 
     @Override

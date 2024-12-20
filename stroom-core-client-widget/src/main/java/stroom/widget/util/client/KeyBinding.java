@@ -113,19 +113,19 @@ public class KeyBinding {
         addCreateDocKeySequence(Action.CREATE_XSLT, KeyCodes.KEY_X);
 
         // Map doc types to the create actions, so we can get the action for a doc
-        DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.DOCUMENT_TYPE, Action.CREATE_ELASTIC_INDEX);
-        DOC_TYPE_TO_ACTION_MAP.put(DashboardDoc.DOCUMENT_TYPE, Action.CREATE_DASHBOARD);
-        DOC_TYPE_TO_ACTION_MAP.put(FeedDoc.DOCUMENT_TYPE, Action.CREATE_FEED);
+        DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.TYPE, Action.CREATE_ELASTIC_INDEX);
+        DOC_TYPE_TO_ACTION_MAP.put(DashboardDoc.TYPE, Action.CREATE_DASHBOARD);
+        DOC_TYPE_TO_ACTION_MAP.put(FeedDoc.TYPE, Action.CREATE_FEED);
         DOC_TYPE_TO_ACTION_MAP.put(ExplorerConstants.FOLDER_TYPE, Action.CREATE_FOLDER);
-        DOC_TYPE_TO_ACTION_MAP.put(DictionaryDoc.DOCUMENT_TYPE, Action.CREATE_DICTIONARY);
-        DOC_TYPE_TO_ACTION_MAP.put(LuceneIndexDoc.DOCUMENT_TYPE, Action.CREATE_LUCENE_INDEX);
-        DOC_TYPE_TO_ACTION_MAP.put(DocumentationDoc.DOCUMENT_TYPE, Action.CREATE_DOCUMENTATION);
-        DOC_TYPE_TO_ACTION_MAP.put(PipelineDoc.DOCUMENT_TYPE, Action.CREATE_PIPELINE);
-        DOC_TYPE_TO_ACTION_MAP.put(QueryDoc.DOCUMENT_TYPE, Action.CREATE_QUERY);
-        DOC_TYPE_TO_ACTION_MAP.put(AnalyticRuleDoc.DOCUMENT_TYPE, Action.CREATE_ANALYTIC_RULE);
-        DOC_TYPE_TO_ACTION_MAP.put(TextConverterDoc.DOCUMENT_TYPE, Action.CREATE_TEXT_CONVERTER);
-        DOC_TYPE_TO_ACTION_MAP.put(ViewDoc.DOCUMENT_TYPE, Action.CREATE_VIEW);
-        DOC_TYPE_TO_ACTION_MAP.put(XsltDoc.DOCUMENT_TYPE, Action.CREATE_XSLT);
+        DOC_TYPE_TO_ACTION_MAP.put(DictionaryDoc.TYPE, Action.CREATE_DICTIONARY);
+        DOC_TYPE_TO_ACTION_MAP.put(LuceneIndexDoc.TYPE, Action.CREATE_LUCENE_INDEX);
+        DOC_TYPE_TO_ACTION_MAP.put(DocumentationDoc.TYPE, Action.CREATE_DOCUMENTATION);
+        DOC_TYPE_TO_ACTION_MAP.put(PipelineDoc.TYPE, Action.CREATE_PIPELINE);
+        DOC_TYPE_TO_ACTION_MAP.put(QueryDoc.TYPE, Action.CREATE_QUERY);
+        DOC_TYPE_TO_ACTION_MAP.put(AnalyticRuleDoc.TYPE, Action.CREATE_ANALYTIC_RULE);
+        DOC_TYPE_TO_ACTION_MAP.put(TextConverterDoc.TYPE, Action.CREATE_TEXT_CONVERTER);
+        DOC_TYPE_TO_ACTION_MAP.put(ViewDoc.TYPE, Action.CREATE_VIEW);
+        DOC_TYPE_TO_ACTION_MAP.put(XsltDoc.TYPE, Action.CREATE_XSLT);
 
 //        addKeySequence(Action.DOCUMENTATION, SUB_TAB_FIRST_KEY, KeyCodes.KEY_D);
 //        addKeySequence(Action.SETTINGS, SUB_TAB_FIRST_KEY, KeyCodes.KEY_S);

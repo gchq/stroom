@@ -283,7 +283,7 @@ public class MetaDaoImpl implements MetaDao {
     private Val getPipelineName(final String uuid) {
         String val = uuid;
         if (docRefInfoService != null) {
-            val = docRefInfoService.name(new DocRef(PipelineDoc.DOCUMENT_TYPE, uuid))
+            val = docRefInfoService.name(new DocRef(PipelineDoc.TYPE, uuid))
                     .orElse(uuid);
         }
         return ValString.create(val);
@@ -314,7 +314,7 @@ public class MetaDaoImpl implements MetaDao {
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+        return docRefInfoService.findByNames(PipelineDoc.TYPE, pipelineNames, true)
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());

@@ -68,10 +68,10 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
-        clusterPresenter.setIncludedTypes(ElasticClusterDoc.DOCUMENT_TYPE);
+        clusterPresenter.setIncludedTypes(ElasticClusterDoc.TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);

@@ -47,7 +47,7 @@ public class StateStoreSettingsPresenter
 
         this.clusterPresenter = clusterPresenter;
 
-        clusterPresenter.setIncludedTypes(ScyllaDbDoc.DOCUMENT_TYPE);
+        clusterPresenter.setIncludedTypes(ScyllaDbDoc.TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setUiHandlers(this);

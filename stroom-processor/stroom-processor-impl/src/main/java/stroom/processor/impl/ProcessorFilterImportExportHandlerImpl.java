@@ -107,11 +107,11 @@ public class ProcessorFilterImportExportHandlerImpl
             if (processorFilter != null) {
                 final Processor processor = processorFilter.getProcessor();
                 if (processor != null) {
-                    return new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                    return new DocRef(PipelineDoc.TYPE,
                             processor.getPipelineUuid(),
                             processor.getPipelineName());
                 } else {
-                    return new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                    return new DocRef(PipelineDoc.TYPE,
                             processorFilter.getPipelineUuid(),
                             processorFilter.getPipelineName());
                 }
@@ -207,7 +207,7 @@ public class ProcessorFilterImportExportHandlerImpl
                 .map(filter -> {
                     if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
                         final Optional<String> optional = docRefInfoServiceProvider.get()
-                                .name(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
+                                .name(new DocRef(PipelineDoc.TYPE, filter.getPipelineUuid()));
                         filter.setPipelineName(optional.orElse(null));
                         if (filter.getPipelineName() == null) {
                             LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid()
@@ -290,7 +290,7 @@ public class ProcessorFilterImportExportHandlerImpl
 
             if (processorFilter != null) {
                 Processor processor = findProcessorForFilter(processorFilter);
-                return new DocRef(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid());
+                return new DocRef(PipelineDoc.TYPE, processor.getPipelineUuid());
             }
         }
 
@@ -377,7 +377,7 @@ public class ProcessorFilterImportExportHandlerImpl
                 result = processorService.create(
                         processorType,
                         new DocRef(Processor.ENTITY_TYPE, processorUuid),
-                        new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName),
+                        new DocRef(PipelineDoc.TYPE, pipelineUuid, pipelineName),
                         true);
                 ex = null;
             } else {

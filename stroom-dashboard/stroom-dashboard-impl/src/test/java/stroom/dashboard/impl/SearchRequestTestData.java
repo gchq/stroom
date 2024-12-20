@@ -138,7 +138,7 @@ public class SearchRequestTestData {
                                 .sourceType(SourceType.DASHBOARD_UI)
                                 .ownerDocRef(DocRef
                                         .builder()
-                                        .type(DashboardDoc.DOCUMENT_TYPE)
+                                        .type(DashboardDoc.TYPE)
                                         .uuid("dashboardUuid")
                                         .build())
                                 .componentId(componentId)

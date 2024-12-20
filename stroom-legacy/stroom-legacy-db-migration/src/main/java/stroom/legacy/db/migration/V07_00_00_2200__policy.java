@@ -69,7 +69,7 @@ public class V07_00_00_2200__policy extends BaseJavaMigration {
                                 .mapList(dataRetentionPolicy.getRules(), MappingUtil::map);
 
                         final DataRetentionRules document = new DataRetentionRules();
-                        document.setType(DataRetentionRules.DOCUMENT_TYPE);
+                        document.setType(DataRetentionRules.TYPE);
                         document.setUuid(UUID.randomUUID().toString());
                         document.setName(name);
                         document.setVersion(UUID.randomUUID().toString());

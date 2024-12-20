@@ -19,6 +19,8 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
@@ -32,8 +34,8 @@ import java.util.Objects;
 
 @Description(
         "The content of this Document is an {{< glossary \"XSLT\" >}} document for transforming data in a pipeline." +
-                "\n" +
-                "This Document is used by the {{< pipe-elm \"XSLTFilter\" >}} pipeline element."
+        "\n" +
+        "This Document is used by the {{< pipe-elm \"XSLTFilter\" >}} pipeline element."
 )
 @JsonPropertyOrder({
         "type",
@@ -49,8 +51,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class XsltDoc extends Doc implements HasData {
 
-    public static final String DOCUMENT_TYPE = "XSLT";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_XSLT;
+    public static final String TYPE = "XSLT";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            TYPE,
+            "XSL Translation",
+            SvgImage.DOCUMENT_XSLT);
 
     @JsonProperty
     private String description;
@@ -80,7 +86,7 @@ public class XsltDoc extends Doc implements HasData {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -89,7 +95,7 @@ public class XsltDoc extends Doc implements HasData {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -123,7 +129,7 @@ public class XsltDoc extends Doc implements HasData {
         }
         final XsltDoc xsltDoc = (XsltDoc) o;
         return Objects.equals(description, xsltDoc.description) &&
-                Objects.equals(data, xsltDoc.data);
+               Objects.equals(data, xsltDoc.data);
     }
 
     @Override

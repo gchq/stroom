@@ -19,6 +19,8 @@ package stroom.aws.s3.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
 
@@ -47,8 +49,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_EMPTY)
 public class S3ConfigDoc extends Doc implements HasData {
 
-    public static final String DOCUMENT_TYPE = "S3Config";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_S3;
+    public static final String TYPE = "S3Config";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            TYPE,
+            "S3 Configuration",
+            SvgImage.DOCUMENT_S3);
 
     @JsonProperty
     private String description = "";
@@ -83,7 +89,7 @@ public class S3ConfigDoc extends Doc implements HasData {
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
     public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(DOCUMENT_TYPE)
+        return DocRef.builder(TYPE)
                 .uuid(uuid)
                 .build();
     }
@@ -92,7 +98,7 @@ public class S3ConfigDoc extends Doc implements HasData {
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(DOCUMENT_TYPE);
+        return DocRef.builder(TYPE);
     }
 
     public String getDescription() {
@@ -127,7 +133,7 @@ public class S3ConfigDoc extends Doc implements HasData {
         }
         final S3ConfigDoc other = (S3ConfigDoc) o;
         return Objects.equals(description, other.description) &&
-                Objects.equals(data, other.data);
+               Objects.equals(data, other.data);
     }
 
     @Override
