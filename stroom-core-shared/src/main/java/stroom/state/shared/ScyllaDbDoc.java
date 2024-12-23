@@ -20,8 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -52,11 +51,7 @@ import java.util.Objects;
 public class ScyllaDbDoc extends Doc {
 
     public static final String TYPE = "ScyllaDB";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            TYPE,
-            "Scylla DB",
-            SvgImage.DOCUMENT_SCYLLA_DB);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SCYLLA_DB_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

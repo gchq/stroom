@@ -20,9 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,11 +54,7 @@ import java.util.Objects;
 public class ViewDoc extends Doc {
 
     public static final String TYPE = "View";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            TYPE,
-            TYPE,
-            SvgImage.DOCUMENT_VIEW);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.VIEW_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

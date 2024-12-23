@@ -4,8 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -23,11 +22,7 @@ import java.util.Objects;
 public class DocumentationDoc extends Doc implements HasData {
 
     public static final String TYPE = "Documentation";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            TYPE,
-            TYPE,
-            SvgImage.DOCUMENT_DOCUMENTATION);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DOCUMENTATION_DOCUMENT_TYPE;
 
     @JsonProperty
     private String documentation;

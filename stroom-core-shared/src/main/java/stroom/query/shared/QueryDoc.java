@@ -20,9 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.v2.TimeRange;
-import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,11 +55,7 @@ import java.util.Objects;
 public class QueryDoc extends Doc {
 
     public static final String TYPE = "Query";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            TYPE,
-            TYPE,
-            SvgImage.DOCUMENT_QUERY);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.QUERY_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

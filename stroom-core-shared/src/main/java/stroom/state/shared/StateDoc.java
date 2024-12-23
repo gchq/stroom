@@ -20,8 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -58,11 +57,7 @@ import java.util.Objects;
 public class StateDoc extends Doc {
 
     public static final String TYPE = "StateStore";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            TYPE,
-            "State Store",
-            SvgImage.DOCUMENT_STATE_STORE);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STATE_STORE_DOCUMENT_TYPE;
 
     /**
      * Reference to the `scyllaDb` containing common connection properties

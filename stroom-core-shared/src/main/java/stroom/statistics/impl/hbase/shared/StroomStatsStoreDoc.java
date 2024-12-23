@@ -20,8 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -57,11 +56,7 @@ import java.util.Set;
 public class StroomStatsStoreDoc extends Doc {
 
     public static final String TYPE = "StroomStatsStore";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            TYPE,
-            "Stroom-Stats Store",
-            SvgImage.DOCUMENT_STROOM_STATS_STORE);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STROOM_STATS_STORE_DOCUMENT_TYPE;
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
