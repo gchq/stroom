@@ -29,7 +29,8 @@ public class AnalyticDuplicateManagementPresenter
     @Inject
     public AnalyticDuplicateManagementPresenter(final EventBus eventBus,
                                                 final DuplicateManagementView view,
-                                                final DuplicateManagementListPresenter duplicateManagementListPresenter) {
+                                                final DuplicateManagementListPresenter
+                                                        duplicateManagementListPresenter) {
         super(eventBus, view, duplicateManagementListPresenter);
     }
 

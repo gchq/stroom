@@ -52,7 +52,8 @@ public class AnalyticRulePresenter
                                  final Provider<AnalyticNotificationListPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
-                                 final Provider<AnalyticDuplicateManagementPresenter> duplicateManagementPresenterProvider,
+                                 final Provider<AnalyticDuplicateManagementPresenter>
+                                         duplicateManagementPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                  final DocumentUserPermissionsTabProvider<AnalyticRuleDoc>
                                          documentUserPermissionsTabProvider) {

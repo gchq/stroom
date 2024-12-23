@@ -14,7 +14,8 @@ public class NotificationStateService {
 
     private final Map<String, NotificationStateImpl> map = new ConcurrentHashMap<>();
 
-    public NotificationState getState(final AbstractAnalyticRuleDoc doc, final NotificationConfig analyticNotificationConfig) {
+    public NotificationState getState(final AbstractAnalyticRuleDoc doc,
+                                      final NotificationConfig analyticNotificationConfig) {
         final NotificationStateImpl analyticState = map
                 .computeIfAbsent(doc.getUuid() + "_" + analyticNotificationConfig.getUuid(), k ->
                         new NotificationStateImpl());
