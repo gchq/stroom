@@ -20,9 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -67,11 +66,7 @@ import java.util.Objects;
 public class SolrIndexDoc extends Doc {
 
     public static final String TYPE = "SolrIndex";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            TYPE,
-            "Solr Index",
-            SvgImage.DOCUMENT_SOLR_INDEX);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SOLR_INDEX_DOCUMENT_TYPE;
 
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 

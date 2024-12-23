@@ -20,10 +20,9 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
-import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -48,11 +47,7 @@ import java.util.Objects;
 public class AnalyticRuleDoc extends Doc {
 
     public static final String TYPE = "AnalyticRule";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
-            TYPE,
-            "Analytic Rule",
-            SvgImage.DOCUMENT_ANALYTIC_RULE);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANALYTIC_RULE_DOCUMENT_TYPE;
 
     @JsonProperty
     private final String description;

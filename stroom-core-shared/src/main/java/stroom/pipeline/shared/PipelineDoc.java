@@ -20,9 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -65,11 +64,7 @@ import java.util.Objects;
 public class PipelineDoc extends Doc {
 
     public static final String TYPE = "Pipeline";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            TYPE,
-            TYPE,
-            SvgImage.DOCUMENT_PIPELINE);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PIPELINE_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

@@ -21,8 +21,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -82,11 +81,7 @@ public class LuceneIndexDoc extends Doc {
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     public static final String TYPE = "Index";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            TYPE,
-            "Lucene Index",
-            SvgImage.DOCUMENT_INDEX);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.LUCENE_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;
