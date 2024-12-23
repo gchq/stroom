@@ -21,8 +21,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,11 +48,7 @@ import java.util.Objects;
 public class ReceiveDataRules extends Doc {
 
     public static final String TYPE = "ReceiveDataRuleSet";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            TYPE,
-            "Rule Set",
-            SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.RECEIVE_DATA_RULESET_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

@@ -1,32 +1,7 @@
 package stroom.docstore.shared;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.ReportDoc;
-import stroom.aws.s3.shared.S3ConfigDoc;
-import stroom.dashboard.shared.DashboardDoc;
-import stroom.dictionary.shared.DictionaryDoc;
-import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.feed.shared.FeedDoc;
-import stroom.index.shared.LuceneIndexDoc;
-import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XsltDoc;
-import stroom.query.shared.QueryDoc;
-import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.script.shared.ScriptDoc;
-import stroom.search.elastic.shared.ElasticClusterDoc;
-import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.state.shared.ScyllaDbDoc;
-import stroom.state.shared.StateDoc;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.svg.shared.SvgImage;
-import stroom.view.shared.ViewDoc;
-import stroom.visualisation.shared.VisualisationDoc;
-import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,44 +36,169 @@ public class DocumentTypeRegistry {
             "ProcessorFilter",
             "Processor Filter",
             SvgImage.FILTER);
+    public static final DocumentType ANALYTIC_RULE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "AnalyticRule",
+            "Analytic Rule",
+            SvgImage.DOCUMENT_ANALYTIC_RULE);
     public static final DocumentType ANALYTICS_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
             "Analytics",
             "Analytics",
             SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType DASHBOARD_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Dashboard",
+            "Dashboard",
+            SvgImage.DOCUMENT_DASHBOARD);
+    public static final DocumentType DICTIONARY_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "Dictionary",
+            "Dictionary",
+            SvgImage.DOCUMENT_DICTIONARY);
+    public static final DocumentType LUCENE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Index",
+            "Lucene Index",
+            SvgImage.DOCUMENT_INDEX);
+    public static final DocumentType REPORT_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Report",
+            "Report",
+            SvgImage.DOCUMENT_REPORT);
+    public static final DocumentType STROOM_STATS_STORE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "StroomStatsStore",
+            "Stroom-Stats Store",
+            SvgImage.DOCUMENT_STROOM_STATS_STORE);
+    public static final DocumentType XML_SCHEMA_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            "XMLSchema",
+            "XML Schema",
+            SvgImage.DOCUMENT_XMLSCHEMA);
+    public static final DocumentType KAFKA_CONFIG_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "KafkaConfig",
+            "Kafka Configuration",
+            SvgImage.DOCUMENT_KAFKA_CONFIG);
+    public static final DocumentType SOLR_INDEX_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "SolrIndex",
+            "Solr Index",
+            SvgImage.DOCUMENT_SOLR_INDEX);
+    public static final DocumentType SCYLLA_DB_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "ScyllaDB",
+            "Scylla DB",
+            SvgImage.DOCUMENT_SCYLLA_DB);
+    public static final DocumentType DOCUMENTATION_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "Documentation",
+            "Documentation",
+            SvgImage.DOCUMENT_DOCUMENTATION);
+    public static final DocumentType ELASTIC_CLUSTER_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "ElasticCluster",
+            "Elastic Cluster",
+            SvgImage.DOCUMENT_ELASTIC_CLUSTER);
+    public static final DocumentType ELASTIC_INDEX_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "ElasticIndex",
+            "Elastic Index",
+            SvgImage.DOCUMENT_ELASTIC_INDEX);
+    public static final DocumentType STATE_STORE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "StateStore",
+            "State Store",
+            SvgImage.DOCUMENT_STATE_STORE);
+    public static final DocumentType STATISTIC_STORE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "StatisticStore",
+            "Statistic Store",
+            SvgImage.DOCUMENT_STATISTIC_STORE);
+    public static final DocumentType FEED_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            "Feed",
+            "Feed",
+            SvgImage.DOCUMENT_FEED);
+    public static final DocumentType PIPELINE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            "Pipeline",
+            "Pipeline",
+            SvgImage.DOCUMENT_PIPELINE);
+    public static final DocumentType QUERY_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Query",
+            "Query",
+            SvgImage.DOCUMENT_QUERY);
+    public static final DocumentType RECEIVE_DATA_RULESET_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "ReceiveDataRuleSet",
+            "Rule Set",
+            SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
+    public static final DocumentType S3_CONFIG_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "S3Config",
+            "S3 Configuration",
+            SvgImage.DOCUMENT_S3);
+    public static final DocumentType SCRIPT_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "Script",
+            "Script",
+            SvgImage.DOCUMENT_SCRIPT);
+    public static final DocumentType TEXT_CONVERTER_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            "TextConverter",
+            "Text Converter",
+            SvgImage.DOCUMENT_TEXT_CONVERTER);
+    public static final DocumentType VIEW_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "View",
+            "View",
+            SvgImage.DOCUMENT_VIEW);
+    public static final DocumentType VISUALISATION_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "Visualisation",
+            "Visualisation",
+            SvgImage.DOCUMENT_VISUALISATION);
+    public static final DocumentType XSLT_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            "XSLT",
+            "XSL Translation",
+            SvgImage.DOCUMENT_XSLT);
 
     static {
         put(ANALYTICS_STORE_DOCUMENT_TYPE);
-        put(AnalyticRuleDoc.DOCUMENT_TYPE);
-        put(DashboardDoc.DOCUMENT_TYPE);
-        put(DictionaryDoc.DOCUMENT_TYPE);
-        put(DocumentationDoc.DOCUMENT_TYPE);
-        put(ElasticClusterDoc.DOCUMENT_TYPE);
-        put(ElasticIndexDoc.DOCUMENT_TYPE);
+        put(ANALYTIC_RULE_DOCUMENT_TYPE);
+        put(DASHBOARD_DOCUMENT_TYPE);
+        put(DICTIONARY_DOCUMENT_TYPE);
+        put(DOCUMENTATION_DOCUMENT_TYPE);
+        put(ELASTIC_CLUSTER_DOCUMENT_TYPE);
+        put(ELASTIC_INDEX_DOCUMENT_TYPE);
         put(FAVOURITES_DOCUMENT_TYPE);
+        put(FEED_DOCUMENT_TYPE);
         put(FOLDER_DOCUMENT_TYPE);
-        put(FeedDoc.DOCUMENT_TYPE);
-        put(KafkaConfigDoc.DOCUMENT_TYPE);
-        put(LuceneIndexDoc.DOCUMENT_TYPE);
+        put(KAFKA_CONFIG_DOCUMENT_TYPE);
+        put(LUCENE_DOCUMENT_TYPE);
+        put(PIPELINE_DOCUMENT_TYPE);
         put(PROCESSOR_DOCUMENT_TYPE);
         put(PROCESSOR_FILTER_DOCUMENT_TYPE);
-        put(PipelineDoc.DOCUMENT_TYPE);
-        put(QueryDoc.DOCUMENT_TYPE);
-        put(ReceiveDataRules.DOCUMENT_TYPE);
-        put(ReportDoc.DOCUMENT_TYPE);
-        put(S3ConfigDoc.DOCUMENT_TYPE);
+        put(QUERY_DOCUMENT_TYPE);
+        put(RECEIVE_DATA_RULESET_DOCUMENT_TYPE);
+        put(REPORT_DOCUMENT_TYPE);
+        put(S3_CONFIG_DOCUMENT_TYPE);
+        put(SCRIPT_DOCUMENT_TYPE);
+        put(SCYLLA_DB_DOCUMENT_TYPE);
+        put(SOLR_INDEX_DOCUMENT_TYPE);
+        put(STATE_STORE_DOCUMENT_TYPE);
+        put(STATISTIC_STORE_DOCUMENT_TYPE);
+        put(STROOM_STATS_STORE_DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
-        put(ScriptDoc.DOCUMENT_TYPE);
-        put(ScyllaDbDoc.DOCUMENT_TYPE);
-        put(SolrIndexDoc.DOCUMENT_TYPE);
-        put(StateDoc.DOCUMENT_TYPE);
-        put(StatisticStoreDoc.DOCUMENT_TYPE);
-        put(StroomStatsStoreDoc.DOCUMENT_TYPE);
-        put(TextConverterDoc.DOCUMENT_TYPE);
-        put(ViewDoc.DOCUMENT_TYPE);
-        put(VisualisationDoc.DOCUMENT_TYPE);
-        put(XmlSchemaDoc.DOCUMENT_TYPE);
-        put(XsltDoc.DOCUMENT_TYPE);
+        put(TEXT_CONVERTER_DOCUMENT_TYPE);
+        put(VIEW_DOCUMENT_TYPE);
+        put(VISUALISATION_DOCUMENT_TYPE);
+        put(XML_SCHEMA_DOCUMENT_TYPE);
+        put(XSLT_DOCUMENT_TYPE);
     }
 
     private static void put(final DocumentType documentType) {
