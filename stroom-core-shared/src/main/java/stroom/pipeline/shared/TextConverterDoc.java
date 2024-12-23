@@ -21,8 +21,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -64,11 +63,7 @@ import java.util.Objects;
 public class TextConverterDoc extends Doc implements HasData {
 
     public static final String TYPE = "TextConverter";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.TRANSFORMATION,
-            TYPE,
-            "Text Converter",
-            SvgImage.DOCUMENT_TEXT_CONVERTER);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.TEXT_CONVERTER_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

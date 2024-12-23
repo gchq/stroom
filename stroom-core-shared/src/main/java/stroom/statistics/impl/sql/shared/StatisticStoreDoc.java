@@ -20,8 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -69,11 +68,7 @@ import java.util.Set;
 public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     public static final String TYPE = "StatisticStore";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            TYPE,
-            "Statistic Store",
-            SvgImage.DOCUMENT_STATISTIC_STORE);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STATISTIC_STORE_DOCUMENT_TYPE;
 
     // IndexFields names
     public static final String FIELD_NAME_DATE_TIME = "Date Time";

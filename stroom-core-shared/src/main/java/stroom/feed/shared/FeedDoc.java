@@ -22,8 +22,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.svg.shared.SvgImage;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
@@ -65,11 +64,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class FeedDoc extends Doc {
 
     public static final String TYPE = "Feed";
-    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.DATA_PROCESSING,
-            TYPE,
-            TYPE,
-            SvgImage.DOCUMENT_FEED);
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;
