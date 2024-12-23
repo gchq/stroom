@@ -16,7 +16,7 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRows;
@@ -36,15 +36,15 @@ import java.util.stream.Collectors;
 @AutoLogged(OperationType.UNLOGGED)
 class DuplicateCheckService {
 
-    private final AnalyticRuleStore analyticRuleStore;
+    private final AnalyticLoader analyticLoader;
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactoryImpl duplicateCheckFactory;
 
     @Inject
-    public DuplicateCheckService(final AnalyticRuleStore analyticRuleStore,
+    public DuplicateCheckService(final AnalyticLoader analyticLoader,
                                  final ExecutionScheduleDao executionScheduleDao,
                                  final DuplicateCheckFactoryImpl duplicateCheckFactory) {
-        this.analyticRuleStore = analyticRuleStore;
+        this.analyticLoader = analyticLoader;
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
     }
@@ -56,7 +56,7 @@ class DuplicateCheckService {
                 .type(AnalyticRuleDoc.TYPE)
                 .uuid(analyticUuid)
                 .build();
-        final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+        final AbstractAnalyticRuleDoc analyticRuleDoc = analyticLoader.load(docRef);
         if (analyticRuleDoc != null) {
             // Load schedules for the analytic.
             final ExecutionScheduleRequest request = ExecutionScheduleRequest
@@ -72,7 +72,7 @@ class DuplicateCheckService {
                     .collect(Collectors.toSet());
             if (nodes.size() > 1) {
                 throw new RuntimeException("Duplicate checking is not supported when executors are running " +
-                        "on multiple nodes");
+                                           "on multiple nodes");
             }
 
             if (nodes.size() == 1) {

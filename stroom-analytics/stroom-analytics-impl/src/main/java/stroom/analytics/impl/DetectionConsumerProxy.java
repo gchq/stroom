@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -40,7 +40,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     private DetectionConsumer detectionConsumer;
 
-    private AnalyticRuleDoc analyticRuleDoc;
+    private AbstractAnalyticRuleDoc analyticRuleDoc;
 
     private CompiledColumns compiledColumns;
 
@@ -88,7 +88,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         }
     }
 
-    public void setAnalyticRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
+    public void setAnalyticRuleDoc(final AbstractAnalyticRuleDoc analyticRuleDoc) {
         this.analyticRuleDoc = analyticRuleDoc;
     }
 

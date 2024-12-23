@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
@@ -34,20 +34,20 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
     private static final String STREAMING_ANALYTIC_CACHE = "Streaming Analytic Cache";
 
     private final AnalyticHelper analyticHelper;
-    private final AnalyticRuleStore analyticRuleStore;
+    private final AnalyticLoader analyticLoader;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final LoadingStroomCache<DocRef, StreamingAnalytic> cache;
     private final SecurityContext securityContext;
 
     @Inject
     public StreamingAnalyticCache(final AnalyticHelper analyticHelper,
-                                  final AnalyticRuleStore analyticRuleStore,
+                                  final AnalyticLoader analyticLoader,
                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                   final CacheManager cacheManager,
                                   final Provider<AnalyticsConfig> analyticsConfigProvider,
                                   final SecurityContext securityContext) {
         this.analyticHelper = analyticHelper;
-        this.analyticRuleStore = analyticRuleStore;
+        this.analyticLoader = analyticLoader;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
@@ -70,7 +70,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 LOGGER.debug("Loading streaming analytic: {}", analyticRuleRef);
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.info(() -> "Loading rule");
-                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
+                final AbstractAnalyticRuleDoc analyticRuleDoc = analyticLoader.load(analyticRuleRef);
 
                 ViewDoc viewDoc;
 

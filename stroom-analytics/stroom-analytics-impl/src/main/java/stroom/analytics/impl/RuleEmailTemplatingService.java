@@ -24,14 +24,20 @@ public class RuleEmailTemplatingService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RuleEmailTemplatingService.class);
 
-    EmailContent renderAlertEmail(
+    EmailContent renderDetectionEmail(
             final Detection detection,
             final NotificationEmailDestination emailDestination) {
         Objects.requireNonNull(detection);
+        final Map<String, Object> context = buildContext(detection);
+        return renderEmail(emailDestination, context);
+    }
+
+    EmailContent renderEmail(
+            final NotificationEmailDestination emailDestination,
+            final Map<String, Object> context) {
         Objects.requireNonNull(emailDestination);
 
         final Jinjava jinjava = getJinjava();
-        final Map<String, Object> context = buildContext(detection);
 
         final String subject = render(jinjava, context, emailDestination.getSubjectTemplate());
         final String body = render(jinjava, context, emailDestination.getBodyTemplate());
@@ -51,11 +57,15 @@ public class RuleEmailTemplatingService {
     String renderTemplate(final Detection detection,
                           final String template) {
         Objects.requireNonNull(detection);
+        final Map<String, Object> context = buildContext(detection);
+        return renderTemplate(template, context);
+    }
+
+    String renderTemplate(final String template,
+                          final Map<String, Object> context) {
         Objects.requireNonNull(template);
 
         final Jinjava jinjava = getJinjava();
-        final Map<String, Object> context = buildContext(detection);
-
         return render(jinjava, context, template);
     }
 

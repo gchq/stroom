@@ -43,6 +43,6 @@ class TestEmailSender {
                 .withDetectorName("DetectorName")
                 .build();
 
-        emailSender.send(destination, detection);
+        emailSender.sendDetection(destination, detection);
     }
 }

@@ -49,10 +49,10 @@ public class AnalyticRulePresenter
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
-                                 final Provider<NotificationListPresenter> notificationPresenterProvider,
+                                 final Provider<AnalyticNotificationListPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
-                                 final Provider<DuplicateManagementPresenter> duplicateManagementPresenterProvider,
+                                 final Provider<AnalyticDuplicateManagementPresenter> duplicateManagementPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                  final DocumentUserPermissionsTabProvider<AnalyticRuleDoc>
                                          documentUserPermissionsTabProvider) {

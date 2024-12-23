@@ -59,29 +59,19 @@ public class NotificationEmailDestination extends NotificationDestination {
     }
 
     @Override
-    public String toString() {
-        return "AnalyticNotificationEmailDestination{" +
-               "to='" + to + '\'' +
-               ", cc='" + cc + '\'' +
-               ", bcc='" + bcc + '\'' +
-               ", subjectTemplate='" + subjectTemplate + '\'' +
-               ", bodyTemplate='" + bodyTemplate + '\'' +
-               '}';
-    }
-
-    @Override
-    public boolean equals(final Object object) {
-        if (this == object) {
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
         }
-        if (object == null || getClass() != object.getClass()) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final NotificationEmailDestination that = (NotificationEmailDestination) object;
-        return Objects.equals(to, that.to) && Objects.equals(cc, that.cc) && Objects.equals(
-                bcc, that.bcc)
-               && Objects.equals(subjectTemplate,
-                that.subjectTemplate) && Objects.equals(bodyTemplate, that.bodyTemplate);
+        final NotificationEmailDestination that = (NotificationEmailDestination) o;
+        return Objects.equals(to, that.to) &&
+               Objects.equals(cc, that.cc) &&
+               Objects.equals(bcc, that.bcc) &&
+               Objects.equals(subjectTemplate, that.subjectTemplate) &&
+               Objects.equals(bodyTemplate, that.bodyTemplate);
     }
 
     @Override

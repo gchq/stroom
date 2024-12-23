@@ -17,8 +17,7 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.client.presenter.DuplicateManagementPresenter.DuplicateManagementView;
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
@@ -32,16 +31,16 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DuplicateManagementPresenter
-        extends DocumentEditPresenter<DuplicateManagementView, AnalyticRuleDoc>
+public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
+        extends DocumentEditPresenter<AbstractDuplicateManagementPresenter.DuplicateManagementView, D>
         implements DirtyUiHandlers {
 
     private final DuplicateManagementListPresenter duplicateManagementListPresenter;
 
     @Inject
-    public DuplicateManagementPresenter(final EventBus eventBus,
-                                        final DuplicateManagementView view,
-                                        final DuplicateManagementListPresenter duplicateManagementListPresenter) {
+    public AbstractDuplicateManagementPresenter(final EventBus eventBus,
+                                                final DuplicateManagementView view,
+                                                final DuplicateManagementListPresenter duplicateManagementListPresenter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.duplicateManagementListPresenter = duplicateManagementListPresenter;
@@ -54,7 +53,7 @@ public class DuplicateManagementPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         final DuplicateNotificationConfig duplicateNotificationConfig = document.getDuplicateNotificationConfig();
         getView().setRememberNotifications(duplicateNotificationConfig.isRememberNotifications());
         getView().setSuppressDuplicateNotifications(duplicateNotificationConfig.isSuppressDuplicateNotifications());
@@ -63,8 +62,7 @@ public class DuplicateManagementPresenter
         duplicateManagementListPresenter.read(docRef);
     }
 
-    @Override
-    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc document) {
+    protected DuplicateNotificationConfig writeDuplicateNotificationConfig() {
         final String[] arr = getView().getColumns().split(",");
         final List<String> columns = new ArrayList<>(arr.length);
         for (final String col : arr) {
@@ -73,15 +71,10 @@ public class DuplicateManagementPresenter
                 columns.add(trimmed);
             }
         }
-        final DuplicateNotificationConfig duplicateNotificationConfig =
-                new DuplicateNotificationConfig(getView().isRememberNotifications(),
-                        getView().isSuppressDuplicateNotifications(),
-                        getView().isChooseColumns(),
-                        columns);
-        return document
-                .copy()
-                .duplicateNotificationConfig(duplicateNotificationConfig)
-                .build();
+        return new DuplicateNotificationConfig(getView().isRememberNotifications(),
+                getView().isSuppressDuplicateNotifications(),
+                getView().isChooseColumns(),
+                columns);
     }
 
     public interface DuplicateManagementView extends View, HasUiHandlers<DirtyUiHandlers> {
@@ -104,4 +97,5 @@ public class DuplicateManagementPresenter
 
         void setListView(View view);
     }
+
 }

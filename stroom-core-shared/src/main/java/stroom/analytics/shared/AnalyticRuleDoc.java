@@ -18,7 +18,6 @@ package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.query.api.v2.Param;
@@ -31,10 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @Description(
         "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
@@ -45,7 +41,7 @@ import java.util.Objects;
         "* Scheduled Query")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class AnalyticRuleDoc extends Doc {
+public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
 
     public static final String TYPE = "AnalyticRule";
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
@@ -54,54 +50,7 @@ public class AnalyticRuleDoc extends Doc {
             "Analytic Rule",
             SvgImage.DOCUMENT_ANALYTIC_RULE);
 
-    @JsonProperty
-    private final String description;
-    @JsonProperty
-    private final QueryLanguageVersion languageVersion;
-    @JsonProperty
-    private final List<Param> parameters;
-    @JsonProperty
-    private final TimeRange timeRange;
-    @JsonProperty
-    private String query;
-    @JsonProperty
-    private final AnalyticProcessType analyticProcessType;
-    @JsonProperty
-    private final AnalyticProcessConfig analyticProcessConfig;
-    @JsonProperty
-    @Deprecated
-    private final NotificationConfig analyticNotificationConfig;
-    @JsonProperty
-    private final List<NotificationConfig> notifications;
-    @JsonProperty
-    private final DocRef errorFeed;
-    @JsonProperty
-    @Deprecated
-    private final boolean rememberNotifications;
-    @JsonProperty
-    @Deprecated
-    private final boolean suppressDuplicateNotifications;
-    @JsonProperty
-    private final DuplicateNotificationConfig duplicateNotificationConfig;
-
     public AnalyticRuleDoc() {
-        description = null;
-        languageVersion = null;
-        parameters = null;
-        timeRange = null;
-        query = null;
-        analyticProcessType = null;
-        analyticProcessConfig = null;
-        analyticNotificationConfig = null;
-        notifications = new ArrayList<>();
-        errorFeed = null;
-        rememberNotifications = false;
-        suppressDuplicateNotifications = false;
-        duplicateNotificationConfig = new DuplicateNotificationConfig(
-                false,
-                false,
-                false,
-                Collections.emptyList());
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -127,142 +76,14 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.description = description;
-        this.languageVersion = languageVersion;
-        this.parameters = parameters;
-        this.timeRange = timeRange;
-        this.query = query;
-        this.analyticProcessType = analyticProcessType;
-        this.analyticProcessConfig = analyticProcessConfig;
-        this.analyticNotificationConfig = null;
-        this.notifications = new ArrayList<>();
-        if (notifications != null) {
-            this.notifications.addAll(notifications);
-        }
-        if (analyticNotificationConfig != null) {
-            this.notifications.add(analyticNotificationConfig);
-        }
-        this.errorFeed = errorFeed;
-        this.rememberNotifications = rememberNotifications;
-        this.suppressDuplicateNotifications = suppressDuplicateNotifications;
-
-        if (duplicateNotificationConfig == null) {
-            this.duplicateNotificationConfig = new DuplicateNotificationConfig(
-                    rememberNotifications,
-                    suppressDuplicateNotifications,
-                    false,
-                    Collections.emptyList());
-        } else {
-            this.duplicateNotificationConfig = duplicateNotificationConfig;
-        }
-    }
-
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(TYPE)
-                .uuid(uuid)
-                .build();
-    }
-
-    /**
-     * @return A new builder for creating a {@link DocRef} for this document's type.
-     */
-    public static DocRef.TypedBuilder buildDocRef() {
-        return DocRef.builder(TYPE);
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public QueryLanguageVersion getLanguageVersion() {
-        return languageVersion;
-    }
-
-    public List<Param> getParameters() {
-        return parameters;
-    }
-
-    public TimeRange getTimeRange() {
-        return timeRange;
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public void setQuery(final String query) {
-        this.query = query;
-    }
-
-    public AnalyticProcessType getAnalyticProcessType() {
-        return analyticProcessType;
-    }
-
-    public AnalyticProcessConfig getAnalyticProcessConfig() {
-        return analyticProcessConfig;
-    }
-
-//    @Deprecated
-//    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
-//        return analyticNotificationConfig;
-//    }
-
-
-    public List<NotificationConfig> getNotifications() {
-        return notifications;
-    }
-
-    public DocRef getErrorFeed() {
-        return errorFeed;
-    }
-
-    @Deprecated
-    public boolean isRememberNotifications() {
-        return rememberNotifications;
-    }
-
-    @Deprecated
-    public boolean isSuppressDuplicateNotifications() {
-        return suppressDuplicateNotifications;
-    }
-
-    public DuplicateNotificationConfig getDuplicateNotificationConfig() {
-        return duplicateNotificationConfig;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-        final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
-        return rememberNotifications == that.rememberNotifications &&
-               suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
-               Objects.equals(description, that.description) &&
-               languageVersion == that.languageVersion &&
-               Objects.equals(parameters, that.parameters) &&
-               Objects.equals(timeRange, that.timeRange) &&
-               Objects.equals(query, that.query) &&
-               analyticProcessType == that.analyticProcessType &&
-               Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
-               Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
-               Objects.equals(notifications, that.notifications) &&
-               Objects.equals(errorFeed, that.errorFeed);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(),
+        super(type,
+                uuid,
+                name,
+                version,
+                createTimeMs,
+                updateTimeMs,
+                createUser,
+                updateUser,
                 description,
                 languageVersion,
                 parameters,
@@ -274,25 +95,8 @@ public class AnalyticRuleDoc extends Doc {
                 notifications,
                 errorFeed,
                 rememberNotifications,
-                suppressDuplicateNotifications);
-    }
-
-    @Override
-    public String toString() {
-        return "AnalyticRuleDoc{" +
-               "description='" + description + '\'' +
-               ", languageVersion=" + languageVersion +
-               ", parameters=" + parameters +
-               ", timeRange=" + timeRange +
-               ", query='" + query + '\'' +
-               ", analyticProcessType=" + analyticProcessType +
-               ", analyticProcessConfig=" + analyticProcessConfig +
-               ", analyticNotificationConfig=" + analyticNotificationConfig +
-               ", notifications=" + notifications +
-               ", errorFeed=" + errorFeed +
-               ", rememberNotifications=" + rememberNotifications +
-               ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
-               '}';
+                suppressDuplicateNotifications,
+                duplicateNotificationConfig);
     }
 
     public static Builder builder() {
@@ -303,84 +107,13 @@ public class AnalyticRuleDoc extends Doc {
         return new Builder(this);
     }
 
-    public static class Builder extends AbstractBuilder<AnalyticRuleDoc, Builder> {
-
-        private String description;
-        private QueryLanguageVersion languageVersion;
-        private List<Param> parameters;
-        private TimeRange timeRange;
-        private String query;
-        private AnalyticProcessType analyticProcessType;
-        private AnalyticProcessConfig analyticProcessConfig;
-        private List<NotificationConfig> notifications = new ArrayList<>();
-        private DocRef errorFeed;
-        private DuplicateNotificationConfig duplicateNotificationConfig;
+    public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
 
         public Builder() {
         }
 
         public Builder(final AnalyticRuleDoc doc) {
             super(doc);
-            this.description = doc.description;
-            this.languageVersion = doc.languageVersion;
-            this.parameters = doc.parameters;
-            this.timeRange = doc.timeRange;
-            this.query = doc.query;
-            this.analyticProcessType = doc.analyticProcessType;
-            this.analyticProcessConfig = doc.analyticProcessConfig;
-            this.notifications = new ArrayList<>(doc.notifications);
-            this.errorFeed = doc.errorFeed;
-            this.duplicateNotificationConfig = doc.duplicateNotificationConfig;
-        }
-
-        public Builder description(final String description) {
-            this.description = description;
-            return self();
-        }
-
-        public Builder languageVersion(final QueryLanguageVersion languageVersion) {
-            this.languageVersion = languageVersion;
-            return self();
-        }
-
-        public Builder parameters(final List<Param> parameters) {
-            this.parameters = parameters;
-            return self();
-        }
-
-        public Builder timeRange(final TimeRange timeRange) {
-            this.timeRange = timeRange;
-            return self();
-        }
-
-        public Builder query(final String query) {
-            this.query = query;
-            return self();
-        }
-
-        public Builder analyticProcessType(final AnalyticProcessType analyticProcessType) {
-            this.analyticProcessType = analyticProcessType;
-            return self();
-        }
-
-        public Builder analyticProcessConfig(final AnalyticProcessConfig analyticProcessConfig) {
-            this.analyticProcessConfig = analyticProcessConfig;
-            return self();
-        }
-
-        public Builder notifications(final List<NotificationConfig> notifications) {
-            this.notifications = new ArrayList<>(notifications);
-            return self();
-        }
-
-        public Builder errorFeed(final DocRef errorFeed) {
-            this.errorFeed = errorFeed;
-            return this;
-        }
-
-        public Builder duplicateNotificationConfig(final DuplicateNotificationConfig duplicateNotificationConfig) {
-            this.duplicateNotificationConfig = duplicateNotificationConfig;
-            return this;
         }
 
         @Override

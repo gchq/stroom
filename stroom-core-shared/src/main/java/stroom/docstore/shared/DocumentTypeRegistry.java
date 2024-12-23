@@ -1,6 +1,7 @@
 package stroom.docstore.shared;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.ReportDoc;
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dictionary.shared.DictionaryDoc;
@@ -84,6 +85,7 @@ public class DocumentTypeRegistry {
         put(PipelineDoc.DOCUMENT_TYPE);
         put(QueryDoc.DOCUMENT_TYPE);
         put(ReceiveDataRules.DOCUMENT_TYPE);
+        put(ReportDoc.DOCUMENT_TYPE);
         put(S3ConfigDoc.DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
         put(ScriptDoc.DOCUMENT_TYPE);
