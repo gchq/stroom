@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
@@ -36,7 +36,7 @@ public class DetectionConsumerFactory {
         this.notificationStateService = notificationStateService;
     }
 
-    public Provider<DetectionConsumer> create(final AnalyticRuleDoc analyticRuleDoc) {
+    public Provider<DetectionConsumer> create(final AbstractAnalyticRuleDoc analyticRuleDoc) {
         if (analyticRuleDoc == null) {
             throw new NullPointerException("Null analytic rule doc.");
         }
@@ -95,7 +95,7 @@ public class DetectionConsumerFactory {
         }
     }
 
-    private DetectionConsumer getDetectionConsumer(final AnalyticRuleDoc analyticRuleDoc,
+    private DetectionConsumer getDetectionConsumer(final AbstractAnalyticRuleDoc analyticRuleDoc,
                                                    final NotificationConfig notificationConfig) {
         if (NotificationDestinationType.STREAM.equals(notificationConfig.getDestinationType())) {
             if (notificationConfig.getDestination() instanceof
@@ -139,7 +139,7 @@ public class DetectionConsumerFactory {
                         notificationState.enableIfPossible();
                         if (notificationState.incrementAndCheckEnabled()) {
                             try {
-                                emailSenderProvider.get().send(emailDestination, detection);
+                                emailSenderProvider.get().sendDetection(emailDestination, detection);
                             } catch (final RuntimeException e) {
                                 errorWriterProxyProvider.get().log(
                                         Severity.ERROR,

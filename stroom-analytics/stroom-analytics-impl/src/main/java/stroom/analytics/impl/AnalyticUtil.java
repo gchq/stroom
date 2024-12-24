@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.util.NullSafe;
 
 public class AnalyticUtil {
@@ -9,13 +9,13 @@ public class AnalyticUtil {
         // Util class.
     }
 
-    public static String getAnalyticRuleIdentity(final AnalyticRuleDoc analyticRuleDoc) {
+    public static String getAnalyticRuleIdentity(final AbstractAnalyticRuleDoc analyticRuleDoc) {
         return NullSafe.get(
                 analyticRuleDoc,
                 analyticRuleDoc2 -> analyticRuleDoc2.getName() +
-                        " (" +
-                        analyticRuleDoc2.getUuid() +
-                        ")");
+                                    " (" +
+                                    analyticRuleDoc2.getUuid() +
+                                    ")");
     }
 
     public static long getMin(Long currentValue, Long newValue) {

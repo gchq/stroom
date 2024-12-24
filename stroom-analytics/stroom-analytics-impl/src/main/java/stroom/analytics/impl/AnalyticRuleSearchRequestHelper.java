@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -29,7 +29,7 @@ public class AnalyticRuleSearchRequestHelper {
         this.expressionContextFactory = expressionContextFactory;
     }
 
-    public SearchRequest create(final AnalyticRuleDoc analyticRuleDoc) {
+    public SearchRequest create(final AbstractAnalyticRuleDoc analyticRuleDoc) {
         try {
             // Map the rule query
             Query sampleQuery = Query.builder().build();

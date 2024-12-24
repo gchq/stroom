@@ -16,13 +16,14 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
+import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -102,11 +103,12 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledQueryAnalyticExecutor.class);
 
     private final AnalyticHelper analyticHelper;
-    private final AnalyticRuleStore analyticRuleStore;
+    private final AnalyticLoader analyticLoader;
     private final ExecutorProvider executorProvider;
     private final ResultStoreManager searchResponseCreatorManager;
     private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
     private final Provider<AnalyticErrorWriter> analyticErrorWriterProvider;
+    private final Provider<ReportGenerator> reportGeneratorProvider;
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
@@ -122,11 +124,12 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
-                                   final AnalyticRuleStore analyticRuleStore,
+                                   final AnalyticLoader analyticLoader,
                                    final ExecutorProvider executorProvider,
                                    final ResultStoreManager searchResponseCreatorManager,
                                    final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
                                    final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
+                                   final Provider<ReportGenerator> reportGeneratorProvider,
                                    final TaskContextFactory taskContextFactory,
                                    final NodeInfo nodeInfo,
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -140,11 +143,12 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
                                    final Provider<DocRefInfoService> docRefInfoServiceProvider,
                                    final ExpressionPredicateFactory expressionPredicateFactory) {
         this.analyticHelper = analyticHelper;
-        this.analyticRuleStore = analyticRuleStore;
+        this.analyticLoader = analyticLoader;
         this.executorProvider = executorProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
         this.analyticErrorWriterProvider = analyticErrorWriterProvider;
+        this.reportGeneratorProvider = reportGeneratorProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
@@ -169,11 +173,11 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
             final List<String> duplicateStoreDirs = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
             // Load rules.
-            final List<AnalyticRuleDoc> analytics = loadScheduledQueryAnalytics();
+            final List<AbstractAnalyticRuleDoc> analytics = loadScheduledQueryAnalytics();
 
             info(() -> "Processing " + LogUtil.namedCount("scheduled analytic rule", NullSafe.size(analytics)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
-            for (final AnalyticRuleDoc analytic : analytics) {
+            for (final AbstractAnalyticRuleDoc analytic : analytics) {
                 final Runnable runnable = createRunnable(analytic, taskContext);
                 try {
                     workQueue.exec(runnable);
@@ -200,7 +204,7 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
         }
     }
 
-    private Runnable createRunnable(final AnalyticRuleDoc analytic,
+    private Runnable createRunnable(final AbstractAnalyticRuleDoc analytic,
                                     final TaskContext parentTaskContext) {
         return () -> {
             if (!parentTaskContext.isTerminated()) {
@@ -215,7 +219,7 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
         };
     }
 
-    private void execAnalytic(final AnalyticRuleDoc analytic,
+    private void execAnalytic(final AbstractAnalyticRuleDoc analytic,
                               final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
         final DocRef analyticDocRef = analytic.asDocRef();
@@ -251,7 +255,7 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
         workQueue.join();
     }
 
-    private boolean executeIfScheduled(final AnalyticRuleDoc analytic,
+    private boolean executeIfScheduled(final AbstractAnalyticRuleDoc analytic,
                                        final TaskContext parentTaskContext,
                                        final ExecutionSchedule executionSchedule) {
         final Optional<ExecutionSchedule> optionalSchedule = executionScheduleDao
@@ -265,7 +269,9 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
         }
 
         // Reload the analytic in case it has changed since last executed.
-        final AnalyticRuleDoc reloaded = analyticRuleStore.readDocument(analytic.asDocRef());
+        final DocRef docRef = analytic.asDocRef();
+        final AbstractAnalyticRuleDoc reloaded = analyticLoader.load(docRef);
+
         if (reloaded == null || !AnalyticProcessType.SCHEDULED_QUERY.equals(reloaded.getAnalyticProcessType())) {
             return false;
         }
@@ -280,7 +286,7 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
                         taskContext)).get();
     }
 
-    private boolean execute(final AnalyticRuleDoc analytic,
+    private boolean execute(final AbstractAnalyticRuleDoc analytic,
                             final ExecutionSchedule executionSchedule,
                             final TaskContext taskContext) {
         final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule).orElse(null);
@@ -315,17 +321,34 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
                                    DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
             final String errorFeedName = analyticHelper.getErrorFeedName(analytic);
             final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
-            return analyticErrorWriter.exec(
-                    errorFeedName,
-                    null,
-                    taskContext,
-                    (t) -> process(
-                            analytic,
-                            trigger,
-                            executionTime,
-                            effectiveExecutionTime,
-                            executionSchedule,
-                            currentTracker));
+
+            if (analytic instanceof final AnalyticRuleDoc analyticRuleDoc) {
+                return analyticErrorWriter.exec(
+                        errorFeedName,
+                        null,
+                        taskContext,
+                        (t) -> process(
+                                analyticRuleDoc,
+                                trigger,
+                                executionTime,
+                                effectiveExecutionTime,
+                                executionSchedule,
+                                currentTracker));
+            } else if (analytic instanceof final ReportDoc reportDoc) {
+                return analyticErrorWriter.exec(
+                        errorFeedName,
+                        null,
+                        taskContext,
+                        (t) -> reportGeneratorProvider.get().process(
+                                reportDoc,
+                                trigger,
+                                executionTime,
+                                effectiveExecutionTime,
+                                executionSchedule,
+                                currentTracker));
+            } else {
+                throw new RuntimeException("Unexpected analytic rule doc type.");
+            }
         }
         return false;
     }
@@ -627,12 +650,12 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
         }
     }
 
-    private List<AnalyticRuleDoc> loadScheduledQueryAnalytics() {
+    private List<AbstractAnalyticRuleDoc> loadScheduledQueryAnalytics() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         info(() -> "Loading rules");
-        final List<AnalyticRuleDoc> analyticList = new ArrayList<>();
-        final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
-        for (final AnalyticRuleDoc analyticRuleDoc : rules) {
+        final List<AbstractAnalyticRuleDoc> analyticList = new ArrayList<>();
+        final List<AbstractAnalyticRuleDoc> rules = analyticHelper.getRules();
+        for (final AbstractAnalyticRuleDoc analyticRuleDoc : rules) {
             if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
                 analyticList.add(analyticRuleDoc);
             }

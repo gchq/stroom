@@ -1,9 +1,9 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
-import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
@@ -708,12 +708,12 @@ public class TableBuilderAnalyticExecutor {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
 
-        private final AnalyticRuleDoc analyticRuleDoc;
+        private final AbstractAnalyticRuleDoc analyticRuleDoc;
         private final DetectionConsumer detectionConsumer;
 
         private List<Column> columns;
 
-        public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
+        public TableResultConsumer(final AbstractAnalyticRuleDoc analyticRuleDoc,
                                    final DetectionConsumer detectionConsumer) {
             this.analyticRuleDoc = analyticRuleDoc;
             this.detectionConsumer = detectionConsumer;
@@ -820,8 +820,8 @@ public class TableBuilderAnalyticExecutor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         info(() -> "Loading rules");
         final List<TableBuilderAnalytic> analyticList = new ArrayList<>();
-        final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
-        for (final AnalyticRuleDoc analyticRuleDoc : rules) {
+        final List<AbstractAnalyticRuleDoc> rules = analyticHelper.getRules();
+        for (final AbstractAnalyticRuleDoc analyticRuleDoc : rules) {
             final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
             if (analyticProcessConfig instanceof
                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
@@ -901,7 +901,7 @@ public class TableBuilderAnalyticExecutor {
     }
 
     private record TableBuilderAnalytic(String ruleIdentity,
-                                        AnalyticRuleDoc analyticRuleDoc,
+                                        AbstractAnalyticRuleDoc analyticRuleDoc,
                                         TableBuilderAnalyticProcessConfig analyticProcessConfig,
                                         AnalyticTracker tracker,
                                         TableBuilderAnalyticTrackerData trackerData,

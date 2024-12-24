@@ -16,11 +16,8 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AnalyticProcessConfig;
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
-import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -40,7 +37,6 @@ import stroom.view.shared.ViewDoc;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,19 +44,19 @@ public class AnalyticHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticHelper.class);
 
-    private final AnalyticRuleStore analyticRuleStore;
+    private final AnalyticLoader analyticLoader;
     private final AnalyticTrackerDao analyticTrackerDao;
     private final ViewStore viewStore;
     private final MetaService metaService;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
 
     @Inject
-    public AnalyticHelper(final AnalyticRuleStore analyticRuleStore,
+    public AnalyticHelper(final AnalyticLoader analyticLoader,
                           final AnalyticTrackerDao analyticTrackerDao,
                           final ViewStore viewStore,
                           final MetaService metaService,
                           final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider) {
-        this.analyticRuleStore = analyticRuleStore;
+        this.analyticLoader = analyticLoader;
         this.analyticTrackerDao = analyticTrackerDao;
         this.viewStore = viewStore;
         this.metaService = metaService;
@@ -72,56 +68,26 @@ public class AnalyticHelper {
         final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
         if (viewDoc == null) {
             throw new RuntimeException("Unable to process analytic: " +
-                    ruleIdentity +
-                    " because selected view cannot be found");
+                                       ruleIdentity +
+                                       " because selected view cannot be found");
         }
         if (viewDoc.getPipeline() == null) {
             throw new RuntimeException("Unable to process analytic: " +
-                    ruleIdentity +
-                    " because view does not specify a pipeline");
+                                       ruleIdentity +
+                                       " because view does not specify a pipeline");
         }
         return viewDoc;
     }
 
-    public void disableProcess(final AnalyticRuleDoc analyticRuleDoc) {
-        final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-        if (analyticProcessConfig instanceof
-                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-            TableBuilderAnalyticProcessConfig updatedProcessConfig = tableBuilderAnalyticProcessConfig
-                    .copy()
-                    .enabled(false)
-                    .build();
-            final AnalyticRuleDoc modified = analyticRuleDoc
-                    .copy()
-                    .analyticProcessConfig(updatedProcessConfig)
-                    .build();
-            analyticRuleStore.writeDocument(modified);
-        }
+    public void disableProcess(final AbstractAnalyticRuleDoc doc) {
+        analyticLoader.disableProcess(doc);
     }
 
-    public List<AnalyticRuleDoc> getRules() {
-        // TODO this is not very efficient. It fetches all the docrefs from the DB,
-        //  then loops over them to fetch+deser the associated doc for each one (one by one)
-        //  so the caller can filter half of them out by type.
-        //  It would be better if we had a json type col in the doc table, so that the
-        //  we can pass some kind of json path query to the persistence layer that the DBPersistence
-        //  can translate to a MySQL json path query.
-        final List<DocRef> docRefList = analyticRuleStore.list();
-        final List<AnalyticRuleDoc> rules = new ArrayList<>();
-        for (final DocRef docRef : docRefList) {
-            try {
-                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
-                if (analyticRuleDoc != null) {
-                    rules.add(analyticRuleDoc);
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        }
-        return rules;
+    public List<AbstractAnalyticRuleDoc> getRules() {
+        return analyticLoader.loadAll();
     }
 
-    public AnalyticTracker getTracker(final AnalyticRuleDoc analyticRuleDoc) {
+    public AnalyticTracker getTracker(final AbstractAnalyticRuleDoc analyticRuleDoc) {
         Optional<AnalyticTracker> optionalTracker =
                 analyticTrackerDao.get(analyticRuleDoc.getUuid());
         while (optionalTracker.isEmpty()) {
@@ -172,14 +138,14 @@ public class AnalyticHelper {
         return metaService.find(findMetaCriteria).getValues();
     }
 
-    public String getErrorFeedName(final AnalyticRuleDoc analyticRuleDoc) {
+    public String getErrorFeedName(final AbstractAnalyticRuleDoc analyticRuleDoc) {
         String errorFeedName = null;
         if (analyticRuleDoc.getErrorFeed() != null) {
             errorFeedName = analyticRuleDoc.getErrorFeed().getName();
         }
         if (errorFeedName == null) {
             LOGGER.debug(() -> "Error feed not defined: " +
-                    AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
+                               AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
 
             final DocRef defaultErrorFeed = analyticUiDefaultConfigProvider.get().getDefaultErrorFeed();
             if (defaultErrorFeed == null) {

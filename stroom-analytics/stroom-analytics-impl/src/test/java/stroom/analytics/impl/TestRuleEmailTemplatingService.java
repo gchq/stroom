@@ -12,14 +12,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRuleEmailTemplatingService {
 
     @Test
-    void renderAlertEmail() {
+    void renderDetectionEmail() {
         final RuleEmailTemplatingService templatingService = new RuleEmailTemplatingService();
         final Detection detection = getExampleDetection(true, true);
         NotificationEmailDestination emailDestination = NotificationEmailDestination.builder()
                 .subjectTemplate("{{ headline }}")
                 .bodyTemplate("{{ detectorVersion }} - {{ detectionRevision }}")
                 .build();
-        final EmailContent emailContent = templatingService.renderAlertEmail(detection, emailDestination);
+        final EmailContent emailContent = templatingService.renderDetectionEmail(detection, emailDestination);
 
         assertThat(emailContent.getSubject())
                 .isEqualTo(detection.getHeadline());
