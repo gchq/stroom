@@ -160,6 +160,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         }
     }
 
+    @Override
     public void addPermission(final String docUuid,
                               final String userUuid,
                               final String permission) {

@@ -2,6 +2,8 @@ package stroom.security.impl;
 
 import stroom.cache.impl.CacheModule;
 import stroom.explorer.api.ExplorerService;
+import stroom.security.api.UserAppPermissionService;
+import stroom.security.api.UserService;
 import stroom.security.impl.db.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;

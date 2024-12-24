@@ -18,29 +18,61 @@
 package stroom.core.receive;
 
 import stroom.feed.api.FeedProperties;
+import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.meta.api.AttributeMap;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.receive.common.AutoContentCreationConfig;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 class FeedStatusServiceImpl implements FeedStatusService {
 
     private final SecurityContext securityContext;
     private final FeedProperties feedProperties;
+    private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
+    private final ContentAutoCreationService contentAutoCreationService;
+
 
     @Inject
-    FeedStatusServiceImpl(final SecurityContext securityContext, final FeedProperties feedProperties) {
+    FeedStatusServiceImpl(final SecurityContext securityContext,
+                          final FeedProperties feedProperties,
+                          final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider,
+                          final ContentAutoCreationService contentAutoCreationService) {
         this.securityContext = securityContext;
         this.feedProperties = feedProperties;
+        this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
+        this.contentAutoCreationService = contentAutoCreationService;
     }
 
     @Override
-    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         return securityContext.asProcessingUserResult(() -> {
-            final FeedStatus feedStatus = feedProperties.getStatus(request.getFeedName());
+            FeedStatus feedStatus = feedProperties.getStatus(request.getFeedName());
+
+            if (feedStatus == null) {
+                // Feed does not exist so auto-create it if so configured
+                if (autoContentCreationConfigProvider.get().isEnabled()) {
+                    final AttributeMap attributeMap = NullSafe.get(
+                            request.getAttributeMap(),
+                            map -> {
+                                final AttributeMap attrMap = new AttributeMap();
+                                attrMap.putAll(map);
+                                return attrMap;
+                            });
+                    feedStatus = contentAutoCreationService.createFeed(
+                                    request.getFeedName(),
+                                    request.getSubjectId(),
+                                    attributeMap)
+                            .map(FeedDoc::getStatus)
+                            .orElse(null);
+                }
+            }
 
             if (feedStatus == null) {
                 return GetFeedStatusResponse.createFeedIsNotDefinedResponse();

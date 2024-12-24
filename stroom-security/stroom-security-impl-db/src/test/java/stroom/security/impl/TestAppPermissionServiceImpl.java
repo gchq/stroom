@@ -16,6 +16,8 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.UserAppPermissionService;
+import stroom.security.api.UserService;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;

@@ -17,12 +17,15 @@ dependencies {
     implementation libs.bcrypt
     implementation libs.bouncy_castle
     implementation libs.commons_compress
+    implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_validation
     implementation libs.guice3
     implementation libs.hessian
     implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
     implementation libs.javax_inject
     implementation libs.jaxb_api

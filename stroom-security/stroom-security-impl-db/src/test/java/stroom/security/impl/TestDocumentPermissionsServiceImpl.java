@@ -19,6 +19,7 @@ package stroom.security.impl;
 
 
 import stroom.docref.DocRef;
+import stroom.security.api.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;

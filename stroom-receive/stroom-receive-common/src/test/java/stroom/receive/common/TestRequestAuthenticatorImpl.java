@@ -59,8 +59,6 @@ class TestRequestAuthenticatorImpl {
 
     @TestFactory
     Stream<DynamicTest> authenticate_tokenEnabled() {
-
-
         final String certCn = "My CN";
         final UserIdentity tokenUser = new TestUserIdentity("1"); // We are mocking so type doesn't matter here
         final UserIdentity certUser = new CertificateUserIdentity(certCn); // Type matters here
@@ -69,6 +67,7 @@ class TestRequestAuthenticatorImpl {
                 DataFeedKeyHashAlgorithm.ARGON2.getDisplayValue(),
                 "MySubjectId",
                 "My Display Name",
+                "My System Name",
                 null,
                 null,
                 Long.MAX_VALUE));

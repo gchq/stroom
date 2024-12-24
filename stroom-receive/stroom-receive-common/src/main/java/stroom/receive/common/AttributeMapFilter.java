@@ -25,6 +25,10 @@ import java.util.List;
 
 public interface AttributeMapFilter {
 
+    /**
+     * Used for filtering received data based on its attributeMap and userIdentity.
+     * @return True if the data should be accepted.
+     */
     boolean filter(AttributeMap attributeMap, final UserIdentity userIdentity);
 
     /**
@@ -48,49 +52,6 @@ public interface AttributeMapFilter {
             return attributeMapFilters.get(0);
         } else {
             return new MultiAttributeMapFilter(attributeMapFilters);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    class MultiAttributeMapFilter implements AttributeMapFilter {
-
-        private final List<AttributeMapFilter> attributeMapFilters;
-
-        private MultiAttributeMapFilter(final List<AttributeMapFilter> attributeMapFilters) {
-            if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-                throw new IllegalArgumentException("Null or empty attributeMapFilters");
-            }
-            this.attributeMapFilters = attributeMapFilters;
-        }
-
-//        public static AttributeMapFilter wrap(final AttributeMapFilter... attributeMapFilters) {
-//            return wrap(NullSafe.asList(attributeMapFilters));
-//        }
-//
-//        public static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
-//            if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-//                return PermissiveAttributeMapFilter.getInstance();
-//            } else if (attributeMapFilters.size() == 1 && attributeMapFilters.getFirst() != null) {
-//                return attributeMapFilters.getFirst();
-//            } else {
-//                return new MultiAttributeMapFilter(attributeMapFilters);
-//            }
-//        }
-
-        @Override
-        public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
-            for (final AttributeMapFilter attributeMapFilter : attributeMapFilters) {
-                if (attributeMapFilter != null) {
-                    final boolean filterResult = attributeMapFilter.filter(attributeMap, userIdentity);
-                    if (!filterResult) {
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
     }
 }

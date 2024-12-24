@@ -16,7 +16,7 @@
 
 package stroom.receive.common;
 
-import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -31,17 +31,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-/**
- * @deprecated Use {@link FeedStatusResourceV2}
- */
-@Deprecated()
 @Tag(name = "Feed Status")
-@Path(FeedStatusResource.BASE_RESOURCE_PATH)
+@Path(FeedStatusResourceV2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface FeedStatusResource extends RestResource {
+public interface FeedStatusResourceV2 extends RestResource {
 
-    String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
+    String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V2;
     String GET_FEED_STATUS_PATH_PART = "/getFeedStatus";
 
     @POST
@@ -50,5 +46,5 @@ public interface FeedStatusResource extends RestResource {
             summary = "Submit a request to get the status of a feed",
             operationId = "getFeedStatus")
     GetFeedStatusResponse getFeedStatus(
-            @Parameter(description = "GetFeedStatusRequest", required = true) GetFeedStatusRequest request);
+            @Parameter(description = "GetFeedStatusRequest", required = true) GetFeedStatusRequestV2 request);
 }

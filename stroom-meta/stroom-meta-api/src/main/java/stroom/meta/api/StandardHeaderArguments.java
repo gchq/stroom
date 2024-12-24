@@ -56,6 +56,10 @@ public interface StandardHeaderArguments {
     String FEED = "Feed";
     String TYPE = "Type";
 
+    String ENCODING = "Encoding";
+    String CONTEXT_ENCODING = "ContextEncoding";
+    String CLASSIFICATION = "Classification";
+
     // Typically added in by nginx
     String X_FORWARDED_FOR = "X-Forwarded-For";
 

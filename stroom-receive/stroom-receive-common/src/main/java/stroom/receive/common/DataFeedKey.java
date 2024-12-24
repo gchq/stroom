@@ -35,13 +35,19 @@ public class DataFeedKey {
     private final String displayName;
 
     @JsonProperty
+    @JsonPropertyDescription("The unique name for the system sending the data. This will be used name " +
+            "auth-created folders and documents in Stroom")
+    private final String systemName;
+
+    @JsonProperty
     @JsonPropertyDescription(
             "A list of case sensitive regular expression patterns that will be used to verify the " +
             "'Feed' header on data receipt. Only feeds matching one of these patterns will be accepted.")
     private final List<String> feedRegexPatterns;
 
     @JsonProperty
-    @JsonPropertyDescription("A map of stream attribute key/value pairs.")
+    @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
+            "in the stream headers.")
     private final Map<String, String> streamMetaData;
 
     @JsonProperty
@@ -53,6 +59,7 @@ public class DataFeedKey {
                        @JsonProperty("hashAlgorithm") final String hashAlgorithm,
                        @JsonProperty("subjectId") final String subjectId,
                        @JsonProperty("displayName") final String displayName,
+                       @JsonProperty("systemName") final String systemName,
                        @JsonProperty("feedRegexPatterns") final List<String> feedRegexPatterns,
                        @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                        @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
@@ -60,6 +67,7 @@ public class DataFeedKey {
         this.hashAlgorithm = hashAlgorithm;
         this.subjectId = subjectId;
         this.displayName = displayName;
+        this.systemName = systemName;
         this.feedRegexPatterns = feedRegexPatterns;
         this.streamMetaData = streamMetaData;
         this.expiryDateEpochMs = expiryDateEpochMs;
@@ -85,6 +93,11 @@ public class DataFeedKey {
      */
     public String getDisplayName() {
         return displayName;
+    }
+
+    @NotBlank
+    public String getSystemName() {
+        return systemName;
     }
 
     public List<String> getFeedRegexPatterns() {
@@ -119,30 +132,38 @@ public class DataFeedKey {
             return false;
         }
         final DataFeedKey that = (DataFeedKey) object;
-        return Objects.equals(hash, that.hash)
-               && Objects.equals(hashAlgorithm, that.hashAlgorithm)
-               && Objects.equals(subjectId, that.subjectId)
-               && Objects.equals(displayName, that.displayName)
-               && Objects.equals(feedRegexPatterns, that.feedRegexPatterns)
-               && Objects.equals(streamMetaData, that.streamMetaData)
-               && expiryDateEpochMs == that.expiryDateEpochMs;
+        return expiryDateEpochMs == that.expiryDateEpochMs && Objects.equals(hash,
+                that.hash) && Objects.equals(hashAlgorithm, that.hashAlgorithm) && Objects.equals(
+                subjectId,
+                that.subjectId) && Objects.equals(displayName, that.displayName) && Objects.equals(
+                systemName,
+                that.systemName) && Objects.equals(feedRegexPatterns,
+                that.feedRegexPatterns) && Objects.equals(streamMetaData, that.streamMetaData);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hash, hashAlgorithm, subjectId, feedRegexPatterns, streamMetaData, expiryDateEpochMs);
+        return Objects.hash(hash,
+                hashAlgorithm,
+                subjectId,
+                displayName,
+                systemName,
+                feedRegexPatterns,
+                streamMetaData,
+                expiryDateEpochMs);
     }
 
     @Override
     public String toString() {
-        return "DatafeedKey{" +
-               "hash='" + hash + '\'' +
-               ", hashAlgorithm='" + hashAlgorithm + '\'' +
-               ", subjectId='" + subjectId + '\'' +
-               ", displayName='" + displayName + '\'' +
-               ", feedRegexPatterns=" + feedRegexPatterns +
-               ", streamMetaData=" + streamMetaData +
-               ", expiryDateEpochMs=" + expiryDateEpochMs +
-               '}';
+        return "DataFeedKey{" +
+                "hash='" + hash + '\'' +
+                ", hashAlgorithm='" + hashAlgorithm + '\'' +
+                ", subjectId='" + subjectId + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", systemName='" + systemName + '\'' +
+                ", feedRegexPatterns=" + feedRegexPatterns +
+                ", streamMetaData=" + streamMetaData +
+                ", expiryDateEpochMs=" + expiryDateEpochMs +
+                '}';
     }
 }

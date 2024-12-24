@@ -13,6 +13,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserService;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
 import stroom.security.shared.Changes;

@@ -6,27 +6,28 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
+import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.string.Base58;
 
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
-import org.bouncycastle.crypto.params.Argon2Parameters;
-import org.bouncycastle.crypto.params.Argon2Parameters.Builder;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -49,15 +50,15 @@ public class DataFeedKeyServiceImpl
 
     // Holds all the keys read from the data feed key files, entries are evicted when
     // the DataFeedKey has passed its expiry date.
-    private final Map<CacheKey, DataFeedKey> cacheKeyTodataFeedKeyMap = new ConcurrentHashMap<>();
-    private final Map<String, DataFeedKey> subjectIdToDataFeedKeyMap = new ConcurrentHashMap<>();
+    private final Map<CacheKey, CachedDataFeedKey> cacheKeyToDataFeedKeyMap = new ConcurrentHashMap<>();
+    private final Map<String, CachedDataFeedKey> subjectIdToDataFeedKeyMap = new ConcurrentHashMap<>();
 
     // TODO replace with cache
-    private final Map<String, Pattern> feedPatternCache = new HashMap<>();
+    private final Map<String, Pattern> feedPatternCache = new ConcurrentHashMap<>();
 
     // TODO replace with cache
     // Cache of the un-hashed key to validated DataFeedKey, to save us the hashing cost
-    private final Map<String, Optional<DataFeedKey>> keyToDataFeedKeyMap = new HashMap<>();
+    private final Map<String, Optional<DataFeedKey>> keyToDataFeedKeyMap = new ConcurrentHashMap<>();
 
     private final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap = new EnumMap<>(
             DataFeedKeyHashAlgorithm.class);
@@ -90,45 +91,109 @@ public class DataFeedKeyServiceImpl
                 .flatMap((String key2) ->
                         lookupKey(key2, attributeMap));
 
-        optDataFeedKey.ifPresent(dataFeedKey -> {
-            validateDataFeedKeyExpiry(dataFeedKey, attributeMap);
-        });
+        optDataFeedKey.ifPresent(dataFeedKey ->
+                validateDataFeedKeyExpiry(dataFeedKey, attributeMap));
 
         return optDataFeedKey;
     }
 
-    private void addDataFeedKeys(final DataFeedKeys dataFeedKeys) {
-        if (dataFeedKeys != null) {
+    @Override
+    public Optional<DataFeedKey> getDataFeedKey(final String subjectId) {
+        return Optional.ofNullable(subjectIdToDataFeedKeyMap.get(subjectId))
+                .map(CachedDataFeedKey::getDataFeedKey);
+    }
+
+    @Override
+    public void addDataFeedKeys(final DataFeedKeys dataFeedKeys,
+                                final Path sourceFile) {
+        if (NullSafe.hasItems(dataFeedKeys)) {
+            LOGGER.debug(() -> LogUtil.message("Adding {} dataFeedKeys",
+                    dataFeedKeys.getDataFeedKeys().size()));
+
             dataFeedKeys.getDataFeedKeys()
+                    .stream()
+                    .map(dataFeedKey -> new CachedDataFeedKey(dataFeedKey, sourceFile))
                     .forEach(this::addDataFeedKey);
         }
     }
 
-    private void addDataFeedKey(final DataFeedKey dataFeedKey) {
-        if (dataFeedKey != null) {
-            final String hash = dataFeedKey.getHash();
-            final String hashAlgorithmName = dataFeedKey.getHashAlgorithm();
+    private void addDataFeedKey(final CachedDataFeedKey cachedDataFeedKey) {
+        if (cachedDataFeedKey != null) {
+            final String hash = cachedDataFeedKey.getHash();
+            final String hashAlgorithmName = cachedDataFeedKey.getHashAlgorithm();
             final DataFeedKeyHashAlgorithm hashAlgorithm = DataFeedKeyHashAlgorithm.fromDisplayValue(
                     hashAlgorithmName);
             CacheKey cacheKey = new CacheKey(hashAlgorithm, hash);
-            cacheKeyTodataFeedKeyMap.put(cacheKey, dataFeedKey);
-            subjectIdToDataFeedKeyMap.put(dataFeedKey.getSubjectId(), dataFeedKey);
+            cacheKeyToDataFeedKeyMap.put(cacheKey, cachedDataFeedKey);
+            subjectIdToDataFeedKeyMap.put(cachedDataFeedKey.getSubjectId(), cachedDataFeedKey);
         }
     }
 
-    private void evictExpiredKeys() {
-        cacheKeyTodataFeedKeyMap.entrySet().removeIf(entry ->
-                entry.getValue().isExpired());
-        subjectIdToDataFeedKeyMap.entrySet().removeIf(entry ->
-                entry.getValue().isExpired());
+    @Override
+    public void evictExpired() {
+        LOGGER.debug("Evicting expired dataFeedKeys");
+        final AtomicInteger counter = new AtomicInteger();
+        final Set<String> patternsToRemove = new HashSet<>();
+        final Predicate<Entry<?, CachedDataFeedKey>> removeIfPredicate = entry -> {
+            final CachedDataFeedKey cachedDataFeedKey = entry.getValue();
+            patternsToRemove.addAll(NullSafe.list(cachedDataFeedKey.getFeedRegexPatterns()));
+            return entry.getValue().isExpired();
+        };
+
+        counter.set(0);
+        cacheKeyToDataFeedKeyMap.entrySet().removeIf(
+                PredicateUtil.countingPredicate(counter, removeIfPredicate));
+        LOGGER.debug("Removed {} cacheKeyToDataFeedKeyMap entries", counter);
+
+        counter.set(0);
+        subjectIdToDataFeedKeyMap.entrySet().removeIf(
+                PredicateUtil.countingPredicate(counter, removeIfPredicate));
+        LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
+
+        counter.set(0);
+        keyToDataFeedKeyMap.entrySet().removeIf(PredicateUtil.countingPredicate(counter, entry ->
+                entry.getValue().filter(DataFeedKey::isExpired).isPresent()));
+        LOGGER.debug("Removed {} keyToDataFeedKeyMap entries", counter);
+
+        // Remove unused patterns. It's possible a pattern is used by >1 DFK, but
+        // it is not that much bother to recompile a pattern if needed. Easier than
+        // working out which ones are not actually needed any more.
+        counter.set(0);
+        feedPatternCache.entrySet().removeIf(PredicateUtil.countingPredicate(counter, entry -> {
+            final String pattern = entry.getKey();
+            return patternsToRemove.contains(pattern);
+        }));
     }
 
-    private void validateDataFeedKeyExpiry(final DataFeedKey dataFeedKey,
-                                           final AttributeMap attributeMap) {
+    @Override
+    public void removeKeysForFile(final Path sourceFile) {
+        if (sourceFile != null) {
+            LOGGER.debug("Evicting dataFeedKeys for sourceFile {}", sourceFile);
+            final AtomicInteger counter = new AtomicInteger();
+            final Predicate<Entry<?, CachedDataFeedKey>> removeIfPredicate = entry -> {
+                final boolean doRemove = Objects.equals(
+                        sourceFile, entry.getValue().getSourceFile());
+                if (doRemove) {
+                    counter.incrementAndGet();
+                }
+                return doRemove;
+            };
+
+            cacheKeyToDataFeedKeyMap.entrySet().removeIf(removeIfPredicate);
+            LOGGER.debug("Removed {} cacheKeyToDataFeedKeyMap entries", counter);
+            counter.set(0);
+            subjectIdToDataFeedKeyMap.entrySet().removeIf(removeIfPredicate);
+            LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
+        }
+    }
+
+    private boolean validateDataFeedKeyExpiry(final DataFeedKey dataFeedKey,
+                                              final AttributeMap attributeMap) {
         if (dataFeedKey.isExpired()) {
             throw new StroomStreamException(
                     StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);
         }
+        return true;
     }
 
     private String extractUniqueIdFromKey(final String key) {
@@ -160,21 +225,23 @@ public class DataFeedKeyServiceImpl
 
         // Try the cache first to save on the hashing cost.
         Optional<DataFeedKey> optDataFeedKey = keyToDataFeedKeyMap.get(key);
-        if (optDataFeedKey.isPresent()) {
-            final DataFeedKey dataFeedKey = optDataFeedKey.get();
-            validateDataFeedKeyExpiry(dataFeedKey, attributeMap);
-            return Optional.of(dataFeedKey);
-        } else {
+        if (optDataFeedKey == null) {
+            // Not in cache,
             optDataFeedKey = getCacheKey(key)
                     .map(cacheKey -> {
                         Objects.requireNonNull(cacheKey);
-                        final DataFeedKey dataFeedKey = cacheKeyTodataFeedKeyMap.get(cacheKey);
+                        final CachedDataFeedKey dataFeedKey = cacheKeyToDataFeedKeyMap.get(cacheKey);
                         LOGGER.debug("Lookup of cacheKey {}, found {}", cacheKey, dataFeedKey);
                         return dataFeedKey;
-                    });
+                    })
+                    .map(CachedDataFeedKey::getDataFeedKey);
             // Cache it to save hashing next time
             keyToDataFeedKeyMap.put(key, optDataFeedKey);
             return optDataFeedKey;
+        } else {
+            return optDataFeedKey
+                    .filter(dataFeedKey ->
+                            validateDataFeedKeyExpiry(dataFeedKey, attributeMap));
         }
     }
 
@@ -192,35 +259,64 @@ public class DataFeedKeyServiceImpl
                 .orElseThrow(() ->
                         new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap));
 
-        final DataFeedKey dataFeedKey = subjectIdToDataFeedKeyMap.get(userIdentity.getSubjectId());
+        final CachedDataFeedKey dataFeedKey = subjectIdToDataFeedKeyMap.get(userIdentity.getSubjectId());
+
         Objects.requireNonNull(dataFeedKey, "dataFeedKey should not be null at this point");
 
         final List<String> feedRegexPatterns = dataFeedKey.getFeedRegexPatterns();
         if (NullSafe.hasItems(feedRegexPatterns)) {
+            boolean isFeedNameValid = false;
             for (final String feedRegexPattern : feedRegexPatterns) {
-                final Pattern pattern = feedPatternCache.get(feedRegexPattern);
+                final Pattern pattern = feedPatternCache.computeIfAbsent(feedRegexPattern, Pattern::compile);
                 if (pattern.matcher(feedName).matches()) {
-                    return true;
+                    // Feed matches one of the regexes, so we need to auto-create it (if enabled)
+//                    ensureFeed(feedName);
+                    isFeedNameValid = true;
+                } else {
+                    LOGGER.debug("feedName: '{}' does not match pattern: '{}'", feedName, feedRegexPattern);
                 }
             }
-            LOGGER.debug(() -> LogUtil.message("No match on feedName '{}' with patterns [{}]",
-                    feedName,
-                    feedRegexPatterns.stream()
-                            .map(pattern -> "'" + pattern + "'")
-                            .collect(Collectors.joining(", "))));
-            throw new StroomStreamException(StroomStatusCode.INVALID_FEED_NAME, attributeMap);
+            if (!isFeedNameValid) {
+                LOGGER.debug(() -> LogUtil.message("No match on feedName '{}' with patterns [{}]",
+                        feedName,
+                        feedRegexPatterns.stream()
+                                .map(pattern -> "'" + pattern + "'")
+                                .collect(Collectors.joining(", "))));
+                throw new StroomStreamException(StroomStatusCode.INVALID_FEED_NAME, attributeMap);
+            } else {
+                return true;
+            }
         } else {
             LOGGER.debug("No feed patterns to match on, allowing it to continue");
             return true;
         }
     }
 
+//    private void ensureFeed(final String feedName) {
+//        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+//        final AutoContentCreationConfig autoContentCreationConfig = receiveDataConfig.getAutoContentCreationConfig();
+//        if (autoContentCreationConfig.isEnabled()) {
+//
+//        }
+//
+//    }
+
     @Override
     public Optional<UserIdentity> authenticate(final HttpServletRequest request,
                                                final AttributeMap attributeMap) {
         try {
-            return getDataFeedKey(request, attributeMap)
-                    .map(DataFeedKeyUserIdentity::new);
+            final Optional<UserIdentity> optUserIdentity = getDataFeedKey(request, attributeMap)
+                    .map(dataFeedKey -> {
+                        // Ensure the stream attributes from the data feed key are set in the attributeMap so
+                        // that the AttributeMapFilters have access to them.
+                        final Map<String, String> streamMeta = NullSafe.map(dataFeedKey.getStreamMetaData());
+                        // Entries from the data feed key trump what is in the headers
+                        attributeMap.putAll(streamMeta);
+
+                        return new DataFeedKeyUserIdentity(dataFeedKey);
+                    });
+            LOGGER.debug("Returning {}", optUserIdentity);
+            return optUserIdentity;
         } catch (StroomStreamException e) {
             throw e;
         } catch (Exception e) {
@@ -228,6 +324,7 @@ public class DataFeedKeyServiceImpl
                     StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap, e.getMessage());
         }
     }
+
 
     // --------------------------------------------------------------------------------
 
@@ -329,72 +426,6 @@ public class DataFeedKeyServiceImpl
                     "displayValue='" + displayValue + '\'' +
                     ", uniqueId=" + uniqueId +
                     '}';
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface DataFeedKeyHasher {
-
-        String hash(String dataFeedKey);
-
-//        default boolean verify(String apiKeyStr, String hash) {
-//            final String computedHash = hash(Objects.requireNonNull(apiKeyStr));
-//            return Objects.equals(Objects.requireNonNull(hash), computedHash);
-//        }
-
-        DataFeedKeyHashAlgorithm getAlgorithm();
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
-
-        // WARNING!!!
-        // Do not change any of these otherwise it will break hash verification of existing
-        // keys. If you want to tune it, make a new ApiKeyHasher impl with a new getType()
-        // 48, 2, 65_536, 1 => ~90ms per hash
-        private static final int HASH_LENGTH = 48;
-        private static final int ITERATIONS = 2;
-        private static final int MEMORY_KB = 65_536;
-        private static final int PARALLELISM = 1;
-
-        private final Argon2Parameters argon2Parameters;
-
-        public Argon2DataFeedKeyHasher() {
-            // No salt given the length of api keys being hashed
-            this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
-                    .withVersion(Argon2Parameters.ARGON2_VERSION_13)
-                    .withIterations(ITERATIONS)
-                    .withMemoryAsKB(MEMORY_KB)
-                    .withParallelism(PARALLELISM)
-                    .build();
-        }
-
-        @Override
-        public String hash(final String dataFeedKey) {
-            Objects.requireNonNull(dataFeedKey);
-            Argon2BytesGenerator generate = new Argon2BytesGenerator();
-            generate.init(argon2Parameters);
-            byte[] result = new byte[HASH_LENGTH];
-            generate.generateBytes(
-                    dataFeedKey.trim().getBytes(StandardCharsets.UTF_8),
-                    result,
-                    0,
-                    result.length);
-
-            // Base58 is a bit less nasty than base64 and widely supported in other languages
-            // due to use in bitcoin.
-            return Base58.encode(result);
-        }
-
-        @Override
-        public DataFeedKeyHashAlgorithm getAlgorithm() {
-            return DataFeedKeyHashAlgorithm.ARGON2;
         }
     }
 

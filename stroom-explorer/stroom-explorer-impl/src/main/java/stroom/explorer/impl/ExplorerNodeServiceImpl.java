@@ -11,7 +11,10 @@ import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.DocPath;
 
+import event.logging.Folder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -252,7 +255,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private synchronized void createRoot() {
         final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
-        if (roots == null || roots.size() == 0) {
+        if (roots == null || roots.isEmpty()) {
             // Insert System root node.
             final DocRef root = ExplorerConstants.SYSTEM_DOC_REF;
             addNode(null, root);
@@ -335,6 +338,27 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         final List<ExplorerTreeNode> children = explorerTreeDao.getChildren(parentNode);
         return children.stream()
                 .filter(n -> name.equals(n.getName()))
+                .map(this::createExplorerNode)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ExplorerNode> getNodesByNameAndType(final ExplorerNode parent,
+                                                    final String name,
+                                                    final String type) {
+
+        ExplorerTreeNode parentNode = null;
+        if (parent != null) {
+            parentNode = explorerTreeDao.findByUUID(parent.getUuid());
+            if (parentNode == null) {
+                throw new RuntimeException("Unable to find parent node");
+            }
+        }
+
+        final List<ExplorerTreeNode> children = explorerTreeDao.getChildrenByNameAndType(
+                parentNode, name, type);
+
+        return children.stream()
                 .map(this::createExplorerNode)
                 .collect(Collectors.toList());
     }
