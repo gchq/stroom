@@ -68,12 +68,13 @@ public class DuplicateCheckDirs {
         return uuidList;
     }
 
-    public void deleteUnused(final List<String> duplicateStoreDirs,
-                             final List<AbstractAnalyticRuleDoc> analytics) {
+    public <T extends AbstractAnalyticRuleDoc> void deleteUnused(
+            final List<String> duplicateStoreDirs,
+            final List<T> analytics) {
         try {
             // Delete unused duplicate stores.
             final Set<String> remaining = new HashSet<>(duplicateStoreDirs);
-            for (final AbstractAnalyticRuleDoc analyticRuleDoc : analytics) {
+            for (final T analyticRuleDoc : analytics) {
                 remaining.remove(analyticRuleDoc.getUuid());
             }
             for (final String uuid : remaining) {

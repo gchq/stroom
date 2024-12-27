@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -77,7 +78,6 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     private final LmdbEnvDirFactory lmdbEnvDirFactory;
     private final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider;
-    private final AnalyticLoader analyticLoader;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final Provider<Executor> executorProvider;
     private final ExpressionContextFactory expressionContextFactory;
@@ -87,11 +87,12 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final SecurityContext securityContext;
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnalyticRuleStore analyticRuleStore;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvDirFactory lmdbEnvDirFactory,
                               final PathCreator pathCreator,
-                              final AnalyticLoader analyticLoader,
+                              final AnalyticRuleStore analyticRuleStore,
                               final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                               final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                               final Provider<Executor> executorProvider,
@@ -101,7 +102,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final ByteBufferFactory bufferFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
-        this.analyticLoader = analyticLoader;
+        this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.executorProvider = executorProvider;
@@ -133,7 +134,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final Set<String> actualDirs = getFileSystemAnalyticStoreDirs();
 
         // Remove old cached stuff.
-        final List<AbstractAnalyticRuleDoc> currentRules = analyticLoader.loadAll();
+        final List<AnalyticRuleDoc> currentRules = loadAll();
         for (final AbstractAnalyticRuleDoc cachedDoc : cachedDocs) {
             if (!currentRules.contains(cachedDoc)) {
                 dataStoreCache.remove(cachedDoc);
@@ -175,7 +176,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return Collections.emptySet();
     }
 
-    private Set<String> getExpectedAnalyticStoreDirs(final List<AbstractAnalyticRuleDoc> currentRules) {
+    private Set<String> getExpectedAnalyticStoreDirs(final List<AnalyticRuleDoc> currentRules) {
         final Set<String> expectedDirs = new HashSet<>();
         currentRules.forEach(analyticRuleDoc -> {
             try {
@@ -301,7 +302,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     @Override
     public ResultPage<ResultStoreInfo> find(final FindResultStoreCriteria criteria) {
         final List<ResultStoreInfo> list = new ArrayList<>();
-        final List<AbstractAnalyticRuleDoc> currentRules = analyticLoader.loadAll();
+        final List<AnalyticRuleDoc> currentRules = loadAll();
         currentRules.forEach(analyticRuleDoc -> {
             try {
                 final DocRef docRef = analyticRuleDoc.asDocRef();
@@ -335,6 +336,29 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return new ResultPage<>(list);
     }
 
+    public List<AnalyticRuleDoc> loadAll() {
+        // TODO this is not very efficient. It fetches all the docrefs from the DB,
+        //  then loops over them to fetch+deser the associated doc for each one (one by one)
+        //  so the caller can filter half of them out by type.
+        //  It would be better if we had a json type col in the doc table, so that the
+        //  we can pass some kind of json path query to the persistence layer that the DBPersistence
+        //  can translate to a MySQL json path query.
+        final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
+        List<DocRef> docRefs = analyticRuleStore.list();
+        for (final DocRef docRef : docRefs) {
+            try {
+                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+                if (analyticRuleDoc != null) {
+                    currentRules.add(analyticRuleDoc);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+        return currentRules;
+    }
+
+
     private String getComponentId(final SearchRequest searchRequest) {
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
             if (resultRequest.getMappings() != null && !resultRequest.getMappings().isEmpty()) {
@@ -362,7 +386,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .uuid(criteria.getAnalyticDocUuid())
                 .build();
         try {
-            final AbstractAnalyticRuleDoc analyticRuleDoc = analyticLoader.load(docRef);
+            final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
             final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
             final String componentId = getComponentId(searchRequest);
             final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
@@ -399,7 +423,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .uuid(request.getAnalyticDocUuid())
                 .build();
         try {
-            final AbstractAnalyticRuleDoc doc = analyticLoader.load(docRef);
+            final AbstractAnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
             final Optional<AnalyticDataStore> optionalAnalyticDataStore = getIfExists(doc);
             if (optionalAnalyticDataStore.isPresent()) {
                 final AnalyticDataStore analyticDataStore = optionalAnalyticDataStore.get();

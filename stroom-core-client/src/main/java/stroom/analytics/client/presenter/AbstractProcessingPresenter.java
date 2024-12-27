@@ -19,6 +19,7 @@ package stroom.analytics.client.presenter;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -36,8 +37,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.List;
 
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocumentEditPresenter<AbstractProcessingPresenter.AnalyticProcessingView, D>
@@ -101,7 +100,11 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
             if (extendedUiConfig != null) {
                 DocRef selectedDocRef = analyticRuleDoc.getErrorFeed();
                 if (selectedDocRef == null) {
-                    selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
+                    if (ReportDoc.TYPE.equals(docRef.getType())) {
+                        selectedDocRef = extendedUiConfig.getReportUiDefaultConfig().getDefaultErrorFeed();
+                    } else {
+                        selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
+                    }
                 }
 
                 if (selectedDocRef != null) {

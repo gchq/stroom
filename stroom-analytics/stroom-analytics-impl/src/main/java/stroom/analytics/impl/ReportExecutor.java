@@ -1,7 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
-import stroom.analytics.shared.ExecutionHistory;
+import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.NotificationConfig;
@@ -18,8 +34,11 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.expression.api.DateTimeSettings;
 import stroom.meta.api.MetaProperties;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.OffsetRange;
@@ -41,6 +60,10 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContextFactory;
+import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
@@ -63,58 +86,82 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ReportGenerator {
+public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportGenerator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportExecutor.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
-    private final TempDirProvider tempDirProvider;
-    private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final ExpressionContextFactory expressionContextFactory;
-    private final SearchRequestFactory searchRequestFactory;
-    private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
+    private final ReportStore reportStore;
     private final ResultStoreManager searchResponseCreatorManager;
+    private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
+    private final SearchRequestFactory searchRequestFactory;
+    private final ExpressionContextFactory expressionContextFactory;
+    private final ExecutionScheduleDao executionScheduleDao;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider;
+    private final TempDirProvider tempDirProvider;
     private final Store streamStore;
     private final NotificationStateService notificationStateService;
     private final Provider<EmailSender> emailSenderProvider;
-    private final ExecutionScheduleDao executionScheduleDao;
 
     @Inject
-    public ReportGenerator(final TempDirProvider tempDirProvider,
-                           final ExpressionPredicateFactory expressionPredicateFactory,
-                           final ExpressionContextFactory expressionContextFactory,
-                           final SearchRequestFactory searchRequestFactory,
-                           final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                           final ResultStoreManager searchResponseCreatorManager,
-                           final Store streamStore,
-                           final NotificationStateService notificationStateService,
-                           final Provider<EmailSender> emailSenderProvider,
-                           final ExecutionScheduleDao executionScheduleDao) {
-        this.tempDirProvider = tempDirProvider;
-        this.expressionPredicateFactory = expressionPredicateFactory;
-        this.expressionContextFactory = expressionContextFactory;
-        this.searchRequestFactory = searchRequestFactory;
-        this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+    public ReportExecutor(final ExecutorProvider executorProvider,
+                          final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
+                          final TaskContextFactory taskContextFactory,
+                          final NodeInfo nodeInfo,
+                          final SecurityContext securityContext,
+                          final ExecutionScheduleDao executionScheduleDao,
+                          final DuplicateCheckDirs duplicateCheckDirs,
+                          final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                          final ReportStore reportStore,
+                          final ResultStoreManager searchResponseCreatorManager,
+                          final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                          final SearchRequestFactory searchRequestFactory,
+                          final ExpressionContextFactory expressionContextFactory,
+                          final ExecutionScheduleDao executionScheduleDao1,
+                          final ExpressionPredicateFactory expressionPredicateFactory,
+                          final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider,
+                          final TempDirProvider tempDirProvider,
+                          final Store streamStore,
+                          final NotificationStateService notificationStateService,
+                          final Provider<EmailSender> emailSenderProvider) {
+        super(executorProvider,
+                analyticErrorWriterProvider,
+                taskContextFactory,
+                nodeInfo,
+                securityContext,
+                executionScheduleDao,
+                duplicateCheckDirs,
+                docRefInfoServiceProvider);
+        this.reportStore = reportStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
+        this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+        this.searchRequestFactory = searchRequestFactory;
+        this.expressionContextFactory = expressionContextFactory;
+        this.executionScheduleDao = executionScheduleDao1;
+        this.expressionPredicateFactory = expressionPredicateFactory;
+        this.reportUiDefaultConfigProvider = reportUiDefaultConfigProvider;
+        this.tempDirProvider = tempDirProvider;
         this.streamStore = streamStore;
         this.notificationStateService = notificationStateService;
         this.emailSenderProvider = emailSenderProvider;
-        this.executionScheduleDao = executionScheduleDao;
     }
 
-    public boolean process(final ReportDoc reportDoc,
-                           final Trigger trigger,
-                           final Instant executionTime,
-                           final Instant effectiveExecutionTime,
-                           final ExecutionSchedule executionSchedule,
-                           final ExecutionTracker currentTracker) {
+    @Override
+    boolean process(final ReportDoc reportDoc,
+                    final Trigger trigger,
+                    final Instant executionTime,
+                    final Instant effectiveExecutionTime,
+                    final ExecutionSchedule executionSchedule,
+                    final ExecutionTracker currentTracker) {
         LOGGER.debug(() -> LogUtil.message(
-                "Executing analytic: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
+                "Executing report: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
                 reportDoc.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
 
         boolean success = false;
@@ -215,8 +262,8 @@ public class ReportGenerator {
                 executionScheduleDao.createTracker(executionSchedule, executionTracker);
             }
 
-            if (executionResult.status == null) {
-                executionResult = new ExecutionResult("Complete", executionResult.message);
+            if (executionResult.status() == null) {
+                executionResult = new ExecutionResult("Complete", executionResult.message());
                 success = true;
             }
 
@@ -400,26 +447,50 @@ public class ReportGenerator {
         writer.write("\n");
     }
 
-    private void addExecutionHistory(final ExecutionSchedule executionSchedule,
-                                     final Instant executionTime,
-                                     final Instant effectiveExecutionTime,
-                                     final ExecutionResult executionResult) {
-        try {
-            final ExecutionHistory executionHistory = ExecutionHistory
-                    .builder()
-                    .executionSchedule(executionSchedule)
-                    .executionTimeMs(executionTime.toEpochMilli())
-                    .effectiveExecutionTimeMs(effectiveExecutionTime.toEpochMilli())
-                    .status(executionResult.status)
-                    .message(executionResult.message)
-                    .build();
-            executionScheduleDao.addExecutionHistory(executionHistory);
-        } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
-        }
+    @Override
+    ReportDoc load(final DocRef docRef) {
+        return reportStore.readDocument(docRef);
     }
 
-    private record ExecutionResult(String status, String message) {
+    @Override
+    List<ReportDoc> getRules() {
+        // TODO this is not very efficient. It fetches all the docrefs from the DB,
+        //  then loops over them to fetch+deser the associated doc for each one (one by one)
+        //  so the caller can filter half of them out by type.
+        //  It would be better if we had a json type col in the doc table, so that the
+        //  we can pass some kind of json path query to the persistence layer that the DBPersistence
+        //  can translate to a MySQL json path query.
+        final List<ReportDoc> currentRules = new ArrayList<>();
+        List<DocRef> docRefs = reportStore.list();
+        for (final DocRef docRef : docRefs) {
+            try {
+                final ReportDoc doc = reportStore.readDocument(docRef);
+                if (doc != null) {
+                    currentRules.add(doc);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+        return currentRules;
+    }
 
+    @Override
+    String getErrorFeedName(final ReportDoc doc) {
+        String errorFeedName = null;
+        if (doc.getErrorFeed() != null) {
+            errorFeedName = doc.getErrorFeed().getName();
+        }
+        if (errorFeedName == null) {
+            LOGGER.debug(() -> "Error feed not defined: " +
+                               AnalyticUtil.getAnalyticRuleIdentity(doc));
+
+            final DocRef defaultErrorFeed = reportUiDefaultConfigProvider.get().getDefaultErrorFeed();
+            if (defaultErrorFeed == null) {
+                throw new RuntimeException("Default error feed not defined");
+            }
+            errorFeedName = defaultErrorFeed.getName();
+        }
+        return errorFeedName;
     }
 }

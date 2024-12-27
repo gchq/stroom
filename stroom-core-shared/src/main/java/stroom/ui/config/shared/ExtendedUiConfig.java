@@ -41,12 +41,12 @@ public class ExtendedUiConfig {
 
     @JsonProperty
     @JsonPropertyDescription("Whether authentication is provided by an external Open ID Connect identity " +
-            "provider or not")
+                             "provider or not")
     private final UiConfig uiConfig;
 
     @JsonProperty
     @JsonPropertyDescription("Whether authentication is provided by an external Open ID Connect identity " +
-            "provider or not")
+                             "provider or not")
     private final boolean externalIdentityProvider;
 
     @JsonProperty
@@ -219,6 +219,11 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
+    public ReportUiDefaultConfig getReportUiDefaultConfig() {
+        return uiConfig.getReportUiDefaultConfig();
+    }
+
+    @JsonIgnore
     public String getNestedIndexFieldsDelimiterPattern() {
         return uiConfig.getNestedIndexFieldsDelimiterPattern();
     }
@@ -273,8 +278,8 @@ public class ExtendedUiConfig {
     @Override
     public String toString() {
         return "ExtendedUiConfig{" +
-                "uiConfig=" + uiConfig +
-                ", externalIdentityProvider=" + externalIdentityProvider +
-                '}';
+               "uiConfig=" + uiConfig +
+               ", externalIdentityProvider=" + externalIdentityProvider +
+               '}';
     }
 }

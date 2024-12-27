@@ -46,7 +46,9 @@ import stroom.query.shared.QueryResource;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
+import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.ButtonPanel;
@@ -286,7 +288,7 @@ public class QueryDocEditPresenter
     }
 
     private List<NotificationConfig> createDefaultNotificationConfig(
-            final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+            final AbstractAnalyticUiDefaultConfig analyticUiDefaultConfig) {
         final NotificationStreamDestination destination =
                 NotificationStreamDestination.builder()
                         .useSourceFeedIfPossible(false)
@@ -362,7 +364,7 @@ public class QueryDocEditPresenter
     private void createReport() {
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
-                final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
+                final ReportUiDefaultConfig analyticUiDefaultConfig = uiConfig.getReportUiDefaultConfig();
                 if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
                     AlertEvent.fireError(this, "No default error feed configured", null);
                 } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
@@ -395,7 +397,7 @@ public class QueryDocEditPresenter
         }, this);
     }
 
-    private void createReport(final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+    private void createReport(final ReportUiDefaultConfig analyticUiDefaultConfig,
                             final String query,
                             final TimeRange timeRange,
                             final AnalyticProcessType analyticProcessType) {
@@ -424,7 +426,7 @@ public class QueryDocEditPresenter
     }
 
     private void loadNewReport(final DocRef ruleDocRef,
-                               final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                               final ReportUiDefaultConfig analyticUiDefaultConfig,
                                final String query,
                                final TimeRange timeRange,
                                final AnalyticProcessType analyticProcessType) {
@@ -468,7 +470,7 @@ public class QueryDocEditPresenter
 
     private void createDefaultScheduledReport(final DocRef ruleDocRef,
                                             final ReportDoc doc,
-                                            final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                                            final ReportUiDefaultConfig analyticUiDefaultConfig,
                                             final String query,
                                             final TimeRange timeRange) {
 //        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
