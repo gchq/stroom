@@ -286,7 +286,7 @@ public class ReportGenerator {
 
                 try {
                     target.startTable("Report " +
-                                      DateUtil.createNormalDateTimeString(effectiveExecutionTime));
+                                      DateUtil.createFileDateTimeString(effectiveExecutionTime));
 
                     final SampleGenerator sampleGenerator =
                             new SampleGenerator(false, 100);

@@ -40,10 +40,6 @@ public class ReportSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public DownloadSearchResultFileType getFileType() {
-        return getView().getFileType();
-    }
-
     @Override
     protected void onRead(final DocRef docRef,
                           final ReportDoc document,
