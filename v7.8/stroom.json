@@ -18643,6 +18643,26 @@
           }
         }
       },
+      "ReportUiDefaultConfig" : {
+        "type" : "object",
+        "properties" : {
+          "defaultBodyTemplate" : {
+            "type" : "string"
+          },
+          "defaultDestinationFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "defaultErrorFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "defaultNode" : {
+            "type" : "string"
+          },
+          "defaultSubjectTemplate" : {
+            "type" : "string"
+          }
+        }
+      },
       "ReprocessDataInfo" : {
         "type" : "object",
         "properties" : {
@@ -21693,6 +21713,9 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          },
+          "reportUiDefaultConfig" : {
+            "$ref" : "#/components/schemas/ReportUiDefaultConfig"
           },
           "source" : {
             "$ref" : "#/components/schemas/SourceConfig"
