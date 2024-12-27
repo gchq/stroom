@@ -401,7 +401,7 @@ public class QueryDocEditPresenter
                             final AnalyticProcessType analyticProcessType) {
         final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
             final DocRef ruleDoc = newNode.getDocRef();
-            loadNewRule(ruleDoc, analyticUiDefaultConfig, query, timeRange, analyticProcessType);
+            loadNewReport(ruleDoc, analyticUiDefaultConfig, query, timeRange, analyticProcessType);
         };
 
         // First get the explorer node for the docref.
@@ -423,11 +423,11 @@ public class QueryDocEditPresenter
                 .exec();
     }
 
-    private void loadNewRReport(final DocRef ruleDocRef,
-                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                             final String query,
-                             final TimeRange timeRange,
-                             final AnalyticProcessType analyticProcessType) {
+    private void loadNewReport(final DocRef ruleDocRef,
+                               final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                               final String query,
+                               final TimeRange timeRange,
+                               final AnalyticProcessType analyticProcessType) {
         restFactory
                 .create(REPORT_RESOURCE)
                 .method(res -> res.fetch(ruleDocRef.getUuid()))
