@@ -17,7 +17,6 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -41,8 +40,6 @@ public class ReportPresenter
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
     private static final TabData EXECUTION = new TabDataImpl("Execution");
-    private static final TabData SHARDS = new TabDataImpl("Shards");
-    private static final TabData DUPLICATE_MANAGEMENT = new TabDataImpl("Duplicate Management");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -53,22 +50,18 @@ public class ReportPresenter
                            final Provider<ReportSettingsPresenter> reportSettingsPresenterProvider,
                            final Provider<ReportNotificationListPresenter> notificationPresenterProvider,
                            final Provider<ReportProcessingPresenter> processPresenterProvider,
-                           final Provider<ReportDuplicateManagementPresenter> duplicateManagementPresenterProvider,
                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                            final DocumentUserPermissionsTabProvider<ReportDoc>
-                                         documentUserPermissionsTabProvider) {
+                                   documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
-        analyticProcessingPresenter.addChangeDataHandler(e ->
-                setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
         addTab(QUERY, new DocumentEditTabProvider<>(() -> reportQueryEditPresenter));
         addTab(SETTINGS, new DocumentEditTabProvider<>(reportSettingsPresenterProvider::get));
         addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
         addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
-        addTab(DUPLICATE_MANAGEMENT, new DocumentEditTabProvider<>(duplicateManagementPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -81,23 +74,12 @@ public class ReportPresenter
 
             @Override
             public ReportDoc onWrite(final MarkdownEditPresenter presenter,
-                                           final ReportDoc document) {
+                                     final ReportDoc document) {
                 return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
-    }
-
-    @Override
-    protected void onRead(final DocRef docRef, final ReportDoc document, final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
-        setRuleType(document.getAnalyticProcessType());
-    }
-
-    private void setRuleType(final AnalyticProcessType analyticProcessType) {
-        setTabHidden(SHARDS, analyticProcessType != AnalyticProcessType.TABLE_BUILDER);
-        setTabHidden(DUPLICATE_MANAGEMENT, analyticProcessType != AnalyticProcessType.SCHEDULED_QUERY);
     }
 
     @Override

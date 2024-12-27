@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.api.AnnotationFields;
 import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -72,7 +73,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -84,9 +84,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private final AnnotationsDecoratorFactory annotationsDecoratorFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
-    private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final AnalyticLoader analyticLoader;
     private final AnalyticDataStores analyticDataStores;
     private final ExpressionPredicateFactory expressionPredicateFactory;
 
@@ -99,18 +97,14 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     AnalyticsNodeSearchTaskHandler(final AnnotationsDecoratorFactory annotationsDecoratorFactory,
                                    final SecurityContext securityContext,
                                    final ExecutorProvider executorProvider,
-                                   final Executor executor,
                                    final TaskContextFactory taskContextFactory,
                                    final AnalyticDataStores analyticDataStores,
-                                   final AnalyticLoader analyticLoader,
                                    final ExpressionPredicateFactory expressionPredicateFactory) {
         this.annotationsDecoratorFactory = annotationsDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
-        this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.analyticDataStores = analyticDataStores;
-        this.analyticLoader = analyticLoader;
         this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
@@ -166,7 +160,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 }
 
                 final ExpressionMatcher expressionMatcher = new ExpressionMatcher(fieldMap);
-                final List<AbstractAnalyticRuleDoc> currentRules = analyticLoader.loadAll();
+                final List<AnalyticRuleDoc> currentRules = analyticDataStores.loadAll();
                 currentRules.forEach(doc -> {
                     final Runnable runnable = taskContextFactory
                             .childContext(parentContext, "Analytic Search - " + doc.getName(), taskContext ->
@@ -229,8 +223,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 final LmdbDataStore lmdbDataStore = analyticDataStore.getLmdbDataStore();
 
                 try {
-                    ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
-                    TableSettings tableSettings = resultRequest.getMappings().get(0);
+                    ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
+                    TableSettings tableSettings = resultRequest.getMappings().getFirst();
 
                     tableSettings = tableSettings
                             .copy()
@@ -354,7 +348,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 final StringBuilder sb = new StringBuilder();
                 for (int j = 0; j < columns.size(); j++) {
                     final Column column = columns.get(j);
-                    if (sb.length() > 0) {
+                    if (!sb.isEmpty()) {
                         sb.append(", ");
                     }
                     sb.append(column.getName());

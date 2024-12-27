@@ -18,15 +18,18 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
+import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ReportSettingsViewImpl extends ViewImpl implements ReportSettingsView {
+public class ReportSettingsViewImpl extends ViewWithUiHandlers<DirtyUiHandlers> implements ReportSettingsView {
 
     private final Widget widget;
 
@@ -113,6 +116,11 @@ public class ReportSettingsViewImpl extends ViewImpl implements ReportSettingsVi
 //    public void onChange(final ValueChangeEvent<Boolean> event) {
 //        percent.setEnabled(sample.getValue());
 //    }
+
+    @UiHandler("fileType")
+    public void onFileTypeChange(final ValueChangeEvent<DownloadSearchResultFileType> event) {
+        getUiHandlers().onDirty();
+    }
 
     public interface Binder extends UiBinder<Widget, ReportSettingsViewImpl> {
 

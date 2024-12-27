@@ -1,9 +1,11 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
+import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
@@ -11,6 +13,8 @@ import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.index.shared.IndexConstants;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaAttributeMapUtil;
 import stroom.meta.shared.MetaFields;
@@ -22,6 +26,8 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
@@ -53,6 +59,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -64,6 +71,7 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import com.google.common.base.Predicates;
@@ -111,12 +119,13 @@ public class TableBuilderAnalyticExecutor {
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final FieldValueExtractorFactory fieldValueExtractorFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnalyticRuleStore analyticRuleStore;
+    private final ViewStore viewStore;
+    private final MetaService metaService;
+    private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
-
-
     private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
-    private final AnalyticHelper analyticHelper;
 
     @Inject
     public TableBuilderAnalyticExecutor(final ExecutorProvider executorProvider,
@@ -127,36 +136,42 @@ public class TableBuilderAnalyticExecutor {
                                         final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
                                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                         final Provider<ExtractionState> extractionStateProvider,
+                                        final AnalyticDataStores analyticDataStores,
                                         final TaskContextFactory taskContextFactory,
                                         final Provider<MemoryIndex> memoryIndexProvider,
-                                        final AnalyticDataStores analyticDataStores,
                                         final AnalyticTrackerDao analyticTrackerDao,
-                                        final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
                                         final ExpressionMatcherFactory expressionMatcherFactory,
-                                        final AnalyticHelper analyticHelper,
                                         final NodeInfo nodeInfo,
                                         final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                         final FieldValueExtractorFactory fieldValueExtractorFactory,
-                                        final ExpressionPredicateFactory expressionPredicateFactory) {
+                                        final ExpressionPredicateFactory expressionPredicateFactory,
+                                        final AnalyticRuleStore analyticRuleStore,
+                                        final ViewStore viewStore,
+                                        final MetaService metaService,
+                                        final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
+                                        final AnalyticErrorWritingExecutor analyticErrorWritingExecutor) {
         this.executorProvider = executorProvider;
-        this.detectionConsumerFactory = detectionConsumerFactory;
         this.securityContext = securityContext;
+        this.detectionConsumerFactory = detectionConsumerFactory;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.analyticsStreamProcessorProvider = analyticsStreamProcessorProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
+        this.analyticDataStores = analyticDataStores;
         this.taskContextFactory = taskContextFactory;
         this.memoryIndexProvider = memoryIndexProvider;
-        this.analyticDataStores = analyticDataStores;
         this.analyticTrackerDao = analyticTrackerDao;
-        this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
         this.metaExpressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
-        this.analyticHelper = analyticHelper;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.analyticRuleStore = analyticRuleStore;
+        this.viewStore = viewStore;
+        this.metaService = metaService;
+        this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
+        this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
     }
 
     public void exec() {
@@ -301,10 +316,25 @@ public class TableBuilderAnalyticExecutor {
 
         // Update all trackers.
         for (final TableBuilderAnalytic analytic : analytics) {
-            analyticHelper.updateTracker(analytic.tracker);
+            updateTracker(analytic.tracker);
         }
 
         return sortedMetaList.size() < maxMetaListSize;
+    }
+
+    public AnalyticTracker getTracker(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+        Optional<AnalyticTracker> optionalTracker =
+                analyticTrackerDao.get(analyticRuleDoc.getUuid());
+        while (optionalTracker.isEmpty()) {
+            final AnalyticTracker tracker = new AnalyticTracker(analyticRuleDoc.getUuid(), null);
+            analyticTrackerDao.create(tracker);
+            optionalTracker = analyticTrackerDao.get(analyticRuleDoc.getUuid());
+        }
+        return optionalTracker.get();
+    }
+
+    public void updateTracker(final AnalyticTracker tracker) {
+        analyticTrackerDao.update(tracker);
     }
 
     private List<Meta> getMetaBatch(final List<TableBuilderAnalytic> analytics) {
@@ -343,7 +373,7 @@ public class TableBuilderAnalyticExecutor {
             final ExpressionOperator findMetaExpression = filterGroupEntry.getKey();
 
             if (ExpressionUtil.hasTerms(findMetaExpression)) {
-                final List<Meta> metaList = analyticHelper.findMeta(findMetaExpression,
+                final List<Meta> metaList = findMeta(findMetaExpression,
                         minStreamId,
                         minCreateTime,
                         maxCreateTime,
@@ -358,6 +388,42 @@ public class TableBuilderAnalyticExecutor {
             sortedMetaList = sortedMetaList.subList(0, maxMetaListSize);
         }
         return sortedMetaList;
+    }
+
+    public List<Meta> findMeta(final ExpressionOperator expression,
+                               final Long minMetaId,
+                               final Long minMetaCreateTimeMs,
+                               final Long maxMetaCreateTimeMs,
+                               final int length) {
+        // Don't select deleted streams.
+        final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                .build();
+
+        ExpressionOperator.Builder builder = ExpressionOperator.builder()
+                .addOperator(expression);
+        if (minMetaId != null) {
+            builder = builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+        }
+
+        if (minMetaCreateTimeMs != null) {
+            builder = builder.addDateTerm(MetaFields.CREATE_TIME,
+                    Condition.GREATER_THAN_OR_EQUAL_TO,
+                    DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
+        }
+        if (maxMetaCreateTimeMs != null) {
+            builder = builder.addDateTerm(MetaFields.CREATE_TIME,
+                    Condition.LESS_THAN_OR_EQUAL_TO,
+                    DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
+        }
+        builder = builder.addOperator(statusExpression);
+
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
+        findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
+        findMetaCriteria.obtainPageRequest().setLength(length);
+
+        return metaService.find(findMetaCriteria).getValues();
     }
 
     private void processStream(final DocRef pipelineDocRef,
@@ -490,9 +556,9 @@ public class TableBuilderAnalyticExecutor {
 
         // Check this analytic should process this meta.
         return meta.getId() < minStreamId ||
-                meta.getCreateMs() < minCreateTime ||
-                meta.getCreateMs() > maxCreateTime ||
-                !metaExpressionMatcher.match(metaAttributeMap, analytic.viewDoc().getFilter());
+               meta.getCreateMs() < minCreateTime ||
+               meta.getCreateMs() > maxCreateTime ||
+               !metaExpressionMatcher.match(metaAttributeMap, analytic.viewDoc().getFilter());
     }
 
     private void deleteOldStores() {
@@ -545,9 +611,25 @@ public class TableBuilderAnalyticExecutor {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             analytic.trackerData().setMessage(e.getMessage());
-            LOGGER.info("Disabling: " + analytic.ruleIdentity());
-            analyticHelper.updateTracker(analytic.tracker);
-            analyticHelper.disableProcess(analytic.analyticRuleDoc);
+            LOGGER.info(() -> "Disabling: " + analytic.ruleIdentity());
+            updateTracker(analytic.tracker);
+            disableProcess(analytic.analyticRuleDoc);
+        }
+    }
+
+    public void disableProcess(final AnalyticRuleDoc doc) {
+        final AnalyticProcessConfig analyticProcessConfig = doc.getAnalyticProcessConfig();
+        if (analyticProcessConfig instanceof
+                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+            TableBuilderAnalyticProcessConfig updatedProcessConfig = tableBuilderAnalyticProcessConfig
+                    .copy()
+                    .enabled(false)
+                    .build();
+            final AnalyticRuleDoc modified = doc
+                    .copy()
+                    .analyticProcessConfig(updatedProcessConfig)
+                    .build();
+            analyticRuleStore.writeDocument(modified);
         }
     }
 
@@ -557,7 +639,7 @@ public class TableBuilderAnalyticExecutor {
                                          final TaskContext parentTaskContext) {
         final Provider<DetectionConsumer> detectionConsumerProvider = detectionConsumerFactory
                 .create(analytic.analyticRuleDoc());
-        final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
+        final String errorFeedName = getAnalyticErrorFeedName(analytic.analyticRuleDoc);
         analyticErrorWritingExecutor.wrap(
                 "Analytics Aggregate Rule Executor",
                 errorFeedName,
@@ -584,6 +666,24 @@ public class TableBuilderAnalyticExecutor {
                         detectionConsumer.end();
                     }
                 }).get();
+    }
+
+    private String getAnalyticErrorFeedName(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+        String errorFeedName = null;
+        if (analyticRuleDoc.getErrorFeed() != null) {
+            errorFeedName = analyticRuleDoc.getErrorFeed().getName();
+        }
+        if (errorFeedName == null) {
+            LOGGER.debug(() -> "Error feed not defined: " +
+                               AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
+
+            final DocRef defaultErrorFeed = analyticUiDefaultConfigProvider.get().getDefaultErrorFeed();
+            if (defaultErrorFeed == null) {
+                throw new RuntimeException("Default error feed not defined");
+            }
+            errorFeedName = defaultErrorFeed.getName();
+        }
+        return errorFeedName;
     }
 
     private void runNotification(final TableBuilderAnalytic analytic,
@@ -628,8 +728,8 @@ public class TableBuilderAnalyticExecutor {
             SearchRequest searchRequest = dataStore.searchRequest();
             final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
             final QueryKey queryKey = new QueryKey(analytic.analyticRuleDoc().getUuid() +
-                    " - " +
-                    analytic.analyticRuleDoc().getName());
+                                                   " - " +
+                                                   analytic.analyticRuleDoc().getName());
 
             searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
             // Perform the search.
@@ -657,10 +757,9 @@ public class TableBuilderAnalyticExecutor {
             analytic.trackerData.setLastWindowEndTimeMs(timeFilter.getTo());
             updateTrackerWithLmdbState(analytic.trackerData, currentDbState);
 
-            analyticHelper.updateTracker(analytic.tracker);
+            updateTracker(analytic.tracker);
         }
     }
-
 
     private void applyDataRetentionRules(final LmdbDataStore lmdbDataStore,
                                          final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
@@ -820,15 +919,15 @@ public class TableBuilderAnalyticExecutor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         info(() -> "Loading rules");
         final List<TableBuilderAnalytic> analyticList = new ArrayList<>();
-        final List<AbstractAnalyticRuleDoc> rules = analyticHelper.getRules();
-        for (final AbstractAnalyticRuleDoc analyticRuleDoc : rules) {
+        final List<AnalyticRuleDoc> rules = loadAll();
+        for (final AnalyticRuleDoc analyticRuleDoc : rules) {
             final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
             if (analyticProcessConfig instanceof
                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
                 if (tableBuilderAnalyticProcessConfig.isEnabled() &&
-                        nodeInfo.getThisNodeName().equals(tableBuilderAnalyticProcessConfig.getNode()) &&
-                        AnalyticProcessType.TABLE_BUILDER.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                    final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
+                    nodeInfo.getThisNodeName().equals(tableBuilderAnalyticProcessConfig.getNode()) &&
+                    AnalyticProcessType.TABLE_BUILDER.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                    final AnalyticTracker tracker = getTracker(analyticRuleDoc);
 
                     TableBuilderAnalyticTrackerData analyticProcessorTrackerData;
                     if (tracker.getAnalyticTrackerData() instanceof
@@ -855,7 +954,7 @@ public class TableBuilderAnalyticExecutor {
 
                         } else {
                             // Load view.
-                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                            viewDoc = loadViewDoc(ruleIdentity, dataSource);
                         }
 
                         final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
@@ -895,13 +994,51 @@ public class TableBuilderAnalyticExecutor {
         return analyticList;
     }
 
+    private List<AnalyticRuleDoc> loadAll() {
+        // TODO this is not very efficient. It fetches all the docrefs from the DB,
+        //  then loops over them to fetch+deser the associated doc for each one (one by one)
+        //  so the caller can filter half of them out by type.
+        //  It would be better if we had a json type col in the doc table, so that the
+        //  we can pass some kind of json path query to the persistence layer that the DBPersistence
+        //  can translate to a MySQL json path query.
+        final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
+        List<DocRef> docRefs = analyticRuleStore.list();
+        for (final DocRef docRef : docRefs) {
+            try {
+                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+                if (analyticRuleDoc != null) {
+                    currentRules.add(analyticRuleDoc);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+        return currentRules;
+    }
+
+    public ViewDoc loadViewDoc(final String ruleIdentity,
+                               final DocRef viewDocRef) {
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
+        if (viewDoc == null) {
+            throw new RuntimeException("Unable to process analytic: " +
+                                       ruleIdentity +
+                                       " because selected view cannot be found");
+        }
+        if (viewDoc.getPipeline() == null) {
+            throw new RuntimeException("Unable to process analytic: " +
+                                       ruleIdentity +
+                                       " because view does not specify a pipeline");
+        }
+        return viewDoc;
+    }
+
     private void info(final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
         taskContextFactory.current().info(messageSupplier);
     }
 
     private record TableBuilderAnalytic(String ruleIdentity,
-                                        AbstractAnalyticRuleDoc analyticRuleDoc,
+                                        AnalyticRuleDoc analyticRuleDoc,
                                         TableBuilderAnalyticProcessConfig analyticProcessConfig,
                                         AnalyticTracker tracker,
                                         TableBuilderAnalyticTrackerData trackerData,

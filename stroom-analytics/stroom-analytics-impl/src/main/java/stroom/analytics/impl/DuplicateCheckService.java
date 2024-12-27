@@ -16,6 +16,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
@@ -36,15 +37,15 @@ import java.util.stream.Collectors;
 @AutoLogged(OperationType.UNLOGGED)
 class DuplicateCheckService {
 
-    private final AnalyticLoader analyticLoader;
+    private final AnalyticRuleStore analyticRuleStore;
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactoryImpl duplicateCheckFactory;
 
     @Inject
-    public DuplicateCheckService(final AnalyticLoader analyticLoader,
+    public DuplicateCheckService(final AnalyticRuleStore analyticRuleStore,
                                  final ExecutionScheduleDao executionScheduleDao,
                                  final DuplicateCheckFactoryImpl duplicateCheckFactory) {
-        this.analyticLoader = analyticLoader;
+        this.analyticRuleStore = analyticRuleStore;
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
     }
@@ -56,7 +57,7 @@ class DuplicateCheckService {
                 .type(AnalyticRuleDoc.TYPE)
                 .uuid(analyticUuid)
                 .build();
-        final AbstractAnalyticRuleDoc analyticRuleDoc = analyticLoader.load(docRef);
+        final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
         if (analyticRuleDoc != null) {
             // Load schedules for the analytic.
             final ExecutionScheduleRequest request = ExecutionScheduleRequest

@@ -63,6 +63,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     private final Provider<AnalyticNotificationEditPresenter> editPresenterProvider;
     private final ListDataProvider<NotificationConfig> dataProvider;
     final List<NotificationConfig> list = new ArrayList<>();
+    private DocRef docRef;
 
     @Inject
     public AbstractNotificationListPresenter(final EventBus eventBus,
@@ -102,7 +103,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private void add() {
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-        presenter.read(NotificationConfig.builder().build());
+        presenter.read(docRef, NotificationConfig.builder().build());
         ShowPopupEvent
                 .builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -124,7 +125,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         final NotificationConfig selected = selectionModel.getSelected();
         if (selected != null) {
             final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-            presenter.read(selected);
+            presenter.read(docRef, selected);
             ShowPopupEvent
                     .builder(presenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -263,6 +264,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
+        this.docRef = docRef;
         list.clear();
         if (document.getNotifications() != null) {
             list.addAll(document.getNotifications());

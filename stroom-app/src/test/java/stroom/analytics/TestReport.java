@@ -16,9 +16,8 @@
 
 package stroom.analytics;
 
-import stroom.analytics.impl.AnalyticHelper;
 import stroom.analytics.impl.ExecutionScheduleDao;
-import stroom.analytics.impl.ScheduledQueryAnalyticExecutor;
+import stroom.analytics.impl.ReportExecutor;
 import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ExecutionHistory;
@@ -79,7 +78,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestReport extends AbstractAnalyticsTest {
 
     @Inject
-    private ScheduledQueryAnalyticExecutor analyticsExecutor;
+    private ReportExecutor reportExecutor;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
     @Inject
@@ -88,8 +87,6 @@ class TestReport extends AbstractAnalyticsTest {
     private ExecutionScheduleDao executionScheduleDao;
     @Inject
     private ReportStore reportStore;
-    @Inject
-    private AnalyticHelper analyticHelper;
     @Inject
     private Store streamStore;
 
@@ -135,7 +132,7 @@ class TestReport extends AbstractAnalyticsTest {
                 .build());
 
         // Now run the search process.
-        analyticsExecutor.exec();
+        reportExecutor.exec();
 
         // As we have created alerts ensure we now have more streams.
         testReportStream(expectedStreams, expectedRecords);
@@ -204,8 +201,8 @@ class TestReport extends AbstractAnalyticsTest {
                 .build();
         reportStore.writeDocument(reportDoc);
 
-        assertThat(analyticHelper.getRules().size()).isOne();
-        assertThat(analyticHelper.getRules().getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(reportStore.list().size()).isOne();
+        assertThat(reportStore.list().getFirst().getUuid()).isEqualTo(docRef.getUuid());
 
         return docRef;
     }
