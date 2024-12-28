@@ -138,7 +138,8 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 securityContext,
                 executionScheduleDao,
                 duplicateCheckDirs,
-                docRefInfoServiceProvider);
+                docRefInfoServiceProvider,
+                "report");
         this.reportStore = reportStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
@@ -280,7 +281,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             }
 
             // Disable future execution.
-            LOGGER.info("Disabling: " + AnalyticUtil.getAnalyticRuleIdentity(reportDoc));
+            LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
             executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
 
         } finally {
@@ -421,7 +422,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
                 } else {
                     throw new RuntimeException("No stream destination config found: " +
-                                               AnalyticUtil.getAnalyticRuleIdentity(reportDoc));
+                                               RuleUtil.getRuleIdentity(reportDoc));
                 }
             } else if (NotificationDestinationType.EMAIL.equals(notificationConfig.getDestinationType())) {
                 if (notificationConfig.getDestination() instanceof
@@ -434,7 +435,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             effectiveExecutionTime);
                 } else {
                     throw new RuntimeException("No email destination config found: " +
-                                               AnalyticUtil.getAnalyticRuleIdentity(reportDoc));
+                                               RuleUtil.getRuleIdentity(reportDoc));
                 }
             }
         }
@@ -482,8 +483,8 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             errorFeedName = doc.getErrorFeed().getName();
         }
         if (errorFeedName == null) {
-            LOGGER.debug(() -> "Error feed not defined: " +
-                               AnalyticUtil.getAnalyticRuleIdentity(doc));
+            LOGGER.debug(() ->
+                    LogUtil.message("Error feed not defined: {}", RuleUtil.getRuleIdentity(doc)));
 
             final DocRef defaultErrorFeed = reportUiDefaultConfigProvider.get().getDefaultErrorFeed();
             if (defaultErrorFeed == null) {

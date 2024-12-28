@@ -1,21 +1,16 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.docstore.shared.Doc;
 import stroom.util.NullSafe;
 
-public class AnalyticUtil {
+public class RuleUtil {
 
-    private AnalyticUtil() {
+    private RuleUtil() {
         // Util class.
     }
 
-    public static String getAnalyticRuleIdentity(final AbstractAnalyticRuleDoc analyticRuleDoc) {
-        return NullSafe.get(
-                analyticRuleDoc,
-                analyticRuleDoc2 -> analyticRuleDoc2.getName() +
-                                    " (" +
-                                    analyticRuleDoc2.getUuid() +
-                                    ")");
+    public static String getRuleIdentity(final Doc doc) {
+        return NullSafe.get(doc, d -> d.getName() + " (" + d.getUuid() + ")");
     }
 
     public static long getMin(Long currentValue, Long newValue) {

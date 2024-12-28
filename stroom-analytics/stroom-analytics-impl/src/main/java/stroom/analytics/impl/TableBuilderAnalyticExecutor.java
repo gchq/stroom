@@ -363,10 +363,10 @@ public class TableBuilderAnalyticExecutor {
                 final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData();
 
                 // Start at the next meta.
-                minStreamId = AnalyticUtil.getMin(minStreamId, trackerData.getMinStreamId());
-                minCreateTime = AnalyticUtil.getMin(minCreateTime,
+                minStreamId = RuleUtil.getMin(minStreamId, trackerData.getMinStreamId());
+                minCreateTime = RuleUtil.getMin(minCreateTime,
                         analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
-                maxCreateTime = AnalyticUtil.getMax(maxCreateTime,
+                maxCreateTime = RuleUtil.getMax(maxCreateTime,
                         analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
             }
 
@@ -550,9 +550,9 @@ public class TableBuilderAnalyticExecutor {
         final TableBuilderAnalyticTrackerData trackerData = analytic.trackerData;
         final long minStreamId = trackerData.getMinStreamId();
         final long minCreateTime =
-                AnalyticUtil.getMin(null, analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
+                RuleUtil.getMin(null, analytic.analyticProcessConfig.getMinMetaCreateTimeMs());
         final long maxCreateTime =
-                AnalyticUtil.getMax(null, analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
+                RuleUtil.getMax(null, analytic.analyticProcessConfig.getMaxMetaCreateTimeMs());
 
         // Check this analytic should process this meta.
         return meta.getId() < minStreamId ||
@@ -674,8 +674,8 @@ public class TableBuilderAnalyticExecutor {
             errorFeedName = analyticRuleDoc.getErrorFeed().getName();
         }
         if (errorFeedName == null) {
-            LOGGER.debug(() -> "Error feed not defined: " +
-                               AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
+            LOGGER.debug(() ->
+                    LogUtil.message("Error feed not defined: {}", RuleUtil.getRuleIdentity(analyticRuleDoc)));
 
             final DocRef defaultErrorFeed = analyticUiDefaultConfigProvider.get().getDefaultErrorFeed();
             if (defaultErrorFeed == null) {
@@ -943,7 +943,7 @@ public class TableBuilderAnalyticExecutor {
                         ViewDoc viewDoc = null;
 
                         // Try and get view.
-                        final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
+                        final String ruleIdentity = RuleUtil.getRuleIdentity(analyticRuleDoc);
                         final SearchRequest searchRequest = analyticRuleSearchRequestHelper
                                 .create(analyticRuleDoc);
                         final DocRef dataSource = searchRequest.getQuery().getDataSource();

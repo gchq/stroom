@@ -77,7 +77,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 ViewDoc viewDoc;
 
                 // Try and get view.
-                final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
+                final String ruleIdentity = RuleUtil.getRuleIdentity(analyticRuleDoc);
                 final SearchRequest searchRequest = analyticRuleSearchRequestHelper
                         .create(analyticRuleDoc);
                 final DocRef dataSource = searchRequest.getQuery().getDataSource();

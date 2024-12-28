@@ -107,7 +107,7 @@ public class ScheduledProcessingPresenter
         if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
             AlertEvent.fireWarn(
                     this,
-                    "Please save the rule and ensure all settings are correct before adding executions",
+                    "Please ensure all settings are correct and save before adding executions",
                     null);
 
         } else {
