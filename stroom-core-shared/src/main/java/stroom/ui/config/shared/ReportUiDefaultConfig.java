@@ -47,7 +47,7 @@ public class ReportUiDefaultConfig  extends AbstractAnalyticUiDefaultConfig impl
         defaultNode = null;
         defaultErrorFeed = null;
         defaultDestinationFeed = null;
-        defaultSubjectTemplate = "Rule '{{ ruleName | escape }}'";
+        defaultSubjectTemplate = "Report '{{ reportName | escape }}'";
         //noinspection TextBlockMigration // GWT no likey textblock, grrr!
         defaultBodyTemplate =
                 "<!DOCTYPE html>\n" +
