@@ -43,7 +43,7 @@ public class DetectionConsumerFactory {
 
         if (analyticRuleDoc.getNotifications() == null || analyticRuleDoc.getNotifications().isEmpty()) {
             throw new RuntimeException("No notification config found: " +
-                    AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
+                                       RuleUtil.getRuleIdentity(analyticRuleDoc));
         }
 
         final List<NotificationConfig> notifications = analyticRuleDoc.getNotifications();
@@ -126,7 +126,7 @@ public class DetectionConsumerFactory {
 
             } else {
                 throw new RuntimeException("No stream destination config found: " +
-                        AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
+                                           RuleUtil.getRuleIdentity(analyticRuleDoc));
             }
         } else if (NotificationDestinationType.EMAIL.equals(notificationConfig.getDestinationType())) {
             if (notificationConfig.getDestination() instanceof
@@ -163,7 +163,7 @@ public class DetectionConsumerFactory {
 
             } else {
                 throw new RuntimeException("No email destination config found: " +
-                        AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc));
+                                           RuleUtil.getRuleIdentity(analyticRuleDoc));
             }
         }
 

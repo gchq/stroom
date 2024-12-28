@@ -72,6 +72,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckDirs duplicateCheckDirs;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final String processType;
 
     AbstractScheduledQueryExecutor(final ExecutorProvider executorProvider,
                                    final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
@@ -80,7 +81,8 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                                    final SecurityContext securityContext,
                                    final ExecutionScheduleDao executionScheduleDao,
                                    final DuplicateCheckDirs duplicateCheckDirs,
-                                   final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                                   final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                                   final String processType) {
         this.executorProvider = executorProvider;
         this.analyticErrorWriterProvider = analyticErrorWriterProvider;
         this.taskContextFactory = taskContextFactory;
@@ -89,24 +91,25 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckDirs = duplicateCheckDirs;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.processType = processType;
     }
 
     public void exec() {
         final TaskContext taskContext = taskContextFactory.current();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
-            info(() -> "Starting scheduled analytic processing");
+            info(() -> "Starting scheduled " + processType + " processing");
 
             // Start by finding a set of UUIDs for existing rule checking stores.
             final List<String> duplicateStoreDirs = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
             // Load rules.
-            final List<T> analytics = loadScheduledQueryAnalytics();
+            final List<T> docs = loadScheduledRules();
 
-            info(() -> "Processing " + LogUtil.namedCount("scheduled analytic rule", NullSafe.size(analytics)));
+            info(() -> "Processing " + LogUtil.namedCount("scheduled " + processType, NullSafe.size(docs)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
-            for (final T analytic : analytics) {
-                final Runnable runnable = createRunnable(analytic, taskContext);
+            for (final T doc : docs) {
+                final Runnable runnable = createRunnable(doc, taskContext);
                 try {
                     workQueue.exec(runnable);
                 } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -121,35 +124,39 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             workQueue.join();
 
             // Delete unused duplicate stores.
-            duplicateCheckDirs.deleteUnused(duplicateStoreDirs, analytics);
+            duplicateCheckDirs.deleteUnused(duplicateStoreDirs, docs);
 
-            info(() -> LogUtil.message("Finished scheduled analytic processing in {}", logExecutionTime));
+            info(() ->
+                    LogUtil.message("Finished scheduled {} processing in {}", processType, logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
-            LOGGER.debug(() -> LogUtil.message("Scheduled Analytic processing terminated after {}", logExecutionTime));
+            LOGGER.debug(() ->
+                    LogUtil.message("Scheduled {} processing terminated after {}", processType, logExecutionTime));
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error during scheduled analytic processing: {}", e.getMessage()), e);
+            LOGGER.error(() ->
+                    LogUtil.message("Error during scheduled {} processing: {}", processType, e.getMessage()), e);
         }
     }
 
-    private Runnable createRunnable(final T analytic,
+    private Runnable createRunnable(final T doc,
                                     final TaskContext parentTaskContext) {
         return () -> {
             if (!parentTaskContext.isTerminated()) {
                 try {
-                    execAnalytic(
-                            analytic,
-                            parentTaskContext);
+                    execRule(doc, parentTaskContext);
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> "Error executing rule: " + AnalyticUtil.getAnalyticRuleIdentity(analytic), e);
+                    LOGGER.error(() ->
+                            LogUtil.message("Error executing {}: {}",
+                                    processType,
+                                    RuleUtil.getRuleIdentity(doc)), e);
                 }
             }
         };
     }
 
-    private void execAnalytic(final T doc,
-                              final TaskContext parentTaskContext) {
-        // Load schedules for the analytic.
+    private void execRule(final T doc,
+                          final TaskContext parentTaskContext) {
+        // Load schedules for the rule.
         final DocRef docRef = doc.asDocRef();
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
                 .builder()
@@ -165,7 +172,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
                     // running within a new thread.
-                    LOGGER.debug(() -> LogUtil.message("analyticRuleDoc: {}, running as user: {}",
+                    LOGGER.debug(() -> LogUtil.message("DocRef: {}, running as user: {}",
                             docRef.toShortString(), executionSchedule.getRunAsUser()));
 
                     securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
@@ -175,7 +182,10 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                         }
                     }));
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> "Error executing rule: " + AnalyticUtil.getAnalyticRuleIdentity(doc), e);
+                    LOGGER.error(() ->
+                            LogUtil.message("Error executing {}: {}",
+                                    processType,
+                                    RuleUtil.getRuleIdentity(doc)), e);
                 }
             };
             workQueue.exec(runnable);
@@ -196,7 +206,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             return false;
         }
 
-        // Reload the analytic in case it has changed since last executed.
+        // Reload the rule in case it has changed since last executed.
         final DocRef docRef = doc.asDocRef();
         final T reloaded = load(docRef);
 
@@ -206,8 +216,8 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
         return taskContextFactory.childContextResult(
                 parentTaskContext,
-                "Scheduled Query Analytic: " +
-                AnalyticUtil.getAnalyticRuleIdentity(reloaded),
+                "Scheduled " + processType + ": " +
+                RuleUtil.getRuleIdentity(reloaded),
                 taskContext -> execute(
                         reloaded,
                         schedule,
@@ -264,7 +274,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         return false;
     }
 
-    abstract boolean process(final T analytic,
+    abstract boolean process(final T doc,
                              final Trigger trigger,
                              final Instant executionTime,
                              final Instant effectiveExecutionTime,
@@ -279,7 +289,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             && !securityContext.isCurrentUser(userRef)) {
             throw new PermissionException(
                     userRef,
-                    "You do not have permission to view the Analytic rules that have scheduled executors " +
+                    "You do not have permission to view the " + processType + "s that have scheduled executors " +
                     "configured to run-as user "
                     + userRef.toInfoString());
         }
@@ -306,9 +316,9 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     }
 
     void addExecutionHistory(final ExecutionSchedule executionSchedule,
-                                     final Instant executionTime,
-                                     final Instant effectiveExecutionTime,
-                                     final ExecutionResult executionResult) {
+                             final Instant executionTime,
+                             final Instant effectiveExecutionTime,
+                             final ExecutionResult executionResult) {
         try {
             final ExecutionHistory executionHistory = ExecutionHistory
                     .builder()
@@ -324,18 +334,18 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         }
     }
 
-    private List<T> loadScheduledQueryAnalytics() {
+    private List<T> loadScheduledRules() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info(() -> "Loading rules");
-        final List<T> analyticList = new ArrayList<>();
+        info(() -> LogUtil.message("Loading {}s", processType));
+        final List<T> list = new ArrayList<>();
         final List<T> rules = getRules();
-        for (final T analyticRuleDoc : rules) {
-            if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                analyticList.add(analyticRuleDoc);
+        for (final T rule : rules) {
+            if (AnalyticProcessType.SCHEDULED_QUERY.equals(rule.getAnalyticProcessType())) {
+                list.add(rule);
             }
         }
-        info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
-        return analyticList;
+        info(() -> LogUtil.message("Finished loading {}s in {}", processType, logExecutionTime));
+        return list;
     }
 
     abstract T load(DocRef docRef);

@@ -120,7 +120,8 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                 securityContext,
                 executionScheduleDao,
                 duplicateCheckDirs,
-                docRefInfoServiceProvider);
+                docRefInfoServiceProvider,
+                "analytic rule");
         this.analyticRuleStore = analyticRuleStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
@@ -365,7 +366,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
             }
 
             // Disable future execution.
-            LOGGER.info(() -> "Disabling: " + AnalyticUtil.getAnalyticRuleIdentity(analytic));
+            LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(analytic)));
             executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
 
         } finally {
@@ -414,8 +415,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
             errorFeedName = doc.getErrorFeed().getName();
         }
         if (errorFeedName == null) {
-            LOGGER.debug(() -> "Error feed not defined: " +
-                               AnalyticUtil.getAnalyticRuleIdentity(doc));
+            LOGGER.debug(() -> LogUtil.message("Error feed not defined: {}", RuleUtil.getRuleIdentity(doc)));
 
             final DocRef defaultErrorFeed = analyticUiDefaultConfigProvider.get().getDefaultErrorFeed();
             if (defaultErrorFeed == null) {
