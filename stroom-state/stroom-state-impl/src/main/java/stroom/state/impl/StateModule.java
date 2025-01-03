@@ -23,12 +23,14 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.pipeline.xsltfunctions.StateLookup;
+import stroom.pipeline.xsltfunctions.StateLookupProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
+import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
 import stroom.state.impl.pipeline.StateElementModule;
-import stroom.state.impl.pipeline.StateLookupImpl;
+import stroom.state.impl.pipeline.StateFetcherImpl;
+import stroom.state.impl.pipeline.StateLookupProviderImpl;
 import stroom.state.impl.pipeline.StateProviderImpl;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
@@ -47,8 +49,9 @@ public class StateModule extends AbstractModule {
     protected void configure() {
         install(new StateElementModule());
 
-        bind(StateLookup.class).to(StateLookupImpl.class);
-        bind(StateProvider.class).to(StateProviderImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), StateLookupProvider.class).addBinding(StateLookupProviderImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
+        bind(StateFetcher.class).to(StateFetcherImpl.class);
 
         // Caches
         bind(ScyllaDbDocCache.class).to(ScyllaDbDocCacheImpl.class);

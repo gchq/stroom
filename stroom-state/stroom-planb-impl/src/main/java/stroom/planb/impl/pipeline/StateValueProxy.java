@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class PlanBValueProxy implements RefDataValueProxy {
+public class StateValueProxy implements RefDataValueProxy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PlanBValueProxy.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StateValueProxy.class);
 
     private final TemporalState state;
     private final MapDefinition mapDefinition;
@@ -34,7 +34,7 @@ public class PlanBValueProxy implements RefDataValueProxy {
     // This will be set with mapDefinition if we have a successful lookup with it, else stays null
     private MapDefinition successfulMapDefinition = null;
 
-    public PlanBValueProxy(final TemporalState state,
+    public StateValueProxy(final TemporalState state,
                            final MapDefinition mapDefinition) {
         this.state = state;
         this.mapDefinition = mapDefinition;
@@ -80,7 +80,8 @@ public class PlanBValueProxy implements RefDataValueProxy {
 
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
-        typedByteBufferConsumer.accept(new TypedByteBuffer(state.value().typeId(),
+        typedByteBufferConsumer.accept(new TypedByteBuffer(
+                state.value().typeId(),
                 state.value().byteBuffer().duplicate()));
         return true;
     }

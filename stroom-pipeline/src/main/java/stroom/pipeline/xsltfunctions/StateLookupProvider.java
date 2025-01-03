@@ -3,7 +3,7 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceDataResult;
 
-public interface PlanBLookup {
+public interface StateLookupProvider {
 
     /**
      * <p>

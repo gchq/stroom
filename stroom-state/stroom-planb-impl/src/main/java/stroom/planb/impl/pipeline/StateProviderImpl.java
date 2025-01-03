@@ -3,7 +3,7 @@ package stroom.planb.impl.pipeline;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.dao.TemporalState;
 import stroom.planb.shared.PlanBDoc;
-import stroom.query.language.functions.PlanBStateProvider;
+import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
@@ -18,14 +18,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-public class PlanBProviderImpl implements PlanBStateProvider {
+public class StateProviderImpl implements StateProvider {
 
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Val> cache;
     private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
     @Inject
-    public PlanBProviderImpl(final PlanBDocCache stateDocCache) {
+    public StateProviderImpl(final PlanBDocCache stateDocCache) {
         this.stateDocCache = stateDocCache;
         cache = Caffeine.newBuilder().maximumSize(1000).build();
     }

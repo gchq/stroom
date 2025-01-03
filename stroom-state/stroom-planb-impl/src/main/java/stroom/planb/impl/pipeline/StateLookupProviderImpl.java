@@ -4,7 +4,7 @@ import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.xsltfunctions.PlanBLookup;
+import stroom.pipeline.xsltfunctions.StateLookupProvider;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.dao.TemporalState;
 import stroom.planb.shared.PlanBDoc;
@@ -22,8 +22,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+// TODO : FIXME
+
 @PipelineScoped
-public class PlanBLookupImpl implements PlanBLookup {
+public class StateLookupProviderImpl implements StateLookupProvider {
 
     private static final ByteBuffer TRUE = ByteBuffer
             .wrap(Boolean.toString(true).getBytes(StandardCharsets.UTF_8));
@@ -35,7 +37,7 @@ public class PlanBLookupImpl implements PlanBLookup {
     private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
     @Inject
-    public PlanBLookupImpl(final PlanBDocCache stateDocCache) {
+    public StateLookupProviderImpl(final PlanBDocCache stateDocCache) {
         this.stateDocCache = stateDocCache;
         cache = Caffeine.newBuilder().maximumSize(1000).build();
     }

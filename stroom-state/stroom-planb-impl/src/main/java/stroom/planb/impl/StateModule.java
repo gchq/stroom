@@ -23,14 +23,14 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.pipeline.xsltfunctions.PlanBLookup;
+import stroom.pipeline.xsltfunctions.StateLookupProvider;
 import stroom.planb.impl.pipeline.PlanBElementModule;
-import stroom.planb.impl.pipeline.PlanBLookupImpl;
-import stroom.planb.impl.pipeline.PlanBProviderImpl;
+import stroom.planb.impl.pipeline.StateLookupProviderImpl;
+import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
-import stroom.query.language.functions.PlanBStateProvider;
+import stroom.query.language.functions.StateProvider;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -46,8 +46,8 @@ public class StateModule extends AbstractModule {
     protected void configure() {
         install(new PlanBElementModule());
 
-        bind(PlanBLookup.class).to(PlanBLookupImpl.class);
-        bind(PlanBStateProvider.class).to(PlanBProviderImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), StateLookupProvider.class).addBinding(StateLookupProviderImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
 
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);

@@ -10,7 +10,7 @@ public class ExpressionContext {
 
     private final int maxStringLength;
     private final DateTimeSettings dateTimeSettings;
-    private final StateProvider stateProvider;
+    private final StateFetcher stateProvider;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
@@ -21,7 +21,7 @@ public class ExpressionContext {
     @JsonCreator
     public ExpressionContext(final int maxStringLength,
                              final DateTimeSettings dateTimeSettings,
-                             final StateProvider stateProvider) {
+                             final StateFetcher stateProvider) {
         this.maxStringLength = maxStringLength;
         this.dateTimeSettings = dateTimeSettings;
         this.stateProvider = stateProvider;
@@ -35,7 +35,7 @@ public class ExpressionContext {
         return dateTimeSettings;
     }
 
-    public StateProvider getStateProvider() {
+    public StateFetcher getStateProvider() {
         return stateProvider;
     }
 
@@ -81,7 +81,7 @@ public class ExpressionContext {
 
         private int maxStringLength;
         private DateTimeSettings dateTimeSettings;
-        private StateProvider stateProvider;
+        private StateFetcher stateProvider;
 
         private Builder() {
         }
@@ -102,7 +102,7 @@ public class ExpressionContext {
             return this;
         }
 
-        public Builder stateProvider(final StateProvider stateProvider) {
+        public Builder stateProvider(final StateFetcher stateProvider) {
             this.stateProvider = stateProvider;
             return this;
         }
