@@ -1,16 +1,18 @@
-ext.moduleName = 'stroom.state.impl'
+ext.moduleName = 'stroom.planb.impl'
 
 dependencies {
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-api')
@@ -22,10 +24,6 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.scylladb_driver_core
-    implementation libs.scylladb_query_builder
-    implementation libs.scylladb_driver_mapper
-
     implementation libs.caffeine
     implementation libs.fast_infoset
     implementation libs.guava
@@ -34,9 +32,11 @@ dependencies {
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.kryo
+    implementation libs.lmdbjava
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.slf4j_api
+    implementation libs.zero_allocation_hashing
 
     testImplementation libs.assertj_core
     testImplementation libs.mockito_core

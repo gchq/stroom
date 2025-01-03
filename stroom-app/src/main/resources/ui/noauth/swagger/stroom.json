@@ -6643,6 +6643,69 @@
         "tags" : [ "Pipelines" ]
       }
     },
+    "/planB/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchStateStore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanBDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an state store doc by its UUID",
+        "tags" : [ "State Stores" ]
+      },
+      "put" : {
+        "operationId" : "updateStateStore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlanBDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanBDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an state store doc",
+        "tags" : [ "State Stores" ]
+      }
+    },
     "/preferences/v1" : {
       "get" : {
         "operationId" : "fetchUserPreferences",
@@ -8999,7 +9062,7 @@
     },
     "/stateStore/v1/{uuid}" : {
       "get" : {
-        "operationId" : "fetchStateStore",
+        "operationId" : "fetchStateStore_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "uuid",
@@ -9024,7 +9087,7 @@
         "tags" : [ "State Stores" ]
       },
       "put" : {
-        "operationId" : "updateStateStore",
+        "operationId" : "updateStateStore_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "uuid",
@@ -17272,6 +17335,66 @@
           "timeout" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "PlanBDoc" : {
+        "type" : "object",
+        "properties" : {
+          "condense" : {
+            "type" : "boolean"
+          },
+          "condenseAge" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "condenseTimeUnit" : {
+            "type" : "string",
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "retainAge" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "retainForever" : {
+            "type" : "boolean"
+          },
+          "retainTimeUnit" : {
+            "type" : "string",
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+          },
+          "stateType" : {
+            "type" : "string",
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
           }
         }
       },

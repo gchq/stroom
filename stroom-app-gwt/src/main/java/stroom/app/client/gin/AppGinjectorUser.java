@@ -71,6 +71,8 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
+import stroom.planb.client.gin.PlanBGinjector;
+import stroom.planb.client.gin.PlanBModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
@@ -160,6 +162,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         S3ConfigModule.class,
         ScyllaDbModule.class,
         StateStoreModule.class,
+        PlanBModule.class
 })
 public interface AppGinjectorUser extends
         AboutGinjector,
@@ -201,7 +204,8 @@ public interface AppGinjectorUser extends
         XMLSchemaGinjector,
         S3ConfigGinjector,
         ScyllaDbGinjector,
-        StateStoreGinjector {
+        StateStoreGinjector,
+        PlanBGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();

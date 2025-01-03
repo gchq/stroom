@@ -106,6 +106,11 @@ public class DocumentTypeRegistry {
             "StateStore",
             "State Store",
             SvgImage.DOCUMENT_STATE_STORE);
+    public static final DocumentType PLAN_B_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "PlanB",
+            "State Store 2",
+            SvgImage.DOCUMENT_STATE_STORE);
     public static final DocumentType STATISTIC_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
             "StatisticStore",
