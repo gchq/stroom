@@ -23,8 +23,8 @@ public class DataFeedKey {
     private final String hash;
 
     @JsonProperty
-    @JsonPropertyDescription("The hash algorithm used to hash the datafeed key.")
-    private final String hashAlgorithm;
+    @JsonPropertyDescription("The hash algorithm ID used to hash the datafeed key. A zero padded 3 digit number.")
+    private final String hashAlgorithmId;
 
     @JsonProperty
     @JsonPropertyDescription("The unique subject ID of the user associated with the datafeed key.")
@@ -42,7 +42,7 @@ public class DataFeedKey {
     @JsonProperty
     @JsonPropertyDescription(
             "A list of case sensitive regular expression patterns that will be used to verify the " +
-            "'Feed' header on data receipt. Only feeds matching one of these patterns will be accepted.")
+                    "'Feed' header on data receipt. Only feeds matching one of these patterns will be accepted.")
     private final List<String> feedRegexPatterns;
 
     @JsonProperty
@@ -56,7 +56,7 @@ public class DataFeedKey {
 
     @JsonCreator
     public DataFeedKey(@JsonProperty("hash") final String hash,
-                       @JsonProperty("hashAlgorithm") final String hashAlgorithm,
+                       @JsonProperty("hashAlgorithmId") final String hashAlgorithmId,
                        @JsonProperty("subjectId") final String subjectId,
                        @JsonProperty("displayName") final String displayName,
                        @JsonProperty("systemName") final String systemName,
@@ -64,7 +64,7 @@ public class DataFeedKey {
                        @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                        @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.hash = hash;
-        this.hashAlgorithm = hashAlgorithm;
+        this.hashAlgorithmId = hashAlgorithmId;
         this.subjectId = subjectId;
         this.displayName = displayName;
         this.systemName = systemName;
@@ -79,8 +79,8 @@ public class DataFeedKey {
     }
 
     @NotBlank
-    public String getHashAlgorithm() {
-        return hashAlgorithm;
+    public String getHashAlgorithmId() {
+        return hashAlgorithmId;
     }
 
     @NotBlank
@@ -132,19 +132,20 @@ public class DataFeedKey {
             return false;
         }
         final DataFeedKey that = (DataFeedKey) object;
-        return expiryDateEpochMs == that.expiryDateEpochMs && Objects.equals(hash,
-                that.hash) && Objects.equals(hashAlgorithm, that.hashAlgorithm) && Objects.equals(
-                subjectId,
-                that.subjectId) && Objects.equals(displayName, that.displayName) && Objects.equals(
-                systemName,
-                that.systemName) && Objects.equals(feedRegexPatterns,
-                that.feedRegexPatterns) && Objects.equals(streamMetaData, that.streamMetaData);
+        return expiryDateEpochMs == that.expiryDateEpochMs
+                && Objects.equals(hash, that.hash)
+                && Objects.equals(hashAlgorithmId, that.hashAlgorithmId)
+                && Objects.equals(subjectId, that.subjectId)
+                && Objects.equals(displayName, that.displayName)
+                && Objects.equals(systemName, that.systemName)
+                && Objects.equals(feedRegexPatterns, that.feedRegexPatterns)
+                && Objects.equals(streamMetaData, that.streamMetaData);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(hash,
-                hashAlgorithm,
+                hashAlgorithmId,
                 subjectId,
                 displayName,
                 systemName,
@@ -157,7 +158,7 @@ public class DataFeedKey {
     public String toString() {
         return "DataFeedKey{" +
                 "hash='" + hash + '\'' +
-                ", hashAlgorithm='" + hashAlgorithm + '\'' +
+                ", hashAlgorithmId='" + hashAlgorithmId + '\'' +
                 ", subjectId='" + subjectId + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", systemName='" + systemName + '\'' +

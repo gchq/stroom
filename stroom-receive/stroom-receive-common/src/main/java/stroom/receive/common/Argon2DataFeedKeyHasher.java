@@ -14,7 +14,7 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
 
     // WARNING!!!
     // Do not change any of these otherwise it will break hash verification of existing
-    // keys. If you want to tune it, make a new ApiKeyHasher impl with a new getType()
+    // keys. If you want to tune it, make a new DataFeedKeyHasher impl with a new getType()
     // 48, 2, 65_536, 1 => ~90ms per hash
     private static final int HASH_LENGTH = 48;
     private static final int ITERATIONS = 2;
@@ -36,10 +36,10 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
     @Override
     public String hash(final String dataFeedKey) {
         Objects.requireNonNull(dataFeedKey);
-        Argon2BytesGenerator generate = new Argon2BytesGenerator();
-        generate.init(argon2Parameters);
+        Argon2BytesGenerator generator = new Argon2BytesGenerator();
+        generator.init(argon2Parameters);
         byte[] result = new byte[HASH_LENGTH];
-        generate.generateBytes(
+        generator.generateBytes(
                 dataFeedKey.trim().getBytes(StandardCharsets.UTF_8),
                 result,
                 0,

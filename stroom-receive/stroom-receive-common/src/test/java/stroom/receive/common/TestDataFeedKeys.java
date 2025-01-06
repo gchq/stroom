@@ -87,7 +87,7 @@ class TestDataFeedKeys {
 
         final DataFeedKey dataFeedKey1 = new DataFeedKey(
                 hasher.hash(key1),
-                hasher.getAlgorithm().getDisplayValue(),
+                hasher.getAlgorithm().getUniqueId(),
                 "user1",
                 "user 1",
                 "system 1",
@@ -99,7 +99,7 @@ class TestDataFeedKeys {
 
         final DataFeedKey dataFeedKey2 = new DataFeedKey(
                 hasher.hash(key2),
-                hasher.getAlgorithm().getDisplayValue(),
+                hasher.getAlgorithm().getUniqueId(),
                 "user2",
                 "user 2",
                 "system 2",
@@ -119,13 +119,10 @@ class TestDataFeedKeys {
                                  final Class<T> clazz) throws IOException {
 
         final ObjectMapper mapper = JsonUtil.getMapper();
-//        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
         assertThat(mapper.canSerialize(entity.getClass()))
                 .isTrue();
 
-        String json = mapper.writeValueAsString(entity);
+        final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 
         final T entity2 = mapper.readValue(json, clazz);

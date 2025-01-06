@@ -34,8 +34,8 @@ public class CachedDataFeedKey {
     }
 
     @NotBlank
-    public String getHashAlgorithm() {
-        return dataFeedKey.getHashAlgorithm();
+    public String getHashAlgorithmId() {
+        return dataFeedKey.getHashAlgorithmId();
     }
 
     @NotBlank

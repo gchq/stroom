@@ -120,10 +120,9 @@ public class DataFeedKeyServiceImpl
     private void addDataFeedKey(final CachedDataFeedKey cachedDataFeedKey) {
         if (cachedDataFeedKey != null) {
             final String hash = cachedDataFeedKey.getHash();
-            final String hashAlgorithmName = cachedDataFeedKey.getHashAlgorithm();
-            final DataFeedKeyHashAlgorithm hashAlgorithm = DataFeedKeyHashAlgorithm.fromDisplayValue(
-                    hashAlgorithmName);
-            CacheKey cacheKey = new CacheKey(hashAlgorithm, hash);
+            final String hashAlgorithmId = cachedDataFeedKey.getHashAlgorithmId();
+            final DataFeedKeyHashAlgorithm hashAlgorithm = DataFeedKeyHashAlgorithm.fromUniqueId(hashAlgorithmId);
+            final CacheKey cacheKey = new CacheKey(hashAlgorithm, hash);
             cacheKeyToDataFeedKeyMap.put(cacheKey, cachedDataFeedKey);
             subjectIdToDataFeedKeyMap.put(cachedDataFeedKey.getSubjectId(), cachedDataFeedKey);
         }
