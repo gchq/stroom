@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.1] - 2025-01-07
+
+* Issue **#4661** : Use Apache HttpClient.
+
+
 ## [v7.8-reporting.5] - 2024-12-28
 
 * Issue **#4378** : Add reporting.
@@ -1129,7 +1134,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.1...HEAD
+[v7.8-beta.1]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...v7.8-beta.1
 [v7.8-reporting.5]: https://github.com/gchq/stroom/compare/v7.8-reporting.4...v7.8-reporting.5
 [v7.8-reporting.4]: https://github.com/gchq/stroom/compare/v7.8-reporting.3...v7.8-reporting.4
 [v7.8-reporting.3]: https://github.com/gchq/stroom/compare/v7.8-reporting.2...v7.8-reporting.3
