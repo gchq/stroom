@@ -63,7 +63,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
     }
 
     public static GetFeedStatusResponse createFeedNotSetToReceiveDataResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
+        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA);
     }
 
     public static GetFeedStatusResponse createCertificateRequiredResponse() {

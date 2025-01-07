@@ -1,67 +1,91 @@
 package stroom.proxy.app;
 
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import javax.net.ssl.HttpsURLConnection;
+import java.io.UncheckedIOException;
 
 public class SendSampleProxyData {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SendSampleProxyData.class);
 
     private SendSampleProxyData() {
     }
 
     public static void main(final String[] args) {
-        doWork("VERY_SIMPLE_DATA_SPLITTER-EVENTS");
-        doWork("VERY_SIMPLE_DATA_SPLITTER-EVENTS-V2");
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            doWork("VERY_SIMPLE_DATA_SPLITTER-EVENTS", httpClient);
+            doWork("VERY_SIMPLE_DATA_SPLITTER-EVENTS-V2", httpClient);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    private static void doWork(String feed) {
+    private static void doWork(final String feed, final HttpClient httpClient) {
         try {
-            String urlS = "http://localhost:8980/stroom-proxy/datafeed";
-
-            URL url = new URL(urlS);
-
-            for (int i = 0; i < 10; i++) {
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-                if (connection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) connection).setHostnameVerifier((arg0, arg1) -> true);
-                }
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/audit");
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setChunkedStreamingMode(100);
-                connection.addRequestProperty("Feed", feed);
-                connection.connect();
-
-                OutputStream out = connection.getOutputStream();
-                PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(out, StreamUtil.DEFAULT_CHARSET));
-                printWriter.println("Id,Time,Action,User,File");
-                for (int z = 0; z < 10; z++) {
-                    printWriter.println(z + ",01/01/2009:00:00:01,OPEN,userone,proxyload.txt");
-                }
-
-                printWriter.close();
-
-                int response = connection.getResponseCode();
-                String msg = connection.getResponseMessage();
-
-                connection.disconnect();
-
-                System.out.println("Client Got Response " + response);
-                if (msg != null && !msg.isEmpty()) {
-                    System.out.println(msg);
-                }
+            final String url = "http://some.server.co.uk/stroom/datafeed";
+            for (int i = 0; i < 200; i++) {
+                final HttpPost httpPost = getHttpPost(url, feed);
+                httpClient.execute(httpPost, response -> {
+                    int code = response.getCode();
+                    String msg = response.getReasonPhrase();
+                    System.out.println("Client Got Response " + response);
+                    if (msg != null && !msg.isEmpty()) {
+                        System.out.println(msg);
+                    }
+                    return code;
+                });
             }
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
         }
+    }
+
+    private static HttpPost getHttpPost(final String url,
+                                        final String feed) throws IOException {
+        final HttpPost httpPost = new HttpPost(url);
+        httpPost.addHeader("Content-Type", "application/audit");
+        httpPost.addHeader("Feed", feed);
+        httpPost.addHeader(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+        httpPost.addHeader("Connection", "Keep-Alive");
+
+        final InputStream inputStream = getInputStream();
+        httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.create("application/audit"), true));
+        return httpPost;
+    }
+
+    private static InputStream getInputStream() throws IOException {
+        byte[] bytes;
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            try (final PrintWriter printWriter =
+                    new PrintWriter(
+                            new OutputStreamWriter(
+                                    new GzipCompressorOutputStream(baos),
+                                    StreamUtil.DEFAULT_CHARSET))) {
+                printWriter.println("Time,Action,User,File");
+                printWriter.println("01/01/2009:00:00:01,OPEN,userone,proxyload.txt");
+            }
+            baos.close();
+            bytes = baos.toByteArray();
+        }
+
+        final InputStream inputStream = new ByteArrayInputStream(bytes);
+        return inputStream;
     }
 }

@@ -31,7 +31,7 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
         final GetFeedStatusResponse response = getFeedStatus(request);
 
         if (FeedStatus.Reject.equals(response.getStatus())) {
-            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA, attributeMap);
+            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
         }
 
         return FeedStatus.Receive.equals(response.getStatus());

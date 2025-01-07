@@ -4,10 +4,8 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.forwarder.ForwardConfig;
-import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.repo.store.FileSet;
-import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.proxy.app.handler.FileGroup;
+import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
 import stroom.util.io.FileName;
@@ -16,12 +14,14 @@ import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +29,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -47,6 +46,7 @@ public class MockFileDestination {
     static ForwardFileConfig createForwardFileConfig() {
         return new ForwardFileConfig(
                 true,
+                false,
                 "My forward file",
                 "forward_dest");
     }
@@ -55,16 +55,14 @@ public class MockFileDestination {
      * A count of all the meta files in the {@link ForwardFileConfig} locations.
      */
     private long getForwardFileMetaCount(final Config config) {
-        final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
+        final List<ForwardFileConfig> forwardConfigs = NullSafe.getOrElseGet(
                 config,
                 Config::getProxyConfig,
-                ProxyConfig::getForwardDestinations,
+                ProxyConfig::getForwardFileDestinations,
                 Collections::emptyList);
 
         if (!forwardConfigs.isEmpty()) {
             return forwardConfigs.stream()
-                    .filter(forwardConfig -> forwardConfig instanceof ForwardFileConfig)
-                    .map(ForwardFileConfig.class::cast)
                     .mapToLong(forwardConfig -> {
                         if (!forwardConfig.getPath().isBlank()) {
                             try (Stream<Path> pathStream = Files.walk(
@@ -90,63 +88,68 @@ public class MockFileDestination {
      * The dir will contain .meta and .zip pairs. Each pair is one item in the returned list.
      */
     private List<ForwardFileItem> getForwardFiles(final Config config) {
-        final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
+        final List<ForwardFileConfig> forwardConfigs = NullSafe.getOrElseGet(
                 config,
                 Config::getProxyConfig,
-                ProxyConfig::getForwardDestinations,
+                ProxyConfig::getForwardFileDestinations,
                 Collections::emptyList);
 
         return forwardConfigs.stream()
-                .filter(forwardConfig -> forwardConfig instanceof ForwardFileConfig)
-                .map(ForwardFileConfig.class::cast)
                 .flatMap(forwardFileConfig -> {
                     final Path forwardDir = pathCreator.toAppPath(forwardFileConfig.getPath());
-                    final SequentialFileStore sequentialFileStore =
-                            new SequentialFileStore(() -> forwardDir);
-                    int id = 1;
                     final List<ForwardFileItem> forwardFileItems = new ArrayList<>();
-                    while (true) {
-                        final FileSet fileSet = sequentialFileStore.getStoreFileSet(id);
-                        if (!Files.exists(fileSet.getMeta())) {
-                            LOGGER.info("id {} does not exist. dir: {}", id, fileSet.getDir());
-                            break;
-                        }
-                        final String zipFileName = fileSet.getZipFileName();
-                        final String baseName = zipFileName.substring(0, zipFileName.indexOf('.'));
-                        final List<ZipItem> zipItems = new ArrayList<>();
-                        final String metaContent;
-                        try {
-                            metaContent = Files.readString(fileSet.getMeta());
-
-                            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
-                                final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-                                while (entries.hasMoreElements()) {
-                                    final ZipArchiveEntry entry = entries.nextElement();
-                                    if (!entry.isDirectory()) {
-                                        final String zipEntryName = entry.getName();
-                                        final FileName fileName = FileName.parse(zipEntryName);
-                                        final StroomZipFileType zipEntryType =
-                                                StroomZipFileType.fromExtension(fileName.getExtension());
-                                        final String zipEntryContent = new String(
-                                                zipFile.getInputStream(entry).readAllBytes(),
-                                                StandardCharsets.UTF_8);
-                                        zipItems.add(new ZipItem(
-                                                zipEntryType,
-                                                fileName.getBaseName(),
-                                                zipEntryContent));
-                                    }
+                    try (final Stream<Path> stream = Files.walk(forwardDir)) {
+                        stream.forEach(path -> {
+                            if (path.getFileName().toString().endsWith(".meta")) {
+                                final Path dir = path.getParent();
+                                final FileGroup fileGroup = new FileGroup(dir);
+                                if (!Files.exists(fileGroup.getMeta())) {
+                                    LOGGER.info("Meta does not exist. dir: {}", dir);
                                 }
+                                final String zipFileName = fileGroup.getZip().getFileName().toString();
+                                final String baseName = zipFileName.substring(0, zipFileName.indexOf('.'));
+                                final List<ZipItem> zipItems = new ArrayList<>();
+                                final String metaContent;
+                                try {
+                                    metaContent = Files.readString(fileGroup.getMeta());
+
+                                    try (final ZipArchiveInputStream zipArchiveInputStream =
+                                            new ZipArchiveInputStream(
+                                                    new BufferedInputStream(
+                                                            Files.newInputStream(fileGroup.getZip())))) {
+                                        ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
+                                        while (entry != null) {
+                                            if (!entry.isDirectory()) {
+                                                final String zipEntryName = entry.getName();
+                                                final FileName fileName = FileName.parse(zipEntryName);
+                                                final StroomZipFileType zipEntryType =
+                                                        StroomZipFileType.fromExtension(fileName.getExtension());
+                                                final String zipEntryContent =
+                                                        new String(zipArchiveInputStream.readAllBytes(),
+                                                                StandardCharsets.UTF_8);
+                                                zipItems.add(new ZipItem(
+                                                        zipEntryType,
+                                                        fileName.getBaseName(),
+                                                        zipEntryContent));
+                                            }
+                                            entry = zipArchiveInputStream.getNextEntry();
+                                        }
+                                    }
+
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                                forwardFileItems.add(new ForwardFileItem(
+                                        zipFileName,
+                                        baseName,
+                                        metaContent,
+                                        zipItems));
                             }
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        id++;
-                        forwardFileItems.add(new ForwardFileItem(
-                                zipFileName,
-                                baseName,
-                                metaContent,
-                                zipItems));
+                        });
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
                     }
+
                     return forwardFileItems.stream();
                 })
                 .toList();
@@ -184,9 +187,9 @@ public class MockFileDestination {
 
         // Check zip content file count.
         final Integer[] sizes = new Integer[count];
-        Arrays.fill(sizes, 7);
-        sizes[sizes.length - 1] = 3;
-        sizes[sizes.length - 2] = 3;
+        Arrays.fill(sizes, 6);
+        sizes[sizes.length - 1] = 2;
+        sizes[sizes.length - 2] = 2;
 
         Assertions.assertThat(forwardFileItems.stream()
                         .map(forwardFileItem -> forwardFileItem.zipItems().size())
@@ -195,15 +198,14 @@ public class MockFileDestination {
 
         // Check zip contents.
         final List<String> expectedFiles = List.of(
-                "001.mf",
-                "001.meta",
-                "001.dat",
-                "002.meta",
-                "002.dat",
-                "003.meta",
-                "003.dat",
-                "004.meta",
-                "004.dat");
+                "0000000001.meta",
+                "0000000001.dat",
+                "0000000002.meta",
+                "0000000002.dat",
+                "0000000003.meta",
+                "0000000003.dat",
+                "0000000004.meta",
+                "0000000004.dat");
         assertForwardFileItemContent(forwardFileItems, expectedFiles);
     }
 

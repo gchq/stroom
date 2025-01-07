@@ -72,8 +72,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         this.updaters = createFromConfig(cacheConfig).build(k -> new FeedStatusUpdater(executorService));
     }
 
-    private Caffeine createFromConfig(final CacheConfig cacheConfig) {
-        final Caffeine cacheBuilder = Caffeine.newBuilder();
+    private Caffeine<Object, Object> createFromConfig(final CacheConfig cacheConfig) {
+        final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
         cacheBuilder.recordStats();
 
         if (cacheConfig.getMaximumSize() != null) {
@@ -142,7 +142,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequest request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final String url = feedStatusConfig.getFeedStatusUrl();
-        if (url == null || url.trim().length() == 0) {
+        if (url == null || url.trim().isEmpty()) {
             throw new RuntimeException("Missing remote status URL in feed status configuration");
         }
 
@@ -223,7 +223,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         final String url = feedStatusConfig.getFeedStatusUrl();
         resultBuilder.withDetail("url", getFeedStatusWebTarget(feedStatusConfig).getUri().toString());
 
-        if (url == null || url.trim().length() == 0) {
+        if (url == null || url.trim().isEmpty()) {
             // If no url is configured then no feed status checking is required so we consider this healthy
             resultBuilder.healthy();
         } else {

@@ -1,20 +1,18 @@
 package stroom.proxy.app;
 
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.zip.ZipUtil;
+import stroom.proxy.app.handler.LocalByteBuffer;
+import stroom.proxy.app.handler.NumericFileNameUtil;
+import stroom.proxy.app.handler.ZipWriter;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
@@ -51,22 +49,24 @@ public class PostDataHelper {
                 "Goodbye");
     }
 
-    void sendZipTestData1() {
+    void sendZipTestData1(final int entryCount) {
         sendZipData(
                 TestConstants.FEED_TEST_EVENTS_1,
                 TestConstants.SYSTEM_TEST_SYSTEM,
                 TestConstants.ENVIRONMENT_DEV,
                 Collections.emptyMap(),
-                "Hello");
+                "Hello",
+                entryCount);
     }
 
-    void sendZipTestData2() {
+    void sendZipTestData2(final int entryCount) {
         sendZipData(
                 TestConstants.FEED_TEST_EVENTS_2,
                 TestConstants.SYSTEM_TEST_SYSTEM,
                 TestConstants.ENVIRONMENT_DEV,
                 Collections.emptyMap(),
-                "Goodbye");
+                "Goodbye",
+                entryCount);
     }
 
     public int sendData(final String feed,
@@ -104,7 +104,8 @@ public class PostDataHelper {
                            final String system,
                            final String environment,
                            final Map<String, String> extraHeaders,
-                           final String data) {
+                           final String data,
+                           final int entryCount) {
         int status;
         try {
             final Builder builder = client.target(url)
@@ -120,12 +121,10 @@ public class PostDataHelper {
             LOGGER.info("Sending POST request to {}", url);
 
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(outputStream)) {
-                for (int i = 1; i <= 4; i++) {
-                    final String name = ModelStringUtil.zeroPad(3, String.valueOf(i)) + ".dat";
-                    zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
-                    zipOutputStream.write(data.getBytes(StandardCharsets.UTF_8));
-                    zipOutputStream.closeArchiveEntry();
+            try (final ZipWriter zipWriter = new ZipWriter(outputStream, LocalByteBuffer.get())) {
+                for (int i = 1; i <= entryCount; i++) {
+                    final String name = NumericFileNameUtil.create(i) + ".dat";
+                    zipWriter.writeString(name, data);
                 }
             }
 

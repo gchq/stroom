@@ -26,6 +26,8 @@ import stroom.state.impl.MockStateModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.http.BasicHttpClientFactory;
+import stroom.util.http.HttpClientFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.jersey.MockJerseyModule;
@@ -91,6 +93,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockStateModule());
 
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
+        bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
 
         final UserService mockUserService = mock(UserService.class);
         when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {

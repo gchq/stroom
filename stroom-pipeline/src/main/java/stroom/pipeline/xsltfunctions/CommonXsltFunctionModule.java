@@ -221,8 +221,11 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
             super(
                     "fetch-json",
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_STRING
+                    },
                     SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
         }
@@ -241,7 +244,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                             SequenceType.OPTIONAL_STRING,
                             SequenceType.OPTIONAL_STRING,
                             SequenceType.OPTIONAL_STRING,
-                            SequenceType.OPTIONAL_STRING},
+                            SequenceType.OPTIONAL_STRING
+                    },
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }

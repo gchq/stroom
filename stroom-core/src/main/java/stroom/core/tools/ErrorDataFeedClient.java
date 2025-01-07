@@ -23,14 +23,16 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityTemplate;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
-import java.util.Map.Entry;
-import javax.net.ssl.HttpsURLConnection;
 
 /**
  * <p>
@@ -48,7 +50,6 @@ public final class ErrorDataFeedClient {
     private static final String ZIP = "zip";
     private static final String GZIP = "gzip";
 
-    private static final String CHUNK_SIZE = "chunkSize";
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String WRITE_SIZE = "writeSize";
 
@@ -65,8 +66,8 @@ public final class ErrorDataFeedClient {
 
     }
 
-    public static void main(final String[] args) {
-        try {
+    public static void main(final String[] args) throws Exception {
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
             final HashMap<String, String> argsMap = new HashMap<>();
             for (int i = 0; i < args.length; i++) {
                 final String[] split = args[i].split("=");
@@ -77,78 +78,66 @@ public final class ErrorDataFeedClient {
                 }
             }
 
-            final String urlS = argsMap.get(ARG_URL);
+            final String url = argsMap.get(ARG_URL);
 
             final long startTime = System.currentTimeMillis();
 
-            final URL url = new URL(urlS);
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            final HttpPost httpPost = new HttpPost(url);
+            httpPost.addHeader("Content-Type", "application/audit");
 
-            if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setHostnameVerifier((arg0, arg1) -> {
-                    System.out.println("HostnameVerifier - " + arg0);
-                    return true;
-                });
-            }
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/audit");
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
-
-            // Also add all our command options
-            for (final Entry<String, String> entry : argsMap.entrySet()) {
-                connection.addRequestProperty(entry.getKey(), entry.getValue());
-            }
+            // Also add all our command options.
+            argsMap.forEach(httpPost::addHeader);
 
             final int bufferSize = argsMap.containsKey(BUFFER_SIZE)
                     ? Integer.parseInt(argsMap.get(BUFFER_SIZE))
-                    : 100;
-            final int chunkSize = argsMap.containsKey(CHUNK_SIZE)
-                    ? Integer.parseInt(argsMap.get(CHUNK_SIZE))
                     : 100;
             final int writeSize = argsMap.containsKey(WRITE_SIZE)
                     ? Integer.parseInt(argsMap.get(WRITE_SIZE))
                     : 1000;
 
-            connection.setChunkedStreamingMode(chunkSize);
-            connection.connect();
 
-            // Using Zip Compression we just have 1 file (called 1)
-            if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                System.out.println("Using ZIP");
-                try (final ZipArchiveOutputStream zout = ZipUtil.createOutputStream(connection.getOutputStream())) {
-                    zout.putArchiveEntry(new ZipArchiveEntry("1"));
-                    try {
-                        write(zout, bufferSize, writeSize);
-                    } finally {
-                        zout.closeArchiveEntry();
-                    }
+            httpPost.setEntity(new EntityTemplate(
+                    -1,
+                    ContentType.create("application/audit"),
+                    null,
+                    outputStream -> {
+                        // Using Zip Compression we just have 1 file (called 1)
+                        if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
+                            System.out.println("Using ZIP");
+                            try (final ZipArchiveOutputStream out = ZipUtil.createOutputStream(outputStream)) {
+                                out.putArchiveEntry(new ZipArchiveEntry("1"));
+                                try {
+                                    write(out, bufferSize, writeSize);
+                                } finally {
+                                    out.closeArchiveEntry();
+                                }
+                            }
+
+                        } else if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
+                            System.out.println("Using GZIP");
+                            try (final GzipCompressorOutputStream out =
+                                    new GzipCompressorOutputStream(outputStream)) {
+                                write(out, bufferSize, writeSize);
+                            }
+                        } else {
+                            try (final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
+                                    outputStream)) {
+                                write(bufferedOutputStream, bufferSize, writeSize);
+                            }
+                        }
+                    }));
+
+            httpClient.execute(httpPost, response -> {
+                final int code = response.getCode();
+                final String msg = response.getReasonPhrase();
+
+                System.out.println(
+                        "Client Got Response " + code + " in " + (System.currentTimeMillis() - startTime) + "ms");
+                if (msg != null && !msg.isEmpty()) {
+                    System.out.println(msg);
                 }
-            } else if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                System.out.println("Using GZIP");
-                try (final GzipCompressorOutputStream out =
-                        new GzipCompressorOutputStream(connection.getOutputStream())) {
-                    write(out, bufferSize, writeSize);
-                }
-            } else {
-                try (final OutputStream out = connection.getOutputStream()) {
-                    write(out, bufferSize, writeSize);
-                }
-            }
-
-            final int response = connection.getResponseCode();
-            final String msg = connection.getResponseMessage();
-
-            connection.disconnect();
-
-            System.out.println(
-                    "Client Got Response " + response + " in " + (System.currentTimeMillis() - startTime) + "ms");
-            if (msg != null && !msg.isEmpty()) {
-                System.out.println(msg);
-            }
-
-        } catch (final IOException | RuntimeException e) {
-            e.printStackTrace();
+                return code;
+            });
         }
     }
 

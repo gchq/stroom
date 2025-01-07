@@ -42,12 +42,11 @@ public class EventResourceImpl implements EventResource {
                         final String event) {
         return receiveDataHelper.process(
                 request,
-                (req, attributeMap, requestUuid) -> consume(req, attributeMap, requestUuid, event),
+                (req, attributeMap, requestUuid) -> consume(attributeMap, requestUuid, event),
                 this::drop);
     }
 
-    private void consume(final HttpServletRequest request,
-                         final AttributeMap attributeMap,
+    private void consume(final AttributeMap attributeMap,
                          final String requestUuid,
                          final String event) {
         eventStore.consume(attributeMap, requestUuid, event);

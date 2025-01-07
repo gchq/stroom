@@ -27,7 +27,7 @@ public class GenerateProxyExpectedYaml {
             # This file is generated based on all the default configuration values that are built into stroom-proxy.
             # It serves as an example of the structure of the full configuration tree.
             # If any configuration item is not explicitly set then these defaults will be used instead.
-            # An exception to this is some list based properties like 'fileScanners', 'forwardFileDestinations',
+            # An exception to this is some list based properties like 'forwardFileDestinations',
             # 'forwardHttpDestinations' and 'sqsConnectors' where the default is an empty list but a single
             # item has been included in this file to show the defaults for each list item.
             # Some configuration items are expected to set but most can be left with their default values.""";
