@@ -37,7 +37,6 @@ import stroom.util.sysinfo.SystemInfoResult;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -329,7 +328,6 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
         }
     }
 
-    @NotNull
     private Map<String, Object> mapCacheEntry(final long streamLimit,
                                               final Entry<EffectiveStreamKey, EffectiveMetaSet> entry) {
         final EffectiveStreamKey key = entry.getKey();

@@ -39,6 +39,8 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.http.BasicHttpClientFactory;
+import stroom.util.http.HttpClientFactory;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.PathConfig;
@@ -114,6 +116,7 @@ public class CliModule extends AbstractModule {
         install(new MockJerseyModule());
 
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
+        bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
 
         // Only needed for feed import so not an issue for Cli
         bind(FsVolumeGroupService.class).to(MockFsVolumeGroupService.class);

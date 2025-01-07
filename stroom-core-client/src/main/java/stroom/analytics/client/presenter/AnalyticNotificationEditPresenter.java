@@ -23,11 +23,13 @@ import stroom.analytics.shared.NotificationDestination;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
+import stroom.analytics.shared.ReportDoc;
 import stroom.dashboard.client.main.UniqueUtil;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.AnalyticUiDefaultConfig;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -66,7 +68,8 @@ public class AnalyticNotificationEditPresenter
         registerHandler(analyticEmailDestinationPresenter.addDirtyHandler(e -> onDirty()));
     }
 
-    public void read(final NotificationConfig config) {
+    public void read(final DocRef docRef,
+                     final NotificationConfig config) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 if (config != null) {
@@ -81,7 +84,13 @@ public class AnalyticNotificationEditPresenter
                 }
 
                 // Initialise the sub presenters whether we have config or not, so they get the right defaults
-                final AnalyticUiDefaultConfig defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
+                final AbstractAnalyticUiDefaultConfig defaultConfig;
+                if (ReportDoc.TYPE.equals(docRef.getType())) {
+                    defaultConfig = extendedUiConfig.getReportUiDefaultConfig();
+                } else {
+                    defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
+                }
+
                 final NotificationDestination destination = GwtNullSafe.get(
                         config,
                         NotificationConfig::getDestination);
@@ -99,7 +108,7 @@ public class AnalyticNotificationEditPresenter
 
     private NotificationEmailDestination getOrDefaultEmailDestination(
             final NotificationDestination destination,
-            final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+            final AbstractAnalyticUiDefaultConfig analyticUiDefaultConfig) {
 
         final NotificationEmailDestination emailDestination;
         if (destination instanceof NotificationEmailDestination) {
@@ -115,7 +124,7 @@ public class AnalyticNotificationEditPresenter
 
     private NotificationStreamDestination getOrDefaultStreamDestination(
             final NotificationDestination destination,
-            final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+            final AbstractAnalyticUiDefaultConfig analyticUiDefaultConfig) {
 
         final NotificationStreamDestination streamDestination;
         if (destination instanceof NotificationStreamDestination) {

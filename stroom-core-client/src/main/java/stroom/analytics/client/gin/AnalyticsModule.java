@@ -17,19 +17,17 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
+import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
+import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
-import stroom.analytics.client.presenter.AnalyticProcessingPresenter;
-import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.analytics.client.presenter.DuplicateManagementPresenter;
-import stroom.analytics.client.presenter.DuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
@@ -58,9 +56,6 @@ public class AnalyticsModule extends PluginModule {
 
         bind(AnalyticRulePresenter.class);
 
-        bindPresenterWidget(AnalyticProcessingPresenter.class,
-                AnalyticProcessingView.class,
-                AnalyticProcessingViewImpl.class);
         bindPresenterWidget(AnalyticNotificationEditPresenter.class,
                 AnalyticNotificationEditView.class,
                 AnalyticNotificationEditViewImpl.class);
@@ -85,8 +80,13 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(ScheduledProcessingPresenter.class,
                 ScheduledProcessingView.class,
                 ScheduledProcessingViewImpl.class);
-        bindPresenterWidget(DuplicateManagementPresenter.class,
+
+        bindSharedView(
+                AnalyticProcessingView.class,
+                AnalyticProcessingViewImpl.class);
+        bindSharedView(
                 DuplicateManagementView.class,
                 DuplicateManagementViewImpl.class);
+
     }
 }

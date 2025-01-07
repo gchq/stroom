@@ -1,8 +1,6 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.logging.LambdaLogger;
@@ -11,20 +9,17 @@ import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import jakarta.inject.Inject;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-@Disabled
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
             TestEndToEndStoreAndForwardToFileAndHttp.class);
 
-    @Inject
-    private DbRecordCountAssertion dbRecordCountAssertion;
     @Inject
     private MockFileDestination mockFileDestination;
 
@@ -33,9 +28,6 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
         return ProxyConfig.builder()
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
-                .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .storingEnabled(true)
-                        .build())
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
                                 .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
@@ -46,8 +38,8 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
-                .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
+                .addForwardFileDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
+                .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
@@ -58,7 +50,6 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
     @Test
     void test() {
         LOGGER.info("Starting basic end-end test");
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 2, 0, 0, 0, 0));
 
         mockHttpDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
@@ -68,29 +59,25 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
 
         // Two feeds each send 4, agg max items of 3 so two batches each
         final PostDataHelper postDataHelper = createPostDataHelper();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 16; i++) {
             postDataHelper.sendTestData1();
             postDataHelper.sendTestData2();
         }
 
-        Assertions.assertThat(postDataHelper.getPostCount())
-                .isEqualTo(8);
+        assertThat(postDataHelper.getPostCount())
+                .isEqualTo(32);
 
-        // Assert file contents.
-        mockFileDestination.assertFileContents(getConfig());
-
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 2, 0, 2, 0, 0, 0, 0));
+        // Assert the contents of the files.
+        mockFileDestination.assertFileContents(getConfig(), 12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();
 
-        // Check the HTTP forwarding
-        mockHttpDestination.assertRequestCount(4);
+        // Check number of forwarded files.
+        mockHttpDestination.assertRequestCount(12);
 
-        // Assert the posts.
-        mockHttpDestination.assertPosts();
-
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 2, 0, 2, 0, 0, 0, 0));
+        // Assert the content of posts
+        mockHttpDestination.assertPosts(12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

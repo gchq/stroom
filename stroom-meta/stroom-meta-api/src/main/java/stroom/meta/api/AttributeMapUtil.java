@@ -34,6 +34,8 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -119,6 +121,11 @@ public class AttributeMapUtil {
         return attributeMap;
     }
 
+    public static void read(final Path file, final AttributeMap attributeMap) throws IOException {
+        final String data = StreamUtil.fileToString(file, DEFAULT_CHARSET);
+        read(data, attributeMap);
+    }
+
     public static void read(final InputStream inputStream, final AttributeMap attributeMap) throws IOException {
         final String data = StreamUtil.streamToString(inputStream, DEFAULT_CHARSET, false);
         read(data, attributeMap);
@@ -150,10 +157,6 @@ public class AttributeMapUtil {
 
     public static void read(final byte[] data, final AttributeMap attributeMap) throws IOException {
         read(new ByteArrayInputStream(data), attributeMap);
-    }
-
-    public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {
-        write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET));
     }
 
     public static void appendAttributes(final AttributeMap attributeMap,
@@ -199,6 +202,16 @@ public class AttributeMapUtil {
             str = null;
         }
         return str;
+    }
+
+    public static void write(final AttributeMap attributeMap, final Path path) throws IOException {
+        try (final Writer writer = Files.newBufferedWriter(path)) {
+            AttributeMapUtil.write(attributeMap, writer);
+        }
+    }
+
+    public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {
+        write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET));
     }
 
     public static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {
@@ -267,7 +280,7 @@ public class AttributeMapUtil {
         attributeMap.computeIfAbsent(StandardHeaderArguments.REMOTE_HOST, key ->
                 nullIfBlank(httpServletRequest.getRemoteHost()));
         attributeMap.computeIfAbsent(StandardHeaderArguments.REMOTE_ADDRESS, key ->
-                nullIfBlank(httpServletRequest.getRemoteHost()));
+                nullIfBlank(httpServletRequest.getRemoteAddr()));
     }
 
     private static String nullIfBlank(final String str) {
@@ -323,6 +336,8 @@ public class AttributeMapUtil {
         attributeMap.put(StandardHeaderArguments.FEED, feedName.trim());
         if (typeName != null && !typeName.isBlank()) {
             attributeMap.put(StandardHeaderArguments.TYPE, typeName.trim());
+        } else {
+            attributeMap.remove(StandardHeaderArguments.TYPE);
         }
     }
 }

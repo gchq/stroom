@@ -1,9 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.repo.ForwardRetryConfig;
-import stroom.proxy.repo.ProxyDbConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.test.common.TestResourceLocks;
 import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
@@ -51,7 +47,6 @@ public abstract class AbstractApplicationTest {
 
     private Config config;
     private Client client = null;
-    private Path homeDir = null;
     private HomeDirProvider homeDirProvider;
     private TempDirProvider tempDirProvider;
     private PathCreator pathCreator;
@@ -90,10 +85,6 @@ public abstract class AbstractApplicationTest {
         return App.class;
     }
 
-    public Path getHomeDir() {
-        return homeDir;
-    }
-
     protected ProxyPathConfig createProxyPathConfig() {
         final Path temp;
         try {
@@ -102,12 +93,14 @@ public abstract class AbstractApplicationTest {
             throw new RuntimeException(LogUtil.message("Error creating temp dir"), e);
         }
 
+        final Path dataDir = temp.resolve("data").toAbsolutePath().normalize();
         final Path homeDir = temp.resolve("home").toAbsolutePath().normalize();
-        this.homeDir = homeDir;
         final Path tempDir = temp.resolve("temp").toAbsolutePath().normalize();
+        FileUtil.ensureDirExists(dataDir);
         FileUtil.ensureDirExists(homeDir);
         FileUtil.ensureDirExists(tempDir);
 
+        final String dataDirStr = dataDir.toString();
         final String homeDirStr = homeDir.toString();
         final String tempDirStr = tempDir.toString();
 
@@ -115,7 +108,7 @@ public abstract class AbstractApplicationTest {
         System.setProperty(HomeDirProvider.PROP_STROOM_HOME, homeDirStr);
         System.setProperty(TempDirProvider.PROP_STROOM_TEMP, tempDirStr);
 
-        return new ProxyPathConfig(homeDirStr, tempDirStr);
+        return new ProxyPathConfig(dataDirStr, homeDirStr, tempDirStr);
     }
 
     private void setupConfig() {
@@ -131,9 +124,6 @@ public abstract class AbstractApplicationTest {
             // Can't use Map.of() due to null value
             final Map<PropertyPath, Object> propValueMap = new HashMap<>();
             propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), proxyPathConfig);
-            propValueMap.put(ProxyConfig.buildPath(
-                    ProxyConfig.PROP_NAME_REPOSITORY,
-                    ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
 
             // Add any overrides from the sub-classes
             propValueMap.putAll(getPropertyValueOverrides());
@@ -167,17 +157,13 @@ public abstract class AbstractApplicationTest {
             Files.createDirectories(path);
         });
 
-        NullSafe.consume(proxyConfig.getProxyRepositoryConfig(), ProxyRepoConfig::getRepoDir, createDirConsumer);
+        NullSafe.consume(proxyConfig.getPathConfig(), ProxyPathConfig::getData, createDirConsumer);
         NullSafe.consume(proxyConfig.getContentDir(), createDirConsumer);
-        NullSafe.consume(proxyConfig.getProxyDbConfig(), ProxyDbConfig::getDbDir, createDirConsumer);
-        NullSafe.consume(proxyConfig.getForwardRetry(), ForwardRetryConfig::getFailedForwardDir, createDirConsumer);
 
-        if (NullSafe.hasItems(proxyConfig.getForwardDestinations())) {
-            proxyConfig.getForwardDestinations().forEach(forwardConfig -> {
-                if (forwardConfig instanceof final ForwardFileConfig forwardFileConfig) {
-                    if (!NullSafe.isBlankString(forwardFileConfig.getPath())) {
-                        createDirConsumer.accept(forwardFileConfig.getPath());
-                    }
+        if (NullSafe.hasItems(proxyConfig.getForwardFileDestinations())) {
+            proxyConfig.getForwardFileDestinations().forEach(forwardConfig -> {
+                if (!NullSafe.isBlankString(forwardConfig.getPath())) {
+                    createDirConsumer.accept(forwardConfig.getPath());
                 }
             });
         }

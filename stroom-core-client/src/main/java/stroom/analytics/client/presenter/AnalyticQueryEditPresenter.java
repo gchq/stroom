@@ -18,51 +18,19 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter;
-import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.task.client.TaskMonitorFactory;
 
-import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.List;
 import javax.inject.Inject;
 
 public class AnalyticQueryEditPresenter
-        extends DocumentEditPresenter<QueryEditView, AnalyticRuleDoc>
-        implements HasToolbar {
-
-    private final QueryEditPresenter queryEditPresenter;
+        extends AbstractQueryEditPresenter<AnalyticRuleDoc> {
 
     @Inject
     public AnalyticQueryEditPresenter(final EventBus eventBus,
                                       final QueryEditPresenter queryEditPresenter) {
-        super(eventBus, queryEditPresenter.getView());
-        this.queryEditPresenter = queryEditPresenter;
-    }
-
-    @Override
-    public List<Widget> getToolbars() {
-        return queryEditPresenter.getToolbars();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
-    }
-
-    @Override
-    public void onRead(final DocRef docRef, final AnalyticRuleDoc entity, final boolean readOnly) {
-        queryEditPresenter.setTimeRange(entity.getTimeRange());
-        queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
+        super(eventBus, queryEditPresenter);
     }
 
     @Override
@@ -72,17 +40,5 @@ public class AnalyticQueryEditPresenter
                 .timeRange(queryEditPresenter.getTimeRange())
                 .query(queryEditPresenter.getQuery())
                 .build();
-    }
-
-    @Override
-    public void onClose() {
-        queryEditPresenter.onClose();
-        super.onClose();
-    }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        queryEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 }

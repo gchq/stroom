@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateCheckRows;
@@ -46,12 +46,12 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     }
 
     @Override
-    public DuplicateCheck create(final AnalyticRuleDoc analyticRuleDoc,
+    public DuplicateCheck create(final AbstractAnalyticRuleDoc analyticRuleDoc,
                                  final CompiledColumns compiledColumns) {
         final DuplicateNotificationConfig duplicateNotificationConfig =
                 analyticRuleDoc.getDuplicateNotificationConfig();
         if (!duplicateNotificationConfig.isRememberNotifications() &&
-                !duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
+            !duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
             return new NoOpDuplicateCheck();
         }
 

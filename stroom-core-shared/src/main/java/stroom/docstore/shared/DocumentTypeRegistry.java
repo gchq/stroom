@@ -61,6 +61,11 @@ public class DocumentTypeRegistry {
             "Index",
             "Lucene Index",
             SvgImage.DOCUMENT_INDEX);
+    public static final DocumentType REPORT_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Report",
+            "Report",
+            SvgImage.DOCUMENT_REPORT);
     public static final DocumentType STROOM_STATS_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
             "StroomStatsStore",
@@ -185,6 +190,7 @@ public class DocumentTypeRegistry {
         put(PROCESSOR_FILTER_DOCUMENT_TYPE);
         put(QUERY_DOCUMENT_TYPE);
         put(RECEIVE_DATA_RULESET_DOCUMENT_TYPE);
+        put(REPORT_DOCUMENT_TYPE);
         put(S3_CONFIG_DOCUMENT_TYPE);
         put(SCRIPT_DOCUMENT_TYPE);
         put(SCYLLA_DB_DOCUMENT_TYPE);

@@ -24,7 +24,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public void sendTestEmail(final NotificationEmailDestination emailDestination) {
-        emailSender.send(emailDestination, getExampleDetection());
+        emailSender.sendDetection(emailDestination, getExampleDetection());
     }
 
     // pkg private for testing

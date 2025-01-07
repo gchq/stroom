@@ -350,6 +350,9 @@ public class ConfigMapper {
             final Map<Class<?>, AbstractConfig> newInstanceMap) {
 
         final ObjectInfo<? extends AbstractConfig> objectInfo = objectInfoMap.get(propertyPath);
+        if (objectInfo == null) {
+            return null;
+        }
 
         AbstractConfig instance = objectInfo.createInstance(argPropName -> {
             final PropertyPath childPropertyPath = propertyPath.merge(argPropName);

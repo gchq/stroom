@@ -7,7 +7,6 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalServiceUserFactory;
-import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.NoIdpServiceUserFactory;
@@ -19,13 +18,11 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 
 import com.google.inject.AbstractModule;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class ProxySecurityModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
         bind(JwtContextFactory.class).to(StandardJwtContextFactory.class);
         bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
         bind(UserIdentityFactory.class).to(ProxyUserIdentityFactory.class);

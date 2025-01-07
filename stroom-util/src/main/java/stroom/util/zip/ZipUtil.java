@@ -108,9 +108,8 @@ public final class ZipUtil {
     private static void putEntry(final ZipArchiveOutputStream zipOutputStream, final Path file, final String name)
             throws IOException {
         LOGGER.debug("zip() - Putting entry {}", name);
-        final ZipArchiveEntry zipEntry = new ZipArchiveEntry(name);
         try {
-            zipOutputStream.putArchiveEntry(zipEntry);
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
             try (final InputStream is = new BufferedInputStream(Files.newInputStream(file))) {
                 StreamUtil.streamToStream(is, zipOutputStream);
             }
@@ -143,10 +142,10 @@ public final class ZipUtil {
         }
     }
 
-    public static List<String> pathList(final Path zipFile) throws IOException {
+    public static List<String> pathList(final Path zipFilePath) throws IOException {
         final List<String> pathList = new ArrayList<>();
         try (final ZipArchiveInputStream zip =
-                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFilePath)))) {
             ZipArchiveEntry zipEntry;
             while ((zipEntry = zip.getNextEntry()) != null) {
                 pathList.add(zipEntry.getName());

@@ -44,12 +44,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
-            "The welcome message is in HTML format.")
+                             "The welcome message is in HTML format.")
     private final String welcomeHtml;
 
     @JsonProperty
     @JsonPropertyDescription("The about message that is displayed when selecting Help -> About. " +
-            "The about message is in HTML format.")
+                             "The about message is in HTML format.")
     private final String aboutHtml;
 
     @JsonProperty
@@ -58,8 +58,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("Provide a generic message to the users about an authentication error, " +
-            "e.g. 'Contact support on 01234 567890.'. This message will be displayed in addition to the actual " +
-            "authentication error message. The message is in HTML format. Can be null.")
+                             "e.g. 'Contact support on 01234 567890.'. This message will be displayed in addition to " +
+                             "the actual authentication error message. The message is in HTML format. Can be null.")
     private final String authErrorMessage;
 
     @JsonProperty
@@ -115,9 +115,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @Pattern(regexp = "^return (true|false);$")
     @JsonProperty
     @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is " +
-            "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' " +
-            "to see the standard " +
-            "browser menu.")
+                             "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to " +
+                             "'return true;' to see the standard browser menu.")
     private final String oncontextmenu;
 
     @JsonProperty
@@ -136,32 +135,41 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private final AnalyticUiDefaultConfig analyticUiDefaultConfig;
 
     @JsonProperty
+    private final ReportUiDefaultConfig reportUiDefaultConfig;
+
+    @JsonProperty
     @JsonPropertyDescription("This regex pattern defines the delimiter to use for nesting index fields in the query " +
-            "helper. This is useful when dealing with large numbers of dynamic fields. e.g. if every element is made " +
-            "into a field with its name being something similar to its xpath. For example, if the delimiter is '.', " +
-            "then the field 'Events.Event.EventTime.TimeCreated' would be displayed as 'TimeCreated' within three " +
-            "nested categories. The default pattern is '[:.]' to also categorise the special " +
-            "'annotation:XXX' fields. Set it to null or an empty string prevent nesting.")
+                             "helper. This is useful when dealing with large numbers of dynamic fields. e.g. if " +
+                             "every element is made into a field with its name being something similar to its xpath. " +
+                             "For example, if the delimiter is '.', then the field " +
+                             "'Events.Event.EventTime.TimeCreated' would be displayed as 'TimeCreated' within three " +
+                             "nested categories. The default pattern is '[:.]' to also categorise the special " +
+                             "'annotation:XXX' fields. Set it to null or an empty string prevent nesting.")
     private final String nestedIndexFieldsDelimiterPattern;
 
     @AllMatchPattern(pattern = ExplorerNode.TAG_PATTERN_STR)
     @JsonProperty
     @JsonPropertyDescription("Set of explorer tags to use as a filter on the Reference Pipeline selector of " +
-            "an XSLTFilter within a pipeline." +
-            "Explorer nodes will only be included if they have at least all the tags in this property. " +
-            "This property should contain a sub set of the tags in property stroom.explorer.suggestedTags")
+                             "an XSLTFilter within a pipeline." +
+                             "Explorer nodes will only be included if they have at least all the tags in this " +
+                             "property. " +
+                             "This property should contain a sub set of the tags in property " +
+                             "stroom.explorer.suggestedTags")
     private final Set<String> referencePipelineSelectorIncludedTags;
 
     @JsonProperty
     @JsonPropertyDescription("The default hash algorithm for hashing API keys. API keys are not stored, only their " +
-            "hash and prefix are. Different hash algorithm offer different levels of performance and security. " +
-            "If not set 'SHA3_256' will be used. Possible values are 'SHA3_256', 'SHA2_256', 'BCRYPT' and 'ARGON2'. " +
-            "This property controls the default value of a selection box, but the user select a different one.")
+                             "hash and prefix are. Different hash algorithm offer different levels of performance " +
+                             "and security. " +
+                             "If not set 'SHA3_256' will be used. Possible values are 'SHA3_256', 'SHA2_256', " +
+                             "'BCRYPT' and 'ARGON2'. " +
+                             "This property controls the default value of a selection box, but the user select a " +
+                             "different one.")
     private final HashAlgorithm defaultApiKeyHashAlgorithm;
 
     @JsonProperty
     @JsonPropertyDescription("The maximum number of code completion entries to show in the popup when using " +
-            "ctrl-space or live autocompletion.")
+                             "ctrl-space or live autocompletion.")
     private final int maxEditorCompletionEntries;
 
     public UiConfig() {
@@ -188,6 +196,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         source = new SourceConfig();
         nodeMonitoring = new NodeMonitoringConfig();
         analyticUiDefaultConfig = new AnalyticUiDefaultConfig();
+        reportUiDefaultConfig = new ReportUiDefaultConfig();
         nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
@@ -220,6 +229,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("source") final SourceConfig source,
                     @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
                     @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                    @JsonProperty("reportUiDefaultConfig") final ReportUiDefaultConfig reportUiDefaultConfig,
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
                     @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
@@ -247,6 +257,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.source = source;
         this.nodeMonitoring = nodeMonitoring;
         this.analyticUiDefaultConfig = analyticUiDefaultConfig;
+        this.reportUiDefaultConfig = reportUiDefaultConfig;
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
@@ -311,7 +322,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             return null;
         } else {
             return helpUrl
-                    + (subPath != null
+                   + (subPath != null
                     ? subPath
                     : "");
         }
@@ -405,6 +416,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return analyticUiDefaultConfig;
     }
 
+    public ReportUiDefaultConfig getReportUiDefaultConfig() {
+        return reportUiDefaultConfig;
+    }
+
     public String getNestedIndexFieldsDelimiterPattern() {
         return nestedIndexFieldsDelimiterPattern;
     }
@@ -432,30 +447,31 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         final UiConfig uiConfig = (UiConfig) o;
 
         return Objects.equals(welcomeHtml, uiConfig.welcomeHtml)
-                && Objects.equals(aboutHtml, uiConfig.aboutHtml)
-                && Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage)
-                && Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults)
-                && Objects.equals(process, uiConfig.process)
-                && Objects.equals(helpUrl, uiConfig.helpUrl)
-                && Objects.equals(helpSubPathJobs, uiConfig.helpSubPathJobs)
-                && Objects.equals(helpSubPathQuickFilter, uiConfig.helpSubPathQuickFilter)
-                && Objects.equals(helpSubPathProperties, uiConfig.helpSubPathProperties)
-                && Objects.equals(helpSubPathExpressions, uiConfig.helpSubPathExpressions)
-                && Objects.equals(helpSubPathDocumentation, uiConfig.helpSubPathDocumentation)
-                && Objects.equals(theme, uiConfig.theme)
-                && Objects.equals(query, uiConfig.query)
-                && Objects.equals(namePattern, uiConfig.namePattern)
-                && Objects.equals(htmlTitle, uiConfig.htmlTitle)
-                && Objects.equals(oncontextmenu, uiConfig.oncontextmenu)
-                && Objects.equals(splash, uiConfig.splash)
-                && Objects.equals(activity, uiConfig.activity)
-                && Objects.equals(source, uiConfig.source)
-                && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
-                && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
-                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
-                && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
-                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
-                && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
+               && Objects.equals(aboutHtml, uiConfig.aboutHtml)
+               && Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage)
+               && Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults)
+               && Objects.equals(process, uiConfig.process)
+               && Objects.equals(helpUrl, uiConfig.helpUrl)
+               && Objects.equals(helpSubPathJobs, uiConfig.helpSubPathJobs)
+               && Objects.equals(helpSubPathQuickFilter, uiConfig.helpSubPathQuickFilter)
+               && Objects.equals(helpSubPathProperties, uiConfig.helpSubPathProperties)
+               && Objects.equals(helpSubPathExpressions, uiConfig.helpSubPathExpressions)
+               && Objects.equals(helpSubPathDocumentation, uiConfig.helpSubPathDocumentation)
+               && Objects.equals(theme, uiConfig.theme)
+               && Objects.equals(query, uiConfig.query)
+               && Objects.equals(namePattern, uiConfig.namePattern)
+               && Objects.equals(htmlTitle, uiConfig.htmlTitle)
+               && Objects.equals(oncontextmenu, uiConfig.oncontextmenu)
+               && Objects.equals(splash, uiConfig.splash)
+               && Objects.equals(activity, uiConfig.activity)
+               && Objects.equals(source, uiConfig.source)
+               && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
+               && Objects.equals(reportUiDefaultConfig, uiConfig.reportUiDefaultConfig)
+               && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
+               && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
+               && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
+               && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
+               && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
     }
 
     @Override
@@ -481,6 +497,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 source,
                 nodeMonitoring,
                 analyticUiDefaultConfig,
+                reportUiDefaultConfig,
                 nestedIndexFieldsDelimiterPattern,
                 referencePipelineSelectorIncludedTags,
                 defaultApiKeyHashAlgorithm,
@@ -490,31 +507,32 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "UiConfig{" +
-                "welcomeHtml='" + welcomeHtml + '\'' +
-                ", aboutHtml='" + aboutHtml + '\'' +
-                ", maintenanceMessage='" + maintenanceMessage + '\'' +
-                ", defaultMaxResults='" + defaultMaxResults + '\'' +
-                ", process=" + process +
-                ", helpUrl='" + helpUrl + '\'' +
-                ", helpSubPathJobs='" + helpSubPathJobs + '\'' +
-                ", helpSubPathQuickFilter='" + helpSubPathQuickFilter + '\'' +
-                ", helpSubPathProperties='" + helpSubPathProperties + '\'' +
-                ", helpSubPathExpressions='" + helpSubPathExpressions + '\'' +
-                ", helpSubPathDocumentation='" + helpSubPathDocumentation + '\'' +
-                ", theme=" + theme +
-                ", query=" + query +
-                ", namePattern='" + namePattern + '\'' +
-                ", htmlTitle='" + htmlTitle + '\'' +
-                ", oncontextmenu='" + oncontextmenu + '\'' +
-                ", splash=" + splash +
-                ", activity=" + activity +
-                ", source=" + source +
-                ", nodeMonitoring=" + nodeMonitoring +
-                ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
-                ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
-                ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
-                ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
-                ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
-                '}';
+               "welcomeHtml='" + welcomeHtml + '\'' +
+               ", aboutHtml='" + aboutHtml + '\'' +
+               ", maintenanceMessage='" + maintenanceMessage + '\'' +
+               ", defaultMaxResults='" + defaultMaxResults + '\'' +
+               ", process=" + process +
+               ", helpUrl='" + helpUrl + '\'' +
+               ", helpSubPathJobs='" + helpSubPathJobs + '\'' +
+               ", helpSubPathQuickFilter='" + helpSubPathQuickFilter + '\'' +
+               ", helpSubPathProperties='" + helpSubPathProperties + '\'' +
+               ", helpSubPathExpressions='" + helpSubPathExpressions + '\'' +
+               ", helpSubPathDocumentation='" + helpSubPathDocumentation + '\'' +
+               ", theme=" + theme +
+               ", query=" + query +
+               ", namePattern='" + namePattern + '\'' +
+               ", htmlTitle='" + htmlTitle + '\'' +
+               ", oncontextmenu='" + oncontextmenu + '\'' +
+               ", splash=" + splash +
+               ", activity=" + activity +
+               ", source=" + source +
+               ", nodeMonitoring=" + nodeMonitoring +
+               ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
+               ", reportUiDefaultConfig=" + reportUiDefaultConfig +
+               ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
+               ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
+               ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
+               ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
+               '}';
     }
 }

@@ -1,14 +1,11 @@
 package stroom.proxy.app;
 
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -23,9 +20,6 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestEndToEndForwardToHttp.class);
 
-    @Inject
-    private DbRecordCountAssertion dbRecordCountAssertion;
-
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()
@@ -35,10 +29,7 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
                         .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
-                .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .storingEnabled(false)
-                        .build())
-                .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
+                .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(true))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
@@ -49,8 +40,6 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
     @Test
     void testBasicEndToEnd() {
         LOGGER.info("Starting basic end-end test");
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 0, 0, 0, 0, 0));
-
         mockHttpDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
         // now the stubs are set up wait for proxy to be ready as proxy needs the
@@ -79,8 +68,6 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
                 .containsExactly(TestConstants.FEED_TEST_EVENTS_1, TestConstants.FEED_TEST_EVENTS_2);
 
         mockHttpDestination.assertSimpleDataFeedRequestContent(expectedRequestCount);
-
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 0, 0, 0, 0, 0));
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

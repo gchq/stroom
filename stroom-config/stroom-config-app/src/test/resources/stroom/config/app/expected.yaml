@@ -778,6 +778,7 @@ appConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        httpClient: null
         identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null
@@ -1186,6 +1187,13 @@ appConfig:
       - "extraction"
     referencePipelineSelectorIncludedTags:
     - "reference-loader"
+    reportUiDefaultConfig:
+      defaultBodyTemplate: "<!DOCTYPE html>\n<html lang=\"en\">\n<meta charset=\"\
+        UTF-8\" />\n<title>Report '{{ reportName | escape }}'</title>\n<body>\n <p><em>Report:\
+        \ {{ reportName | escape }}</em>  executed for {{ effectiveExecutionTime |\
+        \ escape }} on {{ executionTime | escape }}</p>\n <p><em>Description:</em>\
+        \  {{ description | escape }}</p>\n</body>\n"
+      defaultSubjectTemplate: "Report '{{ reportName | escape }}'"
     source:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000

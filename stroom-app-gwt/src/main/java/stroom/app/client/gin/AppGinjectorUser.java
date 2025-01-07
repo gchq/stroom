@@ -24,6 +24,8 @@ import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.analytics.client.gin.AnalyticsGinjector;
 import stroom.analytics.client.gin.AnalyticsModule;
+import stroom.analytics.client.gin.ReportGinjector;
+import stroom.analytics.client.gin.ReportModule;
 import stroom.annotation.client.AnnotationModule;
 import stroom.aws.s3.client.gin.S3ConfigGinjector;
 import stroom.aws.s3.client.gin.S3ConfigModule;
@@ -148,6 +150,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
+        ReportModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
@@ -191,6 +194,7 @@ public interface AppGinjectorUser extends
         AnalyticsGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
+        ReportGinjector,
         SolrIndexGinjector,
         StatisticsGinjector,
         StreamStoreGinjector,

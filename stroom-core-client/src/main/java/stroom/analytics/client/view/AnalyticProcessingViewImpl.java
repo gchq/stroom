@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
+import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.item.client.SelectionBox;
@@ -47,9 +47,6 @@ public class AnalyticProcessingViewImpl
     @Inject
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        processingType.addItem(AnalyticProcessType.SCHEDULED_QUERY);
-        processingType.addItem(AnalyticProcessType.STREAMING);
-        processingType.addItem(AnalyticProcessType.TABLE_BUILDER);
     }
 
     @Override
@@ -60,6 +57,11 @@ public class AnalyticProcessingViewImpl
     @Override
     public void setErrorFeedView(final View view) {
         this.errorFeed.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void addProcessingType(final AnalyticProcessType processingType) {
+        this.processingType.addItem(processingType);
     }
 
     @Override

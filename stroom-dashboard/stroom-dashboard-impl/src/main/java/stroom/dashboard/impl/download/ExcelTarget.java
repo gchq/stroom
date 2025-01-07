@@ -30,6 +30,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
@@ -39,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -315,5 +317,30 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
             return Optional.ofNullable(cellStyle);
         });
+    }
+
+    public void writeInfo(final List<KV> info) {
+        if (workbook != null) {
+            int rowNum = 0;
+            final SXSSFSheet sheet = workbook.createSheet("Info");
+            for (final KV kv : info) {
+                final SXSSFRow row = sheet.createRow(rowNum++);
+                final Cell keyCell = row.createCell(0);
+                keyCell.setCellValue(kv.key);
+                keyCell.setCellStyle(headingStyle);
+
+                final Cell valueCell = row.createCell(1);
+                valueCell.setCellValue(kv.value);
+            }
+
+            // Auto-size tracked columns
+            for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+                sheet.autoSizeColumn(columnIndex);
+            }
+        }
+    }
+
+    public record KV(String key, String value) {
+
     }
 }

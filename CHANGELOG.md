@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.1] - 2025-01-07
+
+* Issue **#4661** : Use Apache HttpClient.
+
+* Issue **#4378** : Add reporting.
+
+
 ## [v7.7-beta.9] - 2024-12-20
 
 * Issue **#4671** : Remove foreign key constraints from the legacy `(app|doc)_permission` tables to `stroom_user` to fix user deletion.
@@ -301,6 +308,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4450** : Fix editor completion in Query editor so that it doesn't limit completions to 100. Added the property `stroom.ui.maxEditorCompletionEntries` to control the maximum number of completions items that are shown. In the event that the property is exceeded, Stroom will pre-filter the completions based on the user's input.
 
 * Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
+
+
+## [v7.5-proxy-beta.2] - 2024-09-16
+
+* Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
+
+
+## [v7.5-beta.12] - 2024-09-06
+
+* Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
+
+* Issue **#4422** : Don't show _Edit Schedule_ in actions menu on Jobs screen for Distributed jobs.
+
+* Issue **#4418** : Fix missing css for `/stroom/sessionList`.
+
+* Issue **#4435** : Fix for progress spinner getting stuck on.
+
+
+## [v7.5-proxy-beta.1] - 2024-09-06
 
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 
@@ -839,6 +865,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4055** : Fix parsing/formatting of durations in query/dashboard expressions.
 
 
+## [v7.3-proxy-beta.1] - 2024-01-29
+
+* Issue **#2201** : New proxy implementation.
+
+
 ## [v7.3-beta.7] - 2024-01-24
 
 * Issue **#4029** : Remove the need to specify node name for query and dashboard API.
@@ -1080,7 +1111,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.1...HEAD
+[v7.8-beta.1]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...v7.8-beta.1
+[v7.8-reporting.5]: https://github.com/gchq/stroom/compare/v7.8-reporting.4...v7.8-reporting.5
+[v7.8-reporting.4]: https://github.com/gchq/stroom/compare/v7.8-reporting.3...v7.8-reporting.4
+[v7.8-reporting.3]: https://github.com/gchq/stroom/compare/v7.8-reporting.2...v7.8-reporting.3
+[v7.8-reporting.2]: https://github.com/gchq/stroom/compare/v7.8-reporting...v7.8-reporting.2
+[v7.8-reporting]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.8-reporting
 [v7.7-beta.9]: https://github.com/gchq/stroom/compare/v7.7-beta.8...v7.7-beta.9
 [v7.7-beta.8]: https://github.com/gchq/stroom/compare/v7.7-beta.7...v7.7-beta.8
 [v7.7-beta.7]: https://github.com/gchq/stroom/compare/v7.7-beta.6...v7.7-beta.7

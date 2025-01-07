@@ -160,15 +160,6 @@ proxyConfig:
 #  receiptPolicy:
 #    receiptPolicyUuid: ""
 
-  repository:
-    storingEnabled: {{ true | envVar('STORING_ENABLED') }}
-#    repoDir: "repo"
-
-  # Do we want to forward data by scanning for files in the repository? This is only needed where we want to pick up
-  # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
-  # the receipt of new data automatically triggers any required process.
-  fileScanners: []
-
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:
     maxItemsPerAggregate: 1000
@@ -182,14 +173,15 @@ proxyConfig:
     - enabled: {{ true | envVar('FORWARDING_ENABLED') }}
       name: "downstream"
       forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
-      sslConfig:
-        keyStorePath: "certs/client.jks"
-        keyStorePassword: "password"
-        trustStorePath: "certs/ca.jks"
-        trustStorePassword: "password"
-        {% if distribution == "docker" %}
-        hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
-        {% endif %}
+      httpClient:
+        tls:
+            keyStorePath: "certs/client.jks"
+            keyStorePassword: "password"
+            trustStorePath: "certs/ca.jks"
+            trustStorePassword: "password"
+            {% if distribution == "docker" %}
+            verifyHostname: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
+            {% endif %}
 
   logStream:
     metaKeys:
