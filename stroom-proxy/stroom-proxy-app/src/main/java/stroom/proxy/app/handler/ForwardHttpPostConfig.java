@@ -21,7 +21,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
     private static final Integer DEFAULT_MAX_RETRIES = 3;
     private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofSeconds(10);
-    private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofSeconds(30);
+    private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofMinutes(1);
 
     private final boolean enabled;
     private final boolean instant;
