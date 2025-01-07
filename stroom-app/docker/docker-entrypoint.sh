@@ -17,7 +17,6 @@ if [ "$(id -u)" = '0' ]; then
     chown stroom:stroom /stroom/logs
     chown stroom:stroom /stroom/logs/extra_headers.txt
     chown stroom:stroom /stroom/output
-    chown stroom:stroom /stroom/proxy_repo
     chown stroom:stroom /stroom/reference_data
     chown stroom:stroom /stroom/search_results
     chown stroom:stroom /stroom/volumes

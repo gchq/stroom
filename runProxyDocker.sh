@@ -7,7 +7,7 @@ main() {
         stroom-proxy_config \
         stroom-proxy_content \
         stroom-proxy_logs \
-        stroom-proxy_repo)
+        stroom-proxy_data)
 
     docker rm stroom-proxy || echo "No container to delete"
 
@@ -24,7 +24,7 @@ main() {
         --mount source=stroom-proxy_config,target=/stroom-proxy/config/ \
         --mount source=stroom-proxy_content,target=/stroom-proxy/content/ \
         --mount source=stroom-proxy_logs,target=/stroom-proxy/logs/ \
-        --mount source=stroom-proxy_repo,target=/stroom-proxy/repo/ \
+        --mount source=stroom-proxy_data,target=/stroom-proxy/data/ \
         --publish 9090:9090 \
         --publish 9091:9091 \
         gchq/stroom-proxy:dev-SNAPSHOT
