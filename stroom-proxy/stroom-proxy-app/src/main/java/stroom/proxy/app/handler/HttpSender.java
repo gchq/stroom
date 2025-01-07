@@ -71,7 +71,6 @@ public class HttpSender implements StreamDestination {
     @Override
     public void send(final AttributeMap attributeMap,
                      final InputStream inputStream) throws IOException {
-        final StroomDuration forwardTimeout = config.getForwardTimeout();
         final Instant startTime = Instant.now();
 
         if (NullSafe.isEmptyString(attributeMap.get(StandardHeaderArguments.FEED))) {
@@ -85,9 +84,9 @@ public class HttpSender implements StreamDestination {
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         LOGGER.debug(() -> LogUtil.message(
-                "'{}' - Opening connection, forwardUrl: {}, userAgent: {}, forwardTimeout: {}, attributeMap (" +
+                "'{}' - Opening connection, forwardUrl: {}, userAgent: {}, attributeMap (" +
                 "values truncated):\n{}",
-                forwarderName, forwardUrl, userAgent, forwardTimeout, formatAttributeMapLogging(attributeMap)));
+                forwarderName, forwardUrl, userAgent, formatAttributeMapLogging(attributeMap)));
 
         final HttpPost httpPost = new HttpPost(forwardUrl);
         httpPost.addHeader("User-Agent", userAgent);

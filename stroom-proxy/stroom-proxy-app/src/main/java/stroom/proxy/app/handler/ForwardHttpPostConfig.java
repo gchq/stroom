@@ -28,7 +28,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     private final String name;
     private final String forwardUrl;
     private final String apiKey;
-    private final StroomDuration forwardTimeout;
     private final StroomDuration forwardDelay;
     private final StroomDuration retryDelay;
     private final Integer maxRetries;
@@ -41,12 +40,11 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         name = null;
         forwardUrl = null;
         apiKey = null;
-        forwardTimeout = DEFAULT_FORWARD_TIMEOUT;
         forwardDelay = DEFAULT_FORWARD_DELAY;
         retryDelay = DEFAULT_RETRY_DELAY;
         maxRetries = DEFAULT_MAX_RETRIES;
         addOpenIdAccessToken = false;
-        httpClient = null;
+        httpClient = new HttpClientConfiguration();
     }
 
     @SuppressWarnings("unused")
@@ -56,7 +54,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                                  @JsonProperty("name") final String name,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("apiKey") final String apiKey,
-                                 @JsonProperty("forwardTimeout") final StroomDuration forwardTimeout,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
                                  @JsonProperty("retryDelay") final StroomDuration retryDelay,
                                  @JsonProperty("maxRetries") final Integer maxRetries,
@@ -67,9 +64,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         this.name = name;
         this.forwardUrl = forwardUrl;
         this.apiKey = apiKey;
-        this.forwardTimeout = forwardTimeout == null
-                ? DEFAULT_FORWARD_TIMEOUT
-                : forwardTimeout;
         this.forwardDelay = forwardDelay == null
                 ? DEFAULT_FORWARD_DELAY
                 : forwardDelay;
@@ -80,7 +74,12 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                 ? DEFAULT_MAX_RETRIES
                 : maxRetries;
         this.addOpenIdAccessToken = addOpenIdAccessToken;
-        this.httpClient = httpClient;
+        this.httpClient = Objects.requireNonNullElse(httpClient, HttpClientConfiguration
+                .builder()
+                .connectionTimeout(DEFAULT_FORWARD_TIMEOUT)
+                .connectionRequestTimeout(DEFAULT_FORWARD_TIMEOUT)
+                .timeToLive(DEFAULT_FORWARD_TIMEOUT)
+                .build());
     }
 
     /**
@@ -121,15 +120,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     @JsonProperty
     public String getApiKey() {
         return apiKey;
-    }
-
-    /**
-     * Time out when forwarding. A timeout of zero means an infinite timeout. If not a default
-     * timeout will be used.
-     */
-    @JsonProperty
-    public StroomDuration getForwardTimeout() {
-        return forwardTimeout;
     }
 
     /**
@@ -193,7 +183,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                Objects.equals(name, that.name) &&
                Objects.equals(forwardUrl, that.forwardUrl) &&
                Objects.equals(apiKey, that.apiKey) &&
-               Objects.equals(forwardTimeout, that.forwardTimeout) &&
                Objects.equals(forwardDelay, that.forwardDelay) &&
                Objects.equals(retryDelay, that.retryDelay) &&
                Objects.equals(httpClient, that.httpClient);
@@ -207,7 +196,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                 name,
                 forwardUrl,
                 apiKey,
-                forwardTimeout,
                 forwardDelay,
                 retryDelay,
                 maxRetries,
@@ -222,7 +210,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                ", instant=" + instant +
                ", name='" + name + '\'' +
                ", forwardUrl='" + forwardUrl + '\'' +
-               ", forwardTimeout=" + forwardTimeout +
                ", forwardDelay=" + forwardDelay +
                ", retryDelay=" + retryDelay +
                ", maxRetries=" + maxRetries +
@@ -241,7 +228,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         private String name;
         private String forwardUrl;
         private String apiKey;
-        private StroomDuration forwardTimeout = DEFAULT_FORWARD_TIMEOUT;
         private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
         private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
         private Integer maxRetries = DEFAULT_MAX_RETRIES;
@@ -256,7 +242,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             this.name = forwardHttpPostConfig.name;
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
             this.apiKey = forwardHttpPostConfig.apiKey;
-            this.forwardTimeout = forwardHttpPostConfig.forwardTimeout;
             this.forwardDelay = forwardHttpPostConfig.forwardDelay;
             this.retryDelay = forwardHttpPostConfig.retryDelay;
             this.maxRetries = forwardHttpPostConfig.maxRetries;
@@ -286,11 +271,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
 
         public Builder apiKey(final String apiKey) {
             this.apiKey = apiKey;
-            return this;
-        }
-
-        public Builder forwardTimeout(final StroomDuration forwardTimeout) {
-            this.forwardTimeout = forwardTimeout;
             return this;
         }
 
@@ -326,7 +306,6 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                     name,
                     forwardUrl,
                     apiKey,
-                    forwardTimeout,
                     forwardDelay,
                     retryDelay,
                     maxRetries,

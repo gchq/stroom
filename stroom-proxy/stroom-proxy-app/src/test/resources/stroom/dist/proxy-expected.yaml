@@ -40,7 +40,6 @@ proxyConfig:
     apiKey: null
     enabled: true
     forwardDelay: "PT0S"
-    forwardTimeout: "PT30S"
     forwardUrl: null
     httpClient: null
     instant: false
