@@ -216,7 +216,7 @@ proxyConfig:
         # INTERNAL - Use API Keys generated in Stroom for feed status check. No support for token
         #            authentication on data receipt.
         # EXTERNAL - Usa an external IDP for receipt token auth and for outbound HTTP connections
-        identityProviderType: "{{ INTERNAL | envVar('IDENTITY_PROVIDER_TYPE') }}"
+        identityProviderType: "{{ 'INTERNAL_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
   {% endif %}
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

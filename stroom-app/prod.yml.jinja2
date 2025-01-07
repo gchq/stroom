@@ -209,7 +209,7 @@ appConfig:
         # NO_IDP      - Use when stroom is using its internal IDP. Use apiKey for feedStatus checks.
         #               Use certificates for forwarding.
         # EXTERNAL_IDP - Usa an external IDP for receipt token auth and for outbound HTTP connections
-        identityProviderType: "{{ NO_IDP | envVar('IDENTITY_PROVIDER_TYPE') }}"
+        identityProviderType: "{{ 'NO_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
   {% endif %}
   serviceDiscovery:
     enabled: "{{ 'false' | envVar('STROOM_SERVICE_DISCOVERY_ENABLED') }}"

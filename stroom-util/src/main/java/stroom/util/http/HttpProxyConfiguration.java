@@ -9,8 +9,6 @@ import stroom.util.shared.NotInjectableConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,16 +61,10 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class HttpProxyConfiguration extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
-    @NotEmpty
     private final String host;
-
     private final Integer port;
-
     private final String scheme;
-
-    @Valid
     private final HttpAuthConfiguration auth;
-
     private final List<String> nonProxyHosts;
 
     public HttpProxyConfiguration() {
@@ -89,9 +81,12 @@ public class HttpProxyConfiguration extends AbstractConfig implements IsStroomCo
                                   @JsonProperty("scheme") final String scheme,
                                   @JsonProperty("auth") final HttpAuthConfiguration auth,
                                   @JsonProperty("nonProxyHosts") final List<String> nonProxyHosts) {
-        this.host = host;
-        this.port = port;
-        this.scheme = scheme;
+        this.host = Objects
+                .requireNonNullElse(host, "");
+        this.port = Objects
+                .requireNonNullElse(port, -1);
+        this.scheme = Objects
+                .requireNonNullElse(scheme, "http");
         this.auth = auth;
         this.nonProxyHosts = nonProxyHosts;
     }

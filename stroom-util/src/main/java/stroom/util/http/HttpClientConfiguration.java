@@ -83,7 +83,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         cookiesEnabled = false;
         maxConnections = 1024;
         maxConnectionsPerRoute = 1024;
-        keepAlive = StroomDuration.ofMillis(0);
+        keepAlive = StroomDuration.ZERO;
         retries = 0;
         userAgent = null;
         proxyConfiguration = null;
@@ -99,8 +99,8 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             @JsonProperty("connectionRequestTimeout") final StroomDuration connectionRequestTimeout,
             @JsonProperty("timeToLive") final StroomDuration timeToLive,
             @JsonProperty("cookiesEnabled") final boolean cookiesEnabled,
-            @JsonProperty("maxConnections") final int maxConnections,
-            @JsonProperty("maxConnectionsPerRoute") final int maxConnectionsPerRoute,
+            @JsonProperty("maxConnections") final Integer maxConnections,
+            @JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
             @JsonProperty("keepAlive") final StroomDuration keepAlive,
             @JsonProperty("retries") final int retries,
             @JsonProperty("userAgent") final String userAgent,
@@ -108,18 +108,26 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             @JsonProperty("validateAfterInactivityPeriod") final StroomDuration validateAfterInactivityPeriod,
             @Nullable @JsonProperty(PROP_NAME_TLS) final HttpTlsConfiguration tlsConfiguration) {
 
-        this.timeout = timeout;
-        this.connectionTimeout = connectionTimeout;
-        this.connectionRequestTimeout = connectionRequestTimeout;
-        this.timeToLive = timeToLive;
+        this.timeout = Objects
+                .requireNonNullElse(timeout, StroomDuration.ofMillis(500));
+        this.connectionTimeout = Objects
+                .requireNonNullElse(connectionTimeout, StroomDuration.ofMillis(500));
+        this.connectionRequestTimeout = Objects
+                .requireNonNullElse(connectionRequestTimeout, StroomDuration.ofMillis(500));
+        this.timeToLive = Objects
+                .requireNonNullElse(timeToLive, StroomDuration.ofHours(1));
         this.cookiesEnabled = cookiesEnabled;
-        this.maxConnections = maxConnections;
-        this.maxConnectionsPerRoute = maxConnectionsPerRoute;
-        this.keepAlive = keepAlive;
+        this.maxConnections = Objects
+                .requireNonNullElse(maxConnections, 1024);
+        this.maxConnectionsPerRoute = Objects
+                .requireNonNullElse(maxConnectionsPerRoute, 1024);
+        this.keepAlive = Objects
+                .requireNonNullElse(keepAlive, StroomDuration.ZERO);
         this.retries = retries;
         this.userAgent = userAgent;
         this.proxyConfiguration = proxyConfiguration;
-        this.validateAfterInactivityPeriod = validateAfterInactivityPeriod;
+        this.validateAfterInactivityPeriod = Objects
+                .requireNonNullElse(validateAfterInactivityPeriod, StroomDuration.ZERO);
         this.tlsConfiguration = tlsConfiguration;
     }
 
