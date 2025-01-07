@@ -17,29 +17,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4661** : Use Apache HttpClient.
 
-
-## [v7.8-reporting.5] - 2024-12-28
-
-* Issue **#4378** : Add reporting.
-
-
-## [v7.8-reporting.4] - 2024-12-28
-
-* Issue **#4378** : Add reporting.
-
-
-## [v7.8-reporting.3] - 2024-12-27
-
-* Issue **#4378** : Add reporting.
-
-
-## [v7.8-reporting.2] - 2024-12-24
-
-* Issue **#4378** : Add reporting.
-
-
-## [v7.8-reporting] - 2024-12-23
-
 * Issue **#4378** : Add reporting.
 
 
