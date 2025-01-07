@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
@@ -18,6 +19,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import jakarta.inject.Inject;
@@ -33,20 +35,20 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamingAnalyticCache.class);
     private static final String STREAMING_ANALYTIC_CACHE = "Streaming Analytic Cache";
 
-    private final AnalyticHelper analyticHelper;
+    private final ViewStore viewStore;
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final LoadingStroomCache<DocRef, StreamingAnalytic> cache;
     private final SecurityContext securityContext;
 
     @Inject
-    public StreamingAnalyticCache(final AnalyticHelper analyticHelper,
+    public StreamingAnalyticCache(final ViewStore viewStore,
                                   final AnalyticRuleStore analyticRuleStore,
                                   final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                   final CacheManager cacheManager,
                                   final Provider<AnalyticsConfig> analyticsConfigProvider,
                                   final SecurityContext securityContext) {
-        this.analyticHelper = analyticHelper;
+        this.viewStore = viewStore;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.securityContext = securityContext;
@@ -70,12 +72,12 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 LOGGER.debug("Loading streaming analytic: {}", analyticRuleRef);
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.info(() -> "Loading rule");
-                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
+                final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
 
                 ViewDoc viewDoc;
 
                 // Try and get view.
-                final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
+                final String ruleIdentity = RuleUtil.getRuleIdentity(analyticRuleDoc);
                 final SearchRequest searchRequest = analyticRuleSearchRequestHelper
                         .create(analyticRuleDoc);
                 final DocRef dataSource = searchRequest.getQuery().getDataSource();
@@ -85,7 +87,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
 
                 } else {
                     // Load view.
-                    viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                    viewDoc = loadViewDoc(ruleIdentity, dataSource);
                 }
 
                 LOGGER.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
@@ -99,6 +101,22 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 throw e;
             }
         });
+    }
+
+    public ViewDoc loadViewDoc(final String ruleIdentity,
+                               final DocRef viewDocRef) {
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
+        if (viewDoc == null) {
+            throw new RuntimeException("Unable to process analytic: " +
+                                       ruleIdentity +
+                                       " because selected view cannot be found");
+        }
+        if (viewDoc.getPipeline() == null) {
+            throw new RuntimeException("Unable to process analytic: " +
+                                       ruleIdentity +
+                                       " because view does not specify a pipeline");
+        }
+        return viewDoc;
     }
 
     @Override

@@ -5480,6 +5480,88 @@ paths:
       summary: Start a search
       tags:
       - Remote Search
+  /report/v1/sendTestEmail:
+    post:
+      operationId: testEmailTemplates_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationEmailDestination"
+        description: emailDestination
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Tests the email subject/body templates using an example detection event.
+      tags:
+      - Queries
+  /report/v1/testTemplate:
+    post:
+      operationId: testTemplate_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StringWrapper"
+        description: template
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringWrapper"
+          description: default response
+      summary: Tests the email template using an example detection event.
+      tags:
+      - Queries
+  /report/v1/{uuid}:
+    get:
+      operationId: fetchReport
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDoc"
+          description: default response
+      summary: Fetch a report doc by its UUID
+      tags:
+      - Queries
+    put:
+      operationId: updateReport
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDoc"
+          description: default response
+      summary: Update a report doc
+      tags:
+      - Queries
   /result-store/v1/destroy/{nodeName}:
     post:
       operationId: destroyResultStore
@@ -9444,6 +9526,7 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_REPORT
           - DOCUMENT_S3
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
@@ -12375,6 +12458,7 @@ components:
           - DOCUMENT_PIPELINE
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_REPORT
           - DOCUMENT_S3
           - DOCUMENT_SCRIPT
           - DOCUMENT_SCYLLA_DB
@@ -13616,6 +13700,88 @@ components:
         properties:
           userRef:
             $ref: "#/components/schemas/UserRef"
+    ReportDoc:
+      type: object
+      properties:
+        analyticNotificationConfig:
+          $ref: "#/components/schemas/NotificationConfig"
+        analyticProcessConfig:
+          $ref: "#/components/schemas/AnalyticProcessConfig"
+        analyticProcessType:
+          type: string
+          enum:
+          - STREAMING
+          - TABLE_BUILDER
+          - SCHEDULED_QUERY
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        duplicateNotificationConfig:
+          $ref: "#/components/schemas/DuplicateNotificationConfig"
+        errorFeed:
+          $ref: "#/components/schemas/DocRef"
+        languageVersion:
+          type: string
+          enum:
+          - STROOM_QL_VERSION_0_1
+          - SIGMA
+        name:
+          type: string
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationConfig"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Param"
+        query:
+          type: string
+        rememberNotifications:
+          type: boolean
+        reportSettings:
+          $ref: "#/components/schemas/ReportSettings"
+        suppressDuplicateNotifications:
+          type: boolean
+        timeRange:
+          $ref: "#/components/schemas/TimeRange"
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    ReportSettings:
+      type: object
+      properties:
+        fileType:
+          type: string
+          enum:
+          - EXCEL
+          - CSV
+          - TSV
+    ReportUiDefaultConfig:
+      type: object
+      properties:
+        defaultBodyTemplate:
+          type: string
+        defaultDestinationFeed:
+          $ref: "#/components/schemas/DocRef"
+        defaultErrorFeed:
+          $ref: "#/components/schemas/DocRef"
+        defaultNode:
+          type: string
+        defaultSubjectTemplate:
+          type: string
     ReprocessDataInfo:
       type: object
       properties:
@@ -15933,6 +16099,8 @@ components:
           items:
             type: string
           uniqueItems: true
+        reportUiDefaultConfig:
+          $ref: "#/components/schemas/ReportUiDefaultConfig"
         source:
           $ref: "#/components/schemas/SourceConfig"
         splash:

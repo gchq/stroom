@@ -13,6 +13,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-reporting.5] - 2024-12-28
+
+* Issue **#4378** : Add reporting.
+
+
+## [v7.8-reporting.4] - 2024-12-28
+
+* Issue **#4378** : Add reporting.
+
+
+## [v7.8-reporting.3] - 2024-12-27
+
+* Issue **#4378** : Add reporting.
+
+
+## [v7.8-reporting.2] - 2024-12-24
+
+* Issue **#4378** : Add reporting.
+
+
+## [v7.8-reporting] - 2024-12-23
+
+* Issue **#4378** : Add reporting.
+
+
 ## [v7.7-beta.9] - 2024-12-20
 
 * Issue **#4671** : Remove foreign key constraints from the legacy `(app|doc)_permission` tables to `stroom_user` to fix user deletion.
@@ -1104,7 +1129,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...HEAD
+[v7.8-reporting.5]: https://github.com/gchq/stroom/compare/v7.8-reporting.4...v7.8-reporting.5
+[v7.8-reporting.4]: https://github.com/gchq/stroom/compare/v7.8-reporting.3...v7.8-reporting.4
+[v7.8-reporting.3]: https://github.com/gchq/stroom/compare/v7.8-reporting.2...v7.8-reporting.3
+[v7.8-reporting.2]: https://github.com/gchq/stroom/compare/v7.8-reporting...v7.8-reporting.2
+[v7.8-reporting]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.8-reporting
 [v7.7-beta.9]: https://github.com/gchq/stroom/compare/v7.7-beta.8...v7.7-beta.9
 [v7.7-beta.8]: https://github.com/gchq/stroom/compare/v7.7-beta.7...v7.7-beta.8
 [v7.7-beta.7]: https://github.com/gchq/stroom/compare/v7.7-beta.6...v7.7-beta.7

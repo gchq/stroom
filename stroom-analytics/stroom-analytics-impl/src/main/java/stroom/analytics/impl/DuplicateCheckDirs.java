@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
@@ -68,12 +68,13 @@ public class DuplicateCheckDirs {
         return uuidList;
     }
 
-    public void deleteUnused(final List<String> duplicateStoreDirs,
-                             final List<AnalyticRuleDoc> analytics) {
+    public <T extends AbstractAnalyticRuleDoc> void deleteUnused(
+            final List<String> duplicateStoreDirs,
+            final List<T> analytics) {
         try {
             // Delete unused duplicate stores.
             final Set<String> remaining = new HashSet<>(duplicateStoreDirs);
-            for (final AnalyticRuleDoc analyticRuleDoc : analytics) {
+            for (final T analyticRuleDoc : analytics) {
                 remaining.remove(analyticRuleDoc.getUuid());
             }
             for (final String uuid : remaining) {

@@ -1,10 +1,10 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.query.common.v2.CompiledColumns;
 
 public interface DuplicateCheckFactory {
 
-    DuplicateCheck create(AnalyticRuleDoc analyticRuleDoc, CompiledColumns compiledColumns);
+    DuplicateCheck create(AbstractAnalyticRuleDoc analyticRuleDoc, CompiledColumns compiledColumns);
 
 }

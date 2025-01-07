@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRows;
@@ -56,7 +57,7 @@ class DuplicateCheckService {
                 .type(AnalyticRuleDoc.TYPE)
                 .uuid(analyticUuid)
                 .build();
-        final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+        final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
         if (analyticRuleDoc != null) {
             // Load schedules for the analytic.
             final ExecutionScheduleRequest request = ExecutionScheduleRequest
@@ -72,7 +73,7 @@ class DuplicateCheckService {
                     .collect(Collectors.toSet());
             if (nodes.size() > 1) {
                 throw new RuntimeException("Duplicate checking is not supported when executors are running " +
-                        "on multiple nodes");
+                                           "on multiple nodes");
             }
 
             if (nodes.size() == 1) {

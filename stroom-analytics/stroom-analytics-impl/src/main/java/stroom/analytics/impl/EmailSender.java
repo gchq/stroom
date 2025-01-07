@@ -20,16 +20,20 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.EmailContent;
 import stroom.analytics.shared.NotificationEmailDestination;
+import stroom.analytics.shared.ReportDoc;
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.common.base.Preconditions;
+import jakarta.activation.FileDataSource;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.mail.Message.RecipientType;
+import org.simplejavamail.api.email.AttachmentResource;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.email.EmailPopulatingBuilder;
 import org.simplejavamail.api.email.Recipient;
@@ -38,8 +42,13 @@ import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.MailerBuilder;
 import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -65,8 +74,37 @@ public class EmailSender {
         this.ruleEmailTemplatingService = ruleEmailTemplatingService;
     }
 
-    public void send(final NotificationEmailDestination emailDestination,
-                     final Detection detection) {
+    public void sendDetection(final NotificationEmailDestination emailDestination,
+                              final Detection detection) {
+        final EmailContent renderedEmail = ruleEmailTemplatingService.renderDetectionEmail(
+                detection,
+                emailDestination);
+        send(emailDestination, renderedEmail, detection.getDetectorName(), Collections.emptyList());
+    }
+
+    public void sendReport(final ReportDoc reportDoc,
+                           final NotificationEmailDestination emailDestination,
+                           final Path file,
+                           final Instant executionTime,
+                           final Instant effectiveExecutionTime) {
+        final Map<String, Object> context = new HashMap<>();
+        context.put("reportName", reportDoc.getName());
+        context.put("description", reportDoc.getDescription());
+        context.put("executionTime", DateUtil.createNormalDateTimeString(executionTime));
+        context.put("effectiveExecutionTime", DateUtil.createNormalDateTimeString(effectiveExecutionTime));
+
+        ruleEmailTemplatingService.renderEmail(emailDestination, context);
+        final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
+        final List<AttachmentResource> attachmentResources = new ArrayList<>();
+        attachmentResources.add(new AttachmentResource(file.getFileName().toString(),
+                new FileDataSource(file.toFile())));
+        send(emailDestination, renderedEmail, reportDoc.getName(), attachmentResources);
+    }
+
+    private void send(final NotificationEmailDestination emailDestination,
+                      final EmailContent renderedEmail,
+                      final String defaultSubject,
+                      final List<AttachmentResource> attachmentResources) {
         final AnalyticsConfig analyticsConfig = analyticsConfigProvider.get();
         final EmailConfig emailConfig = analyticsConfig.getEmailConfig();
         Preconditions.checkNotNull(emailConfig, "Missing 'email' section in config");
@@ -77,13 +115,9 @@ public class EmailSender {
         try {
             validate(emailDestination);
 
-            final EmailContent renderedEmail = ruleEmailTemplatingService.renderAlertEmail(
-                    detection,
-                    emailDestination);
-
             final String subject = NullSafe.nonBlankStringElse(
                     renderedEmail.getSubject(),
-                    detection.getDetectorName());
+                    defaultSubject);
             final String body = Objects.requireNonNullElse(renderedEmail.getBody(), "");
 
             emailBuilder
@@ -103,6 +137,7 @@ public class EmailSender {
             } else {
                 emailBuilder.withPlainText(body);
             }
+            emailBuilder.withAttachments(attachmentResources);
         } catch (Exception e) {
             final String message = LogUtil.message("Error sending alert email using user ({}) at {}:{} - {}",
                     smtpConfig.getUsername(),
@@ -119,7 +154,7 @@ public class EmailSender {
                     .withTransportStrategy(smtpConfig.getTransportStrategy());
 
             if (!NullSafe.isEmptyString(smtpConfig.getUsername())
-                    && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
+                && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
                 mailerBuilder.withSMTPServer(
                         smtpConfig.getHost(),
                         smtpConfig.getPort(),

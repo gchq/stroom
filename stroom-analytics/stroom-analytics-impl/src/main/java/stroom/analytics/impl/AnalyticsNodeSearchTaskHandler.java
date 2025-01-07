@@ -18,6 +18,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.api.AnnotationFields;
 import stroom.datasource.api.v2.QueryField;
@@ -70,10 +71,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -85,7 +84,6 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private final AnnotationsDecoratorFactory annotationsDecoratorFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
-    private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final AnalyticDataStores analyticDataStores;
     private final ExpressionPredicateFactory expressionPredicateFactory;
@@ -99,14 +97,12 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     AnalyticsNodeSearchTaskHandler(final AnnotationsDecoratorFactory annotationsDecoratorFactory,
                                    final SecurityContext securityContext,
                                    final ExecutorProvider executorProvider,
-                                   final Executor executor,
                                    final TaskContextFactory taskContextFactory,
                                    final AnalyticDataStores analyticDataStores,
                                    final ExpressionPredicateFactory expressionPredicateFactory) {
         this.annotationsDecoratorFactory = annotationsDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
-        this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.analyticDataStores = analyticDataStores;
         this.expressionPredicateFactory = expressionPredicateFactory;
@@ -164,7 +160,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 }
 
                 final ExpressionMatcher expressionMatcher = new ExpressionMatcher(fieldMap);
-                final Set<AnalyticRuleDoc> currentRules = analyticDataStores.getCurrentRules();
+                final List<AnalyticRuleDoc> currentRules = analyticDataStores.loadAll();
                 currentRules.forEach(doc -> {
                     final Runnable runnable = taskContextFactory
                             .childContext(parentContext, "Analytic Search - " + doc.getName(), taskContext ->
@@ -209,7 +205,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     }
 
     private void searchAnalyticDoc(final NodeSearchTask task,
-                                   final AnalyticRuleDoc doc,
+                                   final AbstractAnalyticRuleDoc doc,
                                    final ExpressionOperator expression,
                                    final FieldIndex fieldIndex,
                                    final TaskContext parentContext,
@@ -227,8 +223,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 final LmdbDataStore lmdbDataStore = analyticDataStore.getLmdbDataStore();
 
                 try {
-                    ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
-                    TableSettings tableSettings = resultRequest.getMappings().get(0);
+                    ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
+                    TableSettings tableSettings = resultRequest.getMappings().getFirst();
 
                     tableSettings = tableSettings
                             .copy()
@@ -265,11 +261,11 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     LOGGER.debug(e::getMessage, e);
                     errorConsumer.add(new RuntimeException(
                             "Error getting results for analytic '" +
-                                    doc.getName() +
-                                    "' (" +
-                                    doc.getUuid() +
-                                    ") - " +
-                                    e.getMessage(), e));
+                            doc.getName() +
+                            "' (" +
+                            doc.getUuid() +
+                            ") - " +
+                            e.getMessage(), e));
                 }
             }
         } catch (final RuntimeException e) {
@@ -280,19 +276,19 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
     @Override
     public void updateInfo() {
         parentContext.info(() -> "Searching... " +
-                "found "
-                + hitCount.sum() +
-                " documents" +
-                " performed " +
-                extractionCount.sum() +
-                " extractions");
+                                 "found "
+                                 + hitCount.sum() +
+                                 " documents" +
+                                 " performed " +
+                                 extractionCount.sum() +
+                                 " extractions");
     }
 
     private static class TableResultConsumer implements TableResultBuilder {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
 
-        private final AnalyticRuleDoc analyticRuleDoc;
+        private final AbstractAnalyticRuleDoc analyticRuleDoc;
 
         private FieldIndex fieldIndex;
         private final QueryField[] requestedFields;
@@ -304,7 +300,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
         private List<Column> columns;
 
-        public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
+        public TableResultConsumer(final AbstractAnalyticRuleDoc analyticRuleDoc,
                                    final QueryField[] requestedFields,
                                    final LongAdder hitCount,
                                    final ValuesConsumer consumer,
@@ -352,7 +348,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 final StringBuilder sb = new StringBuilder();
                 for (int j = 0; j < columns.size(); j++) {
                     final Column column = columns.get(j);
-                    if (sb.length() > 0) {
+                    if (!sb.isEmpty()) {
                         sb.append(", ");
                     }
                     sb.append(column.getName());

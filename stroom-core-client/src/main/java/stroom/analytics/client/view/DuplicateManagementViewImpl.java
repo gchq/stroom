@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.DuplicateManagementPresenter.DuplicateManagementView;
+import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 

@@ -17,7 +17,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
@@ -50,8 +50,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NotificationListPresenter
-        extends DocumentEditPresenter<PagerView, AnalyticRuleDoc> {
+public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
+        extends DocumentEditPresenter<PagerView, D> {
 
     private final MyDataGrid<NotificationConfig> dataGrid;
     private final MultiSelectionModelImpl<NotificationConfig> selectionModel;
@@ -62,12 +62,13 @@ public class NotificationListPresenter
     private boolean initialised;
     private final Provider<AnalyticNotificationEditPresenter> editPresenterProvider;
     private final ListDataProvider<NotificationConfig> dataProvider;
-    private final List<NotificationConfig> list = new ArrayList<>();
+    final List<NotificationConfig> list = new ArrayList<>();
+    private DocRef docRef;
 
     @Inject
-    public NotificationListPresenter(final EventBus eventBus,
-                                     final PagerView view,
-                                     final Provider<AnalyticNotificationEditPresenter> editPresenterProvider) {
+    public AbstractNotificationListPresenter(final EventBus eventBus,
+                                             final PagerView view,
+                                             final Provider<AnalyticNotificationEditPresenter> editPresenterProvider) {
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
 
@@ -102,7 +103,7 @@ public class NotificationListPresenter
 
     private void add() {
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-        presenter.read(NotificationConfig.builder().build());
+        presenter.read(docRef, NotificationConfig.builder().build());
         ShowPopupEvent
                 .builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -124,7 +125,7 @@ public class NotificationListPresenter
         final NotificationConfig selected = selectionModel.getSelected();
         if (selected != null) {
             final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-            presenter.read(selected);
+            presenter.read(docRef, selected);
             ShowPopupEvent
                     .builder(presenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -262,17 +263,13 @@ public class NotificationListPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
+        this.docRef = docRef;
         list.clear();
         if (document.getNotifications() != null) {
             list.addAll(document.getNotifications());
         }
         refresh();
-    }
-
-    @Override
-    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc document) {
-        return document.copy().notifications(new ArrayList<>(list)).build();
     }
 
     public void clear() {

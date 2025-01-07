@@ -2,8 +2,8 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessResource;
-import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -42,7 +42,7 @@ public class StreamingProcessingPresenter
             if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
                 AlertEvent.fireWarn(
                         this,
-                        "Please save the rule and ensure all settings are correct before adding executions",
+                        "Please ensure all settings are correct and save before adding executions",
                         null);
                 return false;
             } else {
@@ -51,7 +51,7 @@ public class StreamingProcessingPresenter
         });
     }
 
-    public void update(final AnalyticRuleDoc analyticRuleDoc,
+    public void update(final AbstractAnalyticRuleDoc analyticRuleDoc,
                        final boolean readOnly,
                        final String query) {
         restFactory
