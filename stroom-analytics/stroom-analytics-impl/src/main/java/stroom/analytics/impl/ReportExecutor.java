@@ -28,6 +28,7 @@ import stroom.analytics.shared.ReportDoc;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
+import stroom.dashboard.impl.download.ExcelTarget.KV;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.data.shared.StreamTypeNames;
@@ -215,6 +216,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                         // Create the output file.
                         file = createFile(
                                 reportDoc,
+                                executionTime,
                                 effectiveExecutionTime,
                                 modifiedRequest.getDateTimeSettings(),
                                 dataStore,
@@ -296,14 +298,13 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     }
 
     private Path createFile(final ReportDoc reportDoc,
+                            final Instant executionTime,
                             final Instant effectiveExecutionTime,
                             final DateTimeSettings dateTimeSettings,
                             final DataStore dataStore,
                             final ResultRequest resultRequest) throws IOException {
         long totalRowCount = 0;
         final DownloadSearchResultFileType fileType = reportDoc.getReportSettings().getFileType();
-
-        // Import file.
         final String dateTime = DateUtil.createFileDateTimeString(effectiveExecutionTime);
         final String fileName = getFileName(reportDoc.getName() + "_" + dateTime,
                 fileType.getExtension());
@@ -333,8 +334,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 target.start();
 
                 try {
-                    target.startTable("Report " +
-                                      DateUtil.createFileDateTimeString(effectiveExecutionTime));
+                    target.startTable("Report");
 
                     final SampleGenerator sampleGenerator =
                             new SampleGenerator(false, 100);
@@ -358,6 +358,22 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 } finally {
                     target.endTable();
                 }
+
+                // Write report info sheet if this is an Excel target.
+                if (target instanceof final ExcelTarget excelTarget) {
+                    final List<ExcelTarget.KV> info = new ArrayList<>();
+                    info.add(new KV("Report Name", reportDoc.getName()));
+                    info.add(new KV("Report Description",
+                            reportDoc.getDescription() != null
+                                    ? reportDoc.getDescription().replaceAll("\n", "")
+                                    : ""));
+                    info.add(new KV("Execution Time",
+                            DateUtil.createNormalDateTimeString(executionTime)));
+                    info.add(new KV("Effective Execution Time",
+                            DateUtil.createNormalDateTimeString(effectiveExecutionTime)));
+                    excelTarget.writeInfo(info);
+                }
+
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
                 throw e;
