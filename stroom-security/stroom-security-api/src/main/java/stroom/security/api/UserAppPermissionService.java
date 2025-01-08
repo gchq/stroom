@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.security.api;
 
 import java.util.Set;
 

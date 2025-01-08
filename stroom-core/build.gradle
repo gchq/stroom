@@ -28,6 +28,7 @@ dependencies {
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -40,7 +41,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-job:stroom-job-api')
-    
+
     implementation libs.commons_compress
     implementation libs.commons_io
     implementation libs.commons_lang
@@ -79,12 +80,12 @@ dependencies {
     testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
-    
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
-    
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_impl

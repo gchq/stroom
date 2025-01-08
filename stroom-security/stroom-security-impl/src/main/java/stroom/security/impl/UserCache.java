@@ -19,6 +19,7 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.security.api.UserService;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;

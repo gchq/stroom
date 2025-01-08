@@ -18,6 +18,7 @@ package stroom.security.impl;
 
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;

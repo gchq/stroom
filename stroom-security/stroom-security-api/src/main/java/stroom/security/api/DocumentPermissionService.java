@@ -6,6 +6,10 @@ import java.util.Set;
 
 public interface DocumentPermissionService {
 
+    void addPermission(String docUuid,
+                       String userUuid,
+                       String permission);
+
     void clearDocumentPermissions(String documentUuid);
 
     void addDocumentPermissions(DocRef sourceDocRef,

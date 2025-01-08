@@ -3,6 +3,7 @@ package stroom.config;
 import stroom.config.app.AppConfig;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.impl.MetaServiceConfig;
+import stroom.meta.shared.DataFormatNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -32,7 +33,15 @@ public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
         // Make sure we can validate the whole tree
         ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 
-        Assertions.assertThat(result.getErrorCount()).isEqualTo(0);
+        result.handleViolations((constraintViolation, validationSeverity) -> {
+            switch (validationSeverity) {
+                case ERROR -> LOGGER.error("Got violation: {}", constraintViolation.getMessage());
+                case WARNING -> LOGGER.warn("Got violation: {}", constraintViolation.getMessage());
+            }
+        });
+
+        Assertions.assertThat(result.getErrorCount())
+                .isEqualTo(0);
     }
 
     /**
@@ -42,6 +51,7 @@ public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
     void testCrossPropValidation() {
         final Set<String> types = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         final Set<String> rawTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
+        final Set<String> dataFormats = new HashSet<>(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
         // Add a raw type that is not in the set of types so should fail validation
         rawTypes.add("foo");
         MetaServiceConfig metaServiceConfig = new MetaServiceConfig(
@@ -52,11 +62,17 @@ public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
                 null,
                 types,
                 rawTypes,
+                dataFormats,
                 0);
 
         final Result<AbstractConfig> result = appConfigValidator.validate(metaServiceConfig);
-        result.handleViolations((violation, severity) -> LOGGER.error("Got {} violation {}",
-                severity, violation.getMessage()));
+
+        result.handleViolations((constraintViolation, validationSeverity) -> {
+            switch (validationSeverity) {
+                case ERROR -> LOGGER.error("Got violation: {}", constraintViolation.getMessage());
+                case WARNING -> LOGGER.warn("Got violation: {}", constraintViolation.getMessage());
+            }
+        });
         Assertions.assertThat(result.getErrorCount())
                 .isEqualTo(1);
     }

@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 
+import stroom.security.api.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 

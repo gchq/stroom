@@ -52,6 +52,7 @@ public final class PermissionNames {
     public static final String IMPORT_CONFIGURATION = "Import Configuration";
     public static final String EXPORT_CONFIGURATION = "Export Configuration";
     public static final String VIEW_SYSTEM_INFO_PERMISSION = "View System Information";
+    public static final String CHECK_RECEIPT_STATUS = "Check Receipt Status";
 
     public static final String[] PERMISSIONS = new String[]{
             ADMINISTRATOR,

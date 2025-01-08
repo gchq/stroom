@@ -23,8 +23,8 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.util.shared.EntityServiceException;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -32,31 +32,19 @@ import javax.inject.Provider;
 @AutoLogged
 class FeedResourceImpl implements FeedResource {
 
-    private static final List<String> SUPPORTED_ENCODINGS;
-
-    static {
-        final List<String> list = new ArrayList<>();
-        list.add("UTF-8");
-        list.add("UTF-16LE");
-        list.add("UTF-16BE");
-        list.add("UTF-32LE");
-        list.add("UTF-32BE");
-        list.add("ASCII");
-        list.add("");
-
-        list.addAll(Charset.availableCharsets().keySet());
-
-        SUPPORTED_ENCODINGS = list;
-    }
-
     private final Provider<FeedStore> feedStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final List<String> supportedEncodings;
 
     @Inject
     FeedResourceImpl(final Provider<FeedStore> feedStoreProvider,
                      final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.feedStoreProvider = feedStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        final List<String> encodings = new ArrayList<>(feedStoreProvider.get().fetchSupportedEncodings());
+        // Allow user to select no encoding
+        encodings.add("");
+        supportedEncodings = Collections.unmodifiableList(encodings);
     }
 
     @Override
@@ -75,6 +63,6 @@ class FeedResourceImpl implements FeedResource {
 
     @Override
     public List<String> fetchSupportedEncodings() {
-        return SUPPORTED_ENCODINGS;
+        return supportedEncodings;
     }
 }

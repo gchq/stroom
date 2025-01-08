@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -143,10 +144,51 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is non-null and not blank
+     */
+    public static boolean isNonBlankString(final String str) {
+        return str != null && !str.isBlank();
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return other
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return str != null && !str.isBlank()
+                ? str
+                : other;
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return the value supplied by otherSupplier
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return str != null && !str.isBlank()
+                ? str
+                : Objects.requireNonNull(otherSupplier).get();
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if str is non-null and not empty
+     */
+    public static boolean isNonEmptyString(final String str) {
+        return str != null && !str.isEmpty();
+    }
+
+    /**
+     * @return str trimmed or an empty string if str is null
+     */
+    public static String trim(final String str) {
+        return str != null
+                ? str.trim()
+                : "";
     }
 
     /**
@@ -396,6 +438,44 @@ public class NullSafe {
         return set != null
                 ? set
                 : Collections.emptySet();
+    }
+
+    /**
+     * Returns a non-null {@link EnumSet} containing the items in set.
+     * If set is not itself an {@link EnumSet} then the items will be copied into
+     * a new {@link EnumSet}.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <S extends Set<T>, T extends Enum<T>> Set<T> enumSet(final Class<T> type,
+                                                                       final S set) {
+        if (set instanceof EnumSet<?>) {
+            return set;
+        } else if (set == null || set.isEmpty()) {
+            return EnumSet.noneOf(type);
+        } else {
+            // Make sure we get back an EnumSet as they are faster and more memory efficient
+            return EnumSet.copyOf(set);
+        }
+    }
+
+    /**
+     * Returns a non-null {@link EnumSet} containing all non-null items.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <T extends Enum<T>> Set<T> enumSetOf(final Class<T> type, final T... items) {
+        final EnumSet<T> enumSet = EnumSet.noneOf(type);
+        if (items != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    enumSet.add(item);
+                }
+            }
+        }
+        return enumSet;
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.UserAppPermissionService;
 import stroom.security.shared.PermissionNames;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;

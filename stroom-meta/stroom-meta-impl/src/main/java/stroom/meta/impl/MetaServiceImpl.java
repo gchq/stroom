@@ -35,6 +35,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -448,12 +449,17 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public Set<String> getTypes() {
-        return metaServiceConfigProvider.get().getMetaTypes();
+        return NullSafe.set(metaServiceConfigProvider.get().getMetaTypes());
     }
 
     @Override
     public Set<String> getRawTypes() {
-        return metaServiceConfigProvider.get().getRawMetaTypes();
+        return NullSafe.set(metaServiceConfigProvider.get().getRawMetaTypes());
+    }
+
+    @Override
+    public Set<String> getDataFormats() {
+        return NullSafe.set(metaServiceConfigProvider.get().getDataFormats());
     }
 
     @Override

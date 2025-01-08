@@ -17,9 +17,19 @@
 package stroom.receive.common;
 
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 
 public interface FeedStatusService {
 
-    GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest request);
+    /**
+     * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
+     */
+    @Deprecated
+    default GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
+        final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
+        return getFeedStatus(request);
+    }
+
+    GetFeedStatusResponse getFeedStatus(GetFeedStatusRequestV2 request);
 }

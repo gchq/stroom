@@ -28,6 +28,7 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.util.shared.DocPath;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
@@ -48,6 +49,18 @@ class MockExplorerService implements ExplorerService {
                                final String docName,
                                final ExplorerNode destinationFolder,
                                final PermissionInheritance permissionInheritance) {
+        return null;
+    }
+
+    @Override
+    public ExplorerNode ensureFolderPath(final DocPath docPath, final PermissionInheritance permissionInheritance) {
+        return null;
+    }
+
+    @Override
+    public ExplorerNode ensureFolderPath(final DocPath docPath,
+                                         final ExplorerNode baseNode,
+                                         final PermissionInheritance permissionInheritance) {
         return null;
     }
 

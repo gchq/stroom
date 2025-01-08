@@ -5,6 +5,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.api.UserService;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.HasJwtClaims;

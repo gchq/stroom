@@ -3,7 +3,7 @@ package stroom.app.commands;
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.UserService;
+import stroom.security.api.UserService;
 import stroom.security.impl.apikey.ApiKeyService;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
