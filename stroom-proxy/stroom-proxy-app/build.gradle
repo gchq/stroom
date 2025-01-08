@@ -258,8 +258,8 @@ tasks.register('downloadSend', Download) {
     src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom.sh"
     dest "${releaseBuildDir}/bin/"
 
-    // Github rate limits unless you authenticate so use a personal access token
-    // that only has access to public repos. Env var won't be set in dev though.
+    // Github rate limits unless you authenticate so use the special
+    // auto generated workflow GITHUB_TOKEN
     def token = "$System.env.PAT_FOR_PUBLIC_REPOS"
     if (token != null && token != "") {
         header 'Authorization', "Bearer $token"
@@ -271,8 +271,8 @@ tasks.register('downloadSendArgs', Download) {
     src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom_args.sh"
     dest "${releaseBuildDir}/bin/"
 
-    // Github rate limits unless you authenticate so use a personal access token
-    // that only has access to public repos. Env var won't be set in dev though.
+    // Github rate limits unless you authenticate so use the special
+    // auto generated workflow GITHUB_TOKEN
     def token = "$System.env.PAT_FOR_PUBLIC_REPOS"
     if (token != null && token != "") {
         header 'Authorization', "Bearer $token"
