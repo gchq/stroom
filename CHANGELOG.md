@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.6] - 2025-01-08
+
+* Fix config.
+
+
 ## [v7.8-beta.5] - 2025-01-08
 
 * Fix config.
@@ -1131,7 +1136,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.6...HEAD
+[v7.8-beta.6]: https://github.com/gchq/stroom/compare/v7.8-beta.5...v7.8-beta.6
 [v7.8-beta.5]: https://github.com/gchq/stroom/compare/v7.8-beta.4...v7.8-beta.5
 [v7.8-beta.4]: https://github.com/gchq/stroom/compare/v7.8-beta.3...v7.8-beta.4
 [v7.8-beta.3]: https://github.com/gchq/stroom/compare/v7.8-beta.2...v7.8-beta.3
