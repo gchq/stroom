@@ -56,9 +56,8 @@ EXPOSE 8091
 VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
-VOLUME /stroom-proxy/repo/
+VOLUME /stroom-proxy/data/
 VOLUME /stroom-proxy/logs/
-VOLUME /stroom-proxy/db/
 VOLUME /stroom-proxy/failures/
 # sqlite_library mounted as tmpfs not a managed volumne
 
@@ -91,10 +90,8 @@ RUN \
     mkdir -p /stroom-proxy/logs/receive && \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
-    mkdir -p /stroom-proxy/repo && \
-    mkdir -p /stroom-proxy/db && \
+    mkdir -p /stroom-proxy/data && \
     mkdir -p /stroom-proxy/failures && \
-    mkdir -p /stroom-proxy/sqlite_library && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy all the fat jars for the application and connectors
