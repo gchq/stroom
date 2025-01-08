@@ -96,6 +96,7 @@ jobs:
           # https://github.com/gchq/stroom/settings/secrets/actions
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          PAT_FOR_PUBLIC_REPOS: ${{ secrets.PAT_FOR_PUBLIC_REPOS }}
         run: |
           pushd "${BUILD_DIR}" > /dev/null
           echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
