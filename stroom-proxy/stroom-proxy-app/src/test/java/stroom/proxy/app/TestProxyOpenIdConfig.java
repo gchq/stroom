@@ -111,6 +111,6 @@ class TestProxyOpenIdConfig extends AbstractValidatorTest {
         Assertions.assertThat(constraintViolations)
                 .hasSize(1)
                 .first()
-                .matches(violation -> violation.getMessage().contains("INTERNAL is not a valid value"));
+                .matches(violation -> violation.getMessage().contains("INTERNAL_IDP is not a valid value"));
     }
 }
