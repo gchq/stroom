@@ -39,6 +39,7 @@ public class ReceiveDataHelper {
     private final CertificateExtractor certificateExtractor;
     private final ProxyId proxyId;
     private final LogStream logStream;
+    private final AttributeMapValidator attributeMapValidator;
 
     @Inject
     public ReceiveDataHelper(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -46,13 +47,15 @@ public class ReceiveDataHelper {
                              final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
                              final ProxyId proxyId,
-                             final LogStream logStream) {
+                             final LogStream logStream,
+                             final AttributeMapValidator attributeMapValidator) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilter = attributeMapFilterFactory.create();
         this.certificateExtractor = certificateExtractor;
         this.proxyId = proxyId;
         this.logStream = logStream;
+        this.attributeMapValidator = attributeMapValidator;
     }
 
     public String process(final HttpServletRequest request,
@@ -77,14 +80,13 @@ public class ReceiveDataHelper {
 
                 Metrics.measure("ProxyRequestHandler - handle1", () -> {
                     // Validate the supplied attributes.
-                    AttributeMapValidator.validate(
+                    attributeMapValidator.validate(
                             attributeMap,
                             receiveDataConfig::getMetaTypes);
 
                     // Test to see if we are going to accept this stream or drop the data.
                     if (attributeMapFilter.filter(attributeMap, userIdentity)) {
                         consumeHandler.handle(request, attributeMap, requestUuid);
-
                     } else {
                         dropHandler.handle(request, attributeMap, requestUuid);
                     }

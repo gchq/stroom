@@ -2,7 +2,6 @@ package stroom.receive.common;
 
 import stroom.docref.HasDisplayValue;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
@@ -17,13 +16,10 @@ import org.apache.commons.lang3.StringUtils;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -52,9 +48,6 @@ public class DataFeedKeyServiceImpl
     // the DataFeedKey has passed its expiry date.
     private final Map<CacheKey, CachedDataFeedKey> cacheKeyToDataFeedKeyMap = new ConcurrentHashMap<>();
     private final Map<String, CachedDataFeedKey> subjectIdToDataFeedKeyMap = new ConcurrentHashMap<>();
-
-    // TODO replace with cache
-    private final Map<String, Pattern> feedPatternCache = new ConcurrentHashMap<>();
 
     // TODO replace with cache
     // Cache of the un-hashed key to validated DataFeedKey, to save us the hashing cost
@@ -132,12 +125,8 @@ public class DataFeedKeyServiceImpl
     public void evictExpired() {
         LOGGER.debug("Evicting expired dataFeedKeys");
         final AtomicInteger counter = new AtomicInteger();
-        final Set<String> patternsToRemove = new HashSet<>();
-        final Predicate<Entry<?, CachedDataFeedKey>> removeIfPredicate = entry -> {
-            final CachedDataFeedKey cachedDataFeedKey = entry.getValue();
-            patternsToRemove.addAll(NullSafe.list(cachedDataFeedKey.getFeedRegexPatterns()));
-            return entry.getValue().isExpired();
-        };
+        final Predicate<Entry<?, CachedDataFeedKey>> removeIfPredicate = entry ->
+                entry.getValue().isExpired();
 
         counter.set(0);
         cacheKeyToDataFeedKeyMap.entrySet().removeIf(
@@ -153,15 +142,6 @@ public class DataFeedKeyServiceImpl
         keyToDataFeedKeyMap.entrySet().removeIf(PredicateUtil.countingPredicate(counter, entry ->
                 entry.getValue().filter(DataFeedKey::isExpired).isPresent()));
         LOGGER.debug("Removed {} keyToDataFeedKeyMap entries", counter);
-
-        // Remove unused patterns. It's possible a pattern is used by >1 DFK, but
-        // it is not that much bother to recompile a pattern if needed. Easier than
-        // working out which ones are not actually needed any more.
-        counter.set(0);
-        feedPatternCache.entrySet().removeIf(PredicateUtil.countingPredicate(counter, entry -> {
-            final String pattern = entry.getKey();
-            return patternsToRemove.contains(pattern);
-        }));
     }
 
     @Override
@@ -252,44 +232,44 @@ public class DataFeedKeyServiceImpl
                 .filter(str -> !StringUtils.isNotBlank(str));
     }
 
-    @Override
-    public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
-        final String feedName = getAttribute(attributeMap, StandardHeaderArguments.FEED)
-                .orElseThrow(() ->
-                        new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap));
-
-        final CachedDataFeedKey dataFeedKey = subjectIdToDataFeedKeyMap.get(userIdentity.getSubjectId());
-
-        Objects.requireNonNull(dataFeedKey, "dataFeedKey should not be null at this point");
-
-        final List<String> feedRegexPatterns = dataFeedKey.getFeedRegexPatterns();
-        if (NullSafe.hasItems(feedRegexPatterns)) {
-            boolean isFeedNameValid = false;
-            for (final String feedRegexPattern : feedRegexPatterns) {
-                final Pattern pattern = feedPatternCache.computeIfAbsent(feedRegexPattern, Pattern::compile);
-                if (pattern.matcher(feedName).matches()) {
-                    // Feed matches one of the regexes, so we need to auto-create it (if enabled)
-//                    ensureFeed(feedName);
-                    isFeedNameValid = true;
-                } else {
-                    LOGGER.debug("feedName: '{}' does not match pattern: '{}'", feedName, feedRegexPattern);
-                }
-            }
-            if (!isFeedNameValid) {
-                LOGGER.debug(() -> LogUtil.message("No match on feedName '{}' with patterns [{}]",
-                        feedName,
-                        feedRegexPatterns.stream()
-                                .map(pattern -> "'" + pattern + "'")
-                                .collect(Collectors.joining(", "))));
-                throw new StroomStreamException(StroomStatusCode.INVALID_FEED_NAME, attributeMap);
-            } else {
-                return true;
-            }
-        } else {
-            LOGGER.debug("No feed patterns to match on, allowing it to continue");
-            return true;
-        }
-    }
+//    @Override
+//    public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
+//        final String feedName = getAttribute(attributeMap, StandardHeaderArguments.FEED)
+//                .orElseThrow(() ->
+//                        new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap));
+//
+//        final CachedDataFeedKey dataFeedKey = subjectIdToDataFeedKeyMap.get(userIdentity.getSubjectId());
+//
+//        Objects.requireNonNull(dataFeedKey, "dataFeedKey should not be null at this point as we must have");
+//
+//        final List<String> feedRegexPatterns = dataFeedKey.getFeedRegexPatterns();
+//        if (NullSafe.hasItems(feedRegexPatterns)) {
+//            boolean isFeedNameValid = false;
+//            for (final String feedRegexPattern : feedRegexPatterns) {
+//                final Pattern pattern = feedPatternCache.computeIfAbsent(feedRegexPattern, Pattern::compile);
+//                if (pattern.matcher(feedName).matches()) {
+//                    // Feed matches one of the regexes, so we need to auto-create it (if enabled)
+////                    ensureFeed(feedName);
+//                    isFeedNameValid = true;
+//                } else {
+//                    LOGGER.debug("feedName: '{}' does not match pattern: '{}'", feedName, feedRegexPattern);
+//                }
+//            }
+//            if (!isFeedNameValid) {
+//                LOGGER.debug(() -> LogUtil.message("No match on feedName '{}' with patterns [{}]",
+//                        feedName,
+//                        feedRegexPatterns.stream()
+//                                .map(pattern -> "'" + pattern + "'")
+//                                .collect(Collectors.joining(", "))));
+//                throw new StroomStreamException(StroomStatusCode.INVALID_FEED_NAME, attributeMap);
+//            } else {
+//                return true;
+//            }
+//        } else {
+//            LOGGER.debug("No feed patterns to match on, allowing it to continue");
+//            return true;
+//        }
+//    }
 
 //    private void ensureFeed(final String feedName) {
 //        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
@@ -307,7 +287,8 @@ public class DataFeedKeyServiceImpl
             final Optional<UserIdentity> optUserIdentity = getDataFeedKey(request, attributeMap)
                     .map(dataFeedKey -> {
                         // Ensure the stream attributes from the data feed key are set in the attributeMap so
-                        // that the AttributeMapFilters have access to them.
+                        // that the AttributeMapFilters have access to them and any attributes that are static
+                        // to this key are applied to all streams that use it, e.g. aws account number.
                         final Map<String, String> streamMeta = NullSafe.map(dataFeedKey.getStreamMetaData());
                         // Entries from the data feed key trump what is in the headers
                         attributeMap.putAll(streamMeta);

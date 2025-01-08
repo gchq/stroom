@@ -63,6 +63,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final MetaService metaService;
     private final RequestAuthenticator requestAuthenticator;
     private final CertificateExtractor certificateExtractor;
+    private final AttributeMapValidator attributeMapValidator;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
@@ -71,7 +72,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final TaskContextFactory taskContextFactory,
                                      final MetaService metaService,
                                      final RequestAuthenticator requestAuthenticator,
-                                     final CertificateExtractor certificateExtractor) {
+                                     final CertificateExtractor certificateExtractor,
+                                     final AttributeMapValidator attributeMapValidator) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.streamTargetStreamHandlerProvider = streamTargetStreamHandlerProvider;
@@ -79,6 +81,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
         this.metaService = metaService;
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
+        this.attributeMapValidator = attributeMapValidator;
     }
 
     @Override
@@ -92,7 +95,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
             // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap, metaService::getTypes);
+            attributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             final String feedName;
             if (attributeMapFilter.filter(attributeMap, userIdentity)) {

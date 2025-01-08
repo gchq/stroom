@@ -21,23 +21,29 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.meta.api.AttributeMap;
+import stroom.proxy.StroomStatusCode;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.AutoContentCreationConfig;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.util.NullSafe;
 
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 class FeedStatusServiceImpl implements FeedStatusService {
 
+    private static final Pattern REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_]");
+    public static final String NAME_PART_DELIMITER = "-";
+
     private final SecurityContext securityContext;
     private final FeedProperties feedProperties;
     private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
     private final ContentAutoCreationService contentAutoCreationService;
-
 
     @Inject
     FeedStatusServiceImpl(final SecurityContext securityContext,
@@ -50,46 +56,75 @@ class FeedStatusServiceImpl implements FeedStatusService {
         this.contentAutoCreationService = contentAutoCreationService;
     }
 
+    /**
+     * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
+     */
+    @Deprecated
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
+        // Legacy API that does not require a perm check
+        return securityContext.asProcessingUserResult(() -> {
+            FeedStatus feedStatus = feedProperties.getStatus(legacyRequest.getFeedName());
+            return buildGetFeedStatusResponse(feedStatus);
+        });
+    }
+
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
-        return securityContext.asProcessingUserResult(() -> {
-            FeedStatus feedStatus = feedProperties.getStatus(request.getFeedName());
+        // Can't allow anyone with an api key to check feed statues.
+        return securityContext.secureResult(PermissionNames.CHECK_RECEIPT_STATUS, () ->
+                securityContext.asProcessingUserResult(() -> {
 
-            if (feedStatus == null) {
-                // Feed does not exist so auto-create it if so configured
-                if (autoContentCreationConfigProvider.get().isEnabled()) {
-                    final AttributeMap attributeMap = NullSafe.get(
-                            request.getAttributeMap(),
-                            map -> {
-                                final AttributeMap attrMap = new AttributeMap();
-                                attrMap.putAll(map);
-                                return attrMap;
-                            });
-                    feedStatus = contentAutoCreationService.createFeed(
-                                    request.getFeedName(),
-                                    request.getSubjectId(),
-                                    attributeMap)
-                            .map(FeedDoc::getStatus)
-                            .orElse(null);
-                }
+                    final String feedName;
+                    try {
+                        feedName = request.getFeedName();
+                    } catch (Exception e) {
+                        return new GetFeedStatusResponse(stroom.proxy.feed.remote.FeedStatus.Reject,
+                                e.getMessage(),
+                                StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+                    }
+
+                    FeedStatus feedStatus = feedProperties.getStatus(feedName);
+
+                    // Feed does not exist so auto-create it if so configured
+                    if (feedStatus == null
+                            && autoContentCreationConfigProvider.get().isEnabled()) {
+
+                        final AttributeMap attributeMap = NullSafe.get(
+                                request.getAttributeMap(),
+                                reqAttrMap -> {
+                                    final AttributeMap attrMap = new AttributeMap();
+                                    attrMap.putAll(reqAttrMap);
+                                    return attrMap;
+                                });
+
+                        feedStatus = contentAutoCreationService.createFeed(
+                                        feedName,
+                                        request.getSubjectId(),
+                                        attributeMap)
+                                .map(FeedDoc::getStatus)
+                                .orElse(null);
+                    }
+                    return buildGetFeedStatusResponse(feedStatus);
+                }));
+    }
+
+    private static GetFeedStatusResponse buildGetFeedStatusResponse(final FeedStatus feedStatus) {
+        if (feedStatus == null) {
+            return GetFeedStatusResponse.createFeedIsNotDefinedResponse();
+        } else {
+            if (FeedStatus.REJECT.equals(feedStatus)) {
+                return GetFeedStatusResponse.createFeedNotSetToReceiveDataResponse();
             }
-
-            if (feedStatus == null) {
-                return GetFeedStatusResponse.createFeedIsNotDefinedResponse();
-            } else {
-                if (FeedStatus.REJECT.equals(feedStatus)) {
-                    return GetFeedStatusResponse.createFeedNotSetToReceiveDataResponse();
-                }
-                if (FeedStatus.DROP.equals(feedStatus)) {
-                    return GetFeedStatusResponse.createOKDropResponse();
-                }
+            if (FeedStatus.DROP.equals(feedStatus)) {
+                return GetFeedStatusResponse.createOKDropResponse();
             }
+        }
 
-            // All OK so far
+        // All OK so far
 
-            // TODO : REPLACE THIS WITH A POLICY BASED DECISION.
+        // TODO : REPLACE THIS WITH A POLICY BASED DECISION.
 
-            // Feed exists - now check the folder
+        // Feed exists - now check the folder
 //        final Folder folder = folderService.load(feed.getFolder());
 //        final GroupAuthorisation groupAuthorisation = folder.getComputerAuthorisation();
 //
@@ -119,8 +154,6 @@ class FeedStatusServiceImpl implements FeedStatusService {
 //            }
 //        }
 //
-            return GetFeedStatusResponse.createOKReceiveResponse();
-
-        });
+        return GetFeedStatusResponse.createOKReceiveResponse();
     }
 }

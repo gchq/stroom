@@ -45,6 +45,14 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     SelectionBox<String> receivedType;
     @UiField
+    SelectionBox<String> dataFormat;
+    @UiField
+    SelectionBox<String> contextFormat;
+    @UiField
+    TextBox schema;
+    @UiField
+    TextBox schemaVersion;
+    @UiField
     CustomCheckBox reference;
 
     @Inject
@@ -88,6 +96,26 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
+    public SelectionBox<String> getDataFormat() {
+        return dataFormat;
+    }
+
+    @Override
+    public SelectionBox<String> getContextFormat() {
+        return contextFormat;
+    }
+
+    @Override
+    public TextBox getSchema() {
+        return schema;
+    }
+
+    @Override
+    public TextBox getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         classification.setEnabled(!readOnly);
         dataEncoding.setEnabled(!readOnly);
@@ -96,6 +124,10 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         feedStatus.setEnabled(!readOnly);
         reference.setEnabled(!readOnly);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {
 

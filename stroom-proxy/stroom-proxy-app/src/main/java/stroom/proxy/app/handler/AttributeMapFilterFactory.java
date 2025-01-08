@@ -48,7 +48,6 @@ public class AttributeMapFilterFactory {
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider;
     private final DataFeedKeyService dataFeedKeyService;
-
     private final PeriodicallyUpdatedValue<AttributeMapFilter, ConfigState> updatableAttributeMapFilter;
 
     @Inject
@@ -77,10 +76,10 @@ public class AttributeMapFilterFactory {
     private AttributeMapFilter create(final ConfigState configState) {
         final List<AttributeMapFilter> filters = new ArrayList<>();
 
-        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
-            LOGGER.debug("Adding data feed key filter");
-            filters.add(dataFeedKeyService);
-        }
+//        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
+//            LOGGER.debug("Adding data feed key filter");
+//            filters.add(dataFeedKeyService);
+//        }
 
 //        if (NullSafe.isNonBlankString(configState.receiptPolicyUuid)) {
         if (StringUtils.isNotBlank(configState.receiptPolicyUuid)) {

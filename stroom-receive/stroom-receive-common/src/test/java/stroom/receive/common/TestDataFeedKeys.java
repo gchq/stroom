@@ -40,7 +40,6 @@ class TestDataFeedKeys {
                 "user1",
                 "user 1",
                 "system 1",
-                List.of("SYSTEM1_FEED[0-9]", "SYSTEM1_FEED[A-Z]"),
                 Map.of(
                         "key1", "val1",
                         "key2", "val2"),
@@ -52,7 +51,6 @@ class TestDataFeedKeys {
                 "user2",
                 "user 2",
                 "system 2",
-                List.of("SYSTEM2_FEED[0-9]", "SYSTEM2_FEED[A-Z]"),
                 Map.of(
                         "key3", "val3",
                         "key4", "val4"),
@@ -91,7 +89,6 @@ class TestDataFeedKeys {
                 "user1",
                 "user 1",
                 "system 1",
-                List.of("regex1", "regex2"),
                 Map.of(
                         "key1", "val1",
                         "key2", "val2"),
@@ -103,7 +100,6 @@ class TestDataFeedKeys {
                 "user2",
                 "user 2",
                 "system 2",
-                List.of("regex3", "regex4"),
                 Map.of(
                         "key3", "val3",
                         "key4", "val4"),

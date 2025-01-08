@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.validation.constraints.Min;
@@ -45,10 +44,6 @@ public class CachedDataFeedKey {
 
     public String getDisplayName() {
         return dataFeedKey.getDisplayName();
-    }
-
-    public List<String> getFeedRegexPatterns() {
-        return dataFeedKey.getFeedRegexPatterns();
     }
 
     public Map<String, String> getStreamMetaData() {

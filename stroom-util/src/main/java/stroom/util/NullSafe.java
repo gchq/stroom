@@ -144,10 +144,51 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is non-null and not blank
+     */
+    public static boolean isNonBlankString(final String str) {
+        return str != null && !str.isBlank();
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return other
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return str != null && !str.isBlank()
+                ? str
+                : other;
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return the value supplied by otherSupplier
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return str != null && !str.isBlank()
+                ? str
+                : Objects.requireNonNull(otherSupplier).get();
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if str is non-null and not empty
+     */
+    public static boolean isNonEmptyString(final String str) {
+        return str != null && !str.isEmpty();
+    }
+
+    /**
+     * @return str trimmed or an empty string if str is null
+     */
+    public static String trim(final String str) {
+        return str != null
+                ? str.trim()
+                : "";
     }
 
     /**

@@ -63,9 +63,9 @@ public class AttributeMapFilterFactory {
     private AttributeMapFilter create(final ConfigState configState) {
 
         final List<AttributeMapFilter> filters = new ArrayList<>();
-        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
-            filters.add(dataFeedKeyService);
-        }
+//        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
+//            filters.add(dataFeedKeyService);
+//        }
 //        if (NullSafe.isNonEmptyString(configState.policyUuid)) {
         if (configState.policyUuid != null && !configState.policyUuid.isEmpty()) {
             filters.add(dataReceiptPolicyAttributeMapFilterFactory.create(

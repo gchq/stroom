@@ -69,7 +69,6 @@ class TestRequestAuthenticatorImpl {
                 "My Display Name",
                 "My System Name",
                 null,
-                null,
                 Long.MAX_VALUE));
 
         // Type matters here

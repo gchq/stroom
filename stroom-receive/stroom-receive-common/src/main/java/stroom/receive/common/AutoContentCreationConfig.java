@@ -5,6 +5,7 @@ import stroom.util.shared.DocPath;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -42,6 +43,7 @@ public class AutoContentCreationConfig
         additionalGroupSuffix = " (sandbox)";
     }
 
+    @JsonCreator
     public AutoContentCreationConfig(@JsonProperty("enabled") final boolean enabled,
                                      @JsonProperty("destinationPath") final String destinationPath,
                                      @JsonProperty("templatesPath") final String templatesPath,
