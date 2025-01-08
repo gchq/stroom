@@ -194,14 +194,14 @@ proxyConfig:
       - "remotedn"
       - "remotecertexpiry"
 
-  contentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
-#  contentSync:
-#    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
-#    upstreamUrl:
-#      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
-#      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
-#    syncFrequency: 30000
-#    apiKey: ""
+  contentDir: "{{ 'content' | envVar('CONTENT_DIR') }}"
+  #  contentSync:
+  #    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
+  #    upstreamUrl:
+  #      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
+  #      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
+  #    syncFrequency: 30000
+  #    apiKey: ""
 
   feedStatus:
     url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
@@ -212,11 +212,11 @@ proxyConfig:
   security:
     authentication:
       openId:
-        # (EXTERNAL|INTERNAL|TEST), Only use TEST for test/demo installs
-        # INTERNAL - Use API Keys generated in Stroom for feed status check. No support for token
-        #            authentication on data receipt.
-        # EXTERNAL - Usa an external IDP for receipt token auth and for outbound HTTP connections
-        identityProviderType: "{{ 'INTERNAL_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
+        # (NO_IDP|EXTERNAL_IDP|TEST_CREDENTIALS), Only use TEST for test/demo installs
+        # NO_IDP - No IDP is used. API keys are set in config for feed status checks.
+        # EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito.
+        # TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only.
+        identityProviderType: "{{ 'NO_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
   {% endif %}
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

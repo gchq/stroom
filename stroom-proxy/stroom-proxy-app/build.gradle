@@ -4,6 +4,7 @@ def fatJarName = 'stroom-proxy-app-all.jar'
 def releaseBuildDir = 'build/release'
 def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
+def sendToStroomScriptVersion = 'send-to-stroom-v3.2.2-1'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -211,6 +212,9 @@ tasks.register('buildDistribution', Zip) {
     // run all the tasks that produce content for the zip
     dependsOn copyJar
     dependsOn copySupportingFiles
+    dependsOn downloadSend
+    dependsOn downloadSendArgs
+    dependsOn makeSendExecutable
     dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
@@ -247,6 +251,28 @@ tasks.register('Stroom Proxy Node 1', JavaExec) {
     mainClass = 'stroom.proxy.app.App'
     workingDir = '../../'
     args = ['server', 'proxy-local.yml']
+}
+
+tasks.register('downloadSend', Download) {
+    dependsOn copySupportingFiles
+    src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom.sh"
+    dest "${releaseBuildDir}/bin/"
+}
+
+tasks.register('downloadSendArgs', Download) {
+    dependsOn copySupportingFiles
+    src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom_args.sh"
+    dest "${releaseBuildDir}/bin/"
+}
+
+tasks.register('makeSendExecutable') {
+    dependsOn downloadSend
+    doLast {
+        // The args script is sourced so doesn't need execute perms
+        exec {
+            commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
+        }
+    }
 }
 
 // Make the build command create the full distribution

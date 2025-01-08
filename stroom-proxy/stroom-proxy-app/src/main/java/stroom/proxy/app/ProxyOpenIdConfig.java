@@ -89,7 +89,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
 
     @SuppressWarnings("unused")
     @JsonIgnore
-    @ValidationMethod(message = "INTERNAL is not a valid value for identityProviderType in stroom-proxy.")
+    @ValidationMethod(message = "INTERNAL_IDP is not a valid value for identityProviderType in stroom-proxy.")
     public boolean isIdentityProviderTypeValid() {
         return !IdpType.INTERNAL_IDP.equals(getIdentityProviderType());
     }
