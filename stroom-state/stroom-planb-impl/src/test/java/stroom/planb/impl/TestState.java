@@ -31,6 +31,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,11 +49,57 @@ class TestState {
 
     @Test
     void test(@TempDir Path tempDir) {
+        final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY").build();
+        final Function<Integer, StateValue> valueFunction = i -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+        };
+        test(tempDir, 100, keyFunction, valueFunction);
+    }
+
+    @Disabled
+    @Test
+    void testWritePerformanceSameKey(@TempDir Path tempDir) {
+        final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY").build();
+        final Function<Integer, StateValue> valueFunction = i -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+        };
+        testWrite(tempDir, 10000000, keyFunction, valueFunction);
+    }
+
+    @Disabled
+    @Test
+    void testWritePerformanceMultiKey(@TempDir Path tempDir) {
+        final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY" + i).build();
+        final Function<Integer, StateValue> valueFunction = i -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+        };
+        testWrite(tempDir, 10000000, keyFunction, valueFunction);
+    }
+
+    private void test(final Path tempDir,
+                      final int insertRows,
+                      final Function<Integer, Key> keyFunction,
+                      final Function<Integer, StateValue> valueFunction) {
+        testWrite(tempDir, insertRows, keyFunction, valueFunction);
+        testRead(tempDir, insertRows);
+    }
+
+    private void testWrite(final Path tempDir,
+                           final int insertRows,
+                           final Function<Integer, Key> keyFunction,
+                           final Function<Integer, StateValue> valueFunction) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final StateWriter writer = new StateWriter(tempDir, byteBufferFactory, false)) {
-            insertData(writer, 100);
+            insertData(writer, insertRows, keyFunction, valueFunction);
         }
+    }
 
+    private void testRead(final Path tempDir,
+                          final int expectedRows) {
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final StateReader reader = new StateReader(tempDir, byteBufferFactory)) {
             assertThat(reader.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
@@ -59,7 +107,7 @@ class TestState {
             assertThat(optional).isNotEmpty();
             final StateValue res = optional.get();
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.toString()).isEqualTo("test99");
+            assertThat(res.toString()).isEqualTo("test" + (expectedRows - 1));
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(StateFields.KEY);
@@ -76,7 +124,7 @@ class TestState {
             assertThat(results.size()).isEqualTo(1);
             assertThat(results.getFirst()[0].toString()).isEqualTo("TEST_KEY");
             assertThat(results.getFirst()[1].toString()).isEqualTo("String");
-            assertThat(results.getFirst()[2].toString()).isEqualTo("test99");
+            assertThat(results.getFirst()[2].toString()).isEqualTo("test" + (expectedRows - 1));
         }
     }
 
@@ -99,11 +147,12 @@ class TestState {
 //    }
 
     private void insertData(final StateWriter writer,
-                            final int rows) {
+                            final int rows,
+                            final Function<Integer, Key> keyFunction,
+                            final Function<Integer, StateValue> valueFunction) {
         for (int i = 0; i < rows; i++) {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            final Key k = Key.builder().name("TEST_KEY").build();
-            final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+            final Key k = keyFunction.apply(i);
+            final StateValue v = valueFunction.apply(i);
             writer.insert(k, v);
         }
     }
