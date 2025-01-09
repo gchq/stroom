@@ -54,7 +54,7 @@ class TestState2 {
 //            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
 //            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
 //        };
-//        test(tempDir, 100, keyFunction, valueFunction);
+//        testReadWrite(tempDir, 100, keyFunction, valueFunction);
 //    }
 
     @Test
@@ -77,7 +77,7 @@ class TestState2 {
         testWrite(tempDir, 10000000, keyFunction, valueFunction);
     }
 
-    private void test(final Path tempDir,
+    private void testReadWrite(final Path tempDir,
                       final int insertRows,
                       final Function<Integer, Key> keyFunction,
                       final Function<Integer, StateValue> valueFunction) {
