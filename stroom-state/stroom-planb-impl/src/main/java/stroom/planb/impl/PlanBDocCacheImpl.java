@@ -47,7 +47,7 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PlanBDocCacheImpl.class);
 
-    private static final String CACHE_NAME = "State Doc Cache";
+    private static final String CACHE_NAME = "PlanB State Doc Cache";
 
     private final PlanBDocStore stateDocStore;
     private final LoadingStroomCache<String, PlanBDoc> cache;
@@ -62,7 +62,7 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> stateConfigProvider.get().getPlanBDocCache(),
+                () -> stateConfigProvider.get().getStateDocCache(),
                 this::create);
     }
 

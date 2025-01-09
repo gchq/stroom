@@ -28,13 +28,14 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
-import stroom.planb.impl.dao.RangedState;
-import stroom.planb.impl.dao.Session;
-import stroom.planb.impl.dao.ShardWriters;
-import stroom.planb.impl.dao.ShardWriters.ShardWriter;
-import stroom.planb.impl.dao.State;
-import stroom.planb.impl.dao.TemporalRangedState;
-import stroom.planb.impl.dao.TemporalState;
+import stroom.planb.impl.io.RangedState;
+import stroom.planb.impl.io.Session;
+import stroom.planb.impl.io.ShardWriters;
+import stroom.planb.impl.io.ShardWriters.ShardWriter;
+import stroom.planb.impl.io.State;
+import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.TemporalRangedState;
+import stroom.planb.impl.io.TemporalState;
 import stroom.planb.shared.StateType;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
@@ -555,7 +556,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                             final State.Key k = State.Key.builder()
                                     .name(key)
                                     .build();
-                            final State.Value v = State.Value.builder()
+                            final StateValue v = StateValue.builder()
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
@@ -575,7 +576,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .name(key)
                                     .effectiveTime(effectiveTime)
                                     .build();
-                            final TemporalState.Value v = TemporalState.Value.builder()
+                            final StateValue v = StateValue.builder()
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
@@ -604,7 +605,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .keyStart(rangeFrom)
                                     .keyEnd(rangeTo)
                                     .build();
-                            final RangedState.Value v = RangedState.Value.builder()
+                            final StateValue v = StateValue.builder()
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
@@ -636,7 +637,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .keyEnd(rangeTo)
                                     .effectiveTime(effectiveTime)
                                     .build();
-                            final TemporalRangedState.Value v = TemporalRangedState.Value.builder()
+                            final StateValue v = StateValue.builder()
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();

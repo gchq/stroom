@@ -4,9 +4,23 @@ import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.xsltfunctions.StateLookupProvider;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.dao.TemporalState;
+import stroom.planb.impl.data.ReaderCache;
+import stroom.planb.impl.io.AbstractLmdbReader;
+import stroom.planb.impl.io.RangedStateReader;
+import stroom.planb.impl.io.RangedStateRequest;
+import stroom.planb.impl.io.SessionReader;
+import stroom.planb.impl.io.SessionRequest;
+import stroom.planb.impl.io.StateReader;
+import stroom.planb.impl.io.StateRequest;
+import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.TemporalRangedStateReader;
+import stroom.planb.impl.io.TemporalRangedStateRequest;
+import stroom.planb.impl.io.TemporalState;
+import stroom.planb.impl.io.TemporalStateReader;
+import stroom.planb.impl.io.TemporalStateRequest;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.pipeline.scope.PipelineScoped;
 
@@ -22,23 +36,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-// TODO : FIXME
-
 @PipelineScoped
 public class StateLookupProviderImpl implements StateLookupProvider {
 
-    private static final ByteBuffer TRUE = ByteBuffer
-            .wrap(Boolean.toString(true).getBytes(StandardCharsets.UTF_8));
-    private static final ByteBuffer FALSE = ByteBuffer
-            .wrap(Boolean.toString(false).getBytes(StandardCharsets.UTF_8));
-
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Optional<TemporalState>> cache;
+    private final ReaderCache readerCache;
     private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
     @Inject
-    public StateLookupProviderImpl(final PlanBDocCache stateDocCache) {
+    public StateLookupProviderImpl(final PlanBDocCache stateDocCache,
+                                   final ReaderCache readerCache) {
         this.stateDocCache = stateDocCache;
+        this.readerCache = readerCache;
         cache = Caffeine.newBuilder().maximumSize(1000).build();
     }
 
@@ -56,84 +66,96 @@ public class StateLookupProviderImpl implements StateLookupProvider {
                           final String keyName,
                           final Instant eventTime,
                           final ReferenceDataResult result) {
-        final String tableName = mapName.toLowerCase(Locale.ROOT);
-        final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(tableName, k ->
-                Optional.ofNullable(stateDocCache.get(tableName)));
+        final String name = mapName.toLowerCase(Locale.ROOT);
+        final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(name, k ->
+                Optional.ofNullable(stateDocCache.get(name)));
         stateOptional.ifPresent(stateDoc -> {
-            final Key key = new Key(tableName, keyName, eventTime);
+            final Key key = new Key(name, keyName, eventTime);
             final Optional<TemporalState> optional = cache.get(key,
-                    k -> getState(stateDoc, tableName, keyName, eventTime));
+                    k -> getState(stateDoc, name, keyName, eventTime));
 
             // If we found a result then add the value.
             if (optional.isPresent()) {
                 final TemporalState state = optional.get();
                 final RefStreamDefinition refStreamDefinition =
                         new RefStreamDefinition(stateDoc.asDocRef(), "0", -1);
-                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, tableName);
-//                result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
+                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, name);
+                result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
             }
         });
     }
 
     private Optional<TemporalState> getState(final PlanBDoc doc,
-                                             final String tableName,
+                                             final String mapName,
                                              final String keyName,
                                              final Instant eventTime) {
-        Optional<TemporalState> optional;
-
-        switch (doc.getStateType()) {
-//            case STATE -> {
-//                final StateRequest request = new StateRequest(
-//                        tableName,
-//                        keyName);
-//                optional = new impl.dao.PlanBStateDao(sessionProvider, tableName).getState(request)
-//                        .map(state -> new TemporalState(state.key(),
-//                                Instant.ofEpochMilli(0),
-//                                state.typeId(),
-//                                state.value()));
-//            }
-//            case TEMPORAL_STATE -> {
-//                final TemporalStateRequest request = new TemporalStateRequest(
-//                        tableName,
-//                        keyName,
-//                        eventTime);
-//                optional = new TemporalStateDao(sessionProvider, tableName).getState(request);
-//            }
-//            case RANGED_STATE -> {
-//                final long longKey = Long.parseLong(keyName);
-//                final RangedStateRequest request = new RangedStateRequest(
-//                        tableName,
-//                        longKey);
-//                optional = new RangedStateDao(sessionProvider, tableName).getState(request)
-//                        .map(state -> new TemporalState(state.key(),
-//                                Instant.ofEpochMilli(0),
-//                                state.typeId(),
-//                                state.value()));
-//            }
-//            case TEMPORAL_RANGED_STATE -> {
-//                final long longKey = Long.parseLong(keyName);
-//                final TemporalRangedStateRequest request = new TemporalRangedStateRequest(
-//                        tableName,
-//                        longKey,
-//                        eventTime);
-//                optional = new TemporalRangedStateDao(sessionProvider, tableName).getState(request);
-//            }
-//            case SESSION -> {
-//                final TemporalStateRequest request = new TemporalStateRequest(
-//                        tableName,
-//                        keyName,
-//                        eventTime);
-//                final boolean inSession = new SessionDao(sessionProvider, tableName).inSession(request);
-//                final ByteBuffer byteBuffer = inSession
-//                        ? TRUE
-//                        : FALSE;
-//                final TemporalState state = new TemporalState(keyName, eventTime, StringValue.TYPE_ID, byteBuffer);
-//                optional = Optional.of(state);
-//            }
-            default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
+        final Optional<AbstractLmdbReader<?, ?>> optional = readerCache.get(mapName);
+        if (optional.isEmpty()) {
+            return Optional.empty();
         }
-//
-//        return optional;
+
+        final AbstractLmdbReader<?, ?> reader = optional.get();
+        if (reader instanceof final StateReader stateReader) {
+            final StateRequest request =
+                    new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
+            return stateReader
+                    .getState(request)
+                    .map(state -> new TemporalState(TemporalState
+                            .Key
+                            .builder()
+                            .name(state.key().bytes())
+                            .effectiveTime(0)
+                            .build(),
+                            state.value()));
+        } else if (reader instanceof final TemporalStateReader stateReader) {
+            final TemporalStateRequest request =
+                    new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
+                            eventTime.toEpochMilli());
+            return stateReader
+                    .getState(request);
+        } else if (reader instanceof final RangedStateReader stateReader) {
+            final RangedStateRequest request =
+                    new RangedStateRequest(Long.parseLong(keyName));
+            return stateReader
+                    .getState(request)
+                    .map(state -> new TemporalState(TemporalState
+                            .Key
+                            .builder()
+                            .name(keyName)
+                            .effectiveTime(0)
+                            .build(),
+                            state.value()));
+        } else if (reader instanceof final TemporalRangedStateReader stateReader) {
+            final TemporalRangedStateRequest request =
+                    new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
+            return stateReader
+                    .getState(request)
+                    .map(state -> new TemporalState(TemporalState
+                            .Key
+                            .builder()
+                            .name(keyName)
+                            .effectiveTime(0)
+                            .build(),
+                            state.value()));
+        } else if (reader instanceof final SessionReader stateReader) {
+            final SessionRequest request =
+                    new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());
+            return stateReader
+                    .getState(request)
+                    .map(state -> new TemporalState(TemporalState
+                            .Key
+                            .builder()
+                            .name(keyName)
+                            .effectiveTime(0)
+                            .build(),
+                            StateValue
+                                    .builder()
+                                    .typeId(StringValue.TYPE_ID)
+                                    .byteBuffer(ByteBuffer.wrap(state.key()))
+                                    .build()));
+        }
+
+        throw new RuntimeException("Unexpected state type: " + doc.getStateType());
     }
 
     private record Key(String tableName, String keyName, Instant eventTime) {

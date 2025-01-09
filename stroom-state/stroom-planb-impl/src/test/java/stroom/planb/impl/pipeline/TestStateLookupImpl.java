@@ -3,12 +3,12 @@ package stroom.planb.impl.pipeline;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.dao.TemporalState;
-import stroom.planb.impl.dao.TemporalState.Key;
-import stroom.planb.impl.dao.TemporalState.Value;
-import stroom.planb.impl.dao.TemporalStateReader;
-import stroom.planb.impl.dao.TemporalStateRequest;
-import stroom.planb.impl.dao.TemporalStateWriter;
+import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.TemporalState;
+import stroom.planb.impl.io.TemporalState.Key;
+import stroom.planb.impl.io.TemporalStateReader;
+import stroom.planb.impl.io.TemporalStateRequest;
+import stroom.planb.impl.io.TemporalStateWriter;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,7 +80,11 @@ class TestStateLookupImpl {
                         final ByteBuffer byteBuffer = ByteBuffer.wrap(val.getBytes(StandardCharsets.UTF_8));
 
                         final Key k = Key.builder().name(buildKey(keyIdx)).effectiveTime(strmTime).build();
-                        final Value v = Value.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+                        final StateValue v = StateValue
+                                .builder()
+                                .typeId(StringValue.TYPE_ID)
+                                .byteBuffer(byteBuffer)
+                                .build();
 
                         writer.insert(k, v);
                     }
@@ -99,7 +103,6 @@ class TestStateLookupImpl {
                 final Instant time = lookupTimes.get(refStrmIdx);
 
                 final TemporalStateRequest request = new TemporalStateRequest(
-                        mapName,
                         key.getBytes(StandardCharsets.UTF_8),
                         time.toEpochMilli());
 

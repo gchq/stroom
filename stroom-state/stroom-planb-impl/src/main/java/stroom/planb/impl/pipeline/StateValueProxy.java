@@ -12,7 +12,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.UnknownRefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.planb.impl.dao.TemporalState;
+import stroom.planb.impl.io.TemporalState;
 import stroom.util.logging.LogUtil;
 
 import net.sf.saxon.trans.XPathException;

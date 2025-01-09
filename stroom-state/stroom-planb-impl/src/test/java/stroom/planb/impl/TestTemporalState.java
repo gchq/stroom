@@ -21,10 +21,11 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.dao.TemporalState;
-import stroom.planb.impl.dao.TemporalStateFields;
-import stroom.planb.impl.dao.TemporalStateReader;
-import stroom.planb.impl.dao.TemporalStateWriter;
+import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.TemporalState;
+import stroom.planb.impl.io.TemporalStateFields;
+import stroom.planb.impl.io.TemporalStateReader;
+import stroom.planb.impl.io.TemporalStateWriter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -46,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestTemporalState {
 
     @Test
-    void testDao(@TempDir Path tempDir) {
+    void test(@TempDir Path tempDir) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateWriter writer = new TemporalStateWriter(tempDir, byteBufferFactory, false)) {
@@ -58,9 +59,9 @@ class TestTemporalState {
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
             final TemporalState.Key key = TemporalState.Key.builder().name("TEST_KEY").effectiveTime(refTime).build();
-            final Optional<TemporalState.Value> optional = reader.get(key);
+            final Optional<StateValue> optional = reader.get(key);
             assertThat(optional).isNotEmpty();
-            final TemporalState.Value res = optional.get();
+            final StateValue res = optional.get();
 //            assertThat(res.key()).isEqualTo("TEST_KEY");
 //            assertThat(res.effectiveTime()).isEqualTo(refTime);
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
@@ -147,7 +148,7 @@ class TestTemporalState {
                     .effectiveTime(effectiveTime)
                     .build();
 
-            final TemporalState.Value v = TemporalState.Value
+            final StateValue v = StateValue
                     .builder()
                     .typeId(StringValue.TYPE_ID)
                     .byteBuffer(byteBuffer)

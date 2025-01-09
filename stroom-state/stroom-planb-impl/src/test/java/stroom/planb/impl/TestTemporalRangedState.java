@@ -21,13 +21,13 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.dao.TemporalRangedState;
-import stroom.planb.impl.dao.TemporalRangedState.Key;
-import stroom.planb.impl.dao.TemporalRangedState.Value;
-import stroom.planb.impl.dao.TemporalRangedStateFields;
-import stroom.planb.impl.dao.TemporalRangedStateReader;
-import stroom.planb.impl.dao.TemporalRangedStateRequest;
-import stroom.planb.impl.dao.TemporalRangedStateWriter;
+import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.TemporalRangedState;
+import stroom.planb.impl.io.TemporalRangedState.Key;
+import stroom.planb.impl.io.TemporalRangedStateFields;
+import stroom.planb.impl.io.TemporalRangedStateReader;
+import stroom.planb.impl.io.TemporalRangedStateRequest;
+import stroom.planb.impl.io.TemporalRangedStateWriter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestTemporalRangedState {
 
     @Test
-    void testDao(@TempDir Path tempDir) {
+    void test(@TempDir Path tempDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
@@ -64,7 +64,7 @@ class TestTemporalRangedState {
 
 
             final TemporalRangedStateRequest stateRequest =
-                    new TemporalRangedStateRequest("TEST_MAP", 11, refTime.toEpochMilli());
+                    new TemporalRangedStateRequest(11, refTime.toEpochMilli());
             final Optional<TemporalRangedState> optional = reader.getState(stateRequest);
             assertThat(optional).isNotEmpty();
             final TemporalRangedState res = optional.get();
@@ -118,9 +118,9 @@ class TestTemporalRangedState {
     private void testGet(final TemporalRangedStateReader reader) {
         Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(refTime).build();
-        final Optional<Value> optional = reader.get(k);
+        final Optional<StateValue> optional = reader.get(k);
         assertThat(optional).isNotEmpty();
-        final Value res = optional.get();
+        final StateValue res = optional.get();
         assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
         assertThat(res.toString()).isEqualTo("test");
     }
@@ -173,7 +173,7 @@ class TestTemporalRangedState {
         for (int i = 0; i < rows; i++) {
             final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
             final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(effectiveTime).build();
-            final Value v = Value.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+            final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
             writer.insert(k, v);
         }
     }

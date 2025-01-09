@@ -24,6 +24,12 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.planb.impl.data.FileTransferClient;
+import stroom.planb.impl.data.FileTransferClientImpl;
+import stroom.planb.impl.data.FileTransferResourceImpl;
+import stroom.planb.impl.data.FileTransferService;
+import stroom.planb.impl.data.FileTransferServiceImpl;
+import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.StateLookupProviderImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
@@ -60,6 +66,8 @@ public class StateModule extends AbstractModule {
 
         // State
         bind(PlanBDocStore.class).to(PlanBDocStoreImpl.class);
+        bind(FileTransferClient.class).to(FileTransferClientImpl.class);
+        bind(FileTransferService.class).to(FileTransferServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(PlanBDocStoreImpl.class);
@@ -72,7 +80,8 @@ public class StateModule extends AbstractModule {
                 .bind(PlanBDoc.TYPE, PlanBDocStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(PlanBDocResourceImpl.class);
+                .bind(PlanBDocResourceImpl.class)
+                .bind(FileTransferResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StateSearchProvider.class);
@@ -82,19 +91,20 @@ public class StateModule extends AbstractModule {
                 .addBinding(StateSearchProvider.class);
 
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(StateMaintenanceRunnable.class, builder -> builder
-                        .name(StateMaintenanceExecutor.TASK_NAME)
-                        .description("State store maintenance")
+                .bindJobTo(StateMergeRunnable.class, builder -> builder
+                        .name(MergeProcessor.TASK_NAME)
+                        .description("PlanB State store merge")
                         .cronSchedule("0 0 0 * * ?")
                         .advanced(true));
     }
 
-    private static class StateMaintenanceRunnable extends RunnableWrapper {
+
+    private static class StateMergeRunnable extends RunnableWrapper {
 
         @Inject
-        StateMaintenanceRunnable(final StateMaintenanceExecutor condenserExecutor,
-                                 final ClusterLockService clusterLockService) {
-            super(() -> clusterLockService.tryLock(StateMaintenanceExecutor.TASK_NAME, condenserExecutor::exec));
+        StateMergeRunnable(final MergeProcessor mergeProcessor,
+                           final ClusterLockService clusterLockService) {
+            super(mergeProcessor::exec);
         }
     }
 }

@@ -21,11 +21,11 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.dao.State.Key;
-import stroom.planb.impl.dao.State.Value;
-import stroom.planb.impl.dao.StateFields;
-import stroom.planb.impl.dao.StateReader;
-import stroom.planb.impl.dao.StateWriter;
+import stroom.planb.impl.io.State.Key;
+import stroom.planb.impl.io.StateFields;
+import stroom.planb.impl.io.StateReader;
+import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.StateWriter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestState {
 
     @Test
-    void testDao(@TempDir Path tempDir) {
+    void test(@TempDir Path tempDir) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final StateWriter writer = new StateWriter(tempDir, byteBufferFactory, false)) {
             insertData(writer, 100);
@@ -55,9 +55,9 @@ class TestState {
         try (final StateReader reader = new StateReader(tempDir, byteBufferFactory)) {
             assertThat(reader.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
-            final Optional<Value> optional = reader.get(key);
+            final Optional<StateValue> optional = reader.get(key);
             assertThat(optional).isNotEmpty();
-            final Value res = optional.get();
+            final StateValue res = optional.get();
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(res.toString()).isEqualTo("test99");
 
@@ -103,7 +103,7 @@ class TestState {
         for (int i = 0; i < rows; i++) {
             final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
             final Key k = Key.builder().name("TEST_KEY").build();
-            final Value v = Value.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+            final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
             writer.insert(k, v);
         }
     }

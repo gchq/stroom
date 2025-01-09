@@ -20,10 +20,10 @@ package stroom.planb.impl;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.planb.impl.dao.Session;
-import stroom.planb.impl.dao.SessionFields;
-import stroom.planb.impl.dao.SessionReader;
-import stroom.planb.impl.dao.SessionWriter;
+import stroom.planb.impl.io.Session;
+import stroom.planb.impl.io.SessionFields;
+import stroom.planb.impl.io.SessionReader;
+import stroom.planb.impl.io.SessionWriter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSession {
 
     @Test
-    void testDao(@TempDir Path tempDir) {
+    void test(@TempDir Path tempDir) {
         final byte[] key = "TEST".getBytes(StandardCharsets.UTF_8);
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final InstantRange highRange;

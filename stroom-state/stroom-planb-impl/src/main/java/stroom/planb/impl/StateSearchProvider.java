@@ -22,7 +22,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
-import stroom.planb.impl.dao.StateFieldUtil;
+import stroom.planb.impl.io.StateFieldUtil;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;

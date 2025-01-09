@@ -21,13 +21,13 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.dao.RangedState;
-import stroom.planb.impl.dao.RangedState.Key;
-import stroom.planb.impl.dao.RangedState.Value;
-import stroom.planb.impl.dao.RangedStateFields;
-import stroom.planb.impl.dao.RangedStateReader;
-import stroom.planb.impl.dao.RangedStateRequest;
-import stroom.planb.impl.dao.RangedStateWriter;
+import stroom.planb.impl.io.RangedState;
+import stroom.planb.impl.io.RangedState.Key;
+import stroom.planb.impl.io.RangedStateFields;
+import stroom.planb.impl.io.RangedStateReader;
+import stroom.planb.impl.io.RangedStateRequest;
+import stroom.planb.impl.io.RangedStateWriter;
+import stroom.planb.impl.io.StateValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRangedState {
 
     @Test
-    void testDao(@TempDir Path tempDir) {
+    void test(@TempDir Path tempDir) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final RangedStateWriter writer = new RangedStateWriter(tempDir, byteBufferFactory, false)) {
             insertData(writer, 100);
@@ -59,7 +59,7 @@ class TestRangedState {
             testGet(reader);
 
             final RangedStateRequest stateRequest =
-                    new RangedStateRequest("TEST_MAP", 11);
+                    new RangedStateRequest(11);
             final Optional<RangedState> optional = reader.getState(stateRequest);
             assertThat(optional).isNotEmpty();
             final RangedState res = optional.get();
@@ -74,8 +74,6 @@ class TestRangedState {
 //            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
 //                    v -> count.incrementAndGet());
 //            assertThat(count.get()).isEqualTo(1);
-
-
 
 
             final FieldIndex fieldIndex = new FieldIndex();
@@ -101,9 +99,9 @@ class TestRangedState {
 
     private void testGet(final RangedStateReader reader) {
         final Key k = Key.builder().keyStart(10).keyEnd(30).build();
-        final Optional<Value> optional = reader.get(k);
+        final Optional<StateValue> optional = reader.get(k);
         assertThat(optional).isNotEmpty();
-        final Value res = optional.get();
+        final StateValue res = optional.get();
         assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
         assertThat(res.toString()).isEqualTo("test99");
     }
@@ -131,7 +129,7 @@ class TestRangedState {
         for (int i = 0; i < rows; i++) {
             final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
             final Key k = Key.builder().keyStart(10).keyEnd(30).build();
-            final Value v = Value.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+            final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
             writer.insert(k, v);
         }
     }
