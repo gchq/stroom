@@ -27,9 +27,10 @@ class TestUniqueIdGenerator {
 
     @Test
     void testBadNodeId() {
-        Assertions.assertThatThrownBy(() -> {
-                    new UniqueIdGenerator("foo bar");
-                }).isInstanceOf(IllegalArgumentException.class)
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            new UniqueIdGenerator("foo bar");
+                        }).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("must match the pattern");
     }
 
