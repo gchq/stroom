@@ -3,6 +3,8 @@ package stroom.util.concurrent;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 public class ThreadUtil {
 
@@ -56,6 +58,14 @@ public class ThreadUtil {
             Thread.sleep(millis, nanos);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
+        }
+    }
+
+    public static void await(final CountDownLatch latch) {
+        try {
+            Objects.requireNonNull(latch).await();
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
         }
     }
 }

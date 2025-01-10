@@ -1,6 +1,8 @@
 package stroom.proxy.app.handler;
 
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Strings;
@@ -14,6 +16,8 @@ import java.util.regex.Pattern;
  * This is stateful so the node should hold a singleton instance of this class.
  */
 public class UniqueIdGenerator {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UniqueIdGenerator.class);
 
     private static final short MAX_SEQUENCE_NO = 9_999;
 
@@ -30,17 +34,10 @@ public class UniqueIdGenerator {
         state = stateRef.accumulateAndGet(state, (currState, newState) -> {
             final long currEpochMs = currState.epochMs;
             final long newEpochMs = newState.epochMs;
-            if (newEpochMs > currEpochMs) {
-                return newState;
-            } else if (newEpochMs == currEpochMs) {
-                return currState.withNextSequenceNo();
-            } else {
-                throw new RuntimeException(LogUtil.message(
-                        "newState {} is older than currState {}",
-                        newState, currState));
-            }
+            return newEpochMs > currEpochMs
+                    ? newState
+                    : currState.withNextSequenceNo();
         });
-
         return new UniqueId(state.epochMs, state.sequenceNo, nodeId);
     }
 
@@ -72,6 +69,7 @@ public class UniqueIdGenerator {
                 // one node.
                 long newEpochMs = System.currentTimeMillis();
 
+                LOGGER.info("About to loop, epochMs {}, newEpochMs {}", epochMs, newEpochMs);
                 while (newEpochMs <= epochMs) {
                     LockSupport.parkNanos(PARK_NANOS);
                     newEpochMs = System.currentTimeMillis();
