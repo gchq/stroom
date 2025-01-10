@@ -22,7 +22,6 @@ import org.apache.hc.core5.http.HttpStatus;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Main entry point to handling proxy requests.
@@ -61,16 +60,15 @@ public class ProxyRequestHandler implements RequestHandler {
             // Create attribute map from headers.
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-            // Create a new proxy id for the request so we can track progress and report back the UUID to the sender,
-            final String requestUuid = UUID.randomUUID().toString();
-            final String proxyIdString = proxyId.getId();
-            final String result = proxyIdString + ": " + requestUuid;
+            // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
+            final ReceiptId receiptId = proxyId.generateReceiptId();
 
             // Authorise request.
             requestAuthenticator.authenticate(request, attributeMap);
 
-            LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
-            attributeMap.put(proxyIdString, requestUuid);
+            LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptId);
+            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId.toString());
+            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId.toString());
 
             // Save the time the data was received.
             attributeMap.computeIfAbsent(StandardHeaderArguments.RECEIVED_TIME, k ->
@@ -99,9 +97,9 @@ public class ProxyRequestHandler implements RequestHandler {
 
             response.setStatus(HttpStatus.SC_OK);
 
-            LOGGER.debug(() -> "Writing proxy id attribute to response: " + result);
+            LOGGER.debug(() -> "Writing proxy receipt id attribute to response: " + receiptId);
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(result);
+                writer.println(receiptId);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

@@ -6,11 +6,15 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ReceiptId;
+import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -26,10 +30,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.LongSummaryStatistics;
 import java.util.stream.Stream;
 
 public class MockFileDestination {
@@ -86,6 +93,7 @@ public class MockFileDestination {
     /**
      * Get all the files in the directories specified in {@link ForwardFileConfig}.
      * The dir will contain .meta and .zip pairs. Each pair is one item in the returned list.
+     * Each .zip will contain one or more sets of .dat/.meta/.ctx/etc.
      */
     private List<ForwardFileItem> getForwardFiles(final Config config) {
         final List<ForwardFileConfig> forwardConfigs = NullSafe.getOrElseGet(
@@ -155,9 +163,91 @@ public class MockFileDestination {
                 .toList();
     }
 
+    /**
+     * Assert all the {@link ReceiptId}s contained in the stored aggregates
+     */
+    void assertReceiptIds(final Config config,
+                          final List<ReceiptId> expectedReceiptIds) {
+        final List<ReceiptId> actualReceiptIds = getForwardFiles(config)
+                .stream()
+                .map(ForwardFileItem::getContainedReceiptIds)
+                .flatMap(Collection::stream)
+                .toList();
+
+        Assertions.assertThat(actualReceiptIds)
+                .containsExactlyInAnyOrderElementsOf(expectedReceiptIds);
+    }
 
     void assertFileContents(final Config config) {
         assertFileContents(config, 4);
+    }
+
+    void assertReceivedItemCount(final Config config, final int count) {
+        TestUtil.waitForIt(
+                () -> {
+                    final long actualCount = getForwardFiles(config)
+                            .stream()
+                            .map(ForwardFileItem::zipItems)
+                            .flatMap(Collection::stream)
+                            .filter(zipItem -> zipItem.type.equals(StroomZipFileType.META))
+                            .count();
+                    return actualCount;
+                },
+                (long) count,
+                () -> "Forwarded file pairs count",
+                Duration.ofMinutes(1),
+                Duration.ofMillis(100),
+                Duration.ofSeconds(1));
+
+        final long actualCount = getForwardFiles(config)
+                .stream()
+                .map(ForwardFileItem::zipItems)
+                .flatMap(Collection::stream)
+                .filter(zipItem -> zipItem.type.equals(StroomZipFileType.META))
+                .count();
+        Assertions.assertThat(actualCount)
+                .isEqualTo(count);
+    }
+
+    void assertMaxItemsPerAggregate(final Config config) {
+        final List<ForwardFileItem> forwardFiles = getForwardFiles(config);
+        final List<Long> aggItemCounts = forwardFiles.stream()
+                .map(ForwardFileItem::zipItems)
+                .map(zipItems -> zipItems.stream()
+                        .filter(zipItem -> zipItem.type().equals(StroomZipFileType.META))
+                        .count())
+                .toList();
+
+        final AggregatorConfig aggregatorConfig = config.getProxyConfig().getAggregatorConfig();
+        final int maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
+
+        // Each agg should be no bigger than configured max
+        for (final Long itemCount : aggItemCounts) {
+            Assertions.assertThat(itemCount)
+                    .isLessThanOrEqualTo(maxItemsPerAggregate);
+        }
+
+        final StroomDuration maxAggregateAge = aggregatorConfig.getMaxAggregateAge();
+        final List<Duration> aggAges = forwardFiles.stream()
+                .map(ForwardFileItem::zipItems)
+                .map(zipItems -> {
+                    final LongSummaryStatistics stats = zipItems.stream()
+                            .filter(zipItem -> zipItem.type().equals(StroomZipFileType.META))
+                            .map(zipItem -> zipItem.getContentAsAttributeMap()
+                                    .get(StandardHeaderArguments.RECEIVED_TIME))
+                            .mapToLong(DateUtil::parseNormalDateTimeString)
+                            .summaryStatistics();
+                    return Duration.between(
+                            Instant.ofEpochMilli(stats.getMin()),
+                            Instant.ofEpochMilli(stats.getMax()));
+                })
+                .toList();
+
+        // Each agg should have a receipt time range no wider than the configured max agg age
+        for (final Duration aggAge : aggAges) {
+            Assertions.assertThat(aggAge)
+                    .isLessThanOrEqualTo(maxAggregateAge.getDuration());
+        }
     }
 
     void assertFileContents(final Config config, final int count) {
@@ -172,7 +262,8 @@ public class MockFileDestination {
         final List<ForwardFileItem> forwardFileItems = getForwardFiles(config);
 
         // Check number of forwarded files.
-        Assertions.assertThat(forwardFileItems).hasSize(count);
+        Assertions.assertThat(forwardFileItems)
+                .hasSize(count);
 
         // Check feed names.
         final String[] feedNames = new String[count];
@@ -241,6 +332,26 @@ public class MockFileDestination {
 
         public AttributeMap getMetaAttributeMap() {
             return AttributeMapUtil.create(metaContent);
+        }
+
+        /**
+         * The {@link ReceiptId} of the wrapping zip
+         */
+        public ReceiptId getReceiptId() {
+            final String receiptIdStr = AttributeMapUtil.create(metaContent)
+                    .get(StandardHeaderArguments.RECEIPT_ID);
+            return ReceiptId.parse(receiptIdStr);
+        }
+
+        public List<ReceiptId> getContainedReceiptIds() {
+            return zipItems.stream()
+                    .filter(zipItem ->
+                            zipItem.type().equals(StroomZipFileType.META))
+                    .map(ZipItem::getContentAsAttributeMap)
+                    .map(attributeMap ->
+                            attributeMap.get(StandardHeaderArguments.RECEIPT_ID))
+                    .map(ReceiptId::parse)
+                    .toList();
         }
     }
 

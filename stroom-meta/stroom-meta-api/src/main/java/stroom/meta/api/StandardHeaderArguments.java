@@ -54,6 +54,12 @@ public interface StandardHeaderArguments {
     String REMOTE_DN = "RemoteDN";
     String REMOTE_CERT_EXPIRY = "RemoteCertExpiry";
     String REMOTE_FILE = "RemoteFile";
+    String RECEIPT_ID = "ReceiptId";
+    String RECEIPT_ID_PATH = "ReceiptIdPath";
+    /**
+     * The unique message from an AWS SQS queue.
+     */
+    String SQS_MESSAGE_ID = "SqsMessageId";
 
     // The unique identifier of the user on the IDP
     String UPLOAD_USER_ID = "UploadUserId";

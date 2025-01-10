@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStore;
 import stroom.proxy.app.event.EventStoreConfig;
+import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.repo.ProxyServices;
 
 import io.dropwizard.lifecycle.Managed;
@@ -16,7 +17,8 @@ public class ProxyLifecycle implements Managed {
     public ProxyLifecycle(final ProxyConfig proxyConfig,
                           final EventStoreConfig eventStoreConfig,
                           final Provider<EventStore> eventStoreProvider,
-                          final ProxyServices proxyServices) {
+                          final ProxyServices proxyServices,
+                          final ProxyId proxyId) {
         this.proxyServices = proxyServices;
 
         // Add executor to roll event store.
@@ -31,7 +33,8 @@ public class ProxyLifecycle implements Managed {
 
         if (proxyConfig.getSqsConnectors() != null) {
             for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectors()) {
-                final SqsConnector sqsConnector = new SqsConnector(eventStore, sqsConnectorConfig);
+                final SqsConnector sqsConnector = new SqsConnector(
+                        eventStore, sqsConnectorConfig, proxyId);
                 // Add executor to forward event store.
                 proxyServices.addFrequencyExecutor("SQS - poll",
                         () -> sqsConnector::poll,

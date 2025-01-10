@@ -24,6 +24,7 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.proxy.app.handler.ProxyId;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
@@ -90,6 +91,8 @@ public class App extends Application<Config> {
     private HomeDirProvider homeDirProvider;
     @Inject
     private TempDirProvider tempDirProvider;
+    @Inject
+    private ProxyId proxyId;
 
     private Injector injector;
 
@@ -218,18 +221,18 @@ public class App extends Application<Config> {
                     .getOpenIdConfig()
                     .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
             LOGGER.warn("" +
-                    "\n  ---------------------------------------------------------------------------------------" +
-                    "\n  " +
-                    "\n                                        WARNING!" +
-                    "\n  " +
-                    "\n   Using default and publicly available Open ID authentication credentials. " +
-                    "\n   These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
-                    "The API key in use is:" +
-                    "\n" +
-                    "\n   " + defaultOpenIdCredentials.getApiKey() +
-                    "\n  ---------------------------------------------------------------------------------------" +
-                    "");
+                        "\n  ---------------------------------------------------------------------------------------" +
+                        "\n  " +
+                        "\n                                        WARNING!" +
+                        "\n  " +
+                        "\n   Using default and publicly available Open ID authentication credentials. " +
+                        "\n   These should only be used in test/demo environments. " +
+                        "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
+                        "The API key in use is:" +
+                        "\n" +
+                        "\n   " + defaultOpenIdCredentials.getApiKey() +
+                        "\n  ---------------------------------------------------------------------------------------" +
+                        "");
         }
     }
 
@@ -257,10 +260,11 @@ public class App extends Application<Config> {
     private void showInfo() {
         Objects.requireNonNull(buildInfo);
         LOGGER.info(""
-                + "\n  Build version:       " + buildInfo.getBuildVersion()
-                + "\n  Build date:          " + DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())
-                + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize());
+                    + "\n  Build version:       " + buildInfo.getBuildVersion()
+                    + "\n  Build date:          " + DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())
+                    + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                    + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
+                    + "\n  Proxy ID:            " + proxyId.getId());
     }
 
     private Injector createValidationInjector() {
@@ -322,7 +326,7 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && proxyConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom Proxy. To run Stroom Proxy with " +
-                            "invalid configuration, set {} to false, however this is not advised!",
+                         "invalid configuration, set {} to false, however this is not advised!",
                     proxyConfig.getFullPathStr(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }

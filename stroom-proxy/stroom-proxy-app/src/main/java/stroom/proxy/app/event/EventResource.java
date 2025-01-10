@@ -40,7 +40,7 @@ public interface EventResource extends RestResource {
 
     @POST
     @Operation(
-            summary = "Log an event",
+            summary = "Log an event. The response contains a unique receipt ID of the form '<proxy ID>_<UUID>'.",
             operationId = "log_event")
     String event(@Context @NotNull HttpServletRequest request,
                  @Parameter(description = "event", required = true) String event);

@@ -4,6 +4,7 @@ import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -128,18 +130,23 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     @AssertTrue(
             message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. " +
-                    "If there is invalid configuration the system may behave in unexpected ways. This setting is " +
-                    "not advised.",
+                      "If there is invalid configuration the system may behave in unexpected ways. This setting is " +
+                      "not advised.",
             payload = ValidationSeverity.Warning.class)
     @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
     @JsonPropertyDescription("If true, Stroom-Proxy will halt on start up if any errors are found in the YAML " +
-            "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
-
+                             "configuration file. If false, the errors will simply be logged. Setting this to " +
+                             "false is not advised.")
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
     }
 
+    @Pattern(regexp = ProxyId.PROXY_ID_REGEX)
     @JsonProperty
+    @JsonPropertyDescription("The unique id for this proxy instance. Must match the pattern '^[A-Za-z0-9-]$' and " +
+                             "be unique within the whole chain of proxies. It is used in the receipt ID that " +
+                             "is generated for each received stream. If not set a Proxy ID will be generated and " +
+                             "and stored in the file 'proxy-id.txt'.")
     public String getProxyId() {
         return proxyId;
     }
@@ -216,7 +223,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if tokenAuthenticationEnabled " +
-            "is true")
+                                "is true")
     public boolean isTokenAuthenticationEnabledValid() {
         if (NullSafe.test(receiveDataConfig, ReceiveDataConfig::isTokenAuthenticationEnabled)) {
             return NullSafe.test(

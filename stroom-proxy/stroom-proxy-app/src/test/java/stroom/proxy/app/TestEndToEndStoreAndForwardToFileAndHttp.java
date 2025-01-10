@@ -59,25 +59,29 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
 
         // Two feeds each send 4, agg max items of 3 so two batches each
         final PostDataHelper postDataHelper = createPostDataHelper();
-        for (int i = 0; i < 16; i++) {
-            postDataHelper.sendTestData1();
-            postDataHelper.sendTestData2();
+        int reqPerFeed = 16;
+        int reqCount = reqPerFeed * 2;
+        for (int i = 0; i < reqPerFeed; i++) {
+            postDataHelper.sendFeed1TestData();
+            postDataHelper.sendFeed2TestData();
         }
 
         assertThat(postDataHelper.getPostCount())
-                .isEqualTo(32);
+                .isEqualTo(reqCount);
 
-        // Assert the contents of the files.
-        mockFileDestination.assertFileContents(getConfig(), 12);
+        mockFileDestination.assertReceivedItemCount(getConfig(), reqCount);
+        mockFileDestination.assertReceiptIds(getConfig(), postDataHelper.getReceiptIds());
+        mockFileDestination.assertMaxItemsPerAggregate(getConfig());
 
-        // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        mockHttpDestination.assertFeedStatusCheck();
+        mockHttpDestination.assertReceivedItemCount(reqCount);
+        mockHttpDestination.assertReceiptIds(postDataHelper.getReceiptIds());
+        mockHttpDestination.assertMaxItemsPerAggregate(getConfig());
 
         // Check number of forwarded files.
-        mockHttpDestination.assertRequestCount(12);
+//        mockHttpDestination.assertRequestCount(12);
 
         // Assert the content of posts
-        mockHttpDestination.assertPosts(12);
+//        mockHttpDestination.assertPosts(12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

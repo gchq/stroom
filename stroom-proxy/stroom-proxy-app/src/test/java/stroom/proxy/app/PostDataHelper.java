@@ -2,8 +2,10 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.NumericFileNameUtil;
+import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.app.handler.ZipWriter;
 
+import com.google.common.base.Strings;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
@@ -13,8 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 public class PostDataHelper {
@@ -24,6 +29,9 @@ public class PostDataHelper {
     private final Client client;
     private final String url;
     private final LongAdder postToProxyCount = new LongAdder();
+    private final List<PostResponse> postResponses = new ArrayList<>();
+    private final List<String> dataIds = new ArrayList<>();
+    private final AtomicLong dataIdCounter = new AtomicLong();
 
     public PostDataHelper(final Client client,
                           final String url) {
@@ -31,7 +39,7 @@ public class PostDataHelper {
         this.url = url;
     }
 
-    void sendTestData1() {
+    void sendFeed1TestData() {
         sendData(
                 TestConstants.FEED_TEST_EVENTS_1,
                 TestConstants.SYSTEM_TEST_SYSTEM,
@@ -40,7 +48,7 @@ public class PostDataHelper {
                 "Hello");
     }
 
-    void sendTestData2() {
+    void sendFeed2TestData() {
         sendData(
                 TestConstants.FEED_TEST_EVENTS_2,
                 TestConstants.SYSTEM_TEST_SYSTEM,
@@ -85,19 +93,27 @@ public class PostDataHelper {
             if (extraHeaders != null) {
                 extraHeaders.forEach(builder::header);
             }
-            LOGGER.info("Sending POST request to {}", url);
-            final String responseText;
-            try (Response response = builder.post(Entity.text(data))) {
+            final String dataId = getDataId();
+            final String payload = dataId + "-" + data;
+            LOGGER.info("Sending POST request to {}, with payload '{}'", url, payload);
+            try (Response response = builder.post(Entity.text(payload))) {
                 postToProxyCount.increment();
-                status = response.getStatus();
-                responseText = response.readEntity(String.class);
+                status = consumeResponse(response);
             }
-            LOGGER.info("datafeed response ({}):\n{}", status, responseText);
 
         } catch (final Exception e) {
             throw new RuntimeException("Error sending request to " + url, e);
         }
         return status;
+    }
+
+    public String getDataId() {
+        final String dataId = Strings.padStart(
+                String.valueOf(dataIdCounter.getAndIncrement()),
+                10,
+                '0');
+        dataIds.add(dataId);
+        return dataId;
     }
 
     public int sendZipData(final String feed,
@@ -123,19 +139,18 @@ public class PostDataHelper {
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             try (final ZipWriter zipWriter = new ZipWriter(outputStream, LocalByteBuffer.get())) {
                 for (int i = 1; i <= entryCount; i++) {
+                    final String dataId = getDataId();
+                    final String payload = dataId + "-" + data;
                     final String name = NumericFileNameUtil.create(i) + ".dat";
-                    zipWriter.writeString(name, data);
+                    zipWriter.writeString(name, payload);
                 }
             }
 
-            final String responseText;
             try (Response response = builder.post(
                     Entity.entity(outputStream.toByteArray(), MediaType.APPLICATION_JSON_TYPE))) {
                 postToProxyCount.increment();
-                status = response.getStatus();
-                responseText = response.readEntity(String.class);
+                status = consumeResponse(response);
             }
-            LOGGER.info("datafeed response ({}):\n{}", status, responseText);
 
         } catch (final Exception e) {
             throw new RuntimeException("Error sending request to " + url, e);
@@ -143,7 +158,46 @@ public class PostDataHelper {
         return status;
     }
 
+    private int consumeResponse(final Response response) {
+        final int status = response.getStatus();
+        final String responseText = response.readEntity(String.class);
+        ReceiptId receiptId = null;
+        try {
+            receiptId = ReceiptId.parse(responseText);
+        } catch (Exception ignored) {
+            // Ignore
+        }
+        LOGGER.info("datafeed response ({}):\n{}", status, responseText);
+        final PostResponse postResponse = new PostResponse(receiptId, status, responseText);
+        postResponses.add(postResponse);
+        return status;
+    }
+
     public long getPostCount() {
         return postToProxyCount.sum();
+    }
+
+    public List<PostResponse> getPostResponses() {
+        return Collections.unmodifiableList(postResponses);
+    }
+
+    public List<ReceiptId> getReceiptIds() {
+        return postResponses.stream()
+                .map(PostResponse::receiptId)
+                .toList();
+    }
+
+    public List<String> getDataIdsSent() {
+        return Collections.unmodifiableList(dataIds);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public record PostResponse(ReceiptId receiptId,
+                               int status,
+                               String responseText) {
+
     }
 }
