@@ -179,6 +179,7 @@ dependencies {
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     implementation project(':stroom-state:stroom-state-impl')
+    implementation project(':stroom-state:stroom-planb-impl')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')

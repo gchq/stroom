@@ -46,7 +46,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-public class StateModule extends AbstractModule {
+public class PlanBModule extends AbstractModule {
 
     @Override
     protected void configure() {

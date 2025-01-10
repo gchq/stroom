@@ -56,6 +56,7 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
+import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
@@ -958,6 +959,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                 @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
+                @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                 @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -1018,6 +1020,7 @@ class TestConfigMapper {
                     sessionCookieConfig,
                     solrConfig,
                     stateConfig,
+                    planBConfig,
                     statisticsConfig,
                     storedQueryConfig,
                     pathConfig,

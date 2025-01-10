@@ -6179,6 +6179,51 @@ paths:
       summary: Get information for the current session
       tags:
       - Session Info
+  /snapshot/v1/fetchSnapshot:
+    post:
+      operationId: fetchSnapshot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnapshotRequest"
+      responses:
+        default:
+          content:
+            application/octet-stream: {}
+          description: default response
+  /snapshot/v1/sendPart:
+    post:
+      operationId: sendPart
+      parameters:
+      - in: header
+        name: createTime
+        schema:
+          type: integer
+          format: int64
+      - in: header
+        name: metaId
+        schema:
+          type: integer
+          format: int64
+      - in: header
+        name: fileHash
+        schema:
+          type: string
+      - in: header
+        name: fileName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: object
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
   /solrIndex/v1/fetchSolrTypes:
     post:
       operationId: fetchSolrTypes
@@ -9568,6 +9613,7 @@ components:
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
+          - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_REPORT
@@ -12500,6 +12546,7 @@ components:
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
+          - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_REPORT
@@ -14991,6 +15038,14 @@ components:
           format: int32
       xml:
         name: size
+    SnapshotRequest:
+      type: object
+      properties:
+        effectiveTime:
+          type: integer
+          format: int64
+        mapName:
+          type: string
     SolrConnectionConfig:
       type: object
       properties:

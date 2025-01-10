@@ -592,6 +592,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
       maxElements: 1000000
+  planb:
+    nodeList: []
+    path: "${stroom.home}/planb"
+    readerCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 10
+      refreshAfterWrite: null
+    stateDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   processor:
     assignTasks: true
     createTasksBeyondProcessLimit: true
