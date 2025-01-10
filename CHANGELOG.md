@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.8] - 2025-01-10
+
+* Fix tests that were breaking the build.
+
+* Change the format of proxy receiptIds. They now look like `0000001736533752496_0000_TestProxy` with the first part being the epoch millis for when it was generated and the last part is the proxy ID.
+
+
 ## [v7.8-beta.7] - 2025-01-09
 
 * Change default `identityProviderType` to `INTERNAL_IDP` in stroom prod config.
@@ -1141,7 +1148,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.8...HEAD
+[v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
 [v7.8-beta.7]: https://github.com/gchq/stroom/compare/v7.8-beta.6...v7.8-beta.7
 [v7.8-beta.6]: https://github.com/gchq/stroom/compare/v7.8-beta.5...v7.8-beta.6
 [v7.8-beta.5]: https://github.com/gchq/stroom/compare/v7.8-beta.4...v7.8-beta.5
