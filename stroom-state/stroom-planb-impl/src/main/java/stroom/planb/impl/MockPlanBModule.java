@@ -6,7 +6,6 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.pipeline.PlanBElementModule;
-import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.query.language.functions.StateProvider;
 import stroom.util.entityevent.EntityEvent;
@@ -14,7 +13,6 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.util.Providers;
 
 public class MockPlanBModule extends AbstractModule {
@@ -23,7 +21,7 @@ public class MockPlanBModule extends AbstractModule {
     protected void configure() {
         install(new PlanBElementModule());
 
-        bind(PlanBLookup.class).toProvider(Providers.of(null));//PlanBLookupImpl.class);
+        bind(PlanBLookup.class).toProvider(Providers.of(null));
         GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
         bind(FileTransferClient.class).toProvider(Providers.of(null));
 
