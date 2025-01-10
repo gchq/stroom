@@ -15,6 +15,7 @@ import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
+import stroom.planb.impl.MockPlanBModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.ContentPackUserService;
@@ -91,6 +92,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockServletModule());
         install(new MockXmlSchemaModule());
         install(new MockStateModule());
+        install(new MockPlanBModule());
 
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
