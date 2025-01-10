@@ -19,13 +19,14 @@ package stroom.planb.impl.data;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import java.io.InputStream;
 /**
  * Used to transfer snapshots and parts between servers.
  */
+@Tag(name = "File Transfer")
 @Path(FileTransferResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -46,15 +48,21 @@ public interface FileTransferResource extends RestResource {
     @Path(FETCH_SNAPSHOT_PATH_PART)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Fetch Plan B snapshot",
+            operationId = "fetchSnapshot")
     StreamingOutput fetchSnapshot(SnapshotRequest request);
 
     @POST
     @Path(SEND_PART_PATH_PART)
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
-    Response sendPart(@HeaderParam("createTime") long createTime,
-                      @HeaderParam("metaId") long metaId,
-                      @HeaderParam("fileHash") String fileHash,
-                      @HeaderParam("fileName") String fileName,
-                      InputStream inputStream);
+    @Operation(
+            summary = "Send Plan B part",
+            operationId = "sendPart")
+    boolean sendPart(@HeaderParam("createTime") long createTime,
+                     @HeaderParam("metaId") long metaId,
+                     @HeaderParam("fileHash") String fileHash,
+                     @HeaderParam("fileName") String fileName,
+                     InputStream inputStream);
 }

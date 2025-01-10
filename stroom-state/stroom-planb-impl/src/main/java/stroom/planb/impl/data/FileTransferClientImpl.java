@@ -19,7 +19,6 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -113,16 +112,22 @@ public class FileTransferClientImpl implements FileTransferClient {
         final String url = baseEndpointUrl + ResourcePaths.buildServletPath(FileTransferResource.BASE_PATH,
                 FileTransferResource.SEND_PART_PATH_PART);
         final WebTarget webTarget = webTargetFactory.create(url);
-        try (final Response response = storePartRemotely(webTarget, fileDescriptor, path)) {
-            if (response.getStatus() != Status.OK.getStatusCode()) {
+        try {
+            if (!storePartRemotely(webTarget, fileDescriptor, path)) {
                 throw new IOException("Unable to send file to: " + sourceNode);
             }
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+            throw new IOException(e);
         }
     }
 
-    Response storePartRemotely(final WebTarget webTarget,
-                               final FileDescriptor fileDescriptor,
-                               final Path path) throws IOException {
+    boolean storePartRemotely(final WebTarget webTarget,
+                              final FileDescriptor fileDescriptor,
+                              final Path path) throws IOException {
         try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
             return webTarget
                     .request()
@@ -130,7 +135,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                     .header("metaId", fileDescriptor.metaId())
                     .header("fileHash", fileDescriptor.fileHash())
                     .header("fileName", path.getFileName().toString())
-                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM));
+                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM), Boolean.class);
         }
     }
 

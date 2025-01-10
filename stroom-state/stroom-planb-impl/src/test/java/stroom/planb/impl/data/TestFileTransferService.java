@@ -5,8 +5,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -60,9 +58,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                         Mockito.any(InputStream.class));
 
         final WebTarget webTarget = getWebTarget(FileTransferResource.SEND_PART_PATH_PART);
-        try (final Response response = fileTransferClient.storePartRemotely(webTarget, fileDescriptor, path)) {
-            assertThat(response.getStatus()).isEqualTo(Status.OK.getStatusCode());
-        }
+        assertThat(fileTransferClient.storePartRemotely(webTarget, fileDescriptor, path)).isTrue();
     }
 
     @Test

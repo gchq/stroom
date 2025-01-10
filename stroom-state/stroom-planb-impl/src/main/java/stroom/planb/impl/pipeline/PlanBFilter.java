@@ -71,16 +71,16 @@ import java.util.regex.Pattern;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
- * stored as reference data. The key, value map content is likely to have been
+ * stored as state data. The key, value map content is likely to have been
  * produced as the result of an XSL transformation of some reference data.
  * <p>
  * This filter will typically fire
  */
 @ConfigurableElement(
-        type = "StateFilter",
+        type = "PlanBFilter",
         description = """
                 Takes XML input (conforming to the reference-data:2 schema) and \
-                loads the data into the State Store.
+                loads the data into the Plan B State Store.
                 Reference data values can be either simple strings or XML fragments.""",
         category = Category.FILTER,
         roles = {

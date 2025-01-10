@@ -1,8 +1,13 @@
 package stroom.planb.impl.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder(alphabetic = true)
+@JsonInclude(Include.NON_NULL)
 public class SnapshotRequest {
 
     @JsonProperty

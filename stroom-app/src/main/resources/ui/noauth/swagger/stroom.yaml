@@ -6192,6 +6192,9 @@ paths:
           content:
             application/octet-stream: {}
           description: default response
+      summary: Fetch Plan B snapshot
+      tags:
+      - File Transfer
   /snapshot/v1/sendPart:
     post:
       operationId: sendPart
@@ -6222,8 +6225,13 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: boolean
           description: default response
+      summary: Send Plan B part
+      tags:
+      - File Transfer
   /solrIndex/v1/fetchSolrTypes:
     post:
       operationId: fetchSolrTypes

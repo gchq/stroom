@@ -23,8 +23,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.InputStream;
@@ -49,17 +47,20 @@ public class FileTransferResourceImpl implements FileTransferResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public Response sendPart(final long createTime,
-                             final long metaId,
-                             final String fileHash,
-                             final String fileName,
-                             final InputStream inputStream) {
+    public boolean sendPart(final long createTime,
+                            final long metaId,
+                            final String fileHash,
+                            final String fileName,
+                            final InputStream inputStream) {
         try {
             fileTransferServiceProvider.get().receivePart(createTime, metaId, fileHash, fileName, inputStream);
-            return Response.ok("success").build();
+            return true;
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
-            return Response.status(Status.BAD_REQUEST.getStatusCode(), e.getMessage()).build();
+            throw new RuntimeException(e);
         }
     }
 }
