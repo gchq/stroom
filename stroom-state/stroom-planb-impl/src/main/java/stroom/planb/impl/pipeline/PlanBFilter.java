@@ -86,7 +86,7 @@ import java.util.regex.Pattern;
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS},
-        icon = SvgImage.DOCUMENT_STATE_STORE)
+        icon = SvgImage.DOCUMENT_PLAN_B)
 public class PlanBFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBFilter.class);

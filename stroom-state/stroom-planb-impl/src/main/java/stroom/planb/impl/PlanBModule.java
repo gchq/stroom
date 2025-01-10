@@ -23,7 +23,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.FileTransferClientImpl;
 import stroom.planb.impl.data.FileTransferResourceImpl;
@@ -31,7 +31,7 @@ import stroom.planb.impl.data.FileTransferService;
 import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.pipeline.PlanBElementModule;
-import stroom.planb.impl.pipeline.StateLookupProviderImpl;
+import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.common.v2.IndexFieldProvider;
@@ -52,7 +52,7 @@ public class PlanBModule extends AbstractModule {
     protected void configure() {
         install(new PlanBElementModule());
 
-        GuiceUtil.buildMultiBinder(binder(), StateLookupProvider.class).addBinding(StateLookupProviderImpl.class);
+        bind(PlanBLookup.class).to(PlanBLookupImpl.class);
         GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
 
         // Caches
@@ -93,7 +93,7 @@ public class PlanBModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(StateMergeRunnable.class, builder -> builder
                         .name(MergeProcessor.TASK_NAME)
-                        .description("PlanB state store merge")
+                        .description("Plan B state store merge")
                         .cronSchedule("0 0 0 * * ?")
                         .advanced(true));
     }

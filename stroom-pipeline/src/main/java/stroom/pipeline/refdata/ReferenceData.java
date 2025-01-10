@@ -36,7 +36,9 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.pipeline.xsltfunctions.StateLookup;
+import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.state.shared.StateDoc;
 import stroom.task.api.TaskContext;
@@ -82,6 +84,7 @@ public class ReferenceData {
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final StateLookup stateLookup;
+    private final PlanBLookup planBLookup;
 
     @Inject
     ReferenceData(final EffectiveStreamService effectiveStreamService,
@@ -95,7 +98,8 @@ public class ReferenceData {
                   final PipelineStore pipelineStore,
                   final SecurityContext securityContext,
                   final TaskContextFactory taskContextFactory,
-                  final StateLookup stateLookup) {
+                  final StateLookup stateLookup,
+                  final PlanBLookup planBLookup) {
         this.effectiveStreamService = effectiveStreamService;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
@@ -108,6 +112,7 @@ public class ReferenceData {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.stateLookup = stateLookup;
+        this.planBLookup = planBLookup;
     }
 
     /**
@@ -164,7 +169,7 @@ public class ReferenceData {
                     result.logLazyTemplate(
                             Severity.INFO,
                             "Nested lookup using previous lookup value as new key: '{}' - " +
-                                    "(primary map: {}, secondary map: {}, nested lookup: {})",
+                            "(primary map: {}, secondary map: {}, nested lookup: {})",
                             () -> Arrays.asList(
                                     nextKey,
                                     nestedIdentifier.getPrimaryMapName(),
@@ -235,9 +240,17 @@ public class ReferenceData {
                     pipelineReference, lookupIdentifier);
 
             // Try the state store if it is present.
-            if (StateDoc.TYPE.equals(pipelineReference.getPipeline().getType())) {
+            final DocRef pipeline = pipelineReference.getPipeline();
+            final String mapName = lookupIdentifier.getPrimaryMapName();
+            if (PlanBDoc.TYPE.equals(pipeline.getType())) {
                 // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
-                if (stateLookup != null) {
+                if (planBLookup != null && mapName.equalsIgnoreCase(pipeline.getName())) {
+                    planBLookup.lookup(lookupIdentifier, referenceDataResult);
+                }
+
+            } else if (StateDoc.TYPE.equals(pipeline.getType())) {
+                // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
+                if (planBLookup != null && mapName.equalsIgnoreCase(pipeline.getName())) {
                     stateLookup.lookup(lookupIdentifier, referenceDataResult);
                 }
 
@@ -385,7 +398,7 @@ public class ReferenceData {
 
         result.logLazyTemplate(Severity.INFO,
                 "Availability of map '{}' is '{}' in stream: {}, feed: '{}', pipeline: '{}', " +
-                        "lookup required: {}",
+                "lookup required: {}",
                 () -> Arrays.asList(
                         mapName,
                         mapAvailability,
@@ -455,10 +468,10 @@ public class ReferenceData {
             final ReferenceDataResult result) {
 
         if (pipelineReference.getFeed() == null ||
-                pipelineReference.getFeed().getUuid() == null ||
-                pipelineReference.getFeed().getUuid().isEmpty() ||
-                pipelineReference.getStreamType() == null ||
-                pipelineReference.getStreamType().isEmpty()) {
+            pipelineReference.getFeed().getUuid() == null ||
+            pipelineReference.getFeed().getUuid().isEmpty() ||
+            pipelineReference.getStreamType() == null ||
+            pipelineReference.getStreamType().isEmpty()) {
 
             result.logSimpleTemplate(Severity.ERROR,
                     "pipelineReference is not fully formed, {}",
@@ -468,7 +481,7 @@ public class ReferenceData {
         // Check that the current user has permission to read the ref stream.
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
-                        documentPermissionCache.canUseDocument(pipelineReference.getFeed()));
+                documentPermissionCache.canUseDocument(pipelineReference.getFeed()));
 
         if (hasPermission) {
             // Find the latest ref stream that is before our lookup time
@@ -481,7 +494,7 @@ public class ReferenceData {
 
                 result.logLazyTemplate(Severity.INFO,
                         "Checking effective stream: {} in feed: '{}' for presence of map '{}' " +
-                                "(stream effective time: {}, lookup time: {}, pipeline feed: '{}')",
+                        "(stream effective time: {}, lookup time: {}, pipeline feed: '{}')",
                         () -> Arrays.asList(
                                 effectiveStream.getId(),
                                 effectiveStream.getFeedName(),
@@ -592,7 +605,7 @@ public class ReferenceData {
             if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.FAILED)) {
                 throw new RuntimeException(LogUtil.message(
                         "Reference stream {} has been loaded previously but failed, " +
-                                "aborting lookup against this stream.",
+                        "aborting lookup against this stream.",
                         refStreamDefinition.getStreamId()));
             } else {
                 if (isRefLoadRequired) {
@@ -617,7 +630,7 @@ public class ReferenceData {
 
                     // No point in continuing if the load was interrupted
                     if (!isTerminated()
-                            && (storedErrorReceiver == null
+                        && (storedErrorReceiver == null
                             || storedErrorReceiver.getCount(Severity.FATAL_ERROR) == 0)) {
                         // mark this ref stream defs as available for future lookups within this
                         // pipeline process

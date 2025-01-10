@@ -10,6 +10,7 @@ import stroom.planb.impl.io.TemporalRangedStateWriter;
 import stroom.planb.impl.io.TemporalStateWriter;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -30,7 +31,7 @@ import java.util.stream.Stream;
 @Singleton
 public class MergeProcessor {
 
-    public static final String TASK_NAME = "PlanB Merge Processor";
+    public static final String TASK_NAME = "Plan B Merge Processor";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
 
@@ -80,33 +81,34 @@ public class MergeProcessor {
 
     public void exec() {
         securityContext.asProcessingUser(() -> {
-            taskContextFactory.context("PlanB state merge", taskContext -> {
-                try {
-                    final long minStoreId = fileStore.getMinStoreId();
-                    final long maxStoreId = fileStore.getMaxStoreId();
-                    LOGGER.info(() -> LogUtil.message("Min store id = {}, max store id = {}", minStoreId, maxStoreId));
+            final TaskContext taskContext = taskContextFactory.current();
+            try {
+                final long minStoreId = fileStore.getMinStoreId();
+                final long maxStoreId = fileStore.getMaxStoreId();
+                LOGGER.info(() -> LogUtil.message("Min store id = {}, max store id = {}",
+                        minStoreId,
+                        maxStoreId));
 
-                    long storeId = minStoreId;
-                    if (storeId == -1) {
-                        LOGGER.info("Store is empty");
-                        storeId = 0;
-                    }
-
-                    while (!taskContext.isTerminated() && !Thread.currentThread().isInterrupted()) {
-                        // Wait until new data is available.
-                        final long currentStoreId = storeId;
-                        taskContext.info(() -> "Waiting for data...");
-                        final SequentialFile sequentialFile = fileStore.awaitNew(currentStoreId);
-                        taskContext.info(() -> "Merging data: " + currentStoreId);
-                        merge(sequentialFile);
-
-                        // Increment store id.
-                        storeId++;
-                    }
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
+                long storeId = minStoreId;
+                if (storeId == -1) {
+                    LOGGER.info("Store is empty");
+                    storeId = 0;
                 }
-            }).run();
+
+                while (!taskContext.isTerminated() && !Thread.currentThread().isInterrupted()) {
+                    // Wait until new data is available.
+                    final long currentStoreId = storeId;
+                    taskContext.info(() -> "Waiting for data...");
+                    final SequentialFile sequentialFile = fileStore.awaitNew(currentStoreId);
+                    taskContext.info(() -> "Merging data: " + currentStoreId);
+                    merge(sequentialFile);
+
+                    // Increment store id.
+                    storeId++;
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
         });
     }
 

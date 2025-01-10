@@ -5,7 +5,7 @@ import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.ReaderCache;
 import stroom.planb.impl.io.RangedStateReader;
@@ -38,9 +38,9 @@ import java.util.Map;
 import java.util.Optional;
 
 @PipelineScoped
-public class StateLookupProviderImpl implements StateLookupProvider {
+public class PlanBLookupImpl implements PlanBLookup {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateLookupProviderImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBLookupImpl.class);
 
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Optional<TemporalState>> cache;
@@ -48,8 +48,8 @@ public class StateLookupProviderImpl implements StateLookupProvider {
     private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
     @Inject
-    public StateLookupProviderImpl(final PlanBDocCache stateDocCache,
-                                   final ReaderCache readerCache) {
+    public PlanBLookupImpl(final PlanBDocCache stateDocCache,
+                           final ReaderCache readerCache) {
         this.stateDocCache = stateDocCache;
         this.readerCache = readerCache;
         cache = Caffeine.newBuilder().maximumSize(1000).build();

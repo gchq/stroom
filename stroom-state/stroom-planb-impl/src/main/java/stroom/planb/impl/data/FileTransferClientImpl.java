@@ -75,7 +75,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                     if (enabledActiveNodes.contains(node)) {
                         targetNodes.add(node);
                     } else {
-                        throw new RuntimeException("PlanB target node '" + node + "' is not enabled or active");
+                        throw new RuntimeException("Plan B target node '" + node + "' is not enabled or active");
                     }
                 }
             } catch (final Exception e) {

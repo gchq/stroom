@@ -4,12 +4,12 @@ import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
 import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateFetcherImpl;
-import stroom.state.impl.pipeline.StateLookupProviderImpl;
+import stroom.state.impl.pipeline.StateLookupImpl;
 import stroom.state.impl.pipeline.StateProviderImpl;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.util.entityevent.EntityEvent;
@@ -25,7 +25,7 @@ public class MockStateModule extends AbstractModule {
     protected void configure() {
         install(new StateElementModule());
 
-        GuiceUtil.buildMultiBinder(binder(), StateLookupProvider.class).addBinding(StateLookupProviderImpl.class);
+        bind(StateLookup.class).to(StateLookupImpl.class);
         GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
         bind(StateFetcher.class).to(StateFetcherImpl.class);
 

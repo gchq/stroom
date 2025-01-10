@@ -5,7 +5,7 @@ import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.StateDocCache;
 import stroom.state.impl.dao.RangedStateDao;
@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @PipelineScoped
-public class StateLookupProviderImpl implements StateLookupProvider {
+public class StateLookupImpl implements StateLookup {
 
     private static final ByteBuffer TRUE = ByteBuffer
             .wrap(Boolean.toString(true).getBytes(StandardCharsets.UTF_8));
@@ -49,8 +49,8 @@ public class StateLookupProviderImpl implements StateLookupProvider {
     private final Map<String, Optional<StateDoc>> stateDocMap = new HashMap<>();
 
     @Inject
-    public StateLookupProviderImpl(final CqlSessionFactory cqlSessionFactory,
-                                   final StateDocCache stateDocCache) {
+    public StateLookupImpl(final CqlSessionFactory cqlSessionFactory,
+                           final StateDocCache stateDocCache) {
         this.cqlSessionFactory = cqlSessionFactory;
         this.stateDocCache = stateDocCache;
         cache = Caffeine.newBuilder().maximumSize(1000).build();

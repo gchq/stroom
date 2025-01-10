@@ -17,6 +17,5 @@ public interface StateLookupProvider {
      * @param lookupIdentifier The identifier to lookup in the reference data
      * @param result           The reference result object containing the proxy object for performing the lookup
      */
-    void lookup(LookupIdentifier lookupIdentifier,
-                ReferenceDataResult result);
+    void lookup(LookupIdentifier lookupIdentifier, ReferenceDataResult result);
 }

@@ -3,9 +3,9 @@ package stroom.planb.impl;
 import stroom.docstore.api.ContentIndexable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.pipeline.PlanBElementModule;
-import stroom.planb.impl.pipeline.StateLookupProviderImpl;
+import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.query.language.functions.StateProvider;
 import stroom.util.entityevent.EntityEvent;
@@ -20,7 +20,7 @@ public class MockStateModule extends AbstractModule {
     protected void configure() {
         install(new PlanBElementModule());
 
-        GuiceUtil.buildMultiBinder(binder(), StateLookupProvider.class).addBinding(StateLookupProviderImpl.class);
+        bind(PlanBLookup.class).to(PlanBLookupImpl.class);
         GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
 
 //        // Services

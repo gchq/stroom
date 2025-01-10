@@ -36,7 +36,7 @@ public class ReaderCache {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReaderCache.class);
 
-    private static final String CACHE_NAME = "PlanB Reader Cache";
+    private static final String CACHE_NAME = "Plan B Reader Cache";
 
     private final LoadingStroomCache<String, Shard> cache;
     private final ByteBufferFactory byteBufferFactory;
