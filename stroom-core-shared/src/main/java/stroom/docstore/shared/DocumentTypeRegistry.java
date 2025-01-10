@@ -196,6 +196,7 @@ public class DocumentTypeRegistry {
         put(SCYLLA_DB_DOCUMENT_TYPE);
         put(SOLR_INDEX_DOCUMENT_TYPE);
         put(STATE_STORE_DOCUMENT_TYPE);
+        put(PLAN_B_DOCUMENT_TYPE);
         put(STATISTIC_STORE_DOCUMENT_TYPE);
         put(STROOM_STATS_STORE_DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
