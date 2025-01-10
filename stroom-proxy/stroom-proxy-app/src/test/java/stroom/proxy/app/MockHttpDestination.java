@@ -1,16 +1,21 @@
 package stroom.proxy.app;
 
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileName;
 import stroom.util.json.JsonUtil;
@@ -18,6 +23,7 @@ import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -43,10 +49,14 @@ import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.LongSummaryStatistics;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -175,6 +185,8 @@ public class MockHttpDestination {
         if (body.length > 0) {
             final List<DataFeedRequestItem> dataFeedRequestItems = new ArrayList<>();
 
+            // This may not work for 'instant' forwarding, where the front door req into proxy
+            // is forwarded straight to the dest with no store/agg, thus may not be ZIP compressed
             try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(new ByteArrayInputStream(
                     body))) {
                 ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
@@ -202,7 +214,15 @@ public class MockHttpDestination {
                 throw new UncheckedIOException(e);
             }
 
-            final DataFeedRequest dataFeedRequest = new DataFeedRequest(dataFeedRequestItems);
+
+            final AttributeMap attributeMap = new AttributeMap();
+            final Set<String> headerNames = serveEvent.getRequest().getHeaders().keys();
+            for (final String headerName : headerNames) {
+                attributeMap.put(headerName, serveEvent.getRequest().getHeader(headerName));
+            }
+
+            final DataFeedRequest dataFeedRequest = new DataFeedRequest(
+                    attributeMap, dataFeedRequestItems);
             dataFeedRequests.add(dataFeedRequest);
         }
     }
@@ -259,6 +279,10 @@ public class MockHttpDestination {
 
     private int getDataFeedPostsToStroomCount() {
         return dataFeedRequests.size();
+    }
+
+    public List<DataFeedRequest> getDataFeedRequests() {
+        return dataFeedRequests;
     }
 
     List<LoggedRequest> getPostsToStroomDataFeed() {
@@ -425,13 +449,97 @@ public class MockHttpDestination {
         TestUtil.waitForIt(
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,
-                () -> "Forward to stroom datafeed count",
+                () -> "Forward to stroom datafeed POST count",
                 Duration.ofMinutes(1),
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
         WireMock.verify(expectedRequestCount, WireMock.postRequestedFor(
                 WireMock.urlPathEqualTo(getDataFeedPath())));
+    }
+
+    void assertReceivedItemCount(final int count) {
+        TestUtil.waitForIt(
+                () -> {
+                    final long actualCount = getDataFeedRequests()
+                            .stream()
+                            .map(DataFeedRequest::getDataFeedRequestItems)
+                            .flatMap(Collection::stream)
+                            .filter(item -> item.type.equals(StroomZipFileType.META.getExtension()))
+                            .count();
+                    return actualCount;
+                },
+                (long) count,
+                () -> "Received item count",
+                Duration.ofMinutes(1),
+                Duration.ofMillis(100),
+                Duration.ofSeconds(1));
+
+        final long actualCount = getDataFeedRequests()
+                .stream()
+                .map(DataFeedRequest::getDataFeedRequestItems)
+                .flatMap(Collection::stream)
+                .filter(item -> item.type.equals(StroomZipFileType.META.getExtension()))
+                .count();
+        Assertions.assertThat(actualCount)
+                .isEqualTo(count);
+    }
+
+    /**
+     * Assert all the {@link ReceiptId}s contained in the stored aggregates
+     */
+    void assertReceiptIds(final List<ReceiptId> expectedReceiptIds) {
+        final List<ReceiptId> actualReceiptIds = getDataFeedRequests()
+                .stream()
+                .map(DataFeedRequest::getContainedReceiptIds)
+                .flatMap(Collection::stream)
+                .toList();
+
+        Assertions.assertThat(actualReceiptIds)
+                .containsExactlyInAnyOrderElementsOf(expectedReceiptIds);
+    }
+
+    void assertMaxItemsPerAggregate(final Config config) {
+        final List<DataFeedRequest> forwardFiles = getDataFeedRequests();
+        final List<Long> aggItemCounts = forwardFiles.stream()
+                .map(DataFeedRequest::getDataFeedRequestItems)
+                .map(zipItems -> zipItems.stream()
+                        .filter(zipItem ->
+                                zipItem.type().equals(StroomZipFileType.META.getExtension()))
+                        .count())
+                .toList();
+
+        final AggregatorConfig aggregatorConfig = config.getProxyConfig().getAggregatorConfig();
+        final int maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
+
+        // Each agg should be no bigger than configured max
+        for (final Long itemCount : aggItemCounts) {
+            Assertions.assertThat(itemCount)
+                    .isLessThanOrEqualTo(maxItemsPerAggregate);
+        }
+
+        final StroomDuration maxAggregateAge = aggregatorConfig.getMaxAggregateAge();
+        final List<Duration> aggAges = forwardFiles.stream()
+                .map(DataFeedRequest::getDataFeedRequestItems)
+                .map(zipItems -> {
+                    final LongSummaryStatistics stats = zipItems.stream()
+                            .filter(zipItem ->
+                                    zipItem.type().equals(StroomZipFileType.META.getExtension()))
+                            .map(zipItem -> zipItem.getContentAsAttributeMap()
+                                    .get(StandardHeaderArguments.RECEIVED_TIME))
+                            .mapToLong(DateUtil::parseNormalDateTimeString)
+                            .summaryStatistics();
+                    return Duration.between(
+                            Instant.ofEpochMilli(stats.getMin()),
+                            Instant.ofEpochMilli(stats.getMax()));
+                })
+                .toList();
+
+        // Each agg should have a receipt time range no wider than the configured max agg age
+        for (final Duration aggAge : aggAges) {
+            Assertions.assertThat(aggAge)
+                    .isLessThanOrEqualTo(maxAggregateAge.getDuration());
+        }
     }
 
 //    private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests,
@@ -450,16 +558,43 @@ public class MockHttpDestination {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    private static class DataFeedRequest {
+    public static class DataFeedRequest {
 
         private final List<DataFeedRequestItem> dataFeedRequestItems;
+        private final AttributeMap attributeMap;
 
-        public DataFeedRequest(final List<DataFeedRequestItem> dataFeedRequestItems) {
+        public DataFeedRequest(final AttributeMap attributeMap,
+                               final List<DataFeedRequestItem> dataFeedRequestItems) {
             this.dataFeedRequestItems = dataFeedRequestItems;
+            this.attributeMap = attributeMap;
         }
 
         public List<DataFeedRequestItem> getDataFeedRequestItems() {
             return dataFeedRequestItems;
+        }
+
+        public AttributeMap getAttributeMap() {
+            return attributeMap;
+        }
+
+        /**
+         * The {@link ReceiptId} of the wrapping zip
+         */
+        public ReceiptId getReceiptId() {
+            return NullSafe.get(
+                    attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
+                    ReceiptId::parse);
+        }
+
+        public List<ReceiptId> getContainedReceiptIds() {
+            return dataFeedRequestItems.stream()
+                    .filter(item ->
+                            item.type().equals(StroomZipFileType.META.getExtension()))
+                    .map(DataFeedRequestItem::getContentAsAttributeMap)
+                    .map(attributeMap ->
+                            attributeMap.get(StandardHeaderArguments.RECEIPT_ID))
+                    .map(ReceiptId::parse)
+                    .toList();
         }
     }
 
@@ -467,10 +602,19 @@ public class MockHttpDestination {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    private record DataFeedRequestItem(String name,
-                                       String baseName,
-                                       String type,
-                                       String content) {
+    public record DataFeedRequestItem(String name,
+                                      String baseName,
+                                      String type,
+                                      String content) {
+
+        public AttributeMap getContentAsAttributeMap() {
+            if (StroomZipFileType.META.getExtension().equals(type)) {
+                return AttributeMapUtil.create(content);
+            } else {
+                throw new UnsupportedOperationException(LogUtil.message(
+                        "Can't convert {} to an AttributeMap", type));
+            }
+        }
 
     }
 }

@@ -3,7 +3,7 @@ package stroom.proxy.app.event;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
@@ -42,7 +42,6 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     private final ReceiverFactory receiverFactory;
     private final Path dir;
-    private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<EventStoreConfig> eventStoreConfigProvider;
     private final Cache<FeedKey, EventAppender> openAppenders;
     private final Map<FeedKey, EventAppender> stores;
@@ -51,7 +50,6 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     @Inject
     public EventStore(final ReceiverFactory receiverFactory,
-                      final Provider<ProxyConfig> proxyConfigProvider,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
                       final DataDirProvider dataDirProvider,
                       final FileStores fileStores) {
@@ -69,7 +67,6 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
         fileStores.add(0, "Event Store", dir);
 
         this.receiverFactory = receiverFactory;
-        this.proxyConfigProvider = proxyConfigProvider;
         final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
         cacheBuilder.maximumSize(eventStoreConfig.getMaxOpenFiles());
         cacheBuilder.removalListener(this);
@@ -204,7 +201,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     @Override
     public void consume(final AttributeMap attributeMap,
-                        final String requestUuid,
+                        final ReceiptId receiptId,
                         final String data) {
         try {
             final String feed = attributeMap.get("Feed");
@@ -212,8 +209,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
             final FeedKey feedKey = new FeedKey(feed, type);
 
             final String string = eventSerialiser.serialise(
-                    requestUuid,
-                    proxyConfigProvider.get().getProxyId(),
+                    receiptId,
                     feedKey,
                     attributeMap,
                     data) + "\n";

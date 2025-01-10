@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
+    private static final int MAX_ITEMS_PER_AGG = 3;
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFile.class);
 
     @Inject
@@ -37,8 +39,8 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
                         .maxAggregateAge(StroomDuration.ofSeconds(5))
-                        .aggregationFrequency(StroomDuration.ofSeconds(1))
-                        .maxItemsPerAggregate(3)
+                        .aggregationFrequency(StroomDuration.ofSeconds(5))
+                        .maxItemsPerAggregate(MAX_ITEMS_PER_AGG)
                         .build())
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
@@ -58,18 +60,24 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         // stubs to be available to be healthy
         waitForHealthyProxyApp(Duration.ofSeconds(30));
 
-        // Two feeds each send 4, agg max items of 3 so two batches each
+        // Two feeds each send 16, agg max items of 3 so 6 batches each
         final PostDataHelper postDataHelper = createPostDataHelper();
-        for (int i = 0; i < 16; i++) {
-            postDataHelper.sendTestData1();
-            postDataHelper.sendTestData2();
+        int reqPerFeed = 16;
+        int reqCount = reqPerFeed * 2;
+        for (int i = 0; i < reqPerFeed; i++) {
+            postDataHelper.sendFeed1TestData();
+            postDataHelper.sendFeed2TestData();
         }
 
         assertThat(postDataHelper.getPostCount())
-                .isEqualTo(32);
+                .isEqualTo(reqCount);
 
-        // Assert the contents of the files.
-        mockFileDestination.assertFileContents(getConfig(), 12);
+        mockFileDestination.assertReceivedItemCount(getConfig(), reqCount);
+
+        // Makes sure all receiptIds are in the stored files
+        mockFileDestination.assertReceiptIds(getConfig(), postDataHelper.getReceiptIds());
+
+        mockFileDestination.assertMaxItemsPerAggregate(getConfig());
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

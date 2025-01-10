@@ -17,6 +17,7 @@
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
+import stroom.proxy.app.handler.ReceiptId;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,21 +41,23 @@ public class EventResourceImpl implements EventResource {
     @Override
     public String event(final HttpServletRequest request,
                         final String event) {
-        return receiveDataHelper.process(
+        final ReceiptId receiptId = receiveDataHelper.process(
                 request,
-                (req, attributeMap, requestUuid) -> consume(attributeMap, requestUuid, event),
+                (req, attributeMap, receiptId2) ->
+                        consume(attributeMap, receiptId2, event),
                 this::drop);
+        return receiptId.toString();
     }
 
     private void consume(final AttributeMap attributeMap,
-                         final String requestUuid,
+                         final ReceiptId receiptId,
                          final String event) {
-        eventStore.consume(attributeMap, requestUuid, event);
+        eventStore.consume(attributeMap, receiptId, event);
     }
 
     private void drop(final HttpServletRequest request,
                       final AttributeMap attributeMap,
-                      final String requestUuid) {
+                      final ReceiptId receiptId) {
 
     }
 }

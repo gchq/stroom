@@ -2,9 +2,11 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
 import stroom.proxy.app.handler.ProxyId;
+import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
@@ -20,8 +22,6 @@ import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 public class ReceiveDataHelper {
 
@@ -48,18 +48,16 @@ public class ReceiveDataHelper {
         this.logStream = logStream;
     }
 
-    public String process(final HttpServletRequest request,
-                          final Handler consumeHandler,
-                          final Handler dropHandler) throws StroomStreamException {
+    public ReceiptId process(final HttpServletRequest request,
+                             final Handler consumeHandler,
+                             final Handler dropHandler) throws StroomStreamException {
         final long startTimeMs = System.currentTimeMillis();
 
         // Create attribute map from headers.
         final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-        // Create a new proxy id for the request so we can track progress and report back the UUID to the sender,
-        final String requestUuid = UUID.randomUUID().toString();
-        final String proxyIdString = proxyId.getId();
-        final String result = proxyIdString + ": " + requestUuid;
+        // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
+        final ReceiptId receiptId = proxyId.generateReceiptId();
 
         try {
             Metrics.measure("ProxyRequestHandler - stream", () -> {
@@ -77,16 +75,16 @@ public class ReceiveDataHelper {
 
                     // Test to see if we are going to accept this stream or drop the data.
                     if (attributeMapFilter.filter(attributeMap)) {
-                        consumeHandler.handle(request, attributeMap, requestUuid);
-
+                        consumeHandler.handle(request, attributeMap, receiptId);
                     } else {
-                        dropHandler.handle(request, attributeMap, requestUuid);
+                        dropHandler.handle(request, attributeMap, receiptId);
                     }
                 });
             });
         } catch (final Throwable e) {
             // Add the proxy request id to help error diagnosis.
-            attributeMap.put(proxyIdString, requestUuid);
+            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId.toString());
+            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId.toString());
 
             final StroomStreamException stroomStreamException = StroomStreamException.create(
                     e, AttributeMapUtil.create(request, certificateExtractor));
@@ -122,13 +120,17 @@ public class ReceiveDataHelper {
             throw stroomStreamException;
         }
 
-        return result;
+        return receiptId;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler {
 
         void handle(HttpServletRequest request,
                     AttributeMap attributeMap,
-                    String requestUuid);
+                    ReceiptId receiptId);
     }
 }

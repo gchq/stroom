@@ -3,6 +3,9 @@ package stroom.proxy.app;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.event.EventStore;
+import stroom.proxy.app.handler.ProxyId;
+import stroom.proxy.app.handler.ReceiptId;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -23,13 +26,15 @@ public class SqsConnector {
 
     private final EventStore eventStore;
     private final SqsClient sqsClient;
+    private final ProxyId proxyId;
 
     private final String queueUrl;
     private final int waitTimeSeconds;
 
     public SqsConnector(final EventStore eventStore,
-                        final SqsConnectorConfig config) {
+                        final SqsConnectorConfig config, final ProxyId proxyId) {
         this.eventStore = eventStore;
+        this.proxyId = proxyId;
         try {
             LOGGER.debug(() -> "Creating SQS client");
             sqsClient = SqsClient.builder()
@@ -92,7 +97,17 @@ public class SqsConnector {
                             attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
                         }
 
-                        eventStore.consume(attributeMap, message.messageId(), message.body());
+                        final String sqsMessageId = message.messageId();
+                        if (NullSafe.isNonBlankString(sqsMessageId)) {
+                            LOGGER.debug("sqsMessageId: {}", sqsMessageId);
+                            attributeMap.put(StandardHeaderArguments.SQS_MESSAGE_ID, sqsMessageId);
+                        }
+                        final ReceiptId receiptId = proxyId.generateReceiptId();
+                        LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptId);
+                        attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId.toString());
+                        attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId.toString());
+
+                        eventStore.consume(attributeMap, receiptId, message.body());
 
                         final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
                                 .queueUrl(queueUrl)
@@ -103,7 +118,7 @@ public class SqsConnector {
                         LOGGER.error(e::getMessage, e);
                     }
                 }
-            } while (messages.size() > 0);
+            } while (!messages.isEmpty());
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
         }

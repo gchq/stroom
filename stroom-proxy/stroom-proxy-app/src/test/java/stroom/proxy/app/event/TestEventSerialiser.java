@@ -2,6 +2,7 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.handler.ReceiptId;
 
 import org.junit.jupiter.api.Test;
 
@@ -18,8 +19,8 @@ public class TestEventSerialiser {
         attributeMap.put(StandardHeaderArguments.FEED, "test-feed");
         final String data = "this\nis some data \n with new \n\n lines";
         final EventSerialiser eventSerialiser = new EventSerialiser();
-        final String json = eventSerialiser
-                .serialise("requestUuid", "test-proxy", feedKey, attributeMap, data);
+        final ReceiptId receiptId = ReceiptId.generate("test-proxy");
+        final String json = eventSerialiser.serialise(receiptId, feedKey, attributeMap, data);
         assertThat(json).contains("\"this\\nis some data \\n with new \\n\\n lines\"");
         assertThat(json).doesNotContain("\n");
     }

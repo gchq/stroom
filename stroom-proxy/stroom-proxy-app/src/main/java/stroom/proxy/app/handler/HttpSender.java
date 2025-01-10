@@ -95,10 +95,17 @@ public class HttpSender implements StreamDestination {
         if (apiKey != null && !apiKey.isBlank()) {
             httpPost.addHeader("Authorization", "Bearer " + apiKey.trim());
         }
-        httpPost.addHeader(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
         final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
             httpPost.addHeader(entry.getKey(), entry.getValue());
+        }
+
+        // We may be doing an instant forward so need to pass on the compression type.
+        // If it is a forward after a store/agg then the caller should have set it in
+        // the attr map
+        final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
+        if (NullSafe.isNonBlankString(compression)) {
+            httpPost.addHeader(StandardHeaderArguments.COMPRESSION, compression);
         }
 
         // Allows sending to systems on the same OpenId realm as us using an access token

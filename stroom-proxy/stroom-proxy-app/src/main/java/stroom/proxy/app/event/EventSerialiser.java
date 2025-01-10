@@ -3,6 +3,7 @@ package stroom.proxy.app.event;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.event.model.Event;
 import stroom.proxy.app.event.model.Header;
+import stroom.proxy.app.handler.ReceiptId;
 import stroom.util.date.DateUtil;
 import stroom.util.json.JsonUtil;
 
@@ -12,8 +13,7 @@ import java.util.Map;
 
 public class EventSerialiser {
 
-    public String serialise(final String requestUuid,
-                            final String proxyId,
+    public String serialise(final ReceiptId receiptId,
                             final FeedKey feedKey,
                             final AttributeMap attributeMap,
                             final String data) throws IOException {
@@ -26,8 +26,8 @@ public class EventSerialiser {
 
         final Event event = new Event(
                 0,
-                requestUuid,
-                proxyId,
+                receiptId.eventId(),
+                receiptId.proxyId(),
                 feedKey.feed(),
                 feedKey.type(),
                 DateUtil.createNormalDateTimeString(),
