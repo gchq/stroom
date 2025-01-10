@@ -22,6 +22,8 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
+import stroom.planb.impl.data.ReaderCache;
+import stroom.planb.impl.io.AbstractLmdbReader;
 import stroom.planb.impl.io.StateFieldUtil;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.v2.ExpressionUtil;
@@ -32,6 +34,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
@@ -72,6 +75,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private final ResultStoreFactory resultStoreFactory;
     private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
+    private final ReaderCache readerCache;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     public StateSearchProvider(final Executor executor,
@@ -80,7 +85,9 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                                final CoprocessorsFactory coprocessorsFactory,
                                final ResultStoreFactory resultStoreFactory,
                                final TaskManager taskManager,
-                               final TaskContextFactory taskContextFactory) {
+                               final TaskContextFactory taskContextFactory,
+                               final ReaderCache readerCache,
+                               final ExpressionPredicateFactory expressionPredicateFactory) {
         this.executor = executor;
         this.stateDocStore = stateDocStore;
         this.stateDocCache = stateDocCache;
@@ -88,6 +95,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
+        this.readerCache = readerCache;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     private PlanBDoc getPlanBDoc(final DocRef docRef) {
@@ -224,11 +233,15 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
                 final Instant queryStart = Instant.now();
                 try {
-//                    DaoFactory.create(sessionProvider, doc.getStateType(), doc.getName()).search(
-//                            criteria,
-//                            coprocessors.getFieldIndex(),
-//                            searchRequest.getDateTimeSettings(),
-//                            coprocessors);
+                    final Optional<AbstractLmdbReader<?, ?>> optional = readerCache.get(doc.getName());
+                    optional.ifPresent(reader -> {
+                        reader.search(
+                                criteria,
+                                coprocessors.getFieldIndex(),
+                                searchRequest.getDateTimeSettings(),
+                                expressionPredicateFactory,
+                                coprocessors);
+                    });
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     resultStore.addError(e);
