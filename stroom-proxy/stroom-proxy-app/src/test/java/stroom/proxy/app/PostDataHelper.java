@@ -165,6 +165,7 @@ public class PostDataHelper {
         try {
             receiptId = ReceiptId.parse(responseText);
         } catch (Exception ignored) {
+            // Ignore
         }
         LOGGER.info("datafeed response ({}):\n{}", status, responseText);
         final PostResponse postResponse = new PostResponse(receiptId, status, responseText);
