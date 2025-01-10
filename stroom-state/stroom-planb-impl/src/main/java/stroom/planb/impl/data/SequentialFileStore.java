@@ -15,18 +15,19 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Singleton
-class SequentialFileStore {
+public class SequentialFileStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
 
@@ -38,10 +39,10 @@ class SequentialFileStore {
 
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
-    private final AtomicLong addedStoreId = new AtomicLong();
+    private final AtomicLong addedStoreId = new AtomicLong(-1);
 
     @Inject
-    SequentialFileStore(final StatePaths statePaths) {
+    public SequentialFileStore(final StatePaths statePaths) {
 
         // Create the root directory
         ensureDirExists(statePaths.getRootDir());
@@ -58,7 +59,7 @@ class SequentialFileStore {
         stagingDir = statePaths.getStagingDir();
         if (ensureDirExists(stagingDir)) {
             long maxId = getMaxId(stagingDir);
-            storeId.set(maxId);
+            storeId.set(maxId + 1);
             addedStoreId.set(maxId);
         }
     }
@@ -80,13 +81,12 @@ class SequentialFileStore {
     /**
      * Add sources to the DB.
      */
-    public long awaitNew(final long lastAddedStoreId) {
-        long currentStoreId;
+    public SequentialFile awaitNew(final long storeId) {
         try {
             lock.lockInterruptibly();
             try {
-                currentStoreId = addedStoreId.get();
-                while (currentStoreId <= lastAddedStoreId) {
+                long currentStoreId = addedStoreId.get();
+                while (currentStoreId < storeId) {
                     condition.await();
                     currentStoreId = addedStoreId.get();
                 }
@@ -96,26 +96,20 @@ class SequentialFileStore {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
-        return currentStoreId;
+        return getStoreFileSet(storeId);
     }
 
-    public void delete(final long storeId) throws IOException {
-        final SequentialFile fileSet = getStoreFileSet(storeId);
-        fileSet.delete();
-//        storeDirManager.deleteDirsUnderLock(fileSet);
-    }
-
-    public SequentialFile getTempFileSet(final long storeId) {
+    private SequentialFile getTempFileSet(final long storeId) {
         return SequentialFile.get(receiveDir, storeId, true);
     }
 
-    public SequentialFile getStoreFileSet(final long storeId) {
+    private SequentialFile getStoreFileSet(final long storeId) {
         return SequentialFile.get(stagingDir, storeId, true);
     }
 
     private void add(final Path tempFile) throws IOException {
         // Move the new data to the store.
-        final long currentStoreId = storeId.incrementAndGet();
+        final long currentStoreId = storeId.getAndIncrement();
         final SequentialFile storeFileSet = getStoreFileSet(currentStoreId);
 
         try {
@@ -177,16 +171,28 @@ class SequentialFileStore {
         return getMaxId(stagingDir);
     }
 
+    public long getMinStoreId() {
+        return getMinId(stagingDir);
+    }
+
     private long getMaxId(final Path path) {
+        return getId(path, Comparator.naturalOrder());
+    }
+
+    private long getMinId(final Path path) {
+        return getId(path, Comparator.<Long>naturalOrder().reversed());
+    }
+
+    private long getId(final Path path, final Comparator<Long> comparator) {
         // First find the depth dir.
-        Optional<NumericFile> optional = getMaxFile(path);
+        Optional<NumericFile> optional = getNumericFile(path, comparator);
         if (optional.isPresent()) {
             final NumericFile depthDir = optional.get();
             NumericFile parent = depthDir;
 
             // Get the max file.
             for (int i = 0; i <= depthDir.num; i++) {
-                optional = getMaxFile(parent.dir);
+                optional = getNumericFile(parent.dir, comparator);
                 if (optional.isPresent()) {
                     parent = optional.get();
                 } else {
@@ -197,54 +203,54 @@ class SequentialFileStore {
             return parent.num;
         }
 
-        return 0;
+        return -1;
     }
 
-    private Optional<NumericFile> getMaxFile(final Path path) {
-        final AtomicReference<NumericFile> result = new AtomicReference<>();
+    private Optional<NumericFile> getNumericFile(final Path path,
+                                                 final Comparator<Long> comparator) {
+        final NumericFileTest numericFileTest = new NumericFileTest(comparator);
         try (final Stream<Path> stream = Files.list(path)) {
             stream.forEach(file -> {
                 // Get the dir name.
                 final String name = file.getFileName().toString();
 
-                // Strip leading 0's.
-                int start = 0;
-                for (int i = 0; i < name.length(); i++) {
-                    if (name.charAt(i) != '0') {
-                        break;
-                    }
-                    start = i + 1;
-                }
-                int end = name.indexOf(".");
-                final String numericPart;
-                if (start == 0 && end == -1) {
-                    numericPart = name;
-                } else if (end == -1) {
-                    numericPart = name.substring(start);
-                } else {
-                    numericPart = name.substring(start, end);
-                }
-
                 // Parse numeric part of dir.
-                long num = 0;
-                if (numericPart.length() > 0) {
-                    num = Long.parseLong(numericPart);
-                }
+                final long num = parseNumber(name);
 
-                // If this is the biggest num we have seen then set it and remember the dir.
-                final NumericFile current = result.get();
-                if (current == null || num > current.num) {
-                    result.set(new NumericFile(file, num));
-                }
+                numericFileTest.accept(new NumericFile(file, num));
             });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return Optional.ofNullable(result.get());
+        return numericFileTest.get();
     }
 
-    private record NumericFile(Path dir, long num) {
+    private long parseNumber(final String name) {
+        // Strip leading 0's.
+        int start = 0;
+        for (int i = 0; i < name.length(); i++) {
+            if (name.charAt(i) != '0') {
+                break;
+            }
+            start = i + 1;
+        }
+        int end = name.indexOf(".");
+        final String numericPart;
+        if (start == 0 && end == -1) {
+            numericPart = name;
+        } else if (end == -1) {
+            numericPart = name.substring(start);
+        } else {
+            numericPart = name.substring(start, end);
+        }
 
+        // Parse numeric part of dir.
+        long num = 0;
+        if (!numericPart.isEmpty()) {
+            num = Long.parseLong(numericPart);
+        }
+
+        return num;
     }
 
     private boolean ensureDirExists(final Path path) {
@@ -259,5 +265,30 @@ class SequentialFileStore {
         }
 
         return false;
+    }
+
+    private record NumericFile(Path dir, long num) {
+
+    }
+
+    private static class NumericFileTest implements Consumer<NumericFile> {
+
+        private final Comparator<Long> comparator;
+        private NumericFile current;
+
+        public NumericFileTest(final Comparator<Long> comparator) {
+            this.comparator = comparator;
+        }
+
+        @Override
+        public void accept(final NumericFile numericFile) {
+            if (current == null || comparator.compare(numericFile.num, current.num) > 0) {
+                current = numericFile;
+            }
+        }
+
+        public Optional<NumericFile> get() {
+            return Optional.ofNullable(current);
+        }
     }
 }

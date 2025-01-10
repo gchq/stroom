@@ -49,6 +49,10 @@ public class FileTransferServiceImpl implements FileTransferService {
         if (!Files.exists(shard)) {
             throw new RuntimeException("Shard not found");
         }
+        final Path lmdbDataFile = shard.resolve("data.mdb");
+        if (!Files.exists(lmdbDataFile)) {
+            throw new RuntimeException("LMDB data file not found");
+        }
 
         // TODO : Possibly create windowed snapshots.
 

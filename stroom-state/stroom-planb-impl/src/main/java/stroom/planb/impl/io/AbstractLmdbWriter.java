@@ -34,17 +34,17 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
     final Env<ByteBuffer> env;
     final Dbi<ByteBuffer> dbi;
     private Txn<ByteBuffer> writeTxn;
-    private final boolean keepFirst;
     private int commitCount = 0;
+    private int hashClashes = 0;
+    private final DBWriter dbWriter;
 
     public AbstractLmdbWriter(final Path path,
                               final ByteBufferFactory byteBufferFactory,
                               final Serde<K, V> serde,
-                              final boolean keepFirst) {
+                              final boolean overwrite) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
         this.byteBufferFactory = byteBufferFactory;
         this.serde = serde;
-        this.keepFirst = keepFirst;
 
         LOGGER.info(() -> "Creating: " + path);
 
@@ -55,26 +55,78 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
 
         env = builder.open(lmdbEnvDir.getEnvDir().toFile(), EnvFlags.MDB_NOTLS);
         dbi = env.openDbi(NAME, getDbiFlags());
+
+        // If we do not prefix values then we can simply put rows.
+        if (!serde.hasPrefix()) {
+            // If the value has no key prefix, i.e. we are not using key hashes then just try to put.
+            if (overwrite) {
+                // Put and overwrite any existing key/value.
+                dbWriter = dbi::put;
+            } else {
+                // Put but do not overwrite any existing key/value.
+                dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) ->
+                        dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE);
+            }
+        } else {
+            if (overwrite) {
+                dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
+                    // First try to put without overwriting existing values.
+                    if (!dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
+                        serde.createPrefixPredicate(keyByteBuffer, valueByteBuffer, predicate -> {
+                            // Delete current value if there is one.
+                            if (!delete(writeTxn, keyByteBuffer, predicate)) {
+                                // We must have had a hash clash here because we didn't find a row for the key even
+                                // though the db contains the key hash.
+                                hashClashes++;
+                            }
+
+                            // Put new value allowing for duplicate keys as we are only using a hash key.
+                            dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
+                            return true;
+                        });
+                    }
+                };
+            } else {
+                dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
+                    // First try to put without overwriting existing values.
+                    if (!dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
+                        serde.createPrefixPredicate(keyByteBuffer, valueByteBuffer, predicate -> {
+                            if (!exists(writeTxn, keyByteBuffer, predicate)) {
+                                // We must have had a hash clash here because we didn't find a row for the key even
+                                // though the db contains the key hash.
+                                hashClashes++;
+
+                                // Put the value as another row for the same key hash as we didn't find a row for the
+                                // full key value.
+                                dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
+                            }
+                            return true;
+                        });
+                    }
+                };
+            }
+        }
     }
 
     DbiFlags[] getDbiFlags() {
         if (serde.hasPrefix()) {
-            return new DbiFlags[] {DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT};
+            return new DbiFlags[]{DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT};
         }
-        return new DbiFlags[] {DbiFlags.MDB_CREATE};
+        return new DbiFlags[]{DbiFlags.MDB_CREATE};
     }
 
     public void merge(final Path source) {
         final Env.Builder<ByteBuffer> builder = Env.create()
                 .setMaxDbs(1)
                 .setMaxReaders(1);
-        try (final Env<ByteBuffer> sourceEnv = builder.open(source.toFile(), EnvFlags.MDB_NOTLS)) {
+        try (final Env<ByteBuffer> sourceEnv = builder.open(source.toFile(),
+                EnvFlags.MDB_NOTLS,
+                EnvFlags.MDB_NOLOCK,
+                EnvFlags.MDB_RDONLY_ENV)) {
             final Dbi<ByteBuffer> sourceDbi = sourceEnv.openDbi(NAME);
             try (final Txn<ByteBuffer> readTxn = sourceEnv.txnRead()) {
                 try (final CursorIterable<ByteBuffer> cursorIterable = sourceDbi.iterate(readTxn)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                    while (iterator.hasNext()) {
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                         insert(keyVal.key(), keyVal.val());
                     }
                 }
@@ -95,40 +147,11 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
     public boolean insert(final ByteBuffer keyByteBuffer,
                           final ByteBuffer valueByteBuffer) {
         final Txn<ByteBuffer> writeTxn = getOrCreateWriteTxn();
-
-        // If we do not prefix values then we can simply put rows.
-        if (!serde.hasPrefix()) {
-            // If the value has no key prefix, i.e. we are not using key hashes then just try to put.
-            if (keepFirst) {
-                // If we are keeping the first then don't allow overwrite.
-                dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE);
-            } else {
-                // Put and overwrite any existing key/value.
-                dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
-            }
-        } else {
-            // Try to put without overwriting existing values.
-            if (!dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
-                serde.createPrefixPredicate(keyByteBuffer, valueByteBuffer, predicate -> {
-                    if (keepFirst) {
-                        if (!exists(writeTxn, keyByteBuffer, predicate)) {
-                            dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
-                        }
-                    } else {
-                        // Delete current value if there is one.
-                        delete(writeTxn, keyByteBuffer, predicate);
-                        // Put new value allowing for duplicate keys as we are only using a hash key.
-                        dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
-                    }
-                    return true;
-                });
-            }
-        }
+        dbWriter.write(writeTxn, keyByteBuffer, valueByteBuffer);
 
         commitCount++;
         if (commitCount > 10000) {
             commit();
-            commitCount = 0;
         }
 
         return true;
@@ -156,9 +179,7 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
                            final Predicate<KeyVal<ByteBuffer>> predicate) {
         final KeyRange<ByteBuffer> keyRange = KeyRange.closed(keyByteBuffer, keyByteBuffer);
         try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn, keyRange)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-            while (iterator.hasNext()) {
-                final KeyVal<ByteBuffer> keyVal = iterator.next();
+            for (final KeyVal<ByteBuffer> keyVal : cursor) {
                 if (predicate.test(keyVal)) {
                     return true;
                 }
@@ -187,11 +208,26 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
                 }
             }
         }
+
+        commitCount = 0;
+
+        if (hashClashes > 0) {
+            // We prob don't want to warn but will keep for now until we know how big the issue is.
+            LOGGER.warn(() -> "We had " + hashClashes + " hash clashes since last commit");
+            hashClashes = 0;
+        }
     }
 
     @Override
     public void close() {
         commit();
         env.close();
+    }
+
+    private interface DBWriter {
+
+        void write(Txn<ByteBuffer> writeTxn,
+                   ByteBuffer keyByteBuffer,
+                   ByteBuffer valueByteBuffer);
     }
 }

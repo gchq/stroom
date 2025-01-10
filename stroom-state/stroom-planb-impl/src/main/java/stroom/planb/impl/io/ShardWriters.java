@@ -68,7 +68,7 @@ public class ShardWriters {
         private final Meta meta;
         private final Map<String, AbstractLmdbWriter<?, ?>> writers = new HashMap<>();
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
-        private final boolean keepFirst = false;
+        private final boolean overwrite = true;
 
         public ShardWriter(final PlanBDocCache planBDocCache,
                            final ByteBufferFactory byteBufferFactory,
@@ -111,35 +111,35 @@ public class ShardWriters {
         public void addState(final String mapName,
                              final State state) {
             final StateWriter writer = (StateWriter) writers.computeIfAbsent(mapName, k ->
-                    new StateWriter(getLmdbEnvDir(k), byteBufferFactory, keepFirst));
+                    new StateWriter(getLmdbEnvDir(k), byteBufferFactory, overwrite));
             writer.insert(state);
         }
 
         public void addTemporalState(final String mapName,
                                      final TemporalState temporalState) {
             final TemporalStateWriter writer = (TemporalStateWriter) writers.computeIfAbsent(mapName, k ->
-                    new TemporalStateWriter(getLmdbEnvDir(k), byteBufferFactory, keepFirst));
+                    new TemporalStateWriter(getLmdbEnvDir(k), byteBufferFactory, overwrite));
             writer.insert(temporalState);
         }
 
         public void addRangedState(final String mapName,
                                    final RangedState rangedState) {
             final RangedStateWriter writer = (RangedStateWriter) writers.computeIfAbsent(mapName, k ->
-                    new RangedStateWriter(getLmdbEnvDir(k), byteBufferFactory, keepFirst));
+                    new RangedStateWriter(getLmdbEnvDir(k), byteBufferFactory, overwrite));
             writer.insert(rangedState);
         }
 
         public void addTemporalRangedState(final String mapName,
                                            final TemporalRangedState temporalRangedState) {
             final TemporalRangedStateWriter writer = (TemporalRangedStateWriter) writers.computeIfAbsent(mapName, k ->
-                    new TemporalRangedStateWriter(getLmdbEnvDir(k), byteBufferFactory, keepFirst));
+                    new TemporalRangedStateWriter(getLmdbEnvDir(k), byteBufferFactory, overwrite));
             writer.insert(temporalRangedState);
         }
 
         public void addSession(final String mapName,
                                final Session session) {
             final SessionWriter writer = (SessionWriter) writers.computeIfAbsent(mapName, k ->
-                    new SessionWriter(getLmdbEnvDir(k), byteBufferFactory, keepFirst));
+                    new SessionWriter(getLmdbEnvDir(k), byteBufferFactory, overwrite));
             writer.insert(session, session);
         }
 

@@ -93,7 +93,7 @@ public class StateModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(StateMergeRunnable.class, builder -> builder
                         .name(MergeProcessor.TASK_NAME)
-                        .description("PlanB State store merge")
+                        .description("PlanB state store merge")
                         .cronSchedule("0 0 0 * * ?")
                         .advanced(true));
     }

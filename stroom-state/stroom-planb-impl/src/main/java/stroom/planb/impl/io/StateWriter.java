@@ -8,8 +8,13 @@ import java.nio.file.Path;
 public class StateWriter extends AbstractLmdbWriter<Key, StateValue> {
 
     public StateWriter(final Path path,
+                       final ByteBufferFactory byteBufferFactory) {
+        this(path, byteBufferFactory, true);
+    }
+
+    public StateWriter(final Path path,
                        final ByteBufferFactory byteBufferFactory,
-                       final boolean keepFirst) {
-        super(path, byteBufferFactory, new StateSerde(byteBufferFactory), keepFirst);
+                       final boolean overwrite) {
+        super(path, byteBufferFactory, new StateSerde(byteBufferFactory), overwrite);
     }
 }

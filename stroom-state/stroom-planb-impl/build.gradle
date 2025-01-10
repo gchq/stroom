@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.planb.impl'
 dependencies {
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cache:stroom-cache-impl')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-core-shared')
@@ -45,6 +46,7 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.zero_allocation_hashing
 
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.mockito_core

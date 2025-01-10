@@ -30,11 +30,14 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
+import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -47,15 +50,17 @@ class TestSession {
 
     @Test
     void test(@TempDir Path tempDir) {
+        final Ranges ranges = testWrite(tempDir);
+
         final byte[] key = "TEST".getBytes(StandardCharsets.UTF_8);
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        final InstantRange highRange;
-        final InstantRange lowRange;
+        final InstantRange highRange = ranges.highRange;
+        final InstantRange lowRange = ranges.lowRange;
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final SessionWriter writer = new SessionWriter(tempDir, byteBufferFactory, false)) {
-            highRange = insertData(writer, key, refTime, 100, 10);
-            lowRange = insertData(writer, key, refTime, 10, -10);
-        }
+//        try (final SessionWriter writer = new SessionWriter(tempDir, byteBufferFactory)) {
+//            highRange = insertData(writer, key, refTime, 100, 10);
+//            lowRange = insertData(writer, key, refTime, 10, -10);
+//        }
 
         try (final SessionReader reader = new SessionReader(tempDir, byteBufferFactory)) {
             assertThat(reader.count()).isEqualTo(109);
@@ -181,6 +186,43 @@ class TestSession {
 //                    .isFalse();
 //        });
         }
+    }
+
+    @Test
+    void testMerge() throws IOException {
+        final Path db1 = Files.createTempDirectory("db1");
+        final Path db2 = Files.createTempDirectory("db2");
+        try {
+            testWrite(db1);
+            testWrite(db2);
+
+            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+            try (final SessionWriter writer = new SessionWriter(db1, byteBufferFactory)) {
+                writer.merge(db2);
+            }
+
+        } finally {
+            FileUtil.deleteDir(db1);
+            FileUtil.deleteDir(db2);
+        }
+    }
+
+    private Ranges testWrite(final Path dbDir) {
+        final byte[] key = "TEST".getBytes(StandardCharsets.UTF_8);
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        final InstantRange highRange;
+        final InstantRange lowRange;
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final SessionWriter writer = new SessionWriter(dbDir, byteBufferFactory)) {
+            highRange = insertData(writer, key, refTime, 100, 10);
+            lowRange = insertData(writer, key, refTime, 10, -10);
+        }
+        return new Ranges(highRange, lowRange);
+    }
+
+    private record Ranges(InstantRange highRange,
+                          InstantRange lowRange) {
+
     }
 
     private void testGet(final SessionReader reader,

@@ -8,8 +8,13 @@ import java.nio.file.Path;
 public class TemporalRangedStateWriter extends AbstractLmdbWriter<Key, StateValue> {
 
     public TemporalRangedStateWriter(final Path path,
+                                     final ByteBufferFactory byteBufferFactory) {
+        this(path, byteBufferFactory, true);
+    }
+
+    public TemporalRangedStateWriter(final Path path,
                                      final ByteBufferFactory byteBufferFactory,
-                                     final boolean keepFirst) {
-        super(path, byteBufferFactory, new TemporalRangedStateSerde(byteBufferFactory), keepFirst);
+                                     final boolean overwrite) {
+        super(path, byteBufferFactory, new TemporalRangedStateSerde(byteBufferFactory), overwrite);
     }
 }

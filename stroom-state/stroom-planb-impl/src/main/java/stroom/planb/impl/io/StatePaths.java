@@ -30,8 +30,11 @@ public class StatePaths {
     @Inject
     public StatePaths(final Provider<PlanBConfig> configProvider,
                       final PathCreator pathCreator) {
-        rootDir = pathCreator
-                .toAppPath(configProvider.get().getPath());
+        this(pathCreator.toAppPath(configProvider.get().getPath()));
+    }
+
+    public StatePaths(final Path rootDir) {
+        this.rootDir = rootDir;
         writerDir = rootDir.resolve("writer");
         receiveDir = rootDir.resolve("receive");
         stagingDir = rootDir.resolve("staging");

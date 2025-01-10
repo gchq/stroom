@@ -3,7 +3,7 @@ package stroom.planb.impl.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-class SnapshotRequest {
+public class SnapshotRequest {
 
     @JsonProperty
     private final String mapName;

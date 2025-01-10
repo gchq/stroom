@@ -27,21 +27,27 @@ import stroom.planb.impl.io.RangedStateFields;
 import stroom.planb.impl.io.RangedStateReader;
 import stroom.planb.impl.io.RangedStateRequest;
 import stroom.planb.impl.io.RangedStateWriter;
+import stroom.planb.impl.io.State;
 import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.io.StateWriter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,11 +55,9 @@ class TestRangedState {
 
     @Test
     void test(@TempDir Path tempDir) {
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final RangedStateWriter writer = new RangedStateWriter(tempDir, byteBufferFactory, false)) {
-            insertData(writer, 100);
-        }
+        testWrite(tempDir);
 
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final RangedStateReader reader = new RangedStateReader(tempDir, byteBufferFactory)) {
             assertThat(reader.count()).isEqualTo(1);
             testGet(reader);
@@ -94,6 +98,32 @@ class TestRangedState {
             assertThat(results.getFirst()[1].toString()).isEqualTo("30");
             assertThat(results.getFirst()[2].toString()).isEqualTo("String");
             assertThat(results.getFirst()[3].toString()).isEqualTo("test99");
+        }
+    }
+
+    @Test
+    void testMerge() throws IOException {
+        final Path db1 = Files.createTempDirectory("db1");
+        final Path db2 = Files.createTempDirectory("db2");
+        try {
+            testWrite(db1);
+            testWrite(db2);
+
+            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+            try (final RangedStateWriter writer = new RangedStateWriter(db1, byteBufferFactory)) {
+                writer.merge(db2);
+            }
+
+        } finally {
+            FileUtil.deleteDir(db1);
+            FileUtil.deleteDir(db2);
+        }
+    }
+
+    private void testWrite(final Path dbDir) {
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final RangedStateWriter writer = new RangedStateWriter(dbDir, byteBufferFactory)) {
+            insertData(writer, 100);
         }
     }
 

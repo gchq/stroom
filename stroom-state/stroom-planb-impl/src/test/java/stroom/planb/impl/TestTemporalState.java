@@ -30,12 +30,15 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,12 +51,10 @@ class TestTemporalState {
 
     @Test
     void test(@TempDir Path tempDir) {
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateWriter writer = new TemporalStateWriter(tempDir, byteBufferFactory, false)) {
-            insertData(writer, refTime, "test", 100, 10);
-        }
+        testWrite(tempDir);
 
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final TemporalStateReader reader = new TemporalStateReader(tempDir, byteBufferFactory)) {
             assertThat(reader.count()).isEqualTo(100);
 //            final TemporalStateRequest stateRequest =
@@ -91,6 +92,33 @@ class TestTemporalState {
 //            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
 //                    v -> count.incrementAndGet());
 //            assertThat(count.get()).isEqualTo(100);
+        }
+    }
+
+    @Test
+    void testMerge() throws IOException {
+        final Path db1 = Files.createTempDirectory("db1");
+        final Path db2 = Files.createTempDirectory("db2");
+        try {
+            testWrite(db1);
+            testWrite(db2);
+
+            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+            try (final TemporalStateWriter writer = new TemporalStateWriter(db1, byteBufferFactory)) {
+                writer.merge(db2);
+            }
+
+        } finally {
+            FileUtil.deleteDir(db1);
+            FileUtil.deleteDir(db2);
+        }
+    }
+
+    private void testWrite(final Path dbDir) {
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        try (final TemporalStateWriter writer = new TemporalStateWriter(dbDir, byteBufferFactory)) {
+            insertData(writer, refTime, "test", 100, 10);
         }
     }
 

@@ -240,4 +240,105 @@ public class PlanBDoc extends Doc {
                ", retainTimeUnit=" + retainTimeUnit +
                '}';
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static class Builder extends AbstractBuilder<PlanBDoc, PlanBDoc.Builder> {
+
+        private String description;
+        private StateType stateType;
+        private boolean condense;
+        private int condenseAge;
+        private TimeUnit condenseTimeUnit;
+        private boolean retainForever;
+        private int retainAge;
+        private TimeUnit retainTimeUnit;
+
+        public Builder() {
+        }
+
+        public Builder(final PlanBDoc doc) {
+            super(doc);
+            this.description = doc.description;
+            this.stateType = doc.stateType;
+            this.condense = doc.condense;
+            this.condenseAge = doc.condenseAge;
+            this.condenseTimeUnit = doc.condenseTimeUnit;
+            this.retainForever = doc.retainForever;
+            this.retainAge = doc.retainAge;
+            this.retainTimeUnit = doc.retainTimeUnit;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder stateType(final StateType stateType) {
+            this.stateType = stateType;
+            return self();
+        }
+
+        public Builder condense(final boolean condense) {
+            this.condense = condense;
+            return self();
+        }
+
+        public Builder condenseAge(final int condenseAge) {
+            this.condenseAge = condenseAge;
+            return self();
+        }
+
+        public Builder condenseTimeUnit(final TimeUnit condenseTimeUnit) {
+            this.condenseTimeUnit = condenseTimeUnit;
+            return self();
+        }
+
+        public Builder retainForever(final boolean retainForever) {
+            this.retainForever = retainForever;
+            return self();
+        }
+
+        public Builder retainAge(final int retainAge) {
+            this.retainAge = retainAge;
+            return self();
+        }
+
+        public Builder retainTimeUnit(final TimeUnit retainTimeUnit) {
+            this.retainTimeUnit = retainTimeUnit;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public PlanBDoc build() {
+            return new PlanBDoc(
+                    type,
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    stateType,
+                    condense,
+                    condenseAge,
+                    condenseTimeUnit,
+                    retainForever,
+                    retainAge,
+                    retainTimeUnit);
+        }
+    }
 }

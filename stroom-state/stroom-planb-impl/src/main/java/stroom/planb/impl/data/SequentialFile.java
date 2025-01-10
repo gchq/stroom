@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-class SequentialFile {
+public class SequentialFile {
 
     public static final String ZIP_EXTENSION = ".zip";
 

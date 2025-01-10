@@ -60,7 +60,7 @@ class TestStateLookupImpl {
         final List<Instant> lookupTimes = new ArrayList<>(refStreamDefCount);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateWriter writer = new TemporalStateWriter(tempDir, byteBufferFactory, false)) {
+        try (final TemporalStateWriter writer = new TemporalStateWriter(tempDir, byteBufferFactory)) {
             for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
                 final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
                         k -> new ArrayList<>(keyValueMapCount));

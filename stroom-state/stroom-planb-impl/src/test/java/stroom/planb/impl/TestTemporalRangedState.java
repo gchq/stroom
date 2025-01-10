@@ -32,12 +32,15 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -50,14 +53,10 @@ class TestTemporalRangedState {
 
     @Test
     void test(@TempDir Path tempDir) {
+        testWrite(tempDir);
+
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalRangedStateWriter writer =
-                new TemporalRangedStateWriter(tempDir, byteBufferFactory, false)) {
-            insertData(writer, refTime, "test", 100, 10);
-        }
-
         try (final TemporalRangedStateReader reader = new TemporalRangedStateReader(tempDir, byteBufferFactory)) {
             assertThat(reader.count()).isEqualTo(100);
             testGet(reader);
@@ -115,8 +114,37 @@ class TestTemporalRangedState {
         }
     }
 
+    @Test
+    void testMerge() throws IOException {
+        final Path db1 = Files.createTempDirectory("db1");
+        final Path db2 = Files.createTempDirectory("db2");
+        try {
+            testWrite(db1);
+            testWrite(db2);
+
+            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+            try (final TemporalRangedStateWriter writer = new TemporalRangedStateWriter(db1, byteBufferFactory)) {
+                writer.merge(db2);
+            }
+
+        } finally {
+            FileUtil.deleteDir(db1);
+            FileUtil.deleteDir(db2);
+        }
+    }
+
+    private void testWrite(final Path dbDir) {
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final TemporalRangedStateWriter writer =
+                new TemporalRangedStateWriter(dbDir, byteBufferFactory)) {
+            insertData(writer, refTime, "test", 100, 10);
+        }
+    }
+
     private void testGet(final TemporalRangedStateReader reader) {
-        Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(refTime).build();
         final Optional<StateValue> optional = reader.get(k);
         assertThat(optional).isNotEmpty();
