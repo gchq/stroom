@@ -6,7 +6,6 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
-import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
@@ -15,6 +14,7 @@ import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileName;
@@ -486,10 +486,10 @@ public class MockHttpDestination {
     }
 
     /**
-     * Assert all the {@link ReceiptId}s contained in the stored aggregates
+     * Assert all the {@link UniqueId}s contained in the stored aggregates
      */
-    void assertReceiptIds(final List<ReceiptId> expectedReceiptIds) {
-        final List<ReceiptId> actualReceiptIds = getDataFeedRequests()
+    void assertReceiptIds(final List<UniqueId> expectedReceiptIds) {
+        final List<UniqueId> actualReceiptIds = getDataFeedRequests()
                 .stream()
                 .map(DataFeedRequest::getContainedReceiptIds)
                 .flatMap(Collection::stream)
@@ -578,22 +578,22 @@ public class MockHttpDestination {
         }
 
         /**
-         * The {@link ReceiptId} of the wrapping zip
+         * The {@link UniqueId} of the wrapping zip
          */
-        public ReceiptId getReceiptId() {
+        public UniqueId getReceiptId() {
             return NullSafe.get(
                     attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
-                    ReceiptId::parse);
+                    UniqueId::parse);
         }
 
-        public List<ReceiptId> getContainedReceiptIds() {
+        public List<UniqueId> getContainedReceiptIds() {
             return dataFeedRequestItems.stream()
                     .filter(item ->
                             item.type().equals(StroomZipFileType.META.getExtension()))
                     .map(DataFeedRequestItem::getContentAsAttributeMap)
                     .map(attributeMap ->
                             attributeMap.get(StandardHeaderArguments.RECEIPT_ID))
-                    .map(ReceiptId::parse)
+                    .map(UniqueId::parse)
                     .toList();
         }
     }

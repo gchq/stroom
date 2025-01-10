@@ -2,9 +2,9 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +36,11 @@ public class TestEventStore {
             final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put("Feed", feedKey.feed());
             attributeMap.put("Type", feedKey.type());
-            final ReceiptId receiptId = new ReceiptId("test-proxy", "uuid-" + i);
+            final UniqueId receiptId = new UniqueId(
+                    Instant.now().toEpochMilli(),
+                    (short) i,
+                    "test-proxy");
+
             eventStore.consume(attributeMap, receiptId, "test");
         }
 

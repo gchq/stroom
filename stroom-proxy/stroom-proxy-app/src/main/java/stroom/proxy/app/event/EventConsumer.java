@@ -1,11 +1,11 @@
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
-import stroom.proxy.app.handler.ReceiptId;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 
 public interface EventConsumer {
 
     void consume(final AttributeMap attributeMap,
-                 final ReceiptId receiptId,
+                 final UniqueId receiptId,
                  final String data);
 }

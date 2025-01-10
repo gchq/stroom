@@ -1,4 +1,4 @@
-package stroom.proxy.app.handler;
+package stroom.util.concurrent;
 
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -7,6 +7,7 @@ import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Strings;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
@@ -14,10 +15,15 @@ import java.util.regex.Pattern;
 /**
  * A class for generating globally unique IDs that can be used on multiple nodes/threads.
  * This is stateful so the node should hold a singleton instance of this class.
+ * IDs are globally unique on the conditions that each node only has one instance of this
+ * class and each node provides a unique nodeId.
  */
 public class UniqueIdGenerator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UniqueIdGenerator.class);
+
+    private static final String NODE_ID_BASE_REGEX = "[A-Za-z0-9][A-Za-z0-9-]+";
+    private static final Pattern NODE_ID_PATTERN = Pattern.compile("^" + NODE_ID_BASE_REGEX + "$");
 
     private static final short MAX_SEQUENCE_NO = 9_999;
 
@@ -26,10 +32,18 @@ public class UniqueIdGenerator {
     private final AtomicReference<State> stateRef = new AtomicReference<>(State.ofNow());
 
     public UniqueIdGenerator(final String nodeId) {
+        Objects.requireNonNull(nodeId);
+        if (!NODE_ID_PATTERN.matcher(nodeId).matches()) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "nodeId '{}' must match the pattern {}", nodeId, NODE_ID_PATTERN));
+        }
         this.nodeId = nodeId;
     }
 
-    public UniqueId nextId() {
+    /**
+     * Each call will generate a new globally unique ID.
+     */
+    public UniqueId generateId() {
         State state = State.ofNow();
         state = stateRef.accumulateAndGet(state, (currState, newState) -> {
             final long currEpochMs = currState.epochMs;
@@ -88,29 +102,41 @@ public class UniqueIdGenerator {
             short sequenceNo,
             String nodeId) {
 
-        public static final String RECEIPT_ID_DELIMITER = "_";
-        public static final Pattern RECEIPT_ID_DELIMITER_PATTERN = Pattern.compile("_");
-        private static final int MAX_EPOCH_MS_DIGITS = String.valueOf(Long.MAX_VALUE).length();
-        private static final int MAX_SEQUENCE_NO_DIGITS = String.valueOf(MAX_SEQUENCE_NO).length();
+        public static final String UNIQUE_ID_DELIMITER = "_";
+        public static final Pattern UNIQUE_ID_DELIMITER_PATTERN = Pattern.compile("_");
+
+        private static final int EPOCH_MS_DIGITS = String.valueOf(Long.MAX_VALUE).length();
+        private static final int SEQUENCE_NO_DIGITS = String.valueOf(MAX_SEQUENCE_NO).length();
+        private static final String ZERO_SEQUENCE_NO = Strings.padStart(
+                "0", SEQUENCE_NO_DIGITS, '0');
+
+        public static final Pattern UNIQUE_ID_PATTERN = Pattern.compile(
+                "^"
+                + "\\d{" + EPOCH_MS_DIGITS + "}"
+                + UNIQUE_ID_DELIMITER
+                + "\\d{" + SEQUENCE_NO_DIGITS + "}"
+                + UNIQUE_ID_DELIMITER
+                + NODE_ID_BASE_REGEX
+                + "$");
 
         /**
-         * Parse a {@link ReceiptId} from a string.
+         * Parse a {@link UniqueId} from a string.
          */
-        public static UniqueId parse(final String receiptIdStr) {
-            final String trimmed = NullSafe.trim(receiptIdStr);
+        public static UniqueId parse(final String uniqueIdStr) {
+            final String trimmed = NullSafe.trim(uniqueIdStr);
             if (NullSafe.isEmptyString(trimmed)) {
                 return null;
             } else {
-                if (!receiptIdStr.contains(RECEIPT_ID_DELIMITER)) {
+                if (!uniqueIdStr.contains(UNIQUE_ID_DELIMITER)) {
                     throw new IllegalArgumentException(LogUtil.message(
-                            "Invalid receiptIdStr '{}', no '{}' found",
-                            receiptIdStr, RECEIPT_ID_DELIMITER));
+                            "Invalid uniqueIdStr '{}', no '{}' found",
+                            uniqueIdStr, UNIQUE_ID_DELIMITER));
                 }
-                final String[] parts = RECEIPT_ID_DELIMITER_PATTERN.split(trimmed);
+                final String[] parts = UNIQUE_ID_DELIMITER_PATTERN.split(trimmed);
                 if (parts.length != 3) {
                     throw new IllegalArgumentException(LogUtil.message(
-                            "Invalid receiptIdStr '{}', expecting three parts when splitting on '{}'",
-                            trimmed, RECEIPT_ID_DELIMITER));
+                            "Invalid uniqueIdStr '{}', expecting three parts when splitting on '{}'",
+                            trimmed, UNIQUE_ID_DELIMITER));
                 }
                 final long epochMs = Long.parseLong(parts[0]);
                 final short sequenceNo = Short.parseShort(parts[1]);
@@ -127,11 +153,42 @@ public class UniqueIdGenerator {
         public String toString(long epochMs,
                                short sequenceNo,
                                String nodeId) {
-            return Strings.padStart(String.valueOf(epochMs), MAX_EPOCH_MS_DIGITS, '0')
-                   + RECEIPT_ID_DELIMITER
-                   + Strings.padStart(String.valueOf(sequenceNo), MAX_SEQUENCE_NO_DIGITS, '0')
-                   + RECEIPT_ID_DELIMITER
+            // Minor optimisation as 0 will be used a lot, so have a hard coded zero string
+            final String sequenceNoStr = sequenceNo == 0
+                    ? ZERO_SEQUENCE_NO
+                    : Strings.padStart(String.valueOf(sequenceNo), SEQUENCE_NO_DIGITS, '0');
+
+            return Strings.padStart(String.valueOf(epochMs), EPOCH_MS_DIGITS, '0')
+                   + UNIQUE_ID_DELIMITER
+                   + sequenceNoStr
+                   + UNIQUE_ID_DELIMITER
                    + nodeId;
+        }
+
+        /**
+         * @return The time in millis since epoch that the ID was generated.
+         */
+        @Override
+        public long epochMs() {
+            return epochMs;
+        }
+
+        /**
+         * @return A Sequence number that is used to differentiate {@link UniqueId}s that
+         * are generated during the same millisecond.
+         */
+        @Override
+        public short sequenceNo() {
+            return sequenceNo;
+        }
+
+        /**
+         * @return The name/identifier for the node instance, e.g. in a cluster,
+         * each node generating {@link UniqueId}s must have a unique node ID.
+         */
+        @Override
+        public String nodeId() {
+            return nodeId;
         }
     }
 }

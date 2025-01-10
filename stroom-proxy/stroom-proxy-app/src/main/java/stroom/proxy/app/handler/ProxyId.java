@@ -70,13 +70,6 @@ public class ProxyId {
         return id;
     }
 
-    /**
-     * @return A unique receipt ID that includes the proxy ID
-     */
-    public ReceiptId generateReceiptId() {
-        return ReceiptId.generate(id);
-    }
-
     private Path getProxyIdFilePath() {
         return homeDirProvider.get()
                 .resolve(PROXY_ID_FILE);

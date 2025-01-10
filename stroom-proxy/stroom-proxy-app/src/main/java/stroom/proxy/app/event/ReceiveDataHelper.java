@@ -5,8 +5,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
-import stroom.proxy.app.handler.ProxyId;
-import stroom.proxy.app.handler.ReceiptId;
+import stroom.proxy.app.handler.ReceiptIdGenerator;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
@@ -14,6 +13,7 @@ import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -32,32 +32,32 @@ public class ReceiveDataHelper {
     private final RequestAuthenticator requestAuthenticator;
     private final AttributeMapFilter attributeMapFilter;
     private final CertificateExtractor certificateExtractor;
-    private final ProxyId proxyId;
     private final LogStream logStream;
+    private final ReceiptIdGenerator receiptIdGenerator;
 
     @Inject
     public ReceiveDataHelper(final RequestAuthenticator requestAuthenticator,
                              final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
-                             final ProxyId proxyId,
-                             final LogStream logStream) {
+                             final LogStream logStream,
+                             final ReceiptIdGenerator receiptIdGenerator) {
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilter = attributeMapFilterFactory.create();
         this.certificateExtractor = certificateExtractor;
-        this.proxyId = proxyId;
         this.logStream = logStream;
+        this.receiptIdGenerator = receiptIdGenerator;
     }
 
-    public ReceiptId process(final HttpServletRequest request,
-                             final Handler consumeHandler,
-                             final Handler dropHandler) throws StroomStreamException {
+    public UniqueId process(final HttpServletRequest request,
+                            final Handler consumeHandler,
+                            final Handler dropHandler) throws StroomStreamException {
         final long startTimeMs = System.currentTimeMillis();
 
         // Create attribute map from headers.
         final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
         // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
-        final ReceiptId receiptId = proxyId.generateReceiptId();
+        final UniqueId receiptId = receiptIdGenerator.generateId();
 
         try {
             Metrics.measure("ProxyRequestHandler - stream", () -> {
@@ -83,8 +83,9 @@ public class ReceiveDataHelper {
             });
         } catch (final Throwable e) {
             // Add the proxy request id to help error diagnosis.
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId.toString());
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId.toString());
+            final String receiptIdStr = receiptId.toString();
+            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
 
             final StroomStreamException stroomStreamException = StroomStreamException.create(
                     e, AttributeMapUtil.create(request, certificateExtractor));
@@ -131,6 +132,6 @@ public class ReceiveDataHelper {
 
         void handle(HttpServletRequest request,
                     AttributeMap attributeMap,
-                    ReceiptId receiptId);
+                    UniqueId receiptId);
     }
 }

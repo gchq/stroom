@@ -3,9 +3,9 @@ package stroom.proxy.app;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.event.EventStore;
-import stroom.proxy.app.handler.ProxyId;
-import stroom.proxy.app.handler.ReceiptId;
+import stroom.proxy.app.handler.ReceiptIdGenerator;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -26,15 +26,16 @@ public class SqsConnector {
 
     private final EventStore eventStore;
     private final SqsClient sqsClient;
-    private final ProxyId proxyId;
+    private final ReceiptIdGenerator receiptIdGenerator;
 
     private final String queueUrl;
     private final int waitTimeSeconds;
 
     public SqsConnector(final EventStore eventStore,
-                        final SqsConnectorConfig config, final ProxyId proxyId) {
+                        final SqsConnectorConfig config,
+                        final ReceiptIdGenerator receiptIdGenerator) {
         this.eventStore = eventStore;
-        this.proxyId = proxyId;
+        this.receiptIdGenerator = receiptIdGenerator;
         try {
             LOGGER.debug(() -> "Creating SQS client");
             sqsClient = SqsClient.builder()
@@ -102,10 +103,11 @@ public class SqsConnector {
                             LOGGER.debug("sqsMessageId: {}", sqsMessageId);
                             attributeMap.put(StandardHeaderArguments.SQS_MESSAGE_ID, sqsMessageId);
                         }
-                        final ReceiptId receiptId = proxyId.generateReceiptId();
-                        LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptId);
-                        attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId.toString());
-                        attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId.toString());
+                        final UniqueId receiptId = receiptIdGenerator.generateId();
+                        final String receiptIdStr = receiptId.toString();
+                        LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+                        attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+                        attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
 
                         eventStore.consume(attributeMap, receiptId, message.body());
 
