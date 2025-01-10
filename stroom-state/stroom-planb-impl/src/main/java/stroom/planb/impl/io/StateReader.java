@@ -13,7 +13,7 @@ public class StateReader extends AbstractLmdbReader<Key, StateValue> {
         super(path, byteBufferFactory, new StateSerde(byteBufferFactory));
     }
 
-    public synchronized Optional<State> getState(final StateRequest request) {
+    public Optional<State> getState(final StateRequest request) {
         final Key key = Key.builder().name(request.key()).build();
         final Optional<StateValue> optional = get(key);
         return optional.map(value -> new State(key, value));

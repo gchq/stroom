@@ -15,7 +15,6 @@ import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -35,26 +34,26 @@ public class SessionReader extends AbstractLmdbReader<Session, Session> {
         super(path, byteBufferFactory, new SessionSerde(byteBufferFactory));
     }
 
-    public synchronized void search(final ExpressionCriteria criteria,
-                                    final FieldIndex fieldIndex,
-                                    final DateTimeSettings dateTimeSettings,
-                                    final ExpressionPredicateFactory expressionPredicateFactory,
-                                    final ValuesConsumer consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
+                       final ExpressionPredicateFactory expressionPredicateFactory,
+                       final ValuesConsumer consumer) {
         final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
         final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
                 .create(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
         final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
         final Function<KeyVal<ByteBuffer>, Val>[] valExtractors = serde.getValExtractors(fieldIndex);
 
-        // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-
-        Long lastKeyHash = null;
-
         // We keep a map of sessions to cope with key hash clashes.
         final Map<String, CurrentSession> currentSessionMap = new HashMap<>();
 
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
+        read(readTxn -> {
+            // TODO : It would be faster if we limit the iteration to keys based on the criteria.
+
+            Long lastKeyHash = null;
+
+            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     final Val[] vals = new Val[valExtractors.length];
                     for (int i = 0; i < vals.length; i++) {
@@ -116,17 +115,19 @@ public class SessionReader extends AbstractLmdbReader<Session, Session> {
                     }
                 }
             }
-        }
 
-        if (lastKeyHash != null) {
-            // Send the final sessions.
-            currentSessionMap.values().forEach(currentSession -> consumer.accept(extendSession(
-                    currentSession.vals,
-                    fieldIndex,
-                    currentSession.sessionStart,
-                    currentSession.sessionEnd)));
-            currentSessionMap.clear();
-        }
+            if (lastKeyHash != null) {
+                // Send the final sessions.
+                currentSessionMap.values().forEach(currentSession -> consumer.accept(extendSession(
+                        currentSession.vals,
+                        fieldIndex,
+                        currentSession.sessionStart,
+                        currentSession.sessionEnd)));
+                currentSessionMap.clear();
+            }
+
+            return null;
+        });
     }
 
     public Val[] extendSession(final Val[] vals,
@@ -145,8 +146,6 @@ public class SessionReader extends AbstractLmdbReader<Session, Session> {
     }
 
     public Optional<Session> getState(final SessionRequest request) {
-        Optional<Session> result = Optional.empty();
-
         // Hash the value.
         final long nameHash = LongHashFunction.xx3().hashBytes(request.name());
         final long time = request.time();
@@ -161,7 +160,7 @@ public class SessionReader extends AbstractLmdbReader<Session, Session> {
             end.flip();
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.closedBackward(start, end);
-            try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
+            return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
@@ -185,13 +184,12 @@ public class SessionReader extends AbstractLmdbReader<Session, Session> {
                         }
                     }
                 }
-            }
+                return Optional.empty();
+            });
         } finally {
             byteBufferFactory.release(start);
             byteBufferFactory.release(end);
         }
-
-        return result;
     }
 
     private record CurrentSession(Long sessionStart,

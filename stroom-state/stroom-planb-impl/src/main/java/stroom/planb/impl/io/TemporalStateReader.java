@@ -7,7 +7,6 @@ import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -22,7 +21,7 @@ public class TemporalStateReader extends AbstractLmdbReader<Key, StateValue> {
         super(path, byteBufferFactory, new TemporalStateSerde(byteBufferFactory));
     }
 
-    public synchronized Optional<TemporalState> getState(final TemporalStateRequest request) {
+    public Optional<TemporalState> getState(final TemporalStateRequest request) {
         final long rowHash = LongHashFunction.xx3().hashBytes(request.key());
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
         final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
@@ -35,7 +34,7 @@ public class TemporalStateReader extends AbstractLmdbReader<Key, StateValue> {
             stop.flip();
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.closedBackward(start, stop);
-            try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
+            return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
@@ -58,12 +57,11 @@ public class TemporalStateReader extends AbstractLmdbReader<Key, StateValue> {
                         }
                     }
                 }
-            }
+                return Optional.empty();
+            });
         } finally {
             byteBufferFactory.release(start);
             byteBufferFactory.release(stop);
         }
-
-        return Optional.empty();
     }
 }

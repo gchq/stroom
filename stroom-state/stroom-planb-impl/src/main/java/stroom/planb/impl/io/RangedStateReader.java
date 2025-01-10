@@ -6,7 +6,6 @@ import stroom.planb.impl.io.RangedState.Key;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -27,7 +26,8 @@ public class RangedStateReader extends AbstractLmdbReader<Key, StateValue> {
             start.flip();
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(start);
-            try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
+
+            return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
@@ -44,8 +44,8 @@ public class RangedStateReader extends AbstractLmdbReader<Key, StateValue> {
                         }
                     }
                 }
-            }
-            return Optional.empty();
+                return Optional.empty();
+            });
         } finally {
             byteBufferFactory.release(start);
         }

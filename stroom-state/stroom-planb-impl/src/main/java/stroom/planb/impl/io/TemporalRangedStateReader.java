@@ -6,7 +6,6 @@ import stroom.planb.impl.io.TemporalRangedState.Key;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -21,15 +20,14 @@ public class TemporalRangedStateReader extends AbstractLmdbReader<Key, StateValu
     }
 
     public Optional<TemporalRangedState> getState(final TemporalRangedStateRequest request) {
-        Optional<TemporalRangedState> result = Optional.empty();
-
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);
         try {
             start.putLong(request.key());
             start.flip();
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(start);
-            try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
+            return read(readTxn -> {
+                Optional<TemporalRangedState> result = Optional.empty();
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
@@ -53,11 +51,10 @@ public class TemporalRangedStateReader extends AbstractLmdbReader<Key, StateValu
                         }
                     }
                 }
-            }
+                return result;
+            });
         } finally {
             byteBufferFactory.release(start);
         }
-
-        return result;
     }
 }

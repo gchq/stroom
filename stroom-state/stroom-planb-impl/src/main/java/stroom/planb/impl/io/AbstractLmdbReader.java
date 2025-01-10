@@ -13,6 +13,7 @@ import stroom.query.common.v2.ValFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -28,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -38,9 +40,12 @@ public abstract class AbstractLmdbReader<K, V> implements AutoCloseable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbReader.class);
 
     private static final byte[] NAME = "db".getBytes(UTF_8);
+    private static final int CONCURRENT_READERS = 10;
+
+    private final Semaphore concurrentReaderSemaphore;
 
     final ByteBufferFactory byteBufferFactory;
-    final Env<ByteBuffer> env;
+    private final Env<ByteBuffer> env;
     final Dbi<ByteBuffer> dbi;
     final Serde<K, V> serde;
 
@@ -55,19 +60,35 @@ public abstract class AbstractLmdbReader<K, V> implements AutoCloseable {
         final Env.Builder<ByteBuffer> builder = Env.create()
                 .setMapSize(LmdbConfig.DEFAULT_MAX_STORE_SIZE.getBytes())
                 .setMaxDbs(1)
-                .setMaxReaders(1);
+                .setMaxReaders(CONCURRENT_READERS);
 
         env = builder.open(lmdbEnvDir.getEnvDir().toFile(),
                 EnvFlags.MDB_NOTLS,
                 EnvFlags.MDB_NOLOCK,
                 EnvFlags.MDB_RDONLY_ENV);
         dbi = env.openDbi(NAME);
+        concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
     }
 
-    public synchronized Optional<V> get(final K key) {
-        try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
-            return get(readTxn, key);
+    <R> R read(final Function<Txn<ByteBuffer>, R> function) {
+        try {
+            concurrentReaderSemaphore.acquire();
+            try {
+                try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
+                    return function.apply(readTxn);
+                }
+            } finally {
+                concurrentReaderSemaphore.release();
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+            Thread.currentThread().interrupt();
+            throw new UncheckedInterruptedException(e);
         }
+    }
+
+    public Optional<V> get(final K key) {
+        return read(readTxn -> get(readTxn, key));
     }
 
     private Optional<V> get(final Txn<ByteBuffer> readTxn, final K key) {
@@ -88,11 +109,11 @@ public abstract class AbstractLmdbReader<K, V> implements AutoCloseable {
                 }));
     }
 
-    public synchronized void search(final ExpressionCriteria criteria,
-                                    final FieldIndex fieldIndex,
-                                    final DateTimeSettings dateTimeSettings,
-                                    final ExpressionPredicateFactory expressionPredicateFactory,
-                                    final ValuesConsumer consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
+                       final ExpressionPredicateFactory expressionPredicateFactory,
+                       final ValuesConsumer consumer) {
         final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
         final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
                 .create(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
@@ -100,8 +121,8 @@ public abstract class AbstractLmdbReader<K, V> implements AutoCloseable {
         final Function<KeyVal<ByteBuffer>, Val>[] valExtractors = serde.getValExtractors(fieldIndex);
 
         // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
+        read(readTxn -> {
+            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     final Val[] vals = new Val[valExtractors.length];
                     for (int i = 0; i < vals.length; i++) {
@@ -112,7 +133,8 @@ public abstract class AbstractLmdbReader<K, V> implements AutoCloseable {
                     }
                 }
             }
-        }
+            return null;
+        });
     }
 
     ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
@@ -125,10 +147,8 @@ public abstract class AbstractLmdbReader<K, V> implements AutoCloseable {
         };
     }
 
-    public synchronized long count() {
-        try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
-            return dbi.stat(readTxn).entries;
-        }
+    public long count() {
+        return read(readTxn -> dbi.stat(readTxn).entries);
     }
 
     @Override
