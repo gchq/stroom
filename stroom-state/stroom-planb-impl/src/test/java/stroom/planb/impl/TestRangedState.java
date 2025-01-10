@@ -27,14 +27,11 @@ import stroom.planb.impl.io.RangedStateFields;
 import stroom.planb.impl.io.RangedStateReader;
 import stroom.planb.impl.io.RangedStateRequest;
 import stroom.planb.impl.io.RangedStateWriter;
-import stroom.planb.impl.io.State;
 import stroom.planb.impl.io.StateValue;
-import stroom.planb.impl.io.StateWriter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -47,7 +44,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -102,21 +98,18 @@ class TestRangedState {
     }
 
     @Test
-    void testMerge() throws IOException {
-        final Path db1 = Files.createTempDirectory("db1");
-        final Path db2 = Files.createTempDirectory("db2");
-        try {
-            testWrite(db1);
-            testWrite(db2);
+    void testMerge(@TempDir final Path rootDir) throws IOException {
+        final Path db1 = rootDir.resolve("db1");
+        final Path db2 = rootDir.resolve("db2");
+        Files.createDirectory(db1);
+        Files.createDirectory(db2);
 
-            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-            try (final RangedStateWriter writer = new RangedStateWriter(db1, byteBufferFactory)) {
-                writer.merge(db2);
-            }
+        testWrite(db1);
+        testWrite(db2);
 
-        } finally {
-            FileUtil.deleteDir(db1);
-            FileUtil.deleteDir(db2);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final RangedStateWriter writer = new RangedStateWriter(db1, byteBufferFactory)) {
+            writer.merge(db2);
         }
     }
 

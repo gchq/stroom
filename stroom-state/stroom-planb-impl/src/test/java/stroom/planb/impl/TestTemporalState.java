@@ -30,7 +30,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -96,21 +95,18 @@ class TestTemporalState {
     }
 
     @Test
-    void testMerge() throws IOException {
-        final Path db1 = Files.createTempDirectory("db1");
-        final Path db2 = Files.createTempDirectory("db2");
-        try {
-            testWrite(db1);
-            testWrite(db2);
+    void testMerge(@TempDir final Path rootDir) throws IOException {
+        final Path db1 = rootDir.resolve("db1");
+        final Path db2 = rootDir.resolve("db2");
+        Files.createDirectory(db1);
+        Files.createDirectory(db2);
 
-            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-            try (final TemporalStateWriter writer = new TemporalStateWriter(db1, byteBufferFactory)) {
-                writer.merge(db2);
-            }
+        testWrite(db1);
+        testWrite(db2);
 
-        } finally {
-            FileUtil.deleteDir(db1);
-            FileUtil.deleteDir(db2);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final TemporalStateWriter writer = new TemporalStateWriter(db1, byteBufferFactory)) {
+            writer.merge(db2);
         }
     }
 

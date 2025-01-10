@@ -81,165 +81,145 @@ class TestState {
     }
 
     @Test
-    void testMerge() throws IOException {
-        final Path db1 = Files.createTempDirectory("db1");
-        final Path db2 = Files.createTempDirectory("db2");
-        try {
-            final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY1").build();
-            final Function<Integer, StateValue> valueFunction = i -> {
-                final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
-                return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-            };
-            testWrite(db1, 100, keyFunction, valueFunction);
+    void testMerge(@TempDir final Path rootDir) throws IOException {
+        final Path db1 = rootDir.resolve("db1");
+        final Path db2 = rootDir.resolve("db2");
+        Files.createDirectory(db1);
+        Files.createDirectory(db2);
 
-            final Function<Integer, Key> keyFunction2 = i -> Key.builder().name("TEST_KEY2").build();
-            final Function<Integer, StateValue> valueFunction2 = i -> {
-                final ByteBuffer byteBuffer = ByteBuffer.wrap(("test2" + i).getBytes(StandardCharsets.UTF_8));
-                return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-            };
-            testWrite(db2, 100, keyFunction2, valueFunction2);
+        final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY1").build();
+        final Function<Integer, StateValue> valueFunction = i -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
+            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+        };
+        testWrite(db1, 100, keyFunction, valueFunction);
 
-            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-            try (final StateWriter writer = new StateWriter(db1, byteBufferFactory)) {
-                writer.merge(db2);
-            }
+        final Function<Integer, Key> keyFunction2 = i -> Key.builder().name("TEST_KEY2").build();
+        final Function<Integer, StateValue> valueFunction2 = i -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test2" + i).getBytes(StandardCharsets.UTF_8));
+            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+        };
+        testWrite(db2, 100, keyFunction2, valueFunction2);
 
-        } finally {
-            FileUtil.deleteDir(db1);
-            FileUtil.deleteDir(db2);
-        }
-    }
-
-    @Test
-    void testFullProcess() throws IOException {
-        final Path rootDir = Files.createTempDirectory("root");
-        try {
-            final StatePaths statePaths = new StatePaths(rootDir);
-            final SequentialFileStore fileStore = new SequentialFileStore(statePaths);
-            final int parts = 10;
-
-            // Write parts.
-            final List<CompletableFuture<Void>> list = new ArrayList<>();
-            for (int thread = 0; thread < parts; thread++) {
-                list.add(CompletableFuture.runAsync(() ->
-                        writePart(fileStore, "TEST_KEY_1")));
-                list.add(CompletableFuture.runAsync(() ->
-                        writePart(fileStore, "TEST_KEY_2")));
-            }
-            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
-
-            // Consume and merge parts.
-            try (final CacheManager cacheManager = new CacheManagerImpl()) {
-                final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
-                final PlanBDoc doc = PlanBDoc.builder().name("map-name").stateType(StateType.STATE).build();
-                Mockito.when(planBDocStore.findByName(Mockito.anyString()))
-                        .thenReturn(Collections.singletonList(doc.asDocRef()));
-                Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
-                        .thenReturn(doc);
-
-                final CacheConfig stateDocCache = CacheConfig.builder()
-                        .maximumSize(100L)
-                        .expireAfterWrite(StroomDuration.ofMinutes(10))
-                        .build();
-                final CacheConfig snapshotCache = CacheConfig.builder()
-                        .maximumSize(100L)
-                        .expireAfterWrite(StroomDuration.ofMinutes(10))
-                        .build();
-                final CacheConfig readerCache = CacheConfig.builder()
-                        .maximumSize(10L)
-                        .expireAfterWrite(StroomDuration.ofMinutes(5))
-                        .build();
-                final List<String> nodeList = Collections.emptyList();
-                final String path = rootDir.toAbsolutePath().toString();
-                final PlanBConfig planBConfig = new PlanBConfig(
-                        stateDocCache,
-                        snapshotCache,
-                        readerCache,
-                        nodeList,
-                        path);
-                final PlanBDocCache planBDocCache = new PlanBDocCacheImpl(
-                        cacheManager,
-                        planBDocStore,
-                        new MockSecurityContext(),
-                        () -> planBConfig);
-                final MergeProcessor mergeProcessor = new MergeProcessor(
-                        fileStore,
-                        new ByteBufferFactoryImpl(),
-                        planBDocCache,
-                        statePaths,
-                        new MockSecurityContext(),
-                        new SimpleTaskContextFactory());
-                for (int i = 0; i < parts; i++) {
-                    mergeProcessor.merge(i);
-                }
-            }
-
-            // Read merged
-            final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-            try (final StateReader reader = new StateReader(statePaths.getShardDir().resolve("map-name"),
-                    byteBufferFactory)) {
-                assertThat(reader.count()).isEqualTo(2);
-            }
-
-        } finally {
-            FileUtil.deleteDir(rootDir);
-        }
-    }
-
-    @Test
-    void testZipUnzip() throws IOException {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        final Path rootDir = Files.createTempDirectory("root");
-        try {
-            // Simulate constant writing to shard.
-            final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY1").build();
-            final Function<Integer, StateValue> valueFunction = i -> {
-                final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
-                return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-            };
-
-            final Path source = rootDir.resolve("source");
-            final Path zipFile = rootDir.resolve("zip.zip");
-            final Path target = rootDir.resolve("target");
-            Files.createDirectories(source);
-            Files.createDirectories(target);
-
-            final AtomicBoolean writeComplete = new AtomicBoolean();
-            final List<CompletableFuture<?>> list = new ArrayList<>();
-
-            list.add(CompletableFuture.runAsync(() -> {
-                testWrite(source, 1000000, keyFunction, valueFunction);
-                writeComplete.set(true);
-            }));
-
-            list.add(CompletableFuture.runAsync(() -> {
-                try {
-                    while (!writeComplete.get()) {
-                        final Path lmdbDataFile = source.resolve("data.mdb");
-                        if (Files.exists(lmdbDataFile)) {
-                            // Compress.
-                            ZipUtil.zip(zipFile, source);
-                            // Uncompress.
-                            ZipUtil.unzip(zipFile, target);
-                            Files.delete(zipFile);
-                            // Read.
-                            try (final StateReader reader = new StateReader(target, byteBufferFactory)) {
-                                assertThat(reader.count()).isGreaterThanOrEqualTo(0);
-                            }
-                            // Cleanup.
-                            FileUtil.deleteDir(target);
-                        }
-                    }
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }));
-
-            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
-
-        } finally {
-            FileUtil.deleteDir(rootDir);
+        try (final StateWriter writer = new StateWriter(db1, byteBufferFactory)) {
+            writer.merge(db2);
         }
+    }
+
+    @Test
+    void testFullProcess(@TempDir final Path rootDir) throws IOException {
+        final StatePaths statePaths = new StatePaths(rootDir);
+        final SequentialFileStore fileStore = new SequentialFileStore(statePaths);
+        final int parts = 10;
+
+        // Write parts.
+        final List<CompletableFuture<Void>> list = new ArrayList<>();
+        for (int thread = 0; thread < parts; thread++) {
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(fileStore, "TEST_KEY_1")));
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(fileStore, "TEST_KEY_2")));
+        }
+        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+
+        // Consume and merge parts.
+        try (final CacheManager cacheManager = new CacheManagerImpl()) {
+            final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
+            final PlanBDoc doc = PlanBDoc.builder().name("map-name").stateType(StateType.STATE).build();
+            Mockito.when(planBDocStore.findByName(Mockito.anyString()))
+                    .thenReturn(Collections.singletonList(doc.asDocRef()));
+            Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
+                    .thenReturn(doc);
+
+            final CacheConfig stateDocCache = CacheConfig.builder()
+                    .maximumSize(100L)
+                    .expireAfterWrite(StroomDuration.ofMinutes(10))
+                    .build();
+            final CacheConfig readerCache = CacheConfig.builder()
+                    .maximumSize(10L)
+                    .expireAfterWrite(StroomDuration.ofMinutes(10))
+                    .build();
+            final List<String> nodeList = Collections.emptyList();
+            final String path = rootDir.toAbsolutePath().toString();
+            final PlanBConfig planBConfig = new PlanBConfig(
+                    stateDocCache,
+                    readerCache,
+                    nodeList,
+                    path);
+            final PlanBDocCache planBDocCache = new PlanBDocCacheImpl(
+                    cacheManager,
+                    planBDocStore,
+                    new MockSecurityContext(),
+                    () -> planBConfig);
+            final MergeProcessor mergeProcessor = new MergeProcessor(
+                    fileStore,
+                    new ByteBufferFactoryImpl(),
+                    planBDocCache,
+                    statePaths,
+                    new MockSecurityContext(),
+                    new SimpleTaskContextFactory());
+            for (int i = 0; i < parts; i++) {
+                mergeProcessor.merge(i);
+            }
+        }
+
+        // Read merged
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final StateReader reader = new StateReader(statePaths.getShardDir().resolve("map-name"),
+                byteBufferFactory)) {
+            assertThat(reader.count()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void testZipUnzip(@TempDir final Path rootDir) throws IOException {
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        // Simulate constant writing to shard.
+        final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY1").build();
+        final Function<Integer, StateValue> valueFunction = i -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
+            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+        };
+
+        final Path source = rootDir.resolve("source");
+        final Path zipFile = rootDir.resolve("zip.zip");
+        final Path target = rootDir.resolve("target");
+        Files.createDirectories(source);
+        Files.createDirectories(target);
+
+        final AtomicBoolean writeComplete = new AtomicBoolean();
+        final List<CompletableFuture<?>> list = new ArrayList<>();
+
+        list.add(CompletableFuture.runAsync(() -> {
+            testWrite(source, 1000000, keyFunction, valueFunction);
+            writeComplete.set(true);
+        }));
+
+        list.add(CompletableFuture.runAsync(() -> {
+            try {
+                while (!writeComplete.get()) {
+                    final Path lmdbDataFile = source.resolve("data.mdb");
+                    if (Files.exists(lmdbDataFile)) {
+                        // Compress.
+                        ZipUtil.zip(zipFile, source);
+                        // Uncompress.
+                        ZipUtil.unzip(zipFile, target);
+                        Files.delete(zipFile);
+                        // Read.
+                        try (final StateReader reader = new StateReader(target, byteBufferFactory)) {
+                            assertThat(reader.count()).isGreaterThanOrEqualTo(0);
+                        }
+                        // Cleanup.
+                        FileUtil.deleteDir(target);
+                    }
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }));
+
+        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
     }
 
     @Test

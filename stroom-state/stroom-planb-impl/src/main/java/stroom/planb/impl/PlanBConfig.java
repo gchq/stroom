@@ -16,17 +16,12 @@ import java.util.List;
 public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
 
     private final CacheConfig stateDocCache;
-    private final CacheConfig snapshotCache;
     private final CacheConfig readerCache;
     private final List<String> nodeList;
     private final String path;
 
     public PlanBConfig() {
         stateDocCache = CacheConfig.builder()
-                .maximumSize(100L)
-                .expireAfterWrite(StroomDuration.ofMinutes(10))
-                .build();
-        snapshotCache = CacheConfig.builder()
                 .maximumSize(100L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
@@ -41,12 +36,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public PlanBConfig(@JsonProperty("stateDocCache") final CacheConfig stateDocCache,
-                       @JsonProperty("snapshotCache") final CacheConfig snapshotCache,
                        @JsonProperty("readerCache") final CacheConfig readerCache,
                        @JsonProperty("nodeList") final List<String> nodeList,
                        @JsonProperty("path") final String path) {
         this.stateDocCache = stateDocCache;
-        this.snapshotCache = snapshotCache;
         this.readerCache = readerCache;
         this.nodeList = nodeList;
         this.path = path;
@@ -54,10 +47,6 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
 
     public CacheConfig getStateDocCache() {
         return stateDocCache;
-    }
-
-    public CacheConfig getSnapshotCache() {
-        return snapshotCache;
     }
 
     public CacheConfig getReaderCache() {
@@ -76,7 +65,6 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     public String toString() {
         return "PlanBConfig{" +
                "stateDocCache=" + stateDocCache +
-               ", snapshotCache=" + snapshotCache +
                ", readerCache=" + readerCache +
                ", nodeList=" + nodeList +
                ", path='" + path + '\'' +

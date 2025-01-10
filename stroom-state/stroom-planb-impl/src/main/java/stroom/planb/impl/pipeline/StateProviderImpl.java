@@ -2,7 +2,6 @@ package stroom.planb.impl.pipeline;
 
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.ReaderCache;
-import stroom.planb.impl.io.AbstractLmdbReader;
 import stroom.planb.impl.io.RangedState;
 import stroom.planb.impl.io.RangedStateReader;
 import stroom.planb.impl.io.RangedStateRequest;
@@ -24,6 +23,8 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -37,6 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public class StateProviderImpl implements StateProvider {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateProviderImpl.class);
 
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Val> cache;
@@ -69,47 +72,48 @@ public class StateProviderImpl implements StateProvider {
                          final String mapName,
                          final String keyName,
                          final Instant eventTime) {
-        final Optional<AbstractLmdbReader<?, ?>> optional = readerCache.get(mapName);
-        if (optional.isEmpty()) {
+        try {
+            return readerCache.get(mapName, reader -> {
+                if (reader instanceof final StateReader stateReader) {
+                    final StateRequest request =
+                            new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
+                    return getVal(stateReader
+                            .getState(request)
+                            .map(State::value));
+                } else if (reader instanceof final TemporalStateReader stateReader) {
+                    final TemporalStateRequest request =
+                            new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
+                                    eventTime.toEpochMilli());
+                    return getVal(stateReader
+                            .getState(request)
+                            .map(TemporalState::value));
+                } else if (reader instanceof final RangedStateReader stateReader) {
+                    final RangedStateRequest request =
+                            new RangedStateRequest(Long.parseLong(keyName));
+                    return getVal(stateReader
+                            .getState(request)
+                            .map(RangedState::value));
+                } else if (reader instanceof final TemporalRangedStateReader stateReader) {
+                    final TemporalRangedStateRequest request =
+                            new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
+                    return getVal(stateReader
+                            .getState(request)
+                            .map(TemporalRangedState::value));
+                } else if (reader instanceof final SessionReader stateReader) {
+                    final SessionRequest request =
+                            new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());
+                    return stateReader
+                            .getState(request)
+                            .map(session -> ValBoolean.create(true))
+                            .orElse(ValBoolean.create(false));
+                }
+
+                throw new RuntimeException("Unexpected state type: " + doc.getStateType());
+            });
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
             return ValNull.INSTANCE;
         }
-
-        final AbstractLmdbReader<?, ?> reader = optional.get();
-        if (reader instanceof final StateReader stateReader) {
-            final StateRequest request =
-                    new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
-            return getVal(stateReader
-                    .getState(request)
-                    .map(State::value));
-        } else if (reader instanceof final TemporalStateReader stateReader) {
-            final TemporalStateRequest request =
-                    new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
-                            eventTime.toEpochMilli());
-            return getVal(stateReader
-                    .getState(request)
-                    .map(TemporalState::value));
-        } else if (reader instanceof final RangedStateReader stateReader) {
-            final RangedStateRequest request =
-                    new RangedStateRequest(Long.parseLong(keyName));
-            return getVal(stateReader
-                    .getState(request)
-                    .map(RangedState::value));
-        } else if (reader instanceof final TemporalRangedStateReader stateReader) {
-            final TemporalRangedStateRequest request =
-                    new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
-            return getVal(stateReader
-                    .getState(request)
-                    .map(TemporalRangedState::value));
-        } else if (reader instanceof final SessionReader stateReader) {
-            final SessionRequest request =
-                    new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());
-            return stateReader
-                    .getState(request)
-                    .map(session -> ValBoolean.create(true))
-                    .orElse(ValBoolean.create(false));
-        }
-
-        throw new RuntimeException("Unexpected state type: " + doc.getStateType());
     }
 
     private Val getVal(final Optional<StateValue> optional) {

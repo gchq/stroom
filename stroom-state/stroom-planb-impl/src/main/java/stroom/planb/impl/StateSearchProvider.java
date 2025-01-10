@@ -23,7 +23,6 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.planb.impl.data.ReaderCache;
-import stroom.planb.impl.io.AbstractLmdbReader;
 import stroom.planb.impl.io.StateFieldUtil;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.v2.ExpressionUtil;
@@ -233,14 +232,14 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
                 final Instant queryStart = Instant.now();
                 try {
-                    final Optional<AbstractLmdbReader<?, ?>> optional = readerCache.get(doc.getName());
-                    optional.ifPresent(reader -> {
+                    readerCache.get(doc.getName(), reader -> {
                         reader.search(
                                 criteria,
                                 coprocessors.getFieldIndex(),
                                 searchRequest.getDateTimeSettings(),
                                 expressionPredicateFactory,
                                 coprocessors);
+                        return null;
                     });
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
