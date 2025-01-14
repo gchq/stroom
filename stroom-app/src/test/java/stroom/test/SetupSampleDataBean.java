@@ -51,6 +51,7 @@ import stroom.security.shared.User;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.test.common.StroomCoreServerTestFileUtil;
+import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -349,8 +350,9 @@ public final class SetupSampleDataBean {
                     long startTime = System.currentTimeMillis() - (14 * dayMs);
 
                     // Load reference data first.
-                    dataLoader.read(dataDir, true, startTime);
-                    startTime += tenMinMs;
+                    // Force the effective data to be before the event time in the data that is 2010.....
+                    dataLoader.read(dataDir, true,
+                            DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
 
                     // Then load event data.
                     dataLoader.read(dataDir, false, startTime);

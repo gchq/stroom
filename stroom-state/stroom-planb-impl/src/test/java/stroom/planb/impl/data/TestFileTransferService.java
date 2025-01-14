@@ -35,6 +35,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                 null,
                 null,
                 null,
+                null,
                 null);
 
         Mockito
@@ -73,6 +74,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
         final String mapName = "TestMap";
         final long requestTime = System.currentTimeMillis();
         final FileTransferClientImpl fileTransferClient = new FileTransferClientImpl(
+                null,
                 null,
                 null,
                 null,

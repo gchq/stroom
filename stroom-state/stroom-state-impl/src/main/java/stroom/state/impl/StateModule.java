@@ -40,6 +40,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -112,7 +113,7 @@ public class StateModule extends AbstractModule {
                 .bindJobTo(StateMaintenanceRunnable.class, builder -> builder
                         .name(StateMaintenanceExecutor.TASK_NAME)
                         .description("State store maintenance")
-                        .cronSchedule("0 0 0 * * ?")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .advanced(true));
     }
 

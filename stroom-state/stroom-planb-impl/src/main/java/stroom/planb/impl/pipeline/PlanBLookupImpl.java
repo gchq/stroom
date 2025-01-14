@@ -21,8 +21,6 @@ import stroom.planb.impl.io.TemporalState;
 import stroom.planb.impl.io.TemporalStateReader;
 import stroom.planb.impl.io.TemporalStateRequest;
 import stroom.planb.shared.PlanBDoc;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -39,8 +37,6 @@ import java.util.Optional;
 
 @PipelineScoped
 public class PlanBLookupImpl implements PlanBLookup {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBLookupImpl.class);
 
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Optional<TemporalState>> cache;
@@ -92,74 +88,69 @@ public class PlanBLookupImpl implements PlanBLookup {
                                              final String mapName,
                                              final String keyName,
                                              final Instant eventTime) {
-        try {
-            return readerCache.get(mapName, reader -> {
-                if (reader instanceof final StateReader stateReader) {
-                    final StateRequest request =
-                            new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
-                    return stateReader
-                            .getState(request)
-                            .map(state -> new TemporalState(TemporalState
-                                    .Key
-                                    .builder()
-                                    .name(state.key().bytes())
-                                    .effectiveTime(0)
-                                    .build(),
-                                    state.value()));
-                } else if (reader instanceof final TemporalStateReader stateReader) {
-                    final TemporalStateRequest request =
-                            new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
-                                    eventTime.toEpochMilli());
-                    return stateReader
-                            .getState(request);
-                } else if (reader instanceof final RangedStateReader stateReader) {
-                    final RangedStateRequest request =
-                            new RangedStateRequest(Long.parseLong(keyName));
-                    return stateReader
-                            .getState(request)
-                            .map(state -> new TemporalState(TemporalState
-                                    .Key
-                                    .builder()
-                                    .name(keyName)
-                                    .effectiveTime(0)
-                                    .build(),
-                                    state.value()));
-                } else if (reader instanceof final TemporalRangedStateReader stateReader) {
-                    final TemporalRangedStateRequest request =
-                            new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
-                    return stateReader
-                            .getState(request)
-                            .map(state -> new TemporalState(TemporalState
-                                    .Key
-                                    .builder()
-                                    .name(keyName)
-                                    .effectiveTime(0)
-                                    .build(),
-                                    state.value()));
-                } else if (reader instanceof final SessionReader stateReader) {
-                    final SessionRequest request =
-                            new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());
-                    return stateReader
-                            .getState(request)
-                            .map(state -> new TemporalState(TemporalState
-                                    .Key
-                                    .builder()
-                                    .name(keyName)
-                                    .effectiveTime(0)
-                                    .build(),
-                                    StateValue
-                                            .builder()
-                                            .typeId(StringValue.TYPE_ID)
-                                            .byteBuffer(ByteBuffer.wrap(state.key()))
-                                            .build()));
-                }
+        return readerCache.get(mapName, reader -> {
+            if (reader instanceof final StateReader stateReader) {
+                final StateRequest request =
+                        new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
+                return stateReader
+                        .getState(request)
+                        .map(state -> new TemporalState(TemporalState
+                                .Key
+                                .builder()
+                                .name(state.key().bytes())
+                                .effectiveTime(0)
+                                .build(),
+                                state.value()));
+            } else if (reader instanceof final TemporalStateReader stateReader) {
+                final TemporalStateRequest request =
+                        new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
+                                eventTime.toEpochMilli());
+                return stateReader
+                        .getState(request);
+            } else if (reader instanceof final RangedStateReader stateReader) {
+                final RangedStateRequest request =
+                        new RangedStateRequest(Long.parseLong(keyName));
+                return stateReader
+                        .getState(request)
+                        .map(state -> new TemporalState(TemporalState
+                                .Key
+                                .builder()
+                                .name(keyName)
+                                .effectiveTime(0)
+                                .build(),
+                                state.value()));
+            } else if (reader instanceof final TemporalRangedStateReader stateReader) {
+                final TemporalRangedStateRequest request =
+                        new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
+                return stateReader
+                        .getState(request)
+                        .map(state -> new TemporalState(TemporalState
+                                .Key
+                                .builder()
+                                .name(keyName)
+                                .effectiveTime(0)
+                                .build(),
+                                state.value()));
+            } else if (reader instanceof final SessionReader stateReader) {
+                final SessionRequest request =
+                        new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());
+                return stateReader
+                        .getState(request)
+                        .map(state -> new TemporalState(TemporalState
+                                .Key
+                                .builder()
+                                .name(keyName)
+                                .effectiveTime(0)
+                                .build(),
+                                StateValue
+                                        .builder()
+                                        .typeId(StringValue.TYPE_ID)
+                                        .byteBuffer(ByteBuffer.wrap(state.key()))
+                                        .build()));
+            }
 
-                throw new RuntimeException("Unexpected state type: " + doc.getStateType());
-            });
-        } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
-            return Optional.empty();
-        }
+            throw new RuntimeException("Unexpected state type: " + doc.getStateType());
+        });
     }
 
     private record Key(String tableName, String keyName, Instant eventTime) {

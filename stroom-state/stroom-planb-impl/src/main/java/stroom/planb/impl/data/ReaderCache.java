@@ -3,6 +3,7 @@ package stroom.planb.impl.data;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.io.AbstractLmdbReader;
@@ -13,6 +14,7 @@ import stroom.planb.impl.io.StateReader;
 import stroom.planb.impl.io.TemporalRangedStateReader;
 import stroom.planb.impl.io.TemporalStateReader;
 import stroom.planb.shared.PlanBDoc;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -22,10 +24,9 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.lmdbjava.Env.AlreadyClosedException;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -44,6 +45,7 @@ public class ReaderCache {
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
+    private final NodeInfo nodeInfo;
 
     @Inject
     public ReaderCache(final Provider<PlanBConfig> configProvider,
@@ -51,12 +53,14 @@ public class ReaderCache {
                        final ByteBufferFactory byteBufferFactory,
                        final PlanBDocCache planBDocCache,
                        final StatePaths statePaths,
-                       final FileTransferClient fileTransferClient) {
+                       final FileTransferClient fileTransferClient,
+                       final NodeInfo nodeInfo) {
         this.byteBufferFactory = byteBufferFactory;
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
+        this.nodeInfo = nodeInfo;
 
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -79,7 +83,14 @@ public class ReaderCache {
     }
 
     private Shard create(final String mapName) {
-        return new Shard(mapName, statePaths, planBDocCache, configProvider, fileTransferClient, byteBufferFactory);
+        return new Shard(
+                mapName,
+                statePaths,
+                planBDocCache,
+                configProvider,
+                fileTransferClient,
+                byteBufferFactory,
+                nodeInfo);
     }
 
     private void destroy(final String mapName,
@@ -94,6 +105,7 @@ public class ReaderCache {
         private boolean snapshot;
         private final PlanBDoc doc;
         private final ByteBufferFactory byteBufferFactory;
+
         private RuntimeException exception;
         private AbstractLmdbReader<?, ?> currentReader;
         private final ReentrantLock readLock = new ReentrantLock();
@@ -106,7 +118,8 @@ public class ReaderCache {
                      final PlanBDocCache planBDocCache,
                      final Provider<PlanBConfig> configProvider,
                      final FileTransferClient fileTransferClient,
-                     final ByteBufferFactory byteBufferFactory) {
+                     final ByteBufferFactory byteBufferFactory,
+                     final NodeInfo nodeInfo) {
             this.mapName = mapName;
             this.byteBufferFactory = byteBufferFactory;
             doc = planBDocCache.get(mapName);
@@ -115,6 +128,9 @@ public class ReaderCache {
                 exception = new RuntimeException("No PlanB doc found for '" + mapName + "'");
 
             } else {
+                final List<String> nodes = NullSafe.list(configProvider.get().getNodeList());
+                final boolean isStoreNode = nodes.contains(nodeInfo.getThisNodeName());
+
                 // See if we have it locally.
                 final Path shardDir = statePaths.getShardDir().resolve(mapName);
                 if (Files.exists(shardDir)) {
@@ -123,7 +139,23 @@ public class ReaderCache {
                     this.snapshot = false;
                     this.currentReader = createReader();
 
+                } else if (isStoreNode) {
+                    // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.
+                    final String message = "Local Plan B shard not found for '" +
+                                           mapName +
+                                           "'";
+                    LOGGER.error(() -> message);
+                    exception = new RuntimeException(message);
+
+                } else if (nodes.isEmpty()) {
+                    final String message = "Local Plan B shard not found for '" +
+                                           mapName +
+                                           "' and no remote nodes are configured";
+                    LOGGER.error(() -> message);
+                    exception = new RuntimeException(message);
+
                 } else {
+
                     // See if we have a snapshot.
                     final Path snapshotDir = statePaths.getSnapshotDir().resolve(mapName);
                     if (Files.exists(snapshotDir)) {
@@ -143,9 +175,9 @@ public class ReaderCache {
                                 this.snapshot = true;
                                 this.currentReader = createReader();
 
-                            } catch (final IOException e) {
+                            } catch (final Exception e) {
                                 LOGGER.error(e::getMessage, e);
-                                exception = new UncheckedIOException(e);
+                                exception = new RuntimeException(e);
                             }
                         }
                     }

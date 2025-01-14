@@ -40,7 +40,7 @@ import java.io.InputStream;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface FileTransferResource extends RestResource {
 
-    String BASE_PATH = "/snapshot" + ResourcePaths.V1;
+    String BASE_PATH = "/fileTransfer" + ResourcePaths.V1;
     String FETCH_SNAPSHOT_PATH_PART = "/fetchSnapshot";
     String SEND_PART_PATH_PART = "/sendPart";
 

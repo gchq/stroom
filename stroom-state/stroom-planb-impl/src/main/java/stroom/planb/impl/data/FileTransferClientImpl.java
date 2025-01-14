@@ -5,6 +5,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
+import stroom.security.api.SecurityContext;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -23,6 +24,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -40,6 +42,7 @@ public class FileTransferClientImpl implements FileTransferClient {
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final WebTargetFactory webTargetFactory;
     private final SequentialFileStore fileStore;
+    private final SecurityContext securityContext;
 
     @Inject
     public FileTransferClientImpl(final Provider<PlanBConfig> configProvider,
@@ -47,56 +50,64 @@ public class FileTransferClientImpl implements FileTransferClient {
                                   final NodeInfo nodeInfo,
                                   final TargetNodeSetFactory targetNodeSetFactory,
                                   final WebTargetFactory webTargetFactory,
-                                  final SequentialFileStore fileStore) {
+                                  final SequentialFileStore fileStore,
+                                  final SecurityContext securityContext) {
         this.configProvider = configProvider;
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.webTargetFactory = webTargetFactory;
         this.fileStore = fileStore;
+        this.securityContext = securityContext;
     }
 
     @Override
     public void storePart(final FileDescriptor fileDescriptor,
-                          final Path path) throws IOException {
-        final Set<String> targetNodes = new HashSet<>();
-
-        // Now post to all nodes.
-        final PlanBConfig planBConfig = configProvider.get();
-        final List<String> configuredNodes = planBConfig.getNodeList();
-        if (configuredNodes == null || configuredNodes.isEmpty()) {
-            LOGGER.warn("No node list configured for PlanB, assuming this is a single node test setup");
-            targetNodes.add(nodeInfo.getThisNodeName());
-
-        } else {
+                          final Path path) {
+        securityContext.asProcessingUser(() -> {
             try {
-                final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                for (final String node : configuredNodes) {
-                    if (enabledActiveNodes.contains(node)) {
-                        targetNodes.add(node);
-                    } else {
-                        throw new RuntimeException("Plan B target node '" + node + "' is not enabled or active");
+                final Set<String> targetNodes = new HashSet<>();
+
+                // Now post to all nodes.
+                final PlanBConfig planBConfig = configProvider.get();
+                final List<String> configuredNodes = planBConfig.getNodeList();
+                if (configuredNodes == null || configuredNodes.isEmpty()) {
+                    LOGGER.warn("No node list configured for PlanB, assuming this is a single node test setup");
+                    targetNodes.add(nodeInfo.getThisNodeName());
+
+                } else {
+                    try {
+                        final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                        for (final String node : configuredNodes) {
+                            if (enabledActiveNodes.contains(node)) {
+                                targetNodes.add(node);
+                            } else {
+                                throw new RuntimeException("Plan B target node '" + node + "' is not enabled or active");
+                            }
+                        }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e.getMessage(), e);
                     }
                 }
-            } catch (final Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        }
 
-        // Send the data to all nodes.
-        for (final String nodeName : targetNodes) {
-            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                storePartLocally(
-                        fileDescriptor,
-                        path);
-            } else {
-                storePartRemotely(
-                        nodeInfo.getThisNodeName(),
-                        nodeName,
-                        fileDescriptor,
-                        path);
+                // Send the data to all nodes.
+                for (final String nodeName : targetNodes) {
+                    if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                        storePartLocally(
+                                fileDescriptor,
+                                path);
+                    } else {
+                        storePartRemotely(
+                                nodeInfo.getThisNodeName(),
+                                nodeName,
+                                fileDescriptor,
+                                path);
+                    }
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
             }
-        }
+        });
     }
 
     private void storePartLocally(final FileDescriptor fileDescriptor,
@@ -109,19 +120,16 @@ public class FileTransferClientImpl implements FileTransferClient {
                                    final FileDescriptor fileDescriptor,
                                    final Path path) throws IOException {
         final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, targetNode);
-        final String url = baseEndpointUrl + ResourcePaths.buildServletPath(FileTransferResource.BASE_PATH,
+        final String url = baseEndpointUrl + ResourcePaths.buildAuthenticatedApiPath(FileTransferResource.BASE_PATH,
                 FileTransferResource.SEND_PART_PATH_PART);
         final WebTarget webTarget = webTargetFactory.create(url);
         try {
             if (!storePartRemotely(webTarget, fileDescriptor, path)) {
                 throw new IOException("Unable to send file to: " + sourceNode);
             }
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
-            throw new IOException(e);
+            throw new IOException("Unable to send file to: " + sourceNode, e);
         }
     }
 
@@ -142,14 +150,24 @@ public class FileTransferClientImpl implements FileTransferClient {
     @Override
     public void fetchSnapshot(final String nodeName,
                               final SnapshotRequest request,
-                              final Path snapshotDir) throws IOException {
-        LOGGER.info(() -> "Fetching snapshot from '" + nodeName + "' for '" + request.getMapName() + "'");
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                           + ResourcePaths.buildAuthenticatedApiPath(
-                FileTransferResource.BASE_PATH,
-                FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
-        final WebTarget webTarget = webTargetFactory.create(url);
-        fetchSnapshot(webTarget, request, snapshotDir);
+                              final Path snapshotDir) {
+        securityContext.asProcessingUser(() -> {
+            try {
+                LOGGER.info(() -> "Fetching snapshot from '" + nodeName + "' for '" + request.getMapName() + "'");
+                final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                                   + ResourcePaths.buildAuthenticatedApiPath(
+                        FileTransferResource.BASE_PATH,
+                        FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
+                final WebTarget webTarget = webTargetFactory.create(url);
+                fetchSnapshot(webTarget, request, snapshotDir);
+            } catch (final Exception e) {
+                throw new RuntimeException("Error fetching snapshot from '" +
+                                           nodeName +
+                                           "' for '" +
+                                           request.getMapName() +
+                                           "'", e);
+            }
+        });
     }
 
     void fetchSnapshot(final WebTarget webTarget,

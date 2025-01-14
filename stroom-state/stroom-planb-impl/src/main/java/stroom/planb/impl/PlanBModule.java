@@ -42,6 +42,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -94,7 +95,7 @@ public class PlanBModule extends AbstractModule {
                 .bindJobTo(StateMergeRunnable.class, builder -> builder
                         .name(MergeProcessor.TASK_NAME)
                         .description("Plan B state store merge")
-                        .cronSchedule("0 0 0 * * ?")
+                        .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(true));
     }
 
