@@ -3,11 +3,11 @@ package stroom.proxy.app.event;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -201,7 +201,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     @Override
     public void consume(final AttributeMap attributeMap,
-                        final ReceiptId receiptId,
+                        final UniqueId receiptId,
                         final String data) {
         try {
             final String feed = attributeMap.get("Feed");

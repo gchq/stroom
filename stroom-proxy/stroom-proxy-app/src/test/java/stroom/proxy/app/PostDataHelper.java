@@ -2,8 +2,8 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.NumericFileNameUtil;
-import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.app.handler.ZipWriter;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 
 import com.google.common.base.Strings;
 import jakarta.ws.rs.client.Client;
@@ -161,9 +161,9 @@ public class PostDataHelper {
     private int consumeResponse(final Response response) {
         final int status = response.getStatus();
         final String responseText = response.readEntity(String.class);
-        ReceiptId receiptId = null;
+        UniqueId receiptId = null;
         try {
-            receiptId = ReceiptId.parse(responseText);
+            receiptId = UniqueId.parse(responseText);
         } catch (Exception ignored) {
             // Ignore
         }
@@ -181,7 +181,7 @@ public class PostDataHelper {
         return Collections.unmodifiableList(postResponses);
     }
 
-    public List<ReceiptId> getReceiptIds() {
+    public List<UniqueId> getReceiptIds() {
         return postResponses.stream()
                 .map(PostResponse::receiptId)
                 .toList();
@@ -195,7 +195,7 @@ public class PostDataHelper {
     // --------------------------------------------------------------------------------
 
 
-    public record PostResponse(ReceiptId receiptId,
+    public record PostResponse(UniqueId receiptId,
                                int status,
                                String responseText) {
 

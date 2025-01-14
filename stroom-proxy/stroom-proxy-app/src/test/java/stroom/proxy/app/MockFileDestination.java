@@ -6,10 +6,10 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.ReceiptId;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
@@ -164,11 +164,11 @@ public class MockFileDestination {
     }
 
     /**
-     * Assert all the {@link ReceiptId}s contained in the stored aggregates
+     * Assert all the {@link stroom.util.concurrent.UniqueIdGenerator.UniqueId}s contained in the stored aggregates
      */
     void assertReceiptIds(final Config config,
-                          final List<ReceiptId> expectedReceiptIds) {
-        final List<ReceiptId> actualReceiptIds = getForwardFiles(config)
+                          final List<UniqueId> expectedReceiptIds) {
+        final List<UniqueId> actualReceiptIds = getForwardFiles(config)
                 .stream()
                 .map(ForwardFileItem::getContainedReceiptIds)
                 .flatMap(Collection::stream)
@@ -335,22 +335,22 @@ public class MockFileDestination {
         }
 
         /**
-         * The {@link ReceiptId} of the wrapping zip
+         * The {@link UniqueId} of the wrapping zip
          */
-        public ReceiptId getReceiptId() {
+        public UniqueId getReceiptId() {
             final String receiptIdStr = AttributeMapUtil.create(metaContent)
                     .get(StandardHeaderArguments.RECEIPT_ID);
-            return ReceiptId.parse(receiptIdStr);
+            return UniqueId.parse(receiptIdStr);
         }
 
-        public List<ReceiptId> getContainedReceiptIds() {
+        public List<UniqueId> getContainedReceiptIds() {
             return zipItems.stream()
                     .filter(zipItem ->
                             zipItem.type().equals(StroomZipFileType.META))
                     .map(ZipItem::getContentAsAttributeMap)
                     .map(attributeMap ->
                             attributeMap.get(StandardHeaderArguments.RECEIPT_ID))
-                    .map(ReceiptId::parse)
+                    .map(UniqueId::parse)
                     .toList();
         }
     }

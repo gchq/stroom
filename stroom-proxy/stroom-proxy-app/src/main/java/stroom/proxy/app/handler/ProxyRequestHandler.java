@@ -8,6 +8,7 @@ import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -35,20 +36,20 @@ public class ProxyRequestHandler implements RequestHandler {
     private static final String ZERO_CONTENT = "0";
 
     private final RequestAuthenticator requestAuthenticator;
-    private final ProxyId proxyId;
     private final CertificateExtractor certificateExtractor;
     private final ReceiverFactory receiverFactory;
+    private final ReceiptIdGenerator receiptIdGenerator;
     private final String hostName;
 
     @Inject
     public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
-                               final ProxyId proxyId,
                                final CertificateExtractor certificateExtractor,
-                               final ReceiverFactory receiverFactory) {
+                               final ReceiverFactory receiverFactory,
+                               final ReceiptIdGenerator receiptIdGenerator) {
         this.requestAuthenticator = requestAuthenticator;
-        this.proxyId = proxyId;
         this.certificateExtractor = certificateExtractor;
         this.receiverFactory = receiverFactory;
+        this.receiptIdGenerator = receiptIdGenerator;
         this.hostName = HostNameUtil.determineHostName();
     }
 
@@ -61,14 +62,15 @@ public class ProxyRequestHandler implements RequestHandler {
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
             // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
-            final ReceiptId receiptId = proxyId.generateReceiptId();
+            final UniqueId receiptId = receiptIdGenerator.generateId();
 
             // Authorise request.
             requestAuthenticator.authenticate(request, attributeMap);
 
-            LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptId);
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId.toString());
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId.toString());
+            final String receiptIdStr = receiptId.toString();
+            LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
 
             // Save the time the data was received.
             attributeMap.computeIfAbsent(StandardHeaderArguments.RECEIVED_TIME, k ->

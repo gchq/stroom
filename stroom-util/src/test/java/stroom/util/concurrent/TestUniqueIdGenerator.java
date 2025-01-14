@@ -1,18 +1,16 @@
-package stroom.proxy.app.handler;
+package stroom.util.concurrent;
 
-import stroom.proxy.app.handler.UniqueIdGenerator.UniqueId;
-import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,9 +26,19 @@ class TestUniqueIdGenerator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestUniqueIdGenerator.class);
 
     @Test
+    void testBadNodeId() {
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            new UniqueIdGenerator("foo bar");
+                        }).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must match the pattern");
+    }
+
+    @Test
     void simple() {
         UniqueIdGenerator generator = new UniqueIdGenerator("node1");
-        final UniqueId uniqueId = generator.nextId();
+        ThreadUtil.sleep(20);
+        final UniqueId uniqueId = generator.generateId();
 
         final String str = uniqueId.toString();
         LOGGER.info("uniqueId: {}", uniqueId);
@@ -45,7 +53,7 @@ class TestUniqueIdGenerator {
     @Test
     void parse() {
         UniqueIdGenerator generator = new UniqueIdGenerator("node1");
-        final UniqueId uniqueId1 = generator.nextId();
+        final UniqueId uniqueId1 = generator.generateId();
 
         final String str = uniqueId1.toString();
 
@@ -55,7 +63,6 @@ class TestUniqueIdGenerator {
                 .isEqualTo(uniqueId1);
     }
 
-    //    @RepeatedTest(10)
     @Test
     void multiThreadUniqueness() {
         final int cores = Runtime.getRuntime().availableProcessors();
@@ -75,11 +82,13 @@ class TestUniqueIdGenerator {
                 final List<UniqueId> uniqueIdList = new ArrayList<>();
                 startLatch.countDown();
                 ThreadUtil.await(startLatch);
-                LOGGER.info("Thread {} starting", coreIdx);
+//                LOGGER.info("Thread {} starting", coreIdx);
 
                 try {
                     for (int iteration = 0; iteration < iterations; iteration++) {
-                        final UniqueId uniqueId = generator.nextId();
+                        final UniqueId uniqueId = generator.generateId();
+                        assertThat(uniqueId)
+                                .isNotNull();
                         uniqueIdList.add(uniqueId);
                     }
                     lists[coreIdx] = uniqueIdList;
@@ -88,10 +97,10 @@ class TestUniqueIdGenerator {
                 } catch (Exception e) {
                     LOGGER.error("Error", e);
                 } finally {
-                    LOGGER.info("Thread {} completing", coreIdx);
+//                    LOGGER.info("Thread {} completing", coreIdx);
                     completionLatch.countDown();
-                    LOGGER.info("Thread {} complete, completionLatch {}",
-                            coreIdx, completionLatch.getCount());
+//                    LOGGER.info("Thread {} complete, completionLatch {}",
+//                            coreIdx, completionLatch.getCount());
                 }
             }, executorService);
         }
@@ -105,16 +114,16 @@ class TestUniqueIdGenerator {
                 duration,
                 duration.toMillis() / (double) totalCount);
 
-        final List<UniqueId> allIds = Arrays.stream(lists)
-                .flatMap(Collection::stream)
-                .toList();
-
+        final List<UniqueId> allIds = new ArrayList<>(totalCount);
+        for (final List<UniqueId> list : lists) {
+            allIds.addAll(list);
+        }
         assertThat(allIds)
-                .hasSize(cores * iterations);
+                .hasSize(totalCount);
 
         final Set<UniqueId> uniqueIds = new HashSet<>(allIds);
-
+        // No dupes should have dropped out, so size is unchanged
         assertThat(uniqueIds)
-                .hasSize(cores * iterations);
+                .hasSize(totalCount);
     }
 }

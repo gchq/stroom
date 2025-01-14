@@ -2,7 +2,7 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.handler.ReceiptId;
+import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -75,7 +75,7 @@ public class KafkaEventConsumer implements EventConsumer {
 
     @Override
     public void consume(final AttributeMap attributeMap,
-                        final ReceiptId receiptId,
+                        final UniqueId receiptId,
                         final String data) {
         try {
             final List<Header> headers = new ArrayList<>(attributeMap.size());
