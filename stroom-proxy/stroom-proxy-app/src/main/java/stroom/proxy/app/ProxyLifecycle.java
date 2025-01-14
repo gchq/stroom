@@ -2,8 +2,8 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStore;
 import stroom.proxy.app.event.EventStoreConfig;
-import stroom.proxy.app.handler.ReceiptIdGenerator;
 import stroom.proxy.repo.ProxyServices;
+import stroom.receive.common.ReceiptIdGenerator;
 
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;

@@ -24,6 +24,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapValidator;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
@@ -44,6 +45,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
@@ -64,6 +66,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final MetaService metaService;
     private final RequestAuthenticator requestAuthenticator;
     private final CertificateExtractor certificateExtractor;
+    private final ReceiptIdGenerator receiptIdGenerator;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
@@ -72,7 +75,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final TaskContextFactory taskContextFactory,
                                      final MetaService metaService,
                                      final RequestAuthenticator requestAuthenticator,
-                                     final CertificateExtractor certificateExtractor) {
+                                     final CertificateExtractor certificateExtractor,
+                                     final ReceiptIdGenerator receiptIdGenerator) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.streamTargetStreamHandlerProvider = streamTargetStreamHandlerProvider;
@@ -80,6 +84,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
         this.metaService = metaService;
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
+        this.receiptIdGenerator = receiptIdGenerator;
     }
 
     @Override
@@ -95,6 +100,12 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
             // Validate the supplied attributes.
             AttributeMapValidator.validate(attributeMap, metaService::getTypes);
+
+            // Create a new receiptId for the request, so we can track progress and report back the
+            // receiptId to the sender
+            final String receiptId = receiptIdGenerator.generateId().toString();
+            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId);
+            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId);
 
             final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {
@@ -130,6 +141,14 @@ class ReceiveDataRequestHandler implements RequestHandler {
             // Set the response status.
             final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
             response.setStatus(stroomStatusCode.getHttpCode());
+
+            LOGGER.debug(() -> "Writing receipt id attribute to response: " + receiptId);
+            try (final PrintWriter writer = response.getWriter()) {
+                writer.println(receiptId);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
             logSuccess(new StroomStreamStatus(stroomStatusCode, attributeMap));
         });
     }

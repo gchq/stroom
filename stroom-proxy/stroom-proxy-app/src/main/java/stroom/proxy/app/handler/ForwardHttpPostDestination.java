@@ -88,6 +88,7 @@ public class ForwardHttpPostDestination {
     }
 
     private boolean forwardDir(final Path dir) {
+        LOGGER.debug("ForwardDir() - destinationName: {}, dir: {}", destinationName, dir);
         try {
             try {
                 final FileGroup fileGroup = new FileGroup(dir);
@@ -110,7 +111,8 @@ public class ForwardHttpPostDestination {
 
             } catch (final Exception e) {
                 LOGGER.error(() ->
-                        "Error sending '" + FileUtil.getCanonicalPath(dir) + "' to '" + destinationName + "'.");
+                        "Error sending '" + FileUtil.getCanonicalPath(dir)
+                        + "' to '" + destinationName + "'.");
                 LOGGER.debug(e::getMessage, e);
 
                 // Add to the errors

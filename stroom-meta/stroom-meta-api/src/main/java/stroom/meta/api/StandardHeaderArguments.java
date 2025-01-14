@@ -73,6 +73,8 @@ public interface StandardHeaderArguments {
 
     String FEED = "Feed";
     String TYPE = "Type";
+    String SYSTEM = "System";
+    String ENVIRONMENT = "Environment";
 
     // Typically added in by nginx
     String X_FORWARDED_FOR = "X-Forwarded-For";

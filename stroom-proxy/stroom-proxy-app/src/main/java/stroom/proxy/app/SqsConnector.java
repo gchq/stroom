@@ -3,9 +3,9 @@ package stroom.proxy.app;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.event.EventStore;
-import stroom.proxy.app.handler.ReceiptIdGenerator;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

@@ -3,7 +3,7 @@ package stroom.proxy.app;
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.NumericFileNameUtil;
 import stroom.proxy.app.handler.ZipWriter;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 
 import com.google.common.base.Strings;
 import jakarta.ws.rs.client.Client;

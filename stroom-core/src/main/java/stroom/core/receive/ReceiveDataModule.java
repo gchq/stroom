@@ -17,6 +17,7 @@
 package stroom.core.receive;
 
 import stroom.receive.common.FeedStatusService;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestHandler;
 
 import com.google.inject.AbstractModule;
@@ -27,5 +28,6 @@ public class ReceiveDataModule extends AbstractModule {
     protected void configure() {
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
+        bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
     }
 }

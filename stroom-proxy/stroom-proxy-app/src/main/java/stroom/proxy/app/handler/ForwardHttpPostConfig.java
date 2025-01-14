@@ -76,6 +76,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         this.addOpenIdAccessToken = addOpenIdAccessToken;
         this.httpClient = Objects.requireNonNullElse(httpClient, HttpClientConfiguration
                 .builder()
+                .timeout(DEFAULT_FORWARD_TIMEOUT)
                 .connectionTimeout(DEFAULT_FORWARD_TIMEOUT)
                 .connectionRequestTimeout(DEFAULT_FORWARD_TIMEOUT)
                 .timeToLive(DEFAULT_FORWARD_TIMEOUT)

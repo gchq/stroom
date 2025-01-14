@@ -8,10 +8,10 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class LogStream {
@@ -21,6 +21,19 @@ public class LogStream {
     @Inject
     public LogStream(final Provider<LogStreamConfig> logStreamConfigProvider) {
         this.logStreamConfigProvider = logStreamConfigProvider;
+    }
+
+    public Map<String, String> filterAttributes(final AttributeMap attributeMap) {
+        // Use a LinkedHashMap to adhere to metaKeys order, which is a LinkedHashSet
+        final List<String> metaKeys = logStreamConfigProvider.get().getMetaKeys();
+        if (NullSafe.hasItems(metaKeys)) {
+            final Map<String, String> map = new LinkedHashMap<>(metaKeys.size());
+            metaKeys.forEach(key ->
+                    map.put(key, attributeMap.get(key)));
+            return map;
+        } else {
+            return Collections.emptyMap();
+        }
     }
 
     public void log(final Logger logger,
@@ -43,29 +56,23 @@ public class LogStream {
                     final String message) {
 
         if (logger.isInfoEnabled()) {
-            final Set<String> metaKeys = logStreamConfigProvider.get().getMetaKeys();
+            final Map<String, String> filteredAttributes = filterAttributes(attributeMap);
 
-            if (NullSafe.hasItems(metaKeys)) {
-                final Map<String, String> filteredMap = attributeMap.entrySet()
-                        .stream()
-                        .filter(entry -> metaKeys.contains(entry.getKey().toLowerCase()))
-                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-                final String kvPairs = CSVFormatter.format(filteredMap);
-                final String logLine = CSVFormatter.escape(type) +
-                        "," +
-                        CSVFormatter.escape(url) +
-                        "," +
-                        responseCode +
-                        "," +
-                        bytes +
-                        "," +
-                        duration +
-                        "," +
-                        CSVFormatter.escape(message) +
-                        "," +
-                        kvPairs;
-                logger.info(logLine);
-            }
+            final String kvPairs = CSVFormatter.format(filteredAttributes, false);
+            final String logLine = CSVFormatter.escape(type) +
+                                   "," +
+                                   CSVFormatter.escape(url) +
+                                   "," +
+                                   responseCode +
+                                   "," +
+                                   bytes +
+                                   "," +
+                                   duration +
+                                   "," +
+                                   CSVFormatter.escape(message) +
+                                   "," +
+                                   kvPairs;
+            logger.info(logLine);
         }
     }
 }

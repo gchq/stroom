@@ -1,6 +1,6 @@
 package stroom.util.concurrent;
 
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId.NodeType;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -29,30 +29,30 @@ class TestUniqueIdGenerator {
     void testBadNodeId() {
         Assertions.assertThatThrownBy(
                         () -> {
-                            new UniqueIdGenerator("foo bar");
+                            new UniqueIdGenerator(NodeType.PROXY, "foo bar");
                         }).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("must match the pattern");
     }
 
     @Test
     void simple() {
-        UniqueIdGenerator generator = new UniqueIdGenerator("node1");
+        UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
         ThreadUtil.sleep(20);
         final UniqueId uniqueId = generator.generateId();
 
         final String str = uniqueId.toString();
         LOGGER.info("uniqueId: {}", uniqueId);
         assertThat(str)
-                .contains(String.valueOf(uniqueId.epochMs()));
+                .contains(String.valueOf(uniqueId.getEpochMs()));
         assertThat(str)
-                .contains(String.valueOf(uniqueId.sequenceNo()));
+                .contains(String.valueOf(uniqueId.getSequenceNo()));
         assertThat(str)
-                .contains(uniqueId.nodeId());
+                .contains(uniqueId.getNodeId());
     }
 
     @Test
     void parse() {
-        UniqueIdGenerator generator = new UniqueIdGenerator("node1");
+        UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
         final UniqueId uniqueId1 = generator.generateId();
 
         final String str = uniqueId1.toString();
@@ -70,7 +70,7 @@ class TestUniqueIdGenerator {
 
         final CountDownLatch startLatch = new CountDownLatch(cores);
         final CountDownLatch completionLatch = new CountDownLatch(cores);
-        final UniqueIdGenerator generator = new UniqueIdGenerator("node1");
+        final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
 
         int iterations = 100_000;
         final List<UniqueId>[] lists = new List[cores];

@@ -2,7 +2,7 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.ProxyConfig;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

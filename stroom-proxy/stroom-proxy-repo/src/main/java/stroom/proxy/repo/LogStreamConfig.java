@@ -1,5 +1,7 @@
 package stroom.proxy.repo;
 
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.NullSafe;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
@@ -7,43 +9,45 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 
 @JsonPropertyOrder(alphabetic = true)
 public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
 
-    private final SortedSet<String> metaKeys;
+    private final List<String> metaKeys;
 
     public LogStreamConfig() {
-        // SortedSet so the order the keys appear in the log entries can be controlled
-        this(Collections.unmodifiableSortedSet(new TreeSet<>(Set.of(
-                "guid",
-                "feed",
-                "system",
-                "environment",
-                "remotehost",
-                "remoteaddress",
-                "remotedn",
-                "remotecertexpiry"))));
+        // Linked
+        this(List.of(
+                StandardHeaderArguments.GUID,
+                StandardHeaderArguments.RECEIPT_ID,
+                StandardHeaderArguments.FEED,
+                StandardHeaderArguments.SYSTEM,
+                StandardHeaderArguments.ENVIRONMENT,
+                StandardHeaderArguments.REMOTE_HOST,
+                StandardHeaderArguments.REMOTE_ADDRESS,
+                StandardHeaderArguments.REMOTE_DN,
+                StandardHeaderArguments.REMOTE_CERT_EXPIRY));
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public LogStreamConfig(@JsonProperty("metaKeys") final SortedSet<String> metaKeys) {
-        this.metaKeys = Collections.unmodifiableSortedSet(metaKeys);
+    public LogStreamConfig(@JsonProperty("metaKeys") final List<String> metaKeys) {
+        this.metaKeys = NullSafe.stream(metaKeys)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
      * Optional log line with header attributes output as defined by this property
-     * @return
+     * The headers attributes that will be output in log lines. They will be output in the
+     * order that they appear in this list. Duplicates will be ignored.
      */
     @JsonProperty
-    public SortedSet<String> getMetaKeys() {
+    public List<String> getMetaKeys() {
         return metaKeys;
     }
 
@@ -67,7 +71,7 @@ public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
     @Override
     public String toString() {
         return "LogStreamConfig{" +
-                "metaKeys='" + metaKeys + '\'' +
-                '}';
+               "metaKeys='" + metaKeys + '\'' +
+               '}';
     }
 }

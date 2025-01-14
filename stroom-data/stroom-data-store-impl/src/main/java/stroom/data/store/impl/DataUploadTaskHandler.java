@@ -20,6 +20,7 @@ package stroom.data.store.impl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
@@ -52,14 +53,17 @@ public class DataUploadTaskHandler {
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final StreamTargetStreamHandlers streamHandlers;
+    private final ReceiptIdGenerator receiptIdGenerator;
 
     @Inject
     DataUploadTaskHandler(final TaskContextFactory taskContextFactory,
                           final SecurityContext securityContext,
-                          final StreamTargetStreamHandlers streamHandlers) {
+                          final StreamTargetStreamHandlers streamHandlers,
+                          final ReceiptIdGenerator receiptIdGenerator) {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.streamHandlers = streamHandlers;
+        this.receiptIdGenerator = receiptIdGenerator;
     }
 
     public void uploadData(final String fileName,
@@ -114,6 +118,11 @@ public class DataUploadTaskHandler {
             attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
             attributeMap.put("UploadedBy", securityContext.getUserIdentityForAudit());
+            // Create a new receiptId for the request, so we can track progress and report back the
+            // receiptId to the sender
+            final String receiptId = receiptIdGenerator.generateId().toString();
+            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId);
+            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId);
 
             final Consumer<Long> progressHandler = new TaskProgressHandler(taskContext, "Uploading");
 
@@ -122,7 +131,7 @@ public class DataUploadTaskHandler {
                 uploadZipFile(file, feedName, typeName, attributeMap, progressHandler);
 
             } else if (name.endsWith(FILE_SEPARATOR + StandardHeaderArguments.COMPRESSION_GZIP) ||
-                    name.endsWith(FILE_SEPARATOR + GZ)) {
+                       name.endsWith(FILE_SEPARATOR + GZ)) {
                 attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
                 uploadStreamFile(file, feedName, typeName, attributeMap, progressHandler);
 

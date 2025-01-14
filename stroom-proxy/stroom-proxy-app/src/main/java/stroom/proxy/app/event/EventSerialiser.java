@@ -3,7 +3,7 @@ package stroom.proxy.app.event;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.event.model.Event;
 import stroom.proxy.app.event.model.Header;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.json.JsonUtil;
 
@@ -30,7 +30,7 @@ public class EventSerialiser {
         final Event event = new Event(
                 0,
                 receiptId.toString(),
-                receiptId.nodeId(),
+                receiptId.getNodeId(),
                 feedKey.feed(),
                 feedKey.type(),
                 DateUtil.createNormalDateTimeString(),

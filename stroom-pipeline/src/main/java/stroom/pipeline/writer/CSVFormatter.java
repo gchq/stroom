@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CSVFormatter {
+
     private static final String COMMA = ",";
     private static final String QUOTE = "\"";
     private static final String DOUBLE_QUOTE = "\"\"";
@@ -15,9 +16,11 @@ public class CSVFormatter {
     private static final String ESCAPED_EQUALS = "\\=";
     private static final Pattern EQUALS_PATTERN = Pattern.compile(EQUALS);
 
-    public static String format(final Map<String, String> map) {
+    public static String format(final Map<String, String> map, final boolean sortByKey) {
         final List<String> keys = new ArrayList<>(map.keySet());
-        Collections.sort(keys);
+        if (sortByKey) {
+            Collections.sort(keys);
+        }
 
         final StringBuilder sb = new StringBuilder();
         for (final String key : keys) {
@@ -31,7 +34,7 @@ public class CSVFormatter {
             sb.append(COMMA);
         }
 
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
             sb.setLength(sb.length() - 1);
         }
 
