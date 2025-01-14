@@ -195,35 +195,46 @@ class TestState {
         final AtomicBoolean writeComplete = new AtomicBoolean();
         final List<CompletableFuture<?>> list = new ArrayList<>();
 
-        list.add(CompletableFuture.runAsync(() -> {
-            testWrite(source, 1000000, keyFunction, valueFunction);
-            writeComplete.set(true);
-        }));
+        try (final StateWriter writer = new StateWriter(source, byteBufferFactory)) {
+            list.add(CompletableFuture.runAsync(() -> {
+                insertData(writer, 1000000, keyFunction, valueFunction);
+                writeComplete.set(true);
+            }));
 
-        list.add(CompletableFuture.runAsync(() -> {
-            try {
-                while (!writeComplete.get()) {
-                    final Path lmdbDataFile = source.resolve("data.mdb");
-                    if (Files.exists(lmdbDataFile)) {
-                        // Compress.
-                        ZipUtil.zip(zipFile, source);
-                        // Uncompress.
-                        ZipUtil.unzip(zipFile, target);
-                        Files.delete(zipFile);
-                        // Read.
-                        try (final StateReader reader = new StateReader(target, byteBufferFactory)) {
-                            assertThat(reader.count()).isGreaterThanOrEqualTo(0);
+            list.add(CompletableFuture.runAsync(() -> {
+                try {
+                    while (!writeComplete.get()) {
+                        final Path lmdbDataFile = source.resolve("data.mdb");
+                        if (Files.exists(lmdbDataFile)) {
+                            // Compress.
+
+                            // Lock when compressing, so we don't zip half written data.
+                            writer.lock(() -> {
+                                try {
+                                    ZipUtil.zip(zipFile, source);
+                                } catch (final IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            });
+
+                            // Uncompress.
+                            ZipUtil.unzip(zipFile, target);
+                            Files.delete(zipFile);
+                            // Read.
+                            try (final StateReader reader = new StateReader(target, byteBufferFactory)) {
+                                assertThat(reader.count()).isGreaterThanOrEqualTo(0);
+                            }
+                            // Cleanup.
+                            FileUtil.deleteDir(target);
                         }
-                        // Cleanup.
-                        FileUtil.deleteDir(target);
                     }
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }));
+            }));
 
-        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+        }
     }
 
     @Test
