@@ -19,11 +19,12 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
+public abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbWriter.class);
 
@@ -37,6 +38,7 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
     private int commitCount = 0;
     private int hashClashes = 0;
     private final DBWriter dbWriter;
+    private final ReentrantLock lock = new ReentrantLock();
 
     public AbstractLmdbWriter(final Path path,
                               final ByteBufferFactory byteBufferFactory,
@@ -197,31 +199,42 @@ abstract class AbstractLmdbWriter<K, V> implements AutoCloseable {
     }
 
     void commit() {
-        if (writeTxn != null) {
-            try {
-                writeTxn.commit();
-            } finally {
+        lock(() -> {
+            if (writeTxn != null) {
                 try {
-                    writeTxn.close();
+                    writeTxn.commit();
                 } finally {
-                    writeTxn = null;
+                    try {
+                        writeTxn.close();
+                    } finally {
+                        writeTxn = null;
+                    }
                 }
             }
-        }
 
-        commitCount = 0;
+            commitCount = 0;
 
-        if (hashClashes > 0) {
-            // We prob don't want to warn but will keep for now until we know how big the issue is.
-            LOGGER.warn(() -> "We had " + hashClashes + " hash clashes since last commit");
-            hashClashes = 0;
+            if (hashClashes > 0) {
+                // We prob don't want to warn but will keep for now until we know how big the issue is.
+                LOGGER.warn(() -> "We had " + hashClashes + " hash clashes since last commit");
+                hashClashes = 0;
+            }
+        });
+    }
+
+    public void lock(final Runnable runnable) {
+        lock.lock();
+        try {
+            runnable.run();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void close() {
         commit();
-        env.close();
+        lock(env::close);
     }
 
     private interface DBWriter {

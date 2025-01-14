@@ -28,6 +28,7 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.SequentialFileStore;
+import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.io.State.Key;
 import stroom.planb.impl.io.StateFields;
 import stroom.planb.impl.io.StatePaths;
@@ -152,13 +153,16 @@ class TestState {
                     planBDocStore,
                     new MockSecurityContext(),
                     () -> planBConfig);
-            final MergeProcessor mergeProcessor = new MergeProcessor(
-                    fileStore,
+            final ShardManager shardManager = new ShardManager(
                     new ByteBufferFactoryImpl(),
                     planBDocCache,
+                    statePaths);
+            final MergeProcessor mergeProcessor = new MergeProcessor(
+                    fileStore,
                     statePaths,
                     new MockSecurityContext(),
-                    new SimpleTaskContextFactory());
+                    new SimpleTaskContextFactory(),
+                    shardManager);
             for (int i = 0; i < parts; i++) {
                 mergeProcessor.merge(i);
             }

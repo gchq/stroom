@@ -1,23 +1,20 @@
 package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.io.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
-import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Singleton
@@ -27,16 +24,15 @@ public class FileTransferServiceImpl implements FileTransferService {
 
     private final SequentialFileStore fileStore;
     private final SecurityContext securityContext;
-    private final Path shardDir;
+    private final ShardManager shardManager;
 
     @Inject
     public FileTransferServiceImpl(final SequentialFileStore fileStore,
                                    final SecurityContext securityContext,
-                                   final StatePaths statePaths,
-                                   final ByteBufferFactory byteBufferFactory) {
+                                   final ShardManager shardManager) {
         this.fileStore = fileStore;
         this.securityContext = securityContext;
-        shardDir = statePaths.getShardDir();
+        this.shardManager = shardManager;
     }
 
     @Override
@@ -45,24 +41,10 @@ public class FileTransferServiceImpl implements FileTransferService {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
         }
 
-        final Path shard = shardDir.resolve(request.getMapName());
-        if (!Files.exists(shard)) {
-            throw new RuntimeException("Shard not found");
-        }
-        final Path lmdbDataFile = shard.resolve("data.mdb");
-        if (!Files.exists(lmdbDataFile)) {
-            throw new RuntimeException("LMDB data file not found");
-        }
-
         // TODO : Possibly create windowed snapshots.
 
-        // For now we'll just stream the whole map to the requestor. In future we could easily just create a time
-        // window snapshot.
-
-        try (final ZipArchiveOutputStream zipOutputStream =
-                ZipUtil.createOutputStream(new BufferedOutputStream(outputStream))) {
-            ZipUtil.zip(shard, zipOutputStream);
-        }
+        final String mapName = request.getMapName();
+        shardManager.zip(mapName, outputStream);
     }
 
     @Override

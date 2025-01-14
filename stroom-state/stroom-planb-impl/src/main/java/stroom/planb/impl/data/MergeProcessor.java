@@ -1,14 +1,6 @@
 package stroom.planb.impl.data;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.io.RangedStateWriter;
-import stroom.planb.impl.io.SessionWriter;
 import stroom.planb.impl.io.StatePaths;
-import stroom.planb.impl.io.StateWriter;
-import stroom.planb.impl.io.TemporalRangedStateWriter;
-import stroom.planb.impl.io.TemporalStateWriter;
-import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -36,25 +28,21 @@ public class MergeProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
 
     private final SequentialFileStore fileStore;
-    private final ByteBufferFactory byteBufferFactory;
     private final Path mergingDir;
-    private final Path shardDir;
-    private final PlanBDocCache planBDocCache;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
+    private final ShardManager shardManager;
 
     @Inject
     public MergeProcessor(final SequentialFileStore fileStore,
-                          final ByteBufferFactory byteBufferFactory,
-                          final PlanBDocCache planBDocCache,
                           final StatePaths statePaths,
                           final SecurityContext securityContext,
-                          final TaskContextFactory taskContextFactory) {
+                          final TaskContextFactory taskContextFactory,
+                          final ShardManager shardManager) {
         this.fileStore = fileStore;
-        this.byteBufferFactory = byteBufferFactory;
-        this.planBDocCache = planBDocCache;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
+        this.shardManager = shardManager;
 
         mergingDir = statePaths.getMergingDir();
         if (ensureDirExists(mergingDir)) {
@@ -62,7 +50,6 @@ public class MergeProcessor {
                 throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
             }
         }
-        shardDir = statePaths.getShardDir();
     }
 
     private boolean ensureDirExists(final Path path) {
@@ -128,22 +115,10 @@ public class MergeProcessor {
             try (final Stream<Path> stream = Files.list(dir)) {
                 stream.forEach(source -> {
                     try {
-                        final String mapName = source.getFileName().toString();
-                        final PlanBDoc doc = planBDocCache.get(mapName);
-                        if (doc != null) {
-                            // Get shard dir.
-                            final Path target = shardDir.resolve(mapName);
-                            if (!Files.isDirectory(target)) {
-                                Files.createDirectories(shardDir);
-                                Files.move(source, target);
-                            } else {
-                                // merge.
-                                merge(doc, source, target);
-
-                                // Delete source.
-                                FileUtil.deleteDir(source);
-                            }
-                        }
+                        // Merge source.
+                        shardManager.merge(source);
+                        // Delete source.
+                        FileUtil.deleteDir(source);
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -152,41 +127,6 @@ public class MergeProcessor {
 
             // Delete the original zip file.
             sequentialFile.delete();
-        }
-    }
-
-    private void merge(final PlanBDoc doc, final Path sourcePath, final Path targetPath) {
-        switch (doc.getStateType()) {
-            case STATE -> {
-                try (final StateWriter writer =
-                        new StateWriter(targetPath, byteBufferFactory)) {
-                    writer.merge(sourcePath);
-                }
-            }
-            case TEMPORAL_STATE -> {
-                try (final TemporalStateWriter writer =
-                        new TemporalStateWriter(targetPath, byteBufferFactory)) {
-                    writer.merge(sourcePath);
-                }
-            }
-            case RANGED_STATE -> {
-                try (final RangedStateWriter writer =
-                        new RangedStateWriter(targetPath, byteBufferFactory)) {
-                    writer.merge(sourcePath);
-                }
-            }
-            case TEMPORAL_RANGED_STATE -> {
-                try (final TemporalRangedStateWriter writer =
-                        new TemporalRangedStateWriter(targetPath, byteBufferFactory)) {
-                    writer.merge(sourcePath);
-                }
-            }
-            case SESSION -> {
-                try (final SessionWriter writer =
-                        new SessionWriter(targetPath, byteBufferFactory)) {
-                    writer.merge(sourcePath);
-                }
-            }
         }
     }
 }
