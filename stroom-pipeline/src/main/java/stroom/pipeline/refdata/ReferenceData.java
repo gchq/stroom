@@ -49,6 +49,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 import java.time.Instant;
@@ -98,8 +99,8 @@ public class ReferenceData {
                   final PipelineStore pipelineStore,
                   final SecurityContext securityContext,
                   final TaskContextFactory taskContextFactory,
-                  final StateLookup stateLookup,
-                  final PlanBLookup planBLookup) {
+                  @Nullable final StateLookup stateLookup,
+                  @Nullable final PlanBLookup planBLookup) {
         this.effectiveStreamService = effectiveStreamService;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
@@ -244,13 +245,21 @@ public class ReferenceData {
             final String mapName = lookupIdentifier.getPrimaryMapName();
             if (PlanBDoc.TYPE.equals(pipeline.getType())) {
                 // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
-                if (planBLookup != null && mapName.equalsIgnoreCase(pipeline.getName())) {
+                Objects.requireNonNull(planBLookup,
+                        "Attempt to perform Plan B state lookup but Plan B service is not present");
+                Objects.requireNonNull(pipeline.getName(), "Null name for Plan B doc ref in lookup");
+
+                if (mapName.equalsIgnoreCase(pipeline.getName())) {
                     planBLookup.lookup(lookupIdentifier, referenceDataResult);
                 }
 
             } else if (StateDoc.TYPE.equals(pipeline.getType())) {
                 // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
-                if (planBLookup != null && mapName.equalsIgnoreCase(pipeline.getName())) {
+                Objects.requireNonNull(stateLookup,
+                        "Attempt to perform state lookup but state lookup service is not present");
+                Objects.requireNonNull(pipeline.getName(), "Null name for state doc ref in lookup");
+
+                if (mapName.equalsIgnoreCase(pipeline.getName())) {
                     stateLookup.lookup(lookupIdentifier, referenceDataResult);
                 }
 
