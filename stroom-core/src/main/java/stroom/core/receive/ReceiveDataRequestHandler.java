@@ -144,7 +144,9 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
             LOGGER.debug(() -> "Writing receipt id attribute to response: " + receiptId);
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(receiptId);
+                if (writer != null) {
+                    writer.println(receiptId);
+                }
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

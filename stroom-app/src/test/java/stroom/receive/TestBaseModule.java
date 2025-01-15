@@ -15,6 +15,7 @@ import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.mock.MockNodeServiceModule;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.api.UserIdentity;
@@ -45,6 +46,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MemoryPersistenceModule());
         install(new MockMetaModule());
         install(new MockMetaStatisticsModule());
+        install(new MockNodeServiceModule());
         install(new MockSecurityContextModule());
         install(new MockStreamStoreModule());
         install(new PipelineScopeModule());
@@ -52,6 +54,7 @@ public class TestBaseModule extends AbstractModule {
         install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
         install(new TaskContextModule());
+
 
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
     }
