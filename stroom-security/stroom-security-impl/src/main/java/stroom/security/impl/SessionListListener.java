@@ -84,7 +84,9 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     @Override
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
-        LOGGER.info("sessionDestroyed() - {}", httpSession.getId());
+        final UserRef userRef = getUserRefFromSession(httpSession);
+        final String userAgent = UserAgentSessionUtil.get(httpSession);
+        LOGGER.info("sessionDestroyed() - {}, userRef: {}, userAgent: {}", httpSession.getId(), userRef, userAgent);
         sessionMap.remove(httpSession.getId());
     }
 
@@ -151,10 +153,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         return LOGGER.logDurationIfDebugEnabled(() ->
                         sessionMap.values().stream()
                                 .map(httpSession -> {
-                                    final UserRef userRef = UserIdentitySessionUtil.get(httpSession)
-                                            .filter(uid -> uid instanceof HasUserRef)
-                                            .map(uid -> ((HasUserRef) uid).getUserRef())
-                                            .orElse(null);
+                                    final UserRef userRef = getUserRefFromSession(httpSession);
                                     return new SessionDetails(
                                             userRef,
                                             httpSession.getCreationTime(),
@@ -164,6 +163,13 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                                 })
                                 .collect(SessionListResponse.collector(SessionListResponse::new)),
                 () -> LogUtil.message("Obtain session list for this node ({})", thisNodeName));
+    }
+
+    private static UserRef getUserRefFromSession(final HttpSession httpSession) {
+        return UserIdentitySessionUtil.get(httpSession)
+                .filter(uid -> uid instanceof HasUserRef)
+                .map(uid -> ((HasUserRef) uid).getUserRef())
+                .orElse(null);
     }
 
     public SessionListResponse listSessions() {
