@@ -7,6 +7,7 @@ import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
@@ -41,12 +42,11 @@ public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Optional log line with header attributes output as defined by this property
-     * The headers attributes that will be output in log lines. They will be output in the
-     * order that they appear in this list. Duplicates will be ignored.
-     */
     @JsonProperty
+    @JsonPropertyDescription("Optional log line with header attributes output as defined by this property." +
+                             "The headers attributes that will be output in log lines." +
+                             "They will be output in the order that they appear in this list." +
+                             "Duplicates will be ignored, case does not matter.")
     public List<String> getMetaKeys() {
         return metaKeys;
     }
