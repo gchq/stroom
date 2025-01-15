@@ -135,6 +135,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.config.app.SessionConfig getSessionConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.config.app.SessionConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.config.app.SessionCookieConfig getSessionCookieConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -935,20 +944,20 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.query.common.v2.ResultStoreLmdbConfig getResultStoreLmdbConfigButThrow(
+    stroom.query.common.v2.AbstractResultStoreConfig getAbstractResultStoreConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.query.common.v2.ResultStoreLmdbConfig cannot be injected directly. "
+                "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.query.common.v2.AbstractResultStoreConfig getAbstractResultStoreConfigButThrow(
+    stroom.query.common.v2.ResultStoreLmdbConfig getResultStoreLmdbConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
+                "stroom.query.common.v2.ResultStoreLmdbConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

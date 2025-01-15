@@ -39,19 +39,22 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionIdListener;
 import jakarta.servlet.http.HttpSessionListener;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 @Singleton
-class SessionListListener implements HttpSessionListener, SessionListService {
+class SessionListListener implements HttpSessionListener, HttpSessionIdListener, SessionListService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionListListener.class);
 
@@ -84,13 +87,32 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     @Override
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
-        // Uncomment during merge up from 7.5
+        try {
+            // Uncomment during merge up from 7.5
 //        final UserRef userRef = getUserRefFromSession(httpSession);
-        // Get rid during merge up from 7.5
-        final UserName userRef = getUserNameFromSession(httpSession);
-        final String userAgent = UserAgentSessionUtil.get(httpSession);
-        LOGGER.info("sessionDestroyed() - {}, userRef: {}, userAgent: {}", httpSession.getId(), userRef, userAgent);
-        sessionMap.remove(httpSession.getId());
+            // Get rid during merge up from 7.5
+            final UserName userRef = getUserNameFromSession(httpSession);
+            final String userAgent = UserAgentSessionUtil.get(httpSession);
+            final Instant createTime = Instant.ofEpochMilli(httpSession.getCreationTime());
+            final Instant lastAccessedTime = Instant.ofEpochMilli(httpSession.getLastAccessedTime());
+            LOGGER.info("sessionDestroyed() - {}, createTime: {} ({}), lastAccessTime: {} ({}), " +
+                        "userRef: {}, userAgent: {}",
+                    httpSession.getId(),
+                    createTime,
+                    Duration.between(createTime, Instant.now()),
+                    lastAccessedTime,
+                    Duration.between(lastAccessedTime, Instant.now()),
+                    userRef,
+                    userAgent);
+        } finally {
+            sessionMap.remove(httpSession.getId());
+        }
+    }
+
+    @Override
+    public void sessionIdChanged(final HttpSessionEvent event, final String oldSessionId) {
+        final HttpSession httpSession = event.getSession();
+        LOGGER.info("sessionIdChanged() - old: {}, new: {}", oldSessionId, httpSession.getId());
     }
 
 //    public ResultPage<SessionDetails> find(final BaseCriteria criteria) {
