@@ -4392,6 +4392,85 @@
         "tags" : [ "Feed Status" ]
       }
     },
+    "/fileTransfer/v1/fetchSnapshot" : {
+      "post" : {
+        "operationId" : "fetchSnapshot",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SnapshotRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/octet-stream" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch Plan B snapshot",
+        "tags" : [ "File Transfer" ]
+      }
+    },
+    "/fileTransfer/v1/sendPart" : {
+      "post" : {
+        "operationId" : "sendPart",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "createTime",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "header",
+          "name" : "metaId",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "header",
+          "name" : "fileHash",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "fileName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Send Plan B part",
+        "tags" : [ "File Transfer" ]
+      }
+    },
     "/fsVolume/v1" : {
       "post" : {
         "operationId" : "createFsVolume",
@@ -8991,85 +9070,6 @@
         },
         "summary" : "Get information for the current session",
         "tags" : [ "Session Info" ]
-      }
-    },
-    "/snapshot/v1/fetchSnapshot" : {
-      "post" : {
-        "operationId" : "fetchSnapshot",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SnapshotRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/octet-stream" : { }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch Plan B snapshot",
-        "tags" : [ "File Transfer" ]
-      }
-    },
-    "/snapshot/v1/sendPart" : {
-      "post" : {
-        "operationId" : "sendPart",
-        "parameters" : [ {
-          "in" : "header",
-          "name" : "createTime",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "in" : "header",
-          "name" : "metaId",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "in" : "header",
-          "name" : "fileHash",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "fileName",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/octet-stream" : {
-              "schema" : {
-                "type" : "object"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Send Plan B part",
-        "tags" : [ "File Transfer" ]
       }
     },
     "/solrIndex/v1/fetchSolrTypes" : {

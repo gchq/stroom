@@ -1,8 +1,5 @@
 package stroom.planb.impl.data;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.io.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -15,7 +12,6 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
 
 @Singleton
 public class FileTransferServiceImpl implements FileTransferService {

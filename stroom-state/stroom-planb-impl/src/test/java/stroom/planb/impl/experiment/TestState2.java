@@ -21,10 +21,10 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.io.State.Key;
-import stroom.planb.impl.io.StateFields;
-import stroom.planb.impl.io.StateReader;
-import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.db.State.Key;
+import stroom.planb.impl.db.StateDb;
+import stroom.planb.impl.db.StateFields;
+import stroom.planb.impl.db.StateValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -98,10 +98,10 @@ class TestState2 {
     private void testRead(final Path tempDir,
                           final int expectedRows) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final StateReader reader = new StateReader(tempDir, byteBufferFactory)) {
-            assertThat(reader.count()).isEqualTo(1);
+        try (final StateDb db = new StateDb(tempDir, byteBufferFactory, false, true)) {
+            assertThat(db.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
-            final Optional<StateValue> optional = reader.get(key);
+            final Optional<StateValue> optional = db.get(key);
             assertThat(optional).isNotEmpty();
             final StateValue res = optional.get();
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
@@ -113,7 +113,7 @@ class TestState2 {
             fieldIndex.create(StateFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
             final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
-            reader.search(
+            db.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),
                     fieldIndex,
                     null,

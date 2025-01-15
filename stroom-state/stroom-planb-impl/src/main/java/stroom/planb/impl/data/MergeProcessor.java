@@ -1,6 +1,6 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.io.StatePaths;
+import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -117,8 +117,6 @@ public class MergeProcessor {
                     try {
                         // Merge source.
                         shardManager.merge(source);
-                        // Delete source.
-                        FileUtil.deleteDir(source);
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }

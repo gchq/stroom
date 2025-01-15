@@ -16,7 +16,6 @@
 
 package stroom.planb.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
@@ -30,6 +29,7 @@ import stroom.planb.impl.data.FileTransferResourceImpl;
 import stroom.planb.impl.data.FileTransferService;
 import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
+import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
@@ -97,15 +97,28 @@ public class PlanBModule extends AbstractModule {
                         .description("Plan B state store merge")
                         .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(true));
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ShardManagerCleanupRunnable.class, builder -> builder
+                        .name(ShardManager.CLEANUP_TASK_NAME)
+                        .description("Plan B shard cleanup")
+                        .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
+                        .advanced(true));
     }
 
 
     private static class StateMergeRunnable extends RunnableWrapper {
 
         @Inject
-        StateMergeRunnable(final MergeProcessor mergeProcessor,
-                           final ClusterLockService clusterLockService) {
+        StateMergeRunnable(final MergeProcessor mergeProcessor) {
             super(mergeProcessor::exec);
+        }
+    }
+
+    private static class ShardManagerCleanupRunnable extends RunnableWrapper {
+
+        @Inject
+        ShardManagerCleanupRunnable(final ShardManager shardManager) {
+            super(shardManager::cleanup);
         }
     }
 }

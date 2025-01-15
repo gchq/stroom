@@ -1,6 +1,6 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.io.StatePaths;
+import stroom.planb.impl.db.StatePaths;
 import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;

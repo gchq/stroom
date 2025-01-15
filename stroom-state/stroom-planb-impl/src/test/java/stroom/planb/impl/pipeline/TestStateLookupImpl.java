@@ -3,12 +3,11 @@ package stroom.planb.impl.pipeline;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.io.StateValue;
-import stroom.planb.impl.io.TemporalState;
-import stroom.planb.impl.io.TemporalState.Key;
-import stroom.planb.impl.io.TemporalStateReader;
-import stroom.planb.impl.io.TemporalStateRequest;
-import stroom.planb.impl.io.TemporalStateWriter;
+import stroom.planb.impl.db.StateValue;
+import stroom.planb.impl.db.TemporalState;
+import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.impl.db.TemporalStateDb;
+import stroom.planb.impl.db.TemporalStateRequest;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -60,7 +59,7 @@ class TestStateLookupImpl {
         final List<Instant> lookupTimes = new ArrayList<>(refStreamDefCount);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateWriter writer = new TemporalStateWriter(tempDir, byteBufferFactory)) {
+        try (final TemporalStateDb writer = new TemporalStateDb(tempDir, byteBufferFactory)) {
             for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
                 final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
                         k -> new ArrayList<>(keyValueMapCount));
@@ -92,7 +91,7 @@ class TestStateLookupImpl {
             }
         }
 
-        try (final TemporalStateReader reader = new TemporalStateReader(tempDir, byteBufferFactory)) {
+        try (final TemporalStateDb db = new TemporalStateDb(tempDir, byteBufferFactory, false, true)) {
             final Random random = new Random(892374809);
             final Runnable work = () -> {
                 final int refStrmIdx = random.nextInt(refStreamDefCount);
@@ -106,7 +105,7 @@ class TestStateLookupImpl {
                         key.getBytes(StandardCharsets.UTF_8),
                         time.toEpochMilli());
 
-                final TemporalState state = reader.getState(request)
+                final TemporalState state = db.getState(request)
                         .orElseThrow(() -> new RuntimeException(LogUtil.message(
                                 "No entry found for map: {}, key: {}, time: {}",
                                 mapName, key, time)));

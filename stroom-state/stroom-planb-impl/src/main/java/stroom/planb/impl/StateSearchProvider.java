@@ -22,8 +22,8 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
-import stroom.planb.impl.data.ReaderCache;
-import stroom.planb.impl.io.StateFieldUtil;
+import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.db.StateFieldUtil;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -74,7 +74,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private final ResultStoreFactory resultStoreFactory;
     private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
-    private final ReaderCache readerCache;
+    private final ShardManager shardManager;
     private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
@@ -85,7 +85,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                                final ResultStoreFactory resultStoreFactory,
                                final TaskManager taskManager,
                                final TaskContextFactory taskContextFactory,
-                               final ReaderCache readerCache,
+                               final ShardManager shardManager,
                                final ExpressionPredicateFactory expressionPredicateFactory) {
         this.executor = executor;
         this.stateDocStore = stateDocStore;
@@ -94,7 +94,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
-        this.readerCache = readerCache;
+        this.shardManager = shardManager;
         this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
@@ -232,7 +232,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
                 final Instant queryStart = Instant.now();
                 try {
-                    readerCache.get(doc.getName(), reader -> {
+                    shardManager.get(doc.getName(), reader -> {
                         reader.search(
                                 criteria,
                                 coprocessors.getFieldIndex(),

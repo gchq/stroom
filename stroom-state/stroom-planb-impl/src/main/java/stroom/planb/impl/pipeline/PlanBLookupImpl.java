@@ -7,19 +7,19 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.data.ReaderCache;
-import stroom.planb.impl.io.RangedStateReader;
-import stroom.planb.impl.io.RangedStateRequest;
-import stroom.planb.impl.io.SessionReader;
-import stroom.planb.impl.io.SessionRequest;
-import stroom.planb.impl.io.StateReader;
-import stroom.planb.impl.io.StateRequest;
-import stroom.planb.impl.io.StateValue;
-import stroom.planb.impl.io.TemporalRangedStateReader;
-import stroom.planb.impl.io.TemporalRangedStateRequest;
-import stroom.planb.impl.io.TemporalState;
-import stroom.planb.impl.io.TemporalStateReader;
-import stroom.planb.impl.io.TemporalStateRequest;
+import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.db.RangedStateDb;
+import stroom.planb.impl.db.RangedStateRequest;
+import stroom.planb.impl.db.SessionDb;
+import stroom.planb.impl.db.SessionRequest;
+import stroom.planb.impl.db.StateDb;
+import stroom.planb.impl.db.StateRequest;
+import stroom.planb.impl.db.StateValue;
+import stroom.planb.impl.db.TemporalRangedStateDb;
+import stroom.planb.impl.db.TemporalRangedStateRequest;
+import stroom.planb.impl.db.TemporalState;
+import stroom.planb.impl.db.TemporalStateDb;
+import stroom.planb.impl.db.TemporalStateRequest;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.pipeline.scope.PipelineScoped;
 
@@ -40,14 +40,14 @@ public class PlanBLookupImpl implements PlanBLookup {
 
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Optional<TemporalState>> cache;
-    private final ReaderCache readerCache;
+    private final ShardManager shardManager;
     private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
     @Inject
     public PlanBLookupImpl(final PlanBDocCache stateDocCache,
-                           final ReaderCache readerCache) {
+                           final ShardManager shardManager) {
         this.stateDocCache = stateDocCache;
-        this.readerCache = readerCache;
+        this.shardManager = shardManager;
         cache = Caffeine.newBuilder().maximumSize(1000).build();
     }
 
@@ -88,11 +88,11 @@ public class PlanBLookupImpl implements PlanBLookup {
                                              final String mapName,
                                              final String keyName,
                                              final Instant eventTime) {
-        return readerCache.get(mapName, reader -> {
-            if (reader instanceof final StateReader stateReader) {
+        return shardManager.get(mapName, reader -> {
+            if (reader instanceof final StateDb db) {
                 final StateRequest request =
                         new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
-                return stateReader
+                return db
                         .getState(request)
                         .map(state -> new TemporalState(TemporalState
                                 .Key
@@ -101,16 +101,16 @@ public class PlanBLookupImpl implements PlanBLookup {
                                 .effectiveTime(0)
                                 .build(),
                                 state.value()));
-            } else if (reader instanceof final TemporalStateReader stateReader) {
+            } else if (reader instanceof final TemporalStateDb db) {
                 final TemporalStateRequest request =
                         new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
                                 eventTime.toEpochMilli());
-                return stateReader
+                return db
                         .getState(request);
-            } else if (reader instanceof final RangedStateReader stateReader) {
+            } else if (reader instanceof final RangedStateDb db) {
                 final RangedStateRequest request =
                         new RangedStateRequest(Long.parseLong(keyName));
-                return stateReader
+                return db
                         .getState(request)
                         .map(state -> new TemporalState(TemporalState
                                 .Key
@@ -119,10 +119,10 @@ public class PlanBLookupImpl implements PlanBLookup {
                                 .effectiveTime(0)
                                 .build(),
                                 state.value()));
-            } else if (reader instanceof final TemporalRangedStateReader stateReader) {
+            } else if (reader instanceof final TemporalRangedStateDb db) {
                 final TemporalRangedStateRequest request =
                         new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
-                return stateReader
+                return db
                         .getState(request)
                         .map(state -> new TemporalState(TemporalState
                                 .Key
@@ -131,10 +131,10 @@ public class PlanBLookupImpl implements PlanBLookup {
                                 .effectiveTime(0)
                                 .build(),
                                 state.value()));
-            } else if (reader instanceof final SessionReader stateReader) {
+            } else if (reader instanceof final SessionDb db) {
                 final SessionRequest request =
                         new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());
-                return stateReader
+                return db
                         .getState(request)
                         .map(state -> new TemporalState(TemporalState
                                 .Key

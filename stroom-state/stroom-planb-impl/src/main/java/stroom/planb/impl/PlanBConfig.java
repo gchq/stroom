@@ -10,52 +10,53 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
 
     private final CacheConfig stateDocCache;
-    private final CacheConfig readerCache;
     private final List<String> nodeList;
     private final String path;
+    private final StroomDuration minTimeToKeepSnapshots;
+    private final StroomDuration minTimeToKeepEnvOpen;
 
     public PlanBConfig() {
-        stateDocCache = CacheConfig.builder()
-                .maximumSize(100L)
-                .expireAfterWrite(StroomDuration.ofMinutes(10))
-                .build();
-        readerCache = CacheConfig.builder()
-                .maximumSize(10L)
-                .expireAfterWrite(StroomDuration.ofMinutes(10))
-                .build();
-        nodeList = new ArrayList<>();
-        path = "${stroom.home}/planb";
+        this("${stroom.home}/planb");
+    }
+
+    public PlanBConfig(final String path) {
+        this(CacheConfig
+                        .builder()
+                        .maximumSize(100L)
+                        .expireAfterWrite(StroomDuration.ofMinutes(10))
+                        .build(),
+                Collections.emptyList(),
+                path,
+                StroomDuration.ofMinutes(10),
+                StroomDuration.ofMinutes(1));
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public PlanBConfig(@JsonProperty("stateDocCache") final CacheConfig stateDocCache,
-                       @JsonProperty("readerCache") final CacheConfig readerCache,
                        @JsonProperty("nodeList") final List<String> nodeList,
-                       @JsonProperty("path") final String path) {
+                       @JsonProperty("path") final String path,
+                       @JsonProperty("minTimeToKeepSnapshots") final StroomDuration minTimeToKeepSnapshots,
+                       @JsonProperty("minTimeToKeepEnvOpen") final StroomDuration minTimeToKeepEnvOpen) {
         this.stateDocCache = stateDocCache;
-        this.readerCache = readerCache;
         this.nodeList = nodeList;
         this.path = path;
+        this.minTimeToKeepSnapshots = minTimeToKeepSnapshots;
+        this.minTimeToKeepEnvOpen = minTimeToKeepEnvOpen;
     }
 
     @JsonProperty
     @JsonPropertyDescription("Cache for Plan B state docs.")
     public CacheConfig getStateDocCache() {
         return stateDocCache;
-    }
-
-    @JsonProperty
-    @JsonPropertyDescription("Cache for Plan B shard readers.")
-    public CacheConfig getReaderCache() {
-        return readerCache;
     }
 
     @JsonProperty
@@ -72,13 +73,47 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         return path;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("How long should we keep snapshots before we fetch new ones.")
+    public StroomDuration getMinTimeToKeepSnapshots() {
+        return minTimeToKeepSnapshots;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("How long should we keep an environment open but inactive.")
+    public StroomDuration getMinTimeToKeepEnvOpen() {
+        return minTimeToKeepEnvOpen;
+    }
+
     @Override
     public String toString() {
         return "PlanBConfig{" +
                "stateDocCache=" + stateDocCache +
-               ", readerCache=" + readerCache +
                ", nodeList=" + nodeList +
                ", path='" + path + '\'' +
+               ", minTimeToKeepSnapshots=" + minTimeToKeepSnapshots +
+               ", minTimeToKeepEnvOpen=" + minTimeToKeepEnvOpen +
                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final PlanBConfig that = (PlanBConfig) o;
+        return Objects.equals(stateDocCache, that.stateDocCache) &&
+               Objects.equals(nodeList, that.nodeList) &&
+               Objects.equals(path, that.path) &&
+               Objects.equals(minTimeToKeepSnapshots, that.minTimeToKeepSnapshots) &&
+               Objects.equals(minTimeToKeepEnvOpen, that.minTimeToKeepEnvOpen);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(stateDocCache, nodeList, path, minTimeToKeepSnapshots, minTimeToKeepEnvOpen);
     }
 }

@@ -1,8 +1,8 @@
 package stroom.planb.impl.experiment;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.planb.impl.io.State.Key;
-import stroom.planb.impl.io.StateValue;
+import stroom.planb.impl.db.State.Key;
+import stroom.planb.impl.db.StateValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

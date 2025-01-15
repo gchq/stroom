@@ -1,11 +1,8 @@
-package stroom.planb.impl.experiment;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.planb.impl.db.State.Key;
-import stroom.planb.impl.db.StateFields;
-import stroom.planb.impl.db.StateValue;
-import stroom.planb.impl.db.ValUtil;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
@@ -18,14 +15,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * KEY =   <KEY_HASH><KEY_ID>
- * VALUE = <VALUE_TYPE><VALUE_BYTES>
+ * KEY =   <KEY_HASH>
+ * VALUE = <KEY_LENGTH><KEY_BYTES><VALUE_TYPE><VALUE_BYTES>
  */
-public class StateSerde2 implements Serde2<Key, StateValue> {
+public class StateSerde implements Serde<Key, StateValue> {
 
     private final ByteBufferFactory byteBufferFactory;
 
-    public StateSerde2(final ByteBufferFactory byteBufferFactory) {
+    public StateSerde(final ByteBufferFactory byteBufferFactory) {
         this.byteBufferFactory = byteBufferFactory;
     }
 
@@ -83,6 +80,11 @@ public class StateSerde2 implements Serde2<Key, StateValue> {
         final int keyLength = valueByteBuffer.getInt(0);
         final ByteBuffer slice = valueByteBuffer.slice(0, Integer.BYTES + keyLength);
         return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
+    }
+
+    @Override
+    public boolean hasPrefix() {
+        return true;
     }
 
     private void putPrefix(final ByteBuffer byteBuffer, final byte[] keyBytes) {

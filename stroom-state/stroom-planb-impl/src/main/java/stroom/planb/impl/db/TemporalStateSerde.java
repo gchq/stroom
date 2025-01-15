@@ -1,13 +1,11 @@
-package stroom.planb.impl.experiment;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.planb.impl.db.State.Key;
-import stroom.planb.impl.db.StateFields;
-import stroom.planb.impl.db.StateValue;
-import stroom.planb.impl.db.ValUtil;
+import stroom.planb.impl.db.TemporalState.Key;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValNull;
 
 import net.openhft.hashing.LongHashFunction;
@@ -18,24 +16,25 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * KEY =   <KEY_HASH><KEY_ID>
- * VALUE = <VALUE_TYPE><VALUE_BYTES>
+ * KEY =   <KEY_HASH><EFFECTIVE_TIME>
+ * VALUE = <KEY_LENGTH><KEY_BYTES><VALUE_TYPE><VALUE_BYTES>
  */
-public class StateSerde2 implements Serde2<Key, StateValue> {
+public class TemporalStateSerde implements Serde<Key, StateValue> {
 
     private final ByteBufferFactory byteBufferFactory;
 
-    public StateSerde2(final ByteBufferFactory byteBufferFactory) {
+    public TemporalStateSerde(final ByteBufferFactory byteBufferFactory) {
         this.byteBufferFactory = byteBufferFactory;
     }
 
     @Override
     public <T> T createKeyByteBuffer(final Key key, final Function<ByteBuffer, T> function) {
-        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES);
+        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
         try {
             // Hash the key.
             final long keyHash = LongHashFunction.xx3().hashBytes(key.bytes());
             keyByteBuffer.putLong(keyHash);
+            keyByteBuffer.putLong(key.effectiveTime());
             keyByteBuffer.flip();
             return function.apply(keyByteBuffer);
         } finally {
@@ -44,9 +43,9 @@ public class StateSerde2 implements Serde2<Key, StateValue> {
     }
 
     @Override
-    public <R> R createValueByteBuffer(final Key key,
+    public <T> T createValueByteBuffer(final Key key,
                                        final StateValue value,
-                                       final Function<ByteBuffer, R> function) {
+                                       final Function<ByteBuffer, T> function) {
         final ByteBuffer valueByteBuffer = byteBufferFactory.acquire(Integer.BYTES +
                                                                      key.bytes().length +
                                                                      Byte.BYTES +
@@ -69,7 +68,6 @@ public class StateSerde2 implements Serde2<Key, StateValue> {
         try {
             putPrefix(prefixByteBuffer, key.bytes());
             prefixByteBuffer.flip();
-
             return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), prefixByteBuffer));
         } finally {
             byteBufferFactory.release(prefixByteBuffer);
@@ -85,6 +83,11 @@ public class StateSerde2 implements Serde2<Key, StateValue> {
         return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
     }
 
+    @Override
+    public boolean hasPrefix() {
+        return true;
+    }
+
     private void putPrefix(final ByteBuffer byteBuffer, final byte[] keyBytes) {
         byteBuffer.putInt(keyBytes.length);
         byteBuffer.put(keyBytes);
@@ -97,16 +100,20 @@ public class StateSerde2 implements Serde2<Key, StateValue> {
         for (int i = 0; i < fieldIndex.getFields().length; i++) {
             final String field = fieldIndex.getField(i);
             functions[i] = switch (field) {
-                case StateFields.KEY -> kv -> {
+                case TemporalStateFields.KEY -> kv -> {
                     final int keyLength = kv.val().getInt(0);
                     return ValUtil.getValue((byte) 0, kv.val().slice(Integer.BYTES, keyLength));
                 };
-                case StateFields.VALUE_TYPE -> kv -> {
+                case TemporalStateFields.EFFECTIVE_TIME -> kv -> {
+                    final long effectiveTime = kv.key().getLong(Long.BYTES);
+                    return ValDate.create(effectiveTime);
+                };
+                case TemporalStateFields.VALUE_TYPE -> kv -> {
                     final int keyLength = kv.val().getInt(0);
                     final byte typeId = kv.val().get(Integer.BYTES + keyLength);
                     return ValUtil.getType(typeId);
                 };
-                case StateFields.VALUE -> kv -> {
+                case TemporalStateFields.VALUE -> kv -> {
                     final int keyLength = kv.val().getInt(0);
                     final byte typeId = kv.val().get(Integer.BYTES + keyLength);
                     final int valueStart = Integer.BYTES + keyLength + Byte.BYTES;
@@ -120,11 +127,12 @@ public class StateSerde2 implements Serde2<Key, StateValue> {
 
     @Override
     public Key getKey(final KeyVal<ByteBuffer> keyVal) {
-        final ByteBuffer byteBuffer = keyVal.val();
+        final ByteBuffer byteBuffer = keyVal.key();
         final int keyLength = byteBuffer.getInt(0);
         final ByteBuffer slice = byteBuffer.slice(Integer.BYTES, keyLength);
         final byte[] keyBytes = ByteBufferUtils.toBytes(slice);
-        return new Key(keyBytes);
+        final long effectiveTime = keyVal.key().getLong(Long.BYTES);
+        return new Key(keyBytes, effectiveTime);
     }
 
     @Override
