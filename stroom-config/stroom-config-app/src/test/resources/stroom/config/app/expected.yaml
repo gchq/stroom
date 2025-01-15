@@ -926,6 +926,8 @@ appConfig:
     servicesPort: 8080
     zookeeperBasePath: "/stroom-services"
     zookeeperUrl: "localhost:2181"
+  session:
+    maxInactiveInterval: "P1D"
   sessionCookie:
     httpOnly: true
     secure: true

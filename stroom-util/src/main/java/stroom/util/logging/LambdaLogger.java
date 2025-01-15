@@ -73,7 +73,8 @@ public interface LambdaLogger extends Logger {
      *
      * @param timedWork       Work to perform and to time if required
      * @param <T>             The type of the result of the work
-     * @param workDescription The name of the work to be added to the log message
+     * @param workDescription The name of the work to be added to the log message. The log message looks
+     *                        like '{@code Completed [<work description>] in <duration>}'.
      * @return The result of the work
      */
     default <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final String workDescription) {
@@ -86,7 +87,9 @@ public interface LambdaLogger extends Logger {
      *
      * @param timedWork               Work to perform and to time if required
      * @param <T>                     The type of the result of the work
-     * @param workDescriptionSupplier A supplier of the description of the work to be added to the log message
+     * @param workDescriptionSupplier A supplier of the description of the work to be added to the log message.
+     *                                The log message looks like
+     *                                '{@code Completed [<work description>] in <duration>}'.
      * @return The result of the work
      */
     <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier);
@@ -97,7 +100,9 @@ public interface LambdaLogger extends Logger {
      *
      * @param timedWork               Work to perform and to time if required
      * @param <T>                     The type of the result of the work
-     * @param workDescriptionFunction A supplier of the description of the work to be added to the log message
+     * @param workDescriptionFunction A supplier of the description of the work to be added to the log message.
+     *                                The log message looks like
+     *                                '{@code Completed [<work description>] in <duration>}'.
      * @return The result of the work
      */
     <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final Function<T, String> workDescriptionFunction);
@@ -107,7 +112,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork       Work to perform and to time if required
-     * @param workDescription The name of the work to be added to the log message
+     * @param workDescription The name of the work to be added to the log message. The log message looks
+     *                        like '{@code Completed [<work description>] in <duration>}'.
      * @param <T>             The type of the result of the work
      * @return The result of the work
      */
@@ -120,7 +126,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionSupplier The name of the work to be added to the log message
+     * @param workDescriptionSupplier The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      * @param <T>                     The type of the result of the work
      * @return The result of the work
      */
@@ -131,7 +138,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionFunction The name of the work to be added to the log message
+     * @param workDescriptionFunction The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      * @param <T>                     The type of the result of the work
      * @return The result of the work
      */
@@ -142,7 +150,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork       Work to perform and to time if required
-     * @param workDescription The name of the work to be added to the log message
+     * @param workDescription The name of the work to be added to the log message. The log message looks
+     *                        like '{@code Completed [<work description>] in <duration>}'.
      * @param <T>             The type of the result of the work
      * @return The result of the work
      */
@@ -155,7 +164,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionSupplier The name of the work to be added to the log message
+     * @param workDescriptionSupplier The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      * @param <T>                     The type of the result of the work
      * @return The result of the work
      */
@@ -166,7 +176,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionFunction The name of the work to be added to the log message
+     * @param workDescriptionFunction The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      * @param <T>                     The type of the result of the work
      * @return The result of the work
      */
@@ -177,7 +188,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork       Work to perform and to time if required
-     * @param workDescription The name of the work to be added to the log message
+     * @param workDescription The name of the work to be added to the log message. The log message looks
+     *                        like '{@code Completed [<work description>] in <duration>}'.
      */
     default void logDurationIfTraceEnabled(final Runnable timedWork, final String workDescription) {
         logDurationIfTraceEnabled(timedWork, () -> workDescription);
@@ -188,7 +200,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionSupplier The name of the work to be added to the log message
+     * @param workDescriptionSupplier The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      */
     void logDurationIfTraceEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier);
 
@@ -197,7 +210,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork       Work to perform and to time if required
-     * @param workDescription The name of the work to be added to the log message
+     * @param workDescription The name of the work to be added to the log message. The log message looks
+     *                        like '{@code Completed [<work description>] in <duration>}'.
      */
     default void logDurationIfDebugEnabled(final Runnable timedWork, final String workDescription) {
         logDurationIfDebugEnabled(timedWork, () -> workDescription);
@@ -208,7 +222,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionSupplier The name of the work to be added to the log message
+     * @param workDescriptionSupplier The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      */
     void logDurationIfDebugEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier);
 
@@ -217,7 +232,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork       Work to perform and to time if required
-     * @param workDescription The name of the work to be added to the log message
+     * @param workDescription The name of the work to be added to the log message. The log message looks
+     *                        like '{@code Completed [<work description>] in <duration>}'.
      */
     default void logDurationIfInfoEnabled(final Runnable timedWork, final String workDescription) {
         logDurationIfInfoEnabled(timedWork, () -> workDescription);
@@ -228,7 +244,8 @@ public interface LambdaLogger extends Logger {
      * where the work throws a checked exception.
      *
      * @param timedWork               Work to perform and to time if required
-     * @param workDescriptionSupplier The name of the work to be added to the log message
+     * @param workDescriptionSupplier The name of the work to be added to the log message. The log message looks
+     *                                like '{@code Completed [<work description>] in <duration>}'.
      */
     void logDurationIfInfoEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier);
 
