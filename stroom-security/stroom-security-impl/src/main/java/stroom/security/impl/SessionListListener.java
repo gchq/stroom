@@ -28,6 +28,8 @@ import stroom.security.shared.SessionResource;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
@@ -42,8 +44,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -53,7 +53,7 @@ import java.util.function.Supplier;
 @Singleton
 class SessionListListener implements HttpSessionListener, SessionListService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionListListener.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionListListener.class);
 
     private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
 
@@ -84,7 +84,12 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     @Override
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
-        LOGGER.info("sessionDestroyed() - {}", httpSession.getId());
+        // Uncomment during merge up from 7.5
+//        final UserRef userRef = getUserRefFromSession(httpSession);
+        // Get rid during merge up from 7.5
+        final UserName userRef = getUserNameFromSession(httpSession);
+        final String userAgent = UserAgentSessionUtil.get(httpSession);
+        LOGGER.info("sessionDestroyed() - {}, userRef: {}, userAgent: {}", httpSession.getId(), userRef, userAgent);
         sessionMap.remove(httpSession.getId());
     }
 
@@ -119,11 +124,10 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
         } else {
             // This is a different node so make a rest call to it to get the result
-
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName) +
-                    ResourcePaths.buildAuthenticatedApiPath(
-                            SessionResource.BASE_PATH,
-                            SessionResource.LIST_PATH_PART);
+                               ResourcePaths.buildAuthenticatedApiPath(
+                                       SessionResource.BASE_PATH,
+                                       SessionResource.LIST_PATH_PART);
 
             try {
                 LOGGER.debug("Sending request to {} for node {}", url, nodeName);
@@ -143,25 +147,41 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
+        LOGGER.debug(() -> LogUtil.message("Returning {} session items", sessionList.size()));
         return sessionList;
     }
 
     private SessionListResponse listSessionsOnThisNode() {
-        return sessionMap.values().stream()
-                .map(httpSession -> {
-                    // Don't really care about userUuids for this
-                    final UserName userName = UserIdentitySessionUtil.get(httpSession)
-                            .map(UserIdentity::asUserName)
-                            .orElse(null);
-                    return new SessionDetails(
-                            userName,
-                            httpSession.getCreationTime(),
-                            httpSession.getLastAccessedTime(),
-                            UserAgentSessionUtil.get(httpSession),
-                            nodeInfo.getThisNodeName());
-                })
-                .collect(SessionListResponse.collector(SessionListResponse::new));
+        final String thisNodeName = nodeInfo.getThisNodeName();
+        return LOGGER.logDurationIfDebugEnabled(() ->
+                        sessionMap.values().stream()
+                                .map(httpSession -> {
+                                    final UserName userName = getUserNameFromSession(httpSession);
+                                    return new SessionDetails(
+                                            userName,
+                                            httpSession.getCreationTime(),
+                                            httpSession.getLastAccessedTime(),
+                                            UserAgentSessionUtil.get(httpSession),
+                                            thisNodeName);
+                                })
+                                .collect(SessionListResponse.collector(SessionListResponse::new)),
+                () -> LogUtil.message("Obtain session list for this node ({})", thisNodeName));
     }
+
+    // Get rid during merge up from 7.5
+    private static UserName getUserNameFromSession(final HttpSession httpSession) {
+        return UserIdentitySessionUtil.get(httpSession)
+                .map(UserIdentity::asUserName)
+                .orElse(null);
+    }
+
+    // Uncomment during merge up from 7.5
+//    private static UserRef getUserRefFromSession(final HttpSession httpSession) {
+//        return UserIdentitySessionUtil.get(httpSession)
+//                .filter(uid -> uid instanceof HasUserRef)
+//                .map(uid -> ((HasUserRef) uid).getUserRef())
+//                .orElse(null);
+//    }
 
     public SessionListResponse listSessions() {
         return taskContextFactory.contextResult("Get session list on all active nodes", parentTaskContext ->
@@ -179,7 +199,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                                     .supplyAsync(listSessionsOnNodeTask)
                                     .exceptionally(throwable -> {
                                         LOGGER.error("Error getting session list for node [{}]: {}. " +
-                                                        "Enable DEBUG for stacktrace",
+                                                     "Enable DEBUG for stacktrace",
                                                 nodeName,
                                                 throwable.getMessage());
                                         LOGGER.debug("Error getting session list for node [{}]",
