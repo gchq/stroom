@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5.5] - 2025-01-15
+
+* Issue **#4693** : Add the property `stroom.session.maxInactiveInterval` to control the HTTP session expiry. Defaults to `1d`.
+
+
 ## [v7.5.4] - 2024-12-05
 
 * Issue **#4627** : Fix StroomQL function character escaping.
@@ -982,7 +987,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5.5...HEAD
+[v7.5.5]: https://github.com/gchq/stroom/compare/v7.5.4...v7.5.5
 [v7.5.4]: https://github.com/gchq/stroom/compare/v7.5.3...v7.5.4
 [v7.5.3]: https://github.com/gchq/stroom/compare/v7.5.2...v7.5.3
 [v7.5.2]: https://github.com/gchq/stroom/compare/v7.5.1...v7.5.2
