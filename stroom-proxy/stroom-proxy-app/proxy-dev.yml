@@ -131,17 +131,6 @@ proxyConfig:
       maxRetries: 3
       apiKey: ""
 
-  logStream:
-    metaKeys:
-      - "guid"
-      - "feed"
-      - "system"
-      - "environment"
-      - "remotehost"
-      - "remoteaddress"
-      - "remotedn"
-      - "remotecertexpiry"
-
   contentDir: "content"
   #  contentSync:
   #    contentSyncEnabled: false

@@ -22,6 +22,7 @@ public class ProxyId {
 
     private static final String ALLOWED_CHARS = "A-Za-z0-9-";
     public static final String PROXY_ID_REGEX = "^[" + ALLOWED_CHARS + "]+$";
+    public static final Pattern PROXY_ID_PATTERN = Pattern.compile(PROXY_ID_REGEX);
     private static final String UNSAFE_CHARS_REGEX = "[^" + ALLOWED_CHARS + "]";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyId.class);
@@ -42,11 +43,11 @@ public class ProxyId {
         if (NullSafe.isBlankString(proxyId)) {
             LOGGER.info("No proxy id is configured");
             final String storedId = readProxyId();
-            if (NullSafe.isBlankString(storedId)) {
+            if (NullSafe.isBlankString(storedId) || !PROXY_ID_PATTERN.matcher(storedId).matches()) {
                 final String createdId = createProxyId();
                 writeProxyId(createdId);
-                LOGGER.info("No stored proxy ID found in '{}', created and stored new proxy id: {}",
-                        PROXY_ID_FILE, createdId);
+                LOGGER.info("No or invalid stored proxy ID '{}' found in '{}', created and stored new proxy id: {}",
+                        storedId, PROXY_ID_FILE, createdId);
                 id = createdId;
                 source = "generated";
             } else {
@@ -60,7 +61,7 @@ public class ProxyId {
             source = "config";
         }
 
-        if (!Pattern.compile(PROXY_ID_REGEX).matcher(id).matches()) {
+        if (!PROXY_ID_PATTERN.matcher(id).matches()) {
             throw new RuntimeException(LogUtil.message("Proxy ID '{}' (source: {}), does not match pattern '{}'",
                     id, source, PROXY_ID_REGEX));
         }
@@ -80,7 +81,7 @@ public class ProxyId {
         final Path path = getProxyIdFilePath();
         if (Files.exists(path)) {
             try {
-                storedId = Files.readString(path);
+                storedId = Files.readString(path).trim();
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -111,7 +112,7 @@ public class ProxyId {
         return PROXY_ID + UUID.randomUUID();
     }
 
-    private String createSafeString(final String in) {
+    static String createSafeString(final String in) {
         if (in == null) {
             return null;
         } else {

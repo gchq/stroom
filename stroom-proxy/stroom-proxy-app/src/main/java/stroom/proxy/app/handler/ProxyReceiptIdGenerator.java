@@ -1,7 +1,9 @@
 package stroom.proxy.app.handler;
 
+import stroom.receive.common.ReceiptIdGenerator;
+import stroom.util.concurrent.UniqueId;
+import stroom.util.concurrent.UniqueId.NodeType;
 import stroom.util.concurrent.UniqueIdGenerator;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -11,28 +13,34 @@ import jakarta.inject.Singleton;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+/**
+ * {@link ReceiptIdGenerator} for a proxy node
+ */
 @Singleton
-public class ReceiptIdGenerator {
+public class ProxyReceiptIdGenerator implements ReceiptIdGenerator {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiptIdGenerator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyReceiptIdGenerator.class);
+
+    private static final NodeType NODE_TYPE = NodeType.PROXY;
 
     private final UniqueIdGenerator receiptIdGenerator;
 
     @Inject
-    public ReceiptIdGenerator(final ProxyId proxyId) {
+    public ProxyReceiptIdGenerator(final ProxyId proxyId) {
         LOGGER.info("Creating receiptIdGenerator for proxyId '{}'", proxyId);
-        receiptIdGenerator = new UniqueIdGenerator(proxyId.getId());
+        receiptIdGenerator = new UniqueIdGenerator(NODE_TYPE, proxyId.getId());
     }
 
-    public ReceiptIdGenerator(final Supplier<String> nodeIdSupplier) {
+    public ProxyReceiptIdGenerator(final Supplier<String> nodeIdSupplier) {
         final String nodeId = Objects.requireNonNull(nodeIdSupplier).get();
         LOGGER.info("Creating receiptIdGenerator for proxyId '{}'", nodeId);
-        receiptIdGenerator = new UniqueIdGenerator(nodeId);
+        receiptIdGenerator = new UniqueIdGenerator(NODE_TYPE, nodeId);
     }
 
     /**
      * @return A globally unique ID.
      */
+    @Override
     public UniqueId generateId() {
         return receiptIdGenerator.generateId();
     }

@@ -9,7 +9,7 @@ import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
@@ -164,7 +164,7 @@ public class MockFileDestination {
     }
 
     /**
-     * Assert all the {@link stroom.util.concurrent.UniqueIdGenerator.UniqueId}s contained in the stored aggregates
+     * Assert all the {@link UniqueId}s contained in the stored aggregates
      */
     void assertReceiptIds(final Config config,
                           final List<UniqueId> expectedReceiptIds) {

@@ -5,17 +5,18 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
-import stroom.proxy.app.handler.ReceiptIdGenerator;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.util.cert.CertificateExtractor;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
 
 import jakarta.inject.Inject;
@@ -91,9 +92,9 @@ public class ReceiveDataHelper {
                     e, AttributeMapUtil.create(request, certificateExtractor));
 
             final StroomStreamStatus status = stroomStreamException.getStroomStreamStatus();
-            LOGGER.debug("\"handleException()\",{},\"{}\"",
-                    CSVFormatter.format(status.getAttributeMap()),
-                    CSVFormatter.escape(stroomStreamException.getMessage()));
+            LOGGER.debug(() -> LogUtil.message("\"handleException()\",{},\"{}\"",
+                    CSVFormatter.format(status.getAttributeMap(), true),
+                    CSVFormatter.escape(stroomStreamException.getMessage())));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
             if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(status.getStroomStatusCode())) {

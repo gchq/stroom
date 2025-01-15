@@ -1,7 +1,7 @@
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 
 public interface EventConsumer {
 

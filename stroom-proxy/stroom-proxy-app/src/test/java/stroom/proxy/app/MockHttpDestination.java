@@ -14,7 +14,7 @@ import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileName;

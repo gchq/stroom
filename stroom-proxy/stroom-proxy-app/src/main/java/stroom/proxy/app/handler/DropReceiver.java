@@ -46,7 +46,7 @@ public class DropReceiver implements Receiver {
                 }
             }
 
-            LOGGER.warn("\"Dropped\",{}", CSVFormatter.format(attributeMap));
+            LOGGER.warn("\"Dropped\",{}", CSVFormatter.format(attributeMap, true));
 
             final Duration duration = Duration.between(startTime, Instant.now());
             logStream.log(

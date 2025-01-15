@@ -48,6 +48,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -99,6 +101,7 @@ public class HTTPAppender extends AbstractAppender {
 
     private static final Set<String> VALID_REQUEST_METHODS = Set.of(
             "GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE");
+    private static final String META_KEYS_DEFAULT = "guid,receiptid,feed,system,environment,remotehost,remoteaddress";
 
     private final MetaDataHolder metaDataHolder;
     private final TempDirProvider tempDirProvider;
@@ -109,7 +112,7 @@ public class HTTPAppender extends AbstractAppender {
     private Long connectionTimeout;
     private Long readTimeout;
     private Long forwardChunkSize;
-    private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
+    private Set<String> metaKeySet = getMetaKeySet(META_KEYS_DEFAULT);
 
     private final OutputFactory outputStreamSupport;
     private long startTimeMs;
@@ -541,11 +544,10 @@ public class HTTPAppender extends AbstractAppender {
                      final int responseCode,
                      final long bytes,
                      final long duration) {
-        if (logger.isInfoEnabled() && !metaKeySet.isEmpty()) {
-            final Map<String, String> filteredMap = attributeMap.entrySet().stream()
-                    .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))
-                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-            final String kvPairs = CSVFormatter.format(filteredMap);
+
+        if (logger.isInfoEnabled()) {
+            final Map<String, String> filteredMap = filterAttributes(attributeMap);
+            final String kvPairs = CSVFormatter.format(filteredMap, false);
             final String message = CSVFormatter.escape(type) +
                                    "," +
                                    CSVFormatter.escape(url) +
@@ -561,13 +563,29 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
+    public Map<String, String> filterAttributes(final AttributeMap attributeMap) {
+        // Use a LinkedHashMap to adhere to metaKeySet order, which is a LinkedHashSet
+        if (NullSafe.hasItems(metaKeySet)) {
+            final Map<String, String> map = new LinkedHashMap<>(metaKeySet.size());
+            metaKeySet.forEach(key ->
+                    map.put(key, attributeMap.get(key)));
+            return map;
+        } else {
+            return Collections.emptyMap();
+        }
+    }
+
     private Set<String> getMetaKeySet(final String csv) {
         if (NullSafe.isEmptyString(csv)) {
             return Collections.emptySet();
+        } else {
+            // Use LinkedHashSet to preserve order
+            return Arrays.stream(csv.split(","))
+                    .map(String::trim)
+                    .filter(NullSafe::isNonBlankString)
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
         }
-
-        return Arrays.stream(csv.toLowerCase().split(","))
-                .collect(Collectors.toSet());
     }
 
     private static Set<String> getActiveSSLProtocols() {
@@ -677,7 +695,7 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(
             description = "Specifies Which meta data keys will have their values logged in the send log. A Comma " +
                           "delimited string of keys.",
-            defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
+            defaultValue = META_KEYS_DEFAULT,
             displayPriority = 12)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);

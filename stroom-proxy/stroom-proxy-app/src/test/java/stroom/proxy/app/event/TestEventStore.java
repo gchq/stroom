@@ -4,7 +4,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
+import stroom.util.concurrent.UniqueId.NodeType;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -38,7 +39,8 @@ public class TestEventStore {
             attributeMap.put("Type", feedKey.type());
             final UniqueId receiptId = new UniqueId(
                     Instant.now().toEpochMilli(),
-                    (short) i,
+                    i,
+                    NodeType.PROXY,
                     "test-proxy");
 
             eventStore.consume(attributeMap, receiptId, "test");

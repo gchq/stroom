@@ -17,6 +17,7 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.DataDirProviderImpl;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ProxyId;
+import stroom.proxy.app.handler.ProxyReceiptIdGenerator;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ReceiverFactoryProvider;
@@ -27,6 +28,7 @@ import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
@@ -60,6 +62,7 @@ public class ProxyCoreModule extends AbstractModule {
         install(new MockCollectionModule());
 
         bind(ProxyId.class).asEagerSingleton();
+        bind(ReceiptIdGenerator.class).to(ProxyReceiptIdGenerator.class).asEagerSingleton();
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(HttpClientFactory.class).to(DropwizardHttpClientFactory.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);

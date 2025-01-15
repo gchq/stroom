@@ -71,6 +71,10 @@ public class InstantForwardFile {
                 dropReceiver);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class InstantForwardFileReceiverFactory implements ReceiverFactory {
 
         private final AttributeMapFilter attributeMapFilter;
@@ -94,6 +98,10 @@ public class InstantForwardFile {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class InstantForwardFileReceiver implements Receiver {
 

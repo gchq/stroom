@@ -48,9 +48,12 @@ public class NodeConfig extends AbstractConfig implements IsStroomConfig, HasDbC
 
     @NotNull
     @ReadOnly
-    @JsonPropertyDescription("The name of the node to identify it in the cluster. " +
+    @JsonPropertyDescription(
+            "The name of the node to identify it in the cluster. " +
             "Should only be set per node in the application YAML config file. The node name should not " +
-            "be changed once set.")
+            "be changed once set. This node name will be used in the 'receiptId' meta attribute so " +
+            "if a stroom cluster is forwarding to another stroom cluster, then the " +
+            "node name should be unique across all clusters involved.")
     @JsonProperty(PROP_NAME_NAME)
     public String getNodeName() {
         return nodeName;
@@ -64,8 +67,8 @@ public class NodeConfig extends AbstractConfig implements IsStroomConfig, HasDbC
     @Override
     public String toString() {
         return "NodeConfig{" +
-                "nodeName='" + nodeName + '\'' +
-                '}';
+               "nodeName='" + nodeName + '\'' +
+               '}';
     }
 
     @BootStrapConfig

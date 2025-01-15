@@ -62,14 +62,15 @@ proxyConfig:
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
-    - "environment"
-    - "feed"
-    - "guid"
-    - "remoteaddress"
-    - "remotecertexpiry"
-    - "remotedn"
-    - "remotehost"
-    - "system"
+    - "GUID"
+    - "ReceiptId"
+    - "Feed"
+    - "System"
+    - "Environment"
+    - "RemoteHost"
+    - "RemoteAddress"
+    - "RemoteDN"
+    - "RemoteCertExpiry"
   path:
     data: "data"
     home: null

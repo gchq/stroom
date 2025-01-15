@@ -4,11 +4,12 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.CertificateExtractor;
-import stroom.util.concurrent.UniqueIdGenerator.UniqueId;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -61,14 +62,15 @@ public class ProxyRequestHandler implements RequestHandler {
             // Create attribute map from headers.
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-            // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
+            // Create a new proxy id for the request, so we can track progress of the stream
+            // through the various proxies and into stroom and report back the ID to the sender,
             final UniqueId receiptId = receiptIdGenerator.generateId();
 
             // Authorise request.
             requestAuthenticator.authenticate(request, attributeMap);
 
             final String receiptIdStr = receiptId.toString();
-            LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+            LOGGER.debug("Adding meta attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
             attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
             attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
 
@@ -99,13 +101,12 @@ public class ProxyRequestHandler implements RequestHandler {
 
             response.setStatus(HttpStatus.SC_OK);
 
-            LOGGER.debug(() -> "Writing proxy receipt id attribute to response: " + receiptId);
+            LOGGER.debug(() -> "Writing proxy receipt id attribute to response: " + receiptIdStr);
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(receiptId);
+                writer.println(receiptIdStr);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
-
         } catch (final StroomStreamException e) {
             e.sendErrorResponse(response);
         }
