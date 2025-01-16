@@ -360,6 +360,27 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
+    public List<ExplorerNode> getNodesByNameAndType(final ExplorerNode parent,
+                                                    final String name,
+                                                    final String type) {
+
+        ExplorerTreeNode parentNode = null;
+        if (parent != null) {
+            parentNode = explorerTreeDao.findByUUID(parent.getUuid());
+            if (parentNode == null) {
+                throw new RuntimeException("Unable to find parent node");
+            }
+        }
+
+        final List<ExplorerTreeNode> children = explorerTreeDao.getChildrenByNameAndType(
+                parentNode, name, type);
+
+        return children.stream()
+                .map(this::createExplorerNode)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteAllNodes() {
         explorerTreeDao.removeAll();
         addNode(null, ExplorerConstants.SYSTEM_DOC_REF, null);

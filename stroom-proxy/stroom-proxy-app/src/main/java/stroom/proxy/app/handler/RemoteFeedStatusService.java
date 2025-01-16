@@ -1,7 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.feed.remote.FeedStatus;
-import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.UserIdentityFactory;
@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Singleton
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck, Managed {
@@ -50,7 +51,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
-    private final LoadingCache<GetFeedStatusRequest, FeedStatusUpdater> updaters;
+    private final LoadingCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
@@ -69,7 +70,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
         final CacheConfig cacheConfig = feedStatusConfig.getFeedStatusCache();
         Objects.requireNonNull(cacheConfig, "Feed status cache config is null");
-        this.updaters = createFromConfig(cacheConfig).build(k -> new FeedStatusUpdater(executorService));
+        this.updaters = createFromConfig(cacheConfig)
+                .build(k -> new FeedStatusUpdater(executorService));
     }
 
     private Caffeine<Object, Object> createFromConfig(final CacheConfig cacheConfig) {
@@ -98,13 +100,13 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     @Override
-    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final FeedStatus defaultFeedStatus = Optional
                 .ofNullable(feedStatusConfig.getDefaultStatus()).orElse(FeedStatus.Receive);
 
         // If remote feed status checking is disabled then return the default status.
-        if (feedStatusConfig.getEnabled() != null && !feedStatusConfig.getEnabled()) {
+        if (NullSafe.test(feedStatusConfig, Predicate.not(FeedStatusConfig::getEnabled))) {
             return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
         }
 
@@ -139,10 +141,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         return cachedResponse.getResponse();
     }
 
-    private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequest request) {
+    private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final String url = feedStatusConfig.getFeedStatusUrl();
-        if (url == null || url.trim().isEmpty()) {
+        if (NullSafe.isBlankString(url)) {
             throw new RuntimeException("Missing remote status URL in feed status configuration");
         }
 
@@ -166,7 +168,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     private GetFeedStatusResponse sendRequest(
-            final GetFeedStatusRequest request,
+            final GetFeedStatusRequestV2 request,
             final FeedStatusConfig feedStatusConfig,
             final Function<Response, GetFeedStatusResponse> responseConsumer) {
 
@@ -192,7 +194,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private Response getFeedStatusResponse(final FeedStatusConfig feedStatusConfig,
                                            final WebTarget webTarget,
-                                           final GetFeedStatusRequest feedStatusRequest) {
+                                           final GetFeedStatusRequestV2 feedStatusRequest) {
         return webTarget
                 .request(MediaType.APPLICATION_JSON)
                 .headers(getHeaders(feedStatusConfig))
@@ -223,13 +225,12 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         final String url = feedStatusConfig.getFeedStatusUrl();
         resultBuilder.withDetail("url", getFeedStatusWebTarget(feedStatusConfig).getUri().toString());
 
-        if (url == null || url.trim().isEmpty()) {
+        if (NullSafe.isBlankString(url)) {
             // If no url is configured then no feed status checking is required so we consider this healthy
             resultBuilder.healthy();
         } else {
-            final GetFeedStatusRequest request = new GetFeedStatusRequest(
-                    "DUMMY_FEED",
-                    "dummy DN");
+            final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
+                    "DUMMY_FEED", null, null);
             try {
                 sendRequest(request, feedStatusConfig, response -> {
                     int responseCode = response.getStatusInfo().getStatusCode();
@@ -258,6 +259,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         }
         return resultBuilder.build();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class FeedStatusUpdater {
 
@@ -293,6 +298,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             this.cachedResponse = cachedResponse;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class CachedResponse {
 

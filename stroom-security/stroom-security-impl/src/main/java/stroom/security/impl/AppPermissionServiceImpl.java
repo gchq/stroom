@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.AppPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;

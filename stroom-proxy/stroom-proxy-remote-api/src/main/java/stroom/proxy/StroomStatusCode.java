@@ -4,7 +4,8 @@ package stroom.proxy;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * List of all the stroom codes that we return.
+ * List of all the stroom codes that we return from the datafeed interface.
+ * Both stroom and proxy use this.
  */
 public enum StroomStatusCode {
     OK(HttpServletResponse.SC_OK, 0, "OK", "Post of data successful"),
@@ -18,8 +19,27 @@ public enum StroomStatusCode {
     INVALID_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 102, "Data type is invalid",
             "If you provide a data type it must be valid"),
 
+    ACCOUNT_NAME_MUST_BE_SPECIFIED(
+            HttpServletResponse.SC_NOT_ACCEPTABLE,
+            103,
+            "AccountName must be specified",
+            "You must provide AccountName as a header argument in the request"),
+
+    COMPONENT_MUST_BE_SPECIFIED(
+            HttpServletResponse.SC_NOT_ACCEPTABLE,
+            104,
+            "Component must be specified",
+            "You must provide Component as a header argument in the request"),
+
+    INVALID_FORMAT(HttpServletResponse.SC_NOT_ACCEPTABLE, 105, "Data format is invalid",
+            "If you provide a data Format header, its value must be valid"),
+
     FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
+
+    INVALID_FEED_NAME(HttpServletResponse.SC_NOT_ACCEPTABLE, 111,
+            "Feed is not valid",
+            "The feed you have provided does not match an agreed pattern"),
 
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),
@@ -36,8 +56,21 @@ public enum StroomStatusCode {
     CLIENT_TOKEN_OR_CERT_REQUIRED(
             HttpServletResponse.SC_UNAUTHORIZED,
             302,
-            "Client Token or Certificate Required",
-            "The feed you have provided requires a client HTTPS certificate to send data"),
+            "Client token or certificate required",
+            "The feed you have provided requires a client HTTPS certificate or token to send data"),
+
+    CLIENT_DATA_FEED_KEY_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            303,
+            "Client data feed key required",
+            "A client data feed key is required to send data"),
+
+    AUTHENTICATION_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            304,
+            "Authentication of the client is required",
+            "Some form of client authentication is required, e.g. certificate, token, data feed key, etc. " +
+                    "Ask administrator for supported authentication mechanism(s)."),
 
     CLIENT_CERTIFICATE_NOT_AUTHENTICATED(
             HttpServletResponse.SC_UNAUTHORIZED,
@@ -57,11 +90,17 @@ public enum StroomStatusCode {
             "Client Token or Certificate failed authentication",
             "The provided client token or certificate cannot be authorised"),
 
+    DATA_FEED_KEY_NOT_AUTHENTICATED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            313,
+            "Data feed key failed authentication",
+            "The provided data feed key cannot be authorised"),
+
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             400,
             "Compressed stream invalid",
             "The stream of data sent does not form a valid compressed file.  Maybe it terminated " +
-                    "unexpectedly or is corrupt."),
+            "unexpectedly or is corrupt."),
 
     UNKNOWN_ERROR(
             HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -117,7 +156,7 @@ public enum StroomStatusCode {
         for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
             System.out.println("|-");
             System.out.println("|" + stroomStatusCode.getHttpCode() + "||" + stroomStatusCode.getCode() + "||"
-                    + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());
+                               + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());
 
         }
         System.out.println("|}");

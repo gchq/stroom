@@ -18,7 +18,7 @@ import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.ContentPackUserService;
-import stroom.security.impl.UserService;
+import stroom.security.api.UserService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;

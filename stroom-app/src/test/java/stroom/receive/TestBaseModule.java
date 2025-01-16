@@ -29,9 +29,6 @@ import com.google.inject.Provides;
 import com.google.inject.util.Providers;
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.Collections;
-import java.util.Map;
-
 public class TestBaseModule extends AbstractModule {
 
     @Override
@@ -76,25 +73,25 @@ public class TestBaseModule extends AbstractModule {
                 return null;
             }
 
-            @Override
-            public boolean hasAuthenticationToken(final HttpServletRequest request) {
-                return false;
-            }
-
-            @Override
-            public void removeAuthorisationEntries(final Map<String, String> headers) {
-
-            }
-
-            @Override
-            public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
-                return Collections.emptyMap();
-            }
-
-            @Override
-            public Map<String, String> getServiceUserAuthHeaders() {
-                return Collections.emptyMap();
-            }
+//            @Override
+//            public boolean hasAuthenticationToken(final HttpServletRequest request) {
+//                return false;
+//            }
+//
+//            @Override
+//            public void removeAuthorisationEntries(final Map<String, String> headers) {
+//
+//            }
+//
+//            @Override
+//            public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
+//                return Collections.emptyMap();
+//            }
+//
+//            @Override
+//            public Map<String, String> getServiceUserAuthHeaders() {
+//                return Collections.emptyMap();
+//            }
         };
     }
 }

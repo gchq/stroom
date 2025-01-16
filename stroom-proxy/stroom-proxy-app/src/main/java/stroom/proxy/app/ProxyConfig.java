@@ -8,6 +8,7 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
+import stroom.receive.common.AuthenticationType;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
@@ -225,7 +226,10 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if tokenAuthenticationEnabled " +
                                 "is true")
     public boolean isTokenAuthenticationEnabledValid() {
-        if (NullSafe.test(receiveDataConfig, ReceiveDataConfig::isTokenAuthenticationEnabled)) {
+        if (NullSafe.test(
+                receiveDataConfig,
+                config -> config.isAuthenticationTypeEnabled(AuthenticationType.TOKEN))) {
+
             return NullSafe.test(
                     proxySecurityConfig,
                     ProxySecurityConfig::getAuthenticationConfig,

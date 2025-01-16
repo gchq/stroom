@@ -18,53 +18,83 @@ package stroom.core.receive;
 
 import stroom.docref.DocRef;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AuthenticationType;
+import stroom.receive.common.DataFeedKeyService;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.util.concurrent.PeriodicallyUpdatedValue;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Singleton
 public class AttributeMapFilterFactory {
 
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
     private final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter;
-
-    private volatile AttributeMapFilter attributeMapFilter;
-    private final AtomicReference<String> lastPolicyUuid = new AtomicReference<>();
+    private final DataFeedKeyService dataFeedKeyService;
+    private final PeriodicallyUpdatedValue<AttributeMapFilter, ConfigState> updatableAttributeMapFilter;
 
     @Inject
     public AttributeMapFilterFactory(
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
-            final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter) {
+            final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter,
+            final DataFeedKeyService dataFeedKeyService) {
 
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
         this.feedStatusAttributeMapFilter = feedStatusAttributeMapFilter;
+        this.dataFeedKeyService = dataFeedKeyService;
+
+        // Every 60s, see if config has changed and if so create a new filter
+        this.updatableAttributeMapFilter = new PeriodicallyUpdatedValue<>(
+                Duration.ofSeconds(60),
+                this::create,
+                () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));
+    }
+
+    private AttributeMapFilter create(final ConfigState configState) {
+
+        final List<AttributeMapFilter> filters = new ArrayList<>();
+//        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
+//            filters.add(dataFeedKeyService);
+//        }
+//        if (NullSafe.isNonEmptyString(configState.policyUuid)) {
+        if (configState.policyUuid != null && !configState.policyUuid.isEmpty()) {
+            filters.add(dataReceiptPolicyAttributeMapFilterFactory.create(
+                    new DocRef(ReceiveDataRules.TYPE, configState.policyUuid)));
+        }
+        filters.add(feedStatusAttributeMapFilter);
+        return AttributeMapFilter.wrap(filters);
     }
 
     public AttributeMapFilter create() {
-        final String receiptPolicyUuid = receiveDataConfigProvider.get().getReceiptPolicyUuid();
-        final String last = lastPolicyUuid.get();
-        if (attributeMapFilter == null || !Objects.equals(last, receiptPolicyUuid)) {
-            lastPolicyUuid.compareAndSet(last, receiptPolicyUuid);
+        return updatableAttributeMapFilter.getValue();
+    }
 
-            if (receiptPolicyUuid != null && receiptPolicyUuid.length() > 0) {
-                attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
-                        new DocRef(ReceiveDataRules.TYPE, receiptPolicyUuid));
-            } else {
-                attributeMapFilter = feedStatusAttributeMapFilter;
-            }
+
+    // --------------------------------------------------------------------------------
+
+    private record ConfigState(
+            String policyUuid,
+            Set<AuthenticationType> enabledAuthenticationTypes) {
+
+        public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
+            return new ConfigState(
+                    receiveDataConfig.getReceiptPolicyUuid(),
+                    receiveDataConfig.getEnabledAuthenticationTypes());
         }
 
-        return attributeMapFilter;
+        public boolean isEnabled(final AuthenticationType authenticationType) {
+            return enabledAuthenticationTypes.contains(authenticationType);
+        }
     }
 }

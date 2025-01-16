@@ -35,6 +35,10 @@ public class InstantForwardHttpPost {
                 dropReceiver);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class InstantForwardHttpPostReceiverFactory implements ReceiverFactory {
 
         private final AttributeMapFilter attributeMapFilter;
@@ -58,6 +62,10 @@ public class InstantForwardHttpPost {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class InstantForwardHttpPostReceiver implements Receiver {
 

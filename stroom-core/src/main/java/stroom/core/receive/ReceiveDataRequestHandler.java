@@ -32,6 +32,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.NullSafe;
@@ -66,6 +67,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final MetaService metaService;
     private final RequestAuthenticator requestAuthenticator;
     private final CertificateExtractor certificateExtractor;
+    private final AttributeMapValidator attributeMapValidator;
     private final ReceiptIdGenerator receiptIdGenerator;
 
     @Inject
@@ -76,6 +78,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final MetaService metaService,
                                      final RequestAuthenticator requestAuthenticator,
                                      final CertificateExtractor certificateExtractor,
+                                     final AttributeMapValidator attributeMapValidator,
                                      final ReceiptIdGenerator receiptIdGenerator) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
@@ -84,6 +87,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
         this.metaService = metaService;
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
+        this.attributeMapValidator = attributeMapValidator;
         this.receiptIdGenerator = receiptIdGenerator;
     }
 
@@ -94,12 +98,12 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-            // Authenticate the request using token or cert depending on configuration
+            // Authenticate the request depending on the configured auth methods.
             // Adds sender details to the attributeMap
-            requestAuthenticator.authenticate(request, attributeMap);
+            final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
             // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap, metaService::getTypes);
+            attributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             // Create a new receiptId for the request, so we can track progress and report back the
             // receiptId to the sender

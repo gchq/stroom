@@ -71,10 +71,20 @@ public interface StandardHeaderArguments {
     String STROOM_STATUS = "Stroom-Status";
     String STROOM_ERROR = "Stroom-Error";
 
+    String ACCOUNT_NAME = "AccountName";
+    String SYSTEM = "System";
+    String COMPONENT = "Component";
     String FEED = "Feed";
     String TYPE = "Type";
-    String SYSTEM = "System";
     String ENVIRONMENT = "Environment";
+    String FORMAT = "Format"; // The data format, e.g. XML, JSON, CSV, etc.
+    String CONTEXT_FORMAT = "ContextFormat"; // The data format of the context sub-stream, e.g. XML, JSON, CSV, etc.
+    String SCHEMA = "Schema"; // The name of the schema for the data format if applicable, e.g. event-logging
+    String SCHEMA_VERSION = "SchemaVersion"; // The version of the schema if applicable, e.g. 4.0.1
+
+    String ENCODING = "Encoding";
+    String CONTEXT_ENCODING = "ContextEncoding";
+    String CLASSIFICATION = "Classification";
 
     // Typically added in by nginx
     String X_FORWARDED_FOR = "X-Forwarded-For";
@@ -94,3 +104,4 @@ public interface StandardHeaderArguments {
             EFFECTIVE_TIME,
             RECEIVED_TIME);
 }
+

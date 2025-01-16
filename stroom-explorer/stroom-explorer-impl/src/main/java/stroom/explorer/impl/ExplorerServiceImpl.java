@@ -75,6 +75,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
 import stroom.util.logging.Metrics.LocalMetrics;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.DocPath;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -99,6 +100,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SequencedSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -945,6 +947,61 @@ class ExplorerServiceImpl
                         ? destinationFolder.getRootNodeUuid()
                         : null)
                 .build();
+    }
+
+    @Override
+    public ExplorerNode ensureFolderPath(final DocPath docPath,
+                                         final PermissionInheritance permissionInheritance) {
+        return ensureFolderPath(docPath, explorerNodeService.getRoot(), permissionInheritance);
+    }
+
+    @Override
+    public ExplorerNode ensureFolderPath(final DocPath docPath,
+                                         final ExplorerNode baseNode,
+                                         final PermissionInheritance permissionInheritance) {
+        Objects.requireNonNull(baseNode);
+
+        if (docPath.isAbsolute() && !Objects.equals(baseNode, explorerNodeService.getRoot())) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "docPath {} is absolute so baseNode must be the root node {}",
+                    docPath, explorerNodeService.getRoot()));
+        }
+        Objects.requireNonNull(docPath);
+        AtomicReference<ExplorerNode> parentNode = new AtomicReference<>();
+        docPath.forEach((idx, pathPart) -> {
+            if (idx == 0) {
+                final ExplorerNode root = explorerNodeService.getRoot();
+                parentNode.set(explorerNodeService.getRoot());
+                if (!Objects.equals(pathPart, root.getName())) {
+                    throw new RuntimeException(LogUtil.message("Invalid document path '{}'. Must start with /{}",
+                            docPath.toString(), root.getName()));
+                }
+            } else {
+                final List<ExplorerNode> childNodes = explorerNodeService.getNodesByNameAndType(
+                        parentNode.get(),
+                        pathPart,
+                        ExplorerConstants.FOLDER_TYPE);
+                final ExplorerNode childNode;
+
+                if (childNodes.size() > 1) {
+                    throw new RuntimeException(LogUtil.message(
+                            "Found {} folders with name '{}' that are a child of {}",
+                            childNodes.size(), pathPart, parentNode));
+                } else if (childNodes.isEmpty()) {
+                    // node doesn't exist so create it
+                    childNode = create(
+                            ExplorerConstants.FOLDER_TYPE,
+                            pathPart,
+                            parentNode.get(),
+                            PermissionInheritance.DESTINATION);
+                } else {
+                    // One node found
+                    childNode = childNodes.get(0);
+                }
+                parentNode.set(childNode);
+            }
+        });
+        return parentNode.get();
     }
 
     /**

@@ -476,12 +476,17 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public Set<String> getTypes() {
-        return metaServiceConfigProvider.get().getMetaTypes();
+        return NullSafe.set(metaServiceConfigProvider.get().getMetaTypes());
     }
 
     @Override
     public Set<String> getRawTypes() {
-        return metaServiceConfigProvider.get().getRawMetaTypes();
+        return NullSafe.set(metaServiceConfigProvider.get().getRawMetaTypes());
+    }
+
+    @Override
+    public Set<String> getDataFormats() {
+        return NullSafe.set(metaServiceConfigProvider.get().getDataFormats());
     }
 
     @Override

@@ -6,6 +6,8 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.api.ExplorerService;
+import stroom.security.api.AppPermissionService;
+import stroom.security.api.UserService;
 import stroom.security.impl.db.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;

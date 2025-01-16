@@ -40,6 +40,9 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +52,20 @@ import java.util.stream.Collectors;
 public class FeedStoreImpl implements FeedStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStoreImpl.class);
+
+    private static final List<String> SUPPORTED_ENCODINGS;
+
+    static {
+        final List<String> list = new ArrayList<>();
+        list.add("UTF-8");
+        list.add("UTF-16LE");
+        list.add("UTF-16BE");
+        list.add("UTF-32LE");
+        list.add("UTF-32BE");
+        list.add("ASCII");
+        list.addAll(Charset.availableCharsets().keySet());
+        SUPPORTED_ENCODINGS = Collections.unmodifiableList(list);
+    }
 
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
@@ -279,6 +296,11 @@ public class FeedStoreImpl implements FeedStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public List<String> fetchSupportedEncodings() {
+        return SUPPORTED_ENCODINGS;
     }
 
     private String createUniqueName(final String name) {

@@ -6,18 +6,24 @@ import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
-import stroom.util.cert.CertificateExtractor;
+import stroom.util.concurrent.PeriodicallyUpdatedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.Map;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@Singleton
 public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RequestAuthenticatorImpl.class);
@@ -25,82 +31,85 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     private final UserIdentityFactory userIdentityFactory;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     // Inject this so we can mock it for testing
-    private final CertificateExtractor certificateExtractor;
+    private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
+    private final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider;
+    private final Provider<CertificateAuthenticator> certificateAuthenticatorProvider;
+    private final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider;
+
+    private final PeriodicallyUpdatedValue<AuthenticatorFilter, ConfigState> updatableAttributeMapFilter;
 
     @Inject
-    public RequestAuthenticatorImpl(final UserIdentityFactory userIdentityFactory,
-                                    final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                                    final CertificateExtractor certificateExtractor) {
+    public RequestAuthenticatorImpl(
+            final UserIdentityFactory userIdentityFactory,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+            final Provider<DataFeedKeyService> dataFeedKeyServiceProvider,
+            final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider,
+            final Provider<CertificateAuthenticator> certificateAuthenticatorProvider,
+            final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider) {
+
         this.userIdentityFactory = userIdentityFactory;
         this.receiveDataConfigProvider = receiveDataConfigProvider;
-        this.certificateExtractor = certificateExtractor;
+
+        // Every 60s, see if config has changed and if so create a new filter
+        this.updatableAttributeMapFilter = new PeriodicallyUpdatedValue<>(
+                Duration.ofSeconds(60),
+                this::createFilter,
+                () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));
+        this.dataFeedKeyServiceProvider = dataFeedKeyServiceProvider;
+        this.oidcTokenAuthenticatorProvider = oidcTokenAuthenticatorProvider;
+        this.certificateAuthenticatorProvider = certificateAuthenticatorProvider;
+        this.allowUnauthenticatedAuthenticatorProvider = allowUnauthenticatedAuthenticatorProvider;
     }
 
     @Override
     public UserIdentity authenticate(final HttpServletRequest request,
                                      final AttributeMap attributeMap) {
         try {
-            Optional<UserIdentity> optUserIdentity = Optional.empty();
-            final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-            final boolean isAuthRequired = receiveDataConfig.isAuthenticationRequired();
-            final boolean isTokenAuthEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
-            final boolean isCertAuthEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
+            final AuthenticatorFilter filter = updatableAttributeMapFilter.getValue();
+            LOGGER.debug(() -> "Using filter: " + filter.getClass().getName());
+            final Optional<UserIdentity> optUserIdentity = filter.authenticate(request, attributeMap);
 
-            // Try tokens first in preference
-            final boolean foundToken = userIdentityFactory.hasAuthenticationToken(request);
-            if (isTokenAuthEnabled) {
-                if (foundToken) {
-                    try {
-                        optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
-                        if (optUserIdentity.isEmpty() && isAuthRequired && !isCertAuthEnabled) {
-                            throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED,
-                                    attributeMap);
+            final ConfigState configState = updatableAttributeMapFilter.getState();
+            final Set<AuthenticationType> enabledAuthenticationTypes = configState.enabledAuthenticationTypes;
+            final boolean isAuthRequired = configState.isAuthenticationRequired;
+//        final boolean isTokenAuthEnabled = configState.isTokenAuthenticationEnabled;
+//        final boolean isCertAuthEnabled = configState.isCertificateAuthenticationEnabled;
+//        final boolean isDataFeedKeyAuthEnabled = configState.isDatafeedKeyAuthenticationEnabled;
+
+            final int authMechanismCount = enabledAuthenticationTypes.size();
+
+            if (optUserIdentity.isEmpty() && isAuthRequired) {
+                if (authMechanismCount == 1) {
+                    final AuthenticationType authenticationType = enabledAuthenticationTypes.stream()
+                            .findFirst()
+                            .orElseThrow();
+                    switch (authenticationType) {
+                        case DATA_FEED_KEY -> throw new StroomStreamException(
+                                StroomStatusCode.CLIENT_DATA_FEED_KEY_REQUIRED, attributeMap);
+                        case TOKEN ->
+                                throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
+                        case CERT -> throw new StroomStreamException(StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED,
+                                attributeMap);
+                        default -> {
+                            LOGGER.error("Unexpected type {}", authenticationType);
+                            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap,
+                                    "Unknown authentication type " + authenticationType);
                         }
-                    } catch (Exception e) {
-                        throw new StroomStreamException(
-                                StroomStatusCode.CLIENT_TOKEN_NOT_AUTHENTICATED, attributeMap, e.getMessage());
                     }
+                } else if (authMechanismCount == 2
+                           && enabledAuthenticationTypes.contains(AuthenticationType.CERT)
+                           && enabledAuthenticationTypes.contains(AuthenticationType.TOKEN)) {
+                    // This code was added a while ago, but is it not sustainable to have one code
+                    // for each combination of auth mechanisms. Leaving this here just because we already have it
+                    throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_OR_CERT_REQUIRED, attributeMap);
                 } else {
-                    // No token found
-                    if (isAuthRequired && !isCertAuthEnabled) {
-                        throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
-                    }
+                    final String mechanismsStr = enabledAuthenticationTypes.stream()
+                            .map(AuthenticationType::getDisplayValue)
+                            .collect(Collectors.joining(", "));
+                    final String msg = "You must use one of the following authentication mechanisms ["
+                                       + mechanismsStr + "]";
+                    throw new StroomStreamException(StroomStatusCode.AUTHENTICATION_REQUIRED, attributeMap, msg);
                 }
-            } else if (LOGGER.isDebugEnabled() && foundToken) {
-                LOGGER.debug("Request has token but token authentication is not enabled. {}", attributeMap);
-            }
-
-            // Now try certs if
-            final Optional<String> optCertCommonName = certificateExtractor.getCN(request);
-
-            if (isCertAuthEnabled) {
-                if (optUserIdentity.isEmpty()) {
-                    if (optCertCommonName.isPresent()) {
-                        // Not much we can do with the cert. The user won't exist in stroom, so as long
-                        // as the cert is trusted, we can get the CN and use that as the identity.
-                        // Debatable whether this identity should be created in the UserIdentityFactory
-                        optUserIdentity = optCertCommonName.map(CertificateUserIdentity::new);
-                    } else {
-                        // No cert found
-                        if (isAuthRequired) {
-                            if (isTokenAuthEnabled) {
-                                throw new StroomStreamException(
-                                        StroomStatusCode.CLIENT_TOKEN_OR_CERT_REQUIRED, attributeMap);
-                            } else {
-                                throw new StroomStreamException(
-                                        StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED, attributeMap);
-                            }
-                        }
-                    }
-                }
-            } else if (LOGGER.isDebugEnabled() && optCertCommonName.isPresent()) {
-                // Cert auth not enabled
-                LOGGER.debug("Request has certificate but certificate authentication is not enabled. {}", attributeMap);
-            }
-
-            if (optUserIdentity.isEmpty() && !isAuthRequired) {
-                // Debatable whether this identity should be created in the UserIdentityFactory
-                optUserIdentity = Optional.of(UnauthenticatedUserIdentity.getInstance());
             }
 
             // Add identity attrs and remove auth ones
@@ -128,6 +137,44 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         }
     }
 
+    private String getMechanismNameOrNull(final boolean isEnabled, final String name) {
+        return isEnabled
+                ? name
+                : null;
+    }
+
+    /**
+     * Create a combined filter that takes into account the currently configured
+     * auth mechanisms
+     *
+     * @param configState
+     * @return
+     */
+    private AuthenticatorFilter createFilter(final ConfigState configState) {
+        final List<AuthenticatorFilter> filters = new ArrayList<>();
+
+        // We want to do this in a consistent order and to prefer say token over cert
+        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
+            filters.add(dataFeedKeyServiceProvider.get());
+        }
+
+        if (configState.isEnabled(AuthenticationType.TOKEN)) {
+            filters.add(oidcTokenAuthenticatorProvider.get());
+        }
+
+        if (configState.isEnabled(AuthenticationType.CERT)) {
+            filters.add(certificateAuthenticatorProvider.get());
+        }
+
+        // If auth is not required then add a fallback filter to provide an UnauthenticatedUserIdentity
+        // rather than returning an empty optional
+        if (!configState.isAuthenticationRequired) {
+            filters.add(allowUnauthenticatedAuthenticatorProvider.get());
+        }
+
+        return AuthenticatorFilter.wrap(filters);
+    }
+
     private void processAttributes(final AttributeMap attributeMap,
                                    final Optional<UserIdentity> optUserIdentity) {
         if (attributeMap != null) {
@@ -142,27 +189,55 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             });
 
             // Remove authorization header from attributes as it should not be stored or forwarded on.
-            removeAuthorisationEntries(attributeMap);
+            NullSafe.consume(attributeMap, userIdentityFactory::removeAuthEntries);
         }
     }
 
-    @Override
-    public boolean hasAuthenticationToken(final HttpServletRequest request) {
-        return userIdentityFactory.hasAuthenticationToken(request);
-    }
+//    @Override
+//    public boolean hasAuthenticationToken(final HttpServletRequest request) {
+//        return userIdentityFactory.hasAuthenticationToken(request);
+//    }
+//
+//    @Override
+//    public void removeAuthorisationEntries(final Map<String, String> headers) {
+//        NullSafe.consume(headers, userIdentityFactory::removeAuthEntries);
+//    }
+//
+//    @Override
+//    public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
+//        return userIdentityFactory.getAuthHeaders(userIdentity);
+//    }
+//
+//    @Override
+//    public Map<String, String> getServiceUserAuthHeaders() {
+//        return userIdentityFactory.getServiceUserAuthHeaders();
+//    }
 
-    @Override
-    public void removeAuthorisationEntries(final Map<String, String> headers) {
-        NullSafe.consume(headers, userIdentityFactory::removeAuthEntries);
-    }
 
-    @Override
-    public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
-        return userIdentityFactory.getAuthHeaders(userIdentity);
-    }
+    // --------------------------------------------------------------------------------
 
-    @Override
-    public Map<String, String> getServiceUserAuthHeaders() {
-        return userIdentityFactory.getServiceUserAuthHeaders();
+
+    private record ConfigState(
+            String receiptPolicyUuid,
+            boolean isAuthenticationRequired,
+            Set<AuthenticationType> enabledAuthenticationTypes) {
+//            boolean isDatafeedKeyAuthenticationEnabled,
+//            boolean isTokenAuthenticationEnabled,
+//            boolean isCertificateAuthenticationEnabled) {
+
+        public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
+
+            return new ConfigState(
+                    receiveDataConfig.getReceiptPolicyUuid(),
+                    receiveDataConfig.isAuthenticationRequired(),
+                    NullSafe.enumSet(AuthenticationType.class, receiveDataConfig.getEnabledAuthenticationTypes()));
+//                    receiveDataConfig.isDatafeedKeyAuthenticationEnabled(),
+//                    receiveDataConfig.isTokenAuthenticationEnabled(),
+//                    receiveDataConfig.isCertificateAuthenticationEnabled());
+        }
+
+        public boolean isEnabled(final AuthenticationType authenticationType) {
+            return enabledAuthenticationTypes.contains(authenticationType);
+        }
     }
 }

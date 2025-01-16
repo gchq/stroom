@@ -4,8 +4,10 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.FeedStatus;
-import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.util.NullSafe;
+import stroom.util.cert.CertificateExtractor;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -27,7 +29,11 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
         final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
 
         final String senderDn = attributeMap.get(StandardHeaderArguments.REMOTE_DN);
-        final GetFeedStatusRequest request = new GetFeedStatusRequest(feedName, senderDn);
+        final String subjectId = NullSafe.get(senderDn, CertificateExtractor::extractCNFromDN);
+        final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
+                feedName,
+                subjectId,
+                attributeMap);
         final GetFeedStatusResponse response = getFeedStatus(request);
 
         if (FeedStatus.Reject.equals(response.getStatus())) {
@@ -37,7 +43,7 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
         return FeedStatus.Receive.equals(response.getStatus());
     }
 
-    private GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
+    private GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         final GetFeedStatusResponse response = feedStatusService.getFeedStatus(request);
         LOGGER.debug("getFeedStatus() " + request + " -> " + response);
         return response;

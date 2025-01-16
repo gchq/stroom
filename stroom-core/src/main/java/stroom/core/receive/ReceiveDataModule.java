@@ -28,6 +28,7 @@ public class ReceiveDataModule extends AbstractModule {
     protected void configure() {
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
+        bind(ContentAutoCreationService.class).to(ContentAutoCreationServiceImpl.class);
         bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
     }
 }

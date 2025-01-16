@@ -18,11 +18,13 @@ package stroom.proxy.app.handler;
 
 import stroom.docref.DocRef;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AuthenticationType;
+import stroom.receive.common.DataFeedKeyService;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
-import stroom.receive.common.PermissiveAttributeMapFilter;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.util.concurrent.PeriodicallyUpdatedValue;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -31,35 +33,96 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 @Singleton
 public class AttributeMapFilterFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapFilterFactory.class);
 
-    private final AttributeMapFilter attributeMapFilter;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
+    private final Provider<FeedStatusConfig> feedStatusConfigProvider;
+    private final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider;
+    private final DataFeedKeyService dataFeedKeyService;
+    private final PeriodicallyUpdatedValue<AttributeMapFilter, ConfigState> updatableAttributeMapFilter;
 
     @Inject
     public AttributeMapFilterFactory(
-            final ReceiveDataConfig receiveDataConfig,
-            final FeedStatusConfig feedStatusConfig,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+            final Provider<FeedStatusConfig> feedStatusConfigProvider,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
-            final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider) {
+            final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider,
+            final DataFeedKeyService dataFeedKeyService) {
 
-        if (StringUtils.isNotBlank(receiveDataConfig.getReceiptPolicyUuid())) {
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.feedStatusConfigProvider = feedStatusConfigProvider;
+        this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
+        this.remoteFeedStatusServiceProvider = remoteFeedStatusServiceProvider;
+        this.dataFeedKeyService = dataFeedKeyService;
+
+        // Every 60s, see if config has changed and if so create a new filter
+        this.updatableAttributeMapFilter = new PeriodicallyUpdatedValue<>(
+                Duration.ofSeconds(60),
+                this::create,
+                () -> ConfigState.fromConfig(
+                        receiveDataConfigProvider.get(),
+                        feedStatusConfigProvider.get()));
+    }
+
+    private AttributeMapFilter create(final ConfigState configState) {
+        final List<AttributeMapFilter> filters = new ArrayList<>();
+
+//        if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
+//            LOGGER.debug("Adding data feed key filter");
+//            filters.add(dataFeedKeyService);
+//        }
+
+//        if (NullSafe.isNonBlankString(configState.receiptPolicyUuid)) {
+        if (StringUtils.isNotBlank(configState.receiptPolicyUuid)) {
             LOGGER.info("Using data receipt policy to filter received data");
-            attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
-                    new DocRef(ReceiveDataRules.TYPE, receiveDataConfig.getReceiptPolicyUuid()));
-        } else if (StringUtils.isNotBlank(feedStatusConfig.getFeedStatusUrl())) {
+            filters.add(dataReceiptPolicyAttributeMapFilterFactory.create(
+                    new DocRef(ReceiveDataRules.TYPE, configState.receiptPolicyUuid)));
+        }
+
+//        if (NullSafe.isNonBlankString(configState.feedStatusUrl)) {
+        if (StringUtils.isNotBlank(configState.feedStatusUrl)) {
             LOGGER.info("Using remote feed status service to filter received data");
             final RemoteFeedStatusService remoteFeedStatusService = remoteFeedStatusServiceProvider.get();
-            attributeMapFilter = new FeedStatusAttributeMapFilter(remoteFeedStatusService);
-        } else {
-            LOGGER.info("Permitting receipt of all data");
-            attributeMapFilter = new PermissiveAttributeMapFilter();
+            filters.add(new FeedStatusAttributeMapFilter(remoteFeedStatusService));
         }
+
+        return AttributeMapFilter.wrap(filters);
     }
 
     public AttributeMapFilter create() {
-        return attributeMapFilter;
+        return updatableAttributeMapFilter.getValue();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ConfigState(
+            String receiptPolicyUuid,
+            Set<AuthenticationType> enabledAuthenticationTypes,
+            String feedStatusUrl) {
+
+        public static ConfigState fromConfig(
+                final ReceiveDataConfig receiveDataConfig,
+                final FeedStatusConfig feedStatusConfig) {
+
+            return new ConfigState(
+                    receiveDataConfig.getReceiptPolicyUuid(),
+                    receiveDataConfig.getEnabledAuthenticationTypes(),
+                    feedStatusConfig.getFeedStatusUrl());
+        }
+
+        public boolean isEnabled(final AuthenticationType authenticationType) {
+            return enabledAuthenticationTypes.contains(authenticationType);
+        }
     }
 }
