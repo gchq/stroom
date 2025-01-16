@@ -25,18 +25,16 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.data.MergeProcessor;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateType;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.state.impl.ScyllaDbDocStore;
-import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.StateDocStore;
-import stroom.state.shared.ScyllaDbDoc;
-import stroom.state.shared.StateDoc;
-import stroom.state.shared.StateType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
@@ -57,12 +55,12 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestStateLookupTask extends AbstractProcessIntegrationTest {
+class TestPlanBLookupTask extends AbstractProcessIntegrationTest {
 
     private static final int N3 = 3;
     private static final int N4 = 4;
 
-    private static final String DIR = "TestStateLookupTask/";
+    private static final String DIR = "TestPlanBLookupTask/";
 
     @Inject
     private MockMetaService metaService;
@@ -71,13 +69,13 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
-    private ScyllaDbDocStore scyllaDbDocStore;
-    @Inject
-    private StateDocStore stateDocStore;
+    private PlanBDocStore stateDocStore;
     @Inject
     private ProcessorFilterService processorFilterService;
     @Inject
     private StoreCreationTool storeCreationTool;
+    @Inject
+    private MergeProcessor mergeProcessor;
 
     @Test
     void test() throws IOException {
@@ -87,21 +85,14 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         // Process reference data.
         process(3);
 
-        // Alter the scylla db doc to create an isolated instance.
-        assertThat(scyllaDbDocStore.list().size()).isOne();
-        final ScyllaDbDoc scyllaDbDoc = scyllaDbDocStore.readDocument(scyllaDbDocStore.list().getFirst());
-
-        scyllaDbDoc.setConnection(ScyllaDbUtil.getDefaultConnection());
-        scyllaDbDocStore.writeDocument(scyllaDbDoc);
-
-        final DocRef stateDoc1 = createStateDoc(scyllaDbDoc, "hostname_to_location_map");
-        final DocRef stateDoc2 = createStateDoc(scyllaDbDoc, "hostname_to_ip_map");
-        final DocRef stateDoc3 = createStateDoc(scyllaDbDoc, "id_to_user_map");
-        final DocRef stateDoc4 = createStateDoc(scyllaDbDoc, "number_to_id");
+        final DocRef stateDoc1 = createStateDoc("hostname_to_location_map");
+        final DocRef stateDoc2 = createStateDoc("hostname_to_ip_map");
+        final DocRef stateDoc3 = createStateDoc("id_to_user_map");
+        final DocRef stateDoc4 = createStateDoc("number_to_id");
 
         // Add reference data to state store.
         // Setup the pipeline.
-        final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "571a3ca1-5f94-4dcb-8289-119a95d60360");
+        final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "571a3ca3-5f94-4dcb-8289-119a95d60360");
         // Setup the stream processor filter to process all reference data.
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
@@ -122,6 +113,9 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         // Process reference data into state store.
         final List<ProcessorResult> refDataProcessResults = commonTranslationTestHelper.processAll();
         assertThat(refDataProcessResults).hasSize(3);
+
+        // Now merge all of the current state data.
+        mergeProcessor.mergeCurrent();
 
         // Add event data and processor filters.
         final List<PipelineReference> pipelineReferences = Stream
@@ -152,13 +146,13 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir,
-                        "TestStateLookupTask.out");
+                        "TestPlanBLookupTask.out");
                 os.write(data);
                 os.flush();
                 os.close();
 
-                ComparisonHelper.compareFiles(inputDir.resolve("TestStateLookupTask.out"),
-                        outputDir.resolve("TestStateLookupTask.out"));
+                ComparisonHelper.compareFiles(inputDir.resolve("TestPlanBLookupTask.out"),
+                        outputDir.resolve("TestPlanBLookupTask.out"));
             }
         }
 
@@ -183,10 +177,9 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         }
     }
 
-    private DocRef createStateDoc(final ScyllaDbDoc scyllaDbDoc, final String name) {
+    private DocRef createStateDoc(final String name) {
         final DocRef docRef = stateDocStore.createDocument(name);
-        final StateDoc doc = stateDocStore.readDocument(docRef);
-        doc.setScyllaDbRef(scyllaDbDoc.asDocRef());
+        final PlanBDoc doc = stateDocStore.readDocument(docRef);
         doc.setStateType(StateType.TEMPORAL_STATE);
         stateDocStore.writeDocument(doc);
         return docRef;

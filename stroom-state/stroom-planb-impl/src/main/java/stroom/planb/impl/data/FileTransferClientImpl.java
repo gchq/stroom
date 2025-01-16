@@ -20,6 +20,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -48,8 +49,8 @@ public class FileTransferClientImpl implements FileTransferClient {
     public FileTransferClientImpl(final Provider<PlanBConfig> configProvider,
                                   final NodeService nodeService,
                                   final NodeInfo nodeInfo,
-                                  final TargetNodeSetFactory targetNodeSetFactory,
-                                  final WebTargetFactory webTargetFactory,
+                                  @Nullable final TargetNodeSetFactory targetNodeSetFactory,
+                                  @Nullable final WebTargetFactory webTargetFactory,
                                   final SequentialFileStore fileStore,
                                   final SecurityContext securityContext) {
         this.configProvider = configProvider;

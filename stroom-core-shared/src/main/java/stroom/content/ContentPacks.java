@@ -11,8 +11,8 @@ public class ContentPacks {
     private static final GitRepo STROOM_CONTENT_GIT_REPO =
             new GitRepo("stroom-content",
                     "https://github.com/gchq/stroom-content.git",
-                    "7.5",
-                    "d5371bd52c8f812fdace2c35d40d84fc79c1f49d");
+                    "planb",
+                    "325c2df25e729b34ae058e1f0dab74bc9c262c9e");
     private static final GitRepo STROOM_VISUALISATION_DEV_GIT_REPO =
             new GitRepo("stroom-visualisations-dev",
                     "https://github.com/gchq/stroom-visualisations-dev.git",
@@ -43,6 +43,8 @@ public class ContentPacks {
 
     public static final ContentPack STATE = createStandardContentPack("state");
 
+    public static final ContentPack PLANB = createStandardContentPack("planb");
+
     //TEMPLATE_PIPELINES_PACK
 
     public static final ContentPack VISUALISATIONS = createVisualisationContentPack(
@@ -59,6 +61,7 @@ public class ContentPacks {
                     STROOM_101,
                     STROOM_LOGS,
                     STATE,
+                    PLANB,
                     TEMPLATE_PIPELINES_PACK,
                     VISUALISATIONS));
 

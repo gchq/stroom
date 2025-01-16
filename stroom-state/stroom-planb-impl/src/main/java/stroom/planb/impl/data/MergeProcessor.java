@@ -99,6 +99,16 @@ public class MergeProcessor {
         });
     }
 
+    public void mergeCurrent() throws IOException {
+        final long start = fileStore.getMinStoreId();
+        final long end = fileStore.getMaxStoreId();
+        for (long storeId = start; storeId <= end; storeId++) {
+            // Wait until new data is available.
+            final SequentialFile sequentialFile = fileStore.awaitNew(storeId);
+            merge(sequentialFile);
+        }
+    }
+
     public void merge(final long storeId) throws IOException {
         // Wait until new data is available.
         final SequentialFile sequentialFile = fileStore.awaitNew(storeId);
