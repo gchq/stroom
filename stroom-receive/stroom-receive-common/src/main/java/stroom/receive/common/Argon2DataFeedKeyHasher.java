@@ -1,6 +1,5 @@
 package stroom.receive.common;
 
-import stroom.receive.common.DataFeedKeyServiceImpl.DataFeedKeyHashAlgorithm;
 import stroom.util.string.Base58;
 
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;

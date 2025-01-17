@@ -6,6 +6,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.IsSupersetOf;
+import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,7 +43,7 @@ public class ReceiveDataConfig
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
         metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
-        enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERT);
+        enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
         autoContentCreation = new AutoContentCreationConfig();
@@ -83,7 +84,7 @@ public class ReceiveDataConfig
     @NotNull
     @NotEmpty
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
-            "in the default value for this property but can contain additional names.")
+                             "in the default value for this property but can contain additional names.")
     @IsSupersetOf(requiredValues = {
             StreamTypeNames.RAW_EVENTS,
             StreamTypeNames.RAW_REFERENCE,
@@ -108,7 +109,7 @@ public class ReceiveDataConfig
      */
     public boolean isAuthenticationTypeEnabled(final AuthenticationType authenticationType) {
         return authenticationType != null
-                && enabledAuthenticationTypes.contains(authenticationType);
+               && enabledAuthenticationTypes.contains(authenticationType);
     }
 
     @JsonProperty("autoContentCreation")
@@ -118,19 +119,21 @@ public class ReceiveDataConfig
 
     @JsonPropertyDescription(
             "If true, the sender will be authenticated using a certificate or token depending on the " +
-                    "state of tokenAuthenticationEnabled and certificateAuthenticationEnabled. If the sender " +
-                    "can't be authenticated an error will be returned to the client." +
-                    "If false, then authentication will be performed if a token/key/certificate " +
-                    "is present, otherwise data will be accepted without a sender identity.")
+            "state of tokenAuthenticationEnabled and certificateAuthenticationEnabled. If the sender " +
+            "can't be authenticated an error will be returned to the client." +
+            "If false, then authentication will be performed if a token/key/certificate " +
+            "is present, otherwise data will be accepted without a sender identity.")
     public boolean isAuthenticationRequired() {
         return authenticationRequired;
     }
 
+    @ValidDirectoryPath
     @JsonPropertyDescription("The directory where Stroom will look for datafeed key files. " +
-            "Only used if datafeedKeyAuthenticationEnabled is true." +
-            "If the value is a relative path then it will be treated as being " +
-            "relative to stroom.path.home. " +
-            "Data feed key files must have the extension .json. Files in sub-directories will be ignored.")
+                             "Only used if datafeedKeyAuthenticationEnabled is true." +
+                             "If the value is a relative path then it will be treated as being " +
+                             "relative to stroom.path.home. " +
+                             "Data feed key files must have the extension .json. Files in sub-directories" +
+                             "will be ignored.")
     public String getDataFeedKeysDir() {
         return dataFeedKeysDir;
     }
@@ -138,20 +141,20 @@ public class ReceiveDataConfig
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
-            "contain at least one authentication type.")
+                                "contain at least one authentication type.")
     public boolean isAuthenticationRequiredValid() {
         return !authenticationRequired
-                || !enabledAuthenticationTypes.isEmpty();
+               || !enabledAuthenticationTypes.isEmpty();
     }
 
     @Override
     public String toString() {
         return "ReceiveDataConfig{" +
-                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
-                ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
-                ", authenticationRequired=" + authenticationRequired +
-                ", dataFeedKeysDir=" + dataFeedKeysDir +
-                '}';
+               "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
+               ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
+               ", authenticationRequired=" + authenticationRequired +
+               ", dataFeedKeysDir=" + dataFeedKeysDir +
+               '}';
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {

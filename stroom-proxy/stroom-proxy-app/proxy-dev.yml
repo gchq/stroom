@@ -111,9 +111,11 @@ proxyConfig:
   # in Stroom and have the UUID as specified below in receiptPolicyUuid
   receive:
     receiptPolicyUuid:
-    certificateAuthenticationEnabled: false
-    tokenAuthenticationEnabled: false
     authenticationRequired: false
+    enabledAuthenticationTypes:
+      - CERTIFICATE
+      - DATA_FEED_KEY
+      - TOKEN
 
   # Do we want to aggregate before forwarding
   aggregator:

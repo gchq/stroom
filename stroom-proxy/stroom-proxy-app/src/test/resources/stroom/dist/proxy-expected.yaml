@@ -78,9 +78,14 @@ proxyConfig:
   proxyId: null
   receive:
     authenticationRequired: true
-    certificateAuthenticationEnabled: true
+    autoContentCreation:
+      additionalGroupSuffix: " (sandbox)"
+      destinationPath: "/Feeds"
+      enabled: false
+      templatesPath: "/Feeds/Content Templates"
     dataFeedKeysDir: "data_feed_keys"
-    datafeedKeyAuthenticationEnabled: false
+    enabledAuthenticationTypes:
+    - "CERTIFICATE"
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -94,7 +99,6 @@ proxyConfig:
     - "Meta Data"
     - "Records"
     receiptPolicyUuid: null
-    tokenAuthenticationEnabled: false
   security:
     authentication:
       authenticationRequired: true

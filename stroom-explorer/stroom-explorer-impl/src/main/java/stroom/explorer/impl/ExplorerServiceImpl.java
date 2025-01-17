@@ -967,39 +967,30 @@ class ExplorerServiceImpl
                     docPath, explorerNodeService.getRoot()));
         }
         Objects.requireNonNull(docPath);
-        AtomicReference<ExplorerNode> parentNode = new AtomicReference<>();
+        AtomicReference<ExplorerNode> parentNode = new AtomicReference<>(baseNode);
         docPath.forEach((idx, pathPart) -> {
-            if (idx == 0) {
-                final ExplorerNode root = explorerNodeService.getRoot();
-                parentNode.set(explorerNodeService.getRoot());
-                if (!Objects.equals(pathPart, root.getName())) {
-                    throw new RuntimeException(LogUtil.message("Invalid document path '{}'. Must start with /{}",
-                            docPath.toString(), root.getName()));
-                }
-            } else {
-                final List<ExplorerNode> childNodes = explorerNodeService.getNodesByNameAndType(
-                        parentNode.get(),
-                        pathPart,
-                        ExplorerConstants.FOLDER_TYPE);
-                final ExplorerNode childNode;
+            final List<ExplorerNode> childNodes = explorerNodeService.getNodesByNameAndType(
+                    parentNode.get(),
+                    pathPart,
+                    ExplorerConstants.FOLDER_TYPE);
+            final ExplorerNode childNode;
 
-                if (childNodes.size() > 1) {
-                    throw new RuntimeException(LogUtil.message(
-                            "Found {} folders with name '{}' that are a child of {}",
-                            childNodes.size(), pathPart, parentNode));
-                } else if (childNodes.isEmpty()) {
-                    // node doesn't exist so create it
-                    childNode = create(
-                            ExplorerConstants.FOLDER_TYPE,
-                            pathPart,
-                            parentNode.get(),
-                            PermissionInheritance.DESTINATION);
-                } else {
-                    // One node found
-                    childNode = childNodes.get(0);
-                }
-                parentNode.set(childNode);
+            if (childNodes.size() > 1) {
+                throw new RuntimeException(LogUtil.message(
+                        "Found {} folders with name '{}' that are a child of {}",
+                        childNodes.size(), pathPart, parentNode));
+            } else if (childNodes.isEmpty()) {
+                // node doesn't exist so create it
+                childNode = create(
+                        ExplorerConstants.FOLDER_TYPE,
+                        pathPart,
+                        parentNode.get(),
+                        PermissionInheritance.DESTINATION);
+            } else {
+                // One node found
+                childNode = childNodes.get(0);
             }
+            parentNode.set(childNode);
         });
         return parentNode.get();
     }

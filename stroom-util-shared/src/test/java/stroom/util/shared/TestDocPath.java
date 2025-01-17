@@ -5,6 +5,7 @@ import stroom.test.common.TestUtil;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -148,10 +149,10 @@ class TestDocPath {
         DocPath docPath2 = DocPath.fromParts("name");
 
         Assertions.assertThatThrownBy(
-                () -> {
-                    assertThat(docPath1.append(docPath2).toString())
-                            .isEqualTo("/stroom/node/name");
-                })
+                        () -> {
+                            assertThat(docPath1.append(docPath2).toString())
+                                    .isEqualTo("/stroom/node/name");
+                        })
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -270,8 +271,10 @@ class TestDocPath {
                                  final Class<T> clazz) throws IOException {
 
         final ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new Jdk8Module());
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
 
         assertThat(mapper.canSerialize(entity.getClass()))
                 .isTrue();

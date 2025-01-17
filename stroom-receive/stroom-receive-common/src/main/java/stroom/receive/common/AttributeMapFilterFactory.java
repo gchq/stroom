@@ -7,6 +7,7 @@ import stroom.util.concurrent.PeriodicallyUpdatedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
@@ -30,6 +31,7 @@ public class AttributeMapFilterFactory {
 
     private final PeriodicallyUpdatedValue<AttributeMapFilter, ConfigState> updatableAttributeMapFilter;
 
+    @Inject
     public AttributeMapFilterFactory(
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final Provider<FeedStatusService> feedStatusServiceProvider,

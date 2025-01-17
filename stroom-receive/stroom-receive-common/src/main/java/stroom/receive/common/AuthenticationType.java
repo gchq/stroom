@@ -5,7 +5,7 @@ import stroom.docref.HasDisplayValue;
 public enum AuthenticationType implements HasDisplayValue {
     DATA_FEED_KEY("Data feed key"),
     TOKEN("OAuth Token"),
-    CERT("Client certificate"),
+    CERTIFICATE("Client certificate"),
     ;
 
     private final String displayValue;
@@ -22,7 +22,7 @@ public enum AuthenticationType implements HasDisplayValue {
     @Override
     public String toString() {
         return "AuthenticationType{" +
-                "displayValue='" + displayValue + '\'' +
-                '}';
+               "displayValue='" + displayValue + '\'' +
+               '}';
     }
 }

@@ -15,6 +15,7 @@ dependencies {
     testImplementation libs.guice
     testImplementation libs.jackson_core
     testImplementation libs.jackson_databind
+    testImplementation libs.jackson_datatype_jdk8
     testImplementation libs.junit_jupiter_api
     testImplementation libs.junit_jupiter_params
     testImplementation libs.slf4j_api

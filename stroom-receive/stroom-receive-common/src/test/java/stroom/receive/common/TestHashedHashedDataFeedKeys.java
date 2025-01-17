@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -18,56 +19,61 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDataFeedKeys {
+class TestHashedHashedDataFeedKeys {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataFeedKeys.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedHashedDataFeedKeys.class);
 
     public static void main(String[] args) throws IOException {
         final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
 
-        @SuppressWarnings("checkstyle:lineLength") final String key1 = "sdk_"
+        @SuppressWarnings("checkstyle:lineLength") final String key1 =
+                "sdk_"
                 + hasher.getAlgorithm().getUniqueId()
                 + "_"
                 + "okfXqkmtns3k4828fZcnutWUFmegj3hqk83o9sYCLefWGTrRrpT6Bt23FuT1ebwcftPNaL1B7aFbK37gbpefZgQeeP3esbnvNXu612co4awVxpn33He6i1vn7g8kUFEk";
-        @SuppressWarnings("checkstyle:lineLength") final String key2 = "sdk_"
+        @SuppressWarnings("checkstyle:lineLength") final String key2 =
+                "sdk_"
                 + hasher.getAlgorithm().getUniqueId()
                 + "_"
                 + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
 
-        final DataFeedKey dataFeedKey1 = new DataFeedKey(
+        final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
-                hasher.getAlgorithm().getDisplayValue(),
-                "user1",
+                hasher.getAlgorithm().getUniqueId(),
+                "datafeed-key-user1",
                 "user 1",
-                "system 1",
+                "1234",
                 Map.of(
                         "key1", "val1",
                         "key2", "val2"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
-        final DataFeedKey dataFeedKey2 = new DataFeedKey(
+        final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
-                hasher.getAlgorithm().getDisplayValue(),
-                "user2",
+                hasher.getAlgorithm().getUniqueId(),
+                "datafeed-key-user2",
                 "user 2",
-                "system 2",
+                "6789",
                 Map.of(
                         "key3", "val3",
                         "key4", "val4"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
-        final DataFeedKeys dataFeedKeys = new DataFeedKeys(List.of(
-                dataFeedKey1,
-                dataFeedKey2));
+        final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(List.of(
+                hashedDataFeedKey1,
+                hashedDataFeedKey2));
 
         final ObjectMapper mapper = JsonUtil.getMapper();
         final Path dir = Paths.get("/tmp/TestDataFeedKeys");
         Files.createDirectories(dir);
         final Path filePath = dir.resolve("file1.json");
-        mapper.writeValue(filePath.toFile(), dataFeedKeys);
+        final String json = mapper.writeValueAsString(hashedDataFeedKeys);
+        Files.writeString(filePath, json, StandardOpenOption.WRITE);
 
         LOGGER.info("key1:\n{}", key1);
         LOGGER.info("key2:\n{}", key2);
+        LOGGER.info("json\n{}", json);
+        LOGGER.info("JSON written to {}", filePath.toAbsolutePath());
     }
 
     @Test
@@ -75,15 +81,15 @@ class TestDataFeedKeys {
         final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
 
         @SuppressWarnings("checkstyle:lineLength") final String key1 = "sdk_"
-                + hasher.getAlgorithm().getUniqueId()
-                + "_"
-                + "okfXqkmtns3k4828fZcnutWUFmegj3hqk83o9sYCLefWGTrRrpT6Bt23FuT1ebwcftPNaL1B7aFbK37gbpefZgQeeP3esbnvNXu612co4awVxpn33He6i1vn7g8kUFEk";
+                                                                       + hasher.getAlgorithm().getUniqueId()
+                                                                       + "_"
+                                                                       + "okfXqkmtns3k4828fZcnutWUFmegj3hqk83o9sYCLefWGTrRrpT6Bt23FuT1ebwcftPNaL1B7aFbK37gbpefZgQeeP3esbnvNXu612co4awVxpn33He6i1vn7g8kUFEk";
         @SuppressWarnings("checkstyle:lineLength") final String key2 = "sdk_"
-                + hasher.getAlgorithm().getUniqueId()
-                + "_"
-                + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
+                                                                       + hasher.getAlgorithm().getUniqueId()
+                                                                       + "_"
+                                                                       + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
 
-        final DataFeedKey dataFeedKey1 = new DataFeedKey(
+        final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
                 hasher.getAlgorithm().getUniqueId(),
                 "user1",
@@ -94,7 +100,7 @@ class TestDataFeedKeys {
                         "key2", "val2"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
-        final DataFeedKey dataFeedKey2 = new DataFeedKey(
+        final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
                 hasher.getAlgorithm().getUniqueId(),
                 "user2",
@@ -104,11 +110,11 @@ class TestDataFeedKeys {
                         "key3", "val3",
                         "key4", "val4"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        final DataFeedKeys dataFeedKeys = new DataFeedKeys(List.of(
-                dataFeedKey1,
-                dataFeedKey2));
+        final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(List.of(
+                hashedDataFeedKey1,
+                hashedDataFeedKey2));
 
-        doSerdeTest(dataFeedKeys, DataFeedKeys.class);
+        doSerdeTest(hashedDataFeedKeys, HashedDataFeedKeys.class);
     }
 
     private <T> void doSerdeTest(final T entity,

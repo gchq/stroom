@@ -24,7 +24,9 @@ public class AttributeMap extends CIStringHashMap {
 
     public AttributeMap(final boolean overrideEmbeddedMeta, final Map<String, String> values) {
         this.overrideEmbeddedMeta = overrideEmbeddedMeta;
-        putAll(values);
+        if (values != null) {
+            putAll(values);
+        }
     }
 
     public AttributeMap() {
@@ -33,7 +35,9 @@ public class AttributeMap extends CIStringHashMap {
 
     public AttributeMap(final Map<String, String> values) {
         this.overrideEmbeddedMeta = false;
-        putAll(values);
+        if (values != null) {
+            putAll(values);
+        }
     }
 
     private AttributeMap(final Builder builder) {

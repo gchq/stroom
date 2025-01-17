@@ -100,6 +100,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         if (isValidDir) {
             try {
                 startWatcher();
+                onInitialisation();
             } catch (Exception e) {
                 // Swallow and log as we don't want to stop the app from starting just for this
                 errors.add(e.getMessage());
@@ -205,7 +206,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         try {
             final EventType eventType = EventType.fromKind(kind);
             if (eventType != null
-                    && includedEventTypes.contains(eventType)) {
+                && includedEventTypes.contains(eventType)) {
 
                 // Add the event to our batch.
                 // It will either get consumed by an already scheduled thread or one we schedule
@@ -271,8 +272,8 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
             }
             if (executorService != null) {
                 if (watcherFuture != null
-                        && !watcherFuture.isCancelled()
-                        && !watcherFuture.isDone()) {
+                    && !watcherFuture.isCancelled()
+                    && !watcherFuture.isDone()) {
                     watcherFuture.cancel(true);
                 }
                 executorService.shutdown();

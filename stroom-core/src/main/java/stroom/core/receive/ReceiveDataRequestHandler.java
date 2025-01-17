@@ -104,7 +104,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
             // Validate the supplied attributes.
-            attributeMapValidator.validate(attributeMap, metaService::getTypes);
+//            attributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             // Create a new receiptId for the request, so we can track progress and report back the
             // receiptId to the sender

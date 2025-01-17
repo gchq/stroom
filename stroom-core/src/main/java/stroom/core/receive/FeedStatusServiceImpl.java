@@ -29,7 +29,9 @@ import stroom.receive.common.AutoContentCreationConfig;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -37,6 +39,8 @@ import jakarta.inject.Provider;
 import java.util.regex.Pattern;
 
 class FeedStatusServiceImpl implements FeedStatusService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStatusServiceImpl.class);
 
     private static final Pattern REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_]");
     public static final String NAME_PART_DELIMITER = "-";
@@ -85,42 +89,38 @@ class FeedStatusServiceImpl implements FeedStatusService {
                     }
 
                     FeedStatus feedStatus = feedProperties.getStatus(feedName);
+                    final UserDesc userDesc = request.getUserDesc();
+                    final AttributeMap attributeMap = new AttributeMap(request.getAttributeMap());
+
+                    LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
+                            feedName, userDesc, feedStatus);
 
                     // Feed does not exist so auto-create it if so configured
-                    if (feedStatus == null
-                        && autoContentCreationConfigProvider.get().isEnabled()) {
-
-                        final AttributeMap attributeMap = NullSafe.get(
-                                request.getAttributeMap(),
-                                reqAttrMap -> {
-                                    final AttributeMap attrMap = new AttributeMap();
-                                    attrMap.putAll(reqAttrMap);
-                                    return attrMap;
-                                });
-
-                        feedStatus = contentAutoCreationService.createFeed(
-                                        feedName,
-                                        request.getSubjectId(),
-                                        attributeMap)
-                                .map(FeedDoc::getStatus)
-                                .orElse(null);
+                    if (feedStatus == null && userDesc != null) {
+                        if (autoContentCreationConfigProvider.get().isEnabled()) {
+                            // Create the feed if it doesn't already exist
+                            feedStatus = contentAutoCreationService.tryCreateFeed(feedName, userDesc, attributeMap)
+                                    .map(FeedDoc::getStatus)
+                                    .orElse(null);
+                        } else {
+                            LOGGER.debug("Content auto-creation disabled");
+                        }
+                    } else {
+                        LOGGER.debug("Can't auto-create");
                     }
+                    LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
+                            feedName, userDesc, feedStatus);
                     return buildGetFeedStatusResponse(feedStatus);
                 }));
     }
 
     private static GetFeedStatusResponse buildGetFeedStatusResponse(final FeedStatus feedStatus) {
-        if (feedStatus == null) {
-            return GetFeedStatusResponse.createFeedIsNotDefinedResponse();
-        } else {
-            if (FeedStatus.REJECT.equals(feedStatus)) {
-                return GetFeedStatusResponse.createFeedNotSetToReceiveDataResponse();
-            }
-            if (FeedStatus.DROP.equals(feedStatus)) {
-                return GetFeedStatusResponse.createOKDropResponse();
-            }
-        }
-
+        return switch (feedStatus) {
+            case null -> GetFeedStatusResponse.createFeedIsNotDefinedResponse();
+            case RECEIVE -> GetFeedStatusResponse.createOKReceiveResponse();
+            case REJECT -> GetFeedStatusResponse.createFeedNotSetToReceiveDataResponse();
+            case DROP -> GetFeedStatusResponse.createOKDropResponse();
+        };
         // All OK so far
 
         // TODO : REPLACE THIS WITH A POLICY BASED DECISION.
@@ -154,7 +154,5 @@ class FeedStatusServiceImpl implements FeedStatusService {
 //                }
 //            }
 //        }
-//
-        return GetFeedStatusResponse.createOKReceiveResponse();
     }
 }

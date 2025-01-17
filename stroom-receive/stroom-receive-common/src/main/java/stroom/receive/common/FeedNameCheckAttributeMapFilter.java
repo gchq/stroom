@@ -51,7 +51,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         if (isAutoContentEnabled) {
             // If they supply a feed then go with that
             if (feedName.isEmpty()) {
-                final String accountName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_NAME));
+                final String accountName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
                 if (accountName.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.ACCOUNT_ID_MUST_BE_SPECIFIED, attributeMap);
                 }

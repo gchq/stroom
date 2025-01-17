@@ -1,7 +1,5 @@
 package stroom.receive.common;
 
-import stroom.receive.common.DataFeedKeyServiceImpl.DataFeedKeyHashAlgorithm;
-
 interface DataFeedKeyHasher {
 
     String hash(String dataFeedKey);

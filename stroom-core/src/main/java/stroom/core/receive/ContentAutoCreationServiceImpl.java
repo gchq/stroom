@@ -13,11 +13,10 @@ import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.DataFormatNames;
 import stroom.receive.common.AutoContentCreationConfig;
-import stroom.receive.common.DataFeedKey;
-import stroom.receive.common.DataFeedKeyService;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -35,6 +34,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -49,11 +49,11 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final DocumentPermissionService documentPermissionService;
     private final AppPermissionService appPermissionService;
     private final UserService userService;
-    private final DataFeedKeyService dataFeedKeyService;
     private final FeedStore feedStore;
     private final ExplorerService explorerService;
     private final ClusterLockService clusterLockService;
     private final MetaService metaService;
+    private final SecurityContext securityContext;
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -61,47 +61,43 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final DocumentPermissionService documentPermissionService,
                                           final AppPermissionService appPermissionService,
                                           final UserService userService,
-                                          final DataFeedKeyService dataFeedKeyService,
                                           final FeedStore feedStore,
                                           final ExplorerService explorerService,
                                           final ClusterLockService clusterLockService,
-                                          final MetaService metaService) {
+                                          final MetaService metaService,
+                                          final SecurityContext securityContext) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
         this.appPermissionService = appPermissionService;
         this.userService = userService;
-        this.dataFeedKeyService = dataFeedKeyService;
         this.feedStore = feedStore;
         this.explorerService = explorerService;
         this.clusterLockService = clusterLockService;
         this.metaService = metaService;
+        this.securityContext = securityContext;
     }
 
     @Override
-    public Optional<FeedDoc> createFeed(final String feedName,
-                                        final String subjectId,
-                                        final AttributeMap attributeMap) {
-        if (NullSafe.isBlankString(subjectId)) {
-            // Can't auto create if we have no identity
-            return Optional.empty();
-        }
-        LOGGER.debug("attributeMap: {}", attributeMap);
+    public Optional<FeedDoc> tryCreateFeed(final String feedName,
+                                           final UserDesc userDesc,
+                                           final AttributeMap attributeMap) {
+        Objects.requireNonNull(userDesc);
+        LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
+                feedName, userDesc, attributeMap);
 
-        final Optional<FeedDoc> optFeedDoc = dataFeedKeyService.getDataFeedKey(subjectId)
-                .flatMap(dataFeedKey ->
-                        ensureFeed(feedName, subjectId, attributeMap, dataFeedKey));
+        final Optional<FeedDoc> optFeedDoc = securityContext.asProcessingUserResult(() ->
+                ensureFeed(feedName, userDesc, attributeMap));
 
-        LOGGER.debug("feedName: '{}', subjectId: '{}', optFeedDoc: {}",
-                feedName, subjectId, optFeedDoc);
+        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                feedName, userDesc, optFeedDoc);
 
         return optFeedDoc;
     }
 
     private Optional<FeedDoc> ensureFeed(final String feedName,
-                                         final String subjectId,
-                                         final AttributeMap attributeMap,
-                                         final DataFeedKey dataFeedKey) {
+                                         final UserDesc userDesc,
+                                         final AttributeMap attributeMap) {
 
         // We will only come in here if the caller thought the feed needed creating
         // so the lock won't impact normal running once the feed is set up.
@@ -115,7 +111,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             final List<DocRef> feeds = feedStore.findByName(feedName);
             if (feeds.isEmpty()) {
                 try {
-                    docRef = createFeed(feedName, subjectId, attributeMap, dataFeedKey);
+                    docRef = doCreateFeed(feedName, userDesc, attributeMap);
                 } catch (EntityServiceException e) {
                     // It's possible that another thread/node has created the feed
                     if (NullSafe.containsIgnoringCase(e.getMessage(), "exists")) {
@@ -137,40 +133,37 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         return Optional.of(feedStore.readDocument(feedDocRef));
     }
 
-    private DocRef createFeed(final String feedName,
-                              final String subjectId,
-                              final AttributeMap attributeMap,
-                              final DataFeedKey dataFeedKey) {
+    private DocRef doCreateFeed(final String feedName,
+                                final UserDesc userDesc,
+                                final AttributeMap attributeMap) {
 
         final AutoContentCreationConfig config = autoContentCreationConfigProvider.get();
         final String destinationPath = config.getDestinationPath();
+        final String accountId = Objects.requireNonNull(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
         final DocPath docPath = DocPath.fromPathString(destinationPath)
-                .append(dataFeedKey.getAccountName());
+                .append(accountId);
 
         LOGGER.info("Ensuring path '{}' exists", docPath);
         final ExplorerNode destFolder = explorerService.ensureFolderPath(docPath, PermissionInheritance.DESTINATION);
         final DocRef destFolderRef = destFolder.getDocRef();
-        final String systemName = dataFeedKey.getAccountName();
 
-        LOGGER.info("Ensuing user with subjectId: '{}' exists", subjectId);
-        final UserDesc userDesc = UserDesc.builder(dataFeedKey.getSubjectId())
-                .displayName(dataFeedKey.getDisplayName())
-                .build();
+        LOGGER.info("Ensuing user with userRef: '{}' exists", userDesc);
         final User user = userService.getOrCreateUser(userDesc);
         final UserRef userRef = user.asRef();
 
+        final String groupName = "grp-" + accountId;
         LOGGER.info("Auto-creating user group '{}', and adding userRef {} to it",
-                systemName, userRef);
-        final User systemGroup = userService.getOrCreateUserGroup(systemName);
-        addAppPerms(systemGroup);
-        userService.addUserToGroup(userRef, systemGroup.asRef());
+                groupName, userRef);
+        final User group = userService.getOrCreateUserGroup(groupName);
+        addAppPerms(group);
+        userService.addUserToGroup(userRef, group.asRef());
 
         Optional<User> optAdditionalGroup = Optional.empty();
         if (!NullSafe.isBlankString(config.getAdditionalGroupSuffix())) {
-            final String name = systemName + config.getAdditionalGroupSuffix();
+            final String additionalGroupName = groupName + config.getAdditionalGroupSuffix();
             LOGGER.info("Auto-creating user group '{}', and adding userRef {} to it",
-                    name, userRef);
-            final User additionalGroup = userService.getOrCreateUserGroup(name);
+                    additionalGroupName, userRef);
+            final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);
             addAppPerms(additionalGroup);
             userService.addUserToGroup(userRef, additionalGroup.asRef());
             optAdditionalGroup = Optional.of(additionalGroup);
@@ -186,12 +179,12 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
         // Set up the feed doc using the information in the data feed key
-        configureFeed(feedDoc, attributeMap, dataFeedKey);
+        configureFeed(feedDoc, attributeMap, accountId);
         feedDoc = feedStore.writeDocument(feedDoc);
 
         LOGGER.info("Granting READ permission on {} and {}", destFolderRef, feedDocRef);
-        setUpdateDocPerms(systemGroup, destFolderRef, DocumentPermission.VIEW);
-        setUpdateDocPerms(systemGroup, feedDocRef, DocumentPermission.VIEW);
+        setUpdateDocPerms(group, destFolderRef, DocumentPermission.VIEW);
+        setUpdateDocPerms(group, feedDocRef, DocumentPermission.VIEW);
 
         optAdditionalGroup.ifPresent(additionalGroup -> {
             LOGGER.info("Granting UPDATE permission on {} and {}", destFolderRef, feedDocRef);
@@ -206,7 +199,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private void configureFeed(final FeedDoc feedDoc,
                                final AttributeMap attributeMap,
-                               final DataFeedKey dataFeedKey) {
+                               final String accountId) {
         if (NullSafe.hasEntries(attributeMap)) {
             final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
@@ -218,7 +211,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 }
             });
 
-            feedDoc.setDescription("Auto-created for system '" + dataFeedKey.getAccountName() + "'");
+            feedDoc.setDescription("Auto-created for accountId '" + accountId + "'");
             feedDoc.setStatus(FeedStatus.RECEIVE);
 
             consumeAttrVal(attributeMap, StandardHeaderArguments.ENCODING, val ->
@@ -284,10 +277,11 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     }
 
     private void addAppPerms(final User user) {
-        appPermissionService.addPermission(user.asRef(), AppPermission.VIEW_DATA_PERMISSION);
-        appPermissionService.addPermission(user.asRef(), AppPermission.EXPORT_DATA_PERMISSION);
-        appPermissionService.addPermission(user.asRef(), AppPermission.IMPORT_DATA_PERMISSION);
-        appPermissionService.addPermission(user.asRef(), AppPermission.STEPPING_PERMISSION);
+        final UserRef userRef = user.asRef();
+        appPermissionService.addPermission(userRef, AppPermission.VIEW_DATA_PERMISSION);
+        appPermissionService.addPermission(userRef, AppPermission.EXPORT_DATA_PERMISSION);
+        appPermissionService.addPermission(userRef, AppPermission.IMPORT_DATA_PERMISSION);
+        appPermissionService.addPermission(userRef, AppPermission.STEPPING_PERMISSION);
     }
 
     private void setUpdateDocPerms(final User user,

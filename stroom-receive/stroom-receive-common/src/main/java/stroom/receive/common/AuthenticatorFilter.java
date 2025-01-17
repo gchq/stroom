@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public interface AuthenticatorFilter {
 
@@ -67,6 +68,14 @@ public interface AuthenticatorFilter {
                 }
             }
             return Optional.empty();
+        }
+
+        @Override
+        public String toString() {
+            return "Filters: " + authenticatorFilters.stream()
+                    .map(AuthenticatorFilter::getClass)
+                    .map(Class::getSimpleName)
+                    .collect(Collectors.joining(", "));
         }
     }
 }

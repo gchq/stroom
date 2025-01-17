@@ -72,9 +72,6 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             final ConfigState configState = updatableAttributeMapFilter.getState();
             final Set<AuthenticationType> enabledAuthenticationTypes = configState.enabledAuthenticationTypes;
             final boolean isAuthRequired = configState.isAuthenticationRequired;
-//        final boolean isTokenAuthEnabled = configState.isTokenAuthenticationEnabled;
-//        final boolean isCertAuthEnabled = configState.isCertificateAuthenticationEnabled;
-//        final boolean isDataFeedKeyAuthEnabled = configState.isDatafeedKeyAuthenticationEnabled;
 
             final int authMechanismCount = enabledAuthenticationTypes.size();
 
@@ -88,8 +85,9 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                                 StroomStatusCode.CLIENT_DATA_FEED_KEY_REQUIRED, attributeMap);
                         case TOKEN ->
                                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
-                        case CERT -> throw new StroomStreamException(StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED,
-                                attributeMap);
+                        case CERTIFICATE ->
+                                throw new StroomStreamException(StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED,
+                                        attributeMap);
                         default -> {
                             LOGGER.error("Unexpected type {}", authenticationType);
                             throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap,
@@ -97,7 +95,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                         }
                     }
                 } else if (authMechanismCount == 2
-                           && enabledAuthenticationTypes.contains(AuthenticationType.CERT)
+                           && enabledAuthenticationTypes.contains(AuthenticationType.CERTIFICATE)
                            && enabledAuthenticationTypes.contains(AuthenticationType.TOKEN)) {
                     // This code was added a while ago, but is it not sustainable to have one code
                     // for each combination of auth mechanisms. Leaving this here just because we already have it
@@ -162,7 +160,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             filters.add(oidcTokenAuthenticatorProvider.get());
         }
 
-        if (configState.isEnabled(AuthenticationType.CERT)) {
+        if (configState.isEnabled(AuthenticationType.CERTIFICATE)) {
             filters.add(certificateAuthenticatorProvider.get());
         }
 
@@ -179,39 +177,25 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                                    final Optional<UserIdentity> optUserIdentity) {
         if (attributeMap != null) {
             // Add the user identified in the token (if present) to the attribute map.
-            // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
-            // useful for a human to read.
-            optUserIdentity.ifPresent(userIdentity -> {
-                NullSafe.consume(userIdentity.getSubjectId(), id ->
-                        attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
-                NullSafe.consume(userIdentity.getDisplayName(), username ->
-                        attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
-            });
+            // Use both ID and username as the ID will likely be a nasty UUID while the
+            // username will be more useful for a human to read.
+            // Set them to null if we have no identity to prevent clients from setting these
+            // headers themselves.
+            final String uploadUserId = optUserIdentity.map(UserIdentity::getSubjectId)
+                    .filter(NullSafe::isNonBlankString)
+                    .orElse(null);
+            final String uploadUsername = optUserIdentity.map(UserIdentity::getDisplayName)
+                    .filter(NullSafe::isNonBlankString)
+                    .orElse(null);
 
-            // Remove authorization header from attributes as it should not be stored or forwarded on.
+            attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, uploadUserId);
+            attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, uploadUsername);
+
+            // Remove authorization header from attributes as it should not be stored or
+            // forwarded on.
             NullSafe.consume(attributeMap, userIdentityFactory::removeAuthEntries);
         }
     }
-
-//    @Override
-//    public boolean hasAuthenticationToken(final HttpServletRequest request) {
-//        return userIdentityFactory.hasAuthenticationToken(request);
-//    }
-//
-//    @Override
-//    public void removeAuthorisationEntries(final Map<String, String> headers) {
-//        NullSafe.consume(headers, userIdentityFactory::removeAuthEntries);
-//    }
-//
-//    @Override
-//    public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
-//        return userIdentityFactory.getAuthHeaders(userIdentity);
-//    }
-//
-//    @Override
-//    public Map<String, String> getServiceUserAuthHeaders() {
-//        return userIdentityFactory.getServiceUserAuthHeaders();
-//    }
 
 
     // --------------------------------------------------------------------------------
@@ -221,9 +205,6 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             String receiptPolicyUuid,
             boolean isAuthenticationRequired,
             Set<AuthenticationType> enabledAuthenticationTypes) {
-//            boolean isDatafeedKeyAuthenticationEnabled,
-//            boolean isTokenAuthenticationEnabled,
-//            boolean isCertificateAuthenticationEnabled) {
 
         public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
 
@@ -231,9 +212,6 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                     receiveDataConfig.getReceiptPolicyUuid(),
                     receiveDataConfig.isAuthenticationRequired(),
                     NullSafe.enumSet(AuthenticationType.class, receiveDataConfig.getEnabledAuthenticationTypes()));
-//                    receiveDataConfig.isDatafeedKeyAuthenticationEnabled(),
-//                    receiveDataConfig.isTokenAuthenticationEnabled(),
-//                    receiveDataConfig.isCertificateAuthenticationEnabled());
         }
 
         public boolean isEnabled(final AuthenticationType authenticationType) {

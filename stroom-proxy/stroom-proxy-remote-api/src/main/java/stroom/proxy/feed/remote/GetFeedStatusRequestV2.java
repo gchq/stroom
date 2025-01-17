@@ -1,6 +1,7 @@
 package stroom.proxy.feed.remote;
 
 import stroom.proxy.remote.RemoteRequest;
+import stroom.util.shared.UserDesc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,22 +19,22 @@ public class GetFeedStatusRequestV2 extends RemoteRequest {
     @JsonProperty
     private String feedName;
     @JsonProperty
-    private String subjectId;
+    private UserDesc userDesc;
     @JsonProperty
     private Map<String, String> attributeMap;
 
     /**
-     * @param feedName Name of the feed being checked
-     * @param subjectId The subjectId of the identity that sent the data that has
-     *                  triggered this feed check.
+     * @param feedName     Name of the feed being checked
+     * @param userDesc     The user identity that sent the data that has
+     *                     triggered this feed check.
      * @param attributeMap The map of headers from the request. Keys are case-insensitive.
      */
     @JsonCreator
     public GetFeedStatusRequestV2(@JsonProperty("feedName") final String feedName,
-                                  @JsonProperty("senderDn") final String subjectId,
+                                  @JsonProperty("userDesc") final UserDesc userDesc,
                                   @JsonProperty("attributeMap") final Map<String, String> attributeMap) {
         this.feedName = feedName;
-        this.subjectId = subjectId;
+        this.userDesc = userDesc;
         this.attributeMap = attributeMap;
     }
 
@@ -44,8 +45,8 @@ public class GetFeedStatusRequestV2 extends RemoteRequest {
         return feedName;
     }
 
-    public String getSubjectId() {
-        return subjectId;
+    public UserDesc getUserDesc() {
+        return userDesc;
     }
 
     public Map<String, String> getAttributeMap() {
@@ -61,21 +62,21 @@ public class GetFeedStatusRequestV2 extends RemoteRequest {
             return false;
         }
         final GetFeedStatusRequestV2 that = (GetFeedStatusRequestV2) object;
-        return Objects.equals(feedName, that.feedName) && Objects.equals(subjectId,
-                that.subjectId) && Objects.equals(attributeMap, that.attributeMap);
+        return Objects.equals(feedName, that.feedName) && Objects.equals(userDesc,
+                that.userDesc) && Objects.equals(attributeMap, that.attributeMap);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedName, subjectId, attributeMap);
+        return Objects.hash(feedName, userDesc, attributeMap);
     }
 
     @Override
     public String toString() {
         return "GetFeedStatusRequestV2{" +
-                "feedName='" + feedName + '\'' +
-                ", subjectId='" + subjectId + '\'' +
-                ", attributeMap=" + attributeMap +
-                '}';
+               "feedName='" + feedName + '\'' +
+               ", subjectId='" + userDesc + '\'' +
+               ", attributeMap=" + attributeMap +
+               '}';
     }
 }

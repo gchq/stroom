@@ -3,7 +3,6 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.receive.common.DataFeedKeyServiceImpl.DataFeedKeyHashAlgorithm;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.test.common.TestUtil;
@@ -31,7 +30,7 @@ class TestRequestAuthenticatorImpl {
             .build();
     private final ReceiveDataConfig configCertOnly = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
-            .withEnabledAuthenticationTypes(AuthenticationType.CERT)
+            .withEnabledAuthenticationTypes(AuthenticationType.CERTIFICATE)
             .build();
     private final ReceiveDataConfig dataFeedKeyOnly = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
@@ -39,7 +38,7 @@ class TestRequestAuthenticatorImpl {
             .build();
     private final ReceiveDataConfig configTokenAndCert = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
-            .withEnabledAuthenticationTypes(AuthenticationType.TOKEN, AuthenticationType.CERT)
+            .withEnabledAuthenticationTypes(AuthenticationType.TOKEN, AuthenticationType.CERTIFICATE)
             .build();
     private final ReceiveDataConfig configAllTypes = ReceiveDataConfig.builder()
             .withAuthenticationRequired(true)
@@ -62,7 +61,7 @@ class TestRequestAuthenticatorImpl {
         final String certCn = "My CN";
         final UserIdentity tokenUser = new TestUserIdentity("1"); // We are mocking so type doesn't matter here
         final UserIdentity certUser = new CertificateUserIdentity(certCn); // Type matters here
-        final UserIdentity dataFeedKeyUser = new DataFeedKeyUserIdentity(new DataFeedKey(
+        final UserIdentity dataFeedKeyUser = new DataFeedKeyUserIdentity(new HashedDataFeedKey(
                 "my hash",
                 DataFeedKeyHashAlgorithm.ARGON2.getDisplayValue(),
                 "MySubjectId",
@@ -110,7 +109,7 @@ class TestRequestAuthenticatorImpl {
                                             : Optional.empty());
                         }
                     }
-                    if (receiveDataConfig.isAuthenticationTypeEnabled(AuthenticationType.CERT)) {
+                    if (receiveDataConfig.isAuthenticationTypeEnabled(AuthenticationType.CERTIFICATE)) {
                         if (errorCode != null) {
                             Mockito.when(mockCertificateAuthenticator.authenticate(Mockito.any(), Mockito.any()))
                                     .thenThrow(new StroomStreamException(errorCode, null));
@@ -339,8 +338,8 @@ class TestRequestAuthenticatorImpl {
         @Override
         public String toString() {
             return "TestUserIdentity{" +
-                    "id='" + id + '\'' +
-                    '}';
+                   "id='" + id + '\'' +
+                   '}';
         }
     }
 

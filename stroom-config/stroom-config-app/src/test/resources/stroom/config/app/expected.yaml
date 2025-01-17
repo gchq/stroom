@@ -222,6 +222,23 @@ appConfig:
         refreshAfterWrite: null
       volumeSelector: "RoundRobin"
     meta:
+      dataFormats:
+      - "FIXED_WIDTH_NO_HEADER"
+      - "INI"
+      - "CSV"
+      - "JSON"
+      - "TEXT"
+      - "XML_FRAGMENT"
+      - "YAML"
+      - "PSV_NO_HEADER"
+      - "PSV"
+      - "CSV_NO_HEADER"
+      - "XML"
+      - "TSV"
+      - "SYSLOG"
+      - "TSV_NO_HEADER"
+      - "FIXED_WIDTH"
+      - "TOML"
       db:
         connection:
           jdbcDriverClassName: null
@@ -700,9 +717,14 @@ appConfig:
     itemsRetention: 100
   receive:
     authenticationRequired: true
-    certificateAuthenticationEnabled: true
+    autoContentCreation:
+      additionalGroupSuffix: " (sandbox)"
+      destinationPath: "/Feeds"
+      enabled: false
+      templatesPath: "/Feeds/Content Templates"
     dataFeedKeysDir: "data_feed_keys"
-    datafeedKeyAuthenticationEnabled: false
+    enabledAuthenticationTypes:
+    - "CERT"
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -716,7 +738,6 @@ appConfig:
     - "Meta Data"
     - "Records"
     receiptPolicyUuid: null
-    tokenAuthenticationEnabled: false
   s3:
     s3ConfigDocCache:
       expireAfterAccess: "PT10S"

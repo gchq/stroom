@@ -1,6 +1,5 @@
 package stroom.receive.common;
 
-import stroom.docref.HasDisplayValue;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
@@ -10,7 +9,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -18,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,10 +23,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Singleton
 public class DataFeedKeyServiceImpl implements DataFeedKeyService {
@@ -45,12 +40,12 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
 
     // Holds all the keys read from the data feed key files, entries are evicted when
     // the DataFeedKey has passed its expiry date.
-    private final Map<CacheKey, CachedDataFeedKey> cacheKeyToDataFeedKeyMap = new ConcurrentHashMap<>();
-    private final Map<String, CachedDataFeedKey> subjectIdToDataFeedKeyMap = new ConcurrentHashMap<>();
+    private final Map<CacheKey, CachedHashedDataFeedKey> cacheKeyToDataFeedKeyMap = new ConcurrentHashMap<>();
+    private final Map<String, CachedHashedDataFeedKey> subjectIdToDataFeedKeyMap = new ConcurrentHashMap<>();
 
     // TODO replace with cache
     // Cache of the un-hashed key to validated DataFeedKey, to save us the hashing cost
-    private final Map<String, Optional<DataFeedKey>> keyToDataFeedKeyMap = new ConcurrentHashMap<>();
+    private final Map<String, Optional<HashedDataFeedKey>> keyToDataFeedKeyMap = new ConcurrentHashMap<>();
 
     private final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap = new EnumMap<>(
             DataFeedKeyHashAlgorithm.class);
@@ -64,10 +59,10 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
     }
 
     @Override
-    public Optional<DataFeedKey> getDataFeedKey(final HttpServletRequest request,
-                                                final AttributeMap attributeMap) {
+    public Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,
+                                                      final AttributeMap attributeMap) {
         Objects.requireNonNull(request);
-        final Optional<DataFeedKey> optDataFeedKey = getAttribute(attributeMap, AUTHORIZATION_HEADER)
+        final Optional<HashedDataFeedKey> optDataFeedKey = getRequestHeader(request, AUTHORIZATION_HEADER)
                 .map(str -> {
                     final String key;
                     if (str.startsWith(BEARER_PREFIX)) {
@@ -90,33 +85,33 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
     }
 
     @Override
-    public Optional<DataFeedKey> getDataFeedKey(final String subjectId) {
+    public Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId) {
         return Optional.ofNullable(subjectIdToDataFeedKeyMap.get(subjectId))
-                .map(CachedDataFeedKey::getDataFeedKey);
+                .map(CachedHashedDataFeedKey::getDataFeedKey);
     }
 
     @Override
-    public void addDataFeedKeys(final DataFeedKeys dataFeedKeys,
+    public void addDataFeedKeys(final HashedDataFeedKeys hashedDataFeedKeys,
                                 final Path sourceFile) {
-        if (NullSafe.hasItems(dataFeedKeys)) {
+        if (NullSafe.hasItems(hashedDataFeedKeys)) {
             LOGGER.debug(() -> LogUtil.message("Adding {} dataFeedKeys",
-                    dataFeedKeys.getDataFeedKeys().size()));
+                    hashedDataFeedKeys.getDataFeedKeys().size()));
 
-            dataFeedKeys.getDataFeedKeys()
+            hashedDataFeedKeys.getDataFeedKeys()
                     .stream()
-                    .map(dataFeedKey -> new CachedDataFeedKey(dataFeedKey, sourceFile))
+                    .map(dataFeedKey -> new CachedHashedDataFeedKey(dataFeedKey, sourceFile))
                     .forEach(this::addDataFeedKey);
         }
     }
 
-    private void addDataFeedKey(final CachedDataFeedKey cachedDataFeedKey) {
-        if (cachedDataFeedKey != null) {
-            final String hash = cachedDataFeedKey.getHash();
-            final String hashAlgorithmId = cachedDataFeedKey.getHashAlgorithmId();
+    private void addDataFeedKey(final CachedHashedDataFeedKey cachedHashedDataFeedKey) {
+        if (cachedHashedDataFeedKey != null) {
+            final String hash = cachedHashedDataFeedKey.getHash();
+            final String hashAlgorithmId = cachedHashedDataFeedKey.getHashAlgorithmId();
             final DataFeedKeyHashAlgorithm hashAlgorithm = DataFeedKeyHashAlgorithm.fromUniqueId(hashAlgorithmId);
             final CacheKey cacheKey = new CacheKey(hashAlgorithm, hash);
-            cacheKeyToDataFeedKeyMap.put(cacheKey, cachedDataFeedKey);
-            subjectIdToDataFeedKeyMap.put(cachedDataFeedKey.getSubjectId(), cachedDataFeedKey);
+            cacheKeyToDataFeedKeyMap.put(cacheKey, cachedHashedDataFeedKey);
+            subjectIdToDataFeedKeyMap.put(cachedHashedDataFeedKey.getSubjectId(), cachedHashedDataFeedKey);
         }
     }
 
@@ -124,7 +119,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
     public void evictExpired() {
         LOGGER.debug("Evicting expired dataFeedKeys");
         final AtomicInteger counter = new AtomicInteger();
-        final Predicate<Entry<?, CachedDataFeedKey>> removeIfPredicate = entry ->
+        final Predicate<Entry<?, CachedHashedDataFeedKey>> removeIfPredicate = entry ->
                 entry.getValue().isExpired();
 
         counter.set(0);
@@ -139,7 +134,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
 
         counter.set(0);
         keyToDataFeedKeyMap.entrySet().removeIf(PredicateUtil.countingPredicate(counter, entry ->
-                entry.getValue().filter(DataFeedKey::isExpired).isPresent()));
+                entry.getValue().filter(HashedDataFeedKey::isExpired).isPresent()));
         LOGGER.debug("Removed {} keyToDataFeedKeyMap entries", counter);
     }
 
@@ -148,7 +143,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
         if (sourceFile != null) {
             LOGGER.debug("Evicting dataFeedKeys for sourceFile {}", sourceFile);
             final AtomicInteger counter = new AtomicInteger();
-            final Predicate<Entry<?, CachedDataFeedKey>> removeIfPredicate = entry -> {
+            final Predicate<Entry<?, CachedHashedDataFeedKey>> removeIfPredicate = entry -> {
                 final boolean doRemove = Objects.equals(
                         sourceFile, entry.getValue().getSourceFile());
                 if (doRemove) {
@@ -165,9 +160,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
         }
     }
 
-    private boolean validateDataFeedKeyExpiry(final DataFeedKey dataFeedKey,
+    private boolean validateDataFeedKeyExpiry(final HashedDataFeedKey hashedDataFeedKey,
                                               final AttributeMap attributeMap) {
-        if (dataFeedKey.isExpired()) {
+        if (hashedDataFeedKey.isExpired()) {
             throw new StroomStreamException(
                     StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);
         }
@@ -198,21 +193,21 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
         }
     }
 
-    private Optional<DataFeedKey> lookupKey(final String key,
-                                            final AttributeMap attributeMap) {
+    private Optional<HashedDataFeedKey> lookupKey(final String key,
+                                                  final AttributeMap attributeMap) {
 
         // Try the cache first to save on the hashing cost.
-        Optional<DataFeedKey> optDataFeedKey = keyToDataFeedKeyMap.get(key);
+        Optional<HashedDataFeedKey> optDataFeedKey = keyToDataFeedKeyMap.get(key);
         if (optDataFeedKey == null) {
             // Not in cache,
             optDataFeedKey = getCacheKey(key)
                     .map(cacheKey -> {
                         Objects.requireNonNull(cacheKey);
-                        final CachedDataFeedKey dataFeedKey = cacheKeyToDataFeedKeyMap.get(cacheKey);
+                        final CachedHashedDataFeedKey dataFeedKey = cacheKeyToDataFeedKeyMap.get(cacheKey);
                         LOGGER.debug("Lookup of cacheKey {}, found {}", cacheKey, dataFeedKey);
                         return dataFeedKey;
                     })
-                    .map(CachedDataFeedKey::getDataFeedKey);
+                    .map(CachedHashedDataFeedKey::getDataFeedKey);
             // Cache it to save hashing next time
             keyToDataFeedKeyMap.put(key, optDataFeedKey);
             return optDataFeedKey;
@@ -231,53 +226,12 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
                 .filter(str -> !StringUtils.isNotBlank(str));
     }
 
-//    @Override
-//    public boolean filter(final AttributeMap attributeMap, final UserIdentity userIdentity) {
-//        final String feedName = getAttribute(attributeMap, StandardHeaderArguments.FEED)
-//                .orElseThrow(() ->
-//                        new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap));
-//
-//        final CachedDataFeedKey dataFeedKey = subjectIdToDataFeedKeyMap.get(userIdentity.getSubjectId());
-//
-//        Objects.requireNonNull(dataFeedKey, "dataFeedKey should not be null at this point as we must have");
-//
-//        final List<String> feedRegexPatterns = dataFeedKey.getFeedRegexPatterns();
-//        if (NullSafe.hasItems(feedRegexPatterns)) {
-//            boolean isFeedNameValid = false;
-//            for (final String feedRegexPattern : feedRegexPatterns) {
-//                final Pattern pattern = feedPatternCache.computeIfAbsent(feedRegexPattern, Pattern::compile);
-//                if (pattern.matcher(feedName).matches()) {
-//                    // Feed matches one of the regexes, so we need to auto-create it (if enabled)
-////                    ensureFeed(feedName);
-//                    isFeedNameValid = true;
-//                } else {
-//                    LOGGER.debug("feedName: '{}' does not match pattern: '{}'", feedName, feedRegexPattern);
-//                }
-//            }
-//            if (!isFeedNameValid) {
-//                LOGGER.debug(() -> LogUtil.message("No match on feedName '{}' with patterns [{}]",
-//                        feedName,
-//                        feedRegexPatterns.stream()
-//                                .map(pattern -> "'" + pattern + "'")
-//                                .collect(Collectors.joining(", "))));
-//                throw new StroomStreamException(StroomStatusCode.INVALID_FEED_NAME, attributeMap);
-//            } else {
-//                return true;
-//            }
-//        } else {
-//            LOGGER.debug("No feed patterns to match on, allowing it to continue");
-//            return true;
-//        }
-//    }
-
-//    private void ensureFeed(final String feedName) {
-//        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-//        final AutoContentCreationConfig autoContentCreationConfig = receiveDataConfig.getAutoContentCreationConfig();
-//        if (autoContentCreationConfig.isEnabled()) {
-//
-//        }
-//
-//    }
+    private Optional<String> getRequestHeader(final HttpServletRequest request, final String header) {
+        final String value = request.getHeader(header);
+        final Optional<String> optValue = Optional.ofNullable(value)
+                .filter(NullSafe::isNonBlankString);
+        return optValue;
+    }
 
     @Override
     public Optional<UserIdentity> authenticate(final HttpServletRequest request,
@@ -312,125 +266,4 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
                             String hash) {
 
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum DataFeedKeyHashAlgorithm implements HasDisplayValue {
-        ARGON2("Argon2", 0),
-//        BCRYPT("BCrypt", 0),
-        ;
-
-        private static final DataFeedKeyHashAlgorithm[] sparseArray;
-        private static final Map<String, DataFeedKeyHashAlgorithm> nameToValueMap = Arrays.stream(values())
-                .collect(Collectors.toMap(DataFeedKeyHashAlgorithm::getDisplayValue, Function.identity()));
-
-
-        static {
-            final DataFeedKeyHashAlgorithm[] values = DataFeedKeyHashAlgorithm.values();
-            final int maxPrimitive = Arrays.stream(values)
-                    .mapToInt(dataFeedKeyHashAlgorithm -> dataFeedKeyHashAlgorithm.uniqueId)
-                    .max()
-                    .orElseThrow(() -> new RuntimeException("Empty values array supplied"));
-            sparseArray = new DataFeedKeyHashAlgorithm[maxPrimitive + 1];
-            for (final DataFeedKeyHashAlgorithm value : values) {
-                sparseArray[value.uniqueId] = value;
-            }
-        }
-
-        private final String displayValue;
-        private final int uniqueId;
-
-        DataFeedKeyHashAlgorithm(final String displayValue, final int uniqueId) {
-            if (uniqueId < 0) {
-                throw new IllegalArgumentException("Min uniqueId is 0");
-            }
-            if (uniqueId > 999) {
-                throw new IllegalArgumentException("Max uniqueId is 999");
-            }
-            this.displayValue = displayValue;
-            this.uniqueId = uniqueId;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        /**
-         * @return A 3 digit, zero padded number.
-         */
-        public String getUniqueId() {
-            return Strings.padStart(String.valueOf(uniqueId), 3, '0');
-        }
-
-        public static DataFeedKeyHashAlgorithm fromDisplayValue(final String displayValue) {
-            if (displayValue == null) {
-                return null;
-            } else if (NullSafe.isBlankString(displayValue)) {
-                throw new IllegalArgumentException("Blank displayValue");
-            } else {
-                final DataFeedKeyHashAlgorithm hashAlgorithm = nameToValueMap.get(displayValue);
-                if (hashAlgorithm == null) {
-                    throw new IllegalArgumentException("Unknown displayValue " + displayValue);
-                }
-                return hashAlgorithm;
-            }
-        }
-
-        public static DataFeedKeyHashAlgorithm fromUniqueId(final String uniqueId) {
-            if (uniqueId == null) {
-                return null;
-            } else if (uniqueId.isBlank()) {
-                throw new IllegalArgumentException("Blank uniqueId");
-            } else {
-                final int intVal = Integer.parseInt(uniqueId);
-                DataFeedKeyHashAlgorithm dataFeedKeyHashAlgorithm;
-                try {
-                    dataFeedKeyHashAlgorithm = sparseArray[intVal];
-                    if (dataFeedKeyHashAlgorithm == null) {
-                        throw new IllegalArgumentException("Unknown uniqueId " + uniqueId);
-                    }
-                    return dataFeedKeyHashAlgorithm;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "DataFeedKeyHashAlgorithm{" +
-                   "displayValue='" + displayValue + '\'' +
-                   ", uniqueId=" + uniqueId +
-                   '}';
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-//    private static class BCryptApiKeyHasher implements DataFeedKeyHasher {
-//
-//        @Override
-//        public String hash(final String apiKeyStr) {
-//            return BCrypt.hashpw(Objects.requireNonNull(apiKeyStr), BCrypt.gensalt());
-//        }
-//
-//        @Override
-//        public boolean verify(final String apiKeyStr, final String hash) {
-//            if (apiKeyStr == null) {
-//                return false;
-//            } else {
-//                return BCrypt.checkpw(apiKeyStr, hash);
-//            }
-//        }
-//
-//        @Override
-//        public DataFeedKeyHashAlgorithm getAlgorithm() {
-//            return DataFeedKeyHashAlgorithm.BCRYPT;
-//        }
-//    }
 }

@@ -29,7 +29,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     private static final Predicate<Path> FILE_INCLUDE_FILTER = path ->
             path != null
             && Files.isRegularFile(path)
-            && path.getFileName().endsWith(".json");
+            && path.getFileName().toString().endsWith(".json");
 
     private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
 
@@ -96,6 +96,8 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                 if (fileIncludeFilter == null || fileIncludeFilter.test(path)) {
                     processFile(path);
                     counter.incrementAndGet();
+                } else {
+                    LOGGER.info("Ignoring file {}", path.toAbsolutePath().normalize());
                 }
             });
             LOGGER.info("Completed reading {} data feed key files in {}", counter, dirToWatch);
@@ -106,11 +108,20 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
 
     private void processFile(final Path path) {
         if (path != null && Files.isRegularFile(path)) {
+            LOGGER.info("Reading datafeed key file {}", path.toAbsolutePath().normalize());
             final ObjectMapper mapper = JsonUtil.getMapper();
             try (InputStream fileStream = new FileInputStream(path.toFile())) {
                 try {
-                    final DataFeedKeys dataFeedKeys = mapper.readValue(fileStream, DataFeedKeys.class);
-                    dataFeedKeyServiceProvider.get().addDataFeedKeys(dataFeedKeys, path);
+                    final HashedDataFeedKeys hashedDataFeedKeys = mapper.readValue(fileStream,
+                            HashedDataFeedKeys.class);
+                    if (hashedDataFeedKeys != null && NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
+                        dataFeedKeyServiceProvider.get().addDataFeedKeys(hashedDataFeedKeys, path);
+                        LOGGER.info("Loaded {} datafeed keys found in {}",
+                                hashedDataFeedKeys.getDataFeedKeys().size(),
+                                path.toAbsolutePath().normalize());
+                    } else {
+                        LOGGER.info("No datafeed keys found in {}", path.toAbsolutePath().normalize());
+                    }
                 } catch (IOException e) {
                     LOGGER.error("Error parsing file {}: {}", path, e.getMessage(), e);
                     throw new RuntimeException(e);

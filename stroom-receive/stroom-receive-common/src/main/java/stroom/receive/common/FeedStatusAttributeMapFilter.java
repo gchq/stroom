@@ -7,7 +7,7 @@ import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.NullSafe;
-import stroom.util.cert.CertificateExtractor;
+import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -27,11 +27,25 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
     @Override
     public boolean filter(final AttributeMap attributeMap) {
         final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-        final String senderDn = attributeMap.get(StandardHeaderArguments.REMOTE_DN);
-        final String subjectId = NullSafe.get(senderDn, CertificateExtractor::extractCNFromDN);
+        final UserDesc userDesc;
+        // These two have been added by RequestAuthenticatorImpl
+        final String uploadUserId = NullSafe.get(
+                attributeMap.get(StandardHeaderArguments.UPLOAD_USER_ID),
+                String::trim);
+        if (NullSafe.isNonBlankString(uploadUserId)) {
+            final String uploadUsername = NullSafe.get(
+                    attributeMap.get(StandardHeaderArguments.UPLOAD_USERNAME),
+                    String::trim);
+            userDesc = UserDesc.builder(uploadUserId)
+                    .displayName(uploadUsername)
+                    .build();
+        } else {
+            userDesc = null;
+        }
+
         final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
                 feedName,
-                subjectId,
+                userDesc,
                 attributeMap);
         final GetFeedStatusResponse response = getFeedStatus(request);
 

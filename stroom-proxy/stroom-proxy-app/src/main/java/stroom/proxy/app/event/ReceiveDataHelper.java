@@ -77,9 +77,9 @@ public class ReceiveDataHelper {
                 Metrics.measure("ProxyRequestHandler - handle1", () -> {
                     // TODO The following validate call was commented out on master by 66 for some reason
                     // Validate the supplied attributes.
-                    attributeMapValidator.validate(
-                            attributeMap,
-                            () -> receiveDataConfigProvider.get().getMetaTypes());
+//                    attributeMapValidator.validate(
+//                            attributeMap,
+//                            () -> receiveDataConfigProvider.get().getMetaTypes());
 
                     // Test to see if we are going to accept this stream or drop the data.
                     final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();

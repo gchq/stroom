@@ -9,18 +9,18 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
-public class CachedDataFeedKey {
+public class CachedHashedDataFeedKey {
 
-    private final DataFeedKey dataFeedKey;
+    private final HashedDataFeedKey hashedDataFeedKey;
     private final Path sourceFile;
 
-    public CachedDataFeedKey(final DataFeedKey dataFeedKey, final Path sourceFile) {
-        this.dataFeedKey = Objects.requireNonNull(dataFeedKey);
+    public CachedHashedDataFeedKey(final HashedDataFeedKey hashedDataFeedKey, final Path sourceFile) {
+        this.hashedDataFeedKey = Objects.requireNonNull(hashedDataFeedKey);
         this.sourceFile = Objects.requireNonNull(sourceFile);
     }
 
-    public DataFeedKey getDataFeedKey() {
-        return dataFeedKey;
+    public HashedDataFeedKey getDataFeedKey() {
+        return hashedDataFeedKey;
     }
 
     public Path getSourceFile() {
@@ -29,40 +29,40 @@ public class CachedDataFeedKey {
 
     @NotBlank
     public String getHash() {
-        return dataFeedKey.getHash();
+        return hashedDataFeedKey.getHash();
     }
 
     @NotBlank
     public String getHashAlgorithmId() {
-        return dataFeedKey.getHashAlgorithmId();
+        return hashedDataFeedKey.getHashAlgorithmId();
     }
 
     @NotBlank
     public String getSubjectId() {
-        return dataFeedKey.getSubjectId();
+        return hashedDataFeedKey.getSubjectId();
     }
 
     public String getDisplayName() {
-        return dataFeedKey.getDisplayName();
+        return hashedDataFeedKey.getDisplayName();
     }
 
     public Map<String, String> getStreamMetaData() {
-        return dataFeedKey.getStreamMetaData();
+        return hashedDataFeedKey.getStreamMetaData();
     }
 
     @Min(0)
     public long getExpiryDateEpochMs() {
-        return dataFeedKey.getExpiryDateEpochMs();
+        return hashedDataFeedKey.getExpiryDateEpochMs();
     }
 
     @JsonIgnore
     public Instant getExpiryDate() {
-        return dataFeedKey.getExpiryDate();
+        return hashedDataFeedKey.getExpiryDate();
     }
 
     @JsonIgnore
     public boolean isExpired() {
-        return dataFeedKey.isExpired();
+        return hashedDataFeedKey.isExpired();
     }
 
     @Override
@@ -73,20 +73,20 @@ public class CachedDataFeedKey {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final CachedDataFeedKey that = (CachedDataFeedKey) object;
-        return Objects.equals(dataFeedKey, that.dataFeedKey) && Objects.equals(sourceFile,
+        final CachedHashedDataFeedKey that = (CachedHashedDataFeedKey) object;
+        return Objects.equals(hashedDataFeedKey, that.hashedDataFeedKey) && Objects.equals(sourceFile,
                 that.sourceFile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataFeedKey, sourceFile);
+        return Objects.hash(hashedDataFeedKey, sourceFile);
     }
 
     @Override
     public String toString() {
         return "CachedDataFeedKey{" +
-               "dataFeedKey=" + dataFeedKey +
+               "dataFeedKey=" + hashedDataFeedKey +
                ", sourceFile=" + sourceFile +
                '}';
     }

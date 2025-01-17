@@ -5,17 +5,17 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 /**
- * {@link UserIdentity} obtained when authenticated by {@link DataFeedKey}
+ * {@link UserIdentity} obtained when authenticated by {@link HashedDataFeedKey}
  */
 public class DataFeedKeyUserIdentity implements UserIdentity {
 
     private final String subjectId;
     private final String displayName;
 
-    public DataFeedKeyUserIdentity(final DataFeedKey dataFeedKey) {
-        Objects.requireNonNull(dataFeedKey);
-        this.subjectId = dataFeedKey.getSubjectId();
-        this.displayName = dataFeedKey.getDisplayName();
+    public DataFeedKeyUserIdentity(final HashedDataFeedKey hashedDataFeedKey) {
+        Objects.requireNonNull(hashedDataFeedKey);
+        this.subjectId = hashedDataFeedKey.getSubjectId();
+        this.displayName = hashedDataFeedKey.getDisplayName();
     }
 
     @Override

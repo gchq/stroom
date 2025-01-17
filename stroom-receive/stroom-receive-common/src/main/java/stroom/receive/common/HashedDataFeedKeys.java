@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
-public class DataFeedKeys {
+public class HashedDataFeedKeys {
 
-    private final List<DataFeedKey> dataFeedKeys;
+    private final List<HashedDataFeedKey> hashedDataFeedKeys;
 
     @JsonCreator
-    public DataFeedKeys(@JsonProperty("dataFeedKeys") final List<DataFeedKey> dataFeedKeys) {
-        this.dataFeedKeys = dataFeedKeys;
+    public HashedDataFeedKeys(@JsonProperty("dataFeedKeys") final List<HashedDataFeedKey> hashedDataFeedKeys) {
+        this.hashedDataFeedKeys = hashedDataFeedKeys;
     }
 
-    public List<DataFeedKey> getDataFeedKeys() {
-        return NullSafe.list(dataFeedKeys);
+    public List<HashedDataFeedKey> getDataFeedKeys() {
+        return NullSafe.list(hashedDataFeedKeys);
     }
 
     @Override
@@ -31,19 +31,19 @@ public class DataFeedKeys {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final DataFeedKeys that = (DataFeedKeys) object;
-        return Objects.equals(dataFeedKeys, that.dataFeedKeys);
+        final HashedDataFeedKeys that = (HashedDataFeedKeys) object;
+        return Objects.equals(hashedDataFeedKeys, that.hashedDataFeedKeys);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataFeedKeys);
+        return Objects.hash(hashedDataFeedKeys);
     }
 
     @Override
     public String toString() {
         return "DataFeedKeys{" +
-               "dataFeedKeys=" + dataFeedKeys +
+               "dataFeedKeys=" + hashedDataFeedKeys +
                '}';
     }
 }

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,7 +21,7 @@ import java.util.stream.Stream;
 public class DocPath {
 
     private static final String DELIMITER = "/";
-    private static final String DELIMITER_REGEX = Pattern.quote(DELIMITER);
+    private static final String DELIMITER_REGEX = DELIMITER;
     private static final DocPath EMPTY_INSTANCE = new DocPath(Collections.emptyList());
     private static final boolean DEFAULT_ABSOLUTE_VALUE = true;
 
@@ -186,9 +185,10 @@ public class DocPath {
         return leafPart;
     }
 
+    @JsonIgnore
     public List<String> getAllParts() {
         return Stream.concat(parentParts.stream(), Stream.of(leafPart))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public boolean isAbsolute() {
@@ -283,7 +283,7 @@ public class DocPath {
                 return allParts.subList(0, allParts.size() - 1)
                         .stream()
                         .map(String::trim)
-                        .toList();
+                        .collect(Collectors.toList());
             }
         }
     }
@@ -364,8 +364,8 @@ public class DocPath {
         }
         final DocPath docPath = (DocPath) object;
         return Objects.equals(parentParts, docPath.parentParts)
-                && Objects.equals(leafPart, docPath.leafPart)
-                && absolute == docPath.absolute;
+               && Objects.equals(leafPart, docPath.leafPart)
+               && absolute == docPath.absolute;
     }
 
     private boolean areParentPartsEqualIgnoringCase(final List<String> parentParts1,
@@ -405,7 +405,7 @@ public class DocPath {
             return false;
         } else {
             return this.leafPart.equalsIgnoreCase(that.leafPart)
-                    && areParentPartsEqualIgnoringCase(this.parentParts, that.parentParts);
+                   && areParentPartsEqualIgnoringCase(this.parentParts, that.parentParts);
         }
     }
 
@@ -481,6 +481,7 @@ public class DocPath {
 
     @FunctionalInterface
     public interface PartPartsConsumer {
+
         void accept(final int idx, final String pathPart);
     }
 }

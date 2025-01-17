@@ -9,12 +9,12 @@ import java.util.Optional;
 
 public interface DataFeedKeyService extends AuthenticatorFilter {
 
-    Optional<DataFeedKey> getDataFeedKey(final HttpServletRequest request,
-                                         final AttributeMap attributeMap);
+    Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,
+                                               final AttributeMap attributeMap);
 
-    Optional<DataFeedKey> getDataFeedKey(final String subjectId);
+    Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId);
 
-    void addDataFeedKeys(DataFeedKeys dataFeedKeys,
+    void addDataFeedKeys(HashedDataFeedKeys hashedDataFeedKeys,
                          Path sourceFile);
 
     void evictExpired();
