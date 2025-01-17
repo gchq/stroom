@@ -35,14 +35,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 @Singleton
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck, Managed {
@@ -102,43 +100,45 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        final FeedStatus defaultFeedStatus = Optional
-                .ofNullable(feedStatusConfig.getDefaultStatus()).orElse(FeedStatus.Receive);
+        final FeedStatus defaultFeedStatus = Objects.requireNonNullElse(
+                feedStatusConfig.getDefaultStatus(),
+                FeedStatus.Receive);
 
         // If remote feed status checking is disabled then return the default status.
-        if (NullSafe.test(feedStatusConfig, Predicate.not(FeedStatusConfig::getEnabled))) {
+        if (!feedStatusConfig.getEnabled()
+            || NullSafe.isBlankString(feedStatusConfig.getFeedStatusUrl())) {
             return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
-        }
+        } else {
+            final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
+            final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
+                CachedResponse result;
+                try {
+                    final GetFeedStatusResponse response = callFeedStatus(request);
+                    result = new CachedResponse(Instant.now(), response);
 
-        final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
-        final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
-            CachedResponse result;
-            try {
-                final GetFeedStatusResponse response = callFeedStatus(request);
-                result = new CachedResponse(Instant.now(), response);
+                } catch (final Exception e) {
+                    LOGGER.debug("Unable to check remote feed service", e);
+                    // Get the last response we received.
+                    if (lastResponse != null) {
+                        result = new CachedResponse(Instant.now(), lastResponse.getResponse());
+                        LOGGER.error(
+                                "Unable to check remote feed service ({}).... will use last response ({}) - {}",
+                                request, result, e.getMessage());
 
-            } catch (final Exception e) {
-                LOGGER.debug("Unable to check remote feed service", e);
-                // Get the last response we received.
-                if (lastResponse != null) {
-                    result = new CachedResponse(Instant.now(), lastResponse.getResponse());
-                    LOGGER.error(
-                            "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                            request, result, e.getMessage());
-
-                } else {
-                    // Revert to default behaviour.
-                    result = new CachedResponse(Instant.now(),
-                            GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
-                    LOGGER.error(
-                            "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                            request, result, e.getMessage());
+                    } else {
+                        // Revert to default behaviour.
+                        result = new CachedResponse(Instant.now(),
+                                GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
+                        LOGGER.error(
+                                "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
+                                request, result, e.getMessage());
+                    }
                 }
-            }
-            return result;
-        });
+                return result;
+            });
 
-        return cachedResponse.getResponse();
+            return cachedResponse.getResponse();
+        }
     }
 
     private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequestV2 request) {

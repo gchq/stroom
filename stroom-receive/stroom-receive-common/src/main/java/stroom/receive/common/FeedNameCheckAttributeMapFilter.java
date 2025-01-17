@@ -1,5 +1,6 @@
 package stroom.receive.common;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
@@ -8,29 +9,40 @@ import stroom.util.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class AttributeMapValidator {
+/**
+ * Checks the Feed and Type attributes are supplied. If auto content creation is enabled
+ * then the Feed can be derived from AccountId|Format|SchemaName|Type.
+ */
+public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
     private static final Pattern REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_]");
     public static final String NAME_PART_DELIMITER = "-";
-    public static final String SUFFIX = "EVENTS";
 
     private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
-    private AttributeMapValidator(final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider) {
+    public FeedNameCheckAttributeMapFilter(
+            final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
-    public void validate(final AttributeMap attributeMap,
-                         final Supplier<Set<String>> validTypeNamesSupplier) {
+    @Override
+    public boolean filter(final AttributeMap attributeMap) {
+        // Get the type name from the header arguments if supplied.
+        final String type = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
+        if (!type.isEmpty() && !getValidStreamTypes().contains(type)) {
+            throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);
+        }
 
         final boolean isAutoContentEnabled = autoContentCreationConfigProvider.get()
                 .isEnabled();
@@ -48,7 +60,8 @@ public class AttributeMapValidator {
                 if (component.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.COMPONENT_MUST_BE_SPECIFIED, attributeMap);
                 }
-                feedName = deriveFeedName(attributeMap);
+                feedName = deriveFeedName(attributeMap, type);
+                // Add the derived feed name as everything else depends on the feed name
                 attributeMap.put(StandardHeaderArguments.FEED, feedName);
             }
         } else {
@@ -57,41 +70,43 @@ public class AttributeMapValidator {
             }
         }
 
-        // Get the type name from the header arguments if supplied.
-        final String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
-                .map(String::trim)
-                .orElse("");
-        final Set<String> validTypeNames = validTypeNamesSupplier.get();
-        if (!typeName.isEmpty() && !validTypeNames.contains(typeName)) {
-            throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);
-        }
+        return true;
     }
 
-    private static String deriveFeedName(final AttributeMap attributeMap) {
+    private Set<String> getValidStreamTypes() {
+        return NullSafe.set(receiveDataConfigProvider.get().getMetaTypes());
+    }
 
-        final String accountName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_NAME));
-        if (accountName.isEmpty()) {
+    //pkg private for testing
+    static String deriveFeedName(final AttributeMap attributeMap,
+                                 final String type) {
+
+        final String accountId = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
+        if (accountId.isEmpty()) {
             throw new StroomStreamException(StroomStatusCode.ACCOUNT_ID_MUST_BE_SPECIFIED, attributeMap);
         }
+
         final String component = NullSafe.trim(attributeMap.get(StandardHeaderArguments.COMPONENT));
+        final String format = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FORMAT));
         final String schema = NullSafe.trim(attributeMap.get(StandardHeaderArguments.SCHEMA));
+        String effectiveType = type.isBlank()
+                ? StreamTypeNames.EVENTS
+                : type;
 
-        // TODO Need to include the strm type but we may not know it at this point
-
-        final List<String> nameParts = new ArrayList<>();
-        nameParts.add(accountName);
-
-        if (!component.isEmpty()) {
-            nameParts.add(component);
-        }
-        nameParts.add(SUFFIX);
+        final List<String> nameParts = List.of(
+                accountId,
+                component,
+                schema,
+                format,
+                effectiveType);
 
         return buildName(nameParts);
     }
 
     private static String buildName(final List<String> parts) {
         return parts.stream()
-                .map(AttributeMapValidator::normaliseNamePart)
+                .filter(Predicate.not(String::isBlank))
+                .map(FeedNameCheckAttributeMapFilter::normaliseNamePart)
                 .collect(Collectors.joining(NAME_PART_DELIMITER));
     }
 

@@ -8,6 +8,7 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -39,7 +40,7 @@ public class SimpleReceiver implements Receiver {
     private static final String META_FILE_NAME = "0000000001.meta";
     private static final String DATA_FILE_NAME = "0000000001.dat";
 
-    private final AttributeMapFilter attributeMapFilter;
+    private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final LogStream logStream;
     private final DropReceiver dropReceiver;
@@ -50,7 +51,7 @@ public class SimpleReceiver implements Receiver {
                           final DataDirProvider dataDirProvider,
                           final LogStream logStream,
                           final DropReceiver dropReceiver) {
-        this.attributeMapFilter = attributeMapFilterFactory.create();
+        this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
 
@@ -78,6 +79,7 @@ public class SimpleReceiver implements Receiver {
 
         // Determine if the feed is allowed to receive data or if we should ignore it.
         // Throws an exception if we should reject.
+        final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
         if (attributeMapFilter.filter(attributeMap)) {
             long bytesRead = 0;
             try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStreamSupplier.get())) {
@@ -148,7 +150,6 @@ public class SimpleReceiver implements Receiver {
             }
 
         } else {
-
             // Drop the data.
             dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);
         }

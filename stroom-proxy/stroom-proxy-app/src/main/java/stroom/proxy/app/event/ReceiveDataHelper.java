@@ -4,17 +4,16 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.proxy.app.handler.AttributeMapFilterFactory;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
-import stroom.security.api.UserIdentity;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
@@ -36,7 +35,7 @@ public class ReceiveDataHelper {
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final RequestAuthenticator requestAuthenticator;
-    private final AttributeMapFilter attributeMapFilter;
+    private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final CertificateExtractor certificateExtractor;
     private final LogStream logStream;
     private final ReceiptIdGenerator receiptIdGenerator;
@@ -52,7 +51,7 @@ public class ReceiveDataHelper {
                              final AttributeMapValidator attributeMapValidator) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.requestAuthenticator = requestAuthenticator;
-        this.attributeMapFilter = attributeMapFilterFactory.create();
+        this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.certificateExtractor = certificateExtractor;
         this.logStream = logStream;
         this.receiptIdGenerator = receiptIdGenerator;
@@ -72,10 +71,8 @@ public class ReceiveDataHelper {
 
         try {
             Metrics.measure("ProxyRequestHandler - stream", () -> {
-                final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-
                 // Authorise request.
-                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
+                requestAuthenticator.authenticate(request, attributeMap);
 
                 Metrics.measure("ProxyRequestHandler - handle1", () -> {
                     // TODO The following validate call was commented out on master by 66 for some reason
@@ -85,6 +82,7 @@ public class ReceiveDataHelper {
                             () -> receiveDataConfigProvider.get().getMetaTypes());
 
                     // Test to see if we are going to accept this stream or drop the data.
+                    final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
                     if (attributeMapFilter.filter(attributeMap)) {
                         consumeHandler.handle(request, attributeMap, receiptId);
                     } else {

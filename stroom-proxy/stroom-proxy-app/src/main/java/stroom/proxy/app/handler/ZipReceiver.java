@@ -9,6 +9,7 @@ import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileName;
@@ -80,7 +81,7 @@ public class ZipReceiver implements Receiver {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipReceiver.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
-    private final AttributeMapFilter attributeMapFilter;
+    private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final NumberedDirProvider splitZipDirProvider;
     private final LogStream logStream;
@@ -90,7 +91,7 @@ public class ZipReceiver implements Receiver {
     public ZipReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                        final DataDirProvider dataDirProvider,
                        final LogStream logStream) {
-        this.attributeMapFilter = attributeMapFilterFactory.create();
+        this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
 
         // Make receiving zip dir provider.
@@ -179,6 +180,7 @@ public class ZipReceiver implements Receiver {
 
             // Check all the feeds are ok.
             final Map<FeedKey, List<ZipEntryGroup>> allowed = new HashMap<>();
+            final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
             for (final Map.Entry<FeedKey, List<ZipEntryGroup>> entry : receiveResult.feedGroups.entrySet()) {
                 final FeedKey feedKey = entry.getKey();
                 final List<ZipEntryGroup> zipEntryGroups = entry.getValue();

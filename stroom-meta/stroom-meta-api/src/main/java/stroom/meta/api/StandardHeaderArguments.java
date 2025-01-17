@@ -71,6 +71,7 @@ public interface StandardHeaderArguments {
     String STROOM_STATUS = "Stroom-Status";
     String STROOM_ERROR = "Stroom-Error";
 
+    String ACCOUNT_ID = "AccountId";
     String ACCOUNT_NAME = "AccountName";
     String SYSTEM = "System";
     String COMPONENT = "Component";

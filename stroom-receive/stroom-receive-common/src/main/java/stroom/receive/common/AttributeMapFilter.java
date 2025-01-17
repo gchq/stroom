@@ -26,8 +26,11 @@ public interface AttributeMapFilter {
 
     /**
      * Used for filtering received data based on its attributeMap and userIdentity.
+     * May add items to the {@link AttributeMap}, e.g. adding a Feed attribute if
+     * possible and configured.
      *
-     * @return True if the data should be accepted.
+     * @return True if the data should be accepted, false if it should be dropped.
+     * @throws StroomStreamException When data should be rejected for some reason.
      */
     boolean filter(AttributeMap attributeMap);
 

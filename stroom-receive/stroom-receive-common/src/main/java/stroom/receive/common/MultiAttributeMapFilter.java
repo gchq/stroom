@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 class MultiAttributeMapFilter implements AttributeMapFilter {
 
@@ -34,5 +35,13 @@ class MultiAttributeMapFilter implements AttributeMapFilter {
             }
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Filters: " + attributeMapFilters.stream()
+                .map(AttributeMapFilter::getClass)
+                .map(Class::getSimpleName)
+                .collect(Collectors.joining(", "));
     }
 }

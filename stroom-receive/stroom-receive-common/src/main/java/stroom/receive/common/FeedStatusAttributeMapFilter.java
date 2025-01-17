@@ -27,7 +27,6 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
     @Override
     public boolean filter(final AttributeMap attributeMap) {
         final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-
         final String senderDn = attributeMap.get(StandardHeaderArguments.REMOTE_DN);
         final String subjectId = NullSafe.get(senderDn, CertificateExtractor::extractCNFromDN);
         final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(

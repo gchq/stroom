@@ -19,11 +19,11 @@ public enum StroomStatusCode {
     INVALID_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 102, "Data type is invalid",
             "If you provide a data type it must be valid"),
 
-    ACCOUNT_NAME_MUST_BE_SPECIFIED(
+    ACCOUNT_ID_MUST_BE_SPECIFIED(
             HttpServletResponse.SC_NOT_ACCEPTABLE,
             103,
-            "AccountName must be specified",
-            "You must provide AccountName as a header argument in the request"),
+            "AccountId must be specified",
+            "You must provide AccountId as a header argument in the request"),
 
     COMPONENT_MUST_BE_SPECIFIED(
             HttpServletResponse.SC_NOT_ACCEPTABLE,
@@ -70,7 +70,7 @@ public enum StroomStatusCode {
             304,
             "Authentication of the client is required",
             "Some form of client authentication is required, e.g. certificate, token, data feed key, etc. " +
-                    "Ask administrator for supported authentication mechanism(s)."),
+            "Ask administrator for supported authentication mechanism(s)."),
 
     CLIENT_CERTIFICATE_NOT_AUTHENTICATED(
             HttpServletResponse.SC_UNAUTHORIZED,
