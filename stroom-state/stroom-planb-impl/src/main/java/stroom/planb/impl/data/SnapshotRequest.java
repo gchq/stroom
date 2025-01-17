@@ -14,12 +14,16 @@ public class SnapshotRequest {
     private final String mapName;
     @JsonProperty
     private final long effectiveTime;
+    @JsonProperty
+    private final Long currentSnapshotTime;
 
     @JsonCreator
     public SnapshotRequest(@JsonProperty("mapName") final String mapName,
-                           @JsonProperty("effectiveTime") final long effectiveTime) {
+                           @JsonProperty("effectiveTime") final long effectiveTime,
+                           @JsonProperty("currentSnapshotTime")final Long currentSnapshotTime) {
         this.mapName = mapName;
         this.effectiveTime = effectiveTime;
+        this.currentSnapshotTime = currentSnapshotTime;
     }
 
     public String getMapName() {
@@ -28,5 +32,9 @@ public class SnapshotRequest {
 
     public long getEffectiveTime() {
         return effectiveTime;
+    }
+
+    public Long getCurrentSnapshotTime() {
+        return currentSnapshotTime;
     }
 }

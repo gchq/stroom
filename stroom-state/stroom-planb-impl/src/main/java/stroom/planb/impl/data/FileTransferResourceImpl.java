@@ -20,9 +20,13 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.InputStream;
@@ -41,26 +45,60 @@ public class FileTransferResourceImpl implements FileTransferResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public StreamingOutput fetchSnapshot(final SnapshotRequest request) {
-        return output -> fileTransferServiceProvider.get().fetchSnapshot(request, output);
+    public Response fetchSnapshot(final SnapshotRequest request) {
+        try {
+            // Check the status before we start streaming snapshot data as it is hard to capture meaningful errors mid
+            // stream.
+            fileTransferServiceProvider.get().checkSnapshotStatus(request);
+
+            // Stream the snapshhot content to the client as ZIP data
+            final StreamingOutput streamingOutput = output -> {
+                fileTransferServiceProvider.get().fetchSnapshot(request, output);
+            };
+
+            return Response
+                    .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
+                    .build();
+        } catch (final NotModifiedException e) {
+            LOGGER.debug(e::getMessage, e);
+            return Response
+                    .status(Status.NOT_MODIFIED.getStatusCode(), e.getMessage())
+                    .build();
+        } catch (final PermissionException e) {
+            LOGGER.debug(e::getMessage, e);
+            return Response
+                    .status(Status.UNAUTHORIZED.getStatusCode(), e.getMessage())
+                    .build();
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            return Response
+                    .status(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage())
+                    .build();
+        }
     }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public boolean sendPart(final long createTime,
-                            final long metaId,
-                            final String fileHash,
-                            final String fileName,
-                            final InputStream inputStream) {
+    public Response sendPart(final long createTime,
+                             final long metaId,
+                             final String fileHash,
+                             final String fileName,
+                             final InputStream inputStream) {
         try {
             fileTransferServiceProvider.get().receivePart(createTime, metaId, fileHash, fileName, inputStream);
-            return true;
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
+            return Response
+                    .ok()
+                    .build();
+        } catch (final PermissionException e) {
+            LOGGER.debug(e::getMessage, e);
+            return Response
+                    .status(Status.UNAUTHORIZED.getStatusCode(), e.getMessage())
+                    .build();
         } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
-            throw new RuntimeException(e);
+            LOGGER.debug(e::getMessage, e);
+            return Response
+                    .status(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage())
+                    .build();
         }
     }
 }

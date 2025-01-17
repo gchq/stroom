@@ -9,17 +9,18 @@ import stroom.security.api.SecurityContext;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -127,34 +129,37 @@ public class FileTransferClientImpl implements FileTransferClient {
                 FileTransferResource.SEND_PART_PATH_PART);
         final WebTarget webTarget = webTargetFactory.create(url);
         try {
-            if (!storePartRemotely(webTarget, fileDescriptor, path)) {
-                throw new IOException("Unable to send file to: " + sourceNode);
-            }
+            storePartRemotely(webTarget, fileDescriptor, path);
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
             throw new IOException("Unable to send file to: " + sourceNode, e);
         }
     }
 
-    boolean storePartRemotely(final WebTarget webTarget,
-                              final FileDescriptor fileDescriptor,
-                              final Path path) throws IOException {
+    void storePartRemotely(final WebTarget webTarget,
+                           final FileDescriptor fileDescriptor,
+                           final Path path) throws IOException {
         try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
-            return webTarget
+            final Response response = webTarget
                     .request()
                     .header("createTime", fileDescriptor.createTimeMs())
                     .header("metaId", fileDescriptor.metaId())
                     .header("fileHash", fileDescriptor.fileHash())
                     .header("fileName", path.getFileName().toString())
-                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM), Boolean.class);
+                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM));
+            if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
+                throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
+            } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+            }
         }
     }
 
     @Override
-    public void fetchSnapshot(final String nodeName,
-                              final SnapshotRequest request,
-                              final Path snapshotDir) {
-        securityContext.asProcessingUser(() -> {
+    public Instant fetchSnapshot(final String nodeName,
+                                 final SnapshotRequest request,
+                                 final Path snapshotDir) {
+        return securityContext.asProcessingUserResult(() -> {
             try {
                 LOGGER.info(() -> "Fetching snapshot from '" +
                                   nodeName +
@@ -166,7 +171,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                         FileTransferResource.BASE_PATH,
                         FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
                 final WebTarget webTarget = webTargetFactory.create(url);
-                fetchSnapshot(webTarget, request, snapshotDir);
+                return fetchSnapshot(webTarget, request, snapshotDir);
             } catch (final Exception e) {
                 throw new RuntimeException("Error fetching snapshot from '" +
                                            nodeName +
@@ -177,18 +182,25 @@ public class FileTransferClientImpl implements FileTransferClient {
         });
     }
 
-    void fetchSnapshot(final WebTarget webTarget,
-                       final SnapshotRequest request,
-                       final Path snapshotDir) throws IOException {
+    Instant fetchSnapshot(final WebTarget webTarget,
+                          final SnapshotRequest request,
+                          final Path snapshotDir) throws IOException {
         try (Response response = webTarget
                 .request(MediaType.APPLICATION_OCTET_STREAM)
                 .post(Entity.json(request))) {
-            if (response.getStatus() != 200) {
-                throw new WebApplicationException(response);
+            if (response.getStatus() == Status.NOT_MODIFIED.getStatusCode()) {
+                throw new NotModifiedException(response.getStatusInfo().getReasonPhrase());
+            } else if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
+                throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
+            } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
             }
+
             try (final InputStream stream = (InputStream) response.getEntity()) {
                 ZipUtil.unzip(stream, snapshotDir);
             }
+            final String info = Files.readString(snapshotDir.resolve(Shard.SNAPSHOT_INFO_FILE_NAME));
+            return Instant.parse(info);
         }
     }
 }

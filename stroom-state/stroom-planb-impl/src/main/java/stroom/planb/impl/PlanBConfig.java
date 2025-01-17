@@ -22,6 +22,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     private final String path;
     private final StroomDuration minTimeToKeepSnapshots;
     private final StroomDuration minTimeToKeepEnvOpen;
+    private final StroomDuration snapshotRetryFetchInterval;
 
     public PlanBConfig() {
         this("${stroom.home}/planb");
@@ -36,6 +37,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 Collections.emptyList(),
                 path,
                 StroomDuration.ofMinutes(10),
+                StroomDuration.ofMinutes(1),
                 StroomDuration.ofMinutes(1));
     }
 
@@ -45,12 +47,14 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("nodeList") final List<String> nodeList,
                        @JsonProperty("path") final String path,
                        @JsonProperty("minTimeToKeepSnapshots") final StroomDuration minTimeToKeepSnapshots,
-                       @JsonProperty("minTimeToKeepEnvOpen") final StroomDuration minTimeToKeepEnvOpen) {
+                       @JsonProperty("minTimeToKeepEnvOpen") final StroomDuration minTimeToKeepEnvOpen,
+                       @JsonProperty("snapshotRetryFetchInterval") final StroomDuration snapshotRetryFetchInterval) {
         this.stateDocCache = stateDocCache;
         this.nodeList = nodeList;
         this.path = path;
         this.minTimeToKeepSnapshots = minTimeToKeepSnapshots;
         this.minTimeToKeepEnvOpen = minTimeToKeepEnvOpen;
+        this.snapshotRetryFetchInterval = snapshotRetryFetchInterval;
     }
 
     @JsonProperty
@@ -85,6 +89,12 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         return minTimeToKeepEnvOpen;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("How often should we retry to fetch snapshots when we fail to get a snapshot.")
+    public StroomDuration getSnapshotRetryFetchInterval() {
+        return snapshotRetryFetchInterval;
+    }
+
     @Override
     public String toString() {
         return "PlanBConfig{" +
@@ -93,6 +103,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                ", path='" + path + '\'' +
                ", minTimeToKeepSnapshots=" + minTimeToKeepSnapshots +
                ", minTimeToKeepEnvOpen=" + minTimeToKeepEnvOpen +
+               ", snapshotRetryFetchInterval=" + snapshotRetryFetchInterval +
                '}';
     }
 
@@ -109,11 +120,18 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                Objects.equals(nodeList, that.nodeList) &&
                Objects.equals(path, that.path) &&
                Objects.equals(minTimeToKeepSnapshots, that.minTimeToKeepSnapshots) &&
-               Objects.equals(minTimeToKeepEnvOpen, that.minTimeToKeepEnvOpen);
+               Objects.equals(minTimeToKeepEnvOpen, that.minTimeToKeepEnvOpen) &&
+               Objects.equals(snapshotRetryFetchInterval, that.snapshotRetryFetchInterval);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(stateDocCache, nodeList, path, minTimeToKeepSnapshots, minTimeToKeepEnvOpen);
+        return Objects.hash(
+                stateDocCache,
+                nodeList,
+                path,
+                minTimeToKeepSnapshots,
+                minTimeToKeepEnvOpen,
+                snapshotRetryFetchInterval);
     }
 }

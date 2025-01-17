@@ -6,11 +6,13 @@ import java.io.OutputStream;
 
 public interface FileTransferService {
 
-    void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) throws IOException;
+    void checkSnapshotStatus(SnapshotRequest request);
 
-    void receivePart(final long createTime,
-                     final long metaId,
-                     final String fileHash,
-                     final String fileName,
-                     final InputStream inputStream) throws IOException;
+    void fetchSnapshot(SnapshotRequest request, OutputStream outputStream) throws IOException;
+
+    void receivePart(long createTime,
+                     long metaId,
+                     String fileHash,
+                     String fileName,
+                     InputStream inputStream) throws IOException;
 }

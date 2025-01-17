@@ -27,7 +27,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.Response;
 
 import java.io.InputStream;
 
@@ -51,7 +51,7 @@ public interface FileTransferResource extends RestResource {
     @Operation(
             summary = "Fetch Plan B snapshot",
             operationId = "fetchSnapshot")
-    StreamingOutput fetchSnapshot(SnapshotRequest request);
+    Response fetchSnapshot(SnapshotRequest request);
 
     @POST
     @Path(SEND_PART_PATH_PART)
@@ -60,9 +60,9 @@ public interface FileTransferResource extends RestResource {
     @Operation(
             summary = "Send Plan B part",
             operationId = "sendPart")
-    boolean sendPart(@HeaderParam("createTime") long createTime,
-                     @HeaderParam("metaId") long metaId,
-                     @HeaderParam("fileHash") String fileHash,
-                     @HeaderParam("fileName") String fileName,
-                     InputStream inputStream);
+    Response sendPart(@HeaderParam("createTime") long createTime,
+                      @HeaderParam("metaId") long metaId,
+                      @HeaderParam("fileHash") String fileHash,
+                      @HeaderParam("fileName") String fileName,
+                      InputStream inputStream);
 }

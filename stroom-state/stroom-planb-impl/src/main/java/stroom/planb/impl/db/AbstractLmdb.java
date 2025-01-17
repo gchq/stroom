@@ -58,7 +58,6 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
     private final DBWriter dbWriter;
     private final ReentrantLock lock = new ReentrantLock();
     private final boolean readOnly;
-    private final Path path;
 
     public AbstractLmdb(final Path path,
                         final ByteBufferFactory byteBufferFactory,
@@ -68,7 +67,6 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
         this.byteBufferFactory = byteBufferFactory;
         this.serde = serde;
-        this.path = path;
         this.readOnly = readOnly;
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
 
@@ -367,10 +365,6 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
     public void close() {
         commit();
         env.close();
-    }
-
-    public void delete() {
-        FileUtil.deleteDir(path);
     }
 
     private interface DBWriter {

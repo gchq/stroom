@@ -31,18 +31,44 @@ public class FileTransferServiceImpl implements FileTransferService {
         this.shardManager = shardManager;
     }
 
+    /**
+     * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
+     *
+     * @param request The request to create a snapshot.
+     */
     @Override
-    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) throws IOException {
+    public void checkSnapshotStatus(final SnapshotRequest request) {
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
         }
-
-        // TODO : Possibly create windowed snapshots.
-
-        final String mapName = request.getMapName();
-        shardManager.zip(mapName, outputStream);
+        shardManager.checkSnapshotStatus(request);
     }
 
+    /**
+     * Actually create a snapshot and stream it to the supplied output stream.
+     *
+     * @param request      The request to create a snapshot.
+     * @param outputStream The output stream to write the snapshot to.
+     */
+    @Override
+    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) throws IOException {
+        // We will have already checked that we have a processing user but check again just in case.
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
+        }
+        shardManager.createSnapshot(request, outputStream);
+    }
+
+    /**
+     * Receive a part file to add to an existing shard.
+     *
+     * @param createTime
+     * @param metaId
+     * @param fileHash
+     * @param fileName
+     * @param inputStream
+     * @throws IOException
+     */
     @Override
     public void receivePart(final long createTime,
                             final long metaId,
