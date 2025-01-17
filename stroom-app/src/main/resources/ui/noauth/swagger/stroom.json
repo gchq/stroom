@@ -4458,11 +4458,7 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
+              "application/json" : { }
             },
             "description" : "default response"
           }
@@ -20370,6 +20366,10 @@
       "SnapshotRequest" : {
         "type" : "object",
         "properties" : {
+          "currentSnapshotTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "effectiveTime" : {
             "type" : "integer",
             "format" : "int64"

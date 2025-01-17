@@ -3051,9 +3051,7 @@ paths:
       responses:
         default:
           content:
-            application/json:
-              schema:
-                type: boolean
+            application/json: {}
           description: default response
       summary: Send Plan B part
       tags:
@@ -15049,6 +15047,9 @@ components:
     SnapshotRequest:
       type: object
       properties:
+        currentSnapshotTime:
+          type: integer
+          format: int64
         effectiveTime:
           type: integer
           format: int64

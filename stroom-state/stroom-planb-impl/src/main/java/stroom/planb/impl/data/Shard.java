@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 interface Shard {
 
-     String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
+    String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
 
     /**
      * Merge data from the source dir into this shard.

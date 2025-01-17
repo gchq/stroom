@@ -92,8 +92,8 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                 .doAnswer(invocation -> {
                     final SnapshotRequest request = invocation.getArgument(0);
 
-                    // If we already have a snapshot for the current write time then don't create a snapshot and just return an
-                    // error.
+                    // If we already have a snapshot for the current write time then don't create a snapshot and just
+                    // return an error.
                     if (request.getCurrentSnapshotTime() != null &&
                         Objects.equals(lastWriteTime.toEpochMilli(), request.getCurrentSnapshotTime())) {
                         throw new NotModifiedException();
