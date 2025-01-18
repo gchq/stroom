@@ -15,16 +15,12 @@
  *
  */
 
-package stroom.planb.impl;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.db.StateValue;
-import stroom.planb.impl.db.TemporalState;
-import stroom.planb.impl.db.TemporalStateDb;
-import stroom.planb.impl.db.TemporalStateFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -95,29 +91,44 @@ class TestTemporalStateDb {
 
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
-        final Path db1 = rootDir.resolve("db1");
-        final Path db2 = rootDir.resolve("db2");
-        Files.createDirectory(db1);
-        Files.createDirectory(db2);
+        final Path dbPath1 = rootDir.resolve("db1");
+        final Path dbPath2 = rootDir.resolve("db2");
+        Files.createDirectory(dbPath1);
+        Files.createDirectory(dbPath2);
 
-        testWrite(db1);
-        testWrite(db2);
+        testWrite(dbPath1);
+        testWrite(dbPath2);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateDb writer = new TemporalStateDb(db1, byteBufferFactory)) {
-            writer.merge(db2);
+        try (final TemporalStateDb db = new TemporalStateDb(dbPath1, byteBufferFactory)) {
+            db.merge(dbPath2);
+        }
+    }
+
+    @Test
+    void testCondense(@TempDir final Path rootDir) throws IOException {
+        final Path dbPath = rootDir.resolve("db");
+        Files.createDirectory(dbPath);
+
+        testWrite(dbPath);
+
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final TemporalStateDb db = new TemporalStateDb(dbPath, byteBufferFactory)) {
+            assertThat(db.count()).isEqualTo(100);
+            db.condense(Instant.now());
+            assertThat(db.count()).isEqualTo(1);
         }
     }
 
     private void testWrite(final Path dbDir) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb writer = new TemporalStateDb(dbDir, byteBufferFactory)) {
-            insertData(writer, refTime, "test", 100, 10);
+        try (final TemporalStateDb db = new TemporalStateDb(dbDir, byteBufferFactory)) {
+            insertData(db, refTime, "test", 100, 10);
         }
     }
 
-    //
+//
 //    @Test
 //    void testRemoveOldData() {
 //        ScyllaDbUtil.test((sessionProvider, tableName) -> {
@@ -162,22 +173,24 @@ class TestTemporalStateDb {
                             final String value,
                             final int rows,
                             final long deltaSeconds) {
-        final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
-        for (int i = 0; i < rows; i++) {
-            final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
-            final TemporalState.Key k = TemporalState.Key
-                    .builder()
-                    .name("TEST_KEY")
-                    .effectiveTime(effectiveTime)
-                    .build();
+        db.write(writer -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
+            for (int i = 0; i < rows; i++) {
+                final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
+                final TemporalState.Key k = TemporalState.Key
+                        .builder()
+                        .name("TEST_KEY")
+                        .effectiveTime(effectiveTime)
+                        .build();
 
-            final StateValue v = StateValue
-                    .builder()
-                    .typeId(StringValue.TYPE_ID)
-                    .byteBuffer(byteBuffer)
-                    .build();
+                final StateValue v = StateValue
+                        .builder()
+                        .typeId(StringValue.TYPE_ID)
+                        .byteBuffer(byteBuffer.duplicate())
+                        .build();
 
-            db.insert(k, v);
-        }
+                db.insert(writer, k, v);
+            }
+        });
     }
 }

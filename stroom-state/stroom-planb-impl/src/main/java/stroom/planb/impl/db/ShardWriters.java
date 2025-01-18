@@ -66,7 +66,7 @@ public class ShardWriters {
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
-        private final Map<String, AbstractLmdb<?, ?>> writers = new HashMap<>();
+        private final Map<String, WriterInstance> writers = new HashMap<>();
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
         private final boolean overwrite = true;
 
@@ -108,39 +108,81 @@ public class ShardWriters {
             }).map(PlanBDoc::getStateType);
         }
 
+        private static class WriterInstance implements AutoCloseable {
+
+            private final AbstractLmdb<?, ?> lmdb;
+            private final AbstractLmdb.Writer writer;
+
+            public WriterInstance(final AbstractLmdb<?, ?> lmdb) {
+                this.lmdb = lmdb;
+                this.writer = lmdb.createWriter();
+            }
+
+            public void addState(final State state) {
+                final StateDb db = (StateDb) lmdb;
+                db.insert(writer, state);
+            }
+
+            public void addTemporalState(final TemporalState temporalState) {
+                final TemporalStateDb db = (TemporalStateDb) lmdb;
+                db.insert(writer, temporalState);
+            }
+
+            public void addRangedState(final RangedState rangedState) {
+                final RangedStateDb db = (RangedStateDb) lmdb;
+                db.insert(writer, rangedState);
+            }
+
+            public void addTemporalRangedState(final TemporalRangedState temporalRangedState) {
+                final TemporalRangedStateDb db = (TemporalRangedStateDb) lmdb;
+                db.insert(writer, temporalRangedState);
+            }
+
+            public void addSession(final Session session) {
+                final SessionDb db = (SessionDb) lmdb;
+                db.insert(writer, session, session);
+            }
+
+            @Override
+            public void close() {
+                writer.close();
+                lmdb.close();
+            }
+        }
+
         public void addState(final String mapName,
                              final State state) {
-            final StateDb writer = (StateDb) writers.computeIfAbsent(mapName, k ->
-                    new StateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false));
-            writer.insert(state);
+            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+                    new StateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
+            writer.addState(state);
         }
 
         public void addTemporalState(final String mapName,
                                      final TemporalState temporalState) {
-            final TemporalStateDb writer = (TemporalStateDb) writers.computeIfAbsent(mapName, k ->
-                    new TemporalStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false));
-            writer.insert(temporalState);
+            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+                    new TemporalStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
+            writer.addTemporalState(temporalState);
         }
 
         public void addRangedState(final String mapName,
                                    final RangedState rangedState) {
-            final RangedStateDb writer = (RangedStateDb) writers.computeIfAbsent(mapName, k ->
-                    new RangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false));
-            writer.insert(rangedState);
+            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+                    new RangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
+            writer.addRangedState(rangedState);
         }
 
         public void addTemporalRangedState(final String mapName,
                                            final TemporalRangedState temporalRangedState) {
-            final TemporalRangedStateDb writer = (TemporalRangedStateDb) writers.computeIfAbsent(mapName, k ->
-                    new TemporalRangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false));
-            writer.insert(temporalRangedState);
+            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+                    new TemporalRangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
+            writer.addTemporalRangedState(temporalRangedState);
         }
 
         public void addSession(final String mapName,
                                final Session session) {
-            final SessionDb writer = (SessionDb) writers.computeIfAbsent(mapName, k ->
-                    new SessionDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false));
-            writer.insert(session, session);
+            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+                    new SessionDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
+            writer.addSession(session);
         }
 
         private Path getLmdbEnvDir(final String name) {
@@ -157,7 +199,7 @@ public class ShardWriters {
         public void close() throws IOException {
             Path zipFile = null;
             try {
-                writers.values().forEach(AbstractLmdb::close);
+                writers.values().forEach(WriterInstance::close);
 
                 // Zip all and delete dir.
                 zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");

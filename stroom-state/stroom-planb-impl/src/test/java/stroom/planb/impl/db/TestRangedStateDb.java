@@ -15,18 +15,13 @@
  *
  */
 
-package stroom.planb.impl;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.db.RangedState;
 import stroom.planb.impl.db.RangedState.Key;
-import stroom.planb.impl.db.RangedStateDb;
-import stroom.planb.impl.db.RangedStateFields;
-import stroom.planb.impl.db.RangedStateRequest;
-import stroom.planb.impl.db.StateValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -98,17 +93,17 @@ class TestRangedStateDb {
 
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
-        final Path db1 = rootDir.resolve("db1");
-        final Path db2 = rootDir.resolve("db2");
-        Files.createDirectory(db1);
-        Files.createDirectory(db2);
+        final Path dbPath1 = rootDir.resolve("db1");
+        final Path dbPath2 = rootDir.resolve("db2");
+        Files.createDirectory(dbPath1);
+        Files.createDirectory(dbPath2);
 
-        testWrite(db1);
-        testWrite(db2);
+        testWrite(dbPath1);
+        testWrite(dbPath2);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final RangedStateDb writer = new RangedStateDb(db1, byteBufferFactory)) {
-            writer.merge(db2);
+        try (final RangedStateDb db = new RangedStateDb(dbPath1, byteBufferFactory)) {
+            db.merge(dbPath2);
         }
     }
 
@@ -146,13 +141,15 @@ class TestRangedStateDb {
 //        });
 //    }
 
-    private void insertData(final RangedStateDb writer,
+    private void insertData(final RangedStateDb db,
                             final int rows) {
-        for (int i = 0; i < rows; i++) {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            final Key k = Key.builder().keyStart(10).keyEnd(30).build();
-            final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-            writer.insert(k, v);
-        }
+        db.write(writer -> {
+            for (int i = 0; i < rows; i++) {
+                final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+                final Key k = Key.builder().keyStart(10).keyEnd(30).build();
+                final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
+                db.insert(writer, k, v);
+            }
+        });
     }
 }

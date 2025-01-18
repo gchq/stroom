@@ -14,6 +14,8 @@ import stroom.planb.impl.db.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.time.SimpleDurationUtil;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Provider;
@@ -139,6 +141,29 @@ class LocalShard implements Shard {
     }
 
     @Override
+    public void condense() {
+        try {
+            final PlanBDoc doc = getDoc();
+            if (doc != null && doc.isCondense()) {
+                final SimpleDuration duration = SimpleDuration
+                        .builder()
+                        .time(doc.getCondenseAge())
+                        .timeUnit(doc.getCondenseTimeUnit())
+                        .build();
+                final Instant maxAge = SimpleDurationUtil.minus(Instant.now(), duration);
+                incrementUseCount();
+                try {
+                    db.condense(maxAge);
+                } finally {
+                    decrementUseCount();
+                }
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    @Override
     public void checkSnapshotStatus(final SnapshotRequest request) {
         // If we already have a snapshot for the current write time then don't create a snapshot and just return an
         // error.
@@ -217,6 +242,7 @@ class LocalShard implements Shard {
             if (useCount.get() == 0) {
                 if (open && isIdle()) {
                     db.close();
+                    db = null;
                     open = false;
                 }
             }

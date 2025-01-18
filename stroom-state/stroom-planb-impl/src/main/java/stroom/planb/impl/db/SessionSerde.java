@@ -115,7 +115,7 @@ public class SessionSerde implements Serde<Session, Session> {
         final long start = keyVal.key().getLong(Long.BYTES);
         final long end = keyVal.key().getLong(Long.BYTES + Long.BYTES);
         final byte[] key = ByteBufferUtils.toBytes(keyVal.val());
-        return new Session(key, start, end, false);
+        return new Session(key, start, end);
     }
 
     @Override

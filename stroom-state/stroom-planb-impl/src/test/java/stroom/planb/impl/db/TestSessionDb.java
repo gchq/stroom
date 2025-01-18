@@ -15,14 +15,12 @@
  *
  */
 
-package stroom.planb.impl;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.planb.impl.db.Session;
-import stroom.planb.impl.db.SessionDb;
-import stroom.planb.impl.db.SessionFields;
+import stroom.planb.impl.InstantRange;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -188,17 +186,32 @@ class TestSessionDb {
 
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
-        final Path db1 = rootDir.resolve("db1");
-        final Path db2 = rootDir.resolve("db2");
-        Files.createDirectory(db1);
-        Files.createDirectory(db2);
+        final Path dbPath1 = rootDir.resolve("db1");
+        final Path dbPath2 = rootDir.resolve("db2");
+        Files.createDirectory(dbPath1);
+        Files.createDirectory(dbPath2);
 
-        testWrite(db1);
-        testWrite(db2);
+        testWrite(dbPath1);
+        testWrite(dbPath2);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final SessionDb writer = new SessionDb(db1, byteBufferFactory)) {
-            writer.merge(db2);
+        try (final SessionDb db = new SessionDb(dbPath1, byteBufferFactory)) {
+            db.merge(dbPath2);
+        }
+    }
+
+    @Test
+    void testCondense(@TempDir final Path rootDir) throws IOException {
+        final Path dbPath = rootDir.resolve("db");
+        Files.createDirectory(dbPath);
+
+        testWrite(dbPath);
+
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final SessionDb db = new SessionDb(dbPath, byteBufferFactory)) {
+            assertThat(db.count()).isEqualTo(109);
+            db.condense(Instant.now());
+            assertThat(db.count()).isEqualTo(1);
         }
     }
 
@@ -208,9 +221,9 @@ class TestSessionDb {
         final InstantRange highRange;
         final InstantRange lowRange;
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final SessionDb writer = new SessionDb(dbDir, byteBufferFactory)) {
-            highRange = insertData(writer, key, refTime, 100, 10);
-            lowRange = insertData(writer, key, refTime, 10, -10);
+        try (final SessionDb db = new SessionDb(dbDir, byteBufferFactory)) {
+            highRange = insertData(db, key, refTime, 100, 10);
+            lowRange = insertData(db, key, refTime, 10, -10);
         }
         return new Ranges(highRange, lowRange);
     }
@@ -250,26 +263,28 @@ class TestSessionDb {
 //        });
 //    }
 
-    private InstantRange insertData(final SessionDb writer,
+    private InstantRange insertData(final SessionDb db,
                                     final byte[] key,
                                     final Instant refTime,
                                     final int rows,
                                     final long deltaSeconds) {
-        Instant min = refTime;
-        Instant max = refTime;
-        for (int i = 0; i < rows; i++) {
-            final Instant start = refTime.plusSeconds(i * deltaSeconds);
-            final Instant end = start.plusSeconds(Math.abs(deltaSeconds));
-            if (start.isBefore(min)) {
-                min = start;
-            }
-            if (end.isAfter(max)) {
-                max = end;
-            }
+        return db.write(writer -> {
+            Instant min = refTime;
+            Instant max = refTime;
+            for (int i = 0; i < rows; i++) {
+                final Instant start = refTime.plusSeconds(i * deltaSeconds);
+                final Instant end = start.plusSeconds(Math.abs(deltaSeconds));
+                if (start.isBefore(min)) {
+                    min = start;
+                }
+                if (end.isAfter(max)) {
+                    max = end;
+                }
 
-            final Session session = Session.builder().key(key).start(start).end(end).build();
-            writer.insert(session, session);
-        }
-        return new InstantRange(min, max);
+                final Session session = Session.builder().key(key).start(start).end(end).build();
+                db.insert(writer, session, session);
+            }
+            return new InstantRange(min, max);
+        });
     }
 }

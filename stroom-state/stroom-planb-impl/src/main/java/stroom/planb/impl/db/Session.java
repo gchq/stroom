@@ -6,8 +6,7 @@ import java.time.Instant;
 public record Session(
         byte[] key,
         long start,
-        long end,
-        boolean terminal) {
+        long end) {
 
     public static Builder builder() {
         return new Builder();
@@ -18,7 +17,6 @@ public record Session(
         private byte[] key;
         private long start;
         private long end;
-        private boolean terminal;
 
         public Builder() {
         }
@@ -27,7 +25,6 @@ public record Session(
             this.key = session.key;
             this.start = session.start;
             this.end = session.end;
-            this.terminal = session.terminal;
         }
 
         public Builder key(final byte[] key) {
@@ -60,13 +57,8 @@ public record Session(
             return this;
         }
 
-        public Builder terminal(final boolean terminal) {
-            this.terminal = terminal;
-            return this;
-        }
-
         public Session build() {
-            return new Session(key, start, end, terminal);
+            return new Session(key, start, end);
         }
     }
 }

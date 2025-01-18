@@ -18,6 +18,11 @@ interface Shard {
     void merge(Path sourceDir);
 
     /**
+     * Condense data in the shard.
+     */
+    void condense();
+
+    /**
      * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
      *
      * @param request The request to create a snapshot.

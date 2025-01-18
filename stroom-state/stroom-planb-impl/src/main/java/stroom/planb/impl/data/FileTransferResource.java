@@ -20,6 +20,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HeaderParam;
@@ -50,7 +51,14 @@ public interface FileTransferResource extends RestResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Fetch Plan B snapshot",
-            operationId = "fetchSnapshot")
+            operationId = "fetchSnapshot",
+            responses = {
+                    @ApiResponse(description = "Returns: " +
+                                               "200 if the request was ok and the snapshot returned, " +
+                                               "304 if the snapshot has not been modified, " +
+                                               "401 if unauthorised, " +
+                                               "500 for any other error")
+            })
     Response fetchSnapshot(SnapshotRequest request);
 
     @POST
@@ -59,7 +67,13 @@ public interface FileTransferResource extends RestResource {
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
             summary = "Send Plan B part",
-            operationId = "sendPart")
+            operationId = "sendPart",
+            responses = {
+                    @ApiResponse(description = "Returns: " +
+                                               "200 if the part was sent ok, " +
+                                               "401 if unauthorised, " +
+                                               "500 for any other error")
+            })
     Response sendPart(@HeaderParam("createTime") long createTime,
                       @HeaderParam("metaId") long metaId,
                       @HeaderParam("fileHash") String fileHash,

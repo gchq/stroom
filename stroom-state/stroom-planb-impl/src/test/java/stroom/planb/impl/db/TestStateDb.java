@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.planb.impl;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
@@ -24,16 +24,15 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.db.State.Key;
-import stroom.planb.impl.db.StateDb;
-import stroom.planb.impl.db.StateFields;
-import stroom.planb.impl.db.StatePaths;
-import stroom.planb.impl.db.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.query.api.v2.ExpressionOperator;
@@ -80,28 +79,28 @@ class TestStateDb {
 
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
-        final Path db1 = rootDir.resolve("db1");
-        final Path db2 = rootDir.resolve("db2");
-        Files.createDirectory(db1);
-        Files.createDirectory(db2);
+        final Path dbPath1 = rootDir.resolve("db1");
+        final Path dbPath2 = rootDir.resolve("db2");
+        Files.createDirectory(dbPath1);
+        Files.createDirectory(dbPath2);
 
         final Function<Integer, Key> keyFunction = i -> Key.builder().name("TEST_KEY1").build();
         final Function<Integer, StateValue> valueFunction = i -> {
             final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
             return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
         };
-        testWrite(db1, 100, keyFunction, valueFunction);
+        testWrite(dbPath1, 100, keyFunction, valueFunction);
 
         final Function<Integer, Key> keyFunction2 = i -> Key.builder().name("TEST_KEY2").build();
         final Function<Integer, StateValue> valueFunction2 = i -> {
             final ByteBuffer byteBuffer = ByteBuffer.wrap(("test2" + i).getBytes(StandardCharsets.UTF_8));
             return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
         };
-        testWrite(db2, 100, keyFunction2, valueFunction2);
+        testWrite(dbPath2, 100, keyFunction2, valueFunction2);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final StateDb writer = new StateDb(db1, byteBufferFactory)) {
-            writer.merge(db2);
+        try (final StateDb db = new StateDb(dbPath1, byteBufferFactory)) {
+            db.merge(dbPath2);
         }
     }
 
@@ -129,14 +128,12 @@ class TestStateDb {
                     .thenReturn(Collections.singletonList(doc.asDocRef()));
             Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
                     .thenReturn(doc);
+            final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
+            Mockito.when(planBDocCache.get(Mockito.any(String.class)))
+                    .thenReturn(doc);
 
             final String path = rootDir.toAbsolutePath().toString();
             final PlanBConfig planBConfig = new PlanBConfig(path);
-            final PlanBDocCache planBDocCache = new PlanBDocCacheImpl(
-                    cacheManager,
-                    planBDocStore,
-                    new MockSecurityContext(),
-                    () -> planBConfig);
             final ShardManager shardManager = new ShardManager(
                     new ByteBufferFactoryImpl(),
                     planBDocCache,
@@ -182,9 +179,9 @@ class TestStateDb {
         final AtomicBoolean writeComplete = new AtomicBoolean();
         final List<CompletableFuture<?>> list = new ArrayList<>();
 
-        try (final StateDb writer = new StateDb(source, byteBufferFactory)) {
+        try (final StateDb db1 = new StateDb(source, byteBufferFactory)) {
             list.add(CompletableFuture.runAsync(() -> {
-                insertData(writer, 1000000, keyFunction, valueFunction);
+                insertData(db1, 1000000, keyFunction, valueFunction);
                 writeComplete.set(true);
             }));
 
@@ -196,7 +193,7 @@ class TestStateDb {
                             // Compress.
 
                             // Lock when compressing, so we don't zip half written data.
-                            writer.lock(() -> {
+                            db1.lock(() -> {
                                 try {
                                     ZipUtil.zip(zipFile, source);
                                 } catch (final IOException e) {
@@ -208,8 +205,8 @@ class TestStateDb {
                             ZipUtil.unzip(zipFile, target);
                             Files.delete(zipFile);
                             // Read.
-                            try (final StateDb db = new StateDb(target, byteBufferFactory, false, true)) {
-                                assertThat(db.count()).isGreaterThanOrEqualTo(0);
+                            try (final StateDb db2 = new StateDb(target, byteBufferFactory, false, true)) {
+                                assertThat(db2.count()).isGreaterThanOrEqualTo(0);
                             }
                             // Cleanup.
                             FileUtil.deleteDir(target);
@@ -367,14 +364,16 @@ class TestStateDb {
 //        });
 //    }
 
-    private void insertData(final StateDb writer,
+    private void insertData(final StateDb db,
                             final int rows,
                             final Function<Integer, Key> keyFunction,
                             final Function<Integer, StateValue> valueFunction) {
-        for (int i = 0; i < rows; i++) {
-            final Key k = keyFunction.apply(i);
-            final StateValue v = valueFunction.apply(i);
-            writer.insert(k, v);
-        }
+        db.write(writer -> {
+            for (int i = 0; i < rows; i++) {
+                final Key k = keyFunction.apply(i);
+                final StateValue v = valueFunction.apply(i);
+                db.insert(writer, k, v);
+            }
+        });
     }
 }

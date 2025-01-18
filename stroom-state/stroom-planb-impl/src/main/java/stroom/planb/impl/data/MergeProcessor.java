@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -27,11 +29,14 @@ public class MergeProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
 
+    private static final Duration MIN_CONDENSE_FREQUENCY = Duration.ofMinutes(10);
+
     private final SequentialFileStore fileStore;
     private final Path mergingDir;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
+    private Instant nextCondenseTime;
 
     @Inject
     public MergeProcessor(final SequentialFileStore fileStore,
@@ -50,6 +55,8 @@ public class MergeProcessor {
                 throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
             }
         }
+
+        nextCondenseTime = Instant.now().plus(MIN_CONDENSE_FREQUENCY);
     }
 
     private boolean ensureDirExists(final Path path) {
@@ -89,6 +96,13 @@ public class MergeProcessor {
                     final SequentialFile sequentialFile = fileStore.awaitNew(currentStoreId);
                     taskContext.info(() -> "Merging data: " + currentStoreId);
                     merge(sequentialFile);
+
+                    // Periodically we will condense all shards.
+                    // This is done here so that the same thread is always used for writing.
+                    if (nextCondenseTime.isBefore(Instant.now())) {
+                        shardManager.condenseAll();
+                        nextCondenseTime = Instant.now().plus(MIN_CONDENSE_FREQUENCY);
+                    }
 
                     // Increment store id.
                     storeId++;

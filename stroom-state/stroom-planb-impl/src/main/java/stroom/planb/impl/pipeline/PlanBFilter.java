@@ -192,7 +192,6 @@ public class PlanBFilter extends AbstractXMLFilter {
     private final ShardWriters shardWriters;
     private Locator locator;
 
-    private boolean start;
     private Instant time;
     private StroomDuration timeout;
     private ShardWriter writer;
@@ -355,16 +354,9 @@ public class PlanBFilter extends AbstractXMLFilter {
 
             fastInfosetStartElement(localName, uri, qName, atts);
 
-        } else if ("session".equals(localName) ||
-                   "session-start".equals(localName) ||
-                   "session-end".equals(localName)) {
-            start = true;
+        } else if ("session".equals(localName)) {
             time = null;
             timeout = null;
-
-            if ("session-end".equals(localName)) {
-                start = false;
-            }
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -654,12 +646,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                             sessionBuilder.key(key);
                             sessionBuilder.start(time);
                             sessionBuilder.end(time);
-                            if (start) {
-                                if (timeout != null) {
-                                    sessionBuilder.end(time.plus(timeout));
-                                }
-                            } else {
-                                sessionBuilder.terminal(true);
+                            if (timeout != null) {
+                                sessionBuilder.end(time.plus(timeout));
                             }
 
                             LOGGER.trace("Putting session {} into table {}", key, mapName);
@@ -689,7 +677,6 @@ public class PlanBFilter extends AbstractXMLFilter {
         rangeTo = null;
         haveSeenXmlInValueElement = false;
         valueXmlDefaultNamespaceUri = null;
-        start = true;
         time = null;
         timeout = null;
     }

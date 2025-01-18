@@ -4406,10 +4406,7 @@
         },
         "responses" : {
           "default" : {
-            "content" : {
-              "application/octet-stream" : { }
-            },
-            "description" : "default response"
+            "description" : "Returns: 200 if the request was ok and the snapshot returned, 304 if the snapshot has not been modified, 401 if unauthorised, 500 for any other error"
           }
         },
         "summary" : "Fetch Plan B snapshot",
@@ -4457,10 +4454,7 @@
         },
         "responses" : {
           "default" : {
-            "content" : {
-              "application/json" : { }
-            },
-            "description" : "default response"
+            "description" : "Returns: 200 if the part was sent ok, 401 if unauthorised, 500 for any other error"
           }
         },
         "summary" : "Send Plan B part",

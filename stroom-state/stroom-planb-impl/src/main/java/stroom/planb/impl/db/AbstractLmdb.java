@@ -30,10 +30,12 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -52,12 +54,12 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
     final ByteBufferFactory byteBufferFactory;
     final Env<ByteBuffer> env;
     final Dbi<ByteBuffer> dbi;
-    private Txn<ByteBuffer> writeTxn;
-    private int commitCount = 0;
-    private int hashClashes = 0;
     private final DBWriter dbWriter;
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock writeTxnLock = new ReentrantLock();
+    private final ReentrantLock dbCommitLock = new ReentrantLock();
     private final boolean readOnly;
+
+    private final Runnable commitRunnable;
 
     public AbstractLmdb(final Path path,
                         final ByteBufferFactory byteBufferFactory,
@@ -94,10 +96,15 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
         if (readOnly) {
             dbWriter = null;
+            this.commitRunnable = null;
 
         } else {
             // If we do not prefix values then we can simply put rows.
             if (!serde.hasPrefix()) {
+                // Do nothing special on commit.
+                this.commitRunnable = () -> {
+                };
+
                 // If the value has no key prefix, i.e. we are not using key hashes then just try to put.
                 if (overwrite) {
                     // Put and overwrite any existing key/value.
@@ -108,6 +115,10 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                             dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE);
                 }
             } else {
+                // Warn on hash clashes.
+                final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
+                this.commitRunnable = hashClashCommitRunnable;
+
                 if (overwrite) {
                     dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
                         // First try to put without overwriting existing values.
@@ -117,7 +128,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                                 if (!delete(writeTxn, keyByteBuffer, predicate)) {
                                     // We must have had a hash clash here because we didn't find a row for the key even
                                     // though the db contains the key hash.
-                                    hashClashes++;
+                                    hashClashCommitRunnable.increment();
                                 }
 
                                 // Put new value allowing for duplicate keys as we are only using a hash key.
@@ -126,6 +137,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                             });
                         }
                     };
+
                 } else {
                     dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
                         // First try to put without overwriting existing values.
@@ -134,7 +146,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                                 if (!exists(writeTxn, keyByteBuffer, predicate)) {
                                     // We must have had a hash clash here because we didn't find a row for the key even
                                     // though the db contains the key hash.
-                                    hashClashes++;
+                                    hashClashCommitRunnable.increment();
 
                                     // Put the value as another row for the same key hash as we didn't find a row for
                                     // the full key value.
@@ -156,51 +168,72 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         return new DbiFlags[]{DbiFlags.MDB_CREATE};
     }
 
+    private static class HashClashCommitRunnable implements Runnable {
+
+        private int hashClashes;
+
+        public void increment() {
+            // We must have had a hash clash here because we didn't find a row for the key even
+            // though the db contains the key hash.
+            hashClashes++;
+        }
+
+        @Override
+        public void run() {
+            if (hashClashes > 0) {
+                // We prob don't want to warn but will keep for now until we know how big the issue is.
+                LOGGER.warn(() -> "We had " + hashClashes + " hash clashes since last commit");
+                hashClashes = 0;
+            }
+        }
+    }
+
     public void merge(final Path source) {
-        final Env.Builder<ByteBuffer> builder = Env.create()
-                .setMaxDbs(1)
-                .setMaxReaders(1);
-        try (final Env<ByteBuffer> sourceEnv = builder.open(source.toFile(),
-                EnvFlags.MDB_NOTLS,
-                EnvFlags.MDB_NOLOCK,
-                EnvFlags.MDB_RDONLY_ENV)) {
-            final Dbi<ByteBuffer> sourceDbi = sourceEnv.openDbi(NAME);
-            try (final Txn<ByteBuffer> readTxn = sourceEnv.txnRead()) {
-                try (final CursorIterable<ByteBuffer> cursorIterable = sourceDbi.iterate(readTxn)) {
-                    for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                        insert(keyVal.key(), keyVal.val());
+        write(writer -> {
+            final Env.Builder<ByteBuffer> builder = Env.create()
+                    .setMaxDbs(1)
+                    .setMaxReaders(1);
+            try (final Env<ByteBuffer> sourceEnv = builder.open(source.toFile(),
+                    EnvFlags.MDB_NOTLS,
+                    EnvFlags.MDB_NOLOCK,
+                    EnvFlags.MDB_RDONLY_ENV)) {
+                final Dbi<ByteBuffer> sourceDbi = sourceEnv.openDbi(NAME);
+                try (final Txn<ByteBuffer> readTxn = sourceEnv.txnRead()) {
+                    try (final CursorIterable<ByteBuffer> cursorIterable = sourceDbi.iterate(readTxn)) {
+                        for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
+                            insert(writer, keyVal.key(), keyVal.val());
+                        }
                     }
                 }
             }
-        }
-
-        // Always commit after a merge.
-        commit();
+        });
 
         // Delete source now we have merged.
         FileUtil.deleteDir(source);
     }
 
-    public boolean insert(final KV<K, V> kv) {
-        return insert(kv.key(), kv.value());
+    public void condense(Instant maxAge) {
+        // Don't condense by default.
     }
 
-    public boolean insert(final K key, final V value) {
+    boolean insert(final Writer writer,
+                   final KV<K, V> kv) {
+        return insert(writer, kv.key(), kv.value());
+    }
+
+    boolean insert(final Writer writer,
+                   final K key,
+                   final V value) {
         return serde.createKeyByteBuffer(key, keyByteBuffer ->
                 serde.createValueByteBuffer(key, value, valueByteBuffer ->
-                        insert(keyByteBuffer, valueByteBuffer)));
+                        insert(writer, keyByteBuffer, valueByteBuffer)));
     }
 
-    public boolean insert(final ByteBuffer keyByteBuffer,
-                          final ByteBuffer valueByteBuffer) {
-        final Txn<ByteBuffer> writeTxn = getOrCreateWriteTxn();
-        dbWriter.write(writeTxn, keyByteBuffer, valueByteBuffer);
-
-        commitCount++;
-        if (commitCount > 10000) {
-            commit();
-        }
-
+    private boolean insert(final Writer writer,
+                           final ByteBuffer keyByteBuffer,
+                           final ByteBuffer valueByteBuffer) {
+        dbWriter.write(writer.getWriteTxn(), keyByteBuffer, valueByteBuffer);
+        writer.tryCommit();
         return true;
     }
 
@@ -235,44 +268,97 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         return false;
     }
 
+    public static class Writer implements AutoCloseable {
 
-    Txn<ByteBuffer> getOrCreateWriteTxn() {
-        if (writeTxn == null) {
-            writeTxn = env.txnWrite();
+        private final Env<ByteBuffer> env;
+        private final ReentrantLock dbCommitLock;
+        private final Runnable commitListener;
+        private final ReentrantLock writeTxnLock;
+        private Txn<ByteBuffer> writeTxn;
+        private int commitCount = 0;
+
+        public Writer(final Env<ByteBuffer> env,
+                      final ReentrantLock dbCommitLock,
+                      final Runnable commitListener,
+                      final ReentrantLock writeTxnLock) {
+            this.env = env;
+            this.dbCommitLock = dbCommitLock;
+            this.commitListener = commitListener;
+            this.writeTxnLock = writeTxnLock;
+
+            // We are only allowed a single write txn and we can only write with a single thread so ensure this is the
+            // case.
+            writeTxnLock.lock();
         }
-        return writeTxn;
-    }
 
-    void commit() {
-        lock(() -> {
-            if (writeTxn != null) {
-                try {
-                    writeTxn.commit();
-                } finally {
+        Txn<ByteBuffer> getWriteTxn() {
+            if (writeTxn == null) {
+                writeTxn = env.txnWrite();
+            }
+            return writeTxn;
+        }
+
+        void tryCommit() {
+            commitCount++;
+            if (commitCount > 10000) {
+                commit();
+            }
+        }
+
+        void commit() {
+            dbCommitLock.lock();
+            try {
+                if (writeTxn != null) {
                     try {
-                        writeTxn.close();
+                        writeTxn.commit();
                     } finally {
-                        writeTxn = null;
+                        try {
+                            writeTxn.close();
+                        } finally {
+                            writeTxn = null;
+                        }
                     }
                 }
-            }
 
-            commitCount = 0;
-
-            if (hashClashes > 0) {
-                // We prob don't want to warn but will keep for now until we know how big the issue is.
-                LOGGER.warn(() -> "We had " + hashClashes + " hash clashes since last commit");
-                hashClashes = 0;
+                commitCount = 0;
+                commitListener.run();
+            } finally {
+                dbCommitLock.unlock();
             }
-        });
+        }
+
+        @Override
+        public void close() {
+            try {
+                commit();
+            } finally {
+                writeTxnLock.unlock();
+            }
+        }
+    }
+
+    Writer createWriter() {
+        return new Writer(env, dbCommitLock, commitRunnable, writeTxnLock);
+    }
+
+    <T> T write(final Function<Writer, T> function) {
+        try (final Writer writer = new Writer(env, dbCommitLock, commitRunnable, writeTxnLock)) {
+            return function.apply(writer);
+        }
+    }
+
+    void write(final Consumer<Writer> consumer) {
+        try (final Writer writer = new Writer(env, dbCommitLock, commitRunnable, writeTxnLock)) {
+            consumer.accept(writer);
+        }
     }
 
     public void lock(final Runnable runnable) {
-        lock.lock();
+        dbCommitLock.lock();
         try {
             runnable.run();
         } finally {
-            lock.unlock();
+            dbCommitLock.unlock();
         }
     }
 
@@ -363,7 +449,6 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
     @Override
     public void close() {
-        commit();
         env.close();
     }
 

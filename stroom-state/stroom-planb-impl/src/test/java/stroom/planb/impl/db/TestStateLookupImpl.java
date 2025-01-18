@@ -1,13 +1,9 @@
-package stroom.planb.impl.pipeline;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.db.StateValue;
-import stroom.planb.impl.db.TemporalState;
 import stroom.planb.impl.db.TemporalState.Key;
-import stroom.planb.impl.db.TemporalStateDb;
-import stroom.planb.impl.db.TemporalStateRequest;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -59,36 +55,38 @@ class TestStateLookupImpl {
         final List<Instant> lookupTimes = new ArrayList<>(refStreamDefCount);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateDb writer = new TemporalStateDb(tempDir, byteBufferFactory)) {
-            for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
-                final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
-                        k -> new ArrayList<>(keyValueMapCount));
+        try (final TemporalStateDb db = new TemporalStateDb(tempDir, byteBufferFactory)) {
+            db.write(writer -> {
+                for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
+                    final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
+                            k -> new ArrayList<>(keyValueMapCount));
 
-                // The time loaded into the store
-                final Instant strmTime = baseTime.minus(refStrmIdx, ChronoUnit.DAYS);
-                // The time we use to lookup with, i.e. a smidge after the strm time in the store
-                final Instant lookupTime = strmTime.plus(5, ChronoUnit.SECONDS);
-                lookupTimes.add(lookupTime);
+                    // The time loaded into the store
+                    final Instant strmTime = baseTime.minus(refStrmIdx, ChronoUnit.DAYS);
+                    // The time we use to lookup with, i.e. a smidge after the strm time in the store
+                    final Instant lookupTime = strmTime.plus(5, ChronoUnit.SECONDS);
+                    lookupTimes.add(lookupTime);
 
-                for (int mapIdx = 0; mapIdx < keyValueMapCount; mapIdx++) {
-                    final String mapName = buildMapName(KV_TYPE, mapIdx);
-                    mapNames.add(mapName);
-                    for (int keyIdx = 0; keyIdx < entryCount; keyIdx++) {
-                        final String key = buildKey(keyIdx);
-                        final String val = buildKeyStoreValue(mapName, keyIdx, key);
-                        final ByteBuffer byteBuffer = ByteBuffer.wrap(val.getBytes(StandardCharsets.UTF_8));
+                    for (int mapIdx = 0; mapIdx < keyValueMapCount; mapIdx++) {
+                        final String mapName = buildMapName(KV_TYPE, mapIdx);
+                        mapNames.add(mapName);
+                        for (int keyIdx = 0; keyIdx < entryCount; keyIdx++) {
+                            final String key = buildKey(keyIdx);
+                            final String val = buildKeyStoreValue(mapName, keyIdx, key);
+                            final ByteBuffer byteBuffer = ByteBuffer.wrap(val.getBytes(StandardCharsets.UTF_8));
 
-                        final Key k = Key.builder().name(buildKey(keyIdx)).effectiveTime(strmTime).build();
-                        final StateValue v = StateValue
-                                .builder()
-                                .typeId(StringValue.TYPE_ID)
-                                .byteBuffer(byteBuffer)
-                                .build();
+                            final Key k = Key.builder().name(buildKey(keyIdx)).effectiveTime(strmTime).build();
+                            final StateValue v = StateValue
+                                    .builder()
+                                    .typeId(StringValue.TYPE_ID)
+                                    .byteBuffer(byteBuffer)
+                                    .build();
 
-                        writer.insert(k, v);
+                            db.insert(writer, k, v);
+                        }
                     }
                 }
-            }
+            });
         }
 
         try (final TemporalStateDb db = new TemporalStateDb(tempDir, byteBufferFactory, false, true)) {

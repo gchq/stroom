@@ -119,6 +119,11 @@ class SnapshotShard implements Shard {
     }
 
     @Override
+    public void condense() {
+        // Condense is not supported on snapshots
+    }
+
+    @Override
     public void checkSnapshotStatus(final SnapshotRequest request) {
         throw new RuntimeException("You cannot create a snapshot from a snapshot");
     }
@@ -310,6 +315,7 @@ class SnapshotShard implements Shard {
                 if (useCount.get() == 0) {
                     if (open && (destroy || isIdle())) {
                         db.close();
+                        db = null;
                         open = false;
                     }
 

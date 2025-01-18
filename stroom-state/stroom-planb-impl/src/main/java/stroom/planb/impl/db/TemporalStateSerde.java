@@ -127,7 +127,7 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
 
     @Override
     public Key getKey(final KeyVal<ByteBuffer> keyVal) {
-        final ByteBuffer byteBuffer = keyVal.key();
+        final ByteBuffer byteBuffer = keyVal.val();
         final int keyLength = byteBuffer.getInt(0);
         final ByteBuffer slice = byteBuffer.slice(Integer.BYTES, keyLength);
         final byte[] keyBytes = ByteBufferUtils.toBytes(slice);

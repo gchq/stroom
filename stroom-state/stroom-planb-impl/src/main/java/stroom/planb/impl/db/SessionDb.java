@@ -19,6 +19,7 @@ import org.lmdbjava.KeyRange;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -180,7 +181,7 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
                             final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
                             // We might have had a hash collision so test the key equality.
                             if (Arrays.equals(bytes, request.name())) {
-                                return Optional.of(new Session(bytes, startTimeMs, endTimeMs, false));
+                                return Optional.of(new Session(bytes, startTimeMs, endTimeMs));
                             }
                         } else if (endTimeMs < startTimeMs) {
                             final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
@@ -198,6 +199,71 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
             byteBufferFactory.release(start);
             byteBufferFactory.release(end);
         }
+    }
+
+    // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just fees pages for
+    //  reuse. We might want to create a new compacted instance instead of deleting in place.
+    @Override
+    public void condense(final Instant maxAge) {
+        final long maxTime = maxAge.toEpochMilli();
+
+        write(writer -> {
+            Session lastSession = null;
+            Session newSession = null;
+
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(writer.getWriteTxn())) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext()
+                       && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    final Session session = serde.getKey(keyVal);
+
+                    if (lastSession != null &&
+                        Arrays.equals(lastSession.key(), session.key()) &&
+                        session.start() < maxTime &&
+                        lastSession.end() >= session.start()) {
+
+                        // Extend the session.
+                        newSession = new Session(lastSession.key(), lastSession.start(), session.end());
+
+                        // Delete the previous session as we are extending it.
+                        serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
+                            dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+                            writer.tryCommit();
+                            return null;
+                        });
+                    } else {
+                        // Insert new session.
+                        if (newSession != null) {
+                            insert(writer, newSession, newSession);
+                            newSession = null;
+                        }
+                    }
+
+                    lastSession = session;
+                }
+            }
+
+            // Insert new session.
+            if (newSession != null) {
+                // Delete the last session if it will be merged into the new one.
+                if (lastSession != null &&
+                    Arrays.equals(lastSession.key(), newSession.key()) &&
+                    newSession.start() < maxTime &&
+                    lastSession.end() >= newSession.start()) {
+
+                    // Delete the previous session as we are extending it.
+                    serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
+                        dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+                        writer.tryCommit();
+                        return null;
+                    });
+                }
+
+                // Insert the new session.
+                insert(writer, newSession, newSession);
+            }
+        });
     }
 
     private record CurrentSession(Long sessionStart,

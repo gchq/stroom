@@ -65,6 +65,10 @@ public class ShardManager {
         shard.merge(sourceDir);
     }
 
+    public void condenseAll() {
+        shardMap.values().forEach(shard -> shard.condense());
+    }
+
     public void checkSnapshotStatus(final SnapshotRequest request) {
         final Shard shard = getShard(request.getMapName());
         shard.checkSnapshotStatus(request);

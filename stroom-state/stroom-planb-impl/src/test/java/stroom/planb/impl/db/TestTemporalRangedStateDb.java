@@ -15,18 +15,13 @@
  *
  */
 
-package stroom.planb.impl;
+package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.db.StateValue;
-import stroom.planb.impl.db.TemporalRangedState;
 import stroom.planb.impl.db.TemporalRangedState.Key;
-import stroom.planb.impl.db.TemporalRangedStateDb;
-import stroom.planb.impl.db.TemporalRangedStateFields;
-import stroom.planb.impl.db.TemporalRangedStateRequest;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -118,17 +113,32 @@ class TestTemporalRangedStateDb {
 
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
-        final Path db1 = rootDir.resolve("db1");
-        final Path db2 = rootDir.resolve("db2");
-        Files.createDirectory(db1);
-        Files.createDirectory(db2);
+        final Path dbPath1 = rootDir.resolve("db1");
+        final Path dbPath2 = rootDir.resolve("db2");
+        Files.createDirectory(dbPath1);
+        Files.createDirectory(dbPath2);
 
-        testWrite(db1);
-        testWrite(db2);
+        testWrite(dbPath1);
+        testWrite(dbPath2);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalRangedStateDb writer = new TemporalRangedStateDb(db1, byteBufferFactory)) {
-            writer.merge(db2);
+        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath1, byteBufferFactory)) {
+            db.merge(dbPath2);
+        }
+    }
+
+    @Test
+    void testCondense(@TempDir final Path rootDir) throws IOException {
+        final Path dbPath = rootDir.resolve("db");
+        Files.createDirectory(dbPath);
+
+        testWrite(dbPath);
+
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath, byteBufferFactory)) {
+            assertThat(db.count()).isEqualTo(100);
+            db.condense(Instant.now());
+            assertThat(db.count()).isEqualTo(1);
         }
     }
 
@@ -136,9 +146,9 @@ class TestTemporalRangedStateDb {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalRangedStateDb writer =
+        try (final TemporalRangedStateDb db =
                 new TemporalRangedStateDb(dbDir, byteBufferFactory)) {
-            insertData(writer, refTime, "test", 100, 10);
+            insertData(db, refTime, "test", 100, 10);
         }
     }
 
@@ -196,12 +206,18 @@ class TestTemporalRangedStateDb {
                             final String value,
                             final int rows,
                             final long deltaSeconds) {
-        final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
-        for (int i = 0; i < rows; i++) {
-            final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
-            final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(effectiveTime).build();
-            final StateValue v = StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-            db.insert(k, v);
-        }
+        db.write(writer -> {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
+            for (int i = 0; i < rows; i++) {
+                final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
+                final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(effectiveTime).build();
+                final StateValue v = StateValue
+                        .builder()
+                        .typeId(StringValue.TYPE_ID)
+                        .byteBuffer(byteBuffer.duplicate())
+                        .build();
+                db.insert(writer, k, v);
+            }
+        });
     }
 }
