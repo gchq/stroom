@@ -31,7 +31,8 @@ public class RemoteFeedModule extends AbstractModule {
         bind(DataFeedKeyService.class).to(DataFeedKeyServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(FeedStatusResourceImpl.class);
+                .bind(FeedStatusResourceImpl.class)
+                .bind(FeedStatusResourceV2Impl.class);
 
 //        ServletBinder.create(binder())
 //                .bind(RemoteFeedServiceRPC.class);

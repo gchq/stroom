@@ -38,6 +38,7 @@ import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
+import stroom.receive.common.FeedStatusResourceV2Impl;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
@@ -111,6 +112,7 @@ public class ProxyModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)
                 .bind(FeedStatusResourceImpl.class)
+                .bind(FeedStatusResourceV2Impl.class)
                 .bind(EventResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)

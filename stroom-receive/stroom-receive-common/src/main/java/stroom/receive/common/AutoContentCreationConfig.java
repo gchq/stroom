@@ -1,9 +1,11 @@
 package stroom.receive.common;
 
+import stroom.security.shared.User;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.UserType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -34,6 +37,12 @@ public class AutoContentCreationConfig
     @JsonProperty
     private final String additionalGroupSuffix;
 
+    @JsonProperty
+    private final String createAsSubjectId;
+
+    @JsonProperty
+    private final UserType createAsType;
+
     public AutoContentCreationConfig() {
         enabled = false;
         destinationPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART)
@@ -41,17 +50,23 @@ public class AutoContentCreationConfig
         templatesPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
                 .toString();
         additionalGroupSuffix = " (sandbox)";
+        createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
+        createAsType = UserType.GROUP;
     }
 
     @JsonCreator
     public AutoContentCreationConfig(@JsonProperty("enabled") final boolean enabled,
                                      @JsonProperty("destinationPath") final String destinationPath,
                                      @JsonProperty("templatesPath") final String templatesPath,
-                                     @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix) {
+                                     @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
+                                     @JsonProperty("createAsSubjectId") final String createAsSubjectId,
+                                     @JsonProperty("createAsType") final UserType createAsType) {
         this.enabled = enabled;
         this.destinationPath = destinationPath;
         this.templatesPath = templatesPath;
         this.additionalGroupSuffix = additionalGroupSuffix;
+        this.createAsSubjectId = createAsSubjectId;
+        this.createAsType = createAsType;
     }
 
     private AutoContentCreationConfig(Builder builder) {
@@ -59,6 +74,8 @@ public class AutoContentCreationConfig
         this.destinationPath = builder.destinationPath;
         this.templatesPath = builder.templatesPath;
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
+        this.createAsSubjectId = builder.createAsSubjectId;
+        this.createAsType = builder.createAsType;
     }
 
     @JsonPropertyDescription(
@@ -94,6 +111,20 @@ public class AutoContentCreationConfig
         return additionalGroupSuffix;
     }
 
+    @NotNull
+    @JsonPropertyDescription(
+            "The subjectId of the user/group who will be the owner of any auto-created content. " +
+            "This user/group must have the permission to create all content required.")
+    public String getCreateAsSubjectId() {
+        return createAsSubjectId;
+    }
+
+    @NotNull
+    @JsonPropertyDescription("The type of the entity represented by createAsSubjectId, i.g. 'USER' or 'GROUP'")
+    public UserType getCreateAsType() {
+        return createAsType;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "destinationPath must be an absolute path.")
@@ -127,6 +158,8 @@ public class AutoContentCreationConfig
         private String destinationPath;
         private String templatesPath;
         public String additionalGroupSuffix;
+        public String createAsSubjectId;
+        public UserType createAsType;
 
         public Builder enabled(boolean enabled) {
             this.enabled = enabled;
@@ -148,12 +181,24 @@ public class AutoContentCreationConfig
             return this;
         }
 
+        public Builder createAsSubjectId(String createAsSubjectId) {
+            this.createAsSubjectId = createAsSubjectId;
+            return this;
+        }
+
+        public Builder createAsType(UserType createAsType) {
+            this.createAsType = createAsType;
+            return this;
+        }
+
         public Builder copy() {
             return new Builder()
                     .enabled(this.enabled)
                     .destinationPath(this.destinationPath)
                     .templatesPath(this.templatesPath)
-                    .additionalGroupSuffix(this.additionalGroupSuffix);
+                    .additionalGroupSuffix(this.additionalGroupSuffix)
+                    .createAsSubjectId(this.createAsSubjectId)
+                    .createAsType(this.createAsType);
         }
 
         public AutoContentCreationConfig build() {

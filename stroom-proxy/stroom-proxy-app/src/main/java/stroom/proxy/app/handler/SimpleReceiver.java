@@ -3,7 +3,6 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.LogStream;
@@ -71,11 +70,6 @@ public class SimpleReceiver implements Receiver {
                         final AttributeMap attributeMap,
                         final String requestUri,
                         final InputStreamSupplier inputStreamSupplier) {
-        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-        if (feedName.isEmpty()) {
-            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
-        }
 
         // Determine if the feed is allowed to receive data or if we should ignore it.
         // Throws an exception if we should reject.
@@ -114,6 +108,8 @@ public class SimpleReceiver implements Receiver {
                         // Write the data.
                         zipWriter.writeStream(DATA_FILE_NAME, in);
 
+                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
                         // Write the entries for quick reference.
                         final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(
                                 feedName,

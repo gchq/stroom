@@ -25,10 +25,12 @@ import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.UserType;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -86,13 +88,35 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
                 feedName, userDesc, attributeMap);
 
-        final Optional<FeedDoc> optFeedDoc = securityContext.asProcessingUserResult(() ->
+        // Content gets created as the configured user
+        final UserRef runAsUserRef = getRunAsUser();
+
+        final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
                 ensureFeed(feedName, userDesc, attributeMap));
 
         LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
                 feedName, userDesc, optFeedDoc);
 
         return optFeedDoc;
+    }
+
+    private UserRef getRunAsUser() {
+        final AutoContentCreationConfig autoContentCreationConfig = autoContentCreationConfigProvider.get();
+        final String createAsSubjectId = Objects.requireNonNull(autoContentCreationConfig.getCreateAsSubjectId());
+        final UserType createAsType = Objects.requireNonNull(autoContentCreationConfig.getCreateAsType());
+
+        return switch (createAsType) {
+            case USER -> userService.getUserBySubjectId(createAsSubjectId)
+                    .map(User::asRef)
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "No user found with subjectId equal to createAsSubjectId '{}'",
+                            createAsSubjectId)));
+            case GROUP -> userService.getGroupByName(createAsSubjectId)
+                    .map(User::asRef)
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "No group found with name equal to createAsSubjectId '{}'",
+                            createAsSubjectId)));
+        };
     }
 
     private Optional<FeedDoc> ensureFeed(final String feedName,

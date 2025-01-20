@@ -141,7 +141,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
     @Override
     public void removeKeysForFile(final Path sourceFile) {
         if (sourceFile != null) {
-            LOGGER.debug("Evicting dataFeedKeys for sourceFile {}", sourceFile);
+            LOGGER.info("Evicting dataFeedKeys for sourceFile {}", sourceFile);
             final AtomicInteger counter = new AtomicInteger();
             final Predicate<Entry<?, CachedHashedDataFeedKey>> removeIfPredicate = entry -> {
                 final boolean doRemove = Objects.equals(
@@ -154,6 +154,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
 
             cacheKeyToDataFeedKeyMap.entrySet().removeIf(removeIfPredicate);
             LOGGER.debug("Removed {} cacheKeyToDataFeedKeyMap entries", counter);
+            LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", counter, sourceFile);
             counter.set(0);
             subjectIdToDataFeedKeyMap.entrySet().removeIf(removeIfPredicate);
             LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);

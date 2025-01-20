@@ -25,14 +25,17 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -49,7 +52,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     private final boolean isValidDir;
     private final AtomicBoolean isBatchScheduled = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
-    private final AtomicReference<Set<SimpleWatchEvent>> batchAtomicRef = new AtomicReference<>(createEmptySet());
+    private final BlockingQueue<SimpleWatchEvent> queue = new LinkedBlockingQueue<>();
 
     protected final Predicate<Path> fileIncludeFilter;
     protected final Set<EventType> includedEventTypes;
@@ -209,9 +212,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                 && includedEventTypes.contains(eventType)) {
 
                 // Add the event to our batch.
-                // It will either get consumed by an already scheduled thread or one we schedule
-                batchAtomicRef.get()
-                        .add(new SimpleWatchEvent(eventType, affectedFile));
+                queue.add(new SimpleWatchEvent(eventType, affectedFile));
                 scheduleBatchIfRequired();
             } else {
                 LOGGER.debug("Ignoring eventType: {} on affectedFile: {}", eventType, affectedFile);
@@ -237,23 +238,69 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                         try {
                             synchronized (this) {
                                 // Atomically swap out the set with an empty one
-                                final Set<SimpleWatchEvent> oldSet = batchAtomicRef.getAndSet(createEmptySet());
-                                if (oldSet != null) {
-                                    LOGGER.debug(() -> LogUtil.message("Draining batch of {} events", oldSet.size()));
-                                    for (final SimpleWatchEvent simpleWatchEvent : oldSet) {
-                                        final Path affectedFile = simpleWatchEvent.path;
-                                        switch (simpleWatchEvent.eventType) {
-                                            case MODIFY -> onEntryModify(affectedFile);
-                                            case CREATE -> onEntryCreate(affectedFile);
-                                            case DELETE -> onEntryDelete(affectedFile);
+                                final List<SimpleWatchEvent> allEvents = new ArrayList<>();
+                                queue.drainTo(allEvents);
+
+                                LOGGER.debug(() -> LogUtil.message("Draining batch of {} events", allEvents.size()));
+                                final Map<Path, List<SimpleWatchEvent>> groupedByPath = allEvents.stream()
+                                        .collect(Collectors.groupingBy(
+                                                SimpleWatchEvent::path,
+                                                Collectors.toList()));
+
+                                for (Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
+                                    final Path path = entry.getKey();
+                                    List<SimpleWatchEvent> eventsForPath = entry.getValue();
+                                    LOGGER.debug("path: {}, simpleWatchEvents: {}", path, eventsForPath);
+
+                                    if (NullSafe.hasItems(eventsForPath)) {
+                                        eventsForPath = deDupEvents(eventsForPath);
+
+                                        // Now fire all the de-duped events
+                                        for (final SimpleWatchEvent event : eventsForPath) {
+                                            final Path affectedFile = event.path;
+                                            switch (event.eventType) {
+                                                case MODIFY -> onEntryModify(affectedFile);
+                                                case CREATE -> onEntryCreate(affectedFile);
+                                                case DELETE -> onEntryDelete(affectedFile);
+                                            }
                                         }
                                     }
                                 }
+
                             }
                         } finally {
                             isBatchScheduled.set(false);
                         }
                     });
+        }
+    }
+
+    private List<SimpleWatchEvent> deDupEvents(final List<SimpleWatchEvent> events) {
+        if (NullSafe.hasItems(events)) {
+            final Path firstPath = events.getFirst().path;
+            EventType lastEventType = null;
+            final List<SimpleWatchEvent> filteredEvents = new ArrayList<>(events.size());
+            if (events.getLast().eventType == EventType.DELETE) {
+                // DELETE is last so can ignore all other events
+                filteredEvents.add(events.getLast());
+            } else {
+                for (final SimpleWatchEvent event : events) {
+                    if (!Objects.equals(firstPath, event.path)) {
+                        throw new RuntimeException("All paths should be the same in this list.");
+                    }
+                    // Drop latest one in MODIFY,MODIFY or CREATE,MODIFY
+                    if (event.eventType == lastEventType
+                        || (event.eventType == EventType.MODIFY && lastEventType == EventType.CREATE)) {
+                        LOGGER.debug("Dropping event {}", event);
+                    } else {
+                        filteredEvents.add(event);
+                        lastEventType = event.eventType;
+                    }
+                }
+            }
+            return filteredEvents;
+        } else {
+            return events;
         }
     }
 
