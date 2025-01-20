@@ -45,7 +45,7 @@ class TestPeriodicallyUpdatedValue {
         version.incrementAndGet();
 
         LOGGER.debug("Sleeping");
-        ThreadUtil.sleepIgnoringInterrupts(100);
+        ThreadUtil.sleepIgnoringInterrupts(150);
 
         assertThat(periodicallyUpdatedValue.getValue())
                 .isEqualTo("version 2");
