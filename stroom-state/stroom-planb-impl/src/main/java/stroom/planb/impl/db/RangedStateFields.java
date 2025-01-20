@@ -13,7 +13,7 @@ public interface RangedStateFields {
     String VALUE = "Value";
 
     QueryField KEY_START_FIELD = QueryField.createLong(KEY_START);
-    QueryField KEY_END_FIELD = QueryField.createText(KEY_END);
+    QueryField KEY_END_FIELD = QueryField.createLong(KEY_END);
     QueryField VALUE_TYPE_FIELD = QueryField.createText(VALUE_TYPE, false);
     QueryField VALUE_FIELD = QueryField.createText(VALUE, false);
 

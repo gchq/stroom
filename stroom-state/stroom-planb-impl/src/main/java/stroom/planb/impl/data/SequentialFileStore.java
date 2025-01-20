@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -78,10 +79,7 @@ public class SequentialFileStore {
         return getTempFileSet(currentStoreId);
     }
 
-    /**
-     * Add sources to the DB.
-     */
-    public SequentialFile awaitNew(final long storeId) {
+    public SequentialFile awaitNext(final long storeId) {
         try {
             lock.lockInterruptibly();
             try {
@@ -94,10 +92,34 @@ public class SequentialFileStore {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw UncheckedInterruptedException.create(e);
         }
         return getStoreFileSet(storeId);
     }
+
+//    public Optional<SequentialFile> awaitNext(final long storeId,
+//                                              final long time,
+//                                              final TimeUnit timeUnit) {
+//        try {
+//            lock.lockInterruptibly();
+//            try {
+//                long currentStoreId = addedStoreId.get();
+//                while (currentStoreId < storeId) {
+//                    if (!condition.await(time,timeUnit)) {
+//                        return Optional.empty();
+//                    }
+//                    currentStoreId = addedStoreId.get();
+//                }
+//            } finally {
+//                lock.unlock();
+//            }
+//        } catch (final InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//            throw UncheckedInterruptedException.create(e);
+//        }
+//        return Optional.of(getStoreFileSet(storeId));
+//    }
 
     private SequentialFile getTempFileSet(final long storeId) {
         return SequentialFile.get(receiveDir, storeId, true);

@@ -20368,8 +20368,8 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "mapName" : {
-            "type" : "string"
+          "planBDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },

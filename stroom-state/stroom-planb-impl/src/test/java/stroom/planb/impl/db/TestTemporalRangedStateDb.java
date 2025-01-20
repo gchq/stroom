@@ -128,7 +128,7 @@ class TestTemporalRangedStateDb {
     }
 
     @Test
-    void testCondense(@TempDir final Path rootDir) throws IOException {
+    void testCondenseAndDelete(@TempDir final Path rootDir) throws IOException {
         final Path dbPath = rootDir.resolve("db");
         Files.createDirectory(dbPath);
 
@@ -137,8 +137,10 @@ class TestTemporalRangedStateDb {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath, byteBufferFactory)) {
             assertThat(db.count()).isEqualTo(100);
-            db.condense(Instant.now());
+            db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
+            db.condense(System.currentTimeMillis(), System.currentTimeMillis());
+            assertThat(db.count()).isEqualTo(0);
         }
     }
 

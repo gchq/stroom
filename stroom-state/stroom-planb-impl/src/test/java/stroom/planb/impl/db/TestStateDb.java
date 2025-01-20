@@ -19,8 +19,6 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
-import stroom.cache.api.CacheManager;
-import stroom.cache.impl.CacheManagerImpl;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
@@ -66,6 +64,9 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStateDb {
+
+    private static final String MAP_UUID = "map-uuid";
+    private static final String MAP_NAME = "map-name";
 
     @Test
     void testReadWrite(@TempDir Path tempDir) {
@@ -121,40 +122,39 @@ class TestStateDb {
         CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
 
         // Consume and merge parts.
-        try (final CacheManager cacheManager = new CacheManagerImpl()) {
-            final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
-            final PlanBDoc doc = PlanBDoc.builder().name("map-name").stateType(StateType.STATE).build();
-            Mockito.when(planBDocStore.findByName(Mockito.anyString()))
-                    .thenReturn(Collections.singletonList(doc.asDocRef()));
-            Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
-                    .thenReturn(doc);
-            final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
-            Mockito.when(planBDocCache.get(Mockito.any(String.class)))
-                    .thenReturn(doc);
+        final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
+        final PlanBDoc doc = PlanBDoc.builder().uuid(MAP_UUID).name(MAP_NAME).stateType(StateType.STATE).build();
+        Mockito.when(planBDocStore.findByName(Mockito.anyString()))
+                .thenReturn(Collections.singletonList(doc.asDocRef()));
+        Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
+                .thenReturn(doc);
+        final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
+        Mockito.when(planBDocCache.get(Mockito.any(String.class)))
+                .thenReturn(doc);
 
-            final String path = rootDir.toAbsolutePath().toString();
-            final PlanBConfig planBConfig = new PlanBConfig(path);
-            final ShardManager shardManager = new ShardManager(
-                    new ByteBufferFactoryImpl(),
-                    planBDocCache,
-                    null,
-                    () -> planBConfig,
-                    statePaths,
-                    null);
-            final MergeProcessor mergeProcessor = new MergeProcessor(
-                    fileStore,
-                    statePaths,
-                    new MockSecurityContext(),
-                    new SimpleTaskContextFactory(),
-                    shardManager);
-            for (int i = 0; i < parts; i++) {
-                mergeProcessor.merge(i);
-            }
+        final String path = rootDir.toAbsolutePath().toString();
+        final PlanBConfig planBConfig = new PlanBConfig(path);
+        final ShardManager shardManager = new ShardManager(
+                new ByteBufferFactoryImpl(),
+                planBDocCache,
+                planBDocStore,
+                null,
+                () -> planBConfig,
+                statePaths,
+                null);
+        final MergeProcessor mergeProcessor = new MergeProcessor(
+                fileStore,
+                statePaths,
+                new MockSecurityContext(),
+                new SimpleTaskContextFactory(),
+                shardManager);
+        for (int i = 0; i < parts; i++) {
+            mergeProcessor.merge(i);
         }
 
         // Read merged
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final StateDb db = new StateDb(statePaths.getShardDir().resolve("map-name"),
+        try (final StateDb db = new StateDb(statePaths.getShardDir().resolve(MAP_UUID),
                 byteBufferFactory, false, true)) {
             assertThat(db.count()).isEqualTo(2);
         }
@@ -262,7 +262,7 @@ class TestStateDb {
                 return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
             };
             final Path partPath = Files.createTempDirectory("part");
-            final Path mapPath = partPath.resolve("map-name");
+            final Path mapPath = partPath.resolve(MAP_UUID);
             Files.createDirectories(mapPath);
             testWrite(mapPath, 100, keyFunction, valueFunction);
             final Path zipFile = Files.createTempFile("lmdb", "zip");

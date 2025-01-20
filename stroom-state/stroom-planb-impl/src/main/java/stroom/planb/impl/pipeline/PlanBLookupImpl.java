@@ -21,6 +21,7 @@ import stroom.planb.impl.db.TemporalState;
 import stroom.planb.impl.db.TemporalStateDb;
 import stroom.planb.impl.db.TemporalStateRequest;
 import stroom.planb.shared.PlanBDoc;
+import stroom.security.api.SecurityContext;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -42,12 +43,15 @@ public class PlanBLookupImpl implements PlanBLookup {
     private final Cache<Key, Optional<TemporalState>> cache;
     private final ShardManager shardManager;
     private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
+    private final SecurityContext securityContext;
 
     @Inject
     public PlanBLookupImpl(final PlanBDocCache stateDocCache,
-                           final ShardManager shardManager) {
+                           final ShardManager shardManager,
+                           final SecurityContext securityContext) {
         this.stateDocCache = stateDocCache;
         this.shardManager = shardManager;
+        this.securityContext = securityContext;
         cache = Caffeine.newBuilder().maximumSize(1000).build();
     }
 
@@ -67,7 +71,8 @@ public class PlanBLookupImpl implements PlanBLookup {
                           final ReferenceDataResult result) {
         final String name = mapName.toLowerCase(Locale.ROOT);
         final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(name, k ->
-                Optional.ofNullable(stateDocCache.get(name)));
+                securityContext.useAsReadResult(() ->
+                        Optional.ofNullable(stateDocCache.get(name))));
         stateOptional.ifPresent(stateDoc -> {
             final Key key = new Key(name, keyName, eventTime);
             final Optional<TemporalState> optional = cache.get(key,

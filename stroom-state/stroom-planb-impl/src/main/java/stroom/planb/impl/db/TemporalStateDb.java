@@ -10,7 +10,6 @@ import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Optional;
@@ -77,9 +76,8 @@ public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just fees pages for
     //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
-    public void condense(final Instant maxAge) {
-        final long maxTime = maxAge.toEpochMilli();
-
+    public void condense(final long condenseBeforeMs,
+                         final long deleteBeforeMs) {
         write(writer -> {
             Key lastKey = null;
             StateValue lastValue = null;
@@ -91,18 +89,25 @@ public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
                     final Key key = serde.getKey(keyVal);
                     final StateValue value = serde.getVal(keyVal);
 
-                    if (lastKey != null &&
-                        Arrays.equals(lastKey.bytes(), key.bytes()) &&
-                        lastValue.byteBuffer().equals(value.byteBuffer())) {
-                        if (key.effectiveTime() <= maxTime) {
-                            // If the key and value are the same then delete the duplicate entry.
-                            dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
-                            writer.tryCommit();
-                        }
-                    }
+                    if (key.effectiveTime() <= deleteBeforeMs) {
+                        // If this is data we no longer want to retain then delete it.
+                        dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                        writer.tryCommit();
 
-                    lastKey = key;
-                    lastValue = value;
+                    } else {
+                        if (lastKey != null &&
+                            Arrays.equals(lastKey.bytes(), key.bytes()) &&
+                            lastValue.byteBuffer().equals(value.byteBuffer())) {
+                            if (key.effectiveTime() <= condenseBeforeMs) {
+                                // If the key and value are the same then delete the duplicate entry.
+                                dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                                writer.tryCommit();
+                            }
+                        }
+
+                        lastKey = key;
+                        lastValue = value;
+                    }
                 }
             }
         });

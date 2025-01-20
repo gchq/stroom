@@ -1,5 +1,7 @@
 package stroom.planb.impl.data;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -11,23 +13,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class SnapshotRequest {
 
     @JsonProperty
-    private final String mapName;
+    private final DocRef planBDocRef;
     @JsonProperty
     private final long effectiveTime;
     @JsonProperty
     private final Long currentSnapshotTime;
 
     @JsonCreator
-    public SnapshotRequest(@JsonProperty("mapName") final String mapName,
+    public SnapshotRequest(@JsonProperty("planBDocRef") final DocRef planBDocRef,
                            @JsonProperty("effectiveTime") final long effectiveTime,
                            @JsonProperty("currentSnapshotTime")final Long currentSnapshotTime) {
-        this.mapName = mapName;
+        this.planBDocRef = planBDocRef;
         this.effectiveTime = effectiveTime;
         this.currentSnapshotTime = currentSnapshotTime;
     }
 
-    public String getMapName() {
-        return mapName;
+    public DocRef getPlanBDocRef() {
+        return planBDocRef;
     }
 
     public long getEffectiveTime() {

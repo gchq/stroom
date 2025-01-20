@@ -83,10 +83,6 @@ public class SequentialFile {
         return zip;
     }
 
-    public String getZipFileName() {
-        return root.relativize(zip).toString();
-    }
-
     public void delete() throws IOException {
         LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(zip));
         Files.deleteIfExists(zip);

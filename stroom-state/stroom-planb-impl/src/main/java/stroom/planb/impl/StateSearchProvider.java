@@ -40,6 +40,7 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;
@@ -76,6 +77,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final SecurityContext securityContext;
 
     @Inject
     public StateSearchProvider(final Executor executor,
@@ -86,7 +88,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                                final TaskManager taskManager,
                                final TaskContextFactory taskContextFactory,
                                final ShardManager shardManager,
-                               final ExpressionPredicateFactory expressionPredicateFactory) {
+                               final ExpressionPredicateFactory expressionPredicateFactory,
+                               final SecurityContext securityContext) {
         this.executor = executor;
         this.stateDocStore = stateDocStore;
         this.stateDocCache = stateDocCache;
@@ -96,14 +99,17 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.taskContextFactory = taskContextFactory;
         this.shardManager = shardManager;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.securityContext = securityContext;
     }
 
     private PlanBDoc getPlanBDoc(final DocRef docRef) {
-        Objects.requireNonNull(docRef, "Null doc reference");
-        Objects.requireNonNull(docRef.getName(), "Null doc key");
-        final PlanBDoc doc = stateDocCache.get(docRef.getName());
-        Objects.requireNonNull(doc, "Null state doc");
-        return doc;
+        return securityContext.useAsReadResult(() -> {
+            Objects.requireNonNull(docRef, "Null doc reference");
+            Objects.requireNonNull(docRef.getName(), "Null doc key");
+            final PlanBDoc doc = stateDocCache.get(docRef.getName());
+            Objects.requireNonNull(doc, "Null state doc");
+            return doc;
+        });
     }
 
     @Override
@@ -139,7 +145,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(stateDocCache.get(docRef.getName())).map(PlanBDoc::getDescription);
+        return Optional.ofNullable(getPlanBDoc(docRef)).map(PlanBDoc::getDescription);
     }
 
     @Override
@@ -159,7 +165,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         final DocRef docRef = query.getDataSource();
 
         // Check we have permission to read the doc.
-        final PlanBDoc doc = stateDocCache.get(docRef.getName());
+        final PlanBDoc doc = getPlanBDoc(docRef);
         Objects.requireNonNull(doc, "Unable to find state doc with key: " + docRef.getName());
 
         // Extract highlights.

@@ -1,5 +1,7 @@
 package stroom.planb.impl.data;
 
+import stroom.docref.DocRef;
+import stroom.planb.shared.PlanBDoc;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
@@ -77,7 +79,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
         ZipUtil.zip(zipFile, sourceDir);
         final Path targetDir = Files.createTempDirectory("test");
 
-        final String mapName = "TestMap";
+        final DocRef planBDocRef = DocRef.builder().type(PlanBDoc.TYPE).uuid("TestUuid").name("TestMap").build();
         final long requestTime = System.currentTimeMillis();
         final FileTransferClientImpl fileTransferClient = new FileTransferClientImpl(
                 null,
@@ -99,7 +101,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                         throw new NotModifiedException();
                     }
 
-                    assertThat(request.getMapName()).isEqualTo(mapName);
+                    assertThat(request.getPlanBDocRef()).isEqualTo(planBDocRef);
                     assertThat(request.getEffectiveTime()).isEqualTo(requestTime);
                     return null;
                 })
@@ -110,7 +112,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                     final SnapshotRequest request = invocation.getArgument(0);
                     final OutputStream outputStream = invocation.getArgument(1);
 
-                    assertThat(request.getMapName()).isEqualTo(mapName);
+                    assertThat(request.getPlanBDocRef()).isEqualTo(planBDocRef);
                     assertThat(request.getEffectiveTime()).isEqualTo(requestTime);
                     outputStream.write(Files.readAllBytes(zipFile));
                     return null;
@@ -119,7 +121,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                         Mockito.any(SnapshotRequest.class),
                         Mockito.any(OutputStream.class));
 
-        final SnapshotRequest request = new SnapshotRequest(mapName, requestTime, null);
+        final SnapshotRequest request = new SnapshotRequest(planBDocRef, requestTime, null);
         final WebTarget webTarget = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
         final Instant snapshotTime = fileTransferClient.fetchSnapshot(webTarget, request, targetDir);
         assertThat(snapshotTime).isBeforeOrEqualTo(Instant.now());
@@ -130,7 +132,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
 
         // Test error if snapshot is up to date.
         assertThatThrownBy(() -> {
-            SnapshotRequest req = new SnapshotRequest(mapName, requestTime, lastWriteTime.toEpochMilli());
+            SnapshotRequest req = new SnapshotRequest(planBDocRef, requestTime, lastWriteTime.toEpochMilli());
             WebTarget wt = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
             fileTransferClient.fetchSnapshot(wt, req, targetDir);
         }).isInstanceOf(NotModifiedException.class);

@@ -164,7 +164,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                 LOGGER.info(() -> "Fetching snapshot from '" +
                                   nodeName +
                                   "' for '" +
-                                  request.getMapName() +
+                                  request.getPlanBDocRef() +
                                   "'");
                 final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                                    + ResourcePaths.buildAuthenticatedApiPath(
@@ -176,7 +176,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                 throw new RuntimeException("Error fetching snapshot from '" +
                                            nodeName +
                                            "' for '" +
-                                           request.getMapName() +
+                                           request.getPlanBDocRef() +
                                            "'", e);
             }
         });

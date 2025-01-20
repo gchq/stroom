@@ -2,7 +2,6 @@ package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.AbstractLmdb;
 import stroom.planb.impl.db.RangedStateDb;
 import stroom.planb.impl.db.SessionDb;
@@ -34,36 +33,32 @@ class SnapshotShard implements Shard {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SnapshotShard.class);
 
     private final ByteBufferFactory byteBufferFactory;
-    private final PlanBDocCache planBDocCache;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
-    private final String mapName;
+    private final PlanBDoc doc;
 
     private final ReentrantLock lock = new ReentrantLock();
 
     private volatile SnapshotInstance snapshotInstance;
 
     public SnapshotShard(final ByteBufferFactory byteBufferFactory,
-                         final PlanBDocCache planBDocCache,
                          final Provider<PlanBConfig> configProvider,
                          final StatePaths statePaths,
                          final FileTransferClient fileTransferClient,
-                         final String mapName) {
+                         final PlanBDoc doc) {
         this.byteBufferFactory = byteBufferFactory;
-        this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
-        this.mapName = mapName;
+        this.doc = doc;
 
         snapshotInstance = new SnapshotInstance(
                 byteBufferFactory,
-                planBDocCache,
                 configProvider,
                 statePaths,
                 fileTransferClient,
-                mapName,
+                doc,
                 Instant.now(),
                 null);
     }
@@ -82,11 +77,10 @@ class SnapshotShard implements Shard {
                     if (currentInstance.getExpiryTime().isBefore(Instant.now())) {
                         final SnapshotInstance newInstance = new SnapshotInstance(
                                 byteBufferFactory,
-                                planBDocCache,
                                 configProvider,
                                 statePaths,
                                 fileTransferClient,
-                                mapName,
+                                doc,
                                 Instant.now(),
                                 currentInstance.getCurrentSnapshotTime());
 
@@ -119,7 +113,7 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public void condense() {
+    public void condense(final PlanBDoc doc) {
         // Condense is not supported on snapshots
     }
 
@@ -157,11 +151,15 @@ class SnapshotShard implements Shard {
         getDBInstance().cleanup();
     }
 
+    @Override
+    public void delete() {
+        getDBInstance().destroy();
+    }
+
     private static class SnapshotInstance {
 
         private final ByteBufferFactory byteBufferFactory;
         private final Provider<PlanBConfig> configProvider;
-        private final String mapName;
         private final PlanBDoc doc;
         private final Path dbDir;
         private final RuntimeException fetchException;
@@ -176,30 +174,22 @@ class SnapshotShard implements Shard {
         private volatile boolean destroy;
 
         public SnapshotInstance(final ByteBufferFactory byteBufferFactory,
-                                final PlanBDocCache planBDocCache,
                                 final Provider<PlanBConfig> configProvider,
                                 final StatePaths statePaths,
                                 final FileTransferClient fileTransferClient,
-                                final String mapName,
+                                final PlanBDoc doc,
                                 final Instant createTime,
                                 final Instant previousSnapshotTime) {
             Instant currentSnapshotTime = null;
             Instant expiryTime = null;
-            PlanBDoc doc = null;
             Path dbDir = null;
             RuntimeException fetchException = null;
 
             try {
-                doc = planBDocCache.get(mapName);
-                if (doc == null) {
-                    LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
-                    throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
-                }
-
                 // Get the snapshot dir.
                 dbDir = statePaths
                         .getSnapshotDir()
-                        .resolve(mapName)
+                        .resolve(doc.getUuid())
                         .resolve(DateUtil.createFileDateTimeString(createTime));
 
                 // Create dir.
@@ -208,11 +198,11 @@ class SnapshotShard implements Shard {
                 // Go and get a snapshot.
                 boolean fetchComplete = false;
                 final SnapshotRequest request = new SnapshotRequest(
-                        mapName,
+                        doc.asDocRef(),
                         0L,
                         NullSafe.get(previousSnapshotTime, Instant::toEpochMilli));
                 for (final String node : configProvider.get().getNodeList()) {
-                    LOGGER.info(() -> "Fetching shard for '" + mapName + "'");
+                    LOGGER.info(() -> "Fetching shard for '" + doc + "'");
 
                     // Fetch snapshot.
                     currentSnapshotTime = fileTransferClient.fetchSnapshot(node, request, dbDir);
@@ -225,7 +215,7 @@ class SnapshotShard implements Shard {
                 }
 
                 if (!fetchComplete) {
-                    throw new RuntimeException("Unable to get snapshot shard for '" + mapName + "'");
+                    throw new RuntimeException("Unable to get snapshot shard for '" + doc + "'");
                 }
             } catch (final Exception e) {
                 LOGGER.warn(e::getMessage, e);
@@ -236,7 +226,6 @@ class SnapshotShard implements Shard {
 
             this.byteBufferFactory = byteBufferFactory;
             this.configProvider = configProvider;
-            this.mapName = mapName;
             this.currentSnapshotTime = currentSnapshotTime;
             this.expiryTime = expiryTime;
             this.doc = doc;
@@ -322,7 +311,7 @@ class SnapshotShard implements Shard {
                     if (!open && destroy) {
                         // Delete if this is an old snapshot.
                         try {
-                            LOGGER.info(() -> "Deleting snapshot for '" + mapName + "'");
+                            LOGGER.info(() -> "Deleting snapshot for '" + doc + "'");
                             FileUtil.deleteDir(dbDir);
                         } catch (final Exception e) {
                             LOGGER.error(e::getMessage, e);
@@ -380,6 +369,11 @@ class SnapshotShard implements Shard {
                 default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
             }
         }
+    }
+
+    @Override
+    public PlanBDoc getDoc() {
+        return doc;
     }
 
     private static class DestroyedException extends Exception {

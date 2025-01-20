@@ -17,26 +17,24 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 @Singleton
 public class MergeProcessor {
 
-    public static final String TASK_NAME = "Plan B Merge Processor";
+    public static final String MERGE_TASK_NAME = "Plan B Merge Processor";
+    public static final String MAINTAIN_TASK_NAME = "Plan B Maintenance Processor";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
-
-    private static final Duration MIN_CONDENSE_FREQUENCY = Duration.ofMinutes(10);
 
     private final SequentialFileStore fileStore;
     private final Path mergingDir;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
-    private Instant nextCondenseTime;
+    private final ReentrantLock maintenanceLock = new ReentrantLock();
 
     @Inject
     public MergeProcessor(final SequentialFileStore fileStore,
@@ -55,8 +53,6 @@ public class MergeProcessor {
                 throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
             }
         }
-
-        nextCondenseTime = Instant.now().plus(MIN_CONDENSE_FREQUENCY);
     }
 
     private boolean ensureDirExists(final Path path) {
@@ -73,7 +69,7 @@ public class MergeProcessor {
         return false;
     }
 
-    public void exec() {
+    public void merge() {
         securityContext.asProcessingUser(() -> {
             final TaskContext taskContext = taskContextFactory.current();
             try {
@@ -93,22 +89,31 @@ public class MergeProcessor {
                     // Wait until new data is available.
                     final long currentStoreId = storeId;
                     taskContext.info(() -> "Waiting for data...");
-                    final SequentialFile sequentialFile = fileStore.awaitNew(currentStoreId);
-                    taskContext.info(() -> "Merging data: " + currentStoreId);
-                    merge(sequentialFile);
+                    final SequentialFile sequentialFile = fileStore.awaitNext(currentStoreId);
+                    maintenanceLock.lock();
+                    try {
+                        taskContext.info(() -> "Merging data: " + currentStoreId);
+                        merge(sequentialFile);
 
-                    // Periodically we will condense all shards.
-                    // This is done here so that the same thread is always used for writing.
-                    if (nextCondenseTime.isBefore(Instant.now())) {
-                        shardManager.condenseAll();
-                        nextCondenseTime = Instant.now().plus(MIN_CONDENSE_FREQUENCY);
+                        // Increment store id.
+                        storeId++;
+                    } finally {
+                        maintenanceLock.unlock();
                     }
-
-                    // Increment store id.
-                    storeId++;
                 }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    public void maintainShards() {
+        securityContext.asProcessingUser(() -> {
+            maintenanceLock.lock();
+            try {
+                shardManager.condenseAll();
+            } finally {
+                maintenanceLock.unlock();
             }
         });
     }
@@ -118,14 +123,14 @@ public class MergeProcessor {
         final long end = fileStore.getMaxStoreId();
         for (long storeId = start; storeId <= end; storeId++) {
             // Wait until new data is available.
-            final SequentialFile sequentialFile = fileStore.awaitNew(storeId);
+            final SequentialFile sequentialFile = fileStore.awaitNext(storeId);
             merge(sequentialFile);
         }
     }
 
     public void merge(final long storeId) throws IOException {
         // Wait until new data is available.
-        final SequentialFile sequentialFile = fileStore.awaitNew(storeId);
+        final SequentialFile sequentialFile = fileStore.awaitNext(storeId);
         merge(sequentialFile);
     }
 

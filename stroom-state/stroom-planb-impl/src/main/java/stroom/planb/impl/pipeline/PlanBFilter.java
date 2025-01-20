@@ -36,7 +36,7 @@ import stroom.planb.impl.db.State;
 import stroom.planb.impl.db.StateValue;
 import stroom.planb.impl.db.TemporalRangedState;
 import stroom.planb.impl.db.TemporalState;
-import stroom.planb.shared.StateType;
+import stroom.planb.shared.PlanBDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.NullSafe;
@@ -533,11 +533,11 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void addData() {
-        final Optional<StateType> optional = writer.getStateType(mapName, this::error);
-        optional.ifPresent(stateType -> {
+        final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
+        optional.ifPresent(doc -> {
             // end of the ref data item so ensure it is persisted in the store
             try {
-                switch (stateType) {
+                switch (doc.getStateType()) {
                     case STATE -> {
                         if (key == null) {
                             error(LogUtil.message("Key is null for {}", mapName));
@@ -552,7 +552,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
-                            writer.addState(mapName, new State(k, v));
+                            writer.addState(doc, new State(k, v));
                         }
                     }
                     case TEMPORAL_STATE -> {
@@ -572,7 +572,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
-                            writer.addTemporalState(mapName, new TemporalState(k, v));
+                            writer.addTemporalState(doc, new TemporalState(k, v));
                         }
                     }
                     case RANGED_STATE -> {
@@ -601,7 +601,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
-                            writer.addRangedState(mapName, new RangedState(k, v));
+                            writer.addRangedState(doc, new RangedState(k, v));
                         }
                     }
                     case TEMPORAL_RANGED_STATE -> {
@@ -633,7 +633,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     .typeId(typeId)
                                     .byteBuffer(value)
                                     .build();
-                            writer.addTemporalRangedState(mapName, new TemporalRangedState(k, v));
+                            writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
                         }
                     }
                     case SESSION -> {
@@ -651,10 +651,10 @@ public class PlanBFilter extends AbstractXMLFilter {
                             }
 
                             LOGGER.trace("Putting session {} into table {}", key, mapName);
-                            writer.addSession(mapName, sessionBuilder.build());
+                            writer.addSession(doc, sessionBuilder.build());
                         }
                     }
-                    default -> error("Unexpected state type: " + stateType);
+                    default -> error("Unexpected state type: " + doc.getStateType());
                 }
             } catch (final BufferOverflowException boe) {
                 final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",

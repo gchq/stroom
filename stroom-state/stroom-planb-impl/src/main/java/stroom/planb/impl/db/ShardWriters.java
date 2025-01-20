@@ -8,7 +8,6 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.StateType;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -66,7 +65,7 @@ public class ShardWriters {
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
-        private final Map<String, WriterInstance> writers = new HashMap<>();
+        private final Map<PlanBDoc, WriterInstance> writers = new HashMap<>();
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
         private final boolean overwrite = true;
 
@@ -82,7 +81,7 @@ public class ShardWriters {
             this.meta = meta;
         }
 
-        public Optional<StateType> getStateType(final String mapName, final Consumer<String> errorConsumer) {
+        public Optional<PlanBDoc> getDoc(final String mapName, final Consumer<String> errorConsumer) {
             if (NullSafe.isBlankString(mapName)) {
                 errorConsumer.accept("Null map key");
                 return Optional.empty();
@@ -105,7 +104,7 @@ public class ShardWriters {
                 }
 
                 return Optional.ofNullable(doc);
-            }).map(PlanBDoc::getStateType);
+            });
         }
 
         private static class WriterInstance implements AutoCloseable {
@@ -150,44 +149,44 @@ public class ShardWriters {
             }
         }
 
-        public void addState(final String mapName,
+        public void addState(final PlanBDoc doc,
                              final State state) {
-            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
                     new StateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
             writer.addState(state);
         }
 
-        public void addTemporalState(final String mapName,
+        public void addTemporalState(final PlanBDoc doc,
                                      final TemporalState temporalState) {
-            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
                     new TemporalStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
             writer.addTemporalState(temporalState);
         }
 
-        public void addRangedState(final String mapName,
+        public void addRangedState(final PlanBDoc doc,
                                    final RangedState rangedState) {
-            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
                     new RangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
             writer.addRangedState(rangedState);
         }
 
-        public void addTemporalRangedState(final String mapName,
+        public void addTemporalRangedState(final PlanBDoc doc,
                                            final TemporalRangedState temporalRangedState) {
-            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
                     new TemporalRangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
             writer.addTemporalRangedState(temporalRangedState);
         }
 
-        public void addSession(final String mapName,
+        public void addSession(final PlanBDoc doc,
                                final Session session) {
-            final WriterInstance writer = writers.computeIfAbsent(mapName, k -> new WriterInstance(
+            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
                     new SessionDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
             writer.addSession(session);
         }
 
-        private Path getLmdbEnvDir(final String name) {
+        private Path getLmdbEnvDir(final PlanBDoc doc) {
             try {
-                final Path path = dir.resolve(name);
+                final Path path = dir.resolve(doc.getUuid());
                 Files.createDirectory(path);
                 return path;
             } catch (final IOException e) {

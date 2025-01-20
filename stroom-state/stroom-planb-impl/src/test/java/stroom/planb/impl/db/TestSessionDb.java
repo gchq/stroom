@@ -201,7 +201,7 @@ class TestSessionDb {
     }
 
     @Test
-    void testCondense(@TempDir final Path rootDir) throws IOException {
+    void testCondenseAndDelete(@TempDir final Path rootDir) throws IOException {
         final Path dbPath = rootDir.resolve("db");
         Files.createDirectory(dbPath);
 
@@ -210,8 +210,10 @@ class TestSessionDb {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final SessionDb db = new SessionDb(dbPath, byteBufferFactory)) {
             assertThat(db.count()).isEqualTo(109);
-            db.condense(Instant.now());
+            db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
+            db.condense(System.currentTimeMillis(), System.currentTimeMillis());
+            assertThat(db.count()).isEqualTo(0);
         }
     }
 

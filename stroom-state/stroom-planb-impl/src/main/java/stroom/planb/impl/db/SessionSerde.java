@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * KEY =   <KEY_HASH><KEY_START><KEY_END>
+ * KEY =   <KEY_HASH><SESSION_START><SESSION_END>
  * VALUE = <KEY_BYTES>
  */
 public class SessionSerde implements Serde<Session, Session> {

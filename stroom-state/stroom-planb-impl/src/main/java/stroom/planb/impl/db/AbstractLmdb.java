@@ -212,7 +212,8 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         FileUtil.deleteDir(source);
     }
 
-    public void condense(Instant maxAge) {
+    public void condense(final long condenseBeforeMs,
+                         final long deleteBeforeMs) {
         // Don't condense by default.
     }
 

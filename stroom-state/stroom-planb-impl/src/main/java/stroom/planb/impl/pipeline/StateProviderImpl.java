@@ -23,6 +23,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -32,9 +33,7 @@ import jakarta.inject.Inject;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 
 public class StateProviderImpl implements StateProvider {
@@ -43,21 +42,23 @@ public class StateProviderImpl implements StateProvider {
 
     private final PlanBDocCache stateDocCache;
     private final Cache<Key, Val> cache;
-    private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
     private final ShardManager shardManager;
+    private final SecurityContext securityContext;
 
     @Inject
     public StateProviderImpl(final PlanBDocCache stateDocCache,
-                             final ShardManager shardManager) {
+                             final ShardManager shardManager,
+                             final SecurityContext securityContext) {
         this.stateDocCache = stateDocCache;
         this.shardManager = shardManager;
+        this.securityContext = securityContext;
         cache = Caffeine.newBuilder().maximumSize(1000).build();
     }
 
     @Override
     public Val getState(final String mapName, final String keyName, final Instant effectiveTimeMs) {
         final String keyspace = mapName.toLowerCase(Locale.ROOT);
-        final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(keyspace, k ->
+        final Optional<PlanBDoc> stateOptional = securityContext.useAsReadResult(() ->
                 Optional.ofNullable(stateDocCache.get(keyspace)));
         return stateOptional
                 .map(stateDoc -> {

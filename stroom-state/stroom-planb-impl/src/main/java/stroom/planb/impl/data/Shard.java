@@ -1,6 +1,7 @@
 package stroom.planb.impl.data;
 
 import stroom.planb.impl.db.AbstractLmdb;
+import stroom.planb.shared.PlanBDoc;
 
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ interface Shard {
     /**
      * Condense data in the shard.
      */
-    void condense();
+    void condense(PlanBDoc doc);
 
     /**
      * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
@@ -50,4 +51,16 @@ interface Shard {
      * Close the DB if it isn't currently in use for read or write.
      */
     void cleanup();
+
+    /**
+     * Delete the DB if the associated doc has been deleted.
+     */
+    void delete();
+
+    /**
+     * Get the Plan B doc associated with this shard.
+     *
+     * @return The Plan B doc associated with this shard.
+     */
+    PlanBDoc getDoc();
 }

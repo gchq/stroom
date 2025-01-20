@@ -19,7 +19,6 @@ import org.lmdbjava.KeyRange;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -204,9 +203,8 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just fees pages for
     //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
-    public void condense(final Instant maxAge) {
-        final long maxTime = maxAge.toEpochMilli();
-
+    public void condense(final long condenseBeforeMs,
+                         final long deleteBeforeMs) {
         write(writer -> {
             Session lastSession = null;
             Session newSession = null;
@@ -218,29 +216,36 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
                     final KeyVal<ByteBuffer> keyVal = iterator.next();
                     final Session session = serde.getKey(keyVal);
 
-                    if (lastSession != null &&
-                        Arrays.equals(lastSession.key(), session.key()) &&
-                        session.start() < maxTime &&
-                        lastSession.end() >= session.start()) {
+                    if (session.end() <= deleteBeforeMs) {
+                        // If this is data we no longer want to retain then delete it.
+                        dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                        writer.tryCommit();
 
-                        // Extend the session.
-                        newSession = new Session(lastSession.key(), lastSession.start(), session.end());
-
-                        // Delete the previous session as we are extending it.
-                        serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
-                            dbi.delete(writer.getWriteTxn(), keyByteBuffer);
-                            writer.tryCommit();
-                            return null;
-                        });
                     } else {
-                        // Insert new session.
-                        if (newSession != null) {
-                            insert(writer, newSession, newSession);
-                            newSession = null;
-                        }
-                    }
+                        if (lastSession != null &&
+                            Arrays.equals(lastSession.key(), session.key()) &&
+                            session.start() < condenseBeforeMs &&
+                            lastSession.end() >= session.start()) {
 
-                    lastSession = session;
+                            // Extend the session.
+                            newSession = new Session(lastSession.key(), lastSession.start(), session.end());
+
+                            // Delete the previous session as we are extending it.
+                            serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
+                                dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+                                writer.tryCommit();
+                                return null;
+                            });
+                        } else {
+                            // Insert new session.
+                            if (newSession != null) {
+                                insert(writer, newSession, newSession);
+                                newSession = null;
+                            }
+                        }
+
+                        lastSession = session;
+                    }
                 }
             }
 
@@ -249,7 +254,7 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
                 // Delete the last session if it will be merged into the new one.
                 if (lastSession != null &&
                     Arrays.equals(lastSession.key(), newSession.key()) &&
-                    newSession.start() < maxTime &&
+                    newSession.start() < condenseBeforeMs &&
                     lastSession.end() >= newSession.start()) {
 
                     // Delete the previous session as we are extending it.

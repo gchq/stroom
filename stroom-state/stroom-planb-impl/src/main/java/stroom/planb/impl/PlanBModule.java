@@ -93,9 +93,15 @@ public class PlanBModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(StateMergeRunnable.class, builder -> builder
-                        .name(MergeProcessor.TASK_NAME)
+                        .name(MergeProcessor.MERGE_TASK_NAME)
                         .description("Plan B state store merge")
                         .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
+                        .advanced(true));
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(StateMaintenanceRunnable.class, builder -> builder
+                        .name(MergeProcessor.MAINTAIN_TASK_NAME)
+                        .description("Plan B state store maintain")
+                        .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
                         .advanced(true));
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ShardManagerCleanupRunnable.class, builder -> builder
@@ -110,7 +116,15 @@ public class PlanBModule extends AbstractModule {
 
         @Inject
         StateMergeRunnable(final MergeProcessor mergeProcessor) {
-            super(mergeProcessor::exec);
+            super(mergeProcessor::merge);
+        }
+    }
+
+    private static class StateMaintenanceRunnable extends RunnableWrapper {
+
+        @Inject
+        StateMaintenanceRunnable(final MergeProcessor mergeProcessor) {
+            super(mergeProcessor::maintainShards);
         }
     }
 

@@ -36,7 +36,7 @@ class TestSequentialFileStore {
             assertThat(fileStore.getMaxStoreId()).isEqualTo(9);
 
             long currentId = fileStore.getMinStoreId();
-            SequentialFile sequentialFile = fileStore.awaitNew(currentId);
+            SequentialFile sequentialFile = fileStore.awaitNext(currentId);
 
             assertThat(fileStore.getMinStoreId()).isEqualTo(0);
             assertThat(fileStore.getMaxStoreId()).isEqualTo(9);
@@ -48,7 +48,7 @@ class TestSequentialFileStore {
 
             for (; currentId < 10; currentId++) {
                 assertThat(fileStore.getMaxStoreId()).isEqualTo(9);
-                sequentialFile = fileStore.awaitNew(currentId);
+                sequentialFile = fileStore.awaitNext(currentId);
                 sequentialFile.delete();
             }
 

@@ -3,7 +3,6 @@ package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.AbstractLmdb;
 import stroom.planb.impl.db.RangedStateDb;
 import stroom.planb.impl.db.SessionDb;
@@ -12,6 +11,7 @@ import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.db.TemporalRangedStateDb;
 import stroom.planb.impl.db.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
@@ -43,15 +43,12 @@ class LocalShard implements Shard {
     private static final String LOCK_FILE_NAME = "lock.mdb";
 
     private final ByteBufferFactory byteBufferFactory;
-    private final PlanBDocCache planBDocCache;
     private final Provider<PlanBConfig> configProvider;
-    private final StatePaths statePaths;
-    private final String mapName;
     private final Path shardDir;
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private volatile PlanBDoc doc;
+    private final PlanBDoc doc;
     private final AtomicInteger useCount = new AtomicInteger();
     private volatile AbstractLmdb<?, ?> db;
     private volatile boolean open;
@@ -59,17 +56,14 @@ class LocalShard implements Shard {
     private volatile Instant lastWriteTime;
 
     public LocalShard(final ByteBufferFactory byteBufferFactory,
-                      final PlanBDocCache planBDocCache,
                       final Provider<PlanBConfig> configProvider,
                       final StatePaths statePaths,
-                      final String mapName) {
+                      final PlanBDoc doc) {
         this.byteBufferFactory = byteBufferFactory;
-        this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
-        this.statePaths = statePaths;
-        this.mapName = mapName;
+        this.doc = doc;
         lastWriteTime = Instant.now();
-        this.shardDir = statePaths.getShardDir().resolve(mapName);
+        this.shardDir = statePaths.getShardDir().resolve(doc.getUuid());
     }
 
     private void incrementUseCount() {
@@ -101,6 +95,20 @@ class LocalShard implements Shard {
                 throw new RuntimeException("Unexpected count");
             }
             cleanup();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void delete() {
+        lock.lock();
+        try {
+            if (useCount.get() == 0) {
+                LOGGER.info(() -> "Deleting data for: " + doc);
+                cleanup();
+                FileUtil.deleteDir(shardDir);
+            }
         } finally {
             lock.unlock();
         }
@@ -141,19 +149,39 @@ class LocalShard implements Shard {
     }
 
     @Override
-    public void condense() {
+    public void condense(final PlanBDoc doc) {
         try {
-            final PlanBDoc doc = getDoc();
-            if (doc != null && doc.isCondense()) {
+            // Find out how old data needs to be before we condense it.
+            final long condenseBeforeMs;
+            if (doc.isCondense()) {
                 final SimpleDuration duration = SimpleDuration
                         .builder()
                         .time(doc.getCondenseAge())
                         .timeUnit(doc.getCondenseTimeUnit())
                         .build();
-                final Instant maxAge = SimpleDurationUtil.minus(Instant.now(), duration);
+                condenseBeforeMs = SimpleDurationUtil.minus(Instant.now(), duration).toEpochMilli();
+            } else {
+                condenseBeforeMs = 0;
+            }
+
+            // Find out how old data needs to be before we delete it.
+            final long deleteBeforeMs;
+            if (!doc.isRetainForever()) {
+                final SimpleDuration duration = SimpleDuration
+                        .builder()
+                        .time(doc.getRetainAge())
+                        .timeUnit(doc.getRetainTimeUnit())
+                        .build();
+                deleteBeforeMs = SimpleDurationUtil.minus(Instant.now(), duration).toEpochMilli();
+            } else {
+                deleteBeforeMs = 0;
+            }
+
+            // If we are condensing or deleting data then do so.
+            if (condenseBeforeMs > 0 || deleteBeforeMs > 0) {
                 incrementUseCount();
                 try {
-                    db.condense(maxAge);
+                    db.condense(condenseBeforeMs, deleteBeforeMs);
                 } finally {
                     decrementUseCount();
                 }
@@ -256,31 +284,16 @@ class LocalShard implements Shard {
                 configProvider.get().getMinTimeToKeepEnvOpen().getDuration()));
     }
 
-    private PlanBDoc getDoc() {
-        if (doc == null) {
-            doc = planBDocCache.get(mapName);
-            if (doc == null) {
-                LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
-                throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
-            }
-        }
-        return doc;
-    }
-
     private void open() {
-        final PlanBDoc doc = getDoc();
-        final String mapName = doc.getName();
-
-        final Path shardDir = statePaths.getShardDir().resolve(mapName);
         if (Files.exists(shardDir)) {
-            LOGGER.info(() -> "Found local shard for '" + mapName + "'");
+            LOGGER.info(() -> "Found local shard for '" + doc + "'");
             db = openDb(doc, shardDir);
 
 
         } else {
             // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.
             final String message = "Local Plan B shard not found for '" +
-                                   mapName +
+                                   doc +
                                    "'";
             LOGGER.error(() -> message);
             throw new RuntimeException(message);
@@ -307,5 +320,10 @@ class LocalShard implements Shard {
             }
             default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
         }
+    }
+
+    @Override
+    public PlanBDoc getDoc() {
+        return doc;
     }
 }
