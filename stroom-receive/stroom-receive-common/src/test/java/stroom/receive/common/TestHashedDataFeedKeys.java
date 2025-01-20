@@ -19,9 +19,9 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestHashedHashedDataFeedKeys {
+class TestHashedDataFeedKeys {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedHashedDataFeedKeys.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedDataFeedKeys.class);
 
     public static void main(String[] args) throws IOException {
         final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
@@ -68,7 +68,7 @@ class TestHashedHashedDataFeedKeys {
         Files.createDirectories(dir);
         final Path filePath = dir.resolve("file1.json");
         final String json = mapper.writeValueAsString(hashedDataFeedKeys);
-        Files.writeString(filePath, json, StandardOpenOption.WRITE);
+        Files.writeString(filePath, json, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
         LOGGER.info("key1:\n{}", key1);
         LOGGER.info("key2:\n{}", key2);

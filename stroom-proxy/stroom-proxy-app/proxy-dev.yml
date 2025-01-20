@@ -115,7 +115,7 @@ proxyConfig:
     enabledAuthenticationTypes:
       - CERTIFICATE
       - DATA_FEED_KEY
-      - TOKEN
+     # - TOKEN
 
   # Do we want to aggregate before forwarding
   aggregator:
@@ -146,3 +146,7 @@ proxyConfig:
     url: "http://localhost:8080/api/feedStatus/v1"
     apiKey: ""
 
+  security:
+    authentication:
+      openId:
+        identityProviderType: "TEST_CREDENTIALS"

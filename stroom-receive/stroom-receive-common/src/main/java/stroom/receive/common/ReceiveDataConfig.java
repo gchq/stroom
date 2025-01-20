@@ -127,7 +127,7 @@ public class ReceiveDataConfig
         return authenticationRequired;
     }
 
-    @ValidDirectoryPath
+    @ValidDirectoryPath(ensureExistence = true)
     @JsonPropertyDescription("The directory where Stroom will look for datafeed key files. " +
                              "Only used if datafeedKeyAuthenticationEnabled is true." +
                              "If the value is a relative path then it will be treated as being " +
