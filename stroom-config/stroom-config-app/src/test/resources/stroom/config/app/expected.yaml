@@ -724,7 +724,7 @@ appConfig:
       templatesPath: "/Feeds/Content Templates"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
-    - "CERT"
+    - "CERTIFICATE"
     metaTypes:
     - "Context"
     - "Raw Reference"
