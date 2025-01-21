@@ -445,6 +445,8 @@ This could be achieved by sharding data on write to specific key ranges or by fi
 Sharding by effective time would be expensive on write as changes to old shards would need to be copied through to all later shards.
 Sharding by key ranges could be done but would ideally be optional with various settings to control keyspace splitting as it is largely data dependant.
 
+We could also produce fully compacted snapshots regardless of the compaction status of the primary store.
+
 ## Snapshot Diff
 Rather than always transferring whole snapshots or key range slices, we could just transfer diffs.
 This could be accomplished if we tracked the insert/update time for each row and only delivered rows that were new or changed since the last snapshot delivery.
