@@ -88,10 +88,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
         try {
-            // Uncomment during merge up from 7.5
-//        final UserRef userRef = getUserRefFromSession(httpSession);
-            // Get rid during merge up from 7.5
-            final UserName userRef = getUserNameFromSession(httpSession);
+            final UserRef userRef = getUserRefFromSession(httpSession);
             final String userAgent = UserAgentSessionUtil.get(httpSession);
             final Instant createTime = Instant.ofEpochMilli(httpSession.getCreationTime());
             final Instant lastAccessedTime = Instant.ofEpochMilli(httpSession.getLastAccessedTime());
