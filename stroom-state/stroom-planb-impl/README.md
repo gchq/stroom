@@ -11,10 +11,10 @@ Future optimisations will be discussed in the document.
 
 # Process
 To use the new Plan B state store feature the user must create Plan B docs in the UI for each store they want to create.
-Documents are typically analogous to maps in lookup functions and should be named as such.
+Documents describe data stores that are analogous to maps in lookup functions and should therefore be named as such.
 
 The maps must be uniquely named as all lower case characters and underscores, e.g. `my_map_name`.
-Map names are case insentive to existing XSLT that loads reference data with a different case will still work, e.g. `MY_MAP_NAME` in XSLT will work with a Plan B document called `my_map_name`.
+Map names are case insentive so existing XSLT that loads reference data with a different case will still work, e.g. `MY_MAP_NAME` in XSLT will work with a Plan B document called `my_map_name`.
 
 ## Writing
 Once the Plan B documents are created, users can load data into the maps.
