@@ -2,7 +2,6 @@ package stroom.planb.impl.data;
 
 import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -18,6 +17,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
@@ -35,6 +35,7 @@ public class MergeProcessor {
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
     private final ReentrantLock maintenanceLock = new ReentrantLock();
+    private volatile boolean merging;
 
     @Inject
     public MergeProcessor(final SequentialFileStore fileStore,
@@ -70,39 +71,52 @@ public class MergeProcessor {
     }
 
     public void merge() {
-        securityContext.asProcessingUser(() -> {
-            final TaskContext taskContext = taskContextFactory.current();
-            try {
-                final long minStoreId = fileStore.getMinStoreId();
-                final long maxStoreId = fileStore.getMaxStoreId();
-                LOGGER.info(() -> LogUtil.message("Min store id = {}, max store id = {}",
-                        minStoreId,
-                        maxStoreId));
-
-                long storeId = minStoreId;
-                if (storeId == -1) {
-                    LOGGER.info("Store is empty");
-                    storeId = 0;
+        if (!merging) {
+            synchronized (this) {
+                if (!merging) {
+                    merging = true;
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            doMerge();
+                        } finally {
+                            merging = false;
+                        }
+                    });
                 }
+            }
+        }
+    }
 
-                while (!taskContext.isTerminated() && !Thread.currentThread().isInterrupted()) {
-                    // Wait until new data is available.
-                    final long currentStoreId = storeId;
-                    taskContext.info(() -> "Waiting for data...");
-                    final SequentialFile sequentialFile = fileStore.awaitNext(currentStoreId);
-                    maintenanceLock.lock();
-                    try {
+    private void doMerge() {
+        securityContext.asProcessingUser(() -> {
+            final long minStoreId = fileStore.getMinStoreId();
+            final long maxStoreId = fileStore.getMaxStoreId();
+            LOGGER.info(() -> LogUtil.message("Min store id = {}, max store id = {}",
+                    minStoreId,
+                    maxStoreId));
+
+            long storeId = minStoreId;
+            if (storeId == -1) {
+                LOGGER.info("Store is empty");
+                storeId = 0;
+            }
+
+            while (!Thread.currentThread().isInterrupted()) {
+                // Wait until new data is available.
+                final long currentStoreId = storeId;
+                final SequentialFile sequentialFile = fileStore.awaitNext(currentStoreId);
+                maintenanceLock.lock();
+                try {
+                    taskContextFactory.context(MERGE_TASK_NAME, taskContext -> {
                         taskContext.info(() -> "Merging data: " + currentStoreId);
                         merge(sequentialFile);
+                    }).run();
+                } finally {
+                    maintenanceLock.unlock();
 
-                        // Increment store id.
-                        storeId++;
-                    } finally {
-                        maintenanceLock.unlock();
-                    }
+                    // Increment store id.
+                    storeId++;
                 }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
             }
         });
     }
@@ -118,7 +132,7 @@ public class MergeProcessor {
         });
     }
 
-    public void mergeCurrent() throws IOException {
+    public void mergeCurrent() {
         final long start = fileStore.getMinStoreId();
         final long end = fileStore.getMaxStoreId();
         for (long storeId = start; storeId <= end; storeId++) {
@@ -128,32 +142,36 @@ public class MergeProcessor {
         }
     }
 
-    public void merge(final long storeId) throws IOException {
+    public void merge(final long storeId) {
         // Wait until new data is available.
         final SequentialFile sequentialFile = fileStore.awaitNext(storeId);
         merge(sequentialFile);
     }
 
-    private void merge(final SequentialFile sequentialFile) throws IOException {
-        final Path zipFile = sequentialFile.getZip();
-        if (Files.isRegularFile(zipFile)) {
-            final Path dir = mergingDir.resolve(UUID.randomUUID().toString());
-            ZipUtil.unzip(zipFile, dir);
+    private void merge(final SequentialFile sequentialFile) {
+        try {
+            final Path zipFile = sequentialFile.getZip();
+            if (Files.isRegularFile(zipFile)) {
+                final Path dir = mergingDir.resolve(UUID.randomUUID().toString());
+                ZipUtil.unzip(zipFile, dir);
 
-            // We ought to have one or more stores to merge.
-            try (final Stream<Path> stream = Files.list(dir)) {
-                stream.forEach(source -> {
-                    try {
-                        // Merge source.
-                        shardManager.merge(source);
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
+                // We ought to have one or more stores to merge.
+                try (final Stream<Path> stream = Files.list(dir)) {
+                    stream.forEach(source -> {
+                        try {
+                            // Merge source.
+                            shardManager.merge(source);
+                        } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                }
+
+                // Delete the original zip file.
+                sequentialFile.delete();
             }
-
-            // Delete the original zip file.
-            sequentialFile.delete();
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
     }
 }

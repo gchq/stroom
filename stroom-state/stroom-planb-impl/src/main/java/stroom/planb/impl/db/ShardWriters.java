@@ -196,34 +196,36 @@ public class ShardWriters {
 
         @Override
         public void close() throws IOException {
-            Path zipFile = null;
-            try {
-                writers.values().forEach(WriterInstance::close);
-
-                // Zip all and delete dir.
-                zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");
-                ZipUtil.zip(zipFile, dir);
-                FileUtil.deleteDir(dir);
-
-                final String fileHash = FileHashUtil.hash(zipFile);
-
-                final FileDescriptor fileDescriptor = new FileDescriptor(
-                        System.currentTimeMillis(),
-                        meta.getId(),
-                        fileHash);
-                fileTransferClient.storePart(fileDescriptor, zipFile);
-
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-
-            } finally {
+            if (!writers.isEmpty()) {
+                Path zipFile = null;
                 try {
+                    writers.values().forEach(WriterInstance::close);
+
+                    // Zip all and delete dir.
+                    zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");
+                    ZipUtil.zip(zipFile, dir);
                     FileUtil.deleteDir(dir);
-                    if (zipFile != null) {
-                        FileUtil.delete(zipFile);
+
+                    final String fileHash = FileHashUtil.hash(zipFile);
+
+                    final FileDescriptor fileDescriptor = new FileDescriptor(
+                            System.currentTimeMillis(),
+                            meta.getId(),
+                            fileHash);
+                    fileTransferClient.storePart(fileDescriptor, zipFile);
+
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+
+                } finally {
+                    try {
+                        FileUtil.deleteDir(dir);
+                        if (zipFile != null) {
+                            FileUtil.delete(zipFile);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
                     }
-                } catch (final Exception e) {
-                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }

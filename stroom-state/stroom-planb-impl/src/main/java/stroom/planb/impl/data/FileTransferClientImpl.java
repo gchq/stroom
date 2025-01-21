@@ -103,7 +103,6 @@ public class FileTransferClientImpl implements FileTransferClient {
                                 path);
                     } else {
                         storePartRemotely(
-                                nodeInfo.getThisNodeName(),
                                 nodeName,
                                 fileDescriptor,
                                 path);
@@ -120,8 +119,7 @@ public class FileTransferClientImpl implements FileTransferClient {
         fileStore.add(fileDescriptor, path);
     }
 
-    private void storePartRemotely(final String sourceNode,
-                                   final String targetNode,
+    private void storePartRemotely(final String targetNode,
                                    final FileDescriptor fileDescriptor,
                                    final Path path) throws IOException {
         final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, targetNode);
@@ -132,7 +130,7 @@ public class FileTransferClientImpl implements FileTransferClient {
             storePartRemotely(webTarget, fileDescriptor, path);
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
-            throw new IOException("Unable to send file to: " + sourceNode, e);
+            throw new IOException("Unable to send file to '" + targetNode + "': " + e.getMessage(), e);
         }
     }
 

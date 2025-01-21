@@ -30,7 +30,6 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;

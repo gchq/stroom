@@ -476,5 +476,11 @@ All we need to do is use the current table builder process to define the table s
 The processing would be performed in the same distributed manner as other Plan B writing.
 Instant alerting would be done during the merging process on the storage nodes where data is centralised.
 
+## LMDB Size
+The current max size for each LMDB instance is hard coded to 10 GiB.
+This ought to be configurable on a per store basis.
 
+## Max Readers
+Each LMDB instance is hard coded to use a max of 10 readers.
+This is probably a sensible default but could be made configurable.
 
