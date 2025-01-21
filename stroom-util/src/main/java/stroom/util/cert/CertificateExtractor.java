@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
-// Non-static methods to make mocking this possible in tests
 public class CertificateExtractor {
 
     /**
@@ -40,7 +39,8 @@ public class CertificateExtractor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateExtractor.class);
 
     public Optional<String> getCN(final HttpServletRequest request) {
-        return getDN(request).map(CertificateExtractor::extractCNFromDN);
+        return getDN(request)
+                .map(CertificateExtractor::extractCNFromDN);
     }
 
     public Optional<String> getDN(final HttpServletRequest request) {

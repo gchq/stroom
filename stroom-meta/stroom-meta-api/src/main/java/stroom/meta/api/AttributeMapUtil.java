@@ -244,7 +244,7 @@ public class AttributeMapUtil {
                                            final AttributeMap attributeMap) {
         final Optional<X509Certificate> optional = certificateExtractor.extractCertificate(httpServletRequest);
         optional.ifPresent(cert -> {
-            // If we get here it means SSL has been terminated by DropWizard so we need to add meta items
+            // If we get here it means SSL has been terminated by DropWizard, so we need to add meta items
             // from the certificate
             if (cert.getSubjectDN() != null) {
                 final String remoteDN = cert.getSubjectDN().toString();
