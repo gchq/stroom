@@ -716,9 +716,12 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
   receive:
+    allowedCertificateProviders: []
     authenticationRequired: true
     autoContentCreation:
       additionalGroupSuffix: " (sandbox)"
+      createAsSubjectId: "Administrators"
+      createAsType: "GROUP"
       destinationPath: "/Feeds"
       enabled: false
       templatesPath: "/Feeds/Content Templates"
@@ -738,6 +741,8 @@ appConfig:
     - "Meta Data"
     - "Records"
     receiptPolicyUuid: null
+    x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
+    x509CertificateHeader: "X-SSL-CERT"
   s3:
     s3ConfigDocCache:
       expireAfterAccess: "PT10S"

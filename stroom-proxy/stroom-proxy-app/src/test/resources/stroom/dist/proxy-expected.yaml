@@ -77,9 +77,12 @@ proxyConfig:
     temp: null
   proxyId: null
   receive:
+    allowedCertificateProviders: []
     authenticationRequired: true
     autoContentCreation:
       additionalGroupSuffix: " (sandbox)"
+      createAsSubjectId: "Administrators"
+      createAsType: "GROUP"
       destinationPath: "/Feeds"
       enabled: false
       templatesPath: "/Feeds/Content Templates"
@@ -99,6 +102,8 @@ proxyConfig:
     - "Meta Data"
     - "Records"
     receiptPolicyUuid: null
+    x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
+    x509CertificateHeader: "X-SSL-CERT"
   security:
     authentication:
       authenticationRequired: true
