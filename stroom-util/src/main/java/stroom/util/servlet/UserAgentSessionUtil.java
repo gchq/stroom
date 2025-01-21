@@ -1,9 +1,16 @@
 package stroom.util.servlet;
 
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 public final class UserAgentSessionUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserAgentSessionUtil.class);
 
     private static final String USER_AGENT = "user-agent";
 
@@ -16,6 +23,10 @@ public final class UserAgentSessionUtil {
         if (session != null) {
             final String userAgent = request.getHeader(USER_AGENT);
             if (userAgent != null) {
+                LOGGER.debug(() -> LogUtil.message("Setting {} '{}' in session {}",
+                        USER_AGENT,
+                        userAgent,
+                        NullSafe.get(session, HttpSession::getId)));
                 session.setAttribute(USER_AGENT, userAgent);
             }
         }

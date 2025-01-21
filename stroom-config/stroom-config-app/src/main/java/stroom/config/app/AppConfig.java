@@ -116,6 +116,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
+    public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
     public static final String PROP_NAME_STATE = "state";
     public static final String PROP_NAME_STATISTICS = "statistics";
@@ -161,6 +162,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final SecurityConfig securityConfig;
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final SessionCookieConfig sessionCookieConfig;
+    private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
     private final StateConfig stateConfig;
     private final StatisticsConfig statisticsConfig;
@@ -211,6 +213,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new SecurityConfig(),
                 new ServiceDiscoveryConfig(),
                 new SessionCookieConfig(),
+                new SessionConfig(),
                 new SolrConfig(),
                 new StateConfig(),
                 new StatisticsConfig(),
@@ -260,6 +263,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
+                     @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                      @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
@@ -305,6 +309,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.sessionCookieConfig = sessionCookieConfig;
+        this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
         this.stateConfig = stateConfig;
         this.statisticsConfig = statisticsConfig;
@@ -317,11 +322,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     @AssertTrue(
             message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
-                    "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
+                      "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
             payload = ValidationSeverity.Warning.class)
     @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
     @JsonPropertyDescription("If true, Stroom will halt on start up if any errors are found in the YAML " +
-            "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
+                             "configuration file. If false, the errors will simply be logged." +
+                             "Setting this to false is not advised.")
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
     }
@@ -363,8 +369,9 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
     @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details " +
-            "are defined for a service area in stroom, e.g. core or config. This means you can have all service " +
-            "areas running in a single database, have each in their own database or a mixture.")
+                             "are defined for a service area in stroom, e.g. core or config. This means you can " +
+                             "have all service areas running in a single database, have each in their own " +
+                             "database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
     }
@@ -448,10 +455,10 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("This is the base endpoint of the node for all inter-node communications, " +
-            "i.e. all cluster management and node info calls. " +
-            "This endpoint will typically be hidden behind a firewall and not be publicly available. " +
-            "The address must be resolvable from all other nodes in the cluster. " +
-            "This does not need to be set for a single node cluster.")
+                             "i.e. all cluster management and node info calls. " +
+                             "This endpoint will typically be hidden behind a firewall and not be " +
+                             "publicly available. The address must be resolvable from all other nodes " +
+                             "in the cluster. This does not need to be set for a single node cluster.")
     @JsonProperty(PROP_NAME_NODE_URI)
     public NodeUriConfig getNodeUri() {
         return nodeUri;
@@ -479,7 +486,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if " +
-            "behind a proxy")
+                             "behind a proxy")
     @JsonProperty(PROP_NAME_PUBLIC_URI)
     public PublicUriConfig getPublicUri() {
         return publicUri;
@@ -537,6 +544,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return sessionCookieConfig;
     }
 
+    @JsonProperty(PROP_NAME_SESSION)
+    public SessionConfig getSessionConfig() {
+        return sessionConfig;
+    }
+
     @JsonProperty(PROP_NAME_STATE)
     @JsonPropertyDescription("Configuration for the stroom state service")
     public StateConfig getStateConfig() {
@@ -555,7 +567,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the " +
-            "server, e.g. during development or some other deployments")
+                             "server, e.g. during development or some other deployments")
     @JsonProperty(PROP_NAME_UI_URI)
     public UiUriConfig getUiUri() {
         return uiUri;

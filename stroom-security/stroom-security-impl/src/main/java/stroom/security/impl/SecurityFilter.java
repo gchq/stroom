@@ -46,6 +46,7 @@ import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Optional;
 import java.util.Set;
 
@@ -183,13 +184,23 @@ class SecurityFilter implements Filter {
                 securityContext.asProcessingUser(() ->
                         process(request, response, chain));
 
-            } else if (isApiRequest(servletName)) {
+                } else if (isApiRequest(servletPath)) {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
                 // or no login flow is possible/expected.
                 LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
                         "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-
+                    try {
+                        final PrintWriter writer = response.getWriter();
+                        if (writer != null) {
+                            writer.println("""
+                                    Unauthorised
+                                    Your session may have expired in which case you \
+                                    need to refresh the page in browser.""");
+                        }
+                    } catch (Exception e) {
+                        // Ignore. The status will be sufficient.
+                    }
             } else {
                 // No identity found and not an unauthenticated servlet/api so assume it is
                 // a UI request. Thus instigate an OpenID authentication flow

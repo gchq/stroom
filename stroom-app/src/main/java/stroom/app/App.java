@@ -25,6 +25,8 @@ import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.SecurityConfig;
+import stroom.config.app.SessionConfig;
+import stroom.config.app.SessionCookieConfig;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.AdminServlets;
@@ -54,7 +56,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.time.StroomDuration;
 import stroom.util.validation.ValidationModule;
 import stroom.util.yaml.YamlUtil;
 
@@ -70,7 +74,6 @@ import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
-import jakarta.servlet.SessionCookieConfig;
 import jakarta.validation.ValidatorFactory;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -78,6 +81,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Objects;
 
@@ -220,15 +224,14 @@ public class App extends Application<Config> {
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
 
-        // Set up a session handler for Jetty
-        configureSessionHandling(environment);
-
-        // Ensure the session cookie that provides JSESSIONID is secure.
-        // Need to get it from ConfigMapper not AppConfig as ConfigMapper is now the source of
-        // truth for config.
+        // Need to get these config classed from ConfigMapper as the main appInjector is not created yet
+        // and configuration only holds the YAML view of the config, not the DB view.
         final ConfigMapper configMapper = bootStrapInjector.getInstance(ConfigMapper.class);
-        final stroom.config.app.SessionCookieConfig sessionCookieConfig = configMapper.getConfigObject(
-                stroom.config.app.SessionCookieConfig.class);
+        final SessionCookieConfig sessionCookieConfig = configMapper.getConfigObject(SessionCookieConfig.class);
+        final SessionConfig sessionConfig = configMapper.getConfigObject(SessionConfig.class);
+
+        // Set up a session handler for Jetty
+        configureSessionHandling(environment, sessionConfig);
         configureSessionCookie(environment, sessionCookieConfig);
 
         // Configure Cross-Origin Resource Sharing.
@@ -273,11 +276,11 @@ public class App extends Application<Config> {
 
     private void showNodeInfo(final Config configuration) {
         LOGGER.info(""
-                + "\n********************************************************************************"
-                + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
-                + "\n********************************************************************************");
+                    + "\n********************************************************************************"
+                    + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                    + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
+                    + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
+                    + "\n********************************************************************************");
     }
 
     private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
@@ -299,17 +302,17 @@ public class App extends Application<Config> {
                     .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
 
             LOGGER.warn("\n" +
-                    "\n  -----------------------------------------------------------------------------" +
-                    "\n  " +
-                    "\n                                        WARNING!" +
-                    "\n  " +
-                    "\n   Using default and publicly available Open ID authentication credentials. " +
-                    "\n   This is insecure! These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to INTERNAL_IDP/EXTERNAL_IDP for production environments." +
-                    "\n" +
-                    "\n   " + defaultOpenIdCredentials.getApiKey() +
-                    "\n  -----------------------------------------------------------------------------" +
-                    "\n");
+                        "\n  -----------------------------------------------------------------------------" +
+                        "\n  " +
+                        "\n                                        WARNING!" +
+                        "\n  " +
+                        "\n   Using default and publicly available Open ID authentication credentials. " +
+                        "\n   This is insecure! These should only be used in test/demo environments. " +
+                        "\n   Set " + propPath + " to INTERNAL_IDP/EXTERNAL_IDP for production environments." +
+                        "\n" +
+                        "\n   " + defaultOpenIdCredentials.getApiKey() +
+                        "\n  -----------------------------------------------------------------------------" +
+                        "\n");
         }
     }
 
@@ -344,35 +347,56 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                            "configuration, set {} to false, however this is not advised!",
+                         "configuration, set {} to false, however this is not advised!",
                     appConfig.getFullPathStr(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }
 
-    private static void configureSessionHandling(final Environment environment) {
-        SessionHandler sessionHandler = new SessionHandler();
+    private void configureSessionHandling(final Environment environment,
+                                          final SessionConfig sessionConfig) {
+
+        final SessionHandler sessionHandler = new SessionHandler();
         // We need to give our session cookie a name other than JSESSIONID, otherwise it might
         // clash with other services running on the same domain.
         sessionHandler.setSessionCookie(SESSION_COOKIE_NAME);
+        long maxInactiveIntervalSecs = NullSafe.getOrElse(
+                sessionConfig.getMaxInactiveInterval(),
+                StroomDuration::getDuration,
+                Duration::toSeconds,
+                -1L);
+        if (maxInactiveIntervalSecs > Integer.MAX_VALUE) {
+            maxInactiveIntervalSecs = -1;
+        }
+        LOGGER.info("Setting session maxInactiveInterval to {} secs ({})",
+                ModelStringUtil.formatCsv(maxInactiveIntervalSecs),
+                (maxInactiveIntervalSecs > 0
+                        ? Duration.ofSeconds(maxInactiveIntervalSecs).toString()
+                        : String.valueOf(maxInactiveIntervalSecs)));
+
+        // If we don't let sessions expire then the Map of HttpSession in SessionListListener
+        // will grow and grow
+        sessionHandler.setMaxInactiveInterval((int) maxInactiveIntervalSecs);
+
         environment.servlets().setSessionHandler(sessionHandler);
         environment.jersey().register(SessionFactoryProvider.class);
     }
 
-    private static void configureSessionCookie(final Environment environment,
-                                               final stroom.config.app.SessionCookieConfig config) {
+    private void configureSessionCookie(final Environment environment,
+                                        final SessionCookieConfig sessionCookieConfig) {
         // Ensure the session cookie that provides JSESSIONID is secure.
-        final SessionCookieConfig sessionCookieConfig = environment
+        final jakarta.servlet.SessionCookieConfig servletSessionCookieConfig = environment
                 .getApplicationContext()
                 .getServletContext()
                 .getSessionCookieConfig();
-        sessionCookieConfig.setSecure(config.isSecure());
-        sessionCookieConfig.setHttpOnly(config.isHttpOnly());
+        servletSessionCookieConfig.setSecure(sessionCookieConfig.isSecure());
+        servletSessionCookieConfig.setHttpOnly(sessionCookieConfig.isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
     private static void configureCors(io.dropwizard.core.setup.Environment environment) {
-        FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+        final FilterRegistration.Dynamic cors = environment.servlets()
+                .addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
