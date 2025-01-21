@@ -23,7 +23,7 @@ public class SessionListResponse extends ResultPage<SessionDetails> {
         super(values, SessionListResponse.createPageResponse(values));
     }
 
-    public static final SessionListResponse empty() {
+    public static SessionListResponse empty() {
         return new SessionListResponse(
                 Collections.emptyList(),
                 SessionListResponse.createPageResponse(Collections.emptyList()));

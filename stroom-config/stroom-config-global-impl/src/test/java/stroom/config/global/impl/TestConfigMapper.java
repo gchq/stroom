@@ -28,6 +28,7 @@ import stroom.config.app.CrossModuleConfig;
 import stroom.config.app.DataConfig;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.app.SecurityConfig;
+import stroom.config.app.SessionConfig;
 import stroom.config.app.SessionCookieConfig;
 import stroom.config.app.StatisticsConfig;
 import stroom.config.common.CommonDbConfig;
@@ -359,11 +360,11 @@ class TestConfigMapper {
         LOGGER.info("Properties with no default value");
         configProperties.forEach(configProperty -> {
             if (configProperty.getDefaultValue().isEmpty()
-                    && !configProperty.getName().toString().contains("Pool")
-                    && !configProperty.getName().toString().contains("expireAfterWrite")
-                    && !configProperty.getName().toString().contains("expireAfterAccess")
-                    && !configProperty.getName().toString().contains("db.connection")
-                    && !configProperty.getName().toString().contains("Uri.")) {
+                && !configProperty.getName().toString().contains("Pool")
+                && !configProperty.getName().toString().contains("expireAfterWrite")
+                && !configProperty.getName().toString().contains("expireAfterAccess")
+                && !configProperty.getName().toString().contains("db.connection")
+                && !configProperty.getName().toString().contains("Uri.")) {
                 LOGGER.info("{}", configProperty.getName());
             }
         });
@@ -956,6 +957,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
+                @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                 @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
@@ -1016,6 +1018,7 @@ class TestConfigMapper {
                     securityConfig,
                     serviceDiscoveryConfig,
                     sessionCookieConfig,
+                    sessionConfig,
                     solrConfig,
                     stateConfig,
                     statisticsConfig,
