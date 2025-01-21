@@ -66,13 +66,13 @@ public class CertificateExtractor {
     }
 
     private static Optional<X509Certificate> extractCertificate(final ServletRequest request,
-                                                                final String attribute) {
-        final Object[] certs = (Object[]) request.getAttribute(attribute);
-        if (certs != null) {
-            LOGGER.debug(() -> "Found certificate using " + attribute + " header");
-            return extractCertificate(certs);
-        }
-        return Optional.empty();
+                                                                final String attributeName) {
+        final Object[] certs = (Object[]) request.getAttribute(attributeName);
+        return Optional.ofNullable(certs)
+                .flatMap(certs2 -> {
+                    LOGGER.debug(() -> "Found certificate using " + attributeName + " header");
+                    return extractCertificate(certs);
+                });
     }
 
     /**
