@@ -24,6 +24,7 @@ import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -61,19 +62,13 @@ public class FileTransferResourceImpl implements FileTransferResource {
                     .build();
         } catch (final NotModifiedException e) {
             LOGGER.debug(e::getMessage, e);
-            return Response
-                    .status(Status.NOT_MODIFIED.getStatusCode(), e.getMessage())
-                    .build();
+            throw new WebApplicationException(e.getMessage(), Status.NOT_MODIFIED);
         } catch (final PermissionException e) {
             LOGGER.debug(e::getMessage, e);
-            return Response
-                    .status(Status.UNAUTHORIZED.getStatusCode(), e.getMessage())
-                    .build();
+            throw new WebApplicationException(e.getMessage(), Status.UNAUTHORIZED);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
-            return Response
-                    .status(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage())
-                    .build();
+            throw new WebApplicationException(e.getMessage(), Status.NOT_FOUND);
         }
     }
 

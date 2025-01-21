@@ -58,8 +58,8 @@ public class ShardManager {
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
 
-        // Delete any existing shards that might have been left behind from the last use of Stroom.
-        FileUtil.deleteDir(statePaths.getShardDir());
+        // Delete any existing snapshots that might have been left behind from the last use of Stroom.
+        FileUtil.deleteDir(statePaths.getSnapshotDir());
     }
 
     private boolean isSnapshotNode() {

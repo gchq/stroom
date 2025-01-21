@@ -7,6 +7,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.StringIdUtil;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -16,8 +17,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
@@ -31,6 +32,7 @@ public class MergeProcessor {
 
     private final SequentialFileStore fileStore;
     private final Path mergingDir;
+    private final AtomicLong mergingId = new AtomicLong();
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
@@ -49,25 +51,10 @@ public class MergeProcessor {
         this.shardManager = shardManager;
 
         mergingDir = statePaths.getMergingDir();
-        if (ensureDirExists(mergingDir)) {
-            if (!FileUtil.deleteContents(mergingDir)) {
-                throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
-            }
+        FileUtil.ensureDirExists(mergingDir);
+        if (!FileUtil.deleteContents(mergingDir)) {
+            throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
         }
-    }
-
-    private boolean ensureDirExists(final Path path) {
-        if (Files.isDirectory(path)) {
-            return true;
-        }
-
-        try {
-            Files.createDirectories(path);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
-        return false;
     }
 
     public void merge() {
@@ -152,7 +139,8 @@ public class MergeProcessor {
         try {
             final Path zipFile = sequentialFile.getZip();
             if (Files.isRegularFile(zipFile)) {
-                final Path dir = mergingDir.resolve(UUID.randomUUID().toString());
+                final String mergingDirName = StringIdUtil.idToString(mergingId.incrementAndGet());
+                final Path dir = mergingDir.resolve(mergingDirName);
                 ZipUtil.unzip(zipFile, dir);
 
                 // We ought to have one or more stores to merge.
@@ -166,6 +154,9 @@ public class MergeProcessor {
                         }
                     });
                 }
+
+                // Delete dir.
+                FileUtil.deleteDir(dir);
 
                 // Delete the original zip file.
                 sequentialFile.delete();

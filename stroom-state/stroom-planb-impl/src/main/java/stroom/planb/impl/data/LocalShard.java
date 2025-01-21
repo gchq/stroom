@@ -246,7 +246,11 @@ class LocalShard implements Shard {
                 ZipUtil.createOutputStream(new BufferedOutputStream(outputStream))) {
             ZipUtil.zip(shardDir, zipOutputStream);
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry(SNAPSHOT_INFO_FILE_NAME));
-            zipOutputStream.write(lastWriteTime.toString().getBytes(StandardCharsets.UTF_8));
+            try {
+                zipOutputStream.write(lastWriteTime.toString().getBytes(StandardCharsets.UTF_8));
+            } finally {
+                zipOutputStream.closeArchiveEntry();
+            }
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
