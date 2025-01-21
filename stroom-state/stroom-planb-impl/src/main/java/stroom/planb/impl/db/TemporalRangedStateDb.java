@@ -66,7 +66,7 @@ public class TemporalRangedStateDb extends AbstractLmdb<Key, StateValue> {
         }
     }
 
-    // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just fees pages for
+    // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for
     //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
     public void condense(final long condenseBeforeMs,

@@ -205,6 +205,12 @@ It is also unknown what nasty side effects could be uncovered by doing this.
 
 #### Option - Reduce hash length
 We could potentially get away with an `int` hash depending on probability of key clashes.
+Long hashes could be converted to `int` hashes using the `hashCode` method of `Long`. 
+```java
+    public static int hashCode(long value) {
+        return (int)(value ^ (value >>> 32));
+    }
+```
 This would reduce storage size.
 
 #### Option - Use a lookup table
@@ -355,7 +361,7 @@ Allow storage of keys < 492 bytes directly.
 
 Potentially faster.
 Sessions may end up with many duplicate keys increasing storage use, especially without session compaction.
-No need to store anything as a value in the table as we only care about the key.
+No need to store values in the table as we only care about the key.
 
 #### Option - Increase the key size of LMDB
 As above.
@@ -387,20 +393,21 @@ Stores with temporal data can be compacted:
 * `Temporal Ranged State` - Repeated confirmations of identical state can be removed.
 * `Session` - Overlapping sesions can be collapsed into a single session.
 
-Stores are compacted using the `Plan B Maintenance Processor` on the storage nodes.
-The compaction settings in the Plan B document govern how compaction is performed and data to consider for compaction based on temporal state.
+Stores are compacted on the storage nodes, using the `Plan B Maintenance Processor`.
+The compaction settings in the Plan B document govern how compaction is performed.
+Data is considered for compaction based on temporal state.
 
 > Note that when loading old data it may be necessary to disable compaction for a store until data is loaded and processing is up to date, otherwise some data could be compacted prematurely.
 
-> We could introduce an update time to all store rows and only compact data based on update time whcih would remove the risk of compacting old data we have only recently added.
+> We could introduce an update time to all store rows and only compact data based on update time which would remove the risk of compacting data with old timestamps we have recently added.
 
 # Data Retention
-Stores with temporal data can have data aged off:
+Stores with temporal data can have data removed that is older than a certain age:
 * `Temporal State` - Old state data can be deleted.
 * `Temporal Ranged State` - Old state data can be deleted.
 * `Session` - Old sessions can be deleted.
 
-Data retention is performed with the same process as compaction,  using the `Plan B Maintenance Processor` on the storage nodes.
+Data retention is performed on the storage nodes, with the same process as compaction,  using the `Plan B Maintenance Processor`.
 The retention settings in the Plan B document govern how retention is performed and data to consider for deletion based on temporal state.
 
 > Note that when loading old data it may be necessary to disable data retention processing for a store until data is loaded and processing is up to date, otherwise some data could be deleted prematurely.
@@ -409,20 +416,56 @@ The retention settings in the Plan B document govern how retention is performed 
 
 # Store Deletion
 Deleting Plan B documents will not immediately delete the associated LMDB data.
-Instead the data will be deleted with the same process as compaction and retention,  using the `Plan B Maintenance Processor` on the storage nodes.
+Instead the data will be deleted on the storage nodes, with the same process as compaction and retention, using the `Plan B Maintenance Processor`.
 And LMDB data stores that are found that do not have an associated Plan B document will be deleted.
 
 # Cleanup
 LMDB environments are kept open for reading and writing, this includes shards and snapshots.
-A periodic cleanup job `Plan B shard cleanup` should be run on all nodes when using Plan B to ensure LMDB environments are closed and snapshots cleaned up if the environments have ben idle for longer than `stroom.planb.minTimeToKeepEnvOpen` (default 1 minute).
+A periodic cleanup job, `Plan B shard cleanup`, should be run on all nodes when using Plan B to ensure LMDB environments are closed and snapshots cleaned up if the environments have ben idle for longer than `stroom.planb.minTimeToKeepEnvOpen` (default 1 minute).
 
-# Future Optimisations
+# Future Work
+
+## Advanced Control Of Storage Schemes
+As discussed above, it would be useful in various scenarios to have finer control over the way data is stored.
+This includes:
+* Options for key hash length.
+* Deduplication of keys and/or values using lookup tables.
+* Direct storage of short keys with lengths below ~512 bytes (depending on store type).
+
+## Multi Threaded Merge
+At present the merge process uses a single thread because the code is simpler and it makes it much easier to reason about the status of the process.
+However, if we find that merge struggles to keep up with high frequencies of incoming data then we could easily add multi threaded execution to this process.
+This could include the unzip of received data as well as the merging into different shards.
+Shards currently possess write locks so multi threading the merge process would not be dangerous from an LMDB writer perspective where only one writer and one writing thread are allowed at any time. 
 
 ## Snapshot Size Reduction 
 It may be ncessary to reduce snapshot sizes.
 This could be achieved by sharding data on write to specific key ranges or by filtering data on read to produce slices to cover a certain keyspace or effective time range to meet the snapshot request.
 Sharding by effective time would be expensive on write as changes to old shards would need to be copied through to all later shards.
 Sharding by key ranges could be done but would ideally be optional with various settings to control keyspace splitting as it is largely data dependant.
+
+## Snapshot Diff
+Rather than always transferring whole snapshots or key range slices, we could just transfer diffs.
+This could be accomplished if we tracked the insert/update time for each row and only delivered rows that were new or changed since the last snapshot delivery.
+
+## Remote Query
+Snapshots are essential for providing millions of ultra fast lookups when decorating/enriching events.
+The design of Plan B is all about using snapshots because of the performance failings identified with using ScyallaDB, which in theory is one of the fastest remote key/value stores available.
+
+Even the fastest remote DB still has the network performance overhead and other resiliency/replication factors that make them a poor fit for our use case.
+However, in situations where we only want to occasionally query a data store, e.g. when performing a StroomQL query, it may make sense to do this remotely rather than pulling an entire snapshot over the network.
+In these use cases we could query a remote store directly via an API.
+
+## Search Performance
+At present, searches using the query API, do a full table scan.
+This is because it is difficult to turn complex query expressions into sensible key limited ranges.
+In future some code could be added to do this but it isn't a priority for the initial implementation and the current performance seems acceptable.
+
+## Compaction Disk Saving
+LMDB does not free disk space just because you delete entries, instead it just frees pages for reuse.
+We might want to create a new compacted instance instead of deleting in place when we perform compaction and retention operations.
+
+
 
 
 
