@@ -431,6 +431,7 @@ This includes:
 * Options for key hash length.
 * Deduplication of keys and/or values using lookup tables.
 * Direct storage of short keys with lengths below ~512 bytes (depending on store type).
+* Hybrid key storage for full short keys and hash/lookup for longer keys.
 
 ## Multi Threaded Merge
 At present the merge process uses a single thread because the code is simpler and it makes it much easier to reason about the status of the process.
