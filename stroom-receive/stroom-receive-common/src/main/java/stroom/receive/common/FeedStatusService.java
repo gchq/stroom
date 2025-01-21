@@ -26,10 +26,7 @@ public interface FeedStatusService {
      * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
      */
     @Deprecated
-    default GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
-        final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
-        return getFeedStatus(request);
-    }
+    GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest);
 
     GetFeedStatusResponse getFeedStatus(GetFeedStatusRequestV2 request);
 }

@@ -17,15 +17,21 @@ import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @JsonPropertyOrder(alphabetic = true)
 public class ReceiveDataConfig
         extends AbstractConfig
         implements IsStroomConfig, IsProxyConfig {
+
+    public static final String DEFAULT_X509_CERT_HEADER = "X-SSL-CERT";
+    public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
+    public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
 
     @JsonProperty
     private final String receiptPolicyUuid;
@@ -39,6 +45,12 @@ public class ReceiveDataConfig
     private final Set<AuthenticationType> enabledAuthenticationTypes;
     @JsonProperty
     private final AutoContentCreationConfig autoContentCreation;
+    @JsonProperty
+    private final String x509CertificateHeader;
+    @JsonProperty
+    private final String x509CertificateDnHeader;
+    @JsonProperty
+    private final Set<String> allowedCertificateProviders;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
@@ -47,6 +59,9 @@ public class ReceiveDataConfig
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
         autoContentCreation = new AutoContentCreationConfig();
+        x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
+        x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
+        allowedCertificateProviders = Collections.emptySet();
     }
 
     @SuppressWarnings("unused")
@@ -57,7 +72,10 @@ public class ReceiveDataConfig
             @JsonProperty("enabledAuthenticationTypes") final Set<AuthenticationType> enabledAuthenticationTypes,
             @JsonProperty("authenticationRequired") final boolean authenticationRequired,
             @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir,
-            @JsonProperty("autoContentCreation") final AutoContentCreationConfig autoContentCreation) {
+            @JsonProperty("autoContentCreation") final AutoContentCreationConfig autoContentCreation,
+            @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
+            @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
+            @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
@@ -65,6 +83,11 @@ public class ReceiveDataConfig
         this.authenticationRequired = authenticationRequired;
         this.dataFeedKeysDir = dataFeedKeysDir;
         this.autoContentCreation = autoContentCreation;
+        this.x509CertificateHeader = x509CertificateHeader;
+        this.x509CertificateDnHeader = x509CertificateDnHeader;
+        this.allowedCertificateProviders = NullSafe.stream(allowedCertificateProviders)
+                .filter(NullSafe::isNonBlankString)
+                .collect(Collectors.toSet());
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -74,6 +97,9 @@ public class ReceiveDataConfig
         authenticationRequired = builder.authenticationRequired;
         dataFeedKeysDir = builder.dataFeedKeysDir;
         autoContentCreation = builder.autoContentCreation;
+        x509CertificateHeader = builder.x509CertificateHeader;
+        x509CertificateDnHeader = builder.x509CertificateDnHeader;
+        allowedCertificateProviders = builder.allowedCertificateProviders;
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
@@ -138,6 +164,33 @@ public class ReceiveDataConfig
         return dataFeedKeysDir;
     }
 
+    @JsonPropertyDescription(
+            "The HTTP header key used to extract an X509 certificate. This is used when a load balancer does the " +
+            "SSL/mTLS termination and passes the client certificate though in a header. Only used for " +
+            "authentication if a value is set and 'enabledAuthenticationTypes' includes CERTIFICATE.")
+    public String getX509CertificateHeader() {
+        return x509CertificateHeader;
+    }
+
+    @JsonPropertyDescription(
+            "The HTTP header key used to extract the distinguished name (DN) as obtained from an X509 certificate. " +
+            "This is used when a load balancer does the SSL/mTLS termination and passes the client DN though " +
+            "in a header. Only used for " +
+            "authentication if a value is set and 'enabledAuthenticationTypes' includes CERTIFICATE.")
+    public String getX509CertificateDnHeader() {
+        return x509CertificateDnHeader;
+    }
+
+    @JsonPropertyDescription(
+            "An allow-list containing IP addresses or fully qualified host names to verify that the direct sender " +
+            "of a request (e.g. a load balancer or reverse proxy) is trusted to supply certificate/DN headers " +
+            "as configured with 'x509CertificateHeader' and 'x509CertificateDnHeader'. " +
+            "If this list is null/empty then no check will be made on the client's " +
+            "address.")
+    public Set<String> getAllowedCertificateProviders() {
+        return allowedCertificateProviders;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -154,6 +207,9 @@ public class ReceiveDataConfig
                ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
                ", authenticationRequired=" + authenticationRequired +
                ", dataFeedKeysDir=" + dataFeedKeysDir +
+               ", x509CertificateHeader=" + x509CertificateHeader +
+               ", x509CertificateDnHeader=" + x509CertificateDnHeader +
+               ", allowedCertificateProviders=" + allowedCertificateProviders +
                '}';
     }
 
@@ -164,6 +220,9 @@ public class ReceiveDataConfig
         builder.enabledAuthenticationTypes = receiveDataConfig.getEnabledAuthenticationTypes();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
         builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
+        builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
+        builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
+        builder.allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
         return builder;
     }
 
@@ -183,6 +242,9 @@ public class ReceiveDataConfig
         private boolean authenticationRequired;
         private String dataFeedKeysDir;
         private AutoContentCreationConfig autoContentCreation;
+        private String x509CertificateHeader;
+        private String x509CertificateDnHeader;
+        private Set<String> allowedCertificateProviders;
 
         private Builder() {
         }
@@ -234,6 +296,21 @@ public class ReceiveDataConfig
 
         public Builder withAuthContentCreation(final AutoContentCreationConfig val) {
             autoContentCreation = val;
+            return this;
+        }
+
+        public Builder withX509CertificateHeader(final String val) {
+            x509CertificateHeader = val;
+            return this;
+        }
+
+        public Builder withX509CertificateDnHeader(final String val) {
+            x509CertificateDnHeader = val;
+            return this;
+        }
+
+        public Builder withAllowedCertificateProviders(final Set<String> val) {
+            allowedCertificateProviders = val;
             return this;
         }
 

@@ -1,9 +1,11 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.feed.remote.FeedStatus;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
+import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
@@ -54,14 +56,17 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter;
 
     @Inject
     RemoteFeedStatusService(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final JerseyClientFactory jerseyClientFactory,
-                            final UserIdentityFactory userIdentityFactory) {
+                            final UserIdentityFactory userIdentityFactory,
+                            final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter) {
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
+        this.getFeedStatusRequestAdapter = getFeedStatusRequestAdapter;
 
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
@@ -95,6 +100,15 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     @Override
     public void stop() {
         executorService.shutdownNow();
+    }
+
+    /**
+     * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
+     */
+    @Deprecated
+    public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
+        final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
+        return getFeedStatus(request);
     }
 
     @Override

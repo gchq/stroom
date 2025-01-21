@@ -10,10 +10,6 @@ import java.util.Collections;
 
 public class GetFeedStatusRequestAdapter {
 
-    private GetFeedStatusRequestAdapter() {
-
-    }
-
     public static GetFeedStatusRequestV2 mapLegacyRequest(final GetFeedStatusRequest legacyRequest) {
         if (legacyRequest == null) {
             return null;

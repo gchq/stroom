@@ -16,7 +16,6 @@ public class CertificateAuthenticator implements AuthenticatorFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateAuthenticator.class);
 
-    // Inject this so we can mock it for testing
     private final CertificateExtractor certificateExtractor;
 
     @Inject
