@@ -1,10 +1,11 @@
 package stroom.planb.impl.data;
 
+import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
+import stroom.util.string.StringIdUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -12,23 +13,34 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class FileTransferServiceImpl implements FileTransferService {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileTransferServiceImpl.class);
 
     private final SequentialFileStore fileStore;
     private final SecurityContext securityContext;
     private final ShardManager shardManager;
 
+    private final Path receiveDir;
+    private final AtomicLong receiveId = new AtomicLong();
+
     @Inject
     public FileTransferServiceImpl(final SequentialFileStore fileStore,
                                    final SecurityContext securityContext,
-                                   final ShardManager shardManager) {
+                                   final ShardManager shardManager,
+                                   final StatePaths statePaths) {
         this.fileStore = fileStore;
         this.securityContext = securityContext;
         this.shardManager = shardManager;
+
+        // Create the receive directory.
+        receiveDir = statePaths.getReceiveDir();
+        FileUtil.ensureDirExists(receiveDir);
+        if (!FileUtil.deleteContents(receiveDir)) {
+            throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(receiveDir));
+        }
     }
 
     /**
@@ -80,21 +92,10 @@ public class FileTransferServiceImpl implements FileTransferService {
         }
 
         final FileDescriptor fileDescriptor = new FileDescriptor(createTime, metaId, fileHash);
-        SequentialFile tempFile = null;
-        try {
-            tempFile = fileStore.createTemp();
-            StreamUtil.streamToFile(inputStream, tempFile.getZip());
-            fileStore.add(fileDescriptor, tempFile.getZip());
-
-        } finally {
-            // Cleanup.
-            if (tempFile != null) {
-                try {
-                    tempFile.delete();
-                } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-            }
-        }
+        final String receiveFileName = StringIdUtil.idToString(receiveId.incrementAndGet()) +
+                                       SequentialFile.ZIP_EXTENSION;
+        final Path receiveFile = receiveDir.resolve(receiveFileName);
+        StreamUtil.streamToFile(inputStream, receiveFile);
+        fileStore.add(fileDescriptor, receiveFile);
     }
 }

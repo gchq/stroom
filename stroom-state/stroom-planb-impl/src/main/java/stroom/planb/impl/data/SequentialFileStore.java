@@ -2,7 +2,6 @@ package stroom.planb.impl.data;
 
 import stroom.planb.impl.db.StatePaths;
 import stroom.util.concurrent.UncheckedInterruptedException;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -19,7 +18,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -32,10 +30,7 @@ public class SequentialFileStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
 
-    private final Path receiveDir;
     private final Path stagingDir;
-
-    private final AtomicLong tempId = new AtomicLong();
     private final AtomicLong storeId = new AtomicLong();
 
     private final Lock lock = new ReentrantLock();
@@ -47,14 +42,6 @@ public class SequentialFileStore {
 
         // Create the root directory
         ensureDirExists(statePaths.getRootDir());
-
-        // Create the receive directory.
-        receiveDir = statePaths.getReceiveDir();
-        if (ensureDirExists(receiveDir)) {
-            if (!FileUtil.deleteContents(receiveDir)) {
-                throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(receiveDir));
-            }
-        }
 
         // Create the store directory and initialise the store id.
         stagingDir = statePaths.getStagingDir();
@@ -72,11 +59,6 @@ public class SequentialFileStore {
             throw new IOException("File hash is not equal");
         }
         add(path);
-    }
-
-    public SequentialFile createTemp() {
-        final long currentStoreId = tempId.incrementAndGet();
-        return getTempFileSet(currentStoreId);
     }
 
     public SequentialFile awaitNext(final long storeId) {
@@ -120,10 +102,6 @@ public class SequentialFileStore {
 //        }
 //        return Optional.of(getStoreFileSet(storeId));
 //    }
-
-    private SequentialFile getTempFileSet(final long storeId) {
-        return SequentialFile.get(receiveDir, storeId, true);
-    }
 
     private SequentialFile getStoreFileSet(final long storeId) {
         return SequentialFile.get(stagingDir, storeId, true);
