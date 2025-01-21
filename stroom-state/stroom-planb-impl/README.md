@@ -465,9 +465,16 @@ In future some code could be added to do this but it isn't a priority for the in
 LMDB does not free disk space just because you delete entries, instead it just frees pages for reuse.
 We might want to create a new compacted instance instead of deleting in place when we perform compaction and retention operations.
 
+## Statistics
+The process of local writes, central merges and snapshots could easily be used for statistics.
+As with the current statistics implementations it would be hard to make the processing idempotent.
+However, adding a statistic store type to Plan B would be relatively easy and would perform far better than MySQL and likely any other key/value store. 
 
-
-
+## Table Builder Analytics
+As with statistics we could leverage the distributed processing of Plan B for table builder analytics.
+All we need to do is use the current table builder process to define the table structure.
+The processing would be performed in the same distributed manner as other Plan B writing.
+Instant alerting would be done during the merging process on the storage nodes where data is centralised.
 
 
 
