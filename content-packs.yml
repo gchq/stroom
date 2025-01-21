@@ -6,7 +6,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name : "event-logging-xml-schema",
@@ -15,7 +15,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "example-index",
@@ -24,7 +24,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "internal-dashboards",
@@ -33,7 +33,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "internal-statistics-sql",
@@ -42,7 +42,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "internal-statistics-stroom-stats",
@@ -51,7 +51,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "standard-pipelines",
@@ -60,7 +60,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "stroom-101",
@@ -69,7 +69,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "stroom-logs",
@@ -78,7 +78,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "template-pipelines",
@@ -87,7 +87,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "state",
@@ -96,7 +96,7 @@
       name: "state",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "planb",
@@ -105,7 +105,7 @@
       name: "planb",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "planb",
-      commit: "e79e7231a90cac06d80084d8ab6077401fc308ec"
+      commit: "d9e12119e51877eaf8d015d4b5ead52b34f33b62"
     }
   }, {
     name: "stroom-visualisations",
