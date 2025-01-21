@@ -25,7 +25,7 @@ Just like the previous state store implementation, Plan B can store data in the 
 * Temporal Ranged State
 * Session
 
-Each of these store types require data to be descride in specific ways, however the first 4 types will work with data specified in the same way as any existing reference data.
+Each of these store types require data to be descrided in specific ways, however the first 4 types will work with data specified in the same way as any existing reference data.
 Specifics for each state type will be discussed later in this document.
 
 Because the data required for the first 4 types is the same as current reference data, it is easy for users to load data into these stores by just creating a new pipeline that is similar to the `Reference Loader` standard pipeline.
