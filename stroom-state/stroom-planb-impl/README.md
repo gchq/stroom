@@ -440,12 +440,15 @@ This could include the unzip of received data as well as the merging into differ
 Shards currently possess write locks so multi threading the merge process would not be dangerous from an LMDB writer perspective where only one writer and one writing thread are allowed at any time. 
 
 ## Snapshot Size Reduction 
-It may be ncessary to reduce snapshot sizes.
+It may be ncessary to reduce snapshot sizes to prevent excessive download times and disk usage.
+
 This could be achieved by sharding data on write to specific key ranges or by filtering data on read to produce slices to cover a certain keyspace or effective time range to meet the snapshot request.
 Sharding by effective time would be expensive on write as changes to old shards would need to be copied through to all later shards.
+
 Sharding by key ranges could be done but would ideally be optional with various settings to control keyspace splitting as it is largely data dependant.
 
 We could also produce fully compacted snapshots regardless of the compaction status of the primary store.
+Compacted snapshots could be produced eagerly and asynchronously by storage nodes in anticipation of download requests.
 
 ## Snapshot Diff
 Rather than always transferring whole snapshots or key range slices, we could just transfer diffs.
