@@ -151,7 +151,7 @@ The fields available will depend on the store type being queried.
 * End (date)
 
 # Directory Structure And Processing Order
-To recap the directories used by Plan B are as follows:
+To recap, the directories used by Plan B are as follows:
 * `writer` - The initial directory used by pipelines writing data.
 * `receive` - The dir that the receiving storage node initially writes zip data during an upload.
 * `staging` - The sequential file store where zip files await merge.
