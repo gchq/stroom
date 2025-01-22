@@ -15174,6 +15174,9 @@
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
+          "activeUsersOnly" : {
+            "type" : "boolean"
+          },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
