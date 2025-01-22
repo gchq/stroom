@@ -6941,6 +6941,25 @@ paths:
       summary: Update a text converter doc
       tags:
       - Text Converters
+  /userInfo/v1/{userUuid}:
+    get:
+      operationId: fetchUser
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+          description: default response
+      summary: Fetches the userInfo with the supplied user UUID
+      tags:
+      - Authorisation
   /userRef/v1/find:
     post:
       operationId: findUserRefs
@@ -7068,6 +7087,25 @@ paths:
         is admin or has Manage Users permission then they can see all users.
       tags:
       - Authorisation
+  /users/v1/findDependencies:
+    post:
+      operationId: findUserDependenciesByCriteria
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindUserDependenciesCriteria'
+        description: criteria
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageUserDependency'
+          description: default response
+      summary: Find the items that depend on this user
+      tags:
+      - Authorisation
   /users/v1/updateUser:
     post:
       operationId: updateUser
@@ -7104,11 +7142,11 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete the user with the supplied UUID
+      summary: Delete the user with the supplied user UUID
       tags:
       - Authorisation
     get:
-      operationId: fetchUser
+      operationId: fetchUser_1
       parameters:
       - in: path
         name: userUuid
@@ -7146,7 +7184,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Removes user with UUID userUuid from the group with UUID groupUuid
+      summary: Removes user/group with UUID userUuid from the group with UUID groupUuid
       tags:
       - Authorisation
     put:
@@ -7169,7 +7207,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Adds user with UUID userUuid to the group with UUID groupUuid
+      summary: Adds user/group with UUID userUuid to the group with UUID groupUuid
       tags:
       - Authorisation
   /view/v1/list:
@@ -11450,6 +11488,8 @@ components:
     FindUserCriteria:
       type: object
       properties:
+        activeUsersOnly:
+          type: boolean
         expression:
           $ref: '#/components/schemas/ExpressionOperator'
         pageRequest:
@@ -11461,6 +11501,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindUserDependenciesCriteria:
+      type: object
+      properties:
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     FlatResult:
       type: object
       allOf:
@@ -14532,6 +14588,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    ResultPageUserDependency:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDependency'
     ResultPageUserRef:
       type: object
       description: A page of results.
@@ -16568,6 +16634,15 @@ components:
         version:
           type: integer
           format: int32
+    UserDependency:
+      type: object
+      properties:
+        details:
+          type: string
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     UserDesc:
       type: object
       properties:
@@ -16576,6 +16651,23 @@ components:
         fullName:
           type: string
         subjectId:
+          type: string
+    UserInfo:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        displayName:
+          type: string
+        enabled:
+          type: boolean
+        fullName:
+          type: string
+        group:
+          type: boolean
+        subjectId:
+          type: string
+        uuid:
           type: string
     UserPreferences:
       type: object
