@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.6-beta.8] - 2025-01-22
+
+* Issue **#4671** : Remove foreign key constraints from the legacy `(app|doc)_permission` tables to `stroom_user` to fix user deletion.
+
+* Issue **#4670** : Fix display of disabled users in multiple permission related screens.
+
+* Issue **#4659** : Fix refresh selection changes after adding/removing users to/from groups.
+
 * Issue **#4693** : Add the property `stroom.session.maxInactiveInterval` to control the HTTP session expiry. Defaults to `1d`.
 
 
@@ -988,7 +997,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.8...HEAD
+[v7.6-beta.8]: https://github.com/gchq/stroom/compare/v7.6-beta.7...v7.6-beta.8
 [v7.6-beta.7]: https://github.com/gchq/stroom/compare/v7.6-beta.6...v7.6-beta.7
 [v7.6-beta.6]: https://github.com/gchq/stroom/compare/v7.6-beta.5...v7.6-beta.6
 [v7.6-beta.5]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.6-beta.5
