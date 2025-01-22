@@ -69,8 +69,8 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                                         rule.getExpression(),
                                         queryFieldIndex,
                                         dateTimeSettings);
-                        optionalValuesPredicate.ifPresent(columnExpressionMatcher ->
-                                ruleAndMatchers.add(new RuleAndMatcher(rule, columnExpressionMatcher)));
+                        final Predicate<Val[]> predicate = optionalValuesPredicate.orElse(t -> true);
+                        ruleAndMatchers.add(new RuleAndMatcher(rule, predicate));
                     } catch (final RuntimeException e) {
                         throw new RuntimeException("Error evaluating conditional formatting rule: " +
                                                    rule.getExpression() +
