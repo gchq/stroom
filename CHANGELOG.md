@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#4671** : Remove foreign key constraints from the legacy `(app|doc)_permission` tables to `stroom_user` to fix user deletion.
+
+* Issue **#4670** : Fix display of disabled users in multiple permission related screens.
+
+* Issue **#4659** : Fix refresh selection changes after adding/removing users to/from groups.
+
 * Issue **#4693** : Add the property `stroom.session.maxInactiveInterval` to control the HTTP session expiry. Defaults to `1d`.
 
 
