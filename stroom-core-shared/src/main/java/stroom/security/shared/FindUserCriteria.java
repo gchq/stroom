@@ -35,6 +35,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends ExpressionCriteria {
 
+    @JsonProperty
     private final boolean activeUsersOnly;
 
     public FindUserCriteria() {

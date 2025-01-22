@@ -145,7 +145,7 @@ class TestTaskProgressUtil {
             parent.setNodeName(node.getName());
             parent.setTaskName("parent task " + i);
             parent.setThreadName("thread");
-            parent.setUserRef(UserRef.builder().subjectId(user).build());
+            parent.setUserRef(UserRef.builder().displayName(user).build());
 
             totalMap.put(parent.getId(), parent);
 
@@ -160,7 +160,7 @@ class TestTaskProgressUtil {
                 child.setNodeName(node.getName());
                 child.setTaskName("child task " + i + ":" + j);
                 child.setThreadName("thread");
-                child.setUserRef(UserRef.builder().subjectId(user).build());
+                child.setUserRef(UserRef.builder().displayName(user).build());
 
                 totalMap.put(child.getId(), child);
             }
