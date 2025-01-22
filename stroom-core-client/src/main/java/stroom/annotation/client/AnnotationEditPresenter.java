@@ -149,6 +149,8 @@ public class AnnotationEditPresenter
                     .taskMonitorFactory(this)
                     .exec();
         });
+
+        assignedToPresenter.showActiveUsersOnly(true);
     }
 
     @Override

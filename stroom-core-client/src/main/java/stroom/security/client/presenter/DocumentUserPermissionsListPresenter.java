@@ -45,6 +45,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -202,6 +203,7 @@ public class DocumentUserPermissionsListPresenter
                                 UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
+                        .enabledWhen(this::isUserEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("")
                         .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
@@ -219,6 +221,7 @@ public class DocumentUserPermissionsListPresenter
                                 false,
                                 DisplayType.DISPLAY_NAME)
                         .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                        .enabledWhen(this::isUserEnabled)
                         .build();
 
         dataGrid.addResizableColumn(
@@ -289,6 +292,10 @@ public class DocumentUserPermissionsListPresenter
         DataGridUtil.addEndColumn(dataGrid);
 
         dataGrid.getColumnSortList().push(new ColumnSortInfo(displayNameCol, true));
+    }
+
+    private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {
+        return GwtNullSafe.get(documentUserPermissions, DocumentUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
     public SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,

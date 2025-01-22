@@ -26,7 +26,7 @@ import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.Record7;
+import org.jooq.Record8;
 import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
@@ -121,8 +121,6 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
         conditions.add(userDao.getUserCondition(request.getExpression()));
         if (request.getUserRef() != null) {
             conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
-        } else {
-            conditions.add(STROOM_USER.ENABLED.eq(true));
         }
 
         final StroomUser su = STROOM_USER.as("su");
@@ -232,6 +230,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                                 STROOM_USER.DISPLAY_NAME,
                                 STROOM_USER.FULL_NAME,
                                 STROOM_USER.IS_GROUP,
+                                STROOM_USER.ENABLED,
                                 DSL.groupConcatDistinct(DSL.ifnull(recPerms, ""))
                                         .as(ctePerms.getName()),
                                 DSL.groupConcatDistinct(DSL.ifnull(recInheritedPerms, ""))
@@ -244,7 +243,8 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                                 STROOM_USER.NAME,
                                 STROOM_USER.DISPLAY_NAME,
                                 STROOM_USER.FULL_NAME,
-                                STROOM_USER.IS_GROUP)
+                                STROOM_USER.IS_GROUP,
+                                STROOM_USER.ENABLED)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit);
@@ -255,7 +255,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                 throw new RuntimeException(e);
             }
 
-        }).map((Record7<?, ?, ?, ?, ?, ?, ?> r) -> {
+        }).map((Record8<?, ?, ?, ?, ?, ?, ?, ?> r) -> {
             try {
                 final UserRef userRef = recordToUserRef(r);
                 final String perms = r.get(ctePerms.getName(), String.class);
@@ -315,6 +315,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                 .displayName(r.get(STROOM_USER.DISPLAY_NAME))
                 .fullName(r.get(STROOM_USER.FULL_NAME))
                 .group(r.get(STROOM_USER.IS_GROUP))
+                .enabled(r.get(STROOM_USER.ENABLED))
                 .build();
     }
 

@@ -101,7 +101,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                         .from(PERMISSION_DOC)
                         .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
                         .where(PERMISSION_DOC.USER_UUID.eq(userUuid))
-                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetch())
                 .forEach(r -> {
                     final String docUuid = r.get(PERMISSION_DOC.DOC_UUID);
@@ -122,7 +121,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                         .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
                         .where(PERMISSION_DOC.DOC_UUID.eq(documentUuid))
                         .and(PERMISSION_DOC.USER_UUID.eq(userUuid))
-                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetchOptional(PERMISSION_DOC.PERMISSION_ID))
                 .map(r -> DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(r.byteValue()))
                 .orElse(null);
@@ -212,7 +210,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                         .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC_CREATE.USER_UUID))
                         .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
                         .and(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
-                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetch())
                 .map(r -> r.get(PERMISSION_DOC_CREATE.DOC_TYPE_ID).intValue());
     }
@@ -452,8 +449,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         conditions.add(userDao.getUserCondition(request.getExpression()));
         if (request.getUserRef() != null) {
             conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
-        } else {
-            conditions.add(STROOM_USER.ENABLED.eq(true));
         }
 
         final StroomUser su = STROOM_USER.as("su");
@@ -573,6 +568,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                             STROOM_USER.DISPLAY_NAME,
                             STROOM_USER.FULL_NAME,
                             STROOM_USER.IS_GROUP,
+                            STROOM_USER.ENABLED,
                             maxOfPermsField,
                             maxOfInheritedField,
                             effectivePerm)
@@ -584,7 +580,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                             STROOM_USER.NAME,
                             STROOM_USER.DISPLAY_NAME,
                             STROOM_USER.FULL_NAME,
-                            STROOM_USER.IS_GROUP)
+                            STROOM_USER.IS_GROUP,
+                            STROOM_USER.ENABLED)
                     .orderBy(orderFields)
                     .offset(offset)
                     .limit(limit);
@@ -638,8 +635,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         conditions.add(userDao.getUserCondition(request.getExpression()));
         if (request.getUserRef() != null) {
             conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
-        } else {
-            conditions.add(STROOM_USER.ENABLED.eq(true));
         }
 
         // If we have a single doc then try to deliver more useful permissions.
@@ -806,6 +801,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                             STROOM_USER.DISPLAY_NAME,
                             STROOM_USER.FULL_NAME,
                             STROOM_USER.IS_GROUP,
+                            STROOM_USER.ENABLED,
                             maxOfPermsField,
                             maxOfInheritedField,
                             effectivePerm,
@@ -819,7 +815,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                             STROOM_USER.NAME,
                             STROOM_USER.DISPLAY_NAME,
                             STROOM_USER.FULL_NAME,
-                            STROOM_USER.IS_GROUP)
+                            STROOM_USER.IS_GROUP,
+                            STROOM_USER.ENABLED)
                     .orderBy(orderFields)
                     .offset(offset)
                     .limit(limit);
@@ -915,6 +912,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .displayName(r.get(STROOM_USER.DISPLAY_NAME))
                 .fullName(r.get(STROOM_USER.FULL_NAME))
                 .group(r.get(STROOM_USER.IS_GROUP))
+                .enabled(r.get(STROOM_USER.ENABLED))
                 .build();
     }
 }

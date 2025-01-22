@@ -69,6 +69,7 @@ public class ProcessorEditPresenter
         this.clientSecurityContext = clientSecurityContext;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
+        userRefSelectionBoxPresenter.showActiveUsersOnly(true);
     }
 
     public void read(final ExpressionOperator expression,
