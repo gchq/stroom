@@ -56,6 +56,7 @@ public class ChangeAssignedToPresenter
         this.clientSecurityContext = clientSecurityContext;
         getView().setUserView(userRefSelectionBoxPresenter.getView());
         getView().setUiHandlers(this);
+        userRefSelectionBoxPresenter.showActiveUsersOnly(true);
     }
 
     public void show(final List<Long> annotationIdList) {

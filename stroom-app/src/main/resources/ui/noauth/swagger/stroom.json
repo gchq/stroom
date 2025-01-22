@@ -10119,6 +10119,33 @@
         "tags" : [ "Text Converters" ]
       }
     },
+    "/userInfo/v1/{userUuid}" : {
+      "get" : {
+        "operationId" : "fetchUser",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserInfo"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetches the userInfo with the supplied user UUID",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/userRef/v1/find" : {
       "post" : {
         "operationId" : "findUserRefs",
@@ -10299,6 +10326,35 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/users/v1/findDependencies" : {
+      "post" : {
+        "operationId" : "findUserDependenciesByCriteria",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserDependenciesCriteria"
+              }
+            }
+          },
+          "description" : "criteria"
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageUserDependency"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the items that depend on this user",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1/updateUser" : {
       "post" : {
         "operationId" : "updateUser",
@@ -10352,11 +10408,11 @@
             "description" : "default response"
           }
         },
-        "summary" : "Delete the user with the supplied UUID",
+        "summary" : "Delete the user with the supplied user UUID",
         "tags" : [ "Authorisation" ]
       },
       "get" : {
-        "operationId" : "fetchUser",
+        "operationId" : "fetchUser_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "userUuid",
@@ -10411,7 +10467,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Removes user with UUID userUuid from the group with UUID groupUuid",
+        "summary" : "Removes user/group with UUID userUuid from the group with UUID groupUuid",
         "tags" : [ "Authorisation" ]
       },
       "put" : {
@@ -10443,7 +10499,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Adds user with UUID userUuid to the group with UUID groupUuid",
+        "summary" : "Adds user/group with UUID userUuid to the group with UUID groupUuid",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -15118,6 +15174,9 @@
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
+          "activeUsersOnly" : {
+            "type" : "boolean"
+          },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
@@ -15133,6 +15192,30 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          }
+        }
+      },
+      "FindUserDependenciesCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -18696,6 +18779,21 @@
           }
         }
       },
+      "ResultPageUserDependency" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserDependency"
+            }
+          }
+        }
+      },
       "ResultPageUserRef" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -21330,6 +21428,20 @@
           }
         }
       },
+      "UserDependency" : {
+        "type" : "object",
+        "properties" : {
+          "details" : {
+            "type" : "string"
+          },
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
       "UserDesc" : {
         "type" : "object",
         "properties" : {
@@ -21340,6 +21452,32 @@
             "type" : "string"
           },
           "subjectId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UserInfo" : {
+        "type" : "object",
+        "properties" : {
+          "deleted" : {
+            "type" : "boolean"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "group" : {
+            "type" : "boolean"
+          },
+          "subjectId" : {
+            "type" : "string"
+          },
+          "uuid" : {
             "type" : "string"
           }
         }

@@ -58,6 +58,7 @@ public class ScheduledProcessEditPresenter
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
+        userRefSelectionBoxPresenter.showActiveUsersOnly(true);
 
         view.setUiHandlers(this);
         view.getStartTime().setPopupProvider(dateTimePopupProvider);
