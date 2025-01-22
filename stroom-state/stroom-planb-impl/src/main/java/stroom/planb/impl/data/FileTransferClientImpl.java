@@ -91,6 +91,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                             }
                         }
                     } catch (final Exception e) {
+                        LOGGER.error(e::getMessage, e);
                         throw new RuntimeException(e.getMessage(), e);
                     }
                 }
@@ -109,6 +110,7 @@ public class FileTransferClientImpl implements FileTransferClient {
                     }
                 }
             } catch (final IOException e) {
+                LOGGER.error(e::getMessage, e);
                 throw new UncheckedIOException(e);
             }
         });

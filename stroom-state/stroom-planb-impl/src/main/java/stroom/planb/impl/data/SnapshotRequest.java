@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class SnapshotRequest {
@@ -22,7 +24,7 @@ public class SnapshotRequest {
     @JsonCreator
     public SnapshotRequest(@JsonProperty("planBDocRef") final DocRef planBDocRef,
                            @JsonProperty("effectiveTime") final long effectiveTime,
-                           @JsonProperty("currentSnapshotTime")final Long currentSnapshotTime) {
+                           @JsonProperty("currentSnapshotTime") final Long currentSnapshotTime) {
         this.planBDocRef = planBDocRef;
         this.effectiveTime = effectiveTime;
         this.currentSnapshotTime = currentSnapshotTime;
@@ -38,5 +40,33 @@ public class SnapshotRequest {
 
     public Long getCurrentSnapshotTime() {
         return currentSnapshotTime;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SnapshotRequest request = (SnapshotRequest) o;
+        return effectiveTime == request.effectiveTime &&
+               Objects.equals(planBDocRef, request.planBDocRef) &&
+               Objects.equals(currentSnapshotTime, request.currentSnapshotTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(planBDocRef, effectiveTime, currentSnapshotTime);
+    }
+
+    @Override
+    public String toString() {
+        return "SnapshotRequest{" +
+               "planBDocRef=" + planBDocRef +
+               ", effectiveTime=" + effectiveTime +
+               ", currentSnapshotTime=" + currentSnapshotTime +
+               '}';
     }
 }

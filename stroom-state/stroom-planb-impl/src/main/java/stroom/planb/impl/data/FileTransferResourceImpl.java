@@ -20,6 +20,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -31,6 +32,7 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 @AutoLogged(OperationType.UNLOGGED)
 public class FileTransferResourceImpl implements FileTransferResource {
@@ -47,6 +49,7 @@ public class FileTransferResourceImpl implements FileTransferResource {
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public Response fetchSnapshot(final SnapshotRequest request) {
+        LOGGER.debug(() -> "Snapshot request: " + request);
         try {
             // Check the status before we start streaming snapshot data as it is hard to capture meaningful errors mid
             // stream.
@@ -54,20 +57,26 @@ public class FileTransferResourceImpl implements FileTransferResource {
 
             // Stream the snapshhot content to the client as ZIP data
             final StreamingOutput streamingOutput = output -> {
-                fileTransferServiceProvider.get().fetchSnapshot(request, output);
+                try {
+                    fileTransferServiceProvider.get().fetchSnapshot(request, output);
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
+                    throw e;
+                }
             };
 
+            LOGGER.debug(() -> "Sending snapshot: " + request);
             return Response
                     .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
                     .build();
         } catch (final NotModifiedException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.debug(() -> "Snapshot not modified: " + request + " " + e.getMessage(), e);
             throw new WebApplicationException(e.getMessage(), Status.NOT_MODIFIED);
         } catch (final PermissionException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.error(() -> "Snapshot permission exception : " + request + " " + e.getMessage(), e);
             throw new WebApplicationException(e.getMessage(), Status.UNAUTHORIZED);
         } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.debug(() -> "Snapshot not found: " + request + " " + e.getMessage(), e);
             throw new WebApplicationException(e.getMessage(), Status.NOT_FOUND);
         }
     }
@@ -79,18 +88,27 @@ public class FileTransferResourceImpl implements FileTransferResource {
                              final String fileHash,
                              final String fileName,
                              final InputStream inputStream) {
+        final Supplier<String> messageDetail = () -> LogUtil.message(
+                "createTime={}, metaId={}, fileHash={}, fileName={}",
+                createTime,
+                metaId,
+                fileHash,
+                fileName);
+
         try {
+            LOGGER.debug(() -> "Receiving part: " + messageDetail.get());
             fileTransferServiceProvider.get().receivePart(createTime, metaId, fileHash, fileName, inputStream);
+            LOGGER.debug(() -> "Successfully received part: " + messageDetail.get());
             return Response
                     .ok()
                     .build();
         } catch (final PermissionException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.error(LogUtil.message("Permission exception receiving part: " + messageDetail.get()), e);
             return Response
                     .status(Status.UNAUTHORIZED.getStatusCode(), e.getMessage())
                     .build();
         } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.error(LogUtil.message("Exception receiving part: " + messageDetail.get()), e);
             return Response
                     .status(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getMessage())
                     .build();
