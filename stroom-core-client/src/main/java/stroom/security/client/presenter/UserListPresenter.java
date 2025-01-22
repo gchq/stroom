@@ -439,11 +439,11 @@ public class UserListPresenter
                 if (resultPageConsumer != null) {
                     resultPageConsumer.accept(data);
                 }
-                if (!data.isEmpty()) {
-                    selectionModel.setSelected(data.getFirst());
-                } else {
-                    selectionModel.clear();
-                }
+//                if (!data.isEmpty()) {
+//                    selectionModel.setSelected(data.getFirst());
+//                } else {
+//                    selectionModel.clear();
+//                }
             }
         };
         dataProvider.addDataDisplay(dataGrid);
