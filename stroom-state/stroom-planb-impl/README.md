@@ -37,7 +37,7 @@ Each of these store types require data to be described in specific ways, however
     <reference>
         <map>countryToCity</map>
         <key>wales</key>
-        <value>cardiff</value>
+        <value>Cardiff</value>
     </reference>
     
     <!-- Ranged state -->
