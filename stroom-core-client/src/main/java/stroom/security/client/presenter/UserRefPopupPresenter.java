@@ -254,4 +254,8 @@ public class UserRefPopupPresenter
     public void setAdditionalTerm(final ExpressionTerm additionalTerm) {
         this.additionalTerm = additionalTerm;
     }
+
+    public void showActiveUsersOnly(final boolean activeUsersOnly) {
+        criteriaBuilder.activeUsersOnly(activeUsersOnly);
+    }
 }

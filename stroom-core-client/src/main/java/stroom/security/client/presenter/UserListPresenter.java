@@ -36,7 +36,6 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -47,13 +46,9 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.Range;
@@ -179,7 +174,7 @@ public class UserListPresenter
                             .centerAligned()
                             .build(),
                     DataGridUtil.headingBuilder("")
-                            .headingText(buildDualIconHeader())
+                            .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
                             .centerAligned()
                             .withToolTip("Whether this row is a single user or a named user group.")
                             .build(),
@@ -345,28 +340,6 @@ public class UserListPresenter
             filter = null;
         }
         refresh();
-    }
-
-    private SafeHtml buildDualIconHeader() {
-        // TODO this is duplicated in AppUserPermissionsListPresenter
-        final String iconClassName = "svgCell-icon";
-        final Preset userPreset = SvgPresets.USER.title("");
-        final Preset groupPreset = SvgPresets.USER_GROUP.title("");
-        return HtmlBuilder.builder()
-                .div(
-                        divBuilder -> {
-                            divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    userPreset.getTitle(),
-                                    userPreset.getSvgImage(),
-                                    iconClassName));
-                            divBuilder.append("/");
-                            divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    groupPreset.getTitle(),
-                                    groupPreset.getSvgImage(),
-                                    iconClassName));
-                        },
-                        Attribute.className("two-icon-column-header"))
-                .toSafeHtml();
     }
 
     public void setQuickFilterText(final String quickFilterText) {
