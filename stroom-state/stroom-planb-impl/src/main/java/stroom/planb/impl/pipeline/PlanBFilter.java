@@ -422,29 +422,9 @@ public class PlanBFilter extends AbstractXMLFilter {
             fastInfosetEndElement(localName, newUri, newQName);
         } else {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
-                // capture the key of the map that the subsequent values will belong to. A ref
+                // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
                 mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
-//                if (!NullSafe.isBlankString(mapName)) {
-//                    stateDoc = stateDocMap.computeIfAbsent(mapName, k -> {
-//                        PlanBDoc doc = null;
-//
-//                        if (!PlanBNameValidator.isValidName(k)) {
-//                            error("Bad map key: " + k);
-//                        } else {
-//                            try {
-//                                doc = stateDocCache.get(k);
-//                                if (doc == null) {
-//                                    error("Unable to find state doc for map key: " + k);
-//                                }
-//                            } catch (final RuntimeException e) {
-//                                error(e);
-//                            }
-//                        }
-//
-//                        return Optional.ofNullable(doc);
-//                    }).orElse(null);
-//                }
 
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
                 // the key for the KV pair

@@ -83,7 +83,7 @@ public class ShardWriters {
 
         public Optional<PlanBDoc> getDoc(final String mapName, final Consumer<String> errorConsumer) {
             if (NullSafe.isBlankString(mapName)) {
-                errorConsumer.accept("Null map key");
+                errorConsumer.accept("Null map name");
                 return Optional.empty();
             }
 
@@ -91,12 +91,12 @@ public class ShardWriters {
                 PlanBDoc doc = null;
 
                 if (!PlanBNameValidator.isValidName(k)) {
-                    errorConsumer.accept("Bad map key: " + k);
+                    errorConsumer.accept("Bad map name: " + k);
                 } else {
                     try {
                         doc = planBDocCache.get(k);
                         if (doc == null) {
-                            errorConsumer.accept("Unable to find state doc for map key: " + k);
+                            errorConsumer.accept("Unable to find state doc for map name: " + k);
                         }
                     } catch (final RuntimeException e) {
                         errorConsumer.accept(e.getMessage());
