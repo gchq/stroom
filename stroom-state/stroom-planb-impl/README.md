@@ -56,6 +56,7 @@ Sessions are specified with the following XML, although the reference-data schem
 ```xml
 <referenceData xmlns="reference-data:2" xmlns:evt="event-logging:3">
     <session>
+        <map>user_app_sessions</map>
         <key>user1_app1</key>
         <time>2024-01-01T08:10:22.023Z</time>
         <timeout>15m</timeout>
