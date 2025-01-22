@@ -63,7 +63,7 @@ public class FederatedSearchExecutor {
                         return new SearchTaskProgress(
                                 taskProgress.getTaskName(),
                                 taskProgress.getTaskInfo(),
-                                taskProgress.getUserName(),
+                                taskProgress.getUserRef(),
                                 taskProgress.getThreadName(),
                                 taskProgress.getNodeName(),
                                 taskProgress.getSubmitTimeMs(),

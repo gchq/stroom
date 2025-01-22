@@ -15412,6 +15412,9 @@
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
+          "activeUsersOnly" : {
+            "type" : "boolean"
+          },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
@@ -19823,8 +19826,8 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "userName" : {
-            "type" : "string"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -21402,8 +21405,8 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "userName" : {
-            "type" : "string"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },

@@ -190,7 +190,7 @@ public class UserDependenciesListPresenter
                         cellBuilder)
                 .withSorting(FindUserDependenciesCriteria.FIELD_DOC_NAME)
                 .build();
-        dataGrid.addColumn(
+        dataGrid.addResizableColumn(
                 docNameCol,
                 DataGridUtil.headingBuilder("Document Name")
                         .withToolTip("The document that depends on this user.")

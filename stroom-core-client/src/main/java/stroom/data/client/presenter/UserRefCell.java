@@ -179,7 +179,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
                         copySvg));
 
                 // Not all users should be able to open the user
-                if (hasPermissionToOpen(userRef)) {
+                if (userRef.getUuid() != null && hasPermissionToOpen(userRef)) {
                     final SafeHtml openSvg = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME, HOVER_ICON_CLASS_NAME);
                     sb.append(template.divWithToolTip(

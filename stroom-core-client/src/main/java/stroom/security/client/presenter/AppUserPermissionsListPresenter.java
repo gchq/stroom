@@ -39,7 +39,6 @@ import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -51,11 +50,8 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -207,28 +203,6 @@ public class AppUserPermissionsListPresenter
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    private SafeHtml buildIconHeader() {
-        // TODO this is duplicated in UserListPresenter
-        final String iconClassName = "svgCell-icon";
-        final Preset userPreset = SvgPresets.USER.title("");
-        final Preset groupPreset = SvgPresets.USER_GROUP.title("");
-        return HtmlBuilder.builder()
-                .div(
-                        divBuilder -> {
-                            divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    userPreset.getTitle(),
-                                    userPreset.getSvgImage(),
-                                    iconClassName));
-                            divBuilder.append("/");
-                            divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    groupPreset.getTitle(),
-                                    groupPreset.getSvgImage(),
-                                    iconClassName));
-                        },
-                        Attribute.className("two-icon-column-header"))
-                .toSafeHtml();
-    }
-
     private void setupColumns() {
 
         DataGridUtil.addColumnSortHandler(dataGrid, requestBuilder, this::refresh);
@@ -239,15 +213,13 @@ public class AppUserPermissionsListPresenter
         // Icon
         dataGrid.addColumn(
                 DataGridUtil.svgPresetColumnBuilder(false, (AppUserPermissions row) ->
-                                row.getUserRef().isGroup()
-                                        ? SvgPresets.USER_GROUP
-                                        : SvgPresets.USER)
+                                UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
                         .enabledWhen(this::isUserEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("")
-                        .headingText(buildIconHeader())
+                        .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
                         .centerAligned()
                         .withToolTip("Whether this row is a single user or a named user group.")
                         .build(),

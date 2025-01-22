@@ -275,7 +275,11 @@ public class UserDaoImpl implements UserDao {
     public ResultPage<User> find(final FindUserCriteria criteria) {
         final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
 
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        Condition condition = expressionMapper.apply(criteria.getExpression());
+        if (criteria.isActiveUsersOnly()) {
+            condition = condition.and(STROOM_USER.ENABLED.isTrue());
+        }
+
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());

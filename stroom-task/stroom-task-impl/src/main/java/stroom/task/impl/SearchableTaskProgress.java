@@ -143,7 +143,7 @@ class SearchableTaskProgress implements Searchable {
                         final Map<String, Object> attributeMap = new HashMap<>();
                         attributeMap.put(TaskManagerFields.FIELD_NODE, taskProgress.getNodeName());
                         attributeMap.put(TaskManagerFields.FIELD_NAME, taskProgress.getTaskName());
-                        attributeMap.put(TaskManagerFields.FIELD_USER, taskProgress.getUserName());
+                        attributeMap.put(TaskManagerFields.FIELD_USER, taskProgress.getUserRef().getDisplayName());
                         attributeMap.put(TaskManagerFields.FIELD_SUBMIT_TIME, taskProgress.getSubmitTimeMs());
                         attributeMap.put(TaskManagerFields.FIELD_AGE, taskProgress.getAgeMs());
                         attributeMap.put(TaskManagerFields.FIELD_INFO, taskProgress.getTaskInfo());
