@@ -25,7 +25,45 @@ Just like the previous state store implementation, Plan B can store data in the 
 * Temporal Ranged State
 * Session
 
-Each of these store types require data to be descrided in specific ways, however the first 4 types will work with data specified in the same way as any existing reference data.
+Each of these store types require data to be described in specific ways, however the first 4 types will work with data specified in the same way as any existing reference data, e.g.
+
+```xml
+<referenceData xmlns="reference-data:2" xmlns:evt="event-logging:3">
+    <reference>
+        <map>cityToCountry</map>
+        <key>cardiff</key>
+        <value>Wales</value>
+    </reference>
+    <reference>
+        <map>countryToCity</map>
+        <key>wales</key>
+        <value>cardiff</value>
+    </reference>
+    
+    <!-- Ranged state -->
+    <reference>
+        <map>employeeIdToCountry</map>
+        <from>1001</from>
+        <to>1700</to>
+        <value>UK</value>
+    </reference>
+    ...
+</referenceData>
+```
+
+Sessions are specified with the following XML, although the reference-data schema has yet to be updated to reflect this:
+
+```xml
+<referenceData xmlns="reference-data:2" xmlns:evt="event-logging:3">
+    <session>
+        <key>user1_app1</key>
+        <time>2024-01-01T08:10:22.023Z</time>
+        <timeout>15m</timeout>
+    </session>
+    ...
+</referenceData>
+```
+
 Specifics for each state type will be discussed later in this document.
 
 Because the data required for the first 4 types is the same as current reference data, it is easy for users to load data into these stores by just creating a new pipeline that is similar to the `Reference Loader` standard pipeline.
