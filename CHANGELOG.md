@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.10] - 2025-01-22
+
+* Issue **#4652** : Add user links to server tasks and search results lists.
+
+* Issue **#4669** : Make user dependency list document column resizable.
+
+* Issue **#4685** : Fix doc permission layout.
+
+* Issue **#4705** : Fix conditional format fall through.
+
 * Issue **#4671** : Remove foreign key constraints from the legacy `(app|doc)_permission` tables to `stroom_user` to fix user deletion.
 
 * Issue **#4670** : Fix display of disabled users in multiple permission related screens.
@@ -1089,7 +1099,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.10...HEAD
+[v7.7-beta.10]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.7-beta.10
 [v7.7-beta.9]: https://github.com/gchq/stroom/compare/v7.7-beta.8...v7.7-beta.9
 [v7.7-beta.8]: https://github.com/gchq/stroom/compare/v7.7-beta.7...v7.7-beta.8
 [v7.7-beta.7]: https://github.com/gchq/stroom/compare/v7.7-beta.6...v7.7-beta.7
