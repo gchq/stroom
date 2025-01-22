@@ -19597,8 +19597,8 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "userName" : {
-            "type" : "string"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -21176,8 +21176,8 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "userName" : {
-            "type" : "string"
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },

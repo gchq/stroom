@@ -2,30 +2,38 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client">
-    <g:FlowPanel styleName="max default-min-sizes">
-        <form:FormGroup label="Permission Visibility:" addStyleNames="form-padding">
-            <form:HelpHTML>
-                <p>This dropdown controls which users/groups are shown in the <em>Users and Groups</em>
-                    pane below.</p>
-                <ul>
-                    <li><strong>Show Explicit</strong> - Show only those documents/folders that this user/group
-                        has an explicit permission on.</li>
-                    <li><strong>Show Effective</strong> - Show only those documents/folders that this user/group
-                        has an explicit or inherited permission on. The permission may be inherited from an
-                        ancestor group.</li>
-                    <li><strong>Show All</strong> - Shows all documents regardless of permissions held.
-                        Select this to grant new permissions to users/groups.</li>
-                </ul>
-            </form:HelpHTML>
-            <l:SelectionBox ui:field="permissionVisibility"/>
-        </form:FormGroup>
-        <form:FormGroup label="Documents" addStyleNames="form-label-padding max">
-            <form:HelpHTML>
-                <p>Lists documents, optionally filtered based on the value of the
-                    <em>Permission Visibility</em> dropdown.</p>
-            </form:HelpHTML>
-            <g:SimplePanel ui:field="permissionsList" styleName="max"/>
-        </form:FormGroup>
+             xmlns:l="urn:import:stroom.item.client"
+>
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:FlowPanel styleName="form dock-min form-padding">
+            <form:FormGroup label="Permission Visibility:">
+                <form:HelpHTML>
+                    <p>This dropdown controls which users/groups are shown in the
+                        <em>Users and Groups</em>
+                        pane below.
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Show Explicit</strong>
+                            - Show only those documents/folders that this user/group
+                            has an explicit permission on.
+                        </li>
+                        <li>
+                            <strong>Show Effective</strong>
+                            - Show only those documents/folders that this user/group
+                            has an explicit or inherited permission on. The permission may be inherited from an
+                            ancestor group.
+                        </li>
+                        <li>
+                            <strong>Show All</strong>
+                            - Shows all documents regardless of permissions held.
+                            Select this to grant new permissions to users/groups.
+                        </li>
+                    </ul>
+                </form:HelpHTML>
+                <l:SelectionBox ui:field="permissionVisibility"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="permissionsList" styleName="dock-max overflow-hidden"/>
     </g:FlowPanel>
 </ui:UiBinder>

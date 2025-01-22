@@ -19,6 +19,7 @@ package stroom.task.shared;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -38,7 +39,7 @@ public class TaskProgress implements TreeRow {
     @JsonProperty
     private String taskInfo;
     @JsonProperty
-    private String userName;
+    private UserRef userRef;
     @JsonProperty
     private String threadName;
 
@@ -62,7 +63,7 @@ public class TaskProgress implements TreeRow {
     public TaskProgress(@JsonProperty("id") final TaskId id,
                         @JsonProperty("taskName") final String taskName,
                         @JsonProperty("taskInfo") final String taskInfo,
-                        @JsonProperty("userName") final String userName,
+                        @JsonProperty("userRef") final UserRef userRef,
                         @JsonProperty("threadName") final String threadName,
                         @JsonProperty("nodeName") final String nodeName,
                         @JsonProperty("submitTimeMs") final long submitTimeMs,
@@ -72,7 +73,7 @@ public class TaskProgress implements TreeRow {
         this.id = id;
         this.taskName = taskName;
         this.taskInfo = taskInfo;
-        this.userName = userName;
+        this.userRef = userRef;
         this.threadName = threadName;
         this.nodeName = nodeName;
         this.submitTimeMs = submitTimeMs;
@@ -105,12 +106,12 @@ public class TaskProgress implements TreeRow {
         this.taskInfo = taskInfo;
     }
 
-    public String getUserName() {
-        return userName;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
-    public void setUserName(final String userName) {
-        this.userName = userName;
+    public void setUserRef(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
     public String getThreadName() {

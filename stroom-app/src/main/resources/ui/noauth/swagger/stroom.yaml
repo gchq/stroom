@@ -14460,8 +14460,8 @@ components:
         timeNowMs:
           type: integer
           format: int64
-        userName:
-          type: string
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     SelectionIndexShardStatus:
       type: object
       properties:
@@ -15688,8 +15688,8 @@ components:
         timeNowMs:
           type: integer
           format: int64
-        userName:
-          type: string
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     TaskProgressResponse:
       type: object
       properties:

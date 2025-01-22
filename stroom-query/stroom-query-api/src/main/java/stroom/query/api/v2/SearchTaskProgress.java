@@ -17,6 +17,7 @@
 package stroom.query.api.v2;
 
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,7 +35,7 @@ public class SearchTaskProgress {
     @JsonProperty
     private final String taskInfo;
     @JsonProperty
-    private final String userName;
+    private final UserRef userRef;
     @JsonProperty
     private final String threadName;
 
@@ -48,14 +49,14 @@ public class SearchTaskProgress {
     @JsonCreator
     public SearchTaskProgress(@JsonProperty("taskName") final String taskName,
                               @JsonProperty("taskInfo") final String taskInfo,
-                              @JsonProperty("userName") final String userName,
+                              @JsonProperty("userRef") final UserRef userRef,
                               @JsonProperty("threadName") final String threadName,
                               @JsonProperty("nodeName") final String nodeName,
                               @JsonProperty("submitTimeMs") final long submitTimeMs,
                               @JsonProperty("timeNowMs") final long timeNowMs) {
         this.taskName = taskName;
         this.taskInfo = taskInfo;
-        this.userName = userName;
+        this.userRef = userRef;
         this.threadName = threadName;
         this.nodeName = nodeName;
         this.submitTimeMs = submitTimeMs;
@@ -70,8 +71,8 @@ public class SearchTaskProgress {
         return taskInfo;
     }
 
-    public String getUserName() {
-        return userName;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public String getThreadName() {
