@@ -21,6 +21,7 @@ import stroom.node.shared.Node;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
+import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
 
@@ -71,11 +72,13 @@ class TestTaskProgressUtil {
         // Test sorting by user.
         criteria.setSort(FindTaskProgressCriteria.FIELD_USER, false, false);
         sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
-        testList(sortedList, (v1, v2) -> v1.getUserName().compareTo(v2.getUserName()) <= 0);
+        testList(sortedList, (v1, v2) ->
+                v1.getUserRef().getDisplayName().compareTo(v2.getUserRef().getDisplayName()) <= 0);
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_USER, true, false);
         sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
-        testList(sortedList, (v1, v2) -> v1.getUserName().compareTo(v2.getUserName()) >= 0);
+        testList(sortedList, (v1, v2) ->
+                v1.getUserRef().getDisplayName().compareTo(v2.getUserRef().getDisplayName()) >= 0);
 
         // Test sorting by node.
         criteria.setSort(FindTaskProgressCriteria.FIELD_NODE, false, false);
@@ -142,7 +145,7 @@ class TestTaskProgressUtil {
             parent.setNodeName(node.getName());
             parent.setTaskName("parent task " + i);
             parent.setThreadName("thread");
-            parent.setUserName(user);
+            parent.setUserRef(UserRef.builder().subjectId(user).build());
 
             totalMap.put(parent.getId(), parent);
 
@@ -157,7 +160,7 @@ class TestTaskProgressUtil {
                 child.setNodeName(node.getName());
                 child.setTaskName("child task " + i + ":" + j);
                 child.setThreadName("thread");
-                child.setUserName(user);
+                child.setUserRef(UserRef.builder().subjectId(user).build());
 
                 totalMap.put(child.getId(), child);
             }
